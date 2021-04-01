@@ -841,7 +841,11 @@ class helper_base {
         'indiciaFns' => ['deps' => ['jquery'], 'javascript' => [self::$js_path."indicia.functions.js"]],
         'jquery' => array('javascript' => array(self::$js_path."jquery.js", self::$js_path."ie_vml_sizzlepatch_2.js")),
         'datepicker' => [
-          'javascript' => [self::$js_path . 'indicia.datepicker.js']
+          'javascript' => [
+            self::$js_path . 'indicia.datepicker.js',
+            self::$js_path . 'date.polyfill/better-dom/dist/better-dom.min.js',
+            self::$js_path . 'date.polyfill/better-dateinput-polyfill/dist/better-dateinput-polyfill.min.js',
+          ]
         ],
         'sortable' => [
           'javascript' => ['https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.js'],
