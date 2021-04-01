@@ -1202,33 +1202,34 @@ JS;
   public static function georeference_lookup(array $options) {
     $options = self::check_options($options);
     global $indicia_templates;
-    $options = array_merge(array(
+    $options = array_merge([
       'id' => 'imp-georef-search',
       'driver' => 'google_places',
-      'searchButton' => self::apply_replacements_to_template($indicia_templates['button'], array(
+      'searchButton' => self::apply_replacements_to_template($indicia_templates['button'], [
         'href' => '#',
         'id' => 'imp-georef-search-btn',
-        'class' => "class=\"$indicia_templates[buttonDefaultClass]\"",
+        'class' => " class=\"$indicia_templates[buttonDefaultClass]\"",
         'caption' => lang::get('Search'),
         'title' => '',
-      )),
+      ]),
       'public' => FALSE,
       'autoCollapseResults' => FALSE,
       'isFormControl' => TRUE,
       'georefQueryMap' => FALSE,
-    ), $options);
+      ], $options);
     if ($options['driver'] === 'geoplanet') {
       return 'The GeoPlanet place search service is no longer supported';
     }
     if (($options['driver'] === 'google_places' && empty(self::$google_api_key))) {
-      // Can't use place search without the driver API key
+      // Can't use place search without the driver API key.
       return 'The georeference lookup control requires an API key configured for the place search API in use.<br/>';
     }
     self::add_resource('indiciaMapPanel');
-    // dynamically build a resource to link us to the driver js file.
+    // Dynamically build a resource to link us to the driver js file.
     self::$required_resources[] = 'georeference_default_' . $options['driver'];
-    // We need to see if there is a resource in the resource list for any special files required by this driver. This
-    // will do nothing if the resource is absent.
+    // We need to see if there is a resource in the resource list for any
+    // special files required by this driver. This will do nothing if the
+    // resource is absent.
     self::add_resource('georeference_' . $options['driver']);
     $settings = [
       'autoCollapseResults' => $options['autoCollapseResults'] ? 't' : 'f',
@@ -1316,13 +1317,13 @@ JS;
    *     a data service call. Specifies the template used to build the caption,
    *     with each database field represented as {fieldname}.
    */
-  public static function hierarchical_select($options) {
-    $options = array_merge(array(
-      'id' => 'select-' . rand(0,10000),
+  public static function hierarchical_select(array $options) {
+    $options = array_merge([
+      'id' => 'select-' . rand(0, 10000),
       'blankText' => '<please select>',
-      'extraParams' => array(),
+      'extraParams' => [],
       'preferredIdField' => 'preferred_termlists_term_id',
-    ), $options);
+    ], $options);
     // If not language filtered, then limit to preferred, otherwise we could
     // get multiple children.
     // @todo This should probably be set by the caller, not here.
@@ -1352,7 +1353,7 @@ JS;
         $itemCaption = $item[$options['captionField']];
       }
       // We either populate the lookupValues for the top level control or store
-      // in the childData for output into JavaScript
+      // in the childData for output into JavaScript.
       if (empty($item['parent_id']))
         $lookupValues[$itemValue] = $itemCaption;
       else {
@@ -1360,52 +1361,59 @@ JS;
         // Use the mappings from preferred ID to ID in this language to ensure
         // the parents can be found.
         if (!isset($childData[$prefMappings[$item['parent_id']]])) {
-          $childData[$prefMappings[$item['parent_id']]] = array();
+          $childData[$prefMappings[$item['parent_id']]] = [];
         }
-        $childData[$prefMappings[$item['parent_id']]][] = array(
+        $childData[$prefMappings[$item['parent_id']]][] = [
           'id' => $itemValue,
           'caption' => $itemCaption
-        );
+        ];
       }
     }
-    // build an ID with just alphanumerics, that we can use to keep JavaScript function and data names unique
+    // Build an ID with just alphanumerics, that we can use to keep JavaScript
+    // function and data names unique.
     $id = preg_replace('/[^a-zA-Z0-9]/', '', $options['id']);
-    // dump the control population data out for JS to use
-    self::$javascript .= "indiciaData.selectData$id=".json_encode($childData) . ";\n";
+    // Dump the control population data out for JS to use.
+    self::$javascript .= "indiciaData.selectData$id=" . json_encode($childData) . ";\n";
 
-    if (isset($options['autoSelectSingularChildItem']) AND $options['autoSelectSingularChildItem']==true)
+    if (isset($options['autoSelectSingularChildItem']) && $options['autoSelectSingularChildItem'] == TRUE) {
       self::$javascript .= "indiciaData.autoSelectSingularChildItem=true;\n";
+    }
 
-    // Convert the options so that the top-level select uses the lookupValues we've already loaded rather than reloads its own.
+    // Convert the options so that the top-level select uses the lookupValues
+    // we've already loaded rather than reloads its own.
     unset($options['table']);
     unset($options['report']);
     unset($options['captionField']);
     unset($options['valueField']);
     $options['lookupValues'] = $lookupValues;
 
-    // as we are going to output a select using the options, but will use a hidden field for the form value for the selected item,
-    // grab the fieldname and prevent the topmost select having the same name.
+    // As we are going to output a select using the options, but will use a
+    // hidden field for the form value for the selected item, grab the
+    // fieldname and prevent the topmost select having the same name.
     $fieldname = $options['fieldname'];
-    $options['fieldname'] = 'parent-'.$options['fieldname'];
+    $options['fieldname'] = 'parent-' . $options['fieldname'];
 
-    // Output a select. Use templating to add a wrapper div, so we can keep all the hierarchical selects together.
+    // Output a select. Use templating to add a wrapper div, so we can keep all
+    // the hierarchical selects together.
     global $indicia_templates;
     $oldTemplate = $indicia_templates['select'];
-    $classes = array('hierarchical-select', 'control-box');
-    if (!empty($options['class']))
+    $classes = ['hierarchical-select', 'control-box'];
+    if (!empty($options['class'])) {
       $classes[] = $options['class'];
-    $indicia_templates['select'] = '<div class="'.implode(' ', $classes).'">'.$indicia_templates['select'].'</div>';
-    $options['class']='hierarchy-select';
+    }
+    $indicia_templates['select'] = '<div class="' . implode(' ', $classes) . '">' . $indicia_templates['select'] . '</div>';
+    $options['class'] = 'hierarchy-select';
     $r = self::select($options);
     $indicia_templates['select'] = $oldTemplate;
     // jQuery safe version of the Id.
     $safeId = preg_replace('/[:]/', '\\\\\\:', $options['id']);
     // Output a hidden input that contains the value to post.
-    $hiddenOptions = array('id' => 'fld-'.$options['id'], 'fieldname'=>$fieldname, 'default'=>self::check_default_value($options['fieldname']));
-    if (isset($options['default']))
+    $hiddenOptions = ['id' => 'fld-' . $options['id'], 'fieldname' => $fieldname, 'default' => self::check_default_value($options['fieldname'])];
+    if (isset($options['default'])) {
       $hiddenOptions['default'] = $options['default'];
+    }
     $r .= self::hidden_text($hiddenOptions);
-    $options['blankText']=htmlspecialchars(lang::get($options['blankText']));
+    $options['blankText'] = htmlspecialchars(lang::get($options['blankText']));
     $selectClass = 'hierarchy-select' . (isset($indicia_templates['formControlClass']) ?
       " $indicia_templates[formControlClass]" : '');
     // Now output JavaScript that creates and populates child selects as each option is selected. There is also code for
@@ -2150,22 +2158,22 @@ JS;
   public static function postcode_textbox($options) {
     if (empty(self::$google_api_key))
       return 'The postcode textbox control requires a Google API Key in the configuration';
-    // The id must be set to imp-postcode otherwise the search does not work
+    // The id must be set to imp-postcode otherwise the search does not work.
     $options = array_merge($options, array('id'=>'imp-postcode'));
     $options = self::check_options($options);
-    // Merge in the defaults
+    // Merge in the defaults.
     $options = array_merge(array(
-      'srefField'=>'sample:entered_sref',
-      'systemField'=>'sample:entered_sref_system',
-      'hiddenFields'=>true,
-      'linkedAddressBoxId'=>'',
+      'srefField' => 'sample:entered_sref',
+      'systemField' => 'sample:entered_sref_system',
+      'hiddenFields' => TRUE,
+      'linkedAddressBoxId' => '',
       'isFormControl' => TRUE
     ), $options);
     self::add_resource('postcode_search');
     $r = self::apply_template('postcode_textbox', $options);
     if ($options['hiddenFields']) {
-      $defaultSref=self::check_default_value($options['srefField']);
-      $defaultSystem=self::check_default_value($options['systemField'], '4326');
+      $defaultSref = self::check_default_value($options['srefField']);
+      $defaultSystem = self::check_default_value($options['systemField'], '4326');
       $r .= "<input type='hidden' name='".$options['srefField']."' id='imp-sref' value='$defaultSref' />";
       $r .= "<input type='hidden' name='".$options['systemField']."' id='imp-sref-system' value='$defaultSystem' />";
     }
