@@ -597,19 +597,23 @@ class helper_base {
    * @todo Need to ensure this setting is utilised every where it should be.
    *
    */
-  public static $date_format='d/m/Y';
+  public static $date_format = 'd/m/Y';
 
   /**
-   * @var Boolean indicates if any form controls have specified the lockable option.
+   * @var bool indicates if any form controls have specified the lockable option.
    * If so, we will need to output some javascript.
    */
-  protected static $using_locking = false;
+  protected static $using_locking = FALSE;
 
   /**
-   * @var Boolean Are we linking in the default stylesheet? Handled sligtly different to the others so it can be added to the end of the
-   * list, allowing our CSS to override other stuff.
+   * Are we linking in the default stylesheet?
+   *
+   * Handled sligtly different to the others so it can be added to the end of
+   * the list, allowing our CSS to override other stuff.
+   *
+   * @var bool
    */
-  protected static $default_styles = false;
+  protected static $default_styles = FALSE;
 
   /**
    * Array of html attributes. When replacing items in a template, these get automatically wrapped. E.g.
@@ -787,13 +791,14 @@ class helper_base {
    *   * leaflet_google
    */
   public static function add_resource($resource) {
-    // Ensure indiciaFns is always the first resource added
+    // Ensure indiciaFns is always the first resource added.
     if (!self::$indiciaFnsDone) {
       self::$indiciaFnsDone = TRUE;
       self::add_resource('indiciaFns');
     }
     $resourceList = self::get_resources();
-    // If this is an available resource and we have not already included it, then add it to the list
+    // If this is an available resource and we have not already included it,
+    // then add it to the list.
     if (array_key_exists($resource, $resourceList) && !in_array($resource, self::$required_resources)) {
       if (isset($resourceList[$resource]['deps'])) {
         foreach ($resourceList[$resource]['deps'] as $dep) {
@@ -892,11 +897,28 @@ class helper_base {
         'fancybox' => [
           'deps' => ['jquery'],
           'stylesheets' => [self::$js_path . 'fancybox/dist/jquery.fancybox.min.css'],
-          'javascript' => [self::$js_path.'fancybox/dist/jquery.fancybox.min.js'],
+          'javascript' => [self::$js_path . 'fancybox/dist/jquery.fancybox.min.js'],
         ],
-        'treeBrowser' => array('deps' => array('jquery','jquery_ui'), 'javascript' => array(self::$js_path."jquery.treebrowser.js")),
-        'defaultStylesheet' => array('deps' => array(''), 'stylesheets' => array(self::$css_path."default_site.css", self::$css_path."theme-generic.css"), 'javascript' => array()),
-        'validation' => array('deps' => array('jquery'), 'javascript' => array(self::$js_path.'jquery.metadata.js', self::$js_path.'jquery.validate.js', self::$js_path.'additional-methods.js')),
+        'treeBrowser' => [
+          'deps' => ['jquery', 'jquery_ui'],
+          'javascript' => [self::$js_path . 'jquery.treebrowser.js']
+        ],
+        'defaultStylesheet' => [
+          'deps' => [''],
+          'stylesheets' => [
+            self::$css_path . 'default_site.css',
+            self::$css_path . 'theme-generic.css'
+          ],
+          'javascript' => []
+        ],
+        'validation' => [
+          'deps' => ['jquery'],
+          'javascript' => [
+            self::$js_path . 'jquery.metadata.js',
+            self::$js_path . 'jquery.validate.js',
+            self::$js_path . 'additional-methods.js',
+          ],
+        ],
         'plupload' => [
           'deps' => ['jquery_ui', 'fancybox'],
           'javascript' => [
