@@ -77,7 +77,7 @@ class iform_group_home extends iform_dynamic_report_explorer {
    *   Form HTML.
    */
   public static function get_form($args, $nid) {
-    if (empty($_GET['group_id'])) {
+    if (empty($_GET['group_id']) && empty($_GET['dynamic-group_id'])) {
       return 'This page needs a group_id URL parameter.';
     }
     global $base_url;
