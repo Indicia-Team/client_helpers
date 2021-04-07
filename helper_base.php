@@ -883,11 +883,17 @@ class helper_base {
             self::$js_path . 'jquery-ui.effects.js',
           ]
         ],
-        'jquery_ui_fr' => array('deps' => array('jquery_ui'), 'javascript' => array(self::$js_path."jquery.ui.datepicker-fr.js")),
-        'jquery_form' => array('deps' => array('jquery'), 'javascript' => array(self::$js_path."jquery.form.js")),
+        'jquery_ui_fr' => [
+          'deps' => ['jquery_ui'],
+          'javascript' => [self::$js_path . "jquery.ui.datepicker-fr.js"]
+        ],
+        'jquery_form' => [
+          'deps' => ['jquery'],
+          'javascript' => [self::$js_path . "jquery.form.min.js"],
+        ],
         'reportPicker' => [
           'deps' => ['treeview', 'fancybox'],
-          'javascript' => [self::$js_path."reportPicker.js"],
+          'javascript' => [self::$js_path . "reportPicker.js"],
         ],
         'treeview' => array('deps' => array('jquery'), 'stylesheets' => array(self::$css_path."jquery.treeview.css"), 'javascript' => array(self::$js_path."jquery.treeview.js")),
         'treeview_async' => array('deps' => array('treeview'), 'javascript' => array(self::$js_path."jquery.treeview.async.js", self::$js_path."jquery.treeview.edit.js")),
