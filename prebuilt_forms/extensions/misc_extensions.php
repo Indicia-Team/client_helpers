@@ -44,6 +44,7 @@ class extension_misc_extensions {
    *     requires paramNameToPass when in use.
    *   * User can also provide a value in braces to replace with the Drupal
    *     field for current user e.g. {field_indicia_user_id}.
+   *   * User can also provide a value in square brackets to replace it with URL parameter value e.g. [user_id].
    *   * onlyShowWhenLoggedInStatus - If 1, then only show button for logged in
    *     users. If 2, only show link for users who are not logged in.
    */
@@ -80,6 +81,13 @@ class extension_misc_extensions {
             // overwrite the existing value.
             if (!empty($paramValueFromUserField)) {
               $options['paramValueToPass'] = $paramValueFromUserField;
+            }
+          }
+          if (substr($options['paramValueToPass'], 0, 1) === '['&&substr($options['paramValueToPass'], -1) === ']') {
+            $options['paramValueToPass'] = substr($options['paramValueToPass'], 1, -1);
+            // Try and get it from the URL
+            if (!empty($_GET[$options['paramValueToPass']])) {
+              $options['paramValueToPass'] = $_GET[$options['paramValueToPass']];
             }
           }
           $paramToPass = array($options['paramNameToPass'] => $options['paramValueToPass']);
@@ -122,6 +130,7 @@ class extension_misc_extensions {
    *     requires paramNameToPass when in use. User can also provide a value
    *     in braces to replace with the Drupal field for current user e.g.
    *     {field_indicia_user_id}.
+   *   * User can also provide a value in square brackets to replace it with URL parameter value e.g. [user_id].
    *   * onlyShowWhenLoggedInStatus - If 1, then only show link for logged in
    *     users. If 2, only show link for users who are not logged in.
    *   * anchorId - Optional id for anchor link. This might be useful, for
@@ -156,6 +165,13 @@ class extension_misc_extensions {
             //If we have collected the user field from the profile, then overwrite the existing value.
             if (!empty($paramValueFromUserField))
               $options['paramValueToPass']=$paramValueFromUserField;
+          }
+          if (substr($options['paramValueToPass'], 0, 1) === '['&&substr($options['paramValueToPass'], -1) === ']') {
+            $options['paramValueToPass'] = substr($options['paramValueToPass'], 1, -1);
+            // Try and get it from the URL
+            if (!empty($_GET[$options['paramValueToPass']])) {
+              $options['paramValueToPass'] = $_GET[$options['paramValueToPass']];
+            }
           }
           $paramToPass=array($options['paramNameToPass']=>$options['paramValueToPass']);
         }
