@@ -88,7 +88,7 @@ jQuery(document).ready(function($) {
     $.each(names, function() {
       var size = 90 + Math.round(110 * (this.count - min) / (max - min));
       var weight = 100 + 100 * Math.round(8 * (this.count - min) / (max - min));
-      $(el).append('<span class="cloud-term" style="font-size: ' + size + '%; weight: ' + weight + '">' + this.name + '</span>');
+      $(el).append('<span class="cloud-term" style="font-size: ' + size + '%; weight: ' + weight + '">' + this.name + '</span> ');
     })
   };
 
@@ -121,7 +121,7 @@ jQuery(document).ready(function($) {
       var size = 90 + Math.round(110 * (this.count - min) / (max - min));
       var weight = 100 + 100 * Math.round(8 * (this.count - min) / (max - min));
       var name = this.italic ? '<em>' + this.name + '</em>' : this.name;
-      $(el).append('<span class="cloud-term" style="font-size: ' + size + '%; weight: ' + weight + '">' + name + '</span>');
+      $(el).append('<span class="cloud-term" style="font-size: ' + size + '%; weight: ' + weight + '">' + name + '</span> ');
     })
   };
 
