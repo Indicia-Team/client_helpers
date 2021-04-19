@@ -435,17 +435,6 @@ class helper_base {
    */
   public static $nocache = FALSE;
 
- /**
-  * Chance of a cache purge occurring.
-  * On average, every 1 in $interim_image_chance_purge times the
-  * Warehouse is called for data, all interim images older than $interim_image_expiry
-  * seconds will be deleted. These are images that should have uploaded to the
-  * warehouse but the form was not finally submitted.
-  *
-  * @var integer
-  */
-  public static $interim_image_chance_purge = 100;
-
   /**
    * Age of image files in seconds before they will be considered for purging.
    *
@@ -3167,11 +3156,11 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
       $exclude = array('.', '..', '.htaccess', 'web.config', '.gitignore');
       if ($dir) {
         while ($filename = readdir($dir)) {
-          if (in_array($filename, $exclude) || !is_file($filename)) {
+          if (in_array($filename, $exclude) || !is_file($folder . $filename)) {
             continue;
           }
           $lastModified = filemtime($folder . $filename);
-          $files[] = array($folder .$filename, $lastModified);
+          $files[] = array($folder . $filename, $lastModified);
         }
       }
       // Sort the file array by date, oldest first.
@@ -3185,8 +3174,9 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
           break;
         }
         // Clear out the old file.
-        if (is_file($files[$i][0]))
+        if (is_file($files[$i][0])) {
           unlink($files[$i][0]);
+        }
       }
     }
   }
