@@ -131,7 +131,7 @@ class extension_elasticsearch_event_reports {
 
   /**
    * Outputs a block of recent photo thumbnails.
-
+   *
    * @param array $auth
    *   Authorisation tokens.
    * @param array $args
@@ -150,7 +150,7 @@ class extension_elasticsearch_event_reports {
    *   HTML to insert into the page for the table. JavaScript is added to the
    *   variables in helper_base.
    */
-  public static function photos_block($auth, $args, $tabalias, $options, $path) {
+  public static function photos_block($auth, $args, $tabalias, $options) {
     self::initControl($auth, $args);
     helper_base::add_resource('fancybox');
     $options = array_merge([
@@ -161,23 +161,28 @@ class extension_elasticsearch_event_reports {
     ], $options);
     $srcOptions = array_merge(self::getSourceOptions($options), [
       'size' => $options['size'],
-      'filterPath' => 'hits.total,hits.hits._source.id,hits.hits._source.occurrence.media,hits.hits._source.taxon,hits.hits._source.event.recorded_by',
+      'filterPath' => 'hits.total,hits.hits._source.id,hits.hits._source.occurrence.media,hits.hits._source.taxon',
     ]);
     $srcOptions['filterBoolClauses']['must'] = [
       [
         'nested' => 'occurrence.media',
         'query_type' => 'exists',
         'field' => 'occurrence.media.path',
-      ]
+      ],
     ];
     $r = ElasticsearchReportHelper::source($srcOptions);
     if ($options['title']) {
       $r .= "<h2>$options[title]</h2>\n";
     }
-    $r .= ElasticsearchReportHelper::customScript([
+    $r .= ElasticsearchReportHelper::cardGallery([
       'id' => $options['id'],
       'source' => "source-$options[id]",
       'functionName' => 'outputPhotos',
+      'columns' => [
+        [
+          'field' => '#taxon_label#',
+        ],
+      ],
     ]);
 
     return $r;
@@ -185,7 +190,7 @@ class extension_elasticsearch_event_reports {
 
   /**
    * Outputs a table of recorded species.
-
+   *
    * @param array $auth
    *   Authorisation tokens.
    * @param array $args
