@@ -531,14 +531,18 @@ class helper_base {
   public static $validation_errors = NULL;
 
   /**
-   * @var Array of default validation rules to apply to the controls on the form if the
-   * built in client side validation is used (with the jQuery validation plugin). This array
-   * can be replaced if required.
-   * @todo This array could be auto-populated with validation rules for a survey's fields from the
-   * Warehouse.
+   * Default validation rules to apply to the controls on the form.
+   *
+   * Used if the built in client side validation is used (with the jQuery
+   * validation plugin). This array can be replaced if required.
+   *
+   * @var array
+   *
+   * @todo This array could be auto-populated with validation rules for a
+   * survey's fields from the Warehouse.
    */
   public static $default_validation_rules = [
-    'sample:date' => ['required','date'],
+    'sample:date' => ['required', 'date'],
     'sample:entered_sref' => ['required'],
     'occurrence:taxa_taxon_list_id' => ['required'],
     'location:name' => ['required'],
@@ -554,16 +558,22 @@ class helper_base {
   /**
    * Length of time in seconds after which cached Warehouse responses will start to expire.
    *
-   * @var integer
+   * @var int
    */
   public static $cache_timeout = 3600;
 
   /**
-   * @var integer On average, every 1 in $cache_chance_expire times the Warehouse is called for data which is
-   * cached but older than the cache timeout, the cached data will be refreshed. This introduces a random element to
-   * cache refreshes so that no single form load event is responsible for refreshing all cached content.
+   * Chance of a cached file being refreshed after expiry.
+   *
+   * On average, every 1 in $cache_chance_expire times the Warehouse is called
+   * for data which is cached but older than the cache timeout, the cached data
+   * will be refreshed. This introduces a random element to cache refreshes so
+   * that no single form load event is responsible for refreshing all cached
+   * content.
+   *
+   * @var int
    */
-  public static $cache_chance_refresh_file=10;
+  public static $cache_chance_refresh_file = 10;
 
   /**
    * Chance of a cache purge evemt.
@@ -572,12 +582,12 @@ class helper_base {
    * for data, all files older than 5 times the cache_timeout will be purged,
    * apart from the most recent $cache_allowed_file_count files.
    *
-   * @var integer
+   * @var int
    */
   public static $cache_chance_purge = 500;
 
   /**
-   * @var integer Number of recent files allowed in the cache which the cache will not bother clearing during a deletion operation.
+   * @var int Number of recent files allowed in the cache which the cache will not bother clearing during a deletion operation.
    * They will be refreshed occasionally when requested anyway.
    */
   public static $cache_allowed_file_count = 50;
@@ -839,12 +849,21 @@ class helper_base {
         $indicia_theme_path = preg_replace('/css\/$/', 'themes/', self::$css_path);
       }
       // Ensure a trailing slash.
-      if (substr($indicia_theme_path, -1) !== '/')
+      if (substr($indicia_theme_path, -1) !== '/') {
         $indicia_theme_path .= '/';
+      }
       $protocol = empty($_SERVER['HTTPS']) || $_SERVER['HTTPS'] === 'off' ? 'http' : 'https';
       self::$resource_list = array (
-        'indiciaFns' => ['deps' => ['jquery'], 'javascript' => [self::$js_path."indicia.functions.js"]],
-        'jquery' => array('javascript' => array(self::$js_path."jquery.js", self::$js_path."ie_vml_sizzlepatch_2.js")),
+        'indiciaFns' => [
+          'deps' => ['jquery'],
+          'javascript' => [self::$js_path . "indicia.functions.js"],
+        ],
+        'jquery' => [
+          'javascript' => [
+            self::$js_path . 'jquery.js',
+            self::$js_path . 'ie_vml_sizzlepatch_2.js',
+          ],
+        ],
         'datepicker' => [
           'javascript' => [
             self::$js_path . 'indicia.datepicker.js',
@@ -855,19 +874,31 @@ class helper_base {
         'sortable' => [
           'javascript' => ['https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.js'],
         ],
-        'openlayers' => array('javascript' => array(self::$js_path.(function_exists('iform_openlayers_get_file') ? iform_openlayers_get_file() : 'OpenLayers.js'),
-            self::$js_path . 'proj4js.js', self::$js_path . 'proj4defs.js', self::$js_path . 'lang/en.js')),
-        'graticule' => array('deps' =>array('openlayers'), 'javascript' => array(self::$js_path."indiciaGraticule.js")),
-        'clearLayer' => array('deps' =>array('openlayers'), 'javascript' => array(self::$js_path."clearLayer.js")),
-        'hoverControl' => array('deps' =>array('openlayers'), 'javascript' => array(self::$js_path."hoverControl.js")),
-        'addrowtogrid' => array('deps' => array('validation'), 'javascript' => array(self::$js_path."addRowToGrid.js")),
-        'speciesFilterPopup' => array('deps' => array('addrowtogrid'), 'javascript' => array(self::$js_path."speciesFilterPopup.js")),
-        'indiciaMapPanel' => array('deps' =>array('jquery', 'openlayers', 'jquery_ui', 'jquery_cookie','hoverControl'), 'javascript' => array(self::$js_path."jquery.indiciaMapPanel.js")),
-        'indiciaMapEdit' => array('deps' =>array('indiciaMap'), 'javascript' => array(self::$js_path."jquery.indiciaMap.edit.js")),
+        'openlayers' => [
+          'javascript' => [
+            self::$js_path . (function_exists('iform_openlayers_get_file') ? iform_openlayers_get_file() : 'OpenLayers.js'),
+            self::$js_path . 'proj4js.js',
+            self::$js_path . 'proj4defs.js',
+            self::$js_path . 'lang/en.js',
+          ],
+        ],
+        'graticule' => [
+          'deps' => ['openlayers'],
+          'javascript' => [self::$js_path . 'indiciaGraticule.js'],
+        ],
+        'clearLayer' => [
+          'deps' => ['openlayers'],
+          'javascript' => [self::$js_path . 'clearLayer.js'],
+        ],
+        'hoverControl' => array('deps' =>array('openlayers'), 'javascript' => array(self::$js_path . 'hoverControl.js')),
+        'addrowtogrid' => array('deps' => array('validation'), 'javascript' => array(self::$js_path . "addRowToGrid.js")),
+        'speciesFilterPopup' => array('deps' => array('addrowtogrid'), 'javascript' => array(self::$js_path . "speciesFilterPopup.js")),
+        'indiciaMapPanel' => array('deps' => array('jquery', 'openlayers', 'jquery_ui', 'jquery_cookie', 'hoverControl'), 'javascript' => array(self::$js_path . "jquery.indiciaMapPanel.js")),
+        'indiciaMapEdit' => array('deps' => array('indiciaMap'), 'javascript' => array(self::$js_path . "jquery.indiciaMap.edit.js")),
         'postcode_search' => array('javascript' => array(self::$js_path."postcode_search.js")),
-        'locationFinder' => array('deps' =>array('indiciaMapEdit'), 'javascript' => array(self::$js_path."jquery.indiciaMap.edit.locationFinder.js")),
-        'createPersonalSites' => array('deps' => array('jquery'), 'javascript' => array(self::$js_path."createPersonalSites.js")),
-        'autocomplete' => array('deps' => array('jquery'), 'stylesheets' => array(self::$css_path."jquery.autocomplete.css"), 'javascript' => array(self::$js_path."jquery.autocomplete.js")),
+        'locationFinder' => array('deps' => array('indiciaMapEdit'), 'javascript' => array(self::$js_path . "jquery.indiciaMap.edit.locationFinder.js")),
+        'createPersonalSites' => array('deps' => array('jquery'), 'javascript' => array(self::$js_path . "createPersonalSites.js")),
+        'autocomplete' => array('deps' => array('jquery'), 'stylesheets' => array(self::$css_path . "jquery.autocomplete.css"), 'javascript' => array(self::$js_path."jquery.autocomplete.js")),
         'addNewTaxon' => array('javascript' => array(self::$js_path."addNewTaxon.js")),
         'import' => array('javascript' => array(self::$js_path . "import.js")),
         'indicia_locks' => array('deps' =>array('jquery_cookie', 'json'), 'javascript' => array(self::$js_path."indicia.locks.js")),
@@ -1701,27 +1732,32 @@ HTML;
    * @param string $service Path to the service URL used. Default is data/handle_media, but could be import/upload_csv.
    * @return string Error message, or true if successful.
    */
-  public static function send_file_to_warehouse($path, $persist_auth=false, $readAuth = NULL, $service='data/handle_media', $removeLocalCopy=true) {
+  public static function send_file_to_warehouse($path, $persist_auth=false, $readAuth = NULL, $service='data/handle_media', $removeLocalCopy = TRUE) {
     if ($readAuth == NULL) {
       $readAuth = $_POST;
     }
     $interimPath = self::getInterimImageFolder('fullpath');
-    if (!file_exists($interimPath.$path))
+    if (!file_exists($interimPath.$path)) {
       return "The file $interimPath$path does not exist and cannot be uploaded to the Warehouse.";
+    }
     $serviceUrl = self ::$base_url . "index.php/services/$service";
     // This is used by the file box control which renames uploaded files using a guid system, so disable renaming on the server.
     $postargs = array('name_is_guid' => 'true');
     // attach authentication details
-    if (array_key_exists('auth_token', $readAuth))
+    if (array_key_exists('auth_token', $readAuth)) {
       $postargs['auth_token'] = $readAuth['auth_token'];
-    if (array_key_exists('nonce', $readAuth))
+    }
+    if (array_key_exists('nonce', $readAuth)) {
       $postargs['nonce'] = $readAuth['nonce'];
-    if ($persist_auth)
+    }
+    if ($persist_auth) {
       $postargs['persist_auth'] = 'true';
-    $file_to_upload = array('media_upload'=>'@'.realpath($interimPath.$path));
+    }
+    $file_to_upload = ['media_upload' => '@' . realpath($interimPath.$path)];
     $response = self::http_post($serviceUrl, $file_to_upload + $postargs);
     $output = json_decode($response['output'], true);
-    $r = true; // default is success
+    // Default is success.
+    $r = TRUE;
     if (is_array($output)) {
       //an array signals an error
       if (array_key_exists('error', $output)) {
@@ -1732,8 +1768,8 @@ HTML;
           $r = $output['error'];
       }
     }
-    if ($removeLocalCopy==true) {
-      unlink(realpath($interimPath.$path));
+    if ($removeLocalCopy) {
+      unlink(realpath($interimPath . $path));
     }
     return $r;
   }
