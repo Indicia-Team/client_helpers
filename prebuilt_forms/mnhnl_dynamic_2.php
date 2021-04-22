@@ -471,7 +471,7 @@ jQuery('.mnhnl-species-grid').find('".$selector."').change(function(){
       }
       foreach($rules as $rule)
       // But only do if a parameter given as rule:param - eg min:-40
-        for($i=1; $i<count($rule); $i++)
+        for($i=1; $i<count($rule); $i++) {
           if(strpos($rule[$i], ':') !== false){
             $details = explode(':', $rule[$i]);
             data_entry_helper::$late_javascript .= "
@@ -511,11 +511,12 @@ $.validator.addMethod('no_observation', function(arg1, arg2){
           	$sampleAttrs = data_entry_helper::getAttributes($attrOpts, true);
             // fetch start time.
             $found = false;
-            foreach ($sampleAttrs as $id => $attr)
+            foreach ($sampleAttrs as $id => $attr) {
               if($attr["untranslatedCaption"]=="Start time") {
                 $found = $id;
                 break;
               }
+            }
             if($found === false) continue;
             data_entry_helper::$late_javascript .= "
 jQuery('[name=".str_replace(':','\\:',$rule[0])."],[name^=".str_replace(':','\\:',$rule[0])."\\:]').rules('add', {end_time: true});
@@ -564,7 +565,9 @@ jQuery('[name$=".$selector."\\[\\]]').each(function(){
             data_entry_helper::$late_javascript .= "
 jQuery('[name=".str_replace(':','\\:',$rule[0])."],[name^=".str_replace(':','\\:',$rule[0])."\\:]').addClass('".$rule[$i]."');";
           }
+        }
     }
+
     if(!isset($options['speciesListInTextAttr'])) return '';
     $ctrlArgs=explode(',',$options['speciesListInTextAttr']);
     data_entry_helper::$javascript .= "
