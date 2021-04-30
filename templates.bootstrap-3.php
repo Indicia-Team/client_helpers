@@ -3,8 +3,6 @@
 global $indicia_templates;
 
 $indicia_templates['formControlClass'] = 'form-control';
-$indicia_templates['controlWrap'] =
-  '<div id="ctrl-wrap-{id}" class="form-group ctrl-wrap">{control}</div>' . "\n";
 $indicia_templates['controlWrapErrorClass'] = 'has-error';
 $indicia_templates['controlAddonsWrap'] =
   '<div class="input-group">{control}<div class="input-group-addon ctrl-addons">{addons}</div></div>';

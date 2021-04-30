@@ -32,7 +32,7 @@ global $indicia_templates;
 $indicia_templates = [
   'blank' => '',
   'prefix' => '',
-  'controlWrap' => "<div id=\"ctrl-wrap-{id}\" class=\"form-row ctrl-wrap\">{control}</div>\n",
+  'controlWrap' => "<div id=\"ctrl-wrap-{id}\" class=\"form-row ctrl-wrap{wrapClasses}\">{control}</div>\n",
   'controlWrapErrorClass' => '',
   // Template for control with associated buttons/icons to appear to the side.
   'controlAddonsWrap' => "{control}{addons}",
@@ -92,7 +92,7 @@ $indicia_templates = [
   'training' => '<input type="hidden" name="{fieldname}" value="{hiddenValue}"/><input type="checkbox" id="{id}" name="{fieldname}" value="1"{class}{checked}{disabled} {title} />'."\n",
   'date_picker' => '<input type="text" {attribute_list} {class} id="{id}" name="{fieldname}" value="{default}" style="{textDisplay}" {title}/>
       <input type="date" {attribute_list_date} class="{datePickerClass}" style="{dateDisplay}">' . "\n",
-  'date_picker_mode_toggle' => '{vagueLabel}: <label class="switch">
+  'date_picker_mode_toggle' => '<span>{vagueLabel}:</span> <label class="switch">
         <input type="checkbox" class="date-mode-toggle" checked>
         <span class="slider round"></span>
       </label>' . "\n",
@@ -1375,7 +1375,7 @@ class helper_base {
 </div>
 
 HTML;
-          $r .= str_replace(array('{control}', '{id}'), [$ctrl, 'map-toolbar'], $indicia_templates['controlWrap']);
+          $r .= str_replace(array('{control}', '{id}', '{wrapClasses}'), [$ctrl, 'map-toolbar', ''], $indicia_templates['controlWrap']);
         }
         $r .= '<input type="hidden" name="'.$fieldname.'" id="hidden-wkt" value="'.
             (isset($_POST[$fieldname]) ? $_POST[$fieldname] : '').'"/>';
@@ -2256,7 +2256,9 @@ if (typeof validator!=='undefined') {
       'class' => '',
       'disabled' => '',
       'readonly' => '',
+      'wrapClasses' => [],
     ), $options);
+    $options['wrapClasses'] = empty($options['wrapClasses']) ? '' : ' ' . implode(' ', $options['wrapClasses']);
     if (array_key_exists('maxlength', $options)) {
       $options['maxlength']='maxlength="'.$options['maxlength'].'"';
     } else {
@@ -2362,7 +2364,7 @@ if (typeof validator!=='undefined') {
     $r .= self::get_help_text($options, 'after');
     if (isset($options['id']) ) {
       $wrap = empty($options['controlWrapTemplate']) ? $indicia_templates['controlWrap'] : $indicia_templates[$options['controlWrapTemplate']];
-      $r = str_replace(array('{control}', '{id}'), array("\n$r", str_replace(':', '-', $options['id'])), $wrap);
+      $r = str_replace(array('{control}', '{id}', '{wrapClasses}'), array("\n$r", str_replace(':', '-', $options['id']), $options['wrapClasses']), $wrap);
     }
     if (!empty($options['tooltip'])) {
       // preliminary support for

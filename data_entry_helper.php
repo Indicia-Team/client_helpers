@@ -856,8 +856,10 @@ JS;
       'isFormControl' => TRUE,
       'allowFuture' => FALSE,
       'attributes' => [],
-      'vagueLabel' => lang::get('Vague date mode')
+      'vagueLabel' => lang::get('Vague date mode'),
     ], $options);
+    // Date pickers should be limited width, otherwise icon too far to right.
+    $options['wrapClasses'] = ['not-full-width-' . ($options['allowVagueDates'] ? 'md' : 'sm')];
     $dateFormatLabel = str_replace(['d', 'm', 'Y'], ['dd', 'mm', 'yyyy'], helper_base::$date_format);
     if (!isset($options['placeholder'])) {
       $options['placeholder'] = $options['allowVagueDates'] ? lang::get('{1} or vague date', $dateFormatLabel) : $dateFormatLabel;
@@ -2457,7 +2459,7 @@ JS;
       $r .= self::sref_system_select($options);
       // Put an outer container to keep them together.
       global $indicia_templates;
-      $r = str_replace(['{control}', '{id}'], [$r, 'imp-sref-and-system'], $indicia_templates['controlWrap']);
+      $r = str_replace(['{control}', '{id}', '{wrapClasses}'], [$r, 'imp-sref-and-system', ''], $indicia_templates['controlWrap']);
     }
     return $r;
   }
