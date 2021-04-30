@@ -858,6 +858,14 @@ JS;
       'attributes' => [],
       'vagueLabel' => lang::get('Vague date mode'),
     ], $options);
+    // Force vague date mode if loading existing data that requires it.
+    if (isset(self::$entity_to_load["$options[fieldname]_start"]) && isset(self::$entity_to_load["$options[fieldname]_end"]) &&
+         self::$entity_to_load["$options[fieldname]_start"] !== self::$entity_to_load["$options[fieldname]_end"]
+          && $options['allowVagueDates'] === FALSE) {
+      $options['allowVagueDates'] = TRUE;
+      $options['helpText'] = (empty($options['helpText']) ? '' : "$options[helpText] ") .
+        lang::get("Vague dates enabled as this existing form's date is not an exact day.");
+    }
     // Date pickers should be limited width, otherwise icon too far to right.
     $options['wrapClasses'] = ['not-full-width-' . ($options['allowVagueDates'] ? 'md' : 'sm')];
     $dateFormatLabel = str_replace(['d', 'm', 'Y'], ['dd', 'mm', 'yyyy'], helper_base::$date_format);
