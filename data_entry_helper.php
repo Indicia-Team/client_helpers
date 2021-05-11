@@ -4472,8 +4472,12 @@ JS;
    * @return array The taxon list to use in the grid.
    */
   public static function get_species_checklist_taxa_list($options, &$taxonRows) {
-    // Get the list of species that are always added to the grid, by first building a filter
-    if (preg_match('/^(preferred_name|preferred_taxon|taxon_meaning_id|taxa_taxon_list_id|taxon_group|external_key|id)$/', $options['taxonFilterField']))  {
+    // Get the list of species that are always added to the grid, by first
+    // building a filter or using preloaded ones.
+    if (!empty($options['preloadTaxa'])) {
+      $options['extraParams']['taxa_taxon_list_id'] = json_encode($options['preloadTaxa']);
+    }
+    elseif (preg_match('/^(preferred_name|preferred_taxon|taxon_meaning_id|taxa_taxon_list_id|taxon_group|external_key|id)$/', $options['taxonFilterField']))  {
       if ($options['taxonFilterField'] === 'preferred_name') {
         $options['taxonFilterField'] = 'preferred_taxon';
       }
