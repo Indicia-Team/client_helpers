@@ -440,6 +440,11 @@ HTML;
   * the report will load when the tab is first viewed.
   * Default false.
   * </li>
+  * <li><b>ajaxLinksOnly</b>
+  * If true, then sort and pagination links designed for use when JavaScript is disabled will be ommitted. Useful
+  * on public facing pages to prevent search engines navigating links.
+  * Default false.
+  * </li>
   * <li><b>autoloadAjax</b>
   * Set to true to prevent autoload of the grid in Ajax mode. You would then need to call the grid's ajaxload() method
   * when ready to load. This might be useful e.g. if a parameter is obtained from some other user input beforehand.
@@ -541,11 +546,11 @@ HTML;
             if ($sortAndPageUrlParams['orderby']['value'] == $field['orderby'] && $sortAndPageUrlParams['sortdir']['value'] != 'DESC') {
               $sortLink .= '&'.$sortAndPageUrlParams['sortdir']['name']."=DESC";
             }
-            $sortLink=htmlspecialchars($sortLink);
+            $sortHref = self::getGridNavHref($sortLink, $options['ajaxLinksOnly']);
             // store the field in a hidden input field
             $sortBy = lang::get("Sort by {1}", $caption);
             $captionLink = "<input type=\"hidden\" value=\"$field[orderby]\"/>" .
-                "<a href=\"$sortLink\" rel=\"nofollow\" title=\"$sortBy\">$caption</a>";
+                "<a$sortHref title=\"$sortBy\">$caption</a>";
             // set a style for the sort order
             $orderStyle = ($sortAndPageUrlParams['orderby']['value'] == $field['orderby']) ? ' '.$sortdirval : '';
             $orderStyle .= ' sortable';
@@ -969,6 +974,26 @@ JS;
   }
 
   /**
+   * Returns a navigation link for report_grid data.
+   *
+   * If JavaScript disabled, links are used in column headers and pagination to
+   * reload the page with parameters added to sort or page through the data.
+   * These can be disabled, e.g. on public facing pages where you don't want
+   * search engines paging through the data.
+   *
+   * @param string $link
+   *   URL to load.
+   * @param bool $ajaxLinksOnly
+   *   If TRUE, then an empty string is returned.
+   *
+   * @return string
+   *   Href attribute HTML.
+   */
+  private static function getGridNavHref($link, $ajaxLinksOnly) {
+    return $ajaxLinksOnly ? '' : ' href="' . htmlspecialchars($link) . '" rel="nofollow"';
+  }
+
+  /**
    * Loops through the actions defined in a report column configuration and passes the captions through translation.
    * @param array $actions List of actions defined for the column in the config.
    */
@@ -1111,13 +1136,15 @@ JS;
       // If not on first page, we can go back.
       if ($sortAndPageUrlParams['page']['value']>0) {
         $prev = max(0, $sortAndPageUrlParams['page']['value']-1);
-        $r .= "<a class=\"pag-prev pager-button\" rel=\"nofollow\" href=\"$pagLinkUrl".$sortAndPageUrlParams['page']['name']."=$prev\">".lang::get('previous')."</a> \n";
+        $pagingHref = self::getGridNavHref($pagLinkUrl . $sortAndPageUrlParams['page']['name'] . "=$prev", $options['ajaxLinksOnly']);
+        $r .= "<a class=\"pag-prev pager-button\"$pagingHref>".lang::get('previous')."</a> \n";
       } else
         $r .= "<span class=\"pag-prev ui-state-disabled pager-button\">".lang::get('previous')."</span> \n";
       // if the service call returned more records than we are displaying (because we asked for 1 more), then we can go forward
       if (count($response['records'])>$options['itemsPerPage']) {
         $next = $sortAndPageUrlParams['page']['value'] + 1;
-        $r .= "<a class=\"pag-next pager-button\" rel=\"nofollow\" href=\"$pagLinkUrl".$sortAndPageUrlParams['page']['name']."=$next\">".lang::get('next')." &#187</a> \n";
+        $pagingHref = self::getGridNavHref($pagLinkUrl . $sortAndPageUrlParams['page']['name'] . "=$next", $options['ajaxLinksOnly']);
+        $r .= "<a class=\"pag-next pager-button\"$pagingHref>".lang::get('next')." &#187</a> \n";
       } else
         $r .= "<span class=\"pag-next ui-state-disabled pager-button\">".lang::get('next')."</span> \n";
       return $r;
@@ -1140,8 +1167,8 @@ JS;
     // If not on first page, we can include previous link.
     if ($sortAndPageUrlParams['page']['value']>0) {
       $prev = max(0, $sortAndPageUrlParams['page']['value']-1);
-      $replacements['prev'] = "<a class=\"pag-prev pager-button\" rel=\"\nofollow\" href=\"$pagLinkUrl=$prev\">".lang::get('previous')."</a> \n";
-      $replacements['first'] = "<a class=\"pag-first pager-button\" rel=\"nofollow\" href=\"$pagLinkUrl=0\">".lang::get('first')."</a> \n";
+      $replacements['prev'] = "<a class=\"pag-prev pager-button\"" . self::getGridNavHref("$pagLinkUrl=$prev", $options['ajaxLinksOnly']) . ">".lang::get('previous')."</a> \n";
+      $replacements['first'] = "<a class=\"pag-first pager-button\"" . self::getGridNavHref("$pagLinkUrl=0", $options['ajaxLinksOnly']) . ">".lang::get('first')."</a> \n";
     } else {
       $replacements['prev'] = "<span class=\"pag-prev pager-button ui-state-disabled\">".lang::get('prev')."</span>\n";
       $replacements['first'] = "<span class=\"pag-first pager-button ui-state-disabled\">".lang::get('first')."</span>\n";
@@ -1152,14 +1179,15 @@ JS;
       if ($i===$page)
         $pagelist .= "<span class=\"pag-page pager-button ui-state-disabled\" id=\"page-".$options['id']."-$i\">$i</span>\n";
       else
-        $pagelist .= "<a class=\"pag-page pager-button\" rel=\"nofollow\" href=\"$pagLinkUrl=".($i-1)."\" id=\"page-".$options['id']."-$i\">$i</a>\n";
+        $pagelist .= "<a class=\"pag-page pager-button\"" . self::getGridNavHref("$pagLinkUrl=" . ($i - 1), $options['ajaxLinksOnly']) . " id=\"page-".$options['id']."-$i\">$i</a>\n";
     }
     $replacements['pagelist'] = $pagelist;
     // if not on the last page, display a next link
     if ($page<$response['count']/$options['itemsPerPage']) {
       $next = $sortAndPageUrlParams['page']['value'] + 1;
-      $replacements['next'] = "<a class=\"pag-next pager-button\" rel=\"nofollow\" href=\"$pagLinkUrl=$next\">".lang::get('next')."</a>\n";
-      $replacements['last'] = "<a class=\"pag-last pager-button\" rel=\"nofollow\" href=\"$pagLinkUrl=".round($response['count']/$options['itemsPerPage']-1)."\">".lang::get('last')."</a>\n";
+      $replacements['next'] = "<a class=\"pag-next pager-button\"" . self::getGridNavHref("$pagLinkUrl=$next", $options['ajaxLinksOnly']) . ">".lang::get('next')."</a>\n";
+      $last = round($response['count'] / $options['itemsPerPage'] - 1);
+      $replacements['last'] = "<a class=\"pag-last pager-button\"" . self::getGridNavHref("$pagLinkUrl=$last", $options['ajaxLinksOnly']) . ">".lang::get('last')."</a>\n";
     } else {
       $replacements['next'] = "<span class=\"pag-next pager-button ui-state-disabled\">".lang::get('next')."</span>\n";
       $replacements['last'] = "<span class=\"pag-last pager-button ui-state-disabled\">".lang::get('last')."</span>\n";
@@ -2757,6 +2785,7 @@ if (typeof mapSettingsHooks!=='undefined') {
       'sendOutputToMap' => FALSE,
       'zoomMapToOutput' => TRUE,
       'ajax' => FALSE,
+      'ajaxLinksOnly' => FALSE,
       'autoloadAjax' => TRUE,
       'linkFilterToMap' => TRUE,
       'pager' => TRUE,
