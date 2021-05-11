@@ -32,7 +32,7 @@ jQuery(document).ready(function docReady($) {
             // control at this location in the form.
             standardControl
               .prop('disabled', true)
-              .parent()
+              .closest('.ctrl-wrap')
                 .addClass('dynamically-replaced').hide()
                 .after(ctrlWrap);
             // Tag the moved dynamic control so we can clear it out if a
