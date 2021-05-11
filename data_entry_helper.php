@@ -889,8 +889,13 @@ JS;
     $options['attribute_list'] = implode(' ', $attrArray);
     // Options for date control if using a free text vague date input.
     $options['attribute_list_date'] = implode(' ', $attrArrayDate);
-    if (isset($options['default']) && $options['default'] === 'today') {
-      $options['default'] = date(self::$date_format);
+    if (isset($options['default'])) {
+      if ($options['default'] === 'today') {
+        $options['default'] = date(self::$date_format);
+      }
+      elseif (preg_match('/^\d{4}-\d{2}-\d{2}/', $options['default'])) {
+        $options['default'] = date(self::$date_format, strtotime($options['default']));
+      }
     }
     // Text box class helps sync to date picker control.
     $options['class'] .= ' date-text';
