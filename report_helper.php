@@ -19,8 +19,6 @@
  * @link http://code.google.com/p/indicia/
  */
 
-use Masterminds\HTML5;
-
 /**
  * Link in other required php files.
  */
@@ -39,14 +37,14 @@ class report_helper extends helper_base {
    *
    * @var array
    */
-  public static $initialFilterParamsToApply = array();
+  public static $initialFilterParamsToApply = [];
 
   /**
    * Accept parameter values that should be globally skipped on parameters forms.
    *
    * @var array
    */
-  public static $filterParamsToGloballySkip = array();
+  public static $filterParamsToGloballySkip = [];
 
  /**
   * Control which outputs a treeview of the reports available on the warehouse, with
@@ -627,7 +625,7 @@ HTML;
       $footer = helper_base::getStringReplaceTokens($options['footer'], $options['readAuth']);
       // Allow other modules to hook in.
       if (function_exists('hostsite_invoke_alter_hooks')) {
-          hostsite_invoke_alter_hooks('iform_user_replacements', $footer);
+        hostsite_invoke_alter_hooks('iform_user_replacements', $footer);
       }
       // Merge in any references to the parameters sent to the report: could extend this in the future to pass in the extraParams
       foreach($currentParamValues as $key=>$param){
@@ -678,7 +676,7 @@ HTML;
         $rowId = isset($options['rowId']) ? $row[$options['rowId']] : '';
         $rowIdAttr = $rowId ? " id=\"row$rowId\"" : '';
         if ($rowIdx % $options['galleryColCount']==0) {
-          $classes=array();
+          $classes = [];
           if ($altRowClass)
             $classes[]=$altRowClass;
           if (isset($options['rowClass']))
@@ -695,7 +693,7 @@ HTML;
           }
         }
         foreach ($options['columns'] as $field) {
-          $classes=array();
+          $classes = [];
           if ($options['sendOutputToMap'] && isset($field['mappable']) && ($field['mappable']==='true' || $field['mappable']===true)) {
             $data = json_encode($row + array('type'=>'linked'));
             $addFeaturesJs.= "div.addPt(features, ".$data.", '".$field['fieldname']."', {}".
@@ -1161,7 +1159,7 @@ JS;
   */
   private static function advanced_pager($options, $sortAndPageUrlParams, $response, $pagLinkUrl) {
     global $indicia_templates;
-    $replacements = array();
+    $replacements = [];
     // build a link URL to an unspecified page
     $pagLinkUrl .= $sortAndPageUrlParams['page']['name'];
     // If not on first page, we can include previous link.
@@ -1316,9 +1314,9 @@ JS;
   public static function report_chart($options) {
     $options = self::get_report_grid_options($options);
     if (empty($options['rendererOptions']))
-      $options['rendererOptions'] = array();
+      $options['rendererOptions'] = [];
     if (empty($options['axesOptions']))
-      $options['axesOptions'] = array();
+      $options['axesOptions'] = [];
     $currentParamValues = self::getReportGridCurrentParamValues($options);
     //If we want the report_chart to only return the parameters control, then don't provide
     //the report with parameters so that it will return parameter requests for all the
@@ -1329,7 +1327,7 @@ JS;
       $options['extraParams'] = array_merge($options['extraParams'],$currentParamValues);
     // @todo Check they have supplied a valid set of data & label field names
     self::add_resource('jqplot');
-    $opts = array();
+    $opts = [];
     switch ($options['chartType']) {
       case 'bar' :
         self::add_resource('jqplot_bar');
@@ -1380,9 +1378,9 @@ JS;
       // if linking to another report when clicked, store the full data so we can pass it as a parameter to the report
       self::$javascript .= "indiciaData.reportData=[];\n";
     // build the series data
-    $seriesData = array();
+    $seriesData = [];
     $lastRequestSource = '';
-    $xLabelsForSeries=array();
+    $xLabelsForSeries=[];
     $r = '';
     for ($idx=0; $idx<$seriesCount; $idx++) {
       // copy the array data back into the options array to make a normal request for report data
@@ -1408,8 +1406,8 @@ JS;
         $r .= self::build_params_form(array_merge($options, array('form'=>$data['parameterRequest'], 'defaults'=>$currentParamValues)), $hasVisibleContent);
 
       $lastRequestSource = $options['dataSource'];
-      $values=array();
-      $jsData = array();
+      $values=[];
+      $jsData = [];
       foreach ($data as $row) {
         if (isset($options['xValues']))
           // 2 dimensional data
@@ -1723,7 +1721,7 @@ JS;
     $options = array_merge(array(
       'header' => '',
       'footer' => '',
-      'bands' => array()
+      'bands' => []
     ), $options);
 
     if (!isset($records) || count($records)===0) {
@@ -1748,7 +1746,7 @@ JS;
           $outputBand = false;
           // Make sure we have somewhere to store the current field values for checking against
           if (!isset($band['triggerValues']))
-            $band['triggerValues']=array();
+            $band['triggerValues']=[];
           // look for changes in each trigger field
           foreach ($band['triggerFields'] as $triggerField) {
             if (!isset($band['triggerValues'][$triggerField]) || $band['triggerValues'][$triggerField]!=$row[$triggerField])
@@ -1947,7 +1945,7 @@ JS;
     $options = self::get_report_grid_options($options);
 
     // Keep track of the columns in the report output which we need to draw the layer and popups.
-    $colsToInclude=array();
+    $colsToInclude=[];
 
     if (empty($options['geoserverLayer'])) {
       // We are doing vector mapping from an Indicia report.
@@ -2019,8 +2017,8 @@ JS;
           'strokeColor' => '#ff0000',
           'strokeOpacity' => 0.9)
         );
-        $defStyleFns = array();
-        $selStyleFns = array();
+        $defStyleFns = [];
+        $selStyleFns = [];
         // Default fill opacity, more opaque if selected, and gets more transparent as you zoom in.
         $defStyleFns['fillOpacity'] = "getfillopacity: function(feature) {
           return Math.max(0, 0.4 - feature.layer.map.zoom/100);
@@ -2226,7 +2224,7 @@ JS;
         }
         else {
           // Not Ajax so output data to be loaded.
-          $geoms = array();
+          $geoms = [];
           $imagePath = self::get_uploaded_image_folder();
           foreach ($records as $record) {
             // Loop through all records.
@@ -2280,7 +2278,7 @@ JS;
       }
       else {
         // doing WMS reporting via GeoServer
-        $replacements = array();
+        $replacements = [];
         foreach(array_keys($currentParamValues) as $key)
           $replacements[] = "#$key#";
         $options['cqlTemplate'] = str_replace($replacements, $currentParamValues, $options['cqlTemplate']);
@@ -2318,7 +2316,7 @@ JS;
         $locationParamVals=array($currentParamValues['location_id']);
       //User has supplied location parameter options.
       if (!empty($options['locationParams'])) {
-        $locationParamVals=array();
+        $locationParamVals=[];
         $locationParamsArray = explode(',',$options['locationParams']);
         //Create an array of the user's supplied location parameters.
         foreach ($locationParamsArray as $locationParam) {
@@ -2416,7 +2414,7 @@ mapSettingsHooks.push(function(opts) { $setLocationJs
     if (function_exists('hostsite_get_user_field') && hostsite_get_user_field('training')) {
       $options['extraParams']['training'] = 'true';
     }
-    $query = array();
+    $query = [];
     if ($options['mode']=='report') {
       $serviceCall = 'report/requestReport?report='.$options['dataSource'].'.xml&reportSource=local&'.
           (isset($options['filename']) ? 'filename='.$options['filename'].'&' : '');
@@ -2441,10 +2439,10 @@ mapSettingsHooks.push(function(opts) { $setLocationJs
     if (isset($options['filters'])) {
       foreach ($options['filters'] as $key=>$value) {
         if (is_array($value)) {
-          if (!isset($query['in'])) $query['in'] = array();
+          if (!isset($query['in'])) $query['in'] = [];
           $query['in'][$key] = $value;
         } else {
-          if (!isset($query['where'])) $query['where'] = array();
+          if (!isset($query['where'])) $query['where'] = [];
           $query['where'][$key] = $value;
         }
       }
@@ -2539,7 +2537,7 @@ mapSettingsHooks.push(function(opts) { $setLocationJs
     // Build a basic URL path back to this page, but with the page, sortdir and orderby removed
     $pageUrl = $reloadUrl['path'].'?';
     // find the names of the params we must not include
-    $excludedParams = array();
+    $excludedParams = [];
     foreach($sortAndPageUrlParams as $param) {
       $excludedParams[] = $param['name'];
     }
@@ -2628,11 +2626,11 @@ if (typeof mapSettingsHooks!=='undefined') {
    */
   private static function report_grid_get_columns($response, &$options) {
     if (isset($response['columns'])) {
-      $specifiedCols = array();
-      $actionCols = array();
+      $specifiedCols = [];
+      $actionCols = [];
       $idx=0;
       if (!isset($options['columns']))
-        $options['columns'] = array();
+        $options['columns'] = [];
       foreach ($options['columns'] as &$col) {
         if (isset($col['fieldname'])) $specifiedCols[] = $col['fieldname'];
         // action columns need to be removed and added to the end
@@ -2669,7 +2667,7 @@ if (typeof mapSettingsHooks!=='undefined') {
    * with clean urls disabled, this is set to q. Otherwise leave empty.
    */
   private static function get_report_grid_actions($actions, $row, $pathParam='') {
-    $jsReplacements = array();
+    $jsReplacements = [];
     foreach ($row as $key=>$value) {
       $jsReplacements[$key]=$value;
       $jsReplacements["$key-escape-quote"]=str_replace("'", "\'", $value);
@@ -2677,7 +2675,7 @@ if (typeof mapSettingsHooks!=='undefined') {
       $jsReplacements["$key-escape-htmlquote"]=str_replace("'", "&#39;", $value);
       $jsReplacements["$key-escape-htmldblquote"]=str_replace('"', '&quot;', $value);
     }
-    $links = array();
+    $links = [];
     $currentUrl = self::get_reload_link_parts(); // needed for params
     if (!empty($pathParam)) {
       // If we are using a path parameter (like Drupal's q= dirty URLs), then we must ignore this part of the current URL's parameters
@@ -2767,15 +2765,15 @@ if (typeof mapSettingsHooks!=='undefined') {
       'class' => 'ui-widget ui-widget-content report-grid',
       'thClass' => 'ui-widget-header',
       'altRowClass' => 'odd',
-      'columns' => array(),
+      'columns' => [],
       'galleryColCount' => 1,
       'headers' => TRUE,
       'sortable' => TRUE,
       'includeAllColumns' => TRUE,
       'autoParamsForm' => TRUE,
       'paramsOnly' => FALSE,
-      'extraParams' => array(),
-      'immutableParams' => array(),
+      'extraParams' => [],
+      'immutableParams' => [],
       'completeParamsForm' => TRUE,
       'callback' => '',
       'paramsFormButtonCaption' => 'Run Report',
@@ -2817,7 +2815,7 @@ if (typeof mapSettingsHooks!=='undefined') {
    * @return Array Associative array of parameters.
    */
   private static function getReportGridCurrentParamValues($options) {
-    $params = array();
+    $params = [];
     // get defaults first
     if (isset($options['paramDefaults'])) {
       foreach ($options['paramDefaults'] as $key=>$value) {
@@ -2836,12 +2834,12 @@ if (typeof mapSettingsHooks!=='undefined') {
       $cookieData = json_decode($_COOKIE['providedParams'], true);
       // guard against a corrupt cookie
       if (!is_array($cookieData))
-        $cookieData=array();
+        $cookieData=[];
       if (!empty($cookieData[$options['rememberParamsReportGroup']])) {
         $cookieParams = $cookieData[$options['rememberParamsReportGroup']];
         if (isset($cookieParams) && is_array($cookieParams)) {
           // We shouldn't use the cookie values to overwrite any parameters that are hidden in the form as this is confusing.
-          $ignoreParamNames = array();
+          $ignoreParamNames = [];
           foreach($options['paramsToExclude'] as $param)
             $ignoreParamNames[$options['reportGroup']."-$param"] = '';
           $cookieParams = array_diff_key($cookieParams, $ignoreParamNames);
@@ -2857,7 +2855,7 @@ if (typeof mapSettingsHooks!=='undefined') {
       // the single stored cookie with the array key being the rememberParamsReportGroup and the value being
       // an associative array of params.
       if (!isset($cookieData))
-        $cookieData = array();
+        $cookieData = [];
       $cookieData[$options['rememberParamsReportGroup']]=$providedParams;
       setcookie('providedParams', json_encode($cookieData));
     }
@@ -2974,7 +2972,7 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue, removeparam) {
 
     // convert records to a date based array so it can be used when generating the grid.
     $records = $response['records'];
-    $dateRecords=array();
+    $dateRecords=[];
     foreach($records as $record){
       if(isset($dateRecords[$record['date']])) {
         $dateRecords[$record['date']][] = $record;
@@ -3098,7 +3096,7 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue, removeparam) {
         if(isset($options['buildLinkFunc'])){
           $options['consider_date'] = $consider_date->format('d/m/Y');
           $callbackVal = call_user_func_array($options['buildLinkFunc'],
-              array(isset($dateRecords[$consider_date->format('d/m/Y')]) ? $dateRecords[$consider_date->format('d/m/Y')] : array(),
+              array(isset($dateRecords[$consider_date->format('d/m/Y')]) ? $dateRecords[$consider_date->format('d/m/Y')] : [],
                     $options, $cellContents));
           $cellclass=$callbackVal['cellclass'];
           $cellContents=$callbackVal['cellContents'];
@@ -3174,7 +3172,7 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue, removeparam) {
       'id' => 'calendar-report-output', // this needs to be set explicitly when more than one report on a page
       'class' => 'ui-widget ui-widget-content report-grid',
       'thClass' => 'ui-widget-header',
-      'extraParams' => array(),
+      'extraParams' => [],
       'year' => date('Y'),
       'viewPreviousIfTooEarly' => true, // if today is before the start of the calendar, display last year.
         // it is possible to create a partial calendar.
@@ -3234,7 +3232,7 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue, removeparam) {
     // using Apache mod_alias but we don't want to know about that)
     $reloadUrl = self::get_reload_link_parts();
     // find the names of the params we must not include
-    $excludedParams = array();
+    $excludedParams = [];
     foreach($pageUrlParams as $param) {
       $excludedParams[] = $param['name'];
     }
@@ -3478,9 +3476,9 @@ update_controls();
     $tableDateHeaderRow = "";
     $downloadNumberHeaderRow = "";
     $downloadDateHeaderRow = "";
-    $chartNumberLabels=array();
-    $chartDateLabels=array();
-    $fullDates=array();
+    $chartNumberLabels=[];
+    $chartDateLabels=[];
+    $fullDates=[];
     for($i= $minWeekNo; $i <= $maxWeekNo; $i++){
       $tableNumberHeaderRow.= '<td class="week">'.$i.'</td>';
       $tableDateHeaderRow.= '<td class="week">'.$firstWeek_date->format('M').'<br/>'.$firstWeek_date->format('d').'</td>';
@@ -3491,19 +3489,19 @@ update_controls();
       $fullDates[$i] = $firstWeek_date->format('d/m/Y');
       $firstWeek_date->modify('+7 days');
     }
-    $summaryArray=array(); // this is used for the table output format
-    $rawArray=array(); // this is used for the table output format
+    $summaryArray=[]; // this is used for the table output format
+    $rawArray=[]; // this is used for the table output format
     // In order to apply the data combination and estmation processing, we assume that the the records are in taxon, location_id, sample_id order.
-    $locationArray=array(); // this is for a single species at a time.
+    $locationArray=[]; // this is for a single species at a time.
     $lastLocation=false;
-    $seriesLabels=array();
+    $seriesLabels=[];
     $lastTaxonID=false;
-    $locationSamples = array();
-    $weekList = array();
+    $locationSamples = [];
+    $weekList = [];
     $avgFieldList = !empty($options['avgFields']) ? explode(',',$options['avgFields']) : false;
     if(!$avgFieldList || count($avgFieldList)==0) $avgFields = false;
     else {
-      $avgFields = array();
+      $avgFields = [];
       foreach($avgFieldList as $avgField) {
         $avgFields[$avgField] = array('caption'=>$avgField, 'attr'=>false);
         $parts = explode(':',$avgField);
@@ -3544,14 +3542,14 @@ update_controls();
         if(!in_array($record['location_name'],$weekList[$weekno])) $weekList[$weekno][] = $record['location_name'];
       } else $weekList[$weekno] = array($record['location_name']);
       if(!isset($rawArray[$this_index])){
-        $rawArray[$this_index] = array('weekno'=>$weekno, 'counts'=>array(), 'date'=>$record['date'], 'total'=>0, 'samples'=>array(), 'avgFields'=>array());
+        $rawArray[$this_index] = array('weekno'=>$weekno, 'counts'=>[], 'date'=>$record['date'], 'total'=>0, 'samples'=>[], 'avgFields'=>[]);
       }
       // we assume that the report is configured to return the user_id which matches the method used to generate my_user_id
       if (($options['my_user_id']==$record['user_id'] ||
            $options['location_list'] == 'all' ||
            ($options['location_list'] != 'none' && in_array($record['location_id'], $options['location_list'])))
           && !isset($rawArray[$this_index]['samples'][$record['sample_id']])){
-        $rawArray[$this_index]['samples'][$record['sample_id']]=array('id'=>$record['sample_id'], 'location_name'=>$record['location_name'], 'avgFields'=>array());
+        $rawArray[$this_index]['samples'][$record['sample_id']]=array('id'=>$record['sample_id'], 'location_name'=>$record['location_name'], 'avgFields'=>[]);
         if($avgFields){
           foreach($avgFields as $field => $avgField) {
             if(!$avgField['attr'])
@@ -3646,7 +3644,7 @@ update_controls();
       return $warnings.'<p>'.lang::get('No data returned for this period.').'</p>';
     $r="";
     // will storedata in an array[Y][X]
-    $format= array();
+    $format= [];
     if(isset($options['outputTable']) && $options['outputTable']){
       $format['table'] = array('include'=>true,
           'display'=>(isset($options['simultaneousOutput']) && $options['simultaneousOutput'])||(isset($options['outputFormat']) && $options['outputFormat']=='table')||!isset($options['outputFormat']));
@@ -3670,7 +3668,7 @@ update_controls();
         // default is line
       }
       self::add_resource('jqplot_category_axis_renderer');
-      $opts = array();
+      $opts = [];
       $options['legendOptions']["show"]=true;
       $opts[] = "seriesDefaults:{\n".(isset($renderer) ? "  renderer:$renderer,\n" : '')."  rendererOptions:".json_encode($options['rendererOptions'])."}";
       $opts[] = 'legend:'.json_encode($options['legendOptions']);
@@ -3769,17 +3767,17 @@ update_controls();
     $warnings .= '<span style="display:none;">Raw data sort : '.date(DATE_ATOM).'</span>'."\n";
     if(isset($format['chart'])){
       $seriesToDisplay=(isset($options['outputSeries']) ? explode(',', $options['outputSeries']) : 'all');
-      $seriesIDs=array();
-      $rawSeriesData=array();
-      $rawTicks= array();
-      $summarySeriesData=array();
-      $estimatesSeriesData=array();
-      $seriesOptions=array();
+      $seriesIDs=[];
+      $rawSeriesData=[];
+      $rawTicks= [];
+      $summarySeriesData=[];
+      $estimatesSeriesData=[];
+      $seriesOptions=[];
       // Series options are not configurable as we need to setup for ourselves...
       // we need show, label and show label filled in. rest are left to defaults
-      $rawTotalRow = array();
-      $summaryTotalRow = array();
-      $estimatesTotalRow = array();
+      $rawTotalRow = [];
+      $summaryTotalRow = [];
+      $estimatesTotalRow = [];
       for($i= $minWeekNo; $i <= $maxWeekNo; $i++) {
       	$summaryTotalRow[$i] = 0;
       	$estimatesTotalRow[$i] = 0;
@@ -3790,9 +3788,9 @@ update_controls();
       }
       foreach($summaryArray as $seriesID => $summaryRow){
         if (empty($seriesLabels[$seriesID])) continue;
-        $rawValues=array();
-        $summaryValues=array();
-        $estimatesValues=array();
+        $rawValues=[];
+        $summaryValues=[];
+        $estimatesValues=[];
         for($i= $minWeekNo; $i <= $maxWeekNo; $i++){
           if(isset($summaryRow[$i])){
             $estimatesValues[]=$summaryRow[$i]['estimates'];
@@ -4012,7 +4010,7 @@ jQuery('#".$options['chartID']."-series-disable').click(function(){
         if(isset($options['linkURL']) && $options['linkURL']!= ''){
           $r .= '<tr><td>Sample Links</td>';
           foreach($rawArray as $idx => $rawColumn){
-            $links = array();
+            $links = [];
             if(count($rawColumn['samples'])>0)
               foreach($rawColumn['samples'] as $sample)
             	$links[] = '<a href="'.$options['linkURL'].$sample['id'].'" target="_blank" title="'.$sample['location_name'].'">('.$sample['id'].')</a>';
@@ -4052,7 +4050,7 @@ jQuery('#".$options['chartID']."-series-disable').click(function(){
                 $r.= '<td>'.$rawColumn['counts'][$seriesID].'</td>';
                 $total += $rawColumn['counts'][$seriesID];
                 $rawDataDownloadGrid .= ','.$rawColumn['counts'][$seriesID];
-                $locations = array();
+                $locations = [];
                 if(count($rawColumn['samples'])>0)
                   foreach($rawColumn['samples'] as $sample)
                     $locations[$sample['location_name']]=true;
@@ -4111,9 +4109,9 @@ jQuery('#".$options['chartID']."-series-disable').click(function(){
       $r .= "<tbody>\n";
       $altRow=false;
       $grandTotal=0;
-      $totalRow = array();
+      $totalRow = [];
       $estimatesGrandTotal=0;
-      $totalEstimatesRow = array();
+      $totalEstimatesRow = [];
       for($i= $minWeekNo; $i <= $maxWeekNo; $i++) {
         $totalRow[$i] = 0;
         $totalEstimatesRow[$i] = 0;
@@ -4286,7 +4284,7 @@ jQuery('#".$options['chartID']."-series-disable').click(function(){
    * @param array $weekList list of samples in a particular week.
    */
   private static function report_calendar_summary_initLoc1($minWeekNo, $maxWeekNo, $weekList){
-  	$locationArray= array();
+  	$locationArray= [];
   	for($weekno = $minWeekNo; $weekno <= $maxWeekNo; $weekno++)
   		$locationArray[$weekno] = array('this_sample'=>-1,
   				'total'=>0,
@@ -4480,7 +4478,7 @@ jQuery('#".$options['chartID']."-series-disable').click(function(){
       'tableClass' => 'ui-widget ui-widget-content report-grid',
       'thClass' => 'ui-widget-header',
       'altRowClass' => 'odd',
-      'extraParams' => array(),
+      'extraParams' => [],
       'viewPreviousIfTooEarly' => true, // if today is before the start of the calendar, display last year.
         // it is possible to create a partial calendar.
       'includeWeekNumber' => false,
@@ -4495,9 +4493,9 @@ jQuery('#".$options['chartID']."-series-disable').click(function(){
       'height' => 400,
       // 'width' is optional
       'chartType' => 'line', // bar, pie
-      'rendererOptions' => array(),
-      'legendOptions' => array(),
-      'axesOptions' => array(),
+      'rendererOptions' => [],
+      'legendOptions' => [],
+      'axesOptions' => [],
       'includeRawData' => true,
       'includeSummaryData' => true,
       'includeEstimatesData' => false,
@@ -4712,27 +4710,27 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue) {
     // Initialise data
     $tableNumberHeaderRow = $tableDateHeaderRow = $downloadNumberHeaderRow = $downloadDateHeaderRow = "";
     $summaryDataDownloadGrid = $estimateDataDownloadGrid = $rawDataDownloadGrid = '';
-  	$chartNumberLabels=array();
-  	$chartDateLabels=array();
-  	$fullDates=array();
-  	$summaryArray=array(); // this is used for the table output format
-  	$rawArray=array(); // this is used for the table output format
+  	$chartNumberLabels=[];
+  	$chartDateLabels=[];
+  	$fullDates=[];
+  	$summaryArray=[]; // this is used for the table output format
+  	$rawArray=[]; // this is used for the table output format
   	// In order to apply the data combination and estmation processing, we assume that the the records are in taxon, location_id, sample_id order.
-  	$locationArray=array(); // this is for a single species at a time.
+  	$locationArray=[]; // this is for a single species at a time.
   	$lastLocation=false;
-  	$seriesLabels=array();
+  	$seriesLabels=[];
   	$lastTaxonID=false;
   	$lastSample=false;
-  	$locationSamples = array();
-    $periodList = array();
+  	$locationSamples = [];
+    $periodList = [];
     $grandTotal=0;
-    $totalRow = array();
+    $totalRow = [];
     $estimatesGrandTotal=0;
-    $totalEstimatesRow = array();
-    $seriesIDs=array();
-    $summarySeriesData=array();
-    $estimatesSeriesData=array();
-    $seriesOptions=array();
+    $totalEstimatesRow = [];
+    $seriesIDs=[];
+    $summarySeriesData=[];
+    $estimatesSeriesData=[];
+    $seriesOptions=[];
 
     for($i= $minPeriodNo; $i <= $maxPeriodNo; $i++){
         $tableNumberHeaderRow.= '<th class="week">'.$i.'</th>';
@@ -4749,7 +4747,7 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue) {
     if(empty($sampleFieldList))
       $sampleFields = false;
   	else {
-  		$sampleFields = array();
+  		$sampleFields = [];
   		foreach($sampleFieldList as $sampleField) {
   			$parts = explode(':',$sampleField);
   			$field = array('caption'=>$parts[0], 'field'=>$parts[1], 'attr'=>false);
@@ -4768,7 +4766,7 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue) {
   	}
 
   	$count = count($records);
-  	$sortData=array();
+  	$sortData=[];
     foreach($records as $index => $record){
       $taxonMeaningID=$record['taxon_meaning_id'];
       if(empty($seriesLabels[$taxonMeaningID])) {
@@ -4783,7 +4781,7 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue) {
         } else {
           $seriesLabels[$taxonMeaningID]=array('label'=>'['.$record['taxa_taxon_list_id'].']');
         }
-        $summaryArray[$taxonMeaningID]=array();
+        $summaryArray[$taxonMeaningID]=[];
         $sortData[$taxonMeaningID]=array($record['taxonomic_sort_order'],$taxonMeaningID);
       }
       $summarisedData = json_decode($record['summarised_data'], false);
@@ -4860,8 +4858,8 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue) {
   	foreach($sortData as $sortedTaxon){
   		$seriesID=$sortedTaxon[1];
   		$summaryRow=$summaryArray[$seriesID];
-  		$summaryValues=array();
-  		$estimatesValues=array();
+  		$summaryValues=[];
+  		$estimatesValues=[];
   		if (!empty($seriesLabels[$seriesID])) {
         $total = $estimatesTotal = 0;  // row totals
         $summaryTab .= '<tr class="datarow ' . ($altRow ? $options['altRowClass'] : '') . '">' .
@@ -5080,9 +5078,9 @@ jQuery('#estimateChart .disable-button').click(function(){
   			$records = $response['records'];
   			$rawTab = (isset($options['linkMessage']) ? $options['linkMessage'] : '');
   			$rawDataDownloadGrid = lang::get('Week').',';
-  			$rawArray = array();
-  			$sampleList=array();
-  			$sampleDateList=array();
+  			$rawArray = [];
+  			$sampleList=[];
+  			$sampleDateList=[];
   			$smpIdx=0;
   			$hasRawData = (count($records) > 0);
   			if(!$hasRawData)
@@ -5092,7 +5090,7 @@ jQuery('#estimateChart .disable-button').click(function(){
   					if(!in_array($occurrence['sample_id'], $sampleList)) {
   						$sampleList[] = $occurrence['sample_id'];
   						$sampleData = array('id'=>$occurrence['sample_id'], 'date'=>$occurrence['date'], 'location'=>$occurrence['location_name']);
-	  					$rawArray[$occurrence['sample_id']] = array();
+	  					$rawArray[$occurrence['sample_id']] = [];
   						if($sampleFields){
   							foreach($sampleFields as $sampleField) {
   								if($sampleField['attr'] === false)
