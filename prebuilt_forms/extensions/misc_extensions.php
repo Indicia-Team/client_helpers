@@ -44,6 +44,7 @@ class extension_misc_extensions {
    *     requires paramNameToPass when in use.
    *   * User can also provide a value in braces to replace with the Drupal
    *     field for current user e.g. {field_indicia_user_id}.
+   *   * User can also provide a value in square brackets to replace it with URL parameter value e.g. [user_id].
    *   * onlyShowWhenLoggedInStatus - If 1, then only show button for logged in
    *     users. If 2, only show link for users who are not logged in.
    */
@@ -82,6 +83,13 @@ class extension_misc_extensions {
               $options['paramValueToPass'] = $paramValueFromUserField;
             }
           }
+          if (substr($options['paramValueToPass'], 0, 1) === '['&&substr($options['paramValueToPass'], -1) === ']') {
+            $options['paramValueToPass'] = substr($options['paramValueToPass'], 1, -1);
+            // Try and get it from the URL
+            if (!empty($_GET[$options['paramValueToPass']])) {
+              $options['paramValueToPass'] = $_GET[$options['paramValueToPass']];
+            }
+          }
           $paramToPass = array($options['paramNameToPass'] => $options['paramValueToPass']);
         }
         $button = '<div>';
@@ -98,7 +106,7 @@ class extension_misc_extensions {
         $button .= '</div><br>';
       }
       else {
-        drupal_set_message('A link button has been specified without a link path or button label, please fill in the @buttonLinkPath and @buttonLabel options');
+        hostsite_show_message('A link button has been specified without a link path or button label, please fill in the @buttonLinkPath and @buttonLabel options');
         $button = '';
       }
       return $button;
@@ -122,6 +130,7 @@ class extension_misc_extensions {
    *     requires paramNameToPass when in use. User can also provide a value
    *     in braces to replace with the Drupal field for current user e.g.
    *     {field_indicia_user_id}.
+   *   * User can also provide a value in square brackets to replace it with URL parameter value e.g. [user_id].
    *   * onlyShowWhenLoggedInStatus - If 1, then only show link for logged in
    *     users. If 2, only show link for users who are not logged in.
    *   * anchorId - Optional id for anchor link. This might be useful, for
@@ -157,6 +166,13 @@ class extension_misc_extensions {
             if (!empty($paramValueFromUserField))
               $options['paramValueToPass']=$paramValueFromUserField;
           }
+          if (substr($options['paramValueToPass'], 0, 1) === '['&&substr($options['paramValueToPass'], -1) === ']') {
+            $options['paramValueToPass'] = substr($options['paramValueToPass'], 1, -1);
+            // Try and get it from the URL
+            if (!empty($_GET[$options['paramValueToPass']])) {
+              $options['paramValueToPass'] = $_GET[$options['paramValueToPass']];
+            }
+          }
           $paramToPass=array($options['paramNameToPass']=>$options['paramValueToPass']);
         }
         $button = '<div>';
@@ -179,7 +195,7 @@ class extension_misc_extensions {
         $button .= '</div><br>';
       }
       else {
-        drupal_set_message('A text link has been specified without a link path or label, please fill in the @linkPath and @label options');
+        hostsite_show_message('A text link has been specified without a link path or label, please fill in the @linkPath and @label options');
         $button = '';
       }
       return $button;

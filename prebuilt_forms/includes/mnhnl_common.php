@@ -462,7 +462,8 @@ function iform_mnhnl_locModTool($auth, $args, $node) {
   } else {
     $mapOptions['layers']=array("ParentLocationLayer","SiteLabelLayer","SiteAreaLayer","SitePathLayer","SitePointLayer");
   }
-  $retVal .= data_entry_helper::map_panel($mapOptions, $olOptions);
+  iform_load_helpers(['map_helper']);
+  $retVal .= map_helper::map_panel($mapOptions, $olOptions);
   $retVal .= iform_mnhnl_PointGrid($auth, $args, array('srefs'=>'2169,LUREF (m),X,Y,;4326,Lat/Long Deg,Lat,Long,D;4326,Lat/Long Deg:Min,Lat,Long,DM;4326,Lat/Long Deg:Min:Sec,Lat,Long,DMS'));
   $retVal .= '    <input type="submit" class="ui-state-default ui-corner-all" value="'.lang::get('LANG_Submit').'">
     <a href="'.iform_mnhnl_getReloadPath().'"><input class="ui-state-default ui-corner-all" type="button" name="cancel" value="'.lang::get('LANG_Cancel').'" /></a>

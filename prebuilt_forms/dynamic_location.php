@@ -337,9 +337,11 @@ mapInitialisationHooks.push(function(mapdiv) {
     else {
       $r = '';
     }
-    if (!isset($options['standardControls']))
+    if (!isset($options['standardControls'])) {
       $options['standardControls']=array('layerSwitcher','panZoom');
-    $r .= data_entry_helper::map_panel($options, $olOptions);
+    }
+    iform_load_helpers(['map_helper']);
+    $r .= map_helper::map_panel($options, $olOptions);
     // Add a geometry hidden field for boundary support
     if ($boundaries) {
       if (!empty(data_entry_helper::$entity_to_load['location:boundary_geom']))
@@ -515,17 +517,18 @@ mapInitialisationHooks.push(function(mapdiv) {
       // The option to list all locations is denied so enforce selection of own data.
       $extraParams['ownData'] = '1';
     }
-    $r .= data_entry_helper::report_grid(array(
+    iform_load_helpers(['report_helper']);
+    $r .= report_helper::report_grid([
       'id' => 'locations-grid',
       'dataSource' => $args['grid_report'],
       'mode' => 'report',
       'readAuth' => $auth['read'],
-      'columns' => call_user_func(array(self::$called_class, 'getReportActions')),
-      'itemsPerPage' =>(isset($args['grid_num_rows']) ? $args['grid_num_rows'] : 10),
-      'autoParamsForm' => true,
+      'columns' => call_user_func([self::$called_class, 'getReportActions']),
+      'itemsPerPage' => (isset($args['grid_num_rows']) ? $args['grid_num_rows'] : 10),
+      'autoParamsForm' => TRUE,
       'extraParams' => $extraParams,
-      'paramDefaults' => array('ownData' => '1')
-    ));
+      'paramDefaults' => ['ownData' => '1'],
+    ]);
     $r .= '<form>';
     $r .= '<input type="button" value="' . lang::get('LANG_Add_Location') . '" ' .
             'onclick="window.location.href=\'' . hostsite_get_url('node/'.($nid->nid), array('new' => '1')) . '\'">';

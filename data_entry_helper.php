@@ -665,7 +665,7 @@ JS;
     $options = self::check_options($options);
     $default = isset($options['default']) ? $options['default'] : '';
     $value = self::check_default_value($options['fieldname'], $default);
-    $options['checked'] = ($value==='on' || $value === 1 || $value === '1' || $value==='t' || $value===true) ? ' checked="checked"' : '';
+    $options['checked'] = ($value === 'on' || $value === 1 || $value === '1' || $value==='t' || $value === TRUE) ? ' checked="checked"' : '';
     $options['template'] = array_key_exists('template', $options) ? $options['template'] : 'checkbox';
     return self::apply_template($options['template'], $options);
   }
@@ -784,21 +784,25 @@ JS;
    */
   public static function checkbox_group(array $options) {
     $options = self::check_options($options);
-    $options = array_merge(array(
+    $options = array_merge([
       'class' => empty($options['sortable']) || !$options['sortable'] ? 'inline' : ''
-    ), $options);
-    if (substr($options['fieldname'],-2) !='[]')
+    ], $options);
+    if (substr($options['fieldname'], -2) !== '[]') {
       $options['fieldname'] .= '[]';
+    }
     if (!empty($options['sortable']) && $options['sortable']) {
-      self::$javascript .= "$('#$options[id]').sortable();\n";
-      self::$javascript .= "$('#$options[id]').disableSelection();\n";
-      // resort the available options into the saved order
+      self::add_resource('sortable');
+      $escapedId = str_replace(':', '\\\\:', $options['id']);
+      self::$javascript .= "Sortable.create($('#$escapedId')[0], { handle: '.sort-handle' });\n";
+      self::$javascript .= "$('#$escapedId').disableSelection();\n";
+      // Resort the available options into the saved order.
       if (!empty($options['default']) && !empty($options['lookupValues'])) {
-        $sorted = array();
-        // First copy over the ones that are ticked, in order
+        $sorted = [];
+        // First copy over the ones that are ticked, in order.
         foreach ($options['default'] as $option) {
-          if (!empty($options['lookupValues'][$option]))
+          if (!empty($options['lookupValues'][$option])) {
             $sorted[$option] = $options['lookupValues'][$option];
+          }
         }
         // Now the unticked ones in original order.
         foreach ($options['lookupValues'] as $option => $caption) {
@@ -806,120 +810,105 @@ JS;
             $sorted[$option] = $caption;
           }
         }
-        $options['lookupValues']=$sorted;
+        $options['lookupValues'] = $sorted;
       }
-
     }
     return self::check_or_radio_group($options, 'checkbox');
   }
 
   /**
    * Helper function to insert a date picker control.
-   * The output of this control can be configured using the following templates:
-   * <ul>
-   * <li><b>date_picker</b></br>
-   * HTML The output of this controlfor the text input element used for the date picker. Other functionality is added
-   * using JavaScript.
-   * </li>
-   * </ul>
    *
-   * @param array $options Options array with the following possibilities:<ul>
-   * <li><b>fieldname</b><br/>
-   * Required. The name of the database field this control is bound to, for example 'sample:date'.</li>
-   * <li><b>id</b><br/>
-   * Optional. The id to assign to the HTML control. If not assigned the fieldname is used.</li>
-   * <li><b>default</b><br/>
-   * Optional. The default value to assign to the control. This is overridden when reloading a
-   * record with existing data for this control.</li>
-   * <li><b>class</b><br/>
-   * Optional. CSS class names to add to the control.</li>
-   * <li><b>allowFuture</b><br/>
-   * Optional. If true, then future dates are allowed. Default is false.</li>
-   * <li><b>dateFormat</b><br/>
-   * Optional. Allows the date format string to be set, which must match a date format that can be parsed by the JavaScript Date object.
-   * Default is dd/mm/yy.</li>
-   * <li><b>allowVagueDates</b><br/>
-   * Optional. Set to true to enable vague date input, which disables client side validation for standard date input formats.</li>
-   * <li><b>showButton</b><br/>
-   * Optional. Set to true to show a button which must be clicked to drop down the picker. Defaults to false unless allowVagueDates is true
-   * as inputting a vague date without the button is confusing.</li>
-   * <li><b>buttonText</b><br/>
-   * Optional. If showButton is true, this text will be shown as the 'alt' text for the buttom image.</li>
-   * <li><b>placeHolder</b><br/>
-   * Optional. Control the placeholder text shown in the text box before a value has been added.</li>
-   * </ul>
+   * The output of this control can be configured using the following
+   * templates:
+   * * date_picker - HTML The output of this control for the text input element
+   *   used for the date picker. Other functionality is added using JavaScript.
    *
-   * @return string HTML to insert into the page for the date picker control.
+   * @param array $options
+   *   Options array with the following possibilities:
+   *   * fieldname - Required. The name of the database field this control is
+   *     bound to, for example 'sample:date'.
+   *   * id - Optional. The id to assign to the HTML control. If not assigned
+   *     the fieldname is used.
+   *   * default - Optional. The default value to assign to the control. This
+   *     is overridden when reloading a record with existing data for this
+   *     control.
+   *   * class -  Optional. CSS class names to add to the control.
+   *   * allowFuture - Optional. If true, then future dates are allowed.
+   *     Default is false.
+   *   * allowVagueDates - Optional. Set to true to enable vague date input,
+   *     which disables client side validation for standard date input formats.
+   *   * placeholder - Optional. Control the placeholder text shown in the text
+   *     box before a value has been added. Only shown on browsers which don't
+   *     support the HTML5 date input type.
+   *   * attributes - Optional. Additional HTML attribute to attach, e.g.
+   *     data-es_* attributes.
+   *
+   * @return string
+   *   HTML to insert into the page for the date picker control.
    */
   public static function date_picker($options) {
     $options = self::check_options($options);
-    $options = array_merge(array(
-      'dateFormat' => 'dd/mm/yy',
-      'allowVagueDates'=>FALSE,
+    self::add_resource('datepicker');
+    $options = array_merge([
+      'allowVagueDates' => FALSE,
       'default' => '',
-      'isFormControl' => TRUE
-    ), $options);
-    if (!isset($options['showButton'])) {
-      // vague dates best with the button
-      $options['showButton'] = $options['allowVagueDates'];
+      'isFormControl' => TRUE,
+      'allowFuture' => FALSE,
+      'attributes' => [],
+      'vagueLabel' => lang::get('Vague date mode'),
+    ], $options);
+    // Force vague date mode if loading existing data that requires it.
+    if (isset(self::$entity_to_load["$options[fieldname]_start"]) && isset(self::$entity_to_load["$options[fieldname]_end"]) &&
+         self::$entity_to_load["$options[fieldname]_start"] !== self::$entity_to_load["$options[fieldname]_end"]
+          && $options['allowVagueDates'] === FALSE) {
+      $options['allowVagueDates'] = TRUE;
+      $options['helpText'] = (empty($options['helpText']) ? '' : "$options[helpText] ") .
+        lang::get("Vague dates enabled as this existing form's date is not an exact day.");
     }
-    $vague = $options['allowVagueDates'] ? ' vague' : '';
-    if (!isset($options['placeholder']))
-      $options['placeholder'] = $options['showButton'] ? lang::get("Pick or type a$vague date") : lang::get('Click here');
-    self::add_resource('jquery_ui');
-    $escaped_id=str_replace(':','\\\\:',$options['id']);
-    // Don't set js up for the datepicker in the clonable row for the species checklist grid
-    if ($escaped_id!='{fieldname}') {
-      // should include even if validated_form_id is null, as could be doing this via AJAX.
-      if (!$options['allowVagueDates']) {
-        self::$javascript .= "if (typeof jQuery.validator !== \"undefined\") {
-  jQuery.validator.addMethod('customDate',
-    function(value, element) {
-      // parseDate throws exception if the value is invalid
-      try{jQuery.datepicker.parseDate( '".$options['dateFormat']."', value);return true;}
-      catch(e){return false;}
-    }, '".lang::get('Please enter a valid date') . "'
-  );
-}\n";
-      }
-      if ($options['showButton']) {
-        $imgPath = empty(self::$images_path) ? self::relative_client_helper_path() . "../media/images/" : self::$images_path;
-        $imgPath .= 'nuvola/date-16px.png';
-        if (!empty($options['buttonText'])) {
-          $buttonText = $options['buttonText'];
-        }
-        else {
-          $buttonText = $options['allowVagueDates'] ? lang::get('To enter an exact date, click here. To enter a vague date, type it into the text box') : lang::get('Click here to pick a date');
-        }
-        $options['afterControl'] = "<img src=\"$imgPath\" title=\"$buttonText\" onclick=\"jQuery('#sample\\\\:date').datepicker('show');\"/>";
-      }
-      self::$javascript .= "jQuery('#$escaped_id').datepicker({
-    dateFormat : '".$options['dateFormat']."',
-    changeMonth: true,
-    changeYear: true,
-    constrainInput: false";
-      // Filter out future dates
-      if (!array_key_exists('allowFuture', $options) || $options['allowFuture']==false) {
-        self::$javascript .= ",
-    maxDate: '0'";
-      }
-      // If the validation plugin is running, we need to trigger it when the datepicker closes.
-      if (self::$validated_form_id) {
-        self::$javascript .= ",
-    onClose: function() {
-      $(this).valid();
-    }";
-      }
-      self::$javascript .= "\n});\n";
-      self::$javascript .= "$('button.ui-datepicker-trigger').addClass('ui-state-default');\n";
+    // Date pickers should be limited width, otherwise icon too far to right.
+    $options['wrapClasses'] = ['not-full-width-' . ($options['allowVagueDates'] ? 'md' : 'sm')];
+    $dateFormatLabel = str_replace(['d', 'm', 'Y'], ['dd', 'mm', 'yyyy'], helper_base::$date_format);
+    if (!isset($options['placeholder'])) {
+      $options['placeholder'] = $options['allowVagueDates'] ? lang::get('{1} or vague date', $dateFormatLabel) : $dateFormatLabel;
     }
-    // Check for the special default value of today
-    if (isset($options['default']) && $options['default']=='today')
-      $options['default'] = date('d/m/Y');
-
-    // Enforce a class on the control called date
-    if (!array_key_exists('class', $options)) {
-      $options['class']='';
+    $attrArray = [];
+    $attrArrayDate = [
+      'placeholder' => 'placeholder="' . $dateFormatLabel . '"',
+    ];
+    if (!empty($options['placeholder'])) {
+      $attrArray[] = 'placeholder="' . htmlspecialchars($options['placeholder']) . '"';
+    }
+    foreach ($options['attributes'] as $attrName => $attrValue) {
+      $attrArray[] = "$attrName=\"$attrValue\"";
+    }
+    if (!$options['allowFuture']) {
+      $dateTime = new DateTime();
+      $attrArrayDate[] = 'max="' . $dateTime->format('Y-m-d') . '"';
+    }
+    $options['attribute_list'] = implode(' ', $attrArray);
+    // Options for date control if using a free text vague date input.
+    $options['attribute_list_date'] = implode(' ', $attrArrayDate);
+    if (isset($options['default'])) {
+      if ($options['default'] === 'today') {
+        $options['default'] = date(self::$date_format);
+      }
+      elseif (preg_match('/^\d{4}-\d{2}-\d{2}/', $options['default'])) {
+        $options['default'] = date(self::$date_format, strtotime($options['default']));
+      }
+    }
+    // Text box class helps sync to date picker control.
+    $options['class'] .= ' date-text';
+    $options['datePickerClass'] = 'precise-date-picker';
+    global $indicia_templates;
+    if (isset($indicia_templates['formControlClass'])) {
+      $options['datePickerClass'] .= ' ' . $indicia_templates['formControlClass'];
+    }
+    // Show text box for vague dates, or date picker if precise.
+    $options['dateDisplay'] = $options['allowVagueDates'] ? 'display: none' : '';
+    $options['textDisplay'] = $options['allowVagueDates'] ? '' : 'display: none';
+    if ($options['allowVagueDates']) {
+      $options['afterControl'] = self::apply_static_template('date_picker_mode_toggle', $options);
     }
     return self::apply_template('date_picker', $options);
   }
@@ -1228,33 +1217,34 @@ JS;
   public static function georeference_lookup(array $options) {
     $options = self::check_options($options);
     global $indicia_templates;
-    $options = array_merge(array(
+    $options = array_merge([
       'id' => 'imp-georef-search',
       'driver' => 'google_places',
-      'searchButton' => self::apply_replacements_to_template($indicia_templates['button'], array(
+      'searchButton' => self::apply_replacements_to_template($indicia_templates['button'], [
         'href' => '#',
         'id' => 'imp-georef-search-btn',
-        'class' => "class=\"$indicia_templates[buttonDefaultClass]\"",
+        'class' => " class=\"$indicia_templates[buttonDefaultClass]\"",
         'caption' => lang::get('Search'),
         'title' => '',
-      )),
+      ]),
       'public' => FALSE,
       'autoCollapseResults' => FALSE,
       'isFormControl' => TRUE,
       'georefQueryMap' => FALSE,
-    ), $options);
+      ], $options);
     if ($options['driver'] === 'geoplanet') {
       return 'The GeoPlanet place search service is no longer supported';
     }
     if (($options['driver'] === 'google_places' && empty(self::$google_api_key))) {
-      // Can't use place search without the driver API key
+      // Can't use place search without the driver API key.
       return 'The georeference lookup control requires an API key configured for the place search API in use.<br/>';
     }
     self::add_resource('indiciaMapPanel');
-    // dynamically build a resource to link us to the driver js file.
+    // Dynamically build a resource to link us to the driver js file.
     self::$required_resources[] = 'georeference_default_' . $options['driver'];
-    // We need to see if there is a resource in the resource list for any special files required by this driver. This
-    // will do nothing if the resource is absent.
+    // We need to see if there is a resource in the resource list for any
+    // special files required by this driver. This will do nothing if the
+    // resource is absent.
     self::add_resource('georeference_' . $options['driver']);
     $settings = [
       'autoCollapseResults' => $options['autoCollapseResults'] ? 't' : 'f',
@@ -1342,13 +1332,13 @@ JS;
    *     a data service call. Specifies the template used to build the caption,
    *     with each database field represented as {fieldname}.
    */
-  public static function hierarchical_select($options) {
-    $options = array_merge(array(
-      'id' => 'select-' . rand(0,10000),
+  public static function hierarchical_select(array $options) {
+    $options = array_merge([
+      'id' => 'select-' . rand(0, 10000),
       'blankText' => '<please select>',
-      'extraParams' => array(),
+      'extraParams' => [],
       'preferredIdField' => 'preferred_termlists_term_id',
-    ), $options);
+    ], $options);
     // If not language filtered, then limit to preferred, otherwise we could
     // get multiple children.
     // @todo This should probably be set by the caller, not here.
@@ -1378,7 +1368,7 @@ JS;
         $itemCaption = $item[$options['captionField']];
       }
       // We either populate the lookupValues for the top level control or store
-      // in the childData for output into JavaScript
+      // in the childData for output into JavaScript.
       if (empty($item['parent_id']))
         $lookupValues[$itemValue] = $itemCaption;
       else {
@@ -1386,52 +1376,59 @@ JS;
         // Use the mappings from preferred ID to ID in this language to ensure
         // the parents can be found.
         if (!isset($childData[$prefMappings[$item['parent_id']]])) {
-          $childData[$prefMappings[$item['parent_id']]] = array();
+          $childData[$prefMappings[$item['parent_id']]] = [];
         }
-        $childData[$prefMappings[$item['parent_id']]][] = array(
+        $childData[$prefMappings[$item['parent_id']]][] = [
           'id' => $itemValue,
           'caption' => $itemCaption
-        );
+        ];
       }
     }
-    // build an ID with just alphanumerics, that we can use to keep JavaScript function and data names unique
+    // Build an ID with just alphanumerics, that we can use to keep JavaScript
+    // function and data names unique.
     $id = preg_replace('/[^a-zA-Z0-9]/', '', $options['id']);
-    // dump the control population data out for JS to use
-    self::$javascript .= "indiciaData.selectData$id=".json_encode($childData) . ";\n";
+    // Dump the control population data out for JS to use.
+    self::$javascript .= "indiciaData.selectData$id=" . json_encode($childData) . ";\n";
 
-    if (isset($options['autoSelectSingularChildItem']) AND $options['autoSelectSingularChildItem']==true)
+    if (isset($options['autoSelectSingularChildItem']) && $options['autoSelectSingularChildItem'] == TRUE) {
       self::$javascript .= "indiciaData.autoSelectSingularChildItem=true;\n";
+    }
 
-    // Convert the options so that the top-level select uses the lookupValues we've already loaded rather than reloads its own.
+    // Convert the options so that the top-level select uses the lookupValues
+    // we've already loaded rather than reloads its own.
     unset($options['table']);
     unset($options['report']);
     unset($options['captionField']);
     unset($options['valueField']);
     $options['lookupValues'] = $lookupValues;
 
-    // as we are going to output a select using the options, but will use a hidden field for the form value for the selected item,
-    // grab the fieldname and prevent the topmost select having the same name.
+    // As we are going to output a select using the options, but will use a
+    // hidden field for the form value for the selected item, grab the
+    // fieldname and prevent the topmost select having the same name.
     $fieldname = $options['fieldname'];
-    $options['fieldname'] = 'parent-'.$options['fieldname'];
+    $options['fieldname'] = 'parent-' . $options['fieldname'];
 
-    // Output a select. Use templating to add a wrapper div, so we can keep all the hierarchical selects together.
+    // Output a select. Use templating to add a wrapper div, so we can keep all
+    // the hierarchical selects together.
     global $indicia_templates;
     $oldTemplate = $indicia_templates['select'];
-    $classes = array('hierarchical-select', 'control-box');
-    if (!empty($options['class']))
+    $classes = ['hierarchical-select', 'control-box'];
+    if (!empty($options['class'])) {
       $classes[] = $options['class'];
-    $indicia_templates['select'] = '<div class="'.implode(' ', $classes).'">'.$indicia_templates['select'].'</div>';
-    $options['class']='hierarchy-select';
+    }
+    $indicia_templates['select'] = '<div class="' . implode(' ', $classes) . '">' . $indicia_templates['select'] . '</div>';
+    $options['class'] = 'hierarchy-select';
     $r = self::select($options);
     $indicia_templates['select'] = $oldTemplate;
     // jQuery safe version of the Id.
     $safeId = preg_replace('/[:]/', '\\\\\\:', $options['id']);
     // Output a hidden input that contains the value to post.
-    $hiddenOptions = array('id' => 'fld-'.$options['id'], 'fieldname'=>$fieldname, 'default'=>self::check_default_value($options['fieldname']));
-    if (isset($options['default']))
+    $hiddenOptions = ['id' => 'fld-' . $options['id'], 'fieldname' => $fieldname, 'default' => self::check_default_value($options['fieldname'])];
+    if (isset($options['default'])) {
       $hiddenOptions['default'] = $options['default'];
+    }
     $r .= self::hidden_text($hiddenOptions);
-    $options['blankText']=htmlspecialchars(lang::get($options['blankText']));
+    $options['blankText'] = htmlspecialchars(lang::get($options['blankText']));
     $selectClass = 'hierarchy-select' . (isset($indicia_templates['formControlClass']) ?
       " $indicia_templates[formControlClass]" : '');
     // Now output JavaScript that creates and populates child selects as each option is selected. There is also code for
@@ -1588,17 +1585,17 @@ JS;
    *   HTML string to insert in the form.
    */
   public static function jsonwidget($options) {
-    $options = array_merge(array(
+    $options = array_merge([
       'id' => 'jsonwidget_container',
       'fieldname' => 'jsonwidget',
       'schema' => '{}',
       'class' => '',
       'default' => '',
-    ), $options);
+    ], $options);
     $options['class'] = trim($options['class'].' control-box jsonwidget');
 
     self::add_resource('jsonwidget');
-    $options['default'] = str_replace(array("\\n", "\r", "\n", "'"), array('\\\n', '\r','\n',"\'"), $options['default']);
+    $options['default'] = str_replace(["\\n", "\r", "\n", "'"], ['\\\n', '\r','\n',"\'"], $options['default']);
     self::$javascript .= <<<JS
 $('#$options[id]').jsonedit({
   schema: $options[schema],
@@ -1690,7 +1687,7 @@ JS;
       $options['id'] = 'imp-location';
     }
     $options = self::check_options($options);
-    $caption = isset(self::$entity_to_load['sample:location']) ? self::$entity_to_load['sample:location'] : null;
+    $caption = isset(self::$entity_to_load['sample:location']) ? self::$entity_to_load['sample:location'] : NULL;
     if (!$caption && !empty($options['useLocationName']) && $options['useLocationName'] && !empty(self::$entity_to_load['sample:location_name']))
       $caption = self::$entity_to_load['sample:location_name'];
     if (empty($caption) && !empty($options['default'])) {
@@ -1702,7 +1699,7 @@ JS;
         $caption = $thisLoc[0]['name'];
       }
     }
-    $options = array_merge(array(
+    $options = array_merge([
       'table' => 'location',
       'fieldname' => 'sample:location_id',
       'valueField' => 'id',
@@ -1714,7 +1711,7 @@ JS;
       'searchUpdatesUsingBoundary' => FALSE,
       'fetchLocationAttributesIntoSample' =>
           !isset($options['fieldname']) || $options['fieldname'] === 'sample:location_id'
-    ), $options);
+    ], $options);
     // Disable warnings for no matches if the user is allowed to input a vague
     // unmatched location name.
     $options['warnIfNoMatch'] = !$options['useLocationName'];
@@ -1822,9 +1819,9 @@ JS;
     $options = self::check_options($options);
     // Apply location type filter if specified.
     if (array_key_exists('location_type_id', $options)) {
-      $options['extraParams'] += array('location_type_id' => $options['location_type_id']);
+      $options['extraParams'] += ['location_type_id' => $options['location_type_id']];
     }
-    $options = array_merge(array(
+    $options = array_merge([
       'table' => 'location',
       'fieldname' => 'sample:location_id',
       'valueField' => 'id',
@@ -1833,8 +1830,8 @@ JS;
       'searchUpdatesSref' => FALSE,
       'searchUpdatesUsingBoundary' => FALSE,
       'isFormControl' => TRUE
-    ), $options);
-    $options['columns']=$options['valueField'].','.$options['captionField'];
+    ], $options);
+    $options['columns'] = $options['valueField'] . ',' . $options['captionField'];
     if ($options['searchUpdatesSref']) {
       self::$javascript .= "indiciaData.searchUpdatesSref=true;\n";
       self::$javascript .= "indiciaData.searchUpdatesUsingBoundary = " .
@@ -1930,10 +1927,9 @@ JS;
    *
    * @return string HTML to insert into the page for the listbox control.
    */
-  public static function listbox($options)
-  {
+  public static function listbox($options) {
     $options = self::check_options($options);
-    // blank text option not applicable to list box
+    // Blank text option not applicable to list box.
     unset($options['blankText']);
     $options = array_merge(
       array(
@@ -1944,13 +1940,14 @@ JS;
       $options
     );
     $r = '';
-    if(isset($options['multiselect']) && $options['multiselect']!=false && $options['multiselect']!=='false') {
-      $options['multiple']='multiple';
-      if (substr($options['fieldname'],-2) !=='[]') {
+    if (isset($options['multiselect']) && $options['multiselect']!=false && $options['multiselect'] !== 'false') {
+      $options['multiple'] = 'multiple';
+      if (substr($options['fieldname'], -2) !=='[]') {
         $options['fieldname'] .= '[]';
       }
-      // ensure a blank value is posted if nothing is selected in the list, otherwise the list can't be cleared in the db.
-      $r = '<input type="hidden" name="'.$options['fieldname'].'" value=""/>';
+      // Ensure a blank value is posted if nothing is selected in the list,
+      // otherwise the list can't be cleared in the db.
+      $r = '<input type="hidden" name="' . $options['fieldname'] . '" value=""/>';
     }
     return $r . self::select_or_listbox($options);
   }
@@ -2088,17 +2085,6 @@ JS;
   }
 
   /**
-   * Outputs a map panel.
-   * @param array $options Refer to map_helper::map_panel documentation.
-   * @param array $olOptions Refer to map_helper::map_panel documentation.
-   * @deprecated Use map_helper::map_panel instead.
-   */
-  public static function map_panel($options, $olOptions=array()) {
-    require_once('map_helper.php');
-    return map_helper::map_panel($options, $olOptions);
-  }
-
-  /**
    * Helper function to output an HTML password input. For security reasons, this does not re-load existing values
    * or display validation error messages and no default can be set.
    * The output of this control can be configured using the following templates:
@@ -2187,22 +2173,22 @@ JS;
   public static function postcode_textbox($options) {
     if (empty(self::$google_api_key))
       return 'The postcode textbox control requires a Google API Key in the configuration';
-    // The id must be set to imp-postcode otherwise the search does not work
+    // The id must be set to imp-postcode otherwise the search does not work.
     $options = array_merge($options, array('id'=>'imp-postcode'));
     $options = self::check_options($options);
-    // Merge in the defaults
+    // Merge in the defaults.
     $options = array_merge(array(
-      'srefField'=>'sample:entered_sref',
-      'systemField'=>'sample:entered_sref_system',
-      'hiddenFields'=>true,
-      'linkedAddressBoxId'=>'',
+      'srefField' => 'sample:entered_sref',
+      'systemField' => 'sample:entered_sref_system',
+      'hiddenFields' => TRUE,
+      'linkedAddressBoxId' => '',
       'isFormControl' => TRUE
     ), $options);
     self::add_resource('postcode_search');
     $r = self::apply_template('postcode_textbox', $options);
     if ($options['hiddenFields']) {
-      $defaultSref=self::check_default_value($options['srefField']);
-      $defaultSystem=self::check_default_value($options['systemField'], '4326');
+      $defaultSref = self::check_default_value($options['srefField']);
+      $defaultSystem = self::check_default_value($options['systemField'], '4326');
       $r .= "<input type='hidden' name='".$options['srefField']."' id='imp-sref' value='$defaultSref' />";
       $r .= "<input type='hidden' name='".$options['systemField']."' id='imp-sref-system' value='$defaultSystem' />";
     }
@@ -2214,61 +2200,57 @@ JS;
   }
 
   /**
-   * Helper function to generate a radio group from a Indicia core service query.
+   * Helper function to generate a radio group from a termlist.
    *
-   * @param array $options Options array with the following possibilities:<ul>
-   * <li><b>fieldname</b><br/>
-   * Required. The name of the database field this control is bound to.</li>
-   * <li><b>id</b><br/>
-   * Optional. The id to assign to the HTML control. If not assigned the fieldname is used.</li>
-   * <li><b>default</b><br/>
-   * Optional. The default value to assign to the control. This is overridden when reloading a
-   * record with existing data for this control.</li>
-   * <li><b>class</b><br/>
-   * Optional. CSS class names to add to the control.</li>
-   * <li><b>table</b><br/>
-   * Optional. Table name to get data from for the select options. Required unless lookupValues is specified.</li>
-   * <li><b>captionField</b><br/>
-   * Optional. Field to draw values to show in the control from. Required unless lookupValues is specified.</li>
-   * <li><b>valueField</b><br/>
-   * Optional. Field to draw values to return from the control from. Defaults
-   * to the value of captionField. </li>
-   * <li><b>extraParams</b><br/>
-   * Optional. Associative array of items to pass via the query string to the service. This
-   * should at least contain the read authorisation array.</li>
-   * <li><b>lookupValues</b><br/>
-   * If the group is to be populated with a fixed list of values, rather than via a service call, then the
-   * values can be passed into this parameter as an associated array of key=>caption.</li>
-   * <li><b>cachetimeout</b><br/>
-   * Optional. Specifies the number of seconds before the data cache times out - i.e. how long
-   * after a request for data to the Indicia Warehouse before a new request will refetch the data,
-   * rather than use a locally stored (cached) copy of the previous request. This speeds things up
-   * and reduces the loading on the Indicia Warehouse. Defaults to the global website-wide value:
-   * if this is not specified then 1 hour.</li>
-   * <li><b>template</b><br/>
-   * Optional. If specified, specifies the name of the template (in global $indicia_templates) to use
-   * for the outer control.</li>
-   * <li><b>itemTemplate</b><br/>
-   * Optional. If specified, specifies the name of the template (in global $indicia_templates) to use
-   * for each item in the control.</li>
-   * <li><b>captionTemplate</b><br/>
-   * Optional and only relevant when loading content from a data service call. Specifies the template used to build the caption,
-   * with each database field represented as {fieldname}.</li>
-   * <li><b>termImageSize</b><br/>
-   * Optional. Set to an Indicia image size preset (normally thumb, med or original) to include term images in the
-   * output.</li>
-   * </ul>
-   * The output of this control can be configured using the following templates:
-   * <ul>
-   * <li><b>check_or_radio_group</b></br>
-   * Container element for the group of checkboxes.
-   * </li>
-   * <li><b>check_or_radio_group_item</b></br>
-   * Template for the HTML element used for each item in the group.
-   * </li>
-   * </ul>
+   * The output of this control can be configured using the following
+   * templates:
+   *   * check_or_radio_group - Container element for the group of checkboxes.
+   *   * check_or_radio_group_item - Template for the HTML element used for
+   *     each item in the group.
    *
-   * @return string HTML to insert into the page for the group of radio buttons.
+   * @param array $options
+   *   Options array with the following possibilities:
+   *   * fieldname - Required. The name of the database field this control is
+   *     bound to.
+   *   * id - Optional. The id to assign to the HTML control. If not assigned
+   *     the fieldname is used.
+   *   * default - Optional. The default value to assign to the control. This
+   *     is overridden when reloading a record with existing data for this
+   *     control.
+   *   * class - Optional. CSS class names to add to the control.
+   *   * table - Optional. Table name to get data from for the select options.
+   *     Required unless lookupValues is specified.
+   *   * captionField - Optional. Field to draw values to show in the control
+   *     from. Required unless lookupValues is specified.
+   *   * valueField - Optional. Field to draw values to return from the control
+   *     from. Defaults to the value of captionField.
+   *   * extraParams - Optional. Associative array of items to pass via the
+   *     query string to the service. This should at least contain the read
+   *     authorisation array.
+   *   * lookupValues - If the group is to be populated with a fixed list of
+   *     values, rather than via a service call, then the values can be passed
+   *     into this parameter as an associated array of key=>caption.
+   *   * cachetimeout - Optional. Specifies the number of seconds before the
+   *     data cache times out - i.e. how long after a request for data to the
+   *     Indicia Warehouse before a new request will refetch the data, rather
+   *     than use a locally stored (cached) copy of the previous request. This
+   *     speeds things up and reduces the loading on the Indicia Warehouse.
+   *     Defaults to the global website-wide value; if this is not specified
+   *     then 1 hour.
+   *   * template - Optional. If specified, specifies the name of the template
+   *     (in global $indicia_templates) to use for the outer control.
+   *   * itemTemplate - Optional. If specified, specifies the name of the
+   *     template (in global $indicia_templates) to use for each item in the
+   *     control.
+   *   * captionTemplate - Optional and only relevant when loading content from
+   *     a data service call. Specifies the template used to build the caption,
+   *     with each database field represented as {fieldname}.
+   *   * termImageSize - Optional. Set to an Indicia image size preset
+   *     (normally thumb, med or original) to include term images in the
+   *     output.
+   *
+   * @return string
+   *   HTML to insert into the page for the group of radio buttons.
    */
   public static function radio_group($options) {
     $options = self::check_options($options);
@@ -2276,32 +2258,34 @@ JS;
   }
 
   /**
-   * Returns a simple HTML link to download the contents of a report defined by the options. The options arguments supported are the same as for the
-   * report_grid method. Pagination information will be ignored (e.g. itemsPerPage).
-   * @param array $options Refer to report_helper::report_download_link documentation.
-   * @deprecated Use report_helper::report_download_link.
+   * Report download link.
+   *
+   * Returns a simple HTML link to download the contents of a report defined by
+   * the options. The options arguments supported are the same as for the
+   * report_grid method. Pagination information will be ignored (e.g.
+   * itemsPerPage).
+   *
+   * @param array $options
+   *   Refer to report_helper::report_download_link documentation.
+   *
+   * @deprecated
+   *   Use report_helper::report_download_link.
    */
-  public static function report_download_link($options) {
-    require_once('report_helper.php');
+  public static function report_download_link(array $options) {
+    require_once 'report_helper.php';
     return report_helper::report_download_link($options);
   }
 
   /**
-   * Outputs a grid that loads the content of a report or Indicia table.
-   * @param array $options Refer to report_helper::report_grid documentation.
-   * @deprecated Use report_helper::report_grid.
-   */
-  public static function report_grid($options) {
-    require_once('report_helper.php');
-    return report_helper::report_grid($options);
-  }
-
-  /**
    * Outputs a chart that loads the content of a report or Indicia table.
-   * @param array $options Refer to report_helper::report_chart documentation.
-   * @deprecated Use report_helper::report_chart.
+   *
+   * @param array $options
+   *   Refer to report_helper::report_chart documentation.
+   *
+   * @deprecated
+   *   Use report_helper::report_chart.
    */
-  public static function report_chart($options) {
+  public static function report_chart(array $options) {
     require_once('report_helper.php');
     return report_helper::report_chart($options);
   }
@@ -2395,15 +2379,14 @@ JS;
    * @return string
    *   HTML code for a select control.
    */
-  public static function select($options)
-  {
+  public static function select(array $options) {
     $options = array_merge(
-      array(
+      [
         'template' => 'select',
         'itemTemplate' => 'select_item',
         'isFormControl' => TRUE,
         'attributes' => [],
-      ),
+      ],
       self::check_options($options)
     );
     $attrArray = [];
@@ -2415,136 +2398,134 @@ JS;
   }
 
   /**
-   * Outputs a spatial reference input box and a drop down select control populated with a list of
-   * spatial reference systems for the user to select from. If there is only 1 system available then
-   * the system drop down is ommitted since it is not required.
-   * The output of this control can be configured using the following templates:
-   * <ul>
-   * <li><b>sref_textbox</b></br>
-   * Template used for the text input box for the spatial reference.
-   * </li>
-   * <li><b>sref_textbox_latlong</b></br>
-   * Template used for the latitude and longitude input boxes when the splitLatLong option is set
-   * to true.
-   * </li>
-   * <li><b>select</b></br>
-   * Template used for the select element which contains the spatial reference system options available
-   * for input.
-   * </li>
-   * <li><b>select_item</b></br>
-   * Template used for the option elements in the select list of spatial reference system options available
-   * for input.
-   * </li>
-   * </ul>
+   * Spatial ref input with system picker.
    *
-   * @param array $options Options array with the following possibilities:<ul>
-   * <li><b>fieldname</b><br/>
-   * Required. Name of the database field that spatial reference will be posted to. Defaults to
-   * sample:entered_sref. The system field is automatically constructed from this.</li>
-   * <li><b>systems</b>
-   * Optional. List of spatial reference systems to display. Associative array with the key
-   * being the EPSG code for the system or the notation abbreviation (e.g. OSGB), and the value being
-   * the description to display.</li>
-   * <li><b>defaultSystem</b>
-   * Optional. Code for the default system value to load.</li>
-   * <li><b>defaultGeom</b>
-   * Optional. WKT value for the default geometry to load (hidden).</li>
-   * </ul>
+   * Outputs a spatial reference input box and a drop down select control
+   * populated with a list of spatial reference systems for the user to select
+   * from. If there is only 1 system available then the system drop down is
+   * ommitted since it is not required.
    *
-   * @return string HTML to insert into the page for the spatial reference and system selection control.
+   * The output of this control can be configured using the following
+   * templates:
+   * * sref_textbox - Template used for the text input box for the spatial
+   *   reference.
+   * * sref_textbox_latlong - Template used for the latitude and longitude
+   *   input boxes when the splitLatLong option is set to true.
+   * * select - Template used for the select element which contains the spatial
+   *   reference system options available for input.
+   * * select_item - Template used for the option elements in the select list
+   *   of spatial reference system options available for input.
+   *
+   * @param array $options
+   *   Options array with the following possibilities:
+   *   * fieldname - Required. Name of the database field that spatial
+   *     reference will be posted to. Defaults to sample:entered_sref. The
+   *     system field is automatically constructed from this.
+   *   * systems - Optional. List of spatial reference systems to display.
+   *     Associative array with the key being the EPSG code for the system or
+   *     the notation abbreviation (e.g. OSGB), and the value being the
+   *     description to display.
+   *   * defaultSystem - Optional. Code for the default system value to load.
+   *   * defaultGeom - Optional. WKT value for the default geometry to load
+   *     (hidden).
+   *
+   * @return string
+   *   HTML to insert into the page for the spatial reference and system
+   *   selection control.
    */
-  public static function sref_and_system($options) {
-    $options = array_merge(array(
-      'fieldname'=>'sample:entered_sref'
-    ), $options);
+  public static function sref_and_system(array $options) {
+    $options = array_merge([
+      'fieldname' => 'sample:entered_sref'
+    ], $options);
     // If we have more than one possible system, need a control to allow user selection
     $systemControlRequired = !(array_key_exists('systems', $options) && count($options['systems']) === 1);
     // in which case, no wrap around the 2 inner controls, just one around the outer added later
     if ($systemControlRequired)
       $options['controlWrapTemplate'] = 'justControl';
-    if (array_key_exists('systems',$options) && count($options['systems']) == 1) {
-      // The system select will be hidden since there is only one system
+    if (array_key_exists('systems', $options) && count($options['systems']) === 1) {
+      // The system select will be hidden since there is only one system.
       $srefOptions = $options;
     } else {
       $srefOptions = array_merge($options);
-      // Show the help text after the 2nd control
+      // Show the help text after the 2nd control.
       if (isset($srefOptions['helpText'])) {
         unset($srefOptions['helpText']);
       }
     }
-    // Output the sref control
+    // Output the sref control.
     $r = self::sref_textbox($srefOptions);
 
-    // tweak the options passed to the system selector
-    $options['fieldname']=$options['fieldname']."_system";
+    // Tweak the options passed to the system selector.
+    $options['fieldname'] = "$options[fieldname]_system";
     unset($options['label']);
     if (isset($options['defaultSystem'])) {
-      $options['default']=$options['defaultSystem'];
+      $options['default'] = $options['defaultSystem'];
     }
     // Output the system control
     if (!$systemControlRequired) {
       // Hidden field for the system
       $keys = array_keys($options['systems']);
-      $r .= "<input type=\"hidden\" id=\"imp-sref-system\" name=\"".$options['fieldname']."\" value=\"".$keys[0]."\" />\n";
+      $r .= "<input type=\"hidden\" id=\"imp-sref-system\" name=\"$options[fieldname]\" value=\"$keys[0]\" />\n";
       self::includeSrefHandlerJs($options['systems']);
     }
     else {
       $r .= self::sref_system_select($options);
-      // put an outer container to keep them together
+      // Put an outer container to keep them together.
       global $indicia_templates;
-      $r = str_replace(array('{control}', '{id}'), array($r, 'imp-sref-and-system'), $indicia_templates['controlWrap']);
+      $r = str_replace(['{control}', '{id}', '{wrapClasses}'], [$r, 'imp-sref-and-system', ''], $indicia_templates['controlWrap']);
     }
     return $r;
   }
 
   /**
-   * Outputs a drop down select control populated with a list of spatial reference systems
-   * for the user to select from.
+   * Spatial reference system picker.
+   *
+   * Outputs a drop down select control populated with a list of spatial
+   * reference systems for the user to select from.
+   *
    * The output of this control can be configured using the following templates:
-   * <ul>
-   * <li><b>select</b></br>
-   * Template used for the select element which contains the spatial reference system options available
-   * for input.
-   * </li>
-   * <li><b>select_item</b></br>
-   * Template used for the option elements in the select list of spatial reference system options available
-   * for input.
-   * </li>
-   * </ul>
+   * * select - Template used for the select element which contains the spatial
+   *   reference system options available for input.
+   * * select_item - Template used for the option elements in the select list
+   *   of spatial reference system options available for input.
    *
-   * @param array $options Options array with the following possibilities:<ul>
-   * <li><b>fieldname</b><br/>
-   * Required. The name of the database field this control is bound to. Defaults to sample:entered_sref_system.</li>
-   * <li><b>id</b><br/>
-   * Optional. The id to assign to the HTML control. If not assigned the fieldname is used.</li>
-   * <li><b>default</b><br/>
-   * Optional. The default value to assign to the control. This is overridden when reloading a
-   * record with existing data for this control.</li>
-   * <li><b>class</b><br/>
-   * Optional. CSS class names to add to the control.</li>
-   * <li><b>systems</b>
-   * Optional. List of spatial reference systems to display. Associative array with the key
-   * being the EPSG code for the system or the notation abbreviation (e.g. OSGB), and the value being
-   * the description to display.</li>
-   * </ul>
+   * @param array $options
+   *   Options array with the following possibilities:
+   *   * fieldname - Required. The name of the database field this control is
+   *     bound to. Defaults to sample:entered_sref_system.</li>
+   *   * id - Optional. The id to assign to the HTML control. If not assigned
+   *     the fieldname is used.</li>
+   *   * default - Optional. The default value to assign to the control. This
+   *     is overridden when reloading a record with existing data for this
+   *     control.
+   *   * class - Optional. CSS class names to add to the control.>
+   *   * systems - Optional. List of spatial reference systems to display.
+   *     Associative array with the key being the EPSG code for the system or
+   *     the notation abbreviation (e.g. OSGB), and the value being the
+   *     description to display.
    *
-   * @return string HTML to insert into the page for the spatial reference systems selection control.
+   * @return string
+   *   HTML to insert into the page for the spatial reference systems selection
+   *   control.
    */
-  public static function sref_system_select($options) {
+  public static function sref_system_select(array $options) {
     global $indicia_templates;
-    $options = array_merge(array(
-      'fieldname'=>'sample:entered_sref_system',
-      'systems'=>array('OSGB'=>lang::get('sref:OSGB'), '4326'=>lang::get('sref:4326')),
-      'id'=>'imp-sref-system',
+    $options = array_merge([
+      'fieldname' => 'sample:entered_sref_system',
+      'systems'=> [
+        'OSGB' => lang::get('sref:OSGB'),
+        '4326' => lang::get('sref:4326')
+      ],
+      'id' => 'imp-sref-system',
       'isFormControl' => TRUE
-    ), $options);
+    ], $options);
     $options = self::check_options($options);
-    $opts = "";
-    foreach ($options['systems'] as $system=>$caption){
+    $opts = '';
+    foreach ($options['systems'] as $system => $caption){
       $selected = ($options['default'] == $system ? 'selected' : '');
       $opts .= str_replace(
-        array('{value}', '{caption}', '{selected}'),
-        array($system, $caption, $selected),
+        ['{value}', '{caption}', '{selected}'],
+        [$system, $caption, $selected],
         $indicia_templates['select_item']
       );
     }
@@ -3086,7 +3067,7 @@ RIJS;
   * <li><b>mediaTypes</b><br/>
   * Optional. Array of media types that can be uploaded. Choose from Audio:Local, Audio:SoundCloud, Image:Flickr,
   * Image:Instagram, Image:Local, Image:Twitpic, Pdf:Local, Social:Facebook, Social:Twitter, Video:Youtube,
-  * Video:Vimeo.
+  * Video:Vimeo, Zerocrossing:Local.
   * Currently not supported for multi-column grids.</li>
   * <li><b>resizeWidth</b><br/>
   * If set, then the image files will be resized before upload using this as the maximum pixels width.
@@ -3943,14 +3924,10 @@ if ($('#$options[id]').parents('.ui-tabs-panel').length) {
       $readableTypes = array_pop($linkMediaTypes);
       if (count($linkMediaTypes)>0)
         $readableTypes = implode(', ', $linkMediaTypes) . ' ' . lang::get('or') . ' ' . $readableTypes;
-      return '<div style="display: none"><div id="add-link-form" title="Add a link to a remote file">
-<p class="validateTips">'.lang::get('Paste in the web address of a resource on {1}', $readableTypes).'.</p>
-<fieldset>
-<label for="name">URL</label>
-<input type="text" name="link_url" id="link_url" class="text ui-widget-content ui-corner-all">
-<p style="display: none" class="error"></p>
-</fieldset>
-</div></div>';
+      return '<div style="display: none"><div id="add-link-form" title="Add a link to a remote file">' .
+        '<p class="validateTips">'.lang::get('Paste in the web address of a resource on {1}', $readableTypes).'.</p>' .
+        self::text_input(['label' => lang::get('URL'), 'fieldname' => 'link_url', 'class' => 'form-control']) .
+        '</div></div>';
     }
     else {
       return '';
@@ -4131,11 +4108,9 @@ if ($('#$options[id]').parents('.ui-tabs-panel').length) {
           $filterFields['preferred'] = 'true';
           break;
         case 'currentLanguage' :
-          // look for Drupal user variable. Will degrade gracefully if it doesn't exist
-          global $user;
           if (isset($options['language'])) {
             $filterFields['language'] = $options['language'];
-          } elseif (isset($user) && function_exists('hostsite_get_user_field')) {
+          } elseif (function_exists('hostsite_get_user_field')) {
             // if in Drupal we can use the user's language
             require_once 'prebuilt_forms/includes/language_utils.php';
             $filterFields['language'] = iform_lang_iso_639_2(hostsite_get_user_field('language'));
@@ -4497,8 +4472,12 @@ JS;
    * @return array The taxon list to use in the grid.
    */
   public static function get_species_checklist_taxa_list($options, &$taxonRows) {
-    // Get the list of species that are always added to the grid, by first building a filter
-    if (preg_match('/^(preferred_name|preferred_taxon|taxon_meaning_id|taxa_taxon_list_id|taxon_group|external_key|id)$/', $options['taxonFilterField']))  {
+    // Get the list of species that are always added to the grid, by first
+    // building a filter or using preloaded ones.
+    if (!empty($options['preloadTaxa'])) {
+      $options['extraParams']['taxa_taxon_list_id'] = json_encode($options['preloadTaxa']);
+    }
+    elseif (preg_match('/^(preferred_name|preferred_taxon|taxon_meaning_id|taxa_taxon_list_id|taxon_group|external_key|id)$/', $options['taxonFilterField']))  {
       if ($options['taxonFilterField'] === 'preferred_name') {
         $options['taxonFilterField'] = 'preferred_taxon';
       }
@@ -5593,7 +5572,7 @@ $('div#$escaped_divId').indiciaTreeBrowser({
    * </ul>
    * @return type HTML to insert onto the page for the verification panel.
    */
-  public function verification_panel($options) {
+  public static function verification_panel($options) {
     global $indicia_templates;
     $options = array_merge(array(
       'panelOnly'=>false
@@ -5649,7 +5628,11 @@ $('div#$escaped_divId').indiciaTreeBrowser({
    * centre to position the div, making sure the containing element is either floated, or has
    * overflow: auto applied to its style. Default is right.</li>
    * <li><b>buttonClass</b><br/>
-   * Class to add to the button elements.</li>
+   * Class to add to the button elements other than delete and save.</li>
+   * <li><b>deleteButtonClass</b><br/>
+   * Class to add to the delete button.</li>
+   * <li><b>saveButtonClass</b><br/>
+   * Class to add to the save button.</li>
    * <li><b>page</b><br/>
    * Specify first, middle or last to indicate which page this is for. Use middle (the default) for
    * all pages other than the first or last.</li>
@@ -5675,6 +5658,8 @@ $('div#$escaped_divId').indiciaTreeBrowser({
       'captionSave' => 'Save',
       'captionDelete'=> 'Delete',
       'buttonClass' => "$indicia_templates[buttonDefaultClass] inline-control",
+      'saveButtonClass' => "$indicia_templates[buttonHighlightedClass] inline-control",
+      'deleteButtonClass' => "$indicia_templates[buttonWarningClass] inline-control",
       'class'       => 'right',
       'page'        => 'middle',
       'includeVerifyButton' => FALSE,
@@ -5685,42 +5670,51 @@ $('div#$escaped_divId').indiciaTreeBrowser({
     $options['class'] .= ' buttons wizard-buttons';
     // Output the buttons
     $r = '<div class="'.$options['class'].'">';
-    $buttonClass=$options['buttonClass'];
     if (array_key_exists('divId', $options)) {
       if ($options['includeVerifyButton']) {
         $r .= self::apply_replacements_to_template($indicia_templates['button'], array(
-          'href'=>'#',
-          'id'=>'verify-btn',
+          'href' => '#',
+          'id' => 'verify-btn',
           'class' => "class=\"$indicia_templates[buttonDefaultClass]\"",
           'caption'=>lang::get('Precheck my records'),
           'title'=>''
         ));
       }
-      if ($options['page']!='first') {
-        $options['class']=$buttonClass." tab-prev";
-        $options['id']='tab-prev';
-        $options['caption']='&lt; '.lang::get($options['captionPrev']);
+      if ($options['page'] !== 'first') {
+        $options['class'] = "$options[buttonClass] tab-prev";
+        $options['id'] = 'tab-prev';
+        $options['caption'] = '&lt; '.lang::get($options['captionPrev']);
         $r .= self::apply_template('button', $options);
       }
-      if ($options['page']!='last') {
-        $options['class']=$buttonClass." tab-next";
-        $options['id']='tab-next';
-        $options['caption']=lang::get($options['captionNext']).' &gt;';
+      if ($options['page'] !== 'last') {
+        $options['class'] = "$options[buttonClass] tab-next";
+        $options['id'] = 'tab-next';
+        $options['caption'] = lang::get($options['captionNext']).' &gt;';
         $r .= self::apply_template('button', $options);
       } else {
         if ($options['includeSubmitButton']) {
-          $options['class']=$buttonClass." tab-submit";
-          $options['id']='tab-submit';
-          $options['caption']=lang::get($options['captionSave']);
-          $options['name']='action-submit';
+          $options['class'] = "$options[saveButtonClass] tab-submit";
+          $options['id'] = 'tab-submit';
+          $options['caption'] = lang::get($options['captionSave']);
+          $options['name'] = 'action-submit';
           $r .= self::apply_template('submitButton', $options);
         }
         if ($options['includeDeleteButton']) {
-          $options['class']=$buttonClass." tab-delete";
-          $options['id']='tab-delete';
-          $options['caption']=lang::get($options['captionDelete']);
-          $options['name']='delete-button';
+          $options['class'] = "$options[deleteButtonClass] tab-delete";
+          $options['id'] = 'tab-delete';
+          $options['caption'] = lang::get($options['captionDelete']);
+          $options['name'] = 'delete-button';
           $r .= self::apply_template('submitButton', $options);
+          $msg = lang::get('Are you sure you want to delete this form?');
+          self::$javascript .= <<<JS
+$('#tab-delete').click(function(e) {
+  if (!confirm('$msg')) {
+    e.preventDefault();
+    return false;
+  }
+});
+
+JS;
         }
       }
     }
@@ -6040,13 +6034,15 @@ $('div#$escaped_divId').indiciaTreeBrowser({
     if (is_object($hints)) {
       $hints = get_object_vars($hints);
     }
+    $sortHandle = !empty($options['sortable']) ? '<span class="sort-handle"></span>' : '';
     if (isset($options['lookupValues'])) {
       // lookup values are provided, so run these through the item template
-      foreach ($options['lookupValues'] as $key=>$value) {
+      foreach ($options['lookupValues'] as $key => $caption) {
         $selected=self::get_list_item_selected_attribute($key, $selectedItemAttribute, $options, $itemFieldname);
+
         $r[$key] = str_replace(
-          array('{value}', '{caption}', '{'.$selectedItemAttribute.'}', '{title}'),
-          array(htmlspecialchars($key), htmlspecialchars($value), $selected, (isset($hints[$value]) ? ' title="'.$hints[$value].'" ' : '')),
+          array('{sortHandle}', '{value}', '{caption}', '{'.$selectedItemAttribute.'}', '{title}'),
+          array($sortHandle, htmlspecialchars($key), htmlspecialchars($caption), $selected, (isset($hints[$caption]) ? ' title="'.$hints[$caption].'" ' : '')),
           $indicia_templates[$options['itemTemplate']]
         );
       }
@@ -6089,14 +6085,14 @@ $('div#$escaped_divId').indiciaTreeBrowser({
               $baseUrl = self::$base_url;
               $preset = $options['termImageSize'] === 'original' ? '' : "$options[termImageSize]-";
               $caption .= <<<HTML
-<a href="{$baseUrl}upload/$record[preferred_image_path]" class="fancybox">
+<a href="{$baseUrl}upload/$record[preferred_image_path]" data-fancybox>
   <img src="{$baseUrl}upload/$preset$record[preferred_image_path]" />
 </a>
 HTML;
             }
             $item = str_replace(
-              array('{value}', '{caption}', '{'.$selectedItemAttribute.'}', '{title}'),
-              array($value, $caption, $selected, (isset($hints[$value]) ? ' title="'.$hints[$value].'" ' : '')),
+              array('{sortHandle}', '{value}', '{caption}', '{'.$selectedItemAttribute.'}', '{title}'),
+              array($sortHandle, $value, $caption, $selected, (isset($hints[$value]) ? ' title="'.$hints[$value].'" ' : '')),
               $indicia_templates[$options['itemTemplate']]
             );
             $r[$record[$options['valueField']]] = $item;
@@ -6679,7 +6675,7 @@ if (errors$uniq.length>0) {
         // Handle subsamples indicated by a row specific map ref
         $sref = self::extractValueFromArray($record, 'occurrence:spatialref');
         $srefPrecision = self::extractValueFromArray($record, 'occurrence:spatialrefprecision');
-        $occ = data_entry_helper::wrap($record, 'occurrence');
+        $occ = submission_builder::wrap($record, 'occurrence');
         self::attachOccurrenceMediaToModel($occ, $record);
         self::attachAssociationsToModel($id, $occ, $assocData, $arr);
         // If we have a record-level spatial reference, then we need to attach the record to a subsample to capture the
@@ -6719,7 +6715,7 @@ if (errors$uniq.length>0) {
             }
             $subModels[$submodelKey] = array(
               'fkId' => 'parent_id',
-              'model' => data_entry_helper::wrap($subSample, 'sample'),
+              'model' => submission_builder::wrap($subSample, 'sample'),
             );
             $subModels[$submodelKey]['model']['subModels'] = array();
           }
@@ -6739,7 +6735,7 @@ if (errors$uniq.length>0) {
     foreach ($unusedExistingSampleIds as $id) {
       $subModels[$sref] = array(
         'fkId' => 'parent_id',
-        'model' => data_entry_helper::wrap(array(
+        'model' => submission_builder::wrap(array(
           'id' => $id,
           'website_id' => $website_id,
           'deleted' => 't'
@@ -6824,8 +6820,11 @@ if (errors$uniq.length>0) {
       unset($record['occurrence:sampleIDX']);
       $present = self::wrap_species_checklist_record_present($record, $include_if_any_data,
         $zeroAttrs, $zeroValues, array());
-      if (array_key_exists('id', $record) || $present!==null) { // must always handle row if already present in the db
-        if ($present===null)
+      // $record[present] holds taxa taxon list ID so will always be available
+      // for genuine rows. All existing rows, plus any that are present in the
+      // list, must be handled.
+      if (!empty($record['present']) && (array_key_exists('id', $record) || $present !== NULL)) {
+        if ($present === NULL)
           // checkboxes do not appear if not checked. If uncheck, delete record.
           $record['deleted'] = 't';
         else
@@ -6833,7 +6832,7 @@ if (errors$uniq.length>0) {
         $record['taxa_taxon_list_id'] = $record['present'];
         $record['website_id'] = $website_id;
         self::speciesChecklistApplyFieldDefaults($fieldDefaults, $record);
-        $occ = data_entry_helper::wrap($record, 'occurrence');
+        $occ = submission_builder::wrap($record, 'occurrence');
         self::attachOccurrenceMediaToModel($occ, $record);
         $sampleRecords[$sampleIDX]['occurrences'][] = array('fkId' => 'sample_id','model' => $occ);
       }
@@ -6853,7 +6852,7 @@ if (errors$uniq.length>0) {
         $sampleRecord['location_name'] = $arr['sample:location_name'];
       if (!empty($arr['sample:input_form']))
         $sampleRecord['input_form'] = $arr['sample:input_form'];
-      $subSample = data_entry_helper::wrap($sampleRecord, 'sample');
+      $subSample = submission_builder::wrap($sampleRecord, 'sample');
       // Add the subsample/soccurrences in as subModels without overwriting others such as a sample image
       if (array_key_exists('subModels', $subSample)) {
         $subSample['subModels'] = array_merge($subSample['subModels'], $occs);
@@ -7221,38 +7220,6 @@ HTML;
   }
 
   /**
-   * Wraps an array (e.g. Post or Session data generated by a form) into a structure
-   * suitable for submission.
-   * <p>The attributes in the array are all included, unless they
-   * named using the form entity:attribute (e.g. sample:date) in which case they are
-   * only included if wrapping the matching entity. This allows the content of the wrap
-   * to be limited to only the appropriate information.</p>
-   * <p>Do not prefix the survey_id or website_id attributes being posted with an entity
-   * name as these IDs are used by Indicia for all entities.</p>
-   *
-   * @param array $array Array of data generated from data entry controls.
-   * @param string $entity Name of the entity to wrap data for.
-   */
-  public static function wrap($array, $entity)
-  {
-    return submission_builder::wrap($array, $entity);
-  }
-
-  /**
-   * Wraps a set of values for a model into JSON suitable for submission to the Indicia data services,
-   * and also grabs the custom attributes (if there are any) and links them to the model.
-   *
-   * @param array $values Array of form data (e.g. $_POST).
-   * @param string $modelName Name of the model to wrap data for. If this is sample, occurrence or location
-   * then custom attributes will also be wrapped. Furthermore, any attribute called $modelName:image can
-   * contain an image upload (as long as a suitable entity is available to store the image in).
-   * @deprecated
-   */
-  public static function wrap_with_attrs($values, $modelName) {
-    return submission_builder::wrap_with_attrs($values, $modelName);
-  }
-
-  /**
    * Build submission for sample + occurrence list.
    *
    * Helper function to simplify building of a submission that contains a
@@ -7364,7 +7331,7 @@ HTML;
   {
     // We're mainly submitting to the sample model
     $sampleMod = submission_builder::wrap_with_images($values, 'sample');
-    $subModels = data_entry_helper::wrap_species_checklist_with_subsamples($values, $include_if_any_data,
+    $subModels = submission_builder::wrap_species_checklist_with_subsamples($values, $include_if_any_data,
       $zeroAttrs, $zeroValues);
 
     // Add the subsamples/occurrences in as subModels without overwriting others such as a sample image
@@ -7375,28 +7342,6 @@ HTML;
     }
 
     return $sampleMod;
-  }
-
-  /**
-   * Helper function to simplify building of a submission. Does simple submissions that do not involve
-   * species checklist grids.
-   * @param array $values List of the posted values to create the submission from.
-   * @param array $structure Describes the structure of the submission. The form should be:
-   * array(
-   *     'model' => 'main model name',
-   *     'subModels' => array('child model name' =>  array(
-   *         'fieldPrefix'=>'Optional prefix for HTML form fields in the sub model. If not specified then the sub model name is used.',
-   *         'fk' => 'foreign key name'
-   *     )),
-   *     'superModels' => array('child model name' =>  array(
-   *         'fieldPrefix'=>'Optional prefix for HTML form fields in the sub model. If not specified then the sub model name is used.',
-   *         'fk' => 'foreign key name'
-   *     )),
-   *     'metaFields' => array('fieldname1', 'fieldname2', ...)
-   * )
-   */
-  public static function build_submission($values, $structure) {
-    return submission_builder::build_submission($values, $structure);
   }
 
   /**
@@ -7509,7 +7454,7 @@ HTML;
    * server side but where there are no matching controls on the form.
    *
    * If running inside Drupal then the errors are returned with explanation
-   * in a call to Drupal_set_message. Otherwise they are returned, normally for
+   * in a call to Drupal Messenger. Otherwise they are returned, normally for
    * addition to the bottom of the form.
    *
    *
@@ -8164,9 +8109,10 @@ TXT;
       case 'Vague Date': // Vague Date
         if (!empty($attrOptions['displayValue']))
           $attrOptions['default'] = $attrOptions['displayValue'];
-        $attrOptions['class'] = ($item['data_type'] == 'D' ? "date-picker " : "vague-date-picker ");
-        if (isset($item['validation_rules']) && strpos($item['validation_rules'],'date_in_past')=== false)
-          $attrOptions['allowFuture']=true;
+        $attrOptions['allowVagueDates'] = ($item['data_type'] == 'D' ? FALSE : TRUE);
+        if (isset($item['validation_rules']) && strpos($item['validation_rules'],'date_in_past') === FALSE) {
+          $attrOptions['allowFuture'] = TRUE;
+        }
         $output = self::date_picker($attrOptions);
         break;
       case 'Lookup List':
@@ -8235,7 +8181,7 @@ TXT;
           $baseUrl = self::$base_url;
           $preset = $options['attrImageSize'] === 'original' ? '' : "$options[attrImageSize]-";
           $output .= <<<HTML
-<a href="{$baseUrl}upload/$item[image_path]" class="fancybox">
+<a href="{$baseUrl}upload/$item[image_path]" data-fancybox>
   <img src="{$baseUrl}upload/$preset$item[image_path]" />
 </a>
 HTML;
@@ -8417,17 +8363,6 @@ HTML;
       default:  $size = intval($size);                break;
     }
     return $size;
-  }
-
-  /**
-   * Method that retrieves the data from a report or a table/view, ready to display in a chart or grid.
-   * @param array $options Refer to documentation for report_helper::get_report_data.
-   * @param string $extra Refer to documentation for report_helper::get_report_data.
-   * @deprecated, use report_helper::get_report_data instead.
-   */
-  public static function get_report_data($options, $extra='') {
-    require_once('report_helper.php');
-    return report_helper::get_report_data($options, $extra);
   }
 
   /**

@@ -338,8 +338,6 @@ var rgbvalue, applyJitter, setToDate, loadYear;
   loadYear = function (year, side, speciesId) {
     var dateFilter = (year === 'all' ? '&date_from=' + iTLMOpts.firstYear + '-01-01' : '&date_from=' + year + '-01-01&date_to=' + year + '-12-31');
     var speciesFilter = typeof speciesId === 'undefined' ? '' : '&species_id=' + speciesId;
-    var dlgText;
-    var dialog;
     var loadingAll = typeof speciesId === 'undefined';
     if ((iTLMOpts.preloadData && typeof iTLMData.myData['year:' + year] !== 'undefined' && loadingAll)
       || (!loadingAll && typeof iTLMData.myData['year:' + year]['species:' + speciesId] !== 'undefined')) {
@@ -355,14 +353,7 @@ var rgbvalue, applyJitter, setToDate, loadYear;
       iTLMData.mySpecies['year:' + year] = {};
     }
     $(iTLMOpts.errorDiv).empty();
-    dialog = $('<div><img src="' + indiciaData.imagesPath + 'ajax-loader2.gif" style="float: left; padding-right: 20px" /><p>' + iTLMOpts.waitDialogText + '</p></div>').dialog({
-      title: iTLMOpts.waitDialogTitle,
-      buttons: {
-        OK: function okClick() {
-          dialog.dialog('close');
-        }
-      }
-    });
+    $.fancyDialog({ title: iTLMOpts.waitDialogTitle, message: iTLMOpts.waitDialogText, cancelButton: null });
     // Report record should have geom, date, recordDayIndex (days since unix epoch), species ttl_id, attributes.
     jQuery.getJSON(indiciaData.warehouseUrl + 'index.php/services/report/requestReport?report=' + iTLMOpts.report_name +
         '.xml&reportSource=local&mode=json&reset_timeout=true' +
@@ -453,7 +444,7 @@ var rgbvalue, applyJitter, setToDate, loadYear;
         }
         calculateMinAndMax();
         resetMap();
-        dialog.dialog('close');
+        $.fancybox.close();
       });
   };
 

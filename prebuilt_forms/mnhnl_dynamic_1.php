@@ -23,7 +23,7 @@
 /**
  * Prebuilt Indicia data entry form.
  * NB has Drupal specific code. Relies on presence of IForm Proxy.
- * 
+ *
  * @package    Client
  * @subpackage PrebuiltForms
  */
@@ -33,7 +33,7 @@ require_once('includes/mnhnl_common.php');
 
 class iform_mnhnl_dynamic_1 extends iform_dynamic_sample_occurrence {
 
-  /** 
+  /**
    * Return the form metadata.
    * @return string The definition of the form.
    */
@@ -51,7 +51,7 @@ class iform_mnhnl_dynamic_1 extends iform_dynamic_sample_occurrence {
    * Get the list of parameters for this form.
    * @return array List of parameters that this form requires.
    */
-  public static function get_parameters() {    
+  public static function get_parameters() {
     $retVal = array_merge(
       parent::get_parameters(),
       array(
@@ -114,7 +114,7 @@ class iform_mnhnl_dynamic_1 extends iform_dynamic_sample_occurrence {
     );
     return $retVal;
  }
-  
+
   protected static function get_form_html($args, $auth, $attributes) {
     $squares = iform_mnhnl_listLocations($auth, $args);
     if($squares != "all" && count($squares)==0)
@@ -125,14 +125,14 @@ class iform_mnhnl_dynamic_1 extends iform_dynamic_sample_occurrence {
     $r .= call_user_func(array(self::$called_class, 'getTrailerHTML'), $args);
     return $r;
   }
-  
+
   protected static function getGrid($args, $nid, $auth) {
     $r = call_user_func(array(self::$called_class, 'getHeaderHTML'), $args);
     $r .= parent::getGrid($args, $nid, $auth);
     $r .= call_user_func(array(self::$called_class, 'getTrailerHTML'), $args);
-    return $r;  
+    return $r;
   }
-  
+
   protected static function getHeaderHTML($args) {
     $base = base_path();
     if(substr($base, -1)!='/') $base.='/';
@@ -147,10 +147,10 @@ class iform_mnhnl_dynamic_1 extends iform_dynamic_sample_occurrence {
     return (isset($args['headerAndFooter']) && $args['headerAndFooter'] ?
       '<p id="iform-trailer">'.lang::get('LANG_Trailer_Text').'</p>' : '');
   }
-  
+
   /*
    * Hide a control if a user is not in a particular group.
-   * 
+   *
    * $options Options array with the following possibilities:<ul>
    * <li><b>controlId</b><br/>
    * The control to hide. ID used as a jQuery selector.</li>
@@ -161,11 +161,11 @@ class iform_mnhnl_dynamic_1 extends iform_dynamic_sample_occurrence {
     iform_load_helpers(array('report_helper'));
     $currentUserId=hostsite_get_user_field('indicia_user_id');
     if (empty($options['controlId'])) {
-      drupal_set_message('The option to hide a control based on group has been specified, but no option to indicate which control has been provided.');
+      hostsite_show_message('The option to hide a control based on group has been specified, but no option to indicate which control has been provided.');
       return false;
     }
     if (empty($options['groupId'])) {
-      drupal_set_message('The option to hide a control based on group has been specified, but no group id has been provided.');
+      hostsite_show_message('The option to hide a control based on group has been specified, but no group id has been provided.');
       return false;
     }
     $reportOptions = array(
@@ -182,10 +182,10 @@ class iform_mnhnl_dynamic_1 extends iform_dynamic_sample_occurrence {
         $userFoundInGroup=true;
     }
     if ($userFoundInGroup!==true||empty($_GET['group_id'])||$_GET['group_id']!=$options['groupId']) {
-      //Parent hide control stops the control and label from showing on screen. 
+      //Parent hide control stops the control and label from showing on screen.
       //Disable control stops it appearing in the POST and getting submitted.
       data_entry_helper::$javascript .= "$('#".$options['controlId']."').attr('disabled', true);\n";
       data_entry_helper::$javascript .= "$('#".$options['controlId']."').parent().hide();\n";
     }
-  } 
+  }
 }

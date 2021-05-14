@@ -30,7 +30,7 @@ var approveMember,
 
   removeMember = function (id, name) {
     var data;
-    if (confirm('Do you really want to remove "' + name + '" from the group?')) { 
+    if (confirm('Do you really want to remove "' + name + '" from the group?')) {
       data = {
         website_id: indiciaData.website_id,
         'groups_user:id': id,
@@ -98,33 +98,15 @@ var approveMember,
       },
       'json'
     );
-    dialog.dialog('close');
   }
 
   changeAccessLevel = function (id, access_level) {
-    dialog = $('#dialog-form').dialog({
-      autoOpen: false,
-      height: 300,
-      width: 350,
-      modal: true,
-      buttons: {
-        'Update access level': updateAccessLevel,
-        Cancel: function () {
-          dialog.dialog('close');
-        }
-      },
-      close: function () {
-        form[0].reset();
-      }
-    });
     $('#updated_access_level').val(access_level);
     $('#updated_access_level_user_id').val(id);
-
-    form = dialog.find('form').on('submit', function (event) {
-      event.preventDefault();
-      updateAccessLevel();
-    });
-
-    dialog.dialog('open');
+    $.fancyDialog({
+      contentElement: '#dialog-form',
+      okButton: 'Update access level',
+      callbackOk: updateAccessLevel
+    })
   };
 })(jQuery);

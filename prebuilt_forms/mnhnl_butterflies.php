@@ -23,16 +23,16 @@
 /**
  * Prebuilt Indicia data entry form.
  * NB has Drupal specific code.
- * 
+ *
  * @package	Client
  * @subpackage PrebuiltForms
- * 
+ *
  * TBD:
  * Introduce read only fields on section list for transect and date, copied over from front page.
  * Improve deletion: need to maintain the attachment to correct_sample, to enable undeleting if needed.
  * Transect restrictions?
  * Streamline attributes in submission - use new method?
- * 
+ *
  * Should be set up in "wizard" buttons mode
  */
 
@@ -43,26 +43,26 @@ class iform_mnhnl_butterflies extends iform_mnhnl_dynamic_1 {
   protected static $locations;
   protected static $svcUrl;
 
-  /** 
+  /**
    * Return the form metadata.
    * @return array The definition of the form.
    */
   public static function get_mnhnl_butterflies_definition() {
     return array(
       'title'=>self::get_title(),
-      'category' => 'MNHNL forms',      
+      'category' => 'MNHNL forms',
       'description'=>'MNHNL Butterflies form. Inherits from Dynamic 1.'
     );
   }
-  /** 
+  /**
    * Return the form title.
    * @return string The title of the form.
    */
   public static function get_title() {
-    return 'MNHNL Butterflies';  
+    return 'MNHNL Butterflies';
   }
 
-  public static function get_parameters() {    
+  public static function get_parameters() {
     $parentVal = array_merge(
       parent::get_parameters(),
       array(
@@ -128,7 +128,7 @@ class iform_mnhnl_butterflies extends iform_mnhnl_dynamic_1 {
           'description'=>'The Maximum Number of Sections in the Section List.',
           'default'=>8,
           'type'=>'int'
-        )		
+        )
       )
     );
     $retVal=array();
@@ -153,10 +153,10 @@ class iform_mnhnl_butterflies extends iform_mnhnl_dynamic_1 {
       }
       $retVal[] = $param;
     }
-    
+
     return $retVal;
   }
-  
+
   public static function get_form($args, $nid, $response=null) {
     global $indicia_templates;
     global $user;
@@ -201,7 +201,7 @@ var m = ['".lang::get('January')."','".lang::get('February')."','".lang::get('Ma
 '".lang::get('July')."','".lang::get('August')."','".lang::get('September')."',
 '".lang::get('October')."','".lang::get('November')."','".lang::get('December')."'];
 return m[this.getMonth()];
-} 
+}
 var monthAttr = jQuery('[name=smpAttr\\\\:".$args['month_attr_id']."],[name^=smpAttr\\\\:".$args['month_attr_id']."\\\\:]').attr('disabled', true);
 monthAttr.before('<input type=\"hidden\" id=\"storedMonth\" name=\"'+monthAttr.attr('name')+'\">');
 updateSampleDate = function(context, doAlert){
@@ -210,7 +210,7 @@ updateSampleDate = function(context, doAlert){
   var monthAttr = jQuery('[name=smpAttr\\\\:".$args['month_attr_id']."],[name^=smpAttr\\\\:".$args['month_attr_id']."\\\\:]').filter('select').val('');
   if(myDate != null){
     myDate = myDate.getMonthName();
-    monthAttr.find(\"option:contains('\"+myDate+\"')\").attr('selected',true) ; 
+    monthAttr.find(\"option:contains('\"+myDate+\"')\").attr('selected',true) ;
     jQuery('#storedMonth').val(monthAttr.val()); // doing in this order converts the text to a number and stores that number in the storedMonth
   } else
     jQuery('#storedMonth').val('');
@@ -239,14 +239,14 @@ jQuery('.tab-submit').click(function() {
     }
   }
   if (secList != ''){
-    alert('The following sections have no species recorded against them: Section(s) '+secList+'. In these circumstances, the \"No observation\" checkbox must be checked for the relevant section.'); 
+    alert('The following sections have no species recorded against them: Section(s) '+secList+'. In these circumstances, the \"No observation\" checkbox must be checked for the relevant section.');
     return;
   }
   var form = jQuery(this).parents('form:first');
   form.submit();
 });
 ";
-      
+
     } else {
     $retVal .= "<div style=\"display:none\" />
     <form id=\"form-delete-survey\" action=\"".iform_mnhnl_getReloadPath()."\" method=\"POST\">".parent::$auth['write']."
@@ -273,11 +273,11 @@ deleteSurvey = function(sampleID){
   };
 };
 ";
-	
+
     }
     return $retVal;
   }
-    
+
   public static function get_css() {
     return array('mnhnl_butterflies.css');
   }
@@ -322,32 +322,33 @@ deleteSurvey = function(sampleID){
       <label>'.lang::get('Section report').':</label><input type="submit" class="ui-state-default ui-corner-all" value="'.lang::get('Download').'">
     </form>
   </div>';
-	
+
   }
-  
+
   /**
    * When viewing the list of samples for this user, get the grid to insert into the page.
    */
   protected static function getSampleListGrid($args, $nid, $auth, $attributes) {
   	global $user;
-    if ($user->uid===0) {
+    if ($user->uid === 0) {
       // Return a login link that takes you back to this form when done.
       return lang::get('Before using this facility, please <a href="'.url('user/login', array('query'=>"destination=node/$nid")).'">login</a> to the website.');
     }
-    $userIdAttr=iform_mnhnl_getAttrID($auth, $args, 'sample', 'CMS User ID', isset($args['sample_method_id'])&&$args['sample_method_id']!="" ? $args['sample_method_id'] : false);
+    $userIdAttr = iform_mnhnl_getAttrID($auth, $args, 'sample', 'CMS User ID', isset($args['sample_method_id'])&&$args['sample_method_id']!="" ? $args['sample_method_id'] : false);
     if (!$userIdAttr) return lang::get('This form must be used with a survey that has the CMS User ID sample attribute associated with it.');
-    $userNameAttr=iform_mnhnl_getAttrID($auth, $args, 'sample', 'CMS Username', isset($args['sample_method_id'])&&$args['sample_method_id']!="" ? $args['sample_method_id'] : false);
+    $userNameAttr = iform_mnhnl_getAttrID($auth, $args, 'sample', 'CMS Username', isset($args['sample_method_id'])&&$args['sample_method_id']!="" ? $args['sample_method_id'] : false);
     if (!$userNameAttr) return lang::get('This form must be used with a survey that has the CMS Username sample attribute associated with it.');
-    $observerAttr=iform_mnhnl_getAttrID($auth, $args, 'sample', 'Observer', isset($args['sample_method_id'])&&$args['sample_method_id']!="" ? $args['sample_method_id'] : false);
+    $observerAttr = iform_mnhnl_getAttrID($auth, $args, 'sample', 'Observer', isset($args['sample_method_id'])&&$args['sample_method_id']!="" ? $args['sample_method_id'] : false);
     if (!$observerAttr) return lang::get('This form must be used with a survey that has the Observer sample attribute associated with it.');
-        
+
     if (isset($args['grid_report']))
       $reportName = $args['grid_report'];
     else
       // provide a default in case the form settings were saved in an old version of the form
       $reportName = 'reports_for_prebuilt_forms/MNHNL/mnhnl_butterflies';
     $r = call_user_func(array(get_called_class(), 'getSampleListGridPreamble'));
-    $r .= data_entry_helper::report_grid(array(
+    iform_load_helpers(['report_helper']);
+    $r .= report_helper::report_grid(array(
       'id' => 'samples-grid',
       'dataSource' => $reportName,
       'mode' => 'report',
@@ -356,15 +357,15 @@ deleteSurvey = function(sampleID){
       'itemsPerPage' =>(isset($args['grid_num_rows']) ? $args['grid_num_rows'] : 10),
       'autoParamsForm' => true,
       'extraParams' => array(
-        'survey_id'=>$args['survey_id'], 
+        'survey_id'=>$args['survey_id'],
         'userID_attr_id'=>$userIdAttr,
         'userID'=>(hostsite_user_has_permission($args['edit_permission']) ? -1 :  $user->uid), // use -1 if manager - non logged in will not get this far.
         'userName_attr_id'=>$userNameAttr,
         'userName'=>($user->name),
         'observer_attr_id'=>$observerAttr
     )
-    ));	
-    $r .= '<form>';    
+    ));
+    $r .= '<form>';
     $r .= '<input type="button" value="'.lang::get('LANG_Add_Sample').'" onclick="window.location.href=\''.url('node/'.$nid, array('query' => 'new')).'\'">';
     $r .= '</form>';
     return $r;
@@ -415,7 +416,7 @@ jQuery(\"#sample\\\\:location_id\").change();
 ";
     return $ret;
   }
-  
+
   protected static function get_control_transectgrid($auth, $args, $tabalias, $options) {
   	/* We will make the assumption that only one of these will be put onto a form.
   	 * A lot of this is copied from the species control and has the same features. */
@@ -425,7 +426,7 @@ jQuery(\"#sample\\\\:location_id\").change();
     }
     if ($args['species_names_filter']=='language') {
       $extraParams += array('language_iso' => iform_lang_iso_639_2(hostsite_get_user_field('language')));
-    }  
+    }
     // A single species entry control of some kind
     if ($args['extra_list_id']=='')
       $extraParams['taxon_list_id'] = $args['list_id'];
@@ -440,7 +441,7 @@ jQuery(\"#sample\\\\:location_id\").change();
           'table'=>'taxa_taxon_list',
           'captionField'=>'taxon',
           'valueField'=>'taxon_meaning_id',
-          'columns'=>2,          
+          'columns'=>2,
           'parentField'=>'parent_id',
           'extraParams'=>$extraParams,
           'numValues'=>$args['max_species_ids']
@@ -606,7 +607,7 @@ jQuery('input#transectgrid_taxa_taxon_list_id\\\\:taxon').result(function(event,
     }
     if ($args['species_names_filter']=='language') {
       $extraParams += array('language_iso' => iform_lang_iso_639_2(hostsite_get_user_field('language')));
-    }  
+    }
     // A single species entry control of some kind
     if ($args['extra_list_id']=='')
       $extraParams['taxon_list_id'] = $args['list_id'];
@@ -620,7 +621,7 @@ jQuery('input#transectgrid_taxa_taxon_list_id\\\\:taxon').result(function(event,
           'table'=>'taxa_taxon_list',
           'captionField'=>'taxon',
           'valueField'=>'taxon_meaning_id',
-          'columns'=>2,          
+          'columns'=>2,
           'parentField'=>'parent_id',
           'extraParams'=>$extraParams,
           'numValues'=>$args['max_species_ids']
@@ -631,7 +632,7 @@ jQuery('input#transectgrid_taxa_taxon_list_id\\\\:taxon').result(function(event,
     );
     $defAttrOptions=$defNRAttrOptions;
     $defAttrOptions ['validation'] = array('required');
-    
+
     // do not allow tree browser
     if ($args['species_ctrl']=='tree_browser')
       return '<p>Can not use tree browser in this context</p>';
@@ -731,7 +732,7 @@ add_section_column = function(column, sampleID){
     $tempLabel = $indicia_templates['label'];
     $indicia_templates['label'] = ''; // we don't want labels in the cell
       // Fieldname is SLA:section:SectionsampleID:AttrValID:AttrID
-    for($i=0; $i<$numAttrs; $i++){	
+    for($i=0; $i<$numAttrs; $i++){
       data_entry_helper::$javascript .= "
     		} else if(j == (rows.length-".($numAttrs-$i).")) { // section sample attribute rows.
     		  var newName = 'SLA:'+i+':'+(i==column ? sampleID : '-')+':-'; //this will replace the smpAttr, so the AttrID is left alone at the end.
@@ -890,7 +891,7 @@ jQuery('input#sectionlist_taxa_taxon_list_id\\\\:taxon').result(function(event, 
       jQuery('input#sectionlist_taxa_taxon_list_id').change();
 });
 ";
-    
+
     return $retVal;
   }
 
@@ -901,7 +902,7 @@ jQuery('input#sectionlist_taxa_taxon_list_id\\\\:taxon').result(function(event, 
     $r .= '</select>';
     return $r;
   }
-  
+
   protected static function get_control_displaytransectanddate($auth, $args, $tabalias, $options) {
     $r = '<div><div class="displayTransDateContainer"><b>'.lang::get('Transect').'</b>:<span class="displayTransectDetails"></span></div>
 <div class="displayTransDateContainer"><b>'.lang::get('Date').'</b>:<span class="displayDateDetails"></span></div></div>';
@@ -913,16 +914,17 @@ jQuery('input#sectionlist_taxa_taxon_list_id\\\\:taxon').result(function(event, 
     $r = '<p>'.lang::get('LANG_SampleListGrid_Preamble').(hostsite_user_has_permission($args['edit_permission']) ? lang::get('LANG_All_Users') : $user->name).'</p>';
     return $r;
   }
-  
+
   /**
    * Handles the construction of a submission array from a set of form values.
-   * @param array $values Associative array of form data values. 
+   * @param array $values Associative array of form data values.
    * @param array $args iform parameters.
    * @param integer $nid The node's ID
    * @return array Submission structure.
    */
   public static function get_submission($values, $args, $nid) {
-    $sampleMod = data_entry_helper::wrap_with_attrs($values, 'sample');
+    iform_load_helpers(['submission_builder']);
+    $sampleMod = submission_builder::wrap_with_images($values, 'sample');
     if(isset($values['sample:deleted'])) return($sampleMod);
     $subsamples = array();
     // first do transect grid
@@ -931,7 +933,7 @@ jQuery('input#sectionlist_taxa_taxon_list_id\\\\:taxon').result(function(event, 
       for($j=0; $j<5; $j++){
 		$sa = array(
 	      'fkId' => 'parent_id',
-		  'model' => array(	
+		  'model' => array(
             'id' => 'sample',
             'fields' => array()));
         if(isset($values['TGS:'.($j*2).':'.($i*2)]))
@@ -972,7 +974,7 @@ jQuery('input#sectionlist_taxa_taxon_list_id\\\\:taxon').result(function(event, 
       // Fieldname is SL:speciesID:section:SectionsampleID:OccID:AttrID
       $sa = array(
 	      'fkId' => 'parent_id',
-	      'model' => array(	
+	      'model' => array(
           'id' => 'sample',
           'fields' => array()));
       if(isset($values['SLS:'.$i]))
@@ -1045,13 +1047,13 @@ jQuery('input#sectionlist_taxa_taxon_list_id\\\\:taxon').result(function(event, 
       $sampleMod['subModels'] = $subsamples;
     return($sampleMod);
   }
-  
+
   protected static function getReportActions() {
-    return array(array('display' => '', 'actions' => 
+    return array(array('display' => '', 'actions' =>
             array(array('caption' => lang::get('Edit'), 'url'=>'{currentUrl}', 'urlParams'=>array('sample_id'=>'{sample_id}')))),
-        array('display' => '', 'actions' => 
+        array('display' => '', 'actions' =>
             array(array('caption' => lang::get('Delete'), 'javascript'=>'deleteSurvey({sample_id})'))));
   }
-  
+
 
 }

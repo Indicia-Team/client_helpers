@@ -94,7 +94,7 @@ class submission_builder {
     $modelWrapped = self::wrap_with_images($values, array_key_exists('fieldPrefix', $structure) ? $structure['fieldPrefix'] : $structure['model']);
     // Attach the specially handled fields to the model
     if (array_key_exists('metaFields', $structure)) {
-      // need to be careful merging metafields in the structure and those auto generated in wrap_with_attrs (ie sample/location/occurrence attributes)
+      // need to be careful merging metafields in the structure and those auto generated in wrap_with_images (ie sample/location/occurrence attributes)
       if(!array_key_exists('metaFields', $modelWrapped))
         $modelWrapped['metaFields']=array();
       foreach ($metaFields as $key=>$value) {
@@ -106,7 +106,7 @@ class submission_builder {
     }
     // Handle the child model if present
     if (array_key_exists('subModels', $structure)) {
-      // need to be careful merging submodels in the structure and those auto generated in wrap_with_attrs (ie images)
+      // need to be careful merging submodels in the structure and those auto generated in wrap_with_images (ie images)
       if(!array_key_exists('subModels', $modelWrapped))
         $modelWrapped['subModels']=array();
       foreach ($structure['subModels'] as $name => $struct) {
@@ -334,34 +334,30 @@ class submission_builder {
   }
 
   /**
-   * Wraps a set of values for a model into JSON suitable for submission to the Indicia data services,
-   * and also grabs the images and links them to the model. In previous versions of this method, this
-   * included wrapping the attributes but this is no longer necessary so this method just delegates to
-   * wrap_with_images and is here for backwards compatibility only.
-   * @deprecated
+   * Wraps a set of values for a model into JSON suitable for submission.
    *
-   * @param array $values Array of form data (e.g. $_POST).
-   * @param string $modelName Name of the model to wrap data for. If this is sample, occurrence or location
-   * then custom attributes will also be wrapped. Furthermore, any attribute called $modelName:image can
-   * contain an image upload (as long as a suitable entity is available to store the image in).
-   */
-  public static function wrap_with_attrs($values, $modelName, $fieldPrefix=null) {
-    return self::wrap_with_images($values, $modelName, $fieldPrefix);
-  }
-
-  /**
-   * Wraps a set of values for a model into JSON suitable for submission to the Indicia data services,
-   * and also grabs the images and links them to the model.
+   * JSON is ready for submission to the Indicia data services. Also grabs the
+   * images and links them to the model.
    *
-   * @param array $values Array of form data (e.g. $_POST).
-   * @param string $modelName Name of the model to wrap data for. If this is sample, occurrence or location
-   * then custom attributes will also be wrapped. Furthermore, any attribute called $modelName:image can
-   * contain an image upload (as long as a suitable entity is available to store the image in).
+   * @param array $values
+   *   Array of form data (e.g. $_POST).
+   * @param string $modelName
+   *   Name of the model to wrap data for. If this is sample, occurrence or
+   *   location then custom attributes will also be wrapped. Furthermore, any
+   *   attribute called $modelName:image can contain an image upload (as long
+   *   as a suitable entity is available to store the image in).
+   * @param string $fieldPrefix
+   *   Name of the prefix each field on the form has. Used to construct an
+   *   error message array that can be linked back to the source fields
+   *   easily.
+   *
+   * @return array
+   *   Wrapped data structure.
    */
-  public static function wrap_with_images($values, $modelName, $fieldPrefix=null) {
-    // Now search for an input control values which imply that an image file will need to be
-    // either moved to the warehouse, or if already on the warehouse, processed to create
-    // thumbnails.
+  public static function wrap_with_images(array $values, $modelName, $fieldPrefix = NULL) {
+    // Now search for an input control values which imply that an image file
+    // will need to be either moved to the warehouse, or if already on the
+    // warehouse, processed to create thumbnails.
     switch ($modelName) {
       case 'taxon_meaning':
         $mediaModelName = 'taxon';
@@ -376,25 +372,27 @@ class submission_builder {
     }
     foreach ($_FILES as $fieldname => &$file) {
       if ($file['name'] && is_string($file['name'])) {
-        // Get the original file's extension
-        $parts = explode(".",$file['name']);
+        // Get the original file's extension.
+        $parts = explode(".", $file['name']);
         $fext = array_pop($parts);
-        // Generate a file id to store the image as
-        $filename = time().rand(0,1000).".".strtolower($fext);
-        if ($fieldname==='image_upload') {
-          // image_upload is a special case only used on the warehouse, so can move the file directly to its final place
+        // Generate a file id to store the image as.
+        $filename = time() . rand(0, 1000) . "." . strtolower($fext);
+        if ($fieldname === 'image_upload') {
+          // Image_upload is a special case only used on the warehouse, so can
+          // move the file directly to its final place.
           // @todo: Should this special case exist?
           $uploadpath = dirname($_SERVER['SCRIPT_FILENAME']) . '/' .
             (isset(data_entry_helper::$indicia_upload_path) ? data_entry_helper::$indicia_upload_path : 'upload/');
-          if (move_uploaded_file($file['tmp_name'], $uploadpath.$filename)) {
-            // record the new file name, also note it in the $_POST data so it can be tracked after a validation failure
+          if (move_uploaded_file($file['tmp_name'], $uploadpath . $filename)) {
+            // Record the new file name, also note it in the $_POST data so it
+            // can be tracked after a validation failure
             $file['name'] = $filename;
             $values['path'] = $filename;
             // This is the final file destination, so create the image files.
             Image::create_image_files($uploadpath, $filename);
           }
         }
-        elseif (preg_match('/^('.$mediaModelName.':)?[a-z_]+_path$/', $fieldname)) {
+        elseif (preg_match('/^(' . $mediaModelName . ':)?[a-z_]+_path$/', $fieldname)) {
           // image fields can be of form {model}:{qualifier}_path (e.g. group:logo_path) if they are
           // directly embedded in the entity, rather than in a child media entity. These files need
           // to be moved to interim upload folder and will be sent to the warehouse after a successful
@@ -402,8 +400,9 @@ class submission_builder {
           $values[$fieldname] = $filename;
           $uploadpath = helper_base::getInterimImageFolder('fullpath');
           $tempFile = isset($file['tmp_name']) ? $file['tmp_name'] : '';
-          if (!move_uploaded_file($tempFile, $uploadpath . $filename))
+          if (!move_uploaded_file($tempFile, $uploadpath . $filename)) {
             throw new exception('Failed to move uploaded file from temporary location');
+          }
           $file['name'] = $filename;
         }
       }

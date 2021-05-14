@@ -167,13 +167,13 @@ class extension_notifications_centre {
     //Using 'submission_list' and 'entries' allows us to specify several top-level submissions to the system
     //i.e. we need to be able to submit several notifications.
     $submission['submission_list']['entries'] = array();
-    $submission['id']='notification';
-    $extraParams= array(
-      'user_id'=>$user_id,
-      'system_name'=>'indicia',
-      'default_edit_page_path'=>'',
-      'view_record_page_path'=>'',
-      'website_id'=>$args['website_id']
+    $submission['id'] = 'notification';
+    $extraParams = array(
+      'user_id' => $user_id,
+      'system_name' => 'indicia',
+      'default_edit_page_path' => '',
+      'view_record_page_path' => '',
+      'website_id' => $args['website_id']
     );
     //If the page is using a filter drop-down option, then collect the type of notification
     //to remove from the filter drop-down
@@ -198,7 +198,7 @@ class extension_notifications_centre {
     if (!empty($options['groupIds'])) {
       $extraParams['group_ids'] = $options['groupIds'];
     }
-    $notifications = data_entry_helper::get_report_data(array(
+    $notifications = report_helper::get_report_data(array(
       'dataSource'=>$options['dataSource'],
       'readAuth'=>$auth['read'],
       'extraParams'=>$extraParams
@@ -217,11 +217,11 @@ class extension_notifications_centre {
       $response = data_entry_helper::forward_post_to('save', $submission, $auth['write_tokens']);
       if (is_array($response) && array_key_exists('success', $response)) {
         if ($count===1)
-          drupal_set_message(lang::get("1 notification has been removed."));
+          hostsite_show_message(lang::get("1 notification has been removed."));
         else
-          drupal_set_message(lang::get("{1} notifications have been removed.", $count));
+          hostsite_show_message(lang::get("{1} notifications have been removed.", $count));
       } else
-        drupal_set_message(print_r($response,true));
+        hostsite_show_message(print_r($response,true));
     }
   }
 
@@ -258,6 +258,9 @@ class extension_notifications_centre {
     };\n
     ";
     $urlParams=array('occurrence_id'=>'{occurrence_id}');
+    if (!empty($options['recordLinkingParamOverride'])) {
+      $urlParams=array($options['recordLinkingParamOverride'] => '{'.$options['recordLinkingParamOverride'].'}');
+    }
     if (!empty($_GET['group_id']))
       $urlParams['group_id']=$_GET['group_id'];
     $availableActions =

@@ -47,7 +47,7 @@ loadSectionDetails = function(section) {
         $('#section-location-system,#section-location-system-select').val(indiciaData.sections[section].system);
     }
     $.getJSON(indiciaData.indiciaSvc + "index.php/services/data/location_attribute_value?location_id=" + indiciaData.sections[section].id +
-        "&mode=json&view=list&callback=?&auth_token=" + indiciaData.readAuth.auth_token + "&nonce=" + indiciaData.readAuth.nonce, 
+        "&mode=json&view=list&callback=?&auth_token=" + indiciaData.readAuth.auth_token + "&nonce=" + indiciaData.readAuth.nonce,
         function(data) {
           var attrname;
           $.each(data, function(idx, attr) {
@@ -65,28 +65,28 @@ loadSectionDetails = function(section) {
               }
               radioidx=0;
               // check the correct radio
-              while ($('#section-form #locAttr\\:'+attr.location_attribute_id+'\\:'+radioidx).length>0 && 
+              while ($('#section-form #locAttr\\:'+attr.location_attribute_id+'\\:'+radioidx).length>0 &&
                   $('#section-form #locAttr\\:'+attr.location_attribute_id+'\\:'+radioidx).val()!==attr.raw_value) {
                 radioidx++;
               }
-              if ($('#section-form #locAttr\\:'+attr.location_attribute_id+'\\:'+radioidx).length>0 && 
+              if ($('#section-form #locAttr\\:'+attr.location_attribute_id+'\\:'+radioidx).length>0 &&
                   $('#section-form #locAttr\\:'+attr.location_attribute_id+'\\:'+radioidx).val()===attr.raw_value) {
                 $('#section-form #locAttr\\:'+attr.location_attribute_id+'\\:'+radioidx).attr('checked', true);
               }
             } else if ($('#section-form #fld-locAttr\\:'+attr.location_attribute_id).length>0) {
               // a hierarchy select outputs a fld control, which needs a special case
-              $('#section-form #fld-locAttr\\:'+attr.location_attribute_id).val(attr.raw_value);              
+              $('#section-form #fld-locAttr\\:'+attr.location_attribute_id).val(attr.raw_value);
               $('#section-form #fld-locAttr\\:'+attr.location_attribute_id).attr('name',attrname);
               // check the option is already in the drop down.
               if ($('#section-form #locAttr\\:'+attr.location_attribute_id + " option[value='"+attr.raw_value+"']").length===0) {
                 // no - we'll just put it in at the top level
                 // @todo - should really now fetch the top level in the hierarchy then select that.
-                $('#section-form #locAttr\\:'+attr.location_attribute_id).append('<option value="' + 
+                $('#section-form #locAttr\\:'+attr.location_attribute_id).append('<option value="' +
                     attr.raw_value + '">' + attr.value + '</option>');
               }
               $('#section-form #locAttr\\:'+attr.location_attribute_id).val(attr.raw_value);
-            } else {              
-              $('#section-form #locAttr\\:'+attr.location_attribute_id).val(attr.raw_value);              
+            } else {
+              $('#section-form #locAttr\\:'+attr.location_attribute_id).val(attr.raw_value);
               $('#section-form #locAttr\\:'+attr.location_attribute_id).attr('name',attrname);
             }
           });
@@ -96,7 +96,7 @@ loadSectionDetails = function(section) {
 };
 
 confirmSelectSection = function(section, doFeature, withCancel) {
-  var buttons =  { 
+  var buttons =  {
     "Yes": function() {
           dialog.dialog('close');
           $('#section-form').submit(); // this is synchronous
@@ -211,7 +211,7 @@ deleteSection = function(section) {
   // if it has been saved, delete any subsamples lodged against it.
   if(typeof indiciaData.sections[section] !== "undefined"){
     $.getJSON(indiciaData.indiciaSvc + "index.php/services/data/sample?location_id=" + indiciaData.sections[section].id +
-            "&mode=json&view=detail&callback=?&auth_token=" + indiciaData.readAuth.auth_token + "&nonce=" + indiciaData.readAuth.nonce, 
+            "&mode=json&view=detail&callback=?&auth_token=" + indiciaData.readAuth.auth_token + "&nonce=" + indiciaData.readAuth.nonce,
       function(sdata) {
         if (typeof sdata.error==="undefined") {
           $.each(sdata, function(idx, sample) {
@@ -264,7 +264,7 @@ deleteSection = function(section) {
     data[indiciaData.autocalcTransectLengthAttrName] = ''+transectLen;
   }
   // reload the form when all ajax done. This will reload the new section list and total transect length into the form
-  $( document ).ajaxStop(function(event){    
+  $( document ).ajaxStop(function(event){
     window.location = window.location.href.split('#')[0]; // want to GET even if last was a POST. Plus don't want to go to the tab bookmark after #
   });
   $.post(indiciaData.ajaxFormPostUrl,
@@ -304,7 +304,7 @@ insertSection = function(section) {
   $( document ).ajaxStop(function(event){
 	  setTimeout(function(){
 		    window.location.reload(true);
-		},100); 
+		},100);
 //    window.location = window.location.href.split('#')[0]; // want to GET even if last was a POST. Plus don't want to go to the tab bookmark after #
   });
   $.post(indiciaData.ajaxFormPostUrl,
@@ -322,7 +322,7 @@ reloadSection = function(section) {
   var data;
   // section comes in like "S1"
   jQuery('.reload-section').addClass('waiting-button');
-  
+
   numberOfSections = parseInt(jQuery('[name='+indiciaData.numSectionsAttrName.replace(/:/g,'\\:')+']').val(),10) - (parseInt(section.substr(1))+1);
 
   var dialog = jQuery('<p>Please wait whilst the section is deleted (including the observations recorded against it), and the other sections are renumbered.<br/>' +
@@ -331,7 +331,7 @@ reloadSection = function(section) {
 		  // plus 1 is for delete
 	if(typeof indiciaData.sections[section] !== "undefined"){
 		jQuery.getJSON(indiciaData.indiciaSvc + "index.php/services/data/sample?location_id=" + indiciaData.sections[section].id +
-	            "&mode=json&view=detail&callback=?&auth_token=" + indiciaData.readAuth.auth_token + "&nonce=" + indiciaData.readAuth.nonce, 
+	            "&mode=json&view=detail&callback=?&auth_token=" + indiciaData.readAuth.auth_token + "&nonce=" + indiciaData.readAuth.nonce,
 	        function(sdata) {
 				numberOfSamples = sdata.length;
 				jQuery('#recordCounter').html(numberOfRecordsCompleted+' of '+(numberOfSamples+numberOfSections+1));
@@ -348,18 +348,18 @@ reloadSection = function(section) {
   window.onbeforeunload = null;
   setTimeout(function(){
 		    window.location.reload(true);
-		},10000); 
+		},10000);
 };
 
 $(document).ready(function() {
 
-  var doingSelection=false; 
-  
+  var doingSelection=false;
+
   $('#section-form').ajaxForm({
     async: false,
     dataType:  'json',
     complete: function() {
-      // 
+      //
     },
     success: function(data) {
       // remove exiting errors:
@@ -385,8 +385,8 @@ $(document).ready(function() {
         sectionDetailsChanged = false;
       }
     }
-  });  
-  
+  });
+
   $('#section-select li').click(function(evt) {
     var parts = evt.target.id.split('-');
     confirmSelectSection(parts[parts.length-1], true, true);
@@ -422,7 +422,7 @@ $(document).ready(function() {
               if(div.map.controls[i].handler.line){
                 if(div.map.controls[i].handler.line.geometry.components.length == 2) // start point plus current unselected position)
                   div.map.controls[i].cancel();
-                else 
+                else
                   div.map.controls[i].undo();
                 return;
               }
@@ -441,7 +441,7 @@ $(document).ready(function() {
             div.map.editLayer.removeFeatures(oldSection, {});
           }
         } else return; // no existing route to clear
-        if (typeof indiciaData.sections[current]=="undefined") {
+        if (typeof indiciaData.sections[current] === 'undefined') {
           return; // not currently stored in database
         }
         indiciaData.sections[current].sectionLen = 0;
@@ -548,9 +548,9 @@ $(document).ready(function() {
           }});
         }
       });
-      
+
       div.map.editLayer.style = null;
-      var baseStyle = {        
+      var baseStyle = {
         strokeWidth: 4,
         strokeDashstyle: "dash"
       }, defaultRule = new OpenLayers.Rule({
@@ -593,7 +593,7 @@ $(document).ready(function() {
       if (f.length>0) {
         div.map.zoomToExtent(div.map.editLayer.getDataExtent());
       }
-      
+
       function featureChangeEvent(evt) {
         // Only handle lines - as things like the sref control also trigger feature change events
         if (evt.feature.geometry.CLASS_NAME==="OpenLayers.Geometry.LineString") {
@@ -631,10 +631,12 @@ $(document).ready(function() {
             'location:location_type_id':indiciaData.sectionTypeId,
             'website_id':indiciaData.website_id
           };
-          if (typeof indiciaData.sections[current]!=="undefined") {
-            data['location:id']=indiciaData.sections[current].id;
+          if (typeof indiciaData.sections[current] === 'undefined') {
+            // First save, so need to link website.
+            data['locations_website:website_id'] = indiciaData.website_id;
+            indiciaData.sections[current] = {};
           } else {
-            data['locations_website:website_id']=indiciaData.website_id;
+            data['location:id']=indiciaData.sections[current].id;
           }
           if (indiciaData.defaultSectionGridRef==='parent') {
             // initially set the section Sref etc to match the parent. Geom will be auto generated on the server
@@ -703,10 +705,10 @@ $(document).ready(function() {
           );
         }
       }
-      div.map.editLayer.events.on({'featureadded': featureChangeEvent, 'afterfeaturemodified': featureChangeEvent}); 
+      div.map.editLayer.events.on({'featureadded': featureChangeEvent, 'afterfeaturemodified': featureChangeEvent});
     }
   });
-  
+
   $('#add-user').click(function(evt) {
     var user=($('#cmsUserId')[0]).options[$('#cmsUserId')[0].selectedIndex];
     if ($('#user-'+user.value).length===0) {
@@ -714,8 +716,8 @@ $(document).ready(function() {
           user.text+'</td><td><div class="ui-state-default ui-corner-all"><span class="remove-user ui-icon ui-icon-circle-close"></span></div></td></tr>');
     }
   });
-  
-  $('.remove-user').live('click', function(evt) {
+
+  indiciaFns.on('click', '.remove-user', [], function(evt) {
     $(evt.target).closest('tr').css('text-decoration','line-through');
     $(evt.target).closest('tr').addClass('ui-state-disabled');
     // clear the underlying value

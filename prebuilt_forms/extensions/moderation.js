@@ -83,7 +83,7 @@ jQuery(document).ready(function($) {
   //Add an occurrence comment.
   //Can be called from the action column configuration on the edit tab.
   add_comment = function(id) {
-    $.fancybox(
+    $.fancybox.open(
       '<form id="occurrence-comment-form">' +
         '<fieldset class="popup-form">' +
           '<legend>Comment</legend>' +

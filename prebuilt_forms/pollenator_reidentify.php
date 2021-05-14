@@ -91,17 +91,17 @@ class iform_pollenator_reidentify {
       )
     ));
     return $retVal;
-  	
+
   }
 
-  /** 
+  /**
    * Return the form metadata.
    * @return array The definition of the form.
    */
   public static function get_pollenator_reidentify_definition() {
     return array(
       'title'=>self::get_title(),
-      'category' => 'SPIPOLL forms',      
+      'category' => 'SPIPOLL forms',
       'description'=>'Pollenators: Re-identifier of insects following taxa reorganisations.'
     );
   }
@@ -126,7 +126,7 @@ class iform_pollenator_reidentify {
 	data_entry_helper::add_resource('openlayers');
 	data_entry_helper::enable_validation('new-comments-form'); // don't care about ID itself, just want resources
 	data_entry_helper::add_resource('autocomplete');
-	
+
 	global $user;
     $uid = $user->uid;
     $email = $user->mail;
@@ -134,11 +134,11 @@ class iform_pollenator_reidentify {
 	// Get authorisation tokens to update and read from the Warehouse.
 	$readAuth = data_entry_helper::get_read_auth($args['website_id'], $args['password']);
 	$svcUrl = data_entry_helper::$base_url.'/index.php/services';
-	
+
 	// note we have to proxy the post. Every time a write transaction is carried out, the write nonce is trashed.
 	// For security reasons we don't want to give the user the ability to generate their own nonce, so we use
 	// the fact that the user is logged in to drupal as the main authentication/authorisation/identification
-	// process for the user. The proxy also packages the post into the correct format	
+	// process for the user. The proxy also packages the post into the correct format
 
 	// Two insect lists:
 	// 1) list we are going to pick our old taxa from. This will only be those which data entry is no longer allowed.
@@ -156,7 +156,7 @@ class iform_pollenator_reidentify {
     		'blankText'=>lang::get('Choose Taxon'),
     	    'extraParams'=>$readAuth + array('taxon_list_id' => $args['insect_list_id'], 'view'=>'detail','orderby'=>'taxonomic_sort_order','allow_data_entry'=>'f')
 	);
-	
+
  	$r .= '<h1 id="poll-banner"></h1>
 <div id="refresh-message" style="display:none" ><p>'.lang::get('Please Refresh Page').'</p></div>
 <div id="filter" class="ui-accordion ui-widget ui-helper-reset">
@@ -179,12 +179,12 @@ class iform_pollenator_reidentify {
 		    <span><input type="checkbox" value="X" id="insect_id_status:0" name="insect_id_status[]"><label for="insect_id_status:0">'.lang::get('Unidentified').'</label></span></nobr> &nbsp; <nobr>
 		    <span><input type="checkbox" value="A" id="insect_id_status:1" name="insect_id_status[]"><label for="insect_id_status:1">'.lang::get('Initial').'</label></span></nobr> &nbsp; <nobr>
 		    <span><input type="checkbox" value="B" id="insect_id_status:2" name="insect_id_status[]"><label for="insect_id_status:2">'.lang::get('Doubt').'</label></span></nobr> &nbsp; <nobr>
-		    <span><input type="checkbox" value="C" id="insect_id_status:3" name="insect_id_status[]"><label for="insect_id_status:3">'.lang::get('Validated').'</label></span></nobr> &nbsp; 
+		    <span><input type="checkbox" value="C" id="insect_id_status:3" name="insect_id_status[]"><label for="insect_id_status:3">'.lang::get('Validated').'</label></span></nobr> &nbsp;
 		  </span>
 		  <label >'.lang::get('Identification Type').':</label>
 		  <span class="control-box "><nobr>
 		    <span><input type="checkbox" value="seul" id="insect_id_type:0" name="insect_id_type[]"><label for="insect_id_type:0">'.lang::get('Single Taxon').'</label></span></nobr> &nbsp; <nobr>
-		    <span><input type="checkbox" value="multi" id="insect_id_type:1" name="insect_id_type[]"><label for="insect_id_type:1">'.lang::get('Multiple Taxa').'</label></span></nobr> &nbsp; 
+		    <span><input type="checkbox" value="multi" id="insect_id_type:1" name="insect_id_type[]"><label for="insect_id_type:1">'.lang::get('Multiple Taxa').'</label></span></nobr> &nbsp;
 		  </span>
 		</div>
 	  </div>
@@ -204,8 +204,8 @@ class iform_pollenator_reidentify {
     <form id="bulk-reassignment-form" action="'.iform_ajaxproxy_url($nid, 'determination').'" method="POST" >
 		<input type="hidden" name="website_id" value="'.$args['website_id'].'" />
 		<input type="hidden" name="determination:occurrence_id" value="" />
-		<input type="hidden" name="determination:cms_ref" value="'.$uid.'" />  
-		<input type="hidden" name="determination:person_name" value="'.$username.'" />  
+		<input type="hidden" name="determination:cms_ref" value="'.$uid.'" />
+		<input type="hidden" name="determination:person_name" value="'.$username.'" />
 		<input type="hidden" name="determination:email_address" value="'.$email.'" />
 		<input type="hidden" name="determination:determination_type" value="C" />
 		<input type="hidden" name="determination:taxon_details" value="" />
@@ -214,7 +214,7 @@ class iform_pollenator_reidentify {
 		<input type="hidden" name="determination:taxon_extra_info" value="" />
 	</form>
 	  	<div id="reassign-button" class="ui-state-default ui-corner-all reassign-button">'.lang::get('Reassign Taxon').'</div>
-		<div id="reassign-progress"></div>
+		<progress id="reassign-progress" class="progress" max="100"></progress>
 		<div id="reassign-message"></div>
 		<div id="last-updated"></div>
 	  	<div id="cancel-reassign-taxon" class="ui-state-default ui-corner-all cancel-reassign-button">'.lang::get('Cancel').'</div>
@@ -251,12 +251,12 @@ replacechar = function(match){
     default: return match;
   }
 };
-    
+
 htmlspecialchars = function(value){ return value.replace(/[<>\"'&]/g, function(m){return replacechar(m)}) };
 jQuery('#insect-taxa-taxon-list-id option').each(function(idx,elem){
   jQuery(elem).html(jQuery(elem).html()+' ('+jQuery(elem).val()+')');
 });
-    		
+
 jQuery('input#insectAutocomplete1').autocomplete(insectTaxa,
       { matchContains: true,
         parse: function(data)
@@ -295,14 +295,14 @@ jQuery('input#insect2').change(function() {
 jQuery('.removeRow').live('click', function (){ jQuery(this).closest('tr').remove(); });
 bulkAssigning=false;
 bulkCancel=false;
-jQuery('#reassign-progress').progressbar({value: 0});
+jQuery('#reassign-progress').val(0);
 jQuery('form#bulk-reassignment-form').ajaxForm({
-	dataType:  'json', 
+	dataType:  'json',
 	beforeSubmit:   function(data, obj, options){
 		if(bulkCancel){
 			bulkReassignFinish(\"".lang::get('Bulk Reassignment Canceled')."\");
 			return false;
-		}	
+		}
 		return true;
 	},
 	success:   function(data){
@@ -320,7 +320,7 @@ jQuery('form#bulk-reassignment-form').ajaxForm({
 			alert(data.error);
 			bulkReassignFinish(\"".lang::get('Bulk Reassignment Error')."\");
   		}
-	} 
+	}
 });
 // Done: Convert single taxon
 // Done: allow filtering by single or multi taxa.
@@ -338,14 +338,14 @@ uploadReassignment = function(){
 	var max = jQuery('#reassign-progress').data('max');
 	var index = jQuery('#reassign-progress').data('index');
 	jQuery('#reassign-progress').data('index',index+1);
-	jQuery('#reassign-progress').progressbar('option','value',index*100/max);
+	jQuery('#reassign-progress').val(index*100/max);
 	if(index<max){
 		occID=searchResults.features[index].attributes.insect_id;
 		jQuery('#reassign-message').html('<span>'+index+'/'+max+' : '+Math.round(index*100/max)+'%</span>');
 	}
 	if(occID && !bulkCancel){
-		$.getJSON(\"".$svcUrl."/data/determination\" + 
-				\"?mode=json&view=list&nonce=".$readAuth['nonce']."&auth_token=".$readAuth['auth_token']."\" + 
+		$.getJSON(\"".$svcUrl."/data/determination\" +
+				\"?mode=json&view=list&nonce=".$readAuth['nonce']."&auth_token=".$readAuth['auth_token']."\" +
 				\"&reset_timeout=true&occurrence_id=\" + occID + \"&deleted=f&orderby=id&sortdir=DESC&REMOVEABLEJSONP&callback=?\", function(detData) {
 			if(!(detData instanceof Array)){
    				alertIndiciaError(detData);
@@ -399,7 +399,7 @@ bulkReassignPrep=function(max){
 	jQuery('#reassign-message').empty();
 	jQuery('#search-insects-button,#reassign-button').attr('disabled','disabled');
 	jQuery('#reassign-message').html('<span>0/'+max+' : 0%</span>');
-	jQuery('#reassign-progress').data('max',max).data('index',0).progressbar('option','value',0);
+	jQuery('#reassign-progress').data('max',max).data('index',0).val(0);
 }
 bulkReassignFinish=function(message){
 	bulkCancel=false;
@@ -452,7 +452,7 @@ runSearch = function(){
 	var filters = [];
 
   	// filters.push(new OpenLayers.Filter.Comparison({type: OpenLayers.Filter.Comparison.EQUAL_TO, property: 'survey_id', value: '".$args['survey_id']."' }));
- 			
+
 	var insect = jQuery('select[name=insect\\:taxa_taxon_list_id]').val();
 	if(insect == '') return;
 	var insect_taxon_filter = new OpenLayers.Filter.Comparison({type: OpenLayers.Filter.Comparison.LIKE, property: 'insect_taxon_ids', value: '*|'+insect+'|*'});
@@ -469,11 +469,11 @@ runSearch = function(){
 		ORgroup.push(new OpenLayers.Filter.Comparison({type: OpenLayers.Filter.Comparison.EQUAL_TO, property: 'insect_taxon_type', value: elem.value}));
 	});
 	if(ORgroup.length >= 1) filters.push(combineOR(ORgroup));
-	
+
   	feature = '".$args['search_insects_layer']."';
   	properties = ['insect_id','collection_id','geom'];
-  	
-	searchResults = null;  
+
+	searchResults = null;
 	var protocol = new OpenLayers.Protocol.WFS({
               url: '".str_replace("{HOST}", $_SERVER['HTTP_HOST'], $args['search_url'])."',
               featurePrefix: '".$args['search_prefix']."',
@@ -481,7 +481,7 @@ runSearch = function(){
               geometryName:'geom',
               featureNS: '".$args['search_ns']."',
               srsName: 'EPSG:900913',
-              version: '1.1.0',   
+              version: '1.1.0',
               maxFeatures: ".$args['max_features'].",
               propertyNames: properties,
               callback: function(a1){
@@ -504,13 +504,13 @@ runSearch = function(){
     protocol.read({filter: new OpenLayers.Filter.Logical({type: OpenLayers.Filter.Logical.AND, filters: filters})});
 };
 
-searchResults = null;  
+searchResults = null;
 collection = '';
 ";
 
     return $r;
   }
-  
+
   /**
    * Handles the construction of a submission array from a set of form values.
    * @param array $values Associative array of form data values.

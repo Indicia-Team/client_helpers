@@ -72,62 +72,63 @@ class iform_species_details extends iform_dynamic {
     $retVal = array_merge(
       iform_map_get_map_parameters(),
       array(array(
-        'name'=>'interface',
-        'caption'=>'Interface Style Option',
-        'description'=>'Choose the style of user interface, either dividing the form up onto separate tabs, '.
+        'name' => 'interface',
+        'caption' => 'Interface Style Option',
+        'description' => 'Choose the style of user interface, either dividing the form up onto separate tabs, ' .
           'wizard pages or having all controls on a single page.',
-        'type'=>'select',
+        'type' => 'select',
         'options' => array(
           'tabs' => 'Tabs',
           'wizard' => 'Wizard',
-          'one_page' => 'All One Page'
+          'one_page' => 'All One Page',
         ),
         'default' => 'one_page',
-        'group' => 'User Interface'
+        'group' => 'User Interface',
       ),
-      //List of fields to hide in the Species Details section
+      // List of fields to hide in the Species Details section.
       array(
         'name' => 'fields',
         'caption' => 'Fields to include or exclude',
-        'description' => 'List of data fields to hide, one per line.'.
-            'Type in the field name as seen exactly in the Species Details section. For custom attributes you should use the system function values '.
+        'description' => 'List of data fields to hide, one per line.' .
+            'Type in the field name as seen exactly in the Species Details section. For custom attributes you should use the system function values ' .
             'to filter instead of the caption if defined below.',
         'type' => 'textarea',
-        'required'=>false,
+        'required' => FALSE,
         'default' => '',
-        'group' => 'Fields for Species details'
+        'group' => 'Fields for Species details',
       ),
       array(
-        'name'=>'operator',
-        'caption'=>'Include or exclude',
-        'description'=>"Do you want to include only the list of fields you've defined, or exclude them?",
-        'type'=>'select',
+        'name' => 'operator',
+        'caption' => 'Include or exclude',
+        'description' => "Do you want to include only the list of fields you've defined, or exclude them?",
+        'type' => 'select',
         'options' => array(
           'in' => 'Include',
-          'not in' => 'Exclude'
+          'not in' => 'Exclude',
         ),
         'default' => 'not in',
-        'group' => 'Fields for Species details'
+        'group' => 'Fields for Species details',
       ),
       array(
-        'name'=>'testagainst',
-        'caption'=>'Test attributes against',
-        'description'=>'For custom attributes, do you want to filter the list to show using the caption or the system function? If the latter, then '.
+        'name' => 'testagainst',
+        'caption' => 'Test attributes against',
+        'description' => 'For custom attributes, do you want to filter the list to show using the caption or the system function? If the latter, then '.
             'any custom attributes referred to in the fields list above should be referred to by their system function which might be one of: email, '.
-            'cms_user_id, cms_username, first_name, last_name, full_name, biotope, sex_stage, sex_stage_count, certainty, det_first_name, det_last_name.',
-        'type'=>'select',
+            'cms_user_id, cms_username, first_name, last_name, full_name, biotope, behaviour, reproductive_condition, sex_stage, sex_stage_count, ' .
+            'certainty, det_first_name, det_last_name.',
+        'type' =>'select',
         'options' => array(
-          'caption'=>'Caption',
-          'system_function'=>'System Function'
+          'caption' => 'Caption',
+          'system_function' => 'System Function',
         ),
         'default' => 'caption',
-        'group' => 'Fields for Species details'
+        'group' => 'Fields for Species details',
       ),
       //Allows the user to define how the page will be displayed.
       array(
-        'name'=>'structure',
-        'caption'=>'Form Structure',
-        'description'=>'Define the structure of the form. Each component must be placed on a new line. <br/>'.
+        'name' => 'structure',
+        'caption' => 'Form Structure',
+        'description' => 'Define the structure of the form. Each component must be placed on a new line. <br/>'.
           "The following types of component can be specified. <br/>".
           "<strong>[control name]</strong> indicates a predefined control is to be added to the form with the following predefined controls available: <br/>".
               "&nbsp;&nbsp;<strong>[speciesdetails]</strong> - displays information relating to the occurrence and its sample<br/>".
@@ -139,7 +140,7 @@ class iform_species_details extends iform_dynamic {
           "If the page interface type is set to one page, then each tab/page name is displayed as a seperate section on the page. ".
           "Note that in one page mode, the tab/page names are not displayed on the screen.<br/>".
           "<strong>|</strong> is used to split a tab/page/section into two columns, place a [control name] on the previous line and following line to split.<br/>",
-        'type'=>'textarea',
+        'type' => 'textarea',
         'default' => '
 =General=
 [speciesdetails]
@@ -150,9 +151,9 @@ class iform_species_details extends iform_dynamic {
         'group' => 'User Interface'
       ),
       array(
-        'name'=>'explore_url',
-        'caption'=>'Explore URL',
-        'description'=>'When you click on the Explore this species\' records button you are taken to this URL. Use {rootfolder} as a replacement '.
+        'name' => 'explore_url',
+        'caption' => 'Explore URL',
+        'description' => 'When you click on the Explore this species\' records button you are taken to this URL. Use {rootfolder} as a replacement '.
             'token for the site\'s root URL.',
         'type' => 'string',
         'required'=>false,
@@ -160,9 +161,9 @@ class iform_species_details extends iform_dynamic {
         'group' => 'User Interface'
       ),
       array(
-        'name'=>'explore_param_name',
-        'caption'=>'Explore Parameter Name',
-        'description'=>'Name of the parameter added to the Explore URL to pass through the taxon_meaning_id of the species being explored. '.
+        'name' => 'explore_param_name',
+        'caption' => 'Explore Parameter Name',
+        'description' => 'Name of the parameter added to the Explore URL to pass through the taxon_meaning_id of the species being explored. '.
             'The default provided (filter-taxon_meaning_list) is correct if your report uses the standard parameters configuration.',
         'type' => 'string',
         'required'=>false,
@@ -652,7 +653,7 @@ class iform_species_details extends iform_dynamic {
    *   The output report grid.
    */
   protected static function get_control_photos($auth, $args, $tabalias, $options) {
-    iform_load_helpers(array('report_helper'));
+    iform_load_helpers(['report_helper']);
     data_entry_helper::add_resource('fancybox');
     $options = array_merge(array(
       'itemsPerPage' => 20,
@@ -661,44 +662,27 @@ class iform_species_details extends iform_dynamic {
     ), $options);
 
     // Use this report to return the photos.
-    $reportName = 'library/occurrence_images/filterable_explore_list';
-    return
-      '<div class="detail-panel" id="detail-panel-photos"><h3>' . lang::get('Photos and media') . '</h3>' .
-      report_helper::freeform_report(array(
+    $reportName = 'reports_for_prebuilt_forms/species_details/occurrences_thumbnails';
+    $media = report_helper::get_report_data([
       'readAuth' => $auth['read'],
       'dataSource' => $reportName,
       'itemsPerPage' => $options['itemsPerPage'],
-      'class' => $options['class'],
-      'header' => '<ul>',
-      'footer' => '</ul>' .
-          '<p class="helpText">' .
-          lang::get('*Icons in the top corner of photos show the verification status of the underlying records.') .
-          '</p>',
-      'bands' => [
-        [
-          'content' => <<<HTML
-<li class="gallery-item">
-  <a href="{imageFolder}{media}" class="fancybox single">
-    <img src="{imageFolder}$options[imageSize]-{media}" />
-    <span class="status-icon certainty-{certainty} status-{record_status} substatus-{record_substatus} query-{query}" />
-  </a><br/>
-  {caption}
-</li>
-HTML
-        ],
-      ],
-      'emptyText' => '<p>No photos or media files available</p>',
-      'mode' => 'report',
-      'autoParamsForm' => FALSE,
-      'extraParams' => array(
+      'extraParams' => [
         'taxon_meaning_list' => self::$taxon_meaning_id,
-        'smpattrs' => '',
-        'occattrs' => '',
-        'sharing' => 'reporting',
-        'status' => '!R',
         'limit' => $options['itemsPerPage'],
-      )
-    )) . '</div>';
+      ],
+    ]);
+    $r = '<div class="detail-panel" id="detail-panel-photos"><h3>' . lang::get('Photos and media') . '</h3>';
+    if (count($media) === 0) {
+      $r .= '<p>No photos or media files available</p>';
+    }
+    else {
+      foreach ($media['records'] as $medium) {
+        $r .= iform_report_get_gallery_item('occurrence', $medium, $options['imageSize']);
+      }
+    }
+    $r .= '</div>';
+    return $r;
   }
 
   /*
@@ -744,7 +728,7 @@ HTML
       'class' => 'cloud',
       'header' => '<ul>',
       'footer' => '</ul>',
-      'bands' => array(array('content'=>'<li style="font-size: {font_size}px">' .
+      'bands' => array(array('content' => '<li style="font-size: {font_size}px">' .
           "<a href=\"$currentUrl[path]{taxon_meaning_id}\">{species}<a/></li>")),
       'emptyText' => '<p>No association species information available</p>',
       'extraParams' => array()
@@ -957,7 +941,7 @@ HTML
       return '';
     $reportResult = report_helper::get_report_data(array(
       'readAuth' => $auth['read'],
-      'dataSource'=>'library/taxa/species_notes_and_images',
+      'dataSource' => 'library/taxa/species_notes_and_images',
       'useCache' => false,
       'extraParams'=>array(
         'taxa_taxon_list_id'=>self::$taxa_taxon_list_id,

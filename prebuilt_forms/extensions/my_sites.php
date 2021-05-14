@@ -19,7 +19,7 @@
  * @license	http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link 	http://code.google.com/p/indicia/
  */
- 
+
 /**
  * Extension class that supplies new controls to support My Sites selection for dynamic forms.
  */
@@ -60,7 +60,7 @@ class extension_my_sites {
         'filterIncludesNulls' => false,
         'emptyFilterIsUnfiltered' => true
       ), $localityOpts);
-    } 
+    }
     else {
       $r .= '<label>'.lang::get('Select site by locality').'</label> ';
       // no need for a locality select, so just filter to the location type
@@ -74,7 +74,7 @@ class extension_my_sites {
       'table' => '',
       'valueField' => 'location_id',
       'captionField' => 'q',
-      'extraParams' => $auth['read'] + array('location_type_ids'=>$options['locationTypeResults'], 'locattrs'=>'', 
+      'extraParams' => $auth['read'] + array('location_type_ids'=>$options['locationTypeResults'], 'locattrs'=>'',
           'user_id' => hostsite_get_user_field('indicia_user_id'), 'person_site_attr_id'=>$options['mySitesPsnAttrId'], 'hide_existing' => 1),
       'parentControlId' => 'locality_id',
       'parentControlLabel' => lang::get('Locality to search'),
@@ -90,8 +90,8 @@ class extension_my_sites {
       'table' => '',
       'valueField' => 'location_id',
       'captionField' => 'q',
-      'extraParams' => $auth['read'] + array('location_type_ids'=>$options['locationTypeResults'], 'locattrs'=>'', 
-          'user_id' => hostsite_get_user_field('indicia_user_id'), 'person_site_attr_id'=>$options['mySitesPsnAttrId'], 
+      'extraParams' => $auth['read'] + array('location_type_ids'=>$options['locationTypeResults'], 'locattrs'=>'',
+          'user_id' => hostsite_get_user_field('indicia_user_id'), 'person_site_attr_id'=>$options['mySitesPsnAttrId'],
           'hide_existing' => 1, 'parent_id'=>'')
     ));
     $r .= '<button id="add-searched-site-button" type="button">' . lang::get('Add to My Sites') . '</button><br/>';
@@ -99,7 +99,7 @@ class extension_my_sites {
     data_entry_helper::$javascript .= "
       function addSite(locationId) {
         if (!isNaN(locationId) && locationId!=='') {
-          $.post('$postUrl', 
+          $.post('$postUrl',
             {\"website_id\":".$args['website_id'].",\"person_attribute_id\":".$options['mySitesPsnAttrId'].
                 ",\"user_id\":".hostsite_get_user_field('indicia_user_id').",\"int_value\":locationId} ,
             function (data) {
@@ -125,10 +125,10 @@ class extension_my_sites {
           indiciaData.mapdiv.locationSelectedInInput(indiciaData.mapdiv, this.value);
         }
       });
-      
+
       linked_site_delete = function(pav_id) {
         var userId=".hostsite_get_user_field('indicia_user_id').";
-        $.post('$postUrl', 
+        $.post('$postUrl',
           {\"website_id\":".$args['website_id'].",\"id\":pav_id, \"deleted\":\"t\"},
           function (data) {
             if (typeof data.error === 'undefined') {
@@ -144,7 +144,7 @@ class extension_my_sites {
     $r .= '</fieldset>';
     return $r;
   }
-  
+
   /**
    * A select box allowing you to pick one of your sites.
    * Supply @personSiteAttrId as an option to give the ID of the person custom attribute used
@@ -162,16 +162,16 @@ class extension_my_sites {
         $location_list_args['extraParams']['user_id']=$userId;
         $location_list_args['extraParams']['person_site_attr_id']=$options['personSiteAttrId'];
         $location_list_args['report'] = 'library/locations/my_sites_lookup';
-      } else 
+      } else
         $location_list_args['extraParams']['created_by_id']=$userId;
     }
     $location_list_args['extraParams']['view']='detail';
     $location_list_args['allowCreate']=true;
     return data_entry_helper::location_autocomplete($location_list_args);
   }
-  
+
   /*
-   * Control allows administrators to maintain the "my sites" list for other users. 
+   * Control allows administrators to maintain the "my sites" list for other users.
    * @locationParamFromURL can be supplied as an option to hide the locations drop-down and automatically get the location id from the $_GET url parameter, this option should be set as the
    * name of the parameter when it is in use.
    * @userParamFromURL can be set in a very similar way, but this would hide the user drop down instead. This could be used in the situation where
@@ -187,15 +187,15 @@ class extension_my_sites {
       return 'An AJAX Proxy module must be enabled for user sites administration to work.';
      if (!empty($options['locationDropDownLabel']))
       $locationDropDownLabel=$addButtonLabel=$options['locationDropDownLabel'].' :';
-    else 
+    else
       $locationDropDownLabel=lang::get('Location :');
     if (!empty($options['addButtonLabel']))
       $addButtonLabel=$options['addButtonLabel'];
-    else 
+    else
       $addButtonLabel=lang::get('Add to this User\'s Sites List');
     if (!empty($options['fieldSetLegend']))
       $fieldSetLegendText=$options['fieldSetLegend'];
-    else 
+    else
       $fieldSetLegendText=lang::get('Add locations to the sites lists for other users');
     $r = "<form><fieldset><legend>" .$fieldSetLegendText. "</legend>";
     if (empty($options['locationTypes']) || !preg_match('/^([0-9]+,( )?)*[0-9]+$/', $options['locationTypes']))
@@ -216,15 +216,15 @@ class extension_my_sites {
     elseif (!empty($_GET['dynamic-the_user_id']))
       $userIdFromURL=$_GET['dynamic-the_user_id'];
     else
-      $userIdFromURL=0; 
+      $userIdFromURL=0;
     $extraParams=array('location_type_ids'=>$options['locationTypes'], 'user_id'=>hostsite_get_user_field('indicia_user_id'),
         'my_sites_person_attr_id'=>$options['mySitesPsnAttrId']);
     //Can limit results in location drop-down to certain distance of a post code
     if (!empty($options['postCodeGeomParamName'])&&!empty($_GET[$options['postCodeGeomParamName']]))
       $extraParams['post_code_geom']=$_GET[$options['postCodeGeomParamName']];
     if (!empty($options['distanceFromPostCodeParamName'])&&!empty($_GET[$options['distanceFromPostCodeParamName']]))
-      $extraParams['distance_from_post_code']=$_GET[$options['distanceFromPostCodeParamName']]; 
-    //If we don't want to automatically get the location id from the URL, then display a drop-down of locations the user can select from   
+      $extraParams['distance_from_post_code']=$_GET[$options['distanceFromPostCodeParamName']];
+    //If we don't want to automatically get the location id from the URL, then display a drop-down of locations the user can select from
     if (empty($locationIdFromURL)) {
       $r .= '<label>'.$locationDropDownLabel.'</label> ';
       //Get a list of all the locations that match the given location types (in this case my sites are returned first, although this isn't a requirement)
@@ -239,9 +239,9 @@ class extension_my_sites {
     //Get the user select control if the user id isn't in the url
     if (empty($userIdFromURL))
       $r .= self:: user_select_for_add_sites_to_any_user_control($auth['read'],$args['website_id'],$options);
-    
+
     $r .= '<input id="add-user-site-button" type="button" value="'.$addButtonLabel.'"/><br></form><br>';
-    
+
     $postUrl = iform_ajaxproxy_url(null, 'person_attribute_value');
 
     //Firstly check both a uer and location have been selected.
@@ -251,14 +251,14 @@ class extension_my_sites {
       var userIdToAdd = userId;
       var locationIdToAdd = locationId;
       var sitesReport = indiciaData.read.url +'/index.php/services/report/requestReport?report=library/locations/all_user_sites.xml&mode=json&mode=json&callback=?';
-        
+
       var sitesReportParameters = {
         'person_site_attr_id': '".$options['mySitesPsnAttrId']."',
         'auth_token': indiciaData.read.auth_token,
         'nonce': indiciaData.read.nonce,
         'reportSource':'local'
       };
-      
+
       if (!userIdToAdd||!locationIdToAdd) {
         alert('Please select both a user and a location to add.');
       } else {
@@ -279,15 +279,15 @@ class extension_my_sites {
             }
           }
         );
-      }    
+      }
     }
     ";
-      
+
     //After duplicate check is performed, add the user/site combination to the person_attribute_values database table
     data_entry_helper::$javascript .= "
     function addUserSiteData(locationId, userIdToAdd) {
       if (!isNaN(locationId) && locationId!=='') {
-        $.post('$postUrl', 
+        $.post('$postUrl',
           {\"website_id\":".$args['website_id'].",\"person_attribute_id\":".$options['mySitesPsnAttrId'].
               ",\"user_id\":userIdToAdd,\"int_value\":locationId},
           function (data) {
@@ -296,7 +296,7 @@ class extension_my_sites {
               location.reload();
             } else {
               alert(data.error);
-            }              
+            }
           },
           'json'
         );
@@ -312,12 +312,12 @@ class extension_my_sites {
       if (".$locationIdFromURL.") {
         locationId = ".$locationIdFromURL.";
       } else {
-        locationId = $('#location-select').val();       
+        locationId = $('#location-select').val();
       }
       if (".$userIdFromURL.") {
         userId = ".$userIdFromURL.";
       } else {
-        userId = $('#user-select').val();     
+        userId = $('#user-select').val();
       }
       duplicateCheck(locationId,userId);
     });";
@@ -332,11 +332,11 @@ class extension_my_sites {
     //Function for when user elects to remove sites
     data_entry_helper::$javascript .= "
     user_site_delete = function(pav_id) {
-      $.post('$postUrl', 
+      $.post('$postUrl',
         {\"website_id\":".$args['website_id'].",\"id\":pav_id, \"deleted\":\"t\"},
         function (data) {
           if (typeof data.error === 'undefined') {
-            location.reload(); 
+            location.reload();
           } else {
             alert(data.error);
           }
@@ -347,14 +347,14 @@ class extension_my_sites {
     ";
     return $r;
   }
-  
+
   /*
    * User select drop-down for sites administation control
    * @readAuth read authentication
    * @website_id Website ID.
    * @options Options passed to the control.
    */
-  private static function  user_select_for_add_sites_to_any_user_control($readAuth,$website_id,$options) {
+  private static function  user_select_for_add_sites_to_any_user_control($readAuth, $website_id, $options) {
     $r = '';
     if (!empty($options['useAutocomplete'])&&$options['useAutocomplete']==true) {
       $r .= data_entry_helper::autocomplete(array(
@@ -366,7 +366,7 @@ class extension_my_sites {
         'helpText' => lang::get('Select a location to input data for before selecting a site.'),
         'captionField'=>'fullname_surname_first',
         'valueField'=>'id'
-      )); 
+      ));
     } else {
       $reportOptions = array(
         'dataSource'=>'library/users/get_people_details_for_website_or_user',
@@ -375,7 +375,8 @@ class extension_my_sites {
         'valueField'=>'id',
         'captionField'=>'fullname_surname_first'
       );
-      $userData = data_entry_helper::get_report_data($reportOptions);
+      iform_load_helpers(['report_helper']);
+      $userData = report_helper::get_report_data($reportOptions);
       $selectHtml = '<select id="user-select">\n';
       $selectHtml .= '<option value="">'.'please select'.'</option>\n';
       foreach ($userData as $userItem) {

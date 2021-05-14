@@ -76,9 +76,9 @@ class iform_group_leave {
       'extraParams' => $auth['read']+array('id'=>$_GET['group_id']),
       'nocache'=>true
     ));
-    if (count($group)!==1)
+    if (count($group) !== 1) {
       return self::abort('The group you\'ve requested membership of does not exist.', $args);
-    iform_load_helpers(array('submission_builder'));
+    }
     $group = $group[0];
     // Check for an existing group user record
     $existing = data_entry_helper::get_population_data(array(

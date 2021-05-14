@@ -22,14 +22,14 @@
 
 /**
  * Prebuilt form for the Plantlife Wildflower Count
- * 
+ *
  * @package Client
  * @subpackage PrebuiltForms
  */
 class iform_wildflower_count {
-  
-  /** 
-   * Return the form metadata. 
+
+  /**
+   * Return the form metadata.
    * @return array The definition of the form.
    */
   public static function get_wildflower_count_definition() {
@@ -39,12 +39,12 @@ class iform_wildflower_count {
       'description'=>'A form for inputting data against the Plantlife Wildflower Count survey.'
     );
   }
-  
+
   /**
    * Get the list of parameters for this form.
    * @return array List of parameters that this form requires
    */
-  public static function get_parameters() {   
+  public static function get_parameters() {
     return array(
       array(
           'name'=>'survey_id',
@@ -167,10 +167,10 @@ class iform_wildflower_count {
         'siteSpecific'=>true
       ),
     );
-    
-    
+
+
   }
-  
+
   /**
    * Return the generated form output.
    * @param array $args List of parameter values passed through to the form depending on how the form has been configured.
@@ -206,7 +206,7 @@ class iform_wildflower_count {
     data_entry_helper::enable_validation('entry-form');
     $r .= '<form method="post" action="" id="entry-form">';
     $r .= '<div id="tabs">';
-    data_entry_helper::enable_tabs(array('divId'=>'tabs','navButtons'=>true)); 
+    data_entry_helper::enable_tabs(array('divId'=>'tabs','navButtons'=>true));
     $r .= data_entry_helper::tab_header(array('tabs'=>array(
       '#your-square'=>'Find Place',
       '#your-plots'=>'Your Plots',
@@ -238,9 +238,9 @@ class iform_wildflower_count {
     $r .= '</form>';
     return $r;
   }
-  
+
   protected static function load_top_sample_attrs($auth, $args, $sampleId=null) {
-    $attrOpts = array(     
+    $attrOpts = array(
        'valuetable'=>'sample_attribute_value'
        ,'attrtable'=>'sample_attribute'
        ,'key'=>'sample_id'
@@ -258,16 +258,16 @@ class iform_wildflower_count {
     }
     return $sorted;
   }
-  
+
   protected static function get_hiddens($args, $auth) {
     $r = $auth['write'];
     $r .= '<input type="hidden" name="website_id" value="'.$args['website_id'].'"/>';
     $r .= '<input type="hidden" name="survey_id" value="'.$args['survey_id'].'"/>';
-    if (isset(data_entry_helper::$entity_to_load['sample:id'])) 
+    if (isset(data_entry_helper::$entity_to_load['sample:id']))
       $r .= '<input type="hidden" id="sample:id" name="sample:id" value="' . data_entry_helper::$entity_to_load['sample:id'] . '" />';
     return $r;
   }
-  
+
   protected static function tab_your_square($args, $auth, $attrs) {
     $r = '<fieldset class="ui-corner-all" >';
     $r .= '<legend>Place on map</legend>';
@@ -303,8 +303,8 @@ class iform_wildflower_count {
     $r .= 'type="radio" id="attr_surveyed_given_square" value="'.$args['term_surveyed_given_square'].
         '" name="'.$whichSqrAttr['fieldname'].'"/> ';
     $r .= "I have surveyed the random square that I was given</label><br/>\n";
-    
-    
+
+
     $r .= '<label class="auto">';
     $r .= '<input ';
     if ($value==$args['term_surveyed_other_square'])
@@ -327,7 +327,8 @@ class iform_wildflower_count {
     $r .= "I have resurveyed the same square as before</label>\n";
     $r .= '</fieldset>';
     $r .= '</div><div class="column">';
-    $r .= data_entry_helper::map_panel(array(
+    iform_load_helpers(['map_helper']);
+    $r .= map_helper::map_panel(array(
         'presetLayers' => array('google_hybrid'),
         'readAuth' => $auth,
         'class'=>'ui-widget-content',
@@ -340,19 +341,19 @@ class iform_wildflower_count {
         'tabDiv'=>'your-square'
     ));
     $r .= "</div></div></fieldset>\n";
-    
+
     $r .= data_entry_helper::wizard_buttons(array(
       'divId' => 'tabs',
       'page'  => 'middle'
     ));
     return $r;
   }
-  
+
   protected static function tab_your_plots($args, $auth) {
     $r = data_entry_helper::date_picker(array(
       'label' => 'Date of visit',
       'fieldname' => 'sample:date',
-      'class' => 'ui-state-highlight'  
+      'class' => 'ui-state-highlight'
     ));
     $r .= self::output_habitats_block('Path', 'path', $auth, $args);
     $r .= self::output_habitats_block('Square plot', 'square', $auth, $args);
@@ -363,11 +364,11 @@ class iform_wildflower_count {
     ));
     return $r;
   }
-  
+
   protected static function output_habitats_block($title, $prefix, $auth, $args) {
     global $indicia_templates;
     static $existingSubSamples;
-    
+
     $r = '<fieldset class="ui-corner-all">
   <legend>'.$title.' habitats</legend>
   <table class="habitats">
@@ -378,7 +379,7 @@ class iform_wildflower_count {
   <td>26-50%</td>
   <td>51-75%</td>
   <td>76-100%</td>
-  <td>Further info. about habitat e.g management, recent changes</td>';  
+  <td>Further info. about habitat e.g management, recent changes</td>';
     $r .= '</tr></thead>
   <tbody>';
     $coverageAttrs = data_entry_helper::getAttributes(array(
@@ -396,7 +397,7 @@ class iform_wildflower_count {
         'survey_id'=>$args['survey_id'],
     ));
     if (isset($_GET['sample_id'])) {
-      // use a static here to load all the subsample data in one hit      
+      // use a static here to load all the subsample data in one hit
       if (!isset($existingSubSamples)) {
         $attrIds = array();
         foreach ($coverageAttrs as $attr)
@@ -417,7 +418,7 @@ class iform_wildflower_count {
           break;
         }
       }
-      
+
       // apply the defaults we just loaded to the list of attributes
       if (isset($thisSubSample)) {
         foreach ($coverageAttrs as $idx=>$attr) {
@@ -463,7 +464,7 @@ class iform_wildflower_count {
     $r .= '</fieldset>';
     return $r;
   }
-  
+
   protected static function tab_species($args, $auth, $offset, $limit) {
     $r = '<p>Please select the percentage cover of each species that is present in each plot from the list below.</p>';
     global $indicia_templates;
@@ -477,22 +478,22 @@ class iform_wildflower_count {
         'rowInclusionCheck'=>'hasData',
         'class'=>'checklist',
         'survey_id' => $args['survey_id'],
-        'extraParams'=>$auth['read'] + array('taxon_list_id' => $args['list_id'], 'limit'=>$limit, 
+        'extraParams'=>$auth['read'] + array('taxon_list_id' => $args['list_id'], 'limit'=>$limit,
             'offset'=>$offset, 'orderby'=>'taxonomic_sort_order', 'sortdir'=>'ASC', 'view'=>'detail'),
         'occAttrClasses'=>array('coverage'),
         'speciesNameFilterMode'=>'preferred',
         'language'=>'eng',
         // prevent multiple hits to the db - the first grid can load all the species data
         'useLoadedExistingRecords' => $offset>0
-    )); 
+    ));
     $r .= data_entry_helper::wizard_buttons(array(
       'divId' => 'tabs',
       'page'  => 'middle'
     ));
-    
+
     return $r;
   }
-  
+
   protected static function tab_other_species($args, $auth) {
     $r = '';
     $indicia_templates['taxon_label']='<div class="biota nobreak"><span class="vernacular">{common}</span>'.
@@ -520,10 +521,10 @@ class iform_wildflower_count {
       $species_ctrl_opts['taxonFilterField']=$args['taxon_filter_field'];
       $species_ctrl_opts['taxonFilter']=$filterLines;
     }
-    
+
     self::build_grid_taxon_label_function($args);
     self::build_grid_autocomplete_function($args);
-    $r .= data_entry_helper::species_checklist($species_ctrl_opts); 
+    $r .= data_entry_helper::species_checklist($species_ctrl_opts);
     $r .= '<p class="highlight">'.lang::get('Please review all tabs of the form before submitting the survey.').'</p>';
     $r .= data_entry_helper::wizard_buttons(array(
       'divId' => 'tabs',
@@ -532,23 +533,23 @@ class iform_wildflower_count {
     ));
     return $r;
   }
-  
+
   /**
    * Handles the construction of a submission array from a set of form values.
-   * @param array $values Associative array of form data values. 
-   * @param array $args iform parameters. 
+   * @param array $values Associative array of form data values.
+   * @param array $args iform parameters.
    * @return array Submission structure.
    */
   public static function get_submission($values, $args) {
-    $subSampleIds=array('path', 'square', 'linear');    
+    $subSampleIds=array('path', 'square', 'linear');
     $submission = data_entry_helper::build_sample_occurrences_list_submission($values, true);
     // Now because it is not standard, we need to attach the sub-samples for each plot.
-    // First, extract the attributes for each subsample into their own arrays.    
+    // First, extract the attributes for each subsample into their own arrays.
     $subSamples=array();
     foreach ($values as $key=>$value) {
       if (strpos($key,':')) {
-        $parts = explode(':', $key);        
-        if (in_array($parts[0], $subSampleIds)) {          
+        $parts = explode(':', $key);
+        if (in_array($parts[0], $subSampleIds)) {
           $subSamples[$parts[0]][substr($key, strlen($parts[0])+1)] = $value;
         }
       }
@@ -564,17 +565,17 @@ class iform_wildflower_count {
       $s['sample:date']=$values['sample:date'];
       $s['sample:survey_id']=$values['survey_id'];
       $s['location_name']=$prefix;
-      $wrapped = submission_builder::wrap_with_attrs($s, 'sample', $prefix);
+      $wrapped = submission_builder::wrap_with_images($s, 'sample', $prefix);
       $submission['subModels'][]=array('fkId'=>'parent_id', 'model'=>$wrapped);
     }
     return($submission);
   }
-  
+
   public static function get_validation_errors($values, $args) {
     $errors = array();
     if (!self::array_attr_exists('smpAttr:'.$args['attr_surveyed_square'], $values)) {
       $errors['smpAttr:'.$args['attr_surveyed_square']]="Please tell us which square you surveyed.";
-    }  
+    }
     // Ensure spatial reference is a 1km reference
     if (strlen($values['sample:entered_sref'])===0) {
       $errors['sample:entered_sref']="Please specify your 1km grid reference";
@@ -584,9 +585,9 @@ class iform_wildflower_count {
     }
     return $errors;
   }
-  
+
   /**
-   * Version of array_key_exists which looks for attribute data in the posted form array, 
+   * Version of array_key_exists which looks for attribute data in the posted form array,
    * and tolerates attribute value IDs which are different per record.
    * @param type $needle Attr to find, e.g. smpAttr:10
    * @param type $haystack Array to search, e.g. $_POST
@@ -605,13 +606,13 @@ class iform_wildflower_count {
     }
     return false;
   }
-  
+
   /**
    * Build a JavaScript function  to format the display of existing taxa added to the species input grid
    * when an existing sample is loaded.
    */
   protected static function build_grid_taxon_label_function($args) {
-    global $indicia_templates;  
+    global $indicia_templates;
     // always include the searched name
     $php = '$r="";'."\n".
         'if ("{language}"=="lat") {'."\n".
@@ -635,13 +636,13 @@ class iform_wildflower_count {
     // Set it into the indicia templates
     $indicia_templates['taxon_label'] = $php;
   }
-  
+
   /**
    * Build a PHP function  to format the species added to the grid according to the form parameters
    * autocomplete_include_both_names and autocomplete_include_taxon_group.
    */
   protected static function build_grid_autocomplete_function($args) {
-    global $indicia_templates;  
+    global $indicia_templates;
     $fn = "function(item) { \n".
         "  var r;\n".
         "  if (item.language_iso.toLowerCase()==='lat') {\n".
@@ -667,6 +668,6 @@ class iform_wildflower_count {
     // Set it into the indicia templates
     $indicia_templates['format_species_autocomplete_fn'] = $fn;
   }
-  
+
 
 }

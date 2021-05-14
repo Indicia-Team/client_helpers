@@ -85,11 +85,11 @@ TXT;
         'caption' => 'Interface Style Option',
         'description' => 'Choose the style of user interface, either dividing the form up onto separate tabs, wizard pages or having all controls on a single page.',
         'type' => 'select',
-        'options' => array(
+        'options' => [
           'tabs' => 'Tabs',
           'wizard' => 'Wizard',
           'one_page' => 'All one page',
-        ),
+        ],
         'group' => 'User interface',
         'default' => 'tabs',
       ],
@@ -108,7 +108,7 @@ TXT;
         'type' => 'select',
         'options' => [
           'directClient' => 'Authenticate as a client configured in the Warehouse REST API',
-          'directWebsite' => 'Authenticate as a website configured in the Warehouse REST API',
+          'directWebsite' => 'Authenticate as a website registered on the Warehouse',
           'jwtUser' => 'Authenticate as the logged in user using Java Web Tokens',
         ],
         'blankText' => '- Use site-wide configuration -',
@@ -318,6 +318,18 @@ TXT;
     return ElasticsearchReportHelper::statusFilters(array_merge($options, [
       'readAuth' => $auth['read'],
     ]));
+  }
+
+  /**
+   * A control for outputting a gallery of record cards.
+   *
+   * @return string
+   *   HTML for the container element.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-cardGallery
+   */
+  protected static function get_control_cardGallery($auth, $args, $tabalias, $options) {
+    return ElasticsearchReportHelper::cardGallery($options);
   }
 
   /**

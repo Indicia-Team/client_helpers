@@ -30,6 +30,23 @@ class extension_elasticsearch_event_reports {
   private static $rangeLimitApplied = FALSE;
 
   /**
+   * Integrates the page with group parameters.
+   *
+   * Although this integration is automatic when another
+   * elasticsearch_event_reports control is added to the page, calling it
+   * manually at the top of the page allows the group summary information
+   * to be added to the page. Options include:
+   *
+   * * showGroupSummary - includes group title, description and logo.
+   * * showGroupPages - adds a list of page links for the group.
+   *
+   * Must be the first elasticsearch_event_reports control on the page.
+   */
+  public static function group_integration($auth, $args, $tabalias, $options) {
+    return self::initControl($auth, $args, $options);
+  }
+
+  /**
    * Outputs a pie chart of taxon groups.
 
    * @param array $auth
@@ -114,7 +131,7 @@ class extension_elasticsearch_event_reports {
 
   /**
    * Outputs a block of recent photo thumbnails.
-
+   *
    * @param array $auth
    *   Authorisation tokens.
    * @param array $args
@@ -133,7 +150,7 @@ class extension_elasticsearch_event_reports {
    *   HTML to insert into the page for the table. JavaScript is added to the
    *   variables in helper_base.
    */
-  public static function photos_block($auth, $args, $tabalias, $options, $path) {
+  public static function photos_block($auth, $args, $tabalias, $options) {
     self::initControl($auth, $args);
     helper_base::add_resource('fancybox');
     $options = array_merge([
@@ -144,23 +161,28 @@ class extension_elasticsearch_event_reports {
     ], $options);
     $srcOptions = array_merge(self::getSourceOptions($options), [
       'size' => $options['size'],
-      'filterPath' => 'hits.total,hits.hits._source.id,hits.hits._source.occurrence.media,hits.hits._source.taxon,hits.hits._source.event.recorded_by',
+      'filterPath' => 'hits.total,hits.hits._source.id,hits.hits._source.occurrence.media,hits.hits._source.taxon',
     ]);
     $srcOptions['filterBoolClauses']['must'] = [
       [
         'nested' => 'occurrence.media',
         'query_type' => 'exists',
         'field' => 'occurrence.media.path',
-      ]
+      ],
     ];
     $r = ElasticsearchReportHelper::source($srcOptions);
     if ($options['title']) {
       $r .= "<h2>$options[title]</h2>\n";
     }
-    $r .= ElasticsearchReportHelper::customScript([
+    $r .= ElasticsearchReportHelper::cardGallery([
       'id' => $options['id'],
       'source' => "source-$options[id]",
       'functionName' => 'outputPhotos',
+      'columns' => [
+        [
+          'field' => '#taxon_label#',
+        ],
+      ],
     ]);
 
     return $r;
@@ -168,7 +190,7 @@ class extension_elasticsearch_event_reports {
 
   /**
    * Outputs a table of recorded species.
-
+   *
    * @param array $auth
    *   Authorisation tokens.
    * @param array $args
@@ -879,17 +901,24 @@ HTML;
   /**
    * Generic control initialisation.
    */
-  private static function initControl($auth, $args) {
+  private static function initControl($auth, $args, $options = []) {
+    $r = '';
     if (!self::$esIntegrationDone) {
+      $options = array_merge([
+        'showGroupSummary' => FALSE,
+        'showGroupPages' => FALSE,
+        'readAuth' => $auth['read'],
+      ], $options);
       iform_load_helpers(['ElasticsearchReportHelper']);
       ElasticsearchReportHelper::enableElasticsearchProxy();
       // Apply group filter if this is a group page.
       if ($args['available_for_groups'] === '1') {
-        ElasticsearchReportHelper::groupIntegration(['readAuth' => $auth['read']]);
+        $r = ElasticsearchReportHelper::groupIntegration($options);
       }
       self::$esIntegrationDone = TRUE;
     }
     self::$controlCount++;
+    return $r;
   }
 
 }

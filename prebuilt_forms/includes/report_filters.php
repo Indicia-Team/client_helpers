@@ -46,18 +46,17 @@ class filter_what extends FilterBase {
    * @param array $options
    *
    * @return string
-   * @throws \exception
    */
   public function get_controls($readAuth, $options) {
     $r = '';
     // There is only one tab when running on the Warehouse.
     if (!isset($options['runningOnWarehouse']) || $options['runningOnWarehouse'] == FALSE) {
-      if (!empty($options['scratchpadSearch']) && $options['scratchpadSearch']==true) {
-        $r .= "<p id=\"what-filter-instruct\">" . lang::get('You can filter by species group (first tab), a selection of families or other higher taxa (second tab), ' .
-            'a selection of genera or species (third tab), the level within the taxonomic hierarchy (fourth tab), a species scratchpad (fifth tab) or other flags such as marine taxa (sixth tab).') . "</p>\n";
+      if (!empty($options['scratchpadSearch']) && $options['scratchpadSearch'] == TRUE) {
+        $r .= "<p id=\"what-filter-instruct\">" . lang::get('Select the appropriate tab to filter by species group, taxon name, ' .
+            'the level within the taxonomic hierarchy, a species scratchpad or other flags such as marine/terrestrial/freshwater or non-native taxa.') . "</p>\n";
       } else {
-        $r .= "<p id=\"what-filter-instruct\">" . lang::get('You can filter by species group (first tab), a selection of families or other higher taxa (second tab), ' .
-            'a selection of genera or species (third tab), the level within the taxonomic hierarchy (fourth tab) or other flags such as marine taxa (fifth tab).') . "</p>\n";
+        $r .= "<p id=\"what-filter-instruct\">" . lang::get('Select the appropriate tab to You can filter by species group, taxon name, ' .
+            'the level within the taxonomic hierarchy or other flags such as marine/terrestrial/freshwater or non-native taxa.') . "</p>\n";
       }
     }
     $r .= '<div id="what-tabs">' . "\n";
@@ -69,42 +68,47 @@ class filter_what extends FilterBase {
       $r .= '<li id="designations-tab-tab"><a href="#designations-tab" rel="address:designations-tab"><span>' . lang::get('Designations') . '</span></a></li>';
     }
     $r .= '<li id="rank-tab-tab"><a href="#rank-tab" rel="address:rank-tab"><span>' . lang::get('Level') . '</span></a></li>';
-    if (!empty($options['scratchpadSearch']) && $options['scratchpadSearch']==true) {
+    if (!empty($options['scratchpadSearch']) && $options['scratchpadSearch'] == TRUE) {
       $r .= '<li id="scratchpad-tab-tab"><a href="#scratchpad-tab" rel="address:scratchpad-tab"><span>' . lang::get('Scratchpads') . '</span></a></li>';
     }
     $r .= '<li id="flags-tab-tab"><a href="#flags-tab" rel="address:flags-tab"><span>' . lang::get('Other flags') . '</span></a></li>' .
         '</ul>';
     $r .= '<div id="species-group-tab">' . "\n";
     if (function_exists('hostsite_get_user_field')) {
-      $myGroupIds = hostsite_get_user_field('taxon_groups', array(), TRUE);
+      $myGroupIds = hostsite_get_user_field('taxon_groups', [], TRUE);
     }
     else {
-      $myGroupIds = array();
+      $myGroupIds = [];
     }
     if ($myGroupIds) {
       $r .= '<h3>' . lang::get('My groups') . '</h3>';
-      $myGroupsData = data_entry_helper::get_population_data(array(
+      $myGroupsData = data_entry_helper::get_population_data([
         'table' => 'taxon_group',
-        'extraParams' => $readAuth + array('query' => json_encode(array('in' => array('id', $myGroupIds))))
-      ));
-      $myGroupNames = array();
+        'extraParams' => $readAuth + [
+          'query' => json_encode([
+            'in' => ['id', $myGroupIds],
+          ]),
+        ],
+      ]);
+      $myGroupNames = [];
       data_entry_helper::$javascript .= "indiciaData.myGroups = [];\n";
       foreach ($myGroupsData as $group) {
         $myGroupNames[] = $group['title'];
         data_entry_helper::$javascript .= "indiciaData.myGroups.push([$group[id],'$group[title]']);\n";
       }
-      $r .= '<button type="button" id="my_groups">'.lang::get('Include my groups').'</button>';
+      $r .= '<button type="button" id="my_groups">' . lang::get('Include my groups') . '</button>';
       $r .= '<ul class="inline"><li>' . implode('</li><li>', $myGroupNames) . '</li></ul>';
       $r .= '<h3>' . lang::get('Build a list of groups') . '</h3>';
     }
-    // Warehouse doesn't have master taxon list, so only need warning when not running on warehouse
-    if (empty($options['taxon_list_id']) && (!isset($options['runningOnWarehouse'])||$options['runningOnWarehouse'] == FALSE)) {
+    // Warehouse doesn't have master taxon list, so only need warning when not
+    // running on warehouse.
+    if (empty($options['taxon_list_id']) && (!isset($options['runningOnWarehouse']) || $options['runningOnWarehouse'] == FALSE)) {
       throw new exception('Please specify a @taxon_list_id option in the page configuration.');
     }
     $r .= '<p>' . lang::get('Search for and build a list of species groups to include') . '</p>' .
         ' <div class="context-instruct messages warning">' . lang::get('Please note that your access permissions are limiting the groups available to choose from.') . '</div>';
-    $baseParams = empty($options['taxon_list_id']) ? $readAuth : $readAuth + array('taxon_list_id' => $options['taxon_list_id']);
-    $r .= data_entry_helper::sub_list(array(
+    $baseParams = empty($options['taxon_list_id']) ? $readAuth : $readAuth + ['taxon_list_id' => $options['taxon_list_id']];
+    $r .= data_entry_helper::sub_list([
       'fieldname' => 'taxon_group_list',
       'report' => 'library/taxon_groups/taxon_groups_used_in_checklist_lookup',
       'captionField' => 'q',
@@ -112,12 +116,12 @@ class filter_what extends FilterBase {
       'extraParams' => $baseParams,
       'addToTable' => FALSE,
       'continueOnBlur' => FALSE,
-    ));
+    ]);
     $r .= "</div>\n";
     $r .= '<div id="species-tab">' . "\n";
     $r .= '<p>' . lang::get('Search for and build a list of species or higher taxa to include.') . '</p>' .
         ' <div class="context-instruct messages warning">' . lang::get('Please note that your access permissions will limit the records returned to the species you are allowed to see.') . '</div>';
-    $subListOptions = array(
+    $subListOptions = [
       'fieldname' => 'taxa_taxon_list_list',
       'autocompleteControl' => 'species_autocomplete',
       'captionField' => 'searchterm',
@@ -128,7 +132,7 @@ class filter_what extends FilterBase {
       'extraParams' => $baseParams,
       'addToTable' => FALSE,
       'continueOnBlur' => FALSE,
-    );
+    ];
     $r .= data_entry_helper::sub_list($subListOptions);
     $r .= "</div>\n";
     if (!$options['elasticsearch']) {
@@ -136,7 +140,7 @@ class filter_what extends FilterBase {
         $r .= "<div id=\"designations-tab\">\n";
         $r .= '<p>' . lang::get('Search for and build a list of designations to filter against') . '</p>' .
           ' <div class="context-instruct messages warning">' . lang::get('Please note that your access permissions will limit the records returned to the species you are allowed to see.') . '</div>';
-        $subListOptions = array(
+        $subListOptions = [
           'fieldname' => 'taxon_designation_list',
           'table' => 'taxon_designation',
           'captionField' => 'title',
@@ -144,9 +148,9 @@ class filter_what extends FilterBase {
           'extraParams' => $readAuth,
           'addToTable' => FALSE,
           'autocompleteControl' => 'select',
-          'extraParams' => $readAuth + array('orderby' => 'title'),
+          'extraParams' => $readAuth + ['orderby' => 'title'],
           'continueOnBlur' => FALSE,
-        );
+        ];
         $r .= data_entry_helper::sub_list($subListOptions);
         $r .= "</div>\n";
       } catch (Exception $e) {
@@ -161,54 +165,82 @@ class filter_what extends FilterBase {
     }
     $r .= "<div id=\"rank-tab\">\n";
     $r .= '<p id="level-label">' . lang::get('Include records where the level') . '</p>';
-    $r .= data_entry_helper::select(array(
+    $r .= data_entry_helper::select([
       'labelClass' => 'auto',
       'fieldname' => 'taxon_rank_sort_order_op',
-      'lookupValues' => array(
+      'lookupValues' => [
         '=' => lang::get('is'),
         '>=' => lang::get('is the same or lower than'),
-        '<=' => lang::get('is the same or higher than')
-      )
-    ));
-    // we fudge this select rather than using data entry helper, since we want to allow duplicate keys which share the same sort order. We also
-    // include both the selected ID and sort order in the key, and split it out later.
-    $ranks = data_entry_helper::get_population_data(array(
+        '<=' => lang::get('is the same or higher than'),
+      ]
+    ]);
+    // We fudge this select rather than using data entry helper, since we want
+    // to allow duplicate keys which share the same sort order. We also include
+    // both the selected ID and sort order in the key, and split it out later.
+    $ranks = data_entry_helper::get_population_data([
       'table' => 'taxon_rank',
-      'extraParams' => $readAuth + array('orderby' => 'sort_order', 'sortdir' => 'DESC')
-    ));
+      'extraParams' => $readAuth + ['orderby' => 'sort_order', 'sortdir' => 'DESC'],
+    ]);
     $r .= '<select id="taxon_rank_sort_order_combined" name="taxon_rank_sort_order_combined"><option value="">&lt;' . lang::get('Please select') . '&gt;</option>';
     foreach ($ranks as $rank) {
       $r .= "<option value=\"$rank[sort_order]:$rank[id]\">$rank[rank]</option>";
     }
     $r .= '</select>';
     $r .= "</div>\n";
-    if (!empty($options['scratchpadSearch']) && $options['scratchpadSearch']==true) {
+    if (!empty($options['scratchpadSearch']) && $options['scratchpadSearch'] == TRUE) {
       $r .= "<div id=\"scratchpad-tab\">\n";
       $r .= '<p>' . lang::get('Select a species scratchpad to filter against') . '</p>' .
-      $form .= data_entry_helper::select(array(
+      $r .= data_entry_helper::select([
         'blankText' => lang::get('<Please select>'),
         'fieldname' => 'taxa_scratchpad_list_id',
         'id' => 'taxa_scratchpad_list_id',
         'table' => 'scratchpad_list',
         'captionField' => 'title',
         'valueField' => 'id',
-        'extraParams' => $readAuth + array('orderby' => 'title'),
-        'sharing' => 'reporting'
-      ));
+        'extraParams' => $readAuth + ['orderby' => 'title'],
+        'sharing' => 'reporting',
+      ]);
       $r .= "</div>\n";
     }
     $r .= "<div id=\"flags-tab\">\n";
     $r .= '<p>' . lang::get('Select additional flags to filter for.') . '</p>' .
         ' <div class="context-instruct messages warning">' . lang::get('Please note that your access permissions limit the settings you can change on this tab.') . '</div>';
-    $r .= data_entry_helper::select(array(
+    $r .= data_entry_helper::select([
       'label' => lang::get('Marine species'),
       'fieldname' => 'marine_flag',
-      'lookupValues' => array(
+      'lookupValues' => [
         'all' => lang::get('Include marine and non-marine species'),
         'Y' => lang::get('Only marine species'),
-        'N' => lang::get('Exclude marine species')
-      )
-    ));
+        'N' => lang::get('Exclude marine species'),
+      ],
+    ]);
+    $r .= data_entry_helper::select([
+      'label' => lang::get('Freshwater species'),
+      'fieldname' => 'freshwater_flag',
+      'lookupValues' => [
+        'all' => lang::get('Include freshwater and non-freshwater species'),
+        'Y' => lang::get('Only freshwater species'),
+        'N' => lang::get('Exclude freshwater species'),
+      ],
+    ]);
+    $r .= data_entry_helper::select([
+      'label' => lang::get('Terrestrial species'),
+      'fieldname' => 'terrestrial_flag',
+      'lookupValues' => [
+        'all' => lang::get('Include terrestrial and non-terrestrial species'),
+        'Y' => lang::get('Only terrestrial species'),
+        'N' => lang::get('Exclude terrestrial species'),
+      ],
+    ]);
+    $r .= data_entry_helper::select([
+      'label' => lang::get('Non-native species'),
+      'fieldname' => 'non_native_flag',
+      'lookupValues' => [
+        'all' => lang::get('Include native and non-native species'),
+        'Y' => lang::get('Only non-native species'),
+        'N' => lang::get('Exclude non-native species'),
+      ],
+    ]);
     if (!empty($options['allowConfidential'])) {
       $r .= data_entry_helper::select([
         'label' => lang::get('Confidential records'),
@@ -218,7 +250,7 @@ class filter_what extends FilterBase {
           't' => lang::get('Only confidential records'),
           'all' => lang::get('Include both confidential and non-confidential records'),
         ],
-        'defaultValue' => 'f'
+        'defaultValue' => 'f',
       ]);
     }
     if (!empty($options['allowUnreleased'])) {
@@ -239,7 +271,7 @@ class filter_what extends FilterBase {
         $attrs = data_entry_helper::get_population_data([
           'table' => 'taxa_taxon_list_attribute',
           'extraParams' => $readAuth + [
-            'query' => json_encode(['in' => ['id' => $attrIds]])
+            'query' => json_encode(['in' => ['id' => $attrIds]]),
           ],
         ]);
         $termlistIds = [];
@@ -294,37 +326,37 @@ class filter_when extends FilterBase {
     // Additional helptext in case it is needed when a context is applied.
     $r = '<p class="helpText context-instruct">' . lang::get('Please note that your access permissions are limiting the record dates available.').'</p>';
     $r .= '<fieldset><legend>' . lang::get('Which date field to filter on') . '</legend>';
-    $r .= data_entry_helper::select(array(
+    $r .= data_entry_helper::select([
       'label' => lang::get('Date field'),
       'fieldname' => 'date_type',
-      'lookupValues' => array(
+      'lookupValues' => [
         'recorded' => lang::get('Field record date'),
         'input' => lang::get('Input date'),
         'edited' => lang::get('Last changed date'),
         'verified' => lang::get('Verification status change date'),
-      )
-    ));
+      ],
+    ]);
     $r .= '</fieldset>';
     $r .= '<fieldset class="exclusive"><legend>' . lang::get('Specify a date range for the records to include') . '</legend>';
-    $r .= data_entry_helper::date_picker(array(
+    $r .= data_entry_helper::date_picker([
       'label' => lang::get('Records from'),
       'fieldname' => 'date_from',
       'allowFuture' => TRUE,
-    ));
-    $r .= data_entry_helper::date_picker(array(
+    ]);
+    $r .= data_entry_helper::date_picker([
       'label' => lang::get('Records to'),
       'fieldname' => 'date_to',
       'allowFuture' => TRUE,
-    ));
+    ]);
     $r .= '</fieldset>';
     $r .= '<fieldset class="exclusive" id="age"><legend>' . lang::get('Or, specify a maximum age for the records to include') . '</legend>';
-    $r .= data_entry_helper::text_input(array(
+    $r .= data_entry_helper::text_input([
       'label' => lang::get('Max. record age'),
       'helpText' => lang::get('How old records can be before they are dropped from the report? ' .
           'Enter a number followed by the unit (days, weeks, months or years), e.g. "2 days" or "1 year".'),
       'fieldname' => 'date_age',
-      'validation' => array('regex[/^[0-9]+\s*(day|week|month|year)(s)?$/]')
-    ));
+      'validation' => ['regex[/^[0-9]+\s*(day|week|month|year)(s)?$/]'],
+    ]);
     $r .= '</fieldset>';
     return $r;
   }
@@ -344,20 +376,26 @@ class filter_where extends FilterBase {
    * Define the HTML required for this filter's UI panel.
    *
    * Options available:
-   * * **personSiteAttrId** - a multi-value location attribute used to link users to their recording sites.
-   * * **includeSitesCreatedByUser** - boolean which defines if sites that the user is the creator of are available. Default TRUE.
-   * * **indexedLocationTypeIds** - array of location type IDs for types that are available and which are indexed in the spatial index builder
-   * * **otherLocationTypeIds** - array of location type IDs for types that are available and which are indexed in the
+   * * **personSiteAttrId** - a multi-value location attribute used to link
+   *   users to their recording sites.
+   * * **includeSitesCreatedByUser** - boolean which defines if sites that the
+   *   user is the creator of are available. Default TRUE.
+   * * **indexedLocationTypeIds** - array of location type IDs for types that
+   *   are available and which are indexed in the spatial index builder.
+   * * **otherLocationTypeIds** - array of location type IDs for types that are
+   *   available and which are not indexed.
    *
    * @param array $readAuth
-   *   Read authorisation tokens.   *
+   *   Read authorisation tokens.
    * @param array $options
    *   Control options array. Options include:
-   *   * includeSitesCreatedByUser - Defines if user created sites are available for selection. True or false
-   *   * indexedLocationTypeIds - array of location type IDs for sites which can be selected using the index
-   *     system for filtering.
-   *   * otherLocationTypeIds - as above, but does not use the spatial index builder. Should only be used for
-   *     smaller or less complex site boundaries.
+   *   * includeSitesCreatedByUser - Defines if user created sites are
+   *     available for selection. True or false.
+   *   * indexedLocationTypeIds - array of location type IDs for sites which
+   *     can be selected using the index system for filtering.
+   *   * otherLocationTypeIds - as above, but does not use the spatial index
+   *     builder. Should only be used for smaller or less complex site
+   *     boundaries.
    *
    * @return string
    *   Controls HTML
@@ -366,17 +404,17 @@ class filter_where extends FilterBase {
    */
   public function get_controls($readAuth, $options) {
     if (function_exists('iform_load_helpers')) {
-      iform_load_helpers(array('map_helper'));
+      iform_load_helpers(['map_helper']);
     }
     else {
       // When running on warehouse we don't have iform_load_helpers.
       require_once DOCROOT . 'client_helpers/map_helper.php';
     }
-    $options = array_merge(array(
+    $options = array_merge([
       'includeSitesCreatedByUser' => TRUE,
-      'indexedLocationTypeIds' => array(),
+      'indexedLocationTypeIds' => [],
       'otherLocationTypeIds' => [],
-    ), $options);
+    ], $options);
     data_entry_helper::$javascript .= "indiciaData.includeSitesCreatedByUser=" . ($options['includeSitesCreatedByUser'] ? 'true' : 'false') . ";\n";
     data_entry_helper::$javascript .= "indiciaData.personSiteAttrId=" . (empty($options['personSiteAttrId']) ? 'false' : $options['personSiteAttrId']) . ";\n";
     $r = '<fieldset class="inline"><legend>' . lang::get('Filter by site or place') . '</legend>';
@@ -384,7 +422,7 @@ class filter_where extends FilterBase {
         '<div class="context-instruct messages warning">' . lang::get('Please note that your access permissions are limiting the areas you are able to include.') . '</div>';
     $r .= '<fieldset class="exclusive">';
     // Top level of sites selection.
-    $sitesLevel1 = array();
+    $sitesLevel1 = [];
     $this->addProfileLocation($readAuth, 'location', $sitesLevel1);
     $this->addProfileLocation($readAuth, 'location_expertise', $sitesLevel1);
     $this->addProfileLocation($readAuth, 'location_collation', $sitesLevel1);
@@ -394,22 +432,22 @@ class filter_where extends FilterBase {
     // The JS needs to know which location types are indexed so it can build the correct filter.
     data_entry_helper::$javascript .= "indiciaData.indexedLocationTypeIds=" . json_encode($options['indexedLocationTypeIds']) . ";\n";
     $locTypes = array_merge($options['indexedLocationTypeIds'], $options['otherLocationTypeIds']);
-    $locTypes = data_entry_helper::get_population_data(array(
+    $locTypes = data_entry_helper::get_population_data([
       'table' => 'termlists_term',
-      'extraParams' => $readAuth + array('view' => 'cache', 'query' => json_encode(array('in' => array('id' => $locTypes)))),
-    ));
+      'extraParams' => $readAuth + ['view' => 'cache', 'query' => json_encode(['in' => ['id' => $locTypes]])],
+    ]);
     foreach ($locTypes as $locType) {
       $sitesLevel1[$locType['id']] = $locType['term'] . '...';
     }
     $r .= '<div id="ctrl-wrap-location_list" class="form-row ctrl-wrap">';
-    $r .= data_entry_helper::select(array(
+    $r .= data_entry_helper::select([
       'fieldname' => 'site-type',
       'label' => lang::get('Choose an existing site or location'),
       'lookupValues' => $sitesLevel1,
       'blankText' => '<' . lang::get('Please select') . '>',
       'controlWrapTemplate' => 'justControl',
-    ));
-    $r .= data_entry_helper::sub_list(array(
+    ]);
+    $r .= data_entry_helper::sub_list([
       'fieldname' => 'location_list',
       'controlWrapTemplate' => 'justControl',
       'table' => 'location',
@@ -417,7 +455,7 @@ class filter_where extends FilterBase {
       'valueField' => 'id',
       'addToTable' => FALSE,
       'extraParams' => $readAuth,
-    ));
+    ]);
 
     $r .= '</div></fieldset>';
     $r .= '<br/><fieldset class="exclusive">';
@@ -428,7 +466,7 @@ class filter_where extends FilterBase {
     $r .= '</fieldset>';
     $r .= '<fieldset class="exclusive">';
     // Build the array of spatial reference systems into a format Indicia can use.
-    $systems = array();
+    $systems = [];
     // Set default system.
     $systemsConfig = '4326';
     if (!empty($options['sref_systems'])) {
@@ -503,10 +541,10 @@ class filter_where extends FilterBase {
     if (function_exists('hostsite_get_user_field')) {
       $locality = hostsite_get_user_field($profileField);
       if ($locality) {
-        $loc = data_entry_helper::get_population_data(array(
+        $loc = data_entry_helper::get_population_data([
           'table' => 'location',
-          'extraParams' => $readAuth + array('id' => $locality),
-        ));
+          'extraParams' => $readAuth + ['id' => $locality],
+        ]);
         $loc = $loc[0];
         $outputArr["loc:$loc[id]"] = $loc['name'];
       }
@@ -529,10 +567,10 @@ class filter_who extends FilterBase {
    */
   public function get_controls() {
     $r = '<div class="context-instruct messages warning">' . lang::get('Please note, you cannnot change this setting because of your access permissions in this context.') . '</div>';
-    $r .= data_entry_helper::checkbox(array(
+    $r .= data_entry_helper::checkbox([
       'label' => lang::get('Only include my records'),
-      'fieldname' => 'my_records'
-    ));
+      'fieldname' => 'my_records',
+    ]);
     return $r;
   }
 
@@ -596,21 +634,21 @@ class filter_smp_id extends FilterBase {
    */
   public function get_controls() {
     $r = '<div id="ctrl-wrap-smp_id" class="form-row ctrl-wrap">';
-    $r .= data_entry_helper::select(array(
+    $r .= data_entry_helper::select([
       'label' => lang::get('Sample ID'),
       'fieldname' => 'smp_id_op',
-      'lookupValues' => array(
+      'lookupValues' => [
         '=' => lang::get('is'),
         '>=' => lang::get('is at least'),
         '<=' => lang::get('is at most'),
-      ),
+      ],
       'controlWrapTemplate' => 'justControl',
-    ));
-    $r .= data_entry_helper::text_input(array(
+    ]);
+    $r .= data_entry_helper::text_input([
       'fieldname' => 'smp_id',
       'class' => 'control-width-2',
       'controlWrapTemplate' => 'justControl',
-    ));
+    ]);
     $r .= '</div>';
     return $r;
   }
@@ -629,7 +667,7 @@ class filter_quality extends FilterBase {
   /**
    * Define the HTML required for this filter's UI panel.
    */
-  public function get_controls($readAuth, $options, $ctls=array('status', 'auto', 'difficulty', 'photo')) {
+  public function get_controls($readAuth, $options, $ctls = ['status', 'auto', 'difficulty', 'photo']) {
 
     $r='';
     if (in_array('status', $ctls)) {
@@ -668,39 +706,39 @@ class filter_quality extends FilterBase {
       ]);
     }
     if (in_array('auto', $ctls)) {
-      $r .= data_entry_helper::select(array(
+      $r .= data_entry_helper::select([
         'label' => lang::get('Automated checks'),
         'fieldname' => 'autochecks',
-        'lookupValues' => array(
+        'lookupValues' => [
           '' => lang::get('Not filtered'),
           'P' => lang::get('Only include records that pass all automated checks'),
           'F' => lang::get('Only include records that fail at least one automated check'),
-        ),
-      ));
+        ],
+      ]);
     }
     if (in_array('difficulty', $ctls)) {
       if (!$options['elasticsearch']) {
-        $r .= data_entry_helper::select(array(
+        $r .= data_entry_helper::select([
           'label' => lang::get('Identification difficulty'),
           'fieldname' => 'identification_difficulty_op',
-          'lookupValues' => array(
+          'lookupValues' => [
             '=' => lang::get('is'),
             '>=' => lang::get('is at least'),
             '<=' => lang::get('is at most'),
-          ),
-          'afterControl' => data_entry_helper::select(array(
+          ],
+          'afterControl' => data_entry_helper::select([
             'fieldname' => 'identification_difficulty',
-            'lookupValues' => array(
+            'lookupValues' => [
               '' => lang::get('Not filtered'),
               1 => 1,
               2 => 2,
               3 => 3,
               4 => 4,
               5 => 5,
-            ),
+            ],
             'controlWrapTemplate' => 'justControl',
-          ))
-        ));
+          ]),
+        ]);
       }
     }
     if (in_array('photo', $ctls)) {
@@ -733,28 +771,28 @@ class filter_quality_sample extends FilterBase {
    */
   public function get_controls() {
     $r = '<div class="context-instruct messages warning">' . lang::get('Please note, your options for quality filtering are restricted by your access permissions in this context.') . '</div>';
-    $r .= data_entry_helper::select(array(
+    $r .= data_entry_helper::select([
       'label' => lang::get('Samples to include'),
       'fieldname' => 'quality',
       'id' => 'quality-filter',
-      'lookupValues' => array(
+      'lookupValues' => [
         'V' => lang::get('Accepted records only'),
         'P' => lang::get('Not reviewed'),
         '!R' => lang::get('Exclude not accepted records'),
         '!D' => lang::get('Exclude queried or not accepted records'),
         'all' => lang::get('All records'),
         'R' => lang::get('Not accepted records only'),
-      )
-    ));
-    $r .= data_entry_helper::select(array(
+      ],
+    ]);
+    $r .= data_entry_helper::select([
       'label' => lang::get('Automated checks'),
       'fieldname' => 'autochecks',
-      'lookupValues' => array(
+      'lookupValues' => [
         '' => lang::get('Not filtered'),
         'P' => lang::get('Only include records that pass all automated checks'),
         'F' => lang::get('Only include records that fail at least one automated check'),
-      ),
-    ));
+      ],
+    ]);
     $r .= data_entry_helper::select([
       'label' => 'Photos',
       'fieldname' => 'has_photos',
@@ -783,7 +821,7 @@ class filter_source extends FilterBase {
    */
   public function get_controls($readAuth, $options) {
     if (function_exists('iform_load_helpers')) {
-      iform_load_helpers(array('report_helper'));
+      iform_load_helpers(['report_helper']);
     }
     else {
       // When running on warehouse we don't have iform_load_helpers.
@@ -794,16 +832,16 @@ class filter_source extends FilterBase {
     // If running on the warehouse then use a single website (as the user is on the website details->milestones tab for
     // a single website) so don't diplay website selection (which is based on website sharing).
     if (!isset($options['runningOnWarehouse']) || $options['runningOnWarehouse'] == FALSE) {
-      $sources = report_helper::get_report_data(array(
+      $sources = report_helper::get_report_data([
         'dataSource' => 'library/websites/websites_list',
         'readAuth' => $readAuth,
         'caching' => TRUE,
         'cachePerUser' => FALSE,
-        'extraParams' => array('sharing' => $options['sharing'] === 'me' ? 'reporting' : $options['sharing']),
-      ));
+        'extraParams' => ['sharing' => $options['sharing'] === 'me' ? 'reporting' : $options['sharing']],
+      ]);
       if (count($sources) > 1) {
         $r .= '<div id="filter-websites" class="filter-popup-columns"><h3>' . lang::get('Websites') . '</h3><p>' .
-            '<select id="filter-websites-mode" name="website_list_op"><option value="in">' . lang::get('Include') . '</option><option value="not in">'.lang::get('Exclude').'</option></select> '.
+            '<select id="filter-websites-mode" name="website_list_op"><option value="in">' . lang::get('Include') . '</option><option value="not in">' . lang::get('Exclude') . '</option></select> '.
             lang::get('records from') . ':</p><ul id="website-list-checklist">';
         foreach ($sources as $source) {
           $r .= '<li><input type="checkbox" value="' . $source['id'] . '" id="check-website-' . $source['id'] . '"/>' .
@@ -812,24 +850,25 @@ class filter_source extends FilterBase {
         $r .= '</ul></div>';
       }
     }
-    // If running on the warehouse then use a single website id (as the user is on the website details->milestones tab
-    // for a single website) so supply this as a param, we don't need to worry about sharing as other websites will
-    // have their own milestones.
+    // If running on the warehouse then use a single website id (as the user is
+    // on the website details->milestones tab for a single website) so supply
+    // this as a param, we don't need to worry about sharing as other websites
+    // will have their own milestones.
     if (isset($options['runningOnWarehouse']) && $options['runningOnWarehouse'] == TRUE) {
-      $sources = data_entry_helper::get_population_data(array(
+      $sources = data_entry_helper::get_population_data([
         'table' => 'survey',
-        'extraParams' => $readAuth + array('view' => 'detail', 'website_id' => $options['website_id']),
-      ));
+        'extraParams' => $readAuth + ['view' => 'detail', 'website_id' => $options['website_id']],
+      ]);
       $titleToDisplay = 'title';
     }
     else {
-      $sources = report_helper::get_report_data(array(
+      $sources = report_helper::get_report_data([
         'dataSource' => 'library/surveys/surveys_list',
         'readAuth' => $readAuth,
         'caching' => TRUE,
         'cachePerUser' => FALSE,
-        'extraParams' => array('sharing' => $options['sharing'] === 'me' ? 'reporting' : $options['sharing']),
-      ));
+        'extraParams' => ['sharing' => $options['sharing'] === 'me' ? 'reporting' : $options['sharing']],
+      ]);
       $titleToDisplay = 'fulltitle';
     }
     $r .= '<div id="filter-surveys" class="filter-popup-columns"><h3>' . lang::get('Survey datasets') . '</h3><p>' .
@@ -841,23 +880,23 @@ class filter_source extends FilterBase {
           '<label for="check-survey-' . $source['id'] . '">' . $source[$titleToDisplay] . '</label></li>';
     }
     $r .= '</ul></div>';
-    $sourceOptions = array(
+    $sourceOptions = [
       'dataSource' => 'library/input_forms/input_forms_list',
       'readAuth' => $readAuth,
       'caching' => TRUE,
       'cachePerUser' => FALSE,
-      'extraParams' => array('sharing' => $options['sharing'] === 'me' ? 'reporting' : $options['sharing']),
-    );
+      'extraParams' => ['sharing' => $options['sharing'] === 'me' ? 'reporting' : $options['sharing']],
+    ];
     // If in the warehouse then we are only interested in the website for the milestone we are editing.
     if (isset($options['website_id'])) {
-      $sourceOptions['extraParams'] = array_merge(array('website_id' => $options['website_id']), $sourceOptions['extraParams']);
+      $sourceOptions['extraParams'] = array_merge(['website_id' => $options['website_id']], $sourceOptions['extraParams']);
     }
     $sources = report_helper::get_report_data($sourceOptions);
     $r .= '<div id="filter-input_forms" class="filter-popup-columns"><h3>' . lang::get('Input forms') . '</h3><p>' .
           '<select id="filter-input_forms-mode" name="input_forms_list_op"><option value="in">' . lang::get('Include') . '</option><option value="not in">'.lang::get('Exclude').'</option></select> '.
           lang::get('records from') . ':</p><ul id="input_form-list-checklist">';
     // Create an object to contain a lookup from id to form for JS, since forms don't have a real id.
-    $obj = array();
+    $obj = [];
     foreach ($sources as $idx => $source) {
       if (!empty($source['input_form'])) {
         $r .= '<li class="vis-survey-' . $source['survey_id'] . ' vis-website-' . $source['website_id'] . '">' .
@@ -964,23 +1003,24 @@ JS;
  */
 function report_filter_panel(array $readAuth, $options, $website_id, &$hiddenStuff) {
   if (function_exists('iform_load_helpers')) {
-    iform_load_helpers(array('report_helper'));
+    iform_load_helpers(['report_helper']);
   }
   else {
     // When running on warehouse we don't have iform_load_helpers.
     require_once DOCROOT . 'client_helpers/report_helper.php';
   }
+  global $indicia_templates;
   if (!empty($_POST['filter:sharing'])) {
     $options['sharing'] = $_POST['filter:sharing'];
   }
-  $options = array_merge(array(
+  $options = array_merge([
     'sharing' => 'reporting',
     'admin' => FALSE,
-    'adminCanSetSharingTo' => array('R' => lang::get('reporting'), 'V' => lang::get('verification')),
+    'adminCanSetSharingTo' => ['R' => lang::get('reporting'), 'V' => lang::get('verification')],
     'allowLoad' => TRUE,
     'allowSave' => TRUE,
     'redirect_on_success' => '',
-    'presets' => array(
+    'presets' => [
       'all-records',
       'my-records',
       'my-queried-records',
@@ -990,18 +1030,18 @@ function report_filter_panel(array $readAuth, $options, $website_id, &$hiddenStu
       'my-groups',
       'my-locality',
       'my-groups-locality',
-    ),
+    ],
     'entity' => 'occurrence',
     'elasticsearch' => FALSE,
-  ), $options);
+  ], $options);
   // Introduce some extra quick filters useful for verifiers.
   if ($options['sharing'] === 'verification') {
-    $options['presets'] = array_merge(array(
+    $options['presets'] = array_merge([
       'queried-records',
       'answered-records',
       'accepted-records',
       'not-accepted-records',
-    ), $options['presets']);
+    ], $options['presets']);
   }
   if ($options['entity'] === 'sample') {
     unset($options['presets']['my-groups']);
@@ -1010,7 +1050,7 @@ function report_filter_panel(array $readAuth, $options, $website_id, &$hiddenStu
   // If in the warehouse we don't need to worry about the iform master list.
   if (function_exists('hostsite_get_config_value')) {
     $options = array_merge(
-      array('taxon_list_id' => hostsite_get_config_value('iform', 'master_checklist_id', 0)),
+      ['taxon_list_id' => hostsite_get_config_value('iform', 'master_checklist_id', 0)],
       $options
     );
   }
@@ -1029,7 +1069,7 @@ function report_filter_panel(array $readAuth, $options, $website_id, &$hiddenStu
   $filterData = report_filters_load_existing($readAuth, $options['sharingCode']);
   $existing = '';
   $contexts = '';
-  $contextDefs = array();
+  $contextDefs = [];
   $customDefs = [];
   if (!empty($_GET['context_id'])) {
     $options['context_id'] = $_GET['context_id'];
@@ -1131,7 +1171,7 @@ function report_filter_panel(array $readAuth, $options, $website_id, &$hiddenStu
         $presetFilter = array(
           'id' => $preset,
           'title' => $title,
-          'defines_permissions' => 'f'
+          'defines_permissions' => 'f',
         );
         $filterData[] = $presetFilter;
       }
@@ -1148,9 +1188,9 @@ function report_filter_panel(array $readAuth, $options, $website_id, &$hiddenStu
       $taxon_group_ids = hostsite_get_user_field('taxon_groups_expertise', FALSE, TRUE);
       $survey_ids = hostsite_get_user_field('surveys_expertise', FALSE, TRUE);
       if ($location_id || $taxon_group_ids || $survey_ids) {
-        $selected = (!empty($options['context_id']) && $options['context_id']==='default') ? 'selected="selected" ' : '';
-        $contexts .= "<option value=\"default\" $selected>".lang::get('My verification records')."</option>";
-        $def = array();
+        $selected = (!empty($options['context_id']) && $options['context_id'] === 'default') ? 'selected="selected" ' : '';
+        $contexts .= "<option value=\"default\" $selected>" . lang::get('My verification records') . "</option>";
+        $def = [];
         if ($location_id) {
           // User profile geographic limits should always be based on an
           // indexed location.
@@ -1158,11 +1198,11 @@ function report_filter_panel(array $readAuth, $options, $website_id, &$hiddenStu
         }
         if ($taxon_group_ids) {
           $def['taxon_group_list'] = implode(',', $taxon_group_ids);
-          $def['taxon_group_names'] = array();
-          $groups = data_entry_helper::get_population_data(array(
+          $def['taxon_group_names'] = [];
+          $groups = data_entry_helper::get_population_data([
             'table' => 'taxon_group',
-            'extraParams' => $readAuth + array('id' => $taxon_group_ids)
-          ));
+            'extraParams' => $readAuth + ['id' => $taxon_group_ids],
+          ]);
           foreach ($groups as $group) {
             $def['taxon_group_names'][$group['id']] = $group['title'];
           }
@@ -1239,7 +1279,7 @@ function report_filter_panel(array $readAuth, $options, $website_id, &$hiddenStu
       // end of param names so the filter system knows they are not user changeable.
       $contextFilterOrig = empty($options['context_id']) ?
           array_values($contextDefs)[0] : $contextDefs[$options['context_id']];
-      $contextFilter = array();
+      $contextFilter = [];
       foreach ($contextFilterOrig as $key => $value) {
         if ($value !== '') {
           $contextFilter["{$key}_context"] = $value;
@@ -1263,7 +1303,6 @@ function report_filter_panel(array $readAuth, $options, $website_id, &$hiddenStu
     }
     $r .= '<label for="select-filter">' . lang::get('Filter:') . '</label><select id="select-filter"><option value="" selected="selected">' .
         lang::get('Select filter') . "...</option>$existing</select>";
-    global $indicia_templates;
     $r .= helper_base::apply_static_template('button', [
       'id' => 'filter-apply',
       'title' => lang::get('Apply filter'),
@@ -1297,7 +1336,7 @@ function report_filter_panel(array $readAuth, $options, $website_id, &$hiddenStu
     }
   }
   $r .= '<div id="filter-panes">';
-  $filters = array();
+  $filters = [];
   if (isset($options['generateFilterListCallback'])) {
     $filters = call_user_func($options['generateFilterListCallback'], $options['entity']);
   }
@@ -1323,7 +1362,7 @@ function report_filter_panel(array $readAuth, $options, $website_id, &$hiddenStu
     );
   }
   if (!empty($options['filterTypes'])) {
-    $filterModules = array();
+    $filterModules = [];
     foreach ($options['filterTypes'] as $category => $list) {
       // $list can be an array or comma separated list.
       if (is_array($list)) {
@@ -1350,11 +1389,19 @@ function report_filter_panel(array $readAuth, $options, $website_id, &$hiddenStu
 
 HTML;
     }
+    $r .= '<div class="pane-row">';
+    $done = 0;
     foreach ($list as $moduleName => $module) {
       $r .= "<div class=\"pane\" id=\"pane-$moduleName\"><a class=\"fb-filter-link\" href=\"#controls-$moduleName\"><span class=\"pane-title\">" . $module->getTitle() . '</span>';
       $r .= '<span class="filter-desc"></span></a>';
       $r .= "</div>";
+      $done++;
+      // Split rows if necessary.
+      if (count($list) >= 5 && $done === 3) {
+        $r .= '</div><div class="pane-row">';
+      }
     }
+    $r .= '</div>';
     if ($category) {
       $r .= '</div></fieldset>';
     }
@@ -1368,20 +1415,20 @@ HTML;
       if (empty($options['adminCanSetSharingTo'])) {
         throw new exception('Report standard params panel in admin mode so adminCanSetSharingTo option must be populated.');
       }
-      $r .= data_entry_helper::autocomplete(array(
+      $r .= data_entry_helper::autocomplete([
         'label' => lang::get('For who?'),
         'fieldname' => 'filters_user:user_id',
         'table' => 'user',
         'valueField' => 'id',
         'captionField' => 'person_name',
         'formatFunction' => "function(item) { return item.person_name + ' (' + item.email_address + ')'; }",
-        'extraParams' => $readAuth + array('view' => 'detail'),
+        'extraParams' => $readAuth + ['view' => 'detail'],
         'class' => 'control-width-5',
-      ));
-      $r .= data_entry_helper::textarea(array(
+      ]);
+      $r .= data_entry_helper::textarea([
         'label' => lang::get('Description'),
         'fieldname' => 'filter:description',
-      ));
+      ]);
     }
     $r .= '<img src="' . data_entry_helper::$images_path . 'nuvola/save-22px.png" width="22" height="22" alt="Save filter" title="Save filter" class="button" id="filter-save"/>';
     $r .= '<img src="' . data_entry_helper::$images_path . 'trash-22px.png" width="22" height="22" alt="Bin this filter" title="Bin this filter" class="button disabled" id="filter-delete"/>';
@@ -1392,24 +1439,25 @@ HTML;
     // If we are preloading based on a filter user ID, we need to get the
     // information now so that the sharing mode can be known when loading
     // controls.
-    $fu = data_entry_helper::get_population_data(array(
-        'table' => 'filters_user',
-        'extraParams' => $readAuth + array('id' => $options['filters_user_id']),
-        'caching' => FALSE,
-    ));
+    $fu = data_entry_helper::get_population_data([
+      'table' => 'filters_user',
+      'extraParams' => $readAuth + ['id' => $options['filters_user_id']],
+      'caching' => FALSE,
+    ]);
     if (count($fu) !== 1) {
       throw new exception('Could not find filter user record');
     }
     $options['sharing'] = report_filters_sharing_code_to_full_term($fu[0]['filter_sharing']);
   }
-  // Create the hidden panels required to populate the popups for setting each type of filter up.
+  // Create the hidden panels required to populate the popups for setting each
+  // type of filter up.
   $hiddenStuff = '';
   $noDescriptionLangStrings = [];
   foreach ($filterModules as $category => $list) {
     foreach ($list as $moduleName => $module) {
       $hiddenStuff .= "<div style=\"display: none\"><div class=\"filter-popup\" id=\"controls-$moduleName\"><form action=\"#\" class=\"filter-controls\"><fieldset>" . $module->get_controls($readAuth, $options) .
-        '<button class="fb-close" type="button">' . lang::get('Cancel') . '</button>' .
-        '<button class="fb-apply" type="submit">' . lang::get('Apply') . '</button></fieldset></form></div></div>';
+        '<button class="' . $indicia_templates['buttonDefaultClass'] . '" type="button" onclick="jQuery.fancybox.close();">' . lang::get('Cancel') . '</button>' .
+        '<button class="' . $indicia_templates['buttonHighlightedClass'] . '" type="submit">' . lang::get('Apply') . '</button></fieldset></form></div></div>';
       $shortName = str_replace('filter_', '', $moduleName);
       $noDescriptionLangStrings[$shortName] = 'Click to Filter ' . ucfirst($shortName);
     }
@@ -1440,8 +1488,8 @@ HTML;
   report_helper::$javascript .= "indiciaData.admin='" . $options['admin'] . "';\n";
   report_helper::$javascript .= "indiciaData.redirectOnSuccess='$options[redirect_on_success]';\n";
   // Load up the filter, BEFORE any AJAX load of the grid code. First fetch any URL param overrides.
-  $getParams = array();
-  $optionParams = array();
+  $getParams = [];
+  $optionParams = [];
   foreach ($_GET as $key => $value) {
     if (substr($key, 0, 7) === 'filter-') {
       $getParams[substr($key, 7)] = $value;
@@ -1493,27 +1541,30 @@ JS;
 function report_filters_load_existing($readAuth, $sharing, $caching = FALSE) {
   if (function_exists('hostsite_get_user_field')) {
     $userId = hostsite_get_user_field('indicia_user_id');
+    if ($userId === NULL) {
+      return [];
+    }
   }
   else {
     $userId = $_SESSION['auth_user']->id;
   }
   if (function_exists('iform_load_helpers')) {
-    iform_load_helpers(array('report_helper'));
+    iform_load_helpers(['report_helper']);
   }
   else {
     // When running on warehouse we don't have iform_load_helpers.
     require_once DOCROOT . 'client_helpers/report_helper.php';
   }
-  $filters = report_helper::get_report_data(array(
+  $filters = report_helper::get_report_data([
     'dataSource' => 'library/filters/filters_list_minimal',
     'readAuth' => $readAuth,
     'caching' => $caching,
-    'extraParams' => array(
+    'extraParams' => [
       'filter_sharing_mode' => $sharing === 'M' ? 'R' : $sharing,
       'defines_permissions' => '',
       'filter_user_id' => $userId,
-    ),
-  ));
+    ],
+  ]);
   return $filters;
 }
 

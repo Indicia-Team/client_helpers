@@ -251,7 +251,7 @@ function iform_map_get_georef_parameters() {
 }
 
 /**
- * Return a list of options to pass to the data_entry_helper::map_panel method, built from the prebuilt
+ * Return a list of options to pass to the map_helper::map_panel method, built from the prebuilt
  * form arguments.
  * @param $args
  * @param $readAuth
@@ -448,8 +448,8 @@ JS;
 /**
  * Return a list of OpenLayers options to pass to the map.
  *
- * Options are for the data_entry_helper::map_panel method olOptions parameter,
- * built from the prebuilt form arguments.
+ * Options are for the map_helper::map_panel method olOptions parameter, built
+ * from the prebuilt form arguments.
  *
  * @param array $args
  *   Form arguments.
