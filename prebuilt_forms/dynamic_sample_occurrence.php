@@ -674,7 +674,7 @@ TXT;
           'required' => FALSE,
           'default' => 'indicia data view'
         ],
-      ],
+      ]
     );
     return $retVal;
   }
