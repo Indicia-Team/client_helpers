@@ -187,7 +187,7 @@ class iform_dynamic_location extends iform_dynamic {
    * @param array $auth authentication tokens for accessing the warehouse.
    * @return string HTML for grid.
    */
-  protected static function getGrid($args, $nid, $auth) {
+  protected static function getGrid($args, $nid, array $auth) {
     $r = '<div id="locationList">' .
             call_user_func(array(self::$called_class, 'getLocationListGrid'), $args, $nid, $auth) .
           '</div>';

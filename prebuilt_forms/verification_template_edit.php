@@ -319,7 +319,7 @@ class iform_verification_template_edit extends iform_dynamic {
      * @param array $auth authentication tokens for accessing the warehouse.
      * @return string HTML for grid.
      */
-    protected static function getGrid($args, $nid, $auth) {
+    protected static function getGrid($args, $nid, array $auth) {
         iform_load_helpers(['report_helper']);
         return '<div id="templateList">' .
             report_helper::report_grid(
