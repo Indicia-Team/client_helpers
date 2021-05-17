@@ -502,7 +502,7 @@ class iform_npms_paths extends iform_wildflower_count {
    * @param array $auth authentication tokens for accessing the warehouse.
    * @return string HTML for grid.
    */
-  protected static function getGrid($args, $nid, $auth) {
+  protected static function getGrid($args, $nid, array $auth) {
     $r = '';
     $attributeOpts = array(
       'valuetable' => 'sample_attribute_value'
