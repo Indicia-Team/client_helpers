@@ -860,11 +860,14 @@ JS;
     ], $options);
     // Force vague date mode if loading existing data that requires it.
     if (isset(self::$entity_to_load["$options[fieldname]_start"]) && isset(self::$entity_to_load["$options[fieldname]_end"]) &&
-         self::$entity_to_load["$options[fieldname]_start"] !== self::$entity_to_load["$options[fieldname]_end"]
-          && $options['allowVagueDates'] === FALSE) {
-      $options['allowVagueDates'] = TRUE;
-      $options['helpText'] = (empty($options['helpText']) ? '' : "$options[helpText] ") .
-        lang::get("Vague dates enabled as this existing form's date is not an exact day.");
+         self::$entity_to_load["$options[fieldname]_start"] !== self::$entity_to_load["$options[fieldname]_end"]) {
+      if ($options['allowVagueDates'] === FALSE) {
+        $options['allowVagueDates'] = TRUE;
+        $options['helpText'] = (empty($options['helpText']) ? '' : "$options[helpText] ") .
+          lang::get("Vague dates enabled as this existing form's date is not an exact day.");
+      }
+      // Force the toggle on so the existing date can display.
+      self::$indiciaData['enableVagueDateToggle'] = TRUE;
     }
     // Date pickers should be limited width, otherwise icon too far to right.
     $options['wrapClasses'] = ['not-full-width-' . ($options['allowVagueDates'] ? 'md' : 'sm')];
@@ -904,9 +907,6 @@ JS;
     if (isset($indicia_templates['formControlClass'])) {
       $options['datePickerClass'] .= ' ' . $indicia_templates['formControlClass'];
     }
-    // Show text box for vague dates, or date picker if precise.
-    $options['dateDisplay'] = $options['allowVagueDates'] ? 'display: none' : '';
-    $options['textDisplay'] = $options['allowVagueDates'] ? '' : 'display: none';
     if ($options['allowVagueDates']) {
       $options['afterControl'] = self::apply_static_template('date_picker_mode_toggle', $options);
     }
