@@ -90,10 +90,10 @@ $indicia_templates = [
   'textarea' => '<textarea id="{id}" name="{fieldname}"{class} {disabled} cols="{cols}" rows="{rows}" {title}>{default}</textarea>'."\n",
   'checkbox' => '<input type="hidden" name="{fieldname}" value="0"/><input type="checkbox" id="{id}" name="{fieldname}" value="1"{class}{checked}{disabled} {title} />'."\n",
   'training' => '<input type="hidden" name="{fieldname}" value="{hiddenValue}"/><input type="checkbox" id="{id}" name="{fieldname}" value="1"{class}{checked}{disabled} {title} />'."\n",
-  'date_picker' => '<input type="text" {attribute_list} {class} id="{id}" name="{fieldname}" value="{default}" style="{textDisplay}" {title}/>
-      <input type="date" {attribute_list_date} class="{datePickerClass}" style="{dateDisplay}">' . "\n",
+  'date_picker' => '<input type="text" {attribute_list} {class} id="{id}" name="{fieldname}" value="{default}" style="display: none" {title}/>
+      <input type="date" {attribute_list_date} class="{datePickerClass}">' . "\n",
   'date_picker_mode_toggle' => '<span>{vagueLabel}:</span> <label class="switch">
-        <input type="checkbox" class="date-mode-toggle" checked>
+        <input type="checkbox" class="date-mode-toggle">
         <span class="slider round"></span>
       </label>' . "\n",
   'select' => '<select {attribute_list} id="{id}" name="{fieldname}"{class} {disabled} {title}>{items}</select>',
