@@ -389,8 +389,6 @@ function iform_report_get_gallery_item($entity, array $medium, $imageSize = 'thu
       'licence_title' => $medium['licence_title'],
     ],
   ];
-  // iNat only uses a thumb or full size image. So force thumb for preview.
-  $imageSize = $medium['media_type'] === 'Image:iNaturalist' ? 'thumb' : $imageSize;
   $mediaAttr = 'data-media-info="' . htmlspecialchars(json_encode($info)) . '"';
   if (!empty($medium['caption'])) {
     $captionItems[] = $medium['caption'];
@@ -413,8 +411,8 @@ function iform_report_get_gallery_item($entity, array $medium, $imageSize = 'thu
   </a>
 HTML;
   }
-  // Output the media file content, with the info attached.
   if ($medium['media_type'] === 'Audio:Local') {
+    // Output the media file content, with the info attached.
     return <<<HTML
 <li class="gallery-item">
   <audio $mediaAttr$captionAttr
@@ -423,13 +421,14 @@ HTML;
 HTML;
   }
   if ($medium['media_type'] === 'Image:iNaturalist') {
-    $imgLarge = str_replace('/square.', '/large.', $medium['path']);
+    $imgLarge = str_replace('/square.', '/original.', $medium['path']);
+    $path = $imageSize === 'med' ? str_replace('/square.', '/medium.', $medium['path']) : $medium['path'];
     return <<<HTML
 <li class="gallery-item">
   <a $mediaAttr$captionAttr
       href="$imgLarge"
       data-fancybox="gallery" class="single">
-    <img src="$medium[path]" />
+    <img src="$path" />
   </a>
 </li>
 HTML;
