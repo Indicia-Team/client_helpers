@@ -196,7 +196,8 @@ class report_helper extends helper_base {
         $mediaInfoAttr = " data-media-info=\"$mediaInfo\"";
       }
       if (preg_match('/^https:\/\/static\.inaturalist\.org/', $path)) {
-        $imgLarge = str_replace('/square.', '/large.', $path);
+        $imgLarge = str_replace('/square.', '/original.', $path);
+        $path = $preset === 'med' ? str_replace('/square.', '/medium.', $path) : $path;
         $r .= "<a href=\"$imgLarge\" data-fancybox=\"$group\"$mediaInfoAttr class=\"inaturalist $imgclass\"><img src=\"$path\" /></a>";
       }
       elseif (preg_match('/^http(s)?:\/\/(www\.)?(?P<site>[a-z]+(\.kr)?)/', $path, $matches)) {
