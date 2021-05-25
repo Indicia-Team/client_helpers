@@ -55,7 +55,7 @@ class filter_what extends FilterBase {
         $r .= "<p id=\"what-filter-instruct\">" . lang::get('Select the appropriate tab to filter by species group, taxon name, ' .
             'the level within the taxonomic hierarchy, a species scratchpad or other flags such as marine/terrestrial/freshwater or non-native taxa.') . "</p>\n";
       } else {
-        $r .= "<p id=\"what-filter-instruct\">" . lang::get('Select the appropriate tab to You can filter by species group, taxon name, ' .
+        $r .= "<p id=\"what-filter-instruct\">" . lang::get('Select the appropriate tab to filter by species group, taxon name, ' .
             'the level within the taxonomic hierarchy or other flags such as marine/terrestrial/freshwater or non-native taxa.') . "</p>\n";
       }
     }
