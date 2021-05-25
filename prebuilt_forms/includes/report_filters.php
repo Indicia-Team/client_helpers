@@ -189,7 +189,7 @@ class filter_what extends FilterBase {
     $r .= "</div>\n";
     if (!empty($options['scratchpadSearch']) && $options['scratchpadSearch'] == TRUE) {
       $r .= "<div id=\"scratchpad-tab\">\n";
-      $r .= '<p>' . lang::get('Select a species scratchpad to filter against') . '</p>' .
+      $r .= '<p>' . lang::get('Select a species scratchpad to filter against') . '</p>';
       $r .= data_entry_helper::select([
         'blankText' => lang::get('<Please select>'),
         'fieldname' => 'taxa_scratchpad_list_id',
