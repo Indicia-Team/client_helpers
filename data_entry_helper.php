@@ -8007,10 +8007,12 @@ TXT;
       $options['helpText'] = empty($options['helpText']) ? $item['description'] : $options['helpText'];
     }
     $attrOptions = [
-      'fieldname' => $item['fieldname'],
-      'id' => $item['id'],
       'disabled' => '',
     ];
+    if (isset($item['fieldname'])) {
+      $attrOptions['fieldname'] = $item['fieldname'];
+    }
+    $attrOptions['id'] = empty($item['id']) ? $attrOptions['fieldname'] : $item['id'];
     if (isset($item['caption'])) {
       // No need to translate, as that has already been done by getAttributes.
       // Untranslated caption is in field untranslatedCaption.
