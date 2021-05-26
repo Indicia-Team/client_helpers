@@ -106,21 +106,21 @@ class iform_scratchpad_list_edit {
    * Note this does not apply when redirecting (in this case the details of the saved object are in the $_GET data).
    * @return Form HTML.
    */
-  public static function get_form($args, $nid, $response=null) {
+  public static function get_form($args, $nid, $response = NULL) {
     data_entry_helper::add_resource('fancybox');
     data_entry_helper::add_resource('jquery_form');
     $conn = iform_get_connection_details($nid);
     $auth = data_entry_helper::get_read_write_auth($conn['website_id'], $conn['password']);
     $filters = data_entry_helper::explode_lines_key_value_pairs($args['filters']);
-    $options = array(
+    $options = [
       'entity' => $args['entity'],
-      'extraParams' => array(),
+      'extraParams' => [],
       'duplicates' => $args['duplicates'],
       'filters' => $filters,
-      'ajaxProxyUrl' => iform_ajaxproxy_url(null, 'scratchpad_list'),
+      'ajaxProxyUrl' => iform_ajaxproxy_url(NULL, 'scratchpad_list'),
       'websiteId' => $args['website_id'],
-      'returnPath' => hostsite_get_url($args['redirect_on_success'])
-    );
+      'returnPath' => hostsite_get_url($args['redirect_on_success']),
+    ];
     $checkLabel = lang::get('Check');
     $removeDuplicatesLabel = lang::get('Remove duplicates');
     $saveLabel = lang::get('Save');
@@ -136,48 +136,56 @@ class iform_scratchpad_list_edit {
       ]);
     }
     if (!empty($_GET['scratchpad_list_id'])) {
-      $list = data_entry_helper::get_population_data(array(
+      $list = data_entry_helper::get_population_data([
         'table' => 'scratchpad_list',
-        'extraParams' => $auth['read'] + array('id' => $_GET['scratchpad_list_id']),
+        'extraParams' => $auth['read'] + ['id' => $_GET['scratchpad_list_id']],
         'caching' => FALSE,
-      ));
-      $entries = data_entry_helper::get_population_data(array(
+      ]);
+      $entries = data_entry_helper::get_population_data([
         'table' => 'scratchpad_list_entry',
-        'extraParams' => $auth['read'] + array('scratchpad_list_id' => $_GET['scratchpad_list_id']),
+        'extraParams' => $auth['read'] + [
+          'scratchpad_list_id' => $_GET['scratchpad_list_id'],
+          'orderby' => 'id',
+        ],
         'caching' => FALSE,
-      ));
-      $entryIds = [];
+      ]);
+      $sortedTaxa = [];
+      $batchIds = [];
       $taxa = [];
       foreach ($entries as $entry) {
-        $entryIds[] = $entry['entry_id'];
-        // grab the taxon list in batches of 50
-        if (count($entryIds) > 50) {
-          $taxa = array_merge($taxa, data_entry_helper::get_population_data(array(
+        $batchIds[] = $entry['entry_id'];
+        $sortedTaxa["ttlId:$entry[entry_id]"] = NULL;
+        // Grab the taxon list in batches of 50.
+        if (count($batchIds) > 50) {
+          $taxa = array_merge($taxa, data_entry_helper::get_population_data([
             'table' => 'taxa_taxon_list',
-            'extraParams' => $auth['read'] + array(
-                'view' => 'cache',
-                'query' => json_encode(array('in'=>array('id' => $entryIds)))
-              )
-          )));
-          $entryIds = [];
+            'extraParams' => $auth['read'] + [
+              'view' => 'cache',
+              'query' => json_encode(['in' => ['id' => $batchIds]]),
+            ],
+          ]));
+          $batchIds = [];
         }
       };
-      // grab the final batch
-      if (count($entryIds)) {
-        $taxa = array_merge($taxa, data_entry_helper::get_population_data(array(
+      // Grab the final batch.
+      if (count($batchIds)) {
+        $taxa = array_merge($taxa, data_entry_helper::get_population_data([
           'table' => 'taxa_taxon_list',
-          'extraParams' => $auth['read'] + array(
-              'view' => 'cache',
-              'query' => json_encode(array('in' => array('id' => $entryIds)))
-            )
-        )));
+          'extraParams' => $auth['read'] + [
+            'view' => 'cache',
+            'query' => json_encode(['in' => ['id' => $batchIds]]),
+          ],
+        ]));
       }
-
+      // Assign taxa to sorted array.
+      foreach ($taxa as $taxon) {
+        $sortedTaxa["ttlId:$taxon[id]"] = $taxon;
+      }
       data_entry_helper::$entity_to_load = array(
         'scratchpad_list:title' => $list[0]['title'],
         'scratchpad_list:description' => $list[0]['description']
       );
-      foreach ($taxa as $taxonInList) {
+      foreach ($sortedTaxa as $taxonInList) {
         $defaultList .= "<span class=\"matched\" data-id=\"$taxonInList[id]\">" .
           "$taxonInList[taxon]</span><br/>";
       }
