@@ -8011,8 +8011,12 @@ TXT;
     ];
     if (isset($item['fieldname'])) {
       $attrOptions['fieldname'] = $item['fieldname'];
+      // Id can default to same unless specified below.
+      $attrOptions['id'] = $item['fieldname'];
     }
-    $attrOptions['id'] = empty($item['id']) ? $attrOptions['fieldname'] : $item['id'];
+    if (isset($item['id'])) {
+      $attrOptions['id'] = $item['id'];
+    }
     if (isset($item['caption'])) {
       // No need to translate, as that has already been done by getAttributes.
       // Untranslated caption is in field untranslatedCaption.
