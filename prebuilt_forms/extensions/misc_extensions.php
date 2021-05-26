@@ -541,11 +541,14 @@ $('form#entry_form').tooltip({
     }
     $scratchpad_list_id = empty($options['scratchpad_list_id'])
       ? $_GET[$options['parameter']] : $options['scratchpad_list_id'];
-    $entries = data_entry_helper::get_population_data(array(
+    $entries = data_entry_helper::get_population_data([
       'table' => 'scratchpad_list_entry',
-      'extraParams' => $auth['read'] + array('scratchpad_list_id' => $scratchpad_list_id),
-      'caching' => FALSE
-    ));
+      'extraParams' => $auth['read'] + [
+        'scratchpad_list_id' => $scratchpad_list_id,
+        'orderby' => 'id',
+      ],
+      'caching' => FALSE,
+    ]);
     $r = '';
     // Are the taxa pre-ticked, or just loaded.
     $mode = $options['tickAll'] ? 'present' : 'preloadUnticked';
