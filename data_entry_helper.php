@@ -7331,7 +7331,7 @@ HTML;
   {
     // We're mainly submitting to the sample model
     $sampleMod = submission_builder::wrap_with_images($values, 'sample');
-    $subModels = submission_builder::wrap_species_checklist_with_subsamples($values, $include_if_any_data,
+    $subModels = data_entry_helper::wrap_species_checklist_with_subsamples($values, $include_if_any_data,
       $zeroAttrs, $zeroValues);
 
     // Add the subsamples/occurrences in as subModels without overwriting others such as a sample image
