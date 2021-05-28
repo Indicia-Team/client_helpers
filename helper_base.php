@@ -91,9 +91,9 @@ $indicia_templates = [
   'checkbox' => '<input type="hidden" name="{fieldname}" value="0"/><input type="checkbox" id="{id}" name="{fieldname}" value="1"{class}{checked}{disabled} {title} />'."\n",
   'training' => '<input type="hidden" name="{fieldname}" value="{hiddenValue}"/><input type="checkbox" id="{id}" name="{fieldname}" value="1"{class}{checked}{disabled} {title} />'."\n",
   'date_picker' => '<input type="text" {attribute_list} {class} id="{id}" name="{fieldname}" value="{default}" style="display: none" {title}/>
-      <input type="date" {attribute_list_date} class="{datePickerClass}">' . "\n",
+      <input type="date" {attribute_list_date} class="{datePickerClass}" id="{id}:date">' . "\n",
   'date_picker_mode_toggle' => '<span>{vagueLabel}:</span> <label class="switch">
-        <input type="checkbox" class="date-mode-toggle">
+        <input type="checkbox" class="date-mode-toggle" id="{id}:toggle">
         <span class="slider round"></span>
       </label>' . "\n",
   'select' => '<select {attribute_list} id="{id}" name="{fieldname}"{class} {disabled} {title}>{items}</select>',
