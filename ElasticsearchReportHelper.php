@@ -1308,12 +1308,11 @@ HTML;
       helper_base::$indiciaData['idPrefix'] = $config['es']['warehouse_prefix'];
     }
     self::checkOptions('verificationButtons', $options, ['showSelectedRow'], []);
-    if (!empty($options['editPath'])) {
-      $options['editPath'] = helper_base::getRootFolder(TRUE) . $options['editPath'];
-    }
-    if (!empty($options['viewPath'])) {
-      $options['viewPath'] = helper_base::getRootFolder(TRUE) . $options['viewPath'];
-    }
+    $options = array_merge([
+      'editPath' => helper_base::getRootFolder(TRUE) . $options['editPath'],
+      'taxon_list_id' => hostsite_get_config_value('iform', 'master_checklist_id'),
+      'viewPath' => helper_base::getRootFolder(TRUE) . $options['viewPath'],
+    ], $options);
     $dataOptions = helper_base::getOptionsForJs($options, [
       'editPath',
       'keyboardNavigation',
@@ -1374,9 +1373,8 @@ HTML;
       'saveQueryToComments' => 'Save query to comments log',
       'sendQueryAsEmail' => 'Send query as email',
     ]);
-    $redetTaxonListId = hostsite_get_config_value('iform', 'master_checklist_id');
-    if (!$redetTaxonListId) {
-      throw new Exception('[verificationButtons] requires the Indicia setting Master Checklist ID to be set. This ' .
+    if (empty($options['taxon_list_id'])) {
+      throw new Exception('[verificationButtons] requires a @taxon_list_id option, or the Indicia setting Master Checklist ID to be set. This ' .
         'is required to provide a list to select the redetermination from.');
     }
     $redetUrl = iform_ajaxproxy_url(NULL, 'occurrence');
@@ -1386,7 +1384,7 @@ HTML;
       'label' => lang::get('Redetermine to'),
       'helpText' => lang::get('Select the new taxon name.'),
       'fieldname' => 'redet-species',
-      'extraParams' => $options['readAuth'] + ['taxon_list_id' => $redetTaxonListId],
+      'extraParams' => $options['readAuth'] + ['taxon_list_id' => $options['taxon_list_id']],
       'speciesIncludeAuthorities' => TRUE,
       'speciesIncludeBothNames' => TRUE,
       'speciesNameFilterMode' => 'all',
