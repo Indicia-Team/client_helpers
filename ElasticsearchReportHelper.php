@@ -1389,7 +1389,7 @@ HTML;
       'speciesIncludeBothNames' => TRUE,
       'speciesNameFilterMode' => 'all',
       'validation' => ['required'],
-      'class' => 'control-width-5',
+      'wrapClasses' => ['not-full-width-md'],
     ]);
     $commentInput = data_entry_helper::textarea([
       'label' => lang::get('Explanation comment'),
