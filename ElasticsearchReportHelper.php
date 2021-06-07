@@ -1395,6 +1395,7 @@ HTML;
       'label' => lang::get('Explanation comment'),
       'helpText' => lang::get('Please give reasons why you are changing this record.'),
       'fieldname' => 'redet-comment',
+      'wrapClasses' => ['not-full-width-lg'],
     ]);
     global $indicia_templates;
     $btnClass = $indicia_templates['buttonDefaultClass'];
