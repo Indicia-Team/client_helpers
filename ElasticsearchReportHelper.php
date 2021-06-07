@@ -1302,6 +1302,7 @@ HTML;
    *   Panel HTML;
    */
   public static function verificationButtons(array $options) {
+    global $indicia_templates;
     if (!empty($options['includeUploadButton'])) {
       $config = hostsite_get_es_config($nid);
       helper_base::$indiciaData['esEndpoint'] = $config['es']['endpoint'];
@@ -1368,10 +1369,11 @@ HTML;
       'queryCommentTabUserIsNotified' => 'Adding your query as a comment should be OK as this recorder normally checks their notifications.',
       'queryCommentTabUserIsNotNotified' => 'Although you can add a comment, sending the query as an email is preferred as the recorder does not check their notifications.',
       'queryInMultiselectMode' => 'As you are in multi-select mode, email facilities cannot be used and queries can only be added as comments to the record.',
+      'redetPartialListInfo' => 'This record was originally input using a taxon checklist which may not be a complete list of all species. If you cannot find the species you wish to redetermine it to using the search box below, then please tick the "Search all species" checkbox and try again.',
       'requestManualEmail' => 'The webserver is not correctly configured to send emails. Please send the following email usual your email client:',
-      'uploadError' => 'An error occurred whilst uploading your spreadsheet.',
       'saveQueryToComments' => 'Save query to comments log',
       'sendQueryAsEmail' => 'Send query as email',
+      'uploadError' => 'An error occurred whilst uploading your spreadsheet.',
     ]);
     if (empty($options['taxon_list_id'])) {
       throw new Exception('[verificationButtons] requires a @taxon_list_id option, or the Indicia setting Master Checklist ID to be set. This ' .
@@ -1384,6 +1386,8 @@ HTML;
       'label' => lang::get('Redetermine to'),
       'helpText' => lang::get('Select the new taxon name.'),
       'fieldname' => 'redet-species',
+      // Default to the master list, but can switch if taxon from a different
+      // list.
       'extraParams' => $options['readAuth'] + ['taxon_list_id' => $options['taxon_list_id']],
       'speciesIncludeAuthorities' => TRUE,
       'speciesIncludeBothNames' => TRUE,
@@ -1391,13 +1395,22 @@ HTML;
       'validation' => ['required'],
       'wrapClasses' => ['not-full-width-md'],
     ]);
+    $altListCheckbox = data_entry_helper::checkbox([
+      'fieldname' => 'redet-from-full-list',
+      'label' => lang::get('Search all species'),
+      'labelClass' => 'auto',
+      'helpText' => lang::get('This record was identified against a restricted list of taxa. Check this box if ' .
+          'you want to redetermine to a taxon selected from the unrestricted full list available.'),
+      'wrapClasses' => ['alt-taxon-list-controls'],
+    ]);
+    // Remember which is the master list.
+    helper_base::$indiciaData['mainTaxonListId'] = $options['taxon_list_id'];
     $commentInput = data_entry_helper::textarea([
       'label' => lang::get('Explanation comment'),
       'helpText' => lang::get('Please give reasons why you are changing this record.'),
       'fieldname' => 'redet-comment',
       'wrapClasses' => ['not-full-width-lg'],
     ]);
-    global $indicia_templates;
     $btnClass = $indicia_templates['buttonDefaultClass'];
     $uploadButton = empty($options['includeUploadButton']) ? '' : <<<HTML
       <button class="upload-decisions $btnClass" title="Upload a CSV file of verification decisions"><span class="fas fa-file-upload"></span></button>
@@ -1432,7 +1445,9 @@ HTML;
 </div>
 <div id="redet-panel-wrap" style="display: none">
   <form id="redet-form" class="verification-popup">
+    <div class="alt-taxon-list-controls alt-taxon-list-message">$indicia_templates[messageBox]</div>
     $speciesInput
+    $altListCheckbox
     $commentInput
     <button type="submit" class="btn btn-primary" id="apply-redet">Apply redetermination</button>
     <button type="button" class="btn btn-danger" id="cancel-redet">Cancel</button>
