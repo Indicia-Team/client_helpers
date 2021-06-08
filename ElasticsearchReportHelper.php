@@ -1313,6 +1313,7 @@ HTML;
       'editPath' => helper_base::getRootFolder(TRUE) . $options['editPath'],
       'taxon_list_id' => hostsite_get_config_value('iform', 'master_checklist_id'),
       'viewPath' => helper_base::getRootFolder(TRUE) . $options['viewPath'],
+      'redeterminerNameAttributeHandling' => 'overwriteOnRedet',
     ], $options);
     $dataOptions = helper_base::getOptionsForJs($options, [
       'editPath',
@@ -1405,6 +1406,16 @@ HTML;
     ]);
     // Remember which is the master list.
     helper_base::$indiciaData['mainTaxonListId'] = $options['taxon_list_id'];
+    // Option to allow verified to control if determiner name updated after
+    // redet.
+    $redetNameBehaviourOption = '';
+    if ($options['redeterminerNameAttributeHandling'] === 'allowChoice') {
+      $redetNameBehaviourOption = data_entry_helper::checkbox([
+        'label' => lang::get("Don't update the determiner"),
+        'helpText' => lang::get('If you are changing the record determination on behalf of the original recorder and their name should be stored against the determination, please check this box.'),
+        'fieldname' => 'no-update-determiner',
+      ]);
+    }
     $commentInput = data_entry_helper::textarea([
       'label' => lang::get('Explanation comment'),
       'helpText' => lang::get('Please give reasons why you are changing this record.'),
@@ -1448,6 +1459,7 @@ HTML;
     <div class="alt-taxon-list-controls alt-taxon-list-message">$indicia_templates[messageBox]</div>
     $speciesInput
     $altListCheckbox
+    $redetNameBehaviourOption
     $commentInput
     <button type="submit" class="btn btn-primary" id="apply-redet">Apply redetermination</button>
     <button type="button" class="btn btn-danger" id="cancel-redet">Cancel</button>
