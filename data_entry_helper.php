@@ -5071,7 +5071,7 @@ HTML;
       'FinishLabel' => 'Finish',
       'Yes' => 'Yes',
       'No' => 'No',
-      'SRefLabel' => 'LANG_SRef_Label',
+      'SRefLabel' => 'Spatial ref',
     ]);
     // make sure we load the JS.
     data_entry_helper::add_resource('control_speciesmap_controls');
@@ -5086,7 +5086,7 @@ HTML;
           $idKey = "$a[0]:$a[1]:$sampleId:sample:id";
           $deletedKey = "$a[0]:$a[1]:$sampleId:sample:deleted";
           $blocks .= '<div id="scm-'.$a[1].'-block" class="scm-block">'.
-                    '<label>'.lang::get('LANG_SRef_Label').':</label> '.
+                    '<label>'.lang::get('Spatial ref').':</label> '.
                     '<input type="text" value="'.$value.'" readonly="readonly" name="'.$key.'">'.
                     '<input type="hidden" value="'.data_entry_helper::$entity_to_load[$geomKey].'" name="'.$geomKey.'">'.
                     '<input type="hidden" value="'.(isset(data_entry_helper::$entity_to_load[$deletedKey]) ? data_entry_helper::$entity_to_load[$deletedKey] : 'f').'" name="'.$deletedKey.'">'.
