@@ -11,8 +11,9 @@
       }
     });
   });
+})(jQuery);
 
-
+jQuery(document).ready(function($) {
   // Linked list handling for the location type selector. Only needed for
   // location autocomplete mode as automated if the location picker control is
   // a select.
@@ -28,4 +29,5 @@
 
     });
   }
-})(jQuery);
+});
+
