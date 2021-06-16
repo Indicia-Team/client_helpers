@@ -262,7 +262,9 @@ class iform_subscribe_species_alert {
         'valueField' => 'id',
         'captionField' => 'name',
         'extraParams' => $auth['read'] + [
-          'location_type_id' => $args['location_type_id'],
+          'query' => json_encode([
+            'in' => ["location_type_id", $args['location_type_id']],
+          ]),
           'orderby' => 'name',
         ],
         'class' => 'control-width-4',
@@ -275,7 +277,10 @@ class iform_subscribe_species_alert {
         'fieldname' => 'species_alert:location_id',
         'id' => 'imp-location',
         'blankText' => lang::get('<Select boundary>'),
-        'extraParams' => $auth['read'] + ['location_type_id' => $args['location_type_id'], 'orderby' => 'name'],
+        'extraParams' => $auth['read'] + [
+          'location_type_id' => $args['location_type_id'],
+          'orderby' => 'name',
+        ],
         'class' => 'control-width-4',
       ]);
     }
