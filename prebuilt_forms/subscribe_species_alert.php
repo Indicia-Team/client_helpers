@@ -102,6 +102,15 @@ class iform_subscribe_species_alert {
           'default' => 'select',
           'group' => 'Lookups',
         ],
+        [
+          'fieldname' => 'include_location_type_select',
+          'label' => 'Include location type selector',
+          'helpText' => 'Include a select control for the location type, so the user can search within a specific layer.',
+          'type' => 'boolean',
+          'required' => FALSE,
+          'default' => FALSE,
+          'group' => 'Lookups',
+        ],
       ]
     );
   }
@@ -253,36 +262,66 @@ class iform_subscribe_species_alert {
         'class' => 'control-width-4',
       ]);
     }
-    if (empty($args['location_control']) || $args['location_control'] === 'autocomplete') {
-      $form .= data_entry_helper::location_autocomplete([
-        'label' => lang::get('Select location'),
-        'helpText' => lang::get('If you want to restrict the alerts to records within a certain boundary, search for it it here.'),
-        'fieldname' => 'species_alert:location_id',
-        'id' => 'imp-location',
+
+    if (!empty($args['include_location_type_select'])) {
+      $form .= data_entry_helper::select([
+        'label' => lang::get('Location type'),
+        'helpText' => lang::get('If you want to restrict the alerts to records within a certain boundary, choose the type of location to choose the boundary from.'),
+        'fieldname' => 'location_type',
+        'id' => 'location_type',
+        'blankText' => lang::get('<Select type>'),
+        'table' => 'termlists_term',
         'valueField' => 'id',
-        'captionField' => 'name',
+        'captionField' => 'term',
         'extraParams' => $auth['read'] + [
           'query' => json_encode([
-            'in' => ["location_type_id", $args['location_type_id']],
+            'in' => ['id', $args['location_type_id']],
           ]),
-          'orderby' => 'name',
+          'orderby' => 'term',
+          'view' => 'cache',
         ],
         'class' => 'control-width-4',
       ]);
     }
+    $locationCtrlOptions = [
+      'label' => lang::get('Select location'),
+      'helpText' => lang::get('If you want to restrict the alerts to records within a certain boundary, select it here.'),
+      'fieldname' => 'species_alert:location_id',
+      'id' => 'imp-location',
+      'extraParams' => $auth['read'] + [
+        'orderby' => 'name',
+      ],
+      'class' => 'control-width-4',
+    ];
+    if (empty($args['location_control']) || $args['location_control'] === 'autocomplete') {
+      $locationCtrlOptions += [
+        'valueField' => 'id',
+        'captionField' => 'name',
+      ];
+      if (!empty($args['include_location_type_select'])) {
+        $locationCtrlOptions['helpText'] .= ' ' . lang::get('Choose a location type using the drop-down above before searching.');
+        $locationCtrlOptions['disabled'] = ' disabled="disabled"';
+      }
+      else {
+        $locationCtrlOptions['extraParams']['query'] = json_encode([
+          'in' => ['location_type_id', $args['location_type_id']],
+        ]);
+      }
+      $form .= data_entry_helper::location_autocomplete($locationCtrlOptions);
+    }
     else {
-      $form .= data_entry_helper::location_select([
-        'label' => lang::get('Select location'),
-        'helpText' => lang::get('If you want to restrict the alerts to records within a certain boundary, select it here.'),
-        'fieldname' => 'species_alert:location_id',
-        'id' => 'imp-location',
-        'blankText' => lang::get('<Select boundary>'),
-        'extraParams' => $auth['read'] + [
-          'location_type_id' => $args['location_type_id'],
-          'orderby' => 'name',
-        ],
-        'class' => 'control-width-4',
-      ]);
+      $locationCtrlOptions['blankText'] = lang::get('<Select boundary>');
+      if (!empty($args['include_location_type_select'])) {
+        $locationCtrlOptions += [
+          'parentControlId' => 'location_type',
+          'filterField' => 'location_type_id',
+        ];
+        $locationCtrlOptions['helpText'] .= ' ' . lang::get('Choose a location type using the drop-down above before searching.');
+      }
+      else {
+        $locationCtrlOptions['extraParams']['location_type_id'] = $args['location_type_id'];
+      }
+      $form .= data_entry_helper::location_select($locationCtrlOptions);
     }
     $form .= data_entry_helper::checkbox([
       'label' => lang::get('Alert on initial entry'),
