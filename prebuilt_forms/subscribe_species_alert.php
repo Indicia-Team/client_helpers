@@ -93,6 +93,19 @@ class iform_subscribe_species_alert {
           'group'=>'Lookups',
           'siteSpecific'=>true
         ),
+        [
+          'fieldname' => 'location_control',
+          'label' => 'Location selection control',
+          'helpText' => 'For larger lists of locations using an autocomplete search box is easier than a drop-down select.',
+          'type' => 'select',
+          'options' => [
+            'select' => 'Drop-down select',
+            'autocomplete' => 'Autocomplete search box',
+          ],
+          'requred' => TRUE,
+          'default' => 'select',
+          'group' => 'Lookups',
+        ],
       )
     );
   }
@@ -214,7 +227,7 @@ class iform_subscribe_species_alert {
       }
     }
     if (!empty($args['full_lists'])) {
-      $form .= data_entry_helper::select(array(
+      $form .= data_entry_helper::select([
         'label' => lang::get('Select full species lists'),
         'helpText' => lang::get('If you want to restrict the alerts to records of any ' .
             'species within a species list, then select the list here.'),
@@ -223,20 +236,34 @@ class iform_subscribe_species_alert {
         'table' => 'taxon_list',
         'valueField' => 'id',
         'captionField' => 'title',
-        'extraParams' => $auth['read'] + array('id' => $args['full_lists'], 'orderby' => 'title'),
+        'extraParams' => $auth['read'] + ['id' => $args['full_lists'], 'orderby' => 'title'],
         'sharing' => 'reporting',
-        'class' => 'control-width-4'
-      ));
+        'class' => 'control-width-4',
+      ]);
     }
-    $form .= data_entry_helper::location_select(array(
-      'label' => lang::get('Select location'),
-      'helpText' => lang::get('If you want to restrict the alerts to records within a certain boundary, select it here.'),
-      'fieldname' => 'species_alert:location_id',
-      'id' => 'imp-location',
-      'blankText' => lang::get('<Select boundary>'),
-      'extraParams' => $auth['read'] + array('location_type_id' => $args['location_type_id'], 'orderby' => 'name'),
-      'class' => 'control-width-4'
-    ));
+    if (empty($args['location_control']) || $args['location_control'] === 'autocomplete') {
+      $form .= data_entry_helper::location_autocomplete([
+        'label' => lang::get('Select location'),
+        'helpText' => lang::get('If you want to restrict the alerts to records within a certain boundary, search for it it here.'),
+        'fieldname' => 'species_alert:location_id',
+        'id' => 'imp-location',
+        'valueField' => 'id',
+        'captionField' => 'name',
+        'extraParams' => $auth['read'] + ['location_type_id' => $args['location_type_id'], 'orderby' => 'name'],
+        'class' => 'control-width-4',
+      ]);
+    }
+    else {
+      $form .= data_entry_helper::location_select([
+        'label' => lang::get('Select location'),
+        'helpText' => lang::get('If you want to restrict the alerts to records within a certain boundary, select it here.'),
+        'fieldname' => 'species_alert:location_id',
+        'id' => 'imp-location',
+        'blankText' => lang::get('<Select boundary>'),
+        'extraParams' => $auth['read'] + ['location_type_id' => $args['location_type_id'], 'orderby' => 'name'],
+        'class' => 'control-width-4',
+      ]);
+    }
     $form .= data_entry_helper::checkbox(array(
       'label' => lang::get('Alert on initial entry'),
       'helpText' => lang::get('Tick this box if you want to receive a notification when the record is first input into the system.'),
