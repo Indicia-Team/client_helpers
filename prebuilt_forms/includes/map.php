@@ -112,7 +112,6 @@ function iform_map_get_map_parameters() {
         'os_outdoor' => 'OS Outdoor',
         'os_road' => 'OS Road',
         'os_light' => 'OS Light',
-        'os_night' => 'OS Night',
       ),
       'sortable' => TRUE,
       'group' => 'Base Map Layers',
