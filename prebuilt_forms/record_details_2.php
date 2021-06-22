@@ -820,7 +820,7 @@ JS;
     }
     if ($options['module'] === 'addtoany') {
       self::load_record($auth, $args);
-      // lets not promote sharing of sensitive stuff
+      // Don't promote sharing of sensitive stuff.
       if (self::$record['sensitivity_precision']) {
         return '';
       }
@@ -838,9 +838,10 @@ JS;
     }
     else {
       $block_manager = \Drupal::service('plugin.manager.block');
-      $plugin_block = $block_manager->createInstance($options['block'], $options['args']);
+      $plugin_block = $block_manager->createInstance($options['block'], empty($options['args']) ? [] : $options['args']);
       $render = $plugin_block->build();
-      $r .= $render[$options['rendered_item_key']];
+      $renderer = \Drupal::service('renderer');
+      $r .= $renderer->render($render);
     }
     if (!empty($options['title'])) {
       $r .= "</fieldset>";
