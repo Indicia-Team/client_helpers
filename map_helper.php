@@ -73,7 +73,7 @@ class map_helper extends helper_base {
    *     'google_physical', 'google_streets', 'google_hybrid',
    *     'google_satellite', 'openlayers_wms', 'bing_aerial', 'bing_hybrid',
    *     'bing_shaded', 'bing_os', 'osm' (for OpenStreetMap), 'os_outdoor',
-   *     'os_road', 'os_light', 'os_night', 'os_leisure'.
+   *     'os_road', 'os_light', 'os_leisure'.
    *   * otherBaseLayerConfig - Array of layer definitions for any other layers
    *     to add to the map. Each entry is an object with 2 properties -
    *     * class - name of the Openlayers layer class (must be a subclass of
