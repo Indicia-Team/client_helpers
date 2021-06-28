@@ -71,6 +71,8 @@ class DynamicAttrsProxyHelper {
         $attr['default'] = $attr['default_value'];
         $attr['displayValue'] = $attr['default_value_caption'];
         $attr['defaultUpper'] = $attr['default_upper_value'];
+        // Fieldname will be replaced by client-side JS.
+        $attr['fieldname'] = 'tempNameToEnableValidation';
         if ($attr['system_function']) {
           $attrData[] = [
             'attr' => $attr,
