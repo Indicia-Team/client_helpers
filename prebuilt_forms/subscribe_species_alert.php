@@ -96,6 +96,7 @@ class iform_subscribe_species_alert {
           'type' => 'select',
           'options' => [
             'select' => 'Drop-down select',
+            'hierarchical_select' => 'Hierarchical drop-down select',
             'autocomplete' => 'Autocomplete search box',
           ],
           'requred' => TRUE,
@@ -293,13 +294,15 @@ class iform_subscribe_species_alert {
       ],
       'class' => 'control-width-4',
     ];
-    if (empty($args['location_control']) || $args['location_control'] === 'autocomplete') {
+    if (!empty($args['include_location_type_select'])) {
+      $locationCtrlOptions['helpText'] .= ' ' . lang::get('Choose a location type using the drop-down above before searching.');
+    }
+    if (!empty($args['location_control']) && $args['location_control'] === 'autocomplete') {
       $locationCtrlOptions += [
         'valueField' => 'id',
         'captionField' => 'name',
       ];
       if (!empty($args['include_location_type_select'])) {
-        $locationCtrlOptions['helpText'] .= ' ' . lang::get('Choose a location type using the drop-down above before searching.');
         $locationCtrlOptions['disabled'] = ' disabled="disabled"';
       }
       else {
@@ -316,10 +319,22 @@ class iform_subscribe_species_alert {
           'parentControlId' => 'location_type',
           'filterField' => 'location_type_id',
         ];
-        $locationCtrlOptions['helpText'] .= ' ' . lang::get('Choose a location type using the drop-down above before searching.');
       }
       else {
         $locationCtrlOptions['extraParams']['location_type_id'] = $args['location_type_id'];
+      }
+      if (!empty($args['location_control']) && $args['location_control'] === 'hierarchical_select') {
+        $locationCtrlOptions['class'] = (empty($locationCtrlOptions['class']) ? '' : "$locationCtrlOptions[class] ") . ' hierarchical-location-select';
+        $locationCtrlOptions['attributes'] = ['data-index' => 1];
+        // Do we need to insert additional filters here?
+        $locationCtrlOptions['extraParams']['parent_id'] = 'NULL';
+        // Don't use the visible control to post a value - we'll capture the
+        // value in a hidden.
+        $locationCtrlOptions['fieldname'] = 'imp-location';
+        $form .= data_entry_helper::hidden_text([
+          'fieldname' => 'species_alert:location_id',
+          'id' => 'hidden-location-id',
+        ]);
       }
       $form .= data_entry_helper::location_select($locationCtrlOptions);
     }
