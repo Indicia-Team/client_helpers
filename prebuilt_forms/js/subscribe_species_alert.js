@@ -29,5 +29,53 @@ jQuery(document).ready(function($) {
 
     });
   }
+
+  indiciaFns.on('change', '.hierarchical-location-select', {}, function() {
+    var select = this;
+    var thisIndex = $(select).attr('data-index');
+    $.each($('.hierarchical-location-select'), function() {
+      if ($(this).attr('data-index') > thisIndex) {
+        $(this).remove();
+      }
+    });
+    if ($(select).val()) {
+      // Copy the value over so it is saved.
+      $('#hidden-location-id').val($(select).val());
+      // Fetch children.
+      $.ajax({
+        dataType: 'jsonp',
+        url: indiciaData.read.url + 'index.php/services/data/location',
+        data: {
+          parent_id: $(select).val(),
+          auth_token: indiciaData.read.auth_token,
+          nonce: indiciaData.read.nonce
+        },
+        success: function (data) {
+          var newSelect;
+          if (data.length > 0) {
+            newSelect = $('<select class="' + select.className + '" />')
+              .attr('data-index', parseInt($(select).attr('data-index'), 10) + 1)
+              .attr('name', $(select).attr('name'))
+              .append($('<option value="">- Please select -</option>'))
+              .insertAfter($(select))
+              .click(function() {
+                indiciaData.mapdiv.locationSelectedInInput(indiciaData.mapdiv, $(this).val())
+              });
+            data.forEach(function(item) {
+              newSelect.append($('<option value="' + item.id + '">' + item.name + '</option>'));
+            });
+          }
+        }
+      });
+    } else {
+      // Nothing selected. Need to store the parent location ID in the hidden
+      // input in case the form is posted.
+      if ($('.hierarchical-location-select[data-index="' + (thisIndex - 1) + '"]').length > 0) {
+        $('#hidden-location-id').val($('.hierarchical-location-select[data-index="' + (thisIndex - 1) + '"]').val());
+      }
+    }
+
+
+  });
 });
 
