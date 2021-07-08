@@ -121,7 +121,9 @@ $indicia_templates = [
       '<input id="{inputId}" name="{inputId}" type="text" value="{defaultCaption}" {class} {disabled} {title}/>' . "\n",
   'autocomplete_javascript' => "
 $('input#{escaped_input_id}').change(function() {
-  $('input#{escaped_id}').val('');
+  if ($('input#{escaped_id}').data('set-for') !== $('input#{escaped_input_id}').val()) {
+    $('input#{escaped_id}').val('');
+  }
 });
 $('input#{escaped_input_id}').autocomplete('{url}',
   {
@@ -158,6 +160,8 @@ $('input#{escaped_input_id}').autocomplete('{url}',
 });
 $('input#{escaped_input_id}').result(function(event, data) {
   $('input#{escaped_id}').attr('value', data.{valueField});
+  // Remember what text string this value was for.
+  $('input#{escaped_id}').data('set-for', $('input#{escaped_input_id}').val());
   $('.item-icon').remove();
   if (typeof data.icon!=='undefined') {
     $('input#{escaped_input_id}').after(data.icon).next().hover(indiciaFns.hoverIdDiffIcon);
