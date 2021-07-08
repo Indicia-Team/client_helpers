@@ -3060,7 +3060,10 @@ RIJS;
   * <li><b>spatialRefPerRow</b><br/>
   * Optional. If set to true, then a spatial reference column is included on each row. When submitted, each unique
   * spatial reference will cause a subsample to be included in the submission allowing more precise locations to be
-  * defined for some records.</li>
+  * defined for some records. This option should ideally be used on a form where the map is visible near to the species
+  * checklist control so the locations of spatial references can be visualised, otherwise data entry errors are likely.
+  * A button inside the control allows the user to enable a mode where the grid ref can be set by clicking a location
+  * on the map.</li>
   * <li><b>spatialRefPrecisionAttrId</b><br/>
   * Optional. If set to the ID of a sample attribute and spatialRefPerRow is enabled, then a spatial reference
   * precision column is included on each row. When submitted, each unique spatial reference and precision value will
@@ -4651,6 +4654,9 @@ JS;
     if ($options['responsive']) {
       $options['colWidths'] = array();
     }
+    if ($options['spatialRefPerRow']) {
+      self::add_resource('font_awesome');
+    }
     return $options;
   }
 
@@ -4843,10 +4849,12 @@ JS;
       $idx++;
     }
     if ($options['spatialRefPerRow']) {
+      $getFromMapHint = lang::get('Toggle this button to allow you to click on the map to set the spatial reference for this record.');
       $r .= <<<HTML
 <td class="ui-widget-content scSpatialRefCell" headers="$options[id]-spatialref-0">
   <input class="scSpatialRef" type="text" id="$fieldname:occurrence:spatialref"
      name="$fieldname:occurrence:spatialref" value="" />
+  <button class="scSpatialRefFromMap" type="button" title="$getFromMapHint"><i class="fas fa-map-pin"></i></button>
 </td>
 HTML;
     }
