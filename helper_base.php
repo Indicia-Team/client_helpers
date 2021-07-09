@@ -54,7 +54,8 @@ $indicia_templates = [
   'anchorButtonClass' => 'indicia-button',
   'submitButton' => '<input id="{id}" type="submit"{class} name="{name}" value="{caption}" />',
   // Message boxes
-  'messageBox' => '<div class="page-notice ui-state-highlight ui-corner-all">{message}</div>',
+  'messageBox' => '<div class="page-notice ui-state-default ui-corner-all">{message}</div>',
+  'warningBox' => '<div class="page-notice ui-state-highlight ui-corner-all"><span class="fas fa-exclamation-triangle"></span>{message}</div>',
   // Lock icons.
   'lock_icon' => '<span id="{id}_lock" class="unset-lock">&nbsp;</span>',
   'lock_javascript' => "indicia.locks.initControls (

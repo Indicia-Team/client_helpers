@@ -3798,11 +3798,14 @@ RIJS;
           '</div>';
       }
       if ($hasEditedRecord) {
+        self::add_resource('font_awesome');
         self::$javascript .= "$('#$options[id] tbody tr').hide();\n";
         self::$javascript .= "$('#$options[id] tbody tr td.edited-record').parent().show();\n";
         self::$javascript .= "$('#$options[id] tbody tr td.edited-record').parent().next('tr.supplementary-row').show();\n";
-        $r .= '<p>'.lang::get('You are editing a single record that is part of a larger sample, so any changes to the sample\'s information such as edits to the date or map reference '.
-            'will affect the whole sample.') . " <a id=\"species-grid-view-all-$options[id]\">".lang::get('View all the records in this sample or add more records.').'</a></p>';
+        $r = str_replace('{message}',
+          lang::get('You are editing a single record that is part of a larger sample, so any changes to the sample\'s information such as edits to the date or map reference will affect the whole sample.') .
+          "<br/><button type=\"button\" class=\"$indicia_templates[buttonDefaultClass]\" id=\"species-grid-view-all-$options[id]\">".lang::get('Show the full list of records for editing or addition of more records.').'</button>',
+          $indicia_templates['warningBox']) . $r;
         self::$javascript .= "$('#species-grid-view-all-$options[id]').click(function(e) {
   $('#$options[id] tbody tr').show();
   $(e.currentTarget).hide();
@@ -3827,7 +3830,7 @@ if ($('#$options[id]').parents('.ui-tabs-panel').length) {
         self::$javascript .= "jQuery('#{$options['id']}').indiciaFootableChecklist($footable_options);\n";
       }
       $r .= self::enableTaxonAdditionControls($options);
-      return $r;
+      return "<div class=\"species-checklist-wrap\">$r</div>";
     } else {
       return $taxalist['error'];
     }
