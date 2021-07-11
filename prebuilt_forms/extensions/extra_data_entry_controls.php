@@ -266,4 +266,40 @@ class extension_extra_data_entry_controls {
     );
   }
 
+  /**
+   * A select control for choosing a public recording group.
+   *
+   * Allows records to be posted to groups where joining is not a requirement.
+   * The control can be added to a normal form - it is not necessary on a group
+   * linked recording form.
+   *
+   * Options include:
+   * * group_type_id - ID, or array of group_type_ids to limit to.
+   *   include.
+   * * helpText - text to show under the control.
+   * * label - label for the control.
+   */
+  public function group_select($auth, $args, $tabalias, array $options) {
+    $options = array_merge([
+      'label' => 'Select where to post the record',
+      'helpText' => NULL,
+      'table' => 'group',
+      'captionField' => 'title',
+      'valueField' => 'id',
+      'extraParams' => ['joining_method' => 'P'],
+      'fieldname' => 'sample:group_id',
+      'blankText' => '- select a group -'
+    ], $options);
+    $options['extraParams'] += $auth['read'];
+    if (isset($options['group_type_id'])) {
+      $options['group_type_id'] = is_array($options['group_type_id'])
+        ? $options['group_type_id']
+        : [$options['group_type_id']];
+      $options['extraParams']['query'] = json_encode([
+        'in' => ['group_type_id' => $options['group_type_id']],
+      ]);
+    }
+    return data_entry_helper::select($options);
+  }
+
 }
