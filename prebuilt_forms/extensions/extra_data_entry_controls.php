@@ -283,21 +283,22 @@ class extension_extra_data_entry_controls {
     $options = array_merge([
       'label' => 'Select where to post the record',
       'helpText' => NULL,
-      'table' => 'group',
+      'report' => 'library/groups/groups_select',
       'captionField' => 'title',
       'valueField' => 'id',
       'extraParams' => ['joining_method' => 'P'],
       'fieldname' => 'sample:group_id',
-      'blankText' => '- select a group -'
+      'blankText' => '- select a group -',
     ], $options);
     $options['extraParams'] += $auth['read'];
     if (isset($options['group_type_id'])) {
       $options['group_type_id'] = is_array($options['group_type_id'])
-        ? $options['group_type_id']
-        : [$options['group_type_id']];
-      $options['extraParams']['query'] = json_encode([
-        'in' => ['group_type_id' => $options['group_type_id']],
-      ]);
+        ? implode(',', $options['group_type_id'])
+        : $options['group_type_id'];
+      $options['extraParams']['group_type_id'] = $options['group_type_id'];
+    }
+    if (isset(data_entry_helper::$entity_to_load['sample:group_id'])) {
+      $options['extraParams']['current_record_group_id'] = data_entry_helper::$entity_to_load['sample:group_id'];
     }
     return data_entry_helper::select($options);
   }
