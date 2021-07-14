@@ -2148,7 +2148,7 @@ JS;
       self::$javascript .= "
 indiciaData.controlWrapErrorClass = '$indicia_templates[controlWrapErrorClass]';
 var validator = $('#".self::$validated_form_id."').validate({
-  ignore: \":hidden,.inactive\",
+  ignore: \":hidden:not(.date-text),.inactive\",
   errorClass: \"$indicia_templates[error_class]\",
   ". (in_array('inline', self::$validation_mode) ? "" : "errorElement: 'p',") ."
   highlight: function(el, errorClass) {
@@ -2170,9 +2170,6 @@ var validator = $('#".self::$validated_form_id."').validate({
   },
   unhighlight: function(el, errorClass) {
     var controlWrap = $(el).closest('.ctrl-wrap');
-    if (controlWrap.length > 0) {
-      $(controlWrap).removeClass(indiciaData.controlWrapErrorClass);
-    }
     if ($(el).is(':radio') || $(el).is(':checkbox')) {
       //if the element is a radio or checkbox group then highlight the group
       var jqBox = $(el).parents('.control-box');
@@ -2183,6 +2180,9 @@ var validator = $('#".self::$validated_form_id."').validate({
       }
     } else {
       $(el).removeClass('ui-state-error');
+    }
+    if (controlWrap.length > 0 && $(controlWrap).find('.ui-state-error').length === 0) {
+      $(controlWrap).removeClass(indiciaData.controlWrapErrorClass);
     }
   },
   invalidHandler: $indicia_templates[invalid_handler_javascript],
