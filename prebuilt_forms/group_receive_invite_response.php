@@ -23,15 +23,15 @@
 require_once('includes/report_filters.php');
 
 /**
- * 
- * 
+ *
+ *
  * @package Client
  * @subpackage PrebuiltForms
  * A page for receiving invitation responses from invited users.
  */
 class iform_group_receive_invite_response {
-  
-  /** 
+
+  /**
    * Return the form metadata.
    * @return array The definition of the form.
    */
@@ -44,13 +44,13 @@ class iform_group_receive_invite_response {
       'recommended' => true
     );
   }
-  
+
   /**
    * Get the list of parameters for this form.
    * @return array List of parameters that this form requires.
    * @todo: Implement this method
    */
-  public static function get_parameters() {   
+  public static function get_parameters() {
     return array(array(
       'name'=>'groups_page_path',
       'caption'=>'Path to main groups page',
@@ -63,7 +63,7 @@ class iform_group_receive_invite_response {
       'type'=>'text_input'
     ));
   }
-  
+
   /**
    * Return the generated form output.
    * @param array $args List of parameter values passed through to the form depending on how the form has been configured.
@@ -88,49 +88,55 @@ class iform_group_receive_invite_response {
       return self::fail_message("You've followed a link to accept an invite to a recording group but unfortunately ".
           "the invite is no longer valid.", $args);
     $invite = $invite[0];
-    if ($_POST && !empty($_POST['accept'])) 
+    if ($_POST && !empty($_POST['accept']))
       return self::accept($args, $invite, $auth);
-    elseif ($_POST && !empty($_POST['reject'])) 
+    elseif ($_POST && !empty($_POST['reject']))
       return self::reject($args, $invite, $auth);
-    elseif ($_POST && !empty($_POST['maybe'])) 
+    elseif ($_POST && !empty($_POST['maybe']))
       return self::maybe($args, $invite, $auth);
-    if (hostsite_get_user_field('id'))
+    if (hostsite_get_user_field('id')) {
       return self::logged_in_page($invite, $auth);
-    else 
+    }
+    else {
       return self::logged_out_page($invite, $auth);
+    }
   }
-  
+
   /**
    * Display a simple failure message and return to groups page button.
+   *
    * @param string $msg Message string
    * @param array $args Form args
    * @return string HTML to output
    */
   private static function fail_message($msg, $args) {
-    $r = '<p>' . lang::get($msg) . '</p>';  
-    if (hostsite_get_user_field('id'))
+    $r = '<p>' . lang::get($msg) . '</p>';
+    if (hostsite_get_user_field('id')) {
       $r .= '<a class="button" href="' . hostsite_get_url($args['groups_page_path']) . '">' . lang::get('Return to Groups page') . '</a>';
+    }
     return $r;
   }
-  
+
   private static function logged_in_page($invite, $auth) {
-    if (self::existingUser($invite, $auth))
+    if (self::existingUser($invite, $auth)) {
       return lang::get('There is no need to accept this invitation as you are already a member of {1}.',
           $invite['group_title']);
+    }
     $reloadPath = self::getReloadPath();
-    $r = '<p>'.lang::get('You are logged in to {1} as {2} and have been invited to join the recording group {3}.',
+    $r = '<p>' . lang::get('You are logged in to {1} as {2} and have been invited to join the recording group {3}.',
         hostsite_get_config_value('site', 'name'), hostsite_get_user_field('name'), $invite['group_title']) . '</p>';
-    $r .= '<form id="entry_form" action="'.$reloadPath.'" method="POST">';
-    $r .= '<input type="hidden" name="token" value="'.$_GET['token'].'"/>';
-    $r .= '<input type="submit" id="btn-accept" name="accept" value="'.lang::get('Accept invitation').'"/>';
-    $r .= '<input type="submit" id="btn-reject" name="reject" value="'.lang::get('Reject invitation').'"/>';
-    $r .= '<input type="submit" id="btn-maybe" name="maybe" value="'.lang::get('Maybe later').'"/>';
+    $r .= '<form id="entry_form" action="$reloadPath" method="POST">';
+    $r .= '<input type="hidden" name="token" value="'.$_GET['token'] . '"/>';
+    $r .= '<input type="submit" id="btn-accept" name="accept" value="' . lang::get('Accept invitation') . '"/>';
+    $r .= '<input type="submit" id="btn-reject" name="reject" value="' . lang::get('Reject invitation') . '"/>';
+    $r .= '<input type="submit" id="btn-maybe" name="maybe" value="' . lang::get('Maybe later') . '"/>';
     hostsite_set_page_title(lang::get('Invitation to join {1}', $invite['group_title']));
     return $r;
   }
 
   /**
    * Checks if the invite relates to a group the user already belongs to.
+   *
    * @param $invite
    * @param $auth
    * @return bool
@@ -148,9 +154,9 @@ class iform_group_receive_invite_response {
     return count($existing) > 0;
   }
 
-  /** 
+  /**
    * Retrieve the path to the current page, so the form can submit to itself.
-   * @return string 
+   * @return string
    */
   private static function getReloadPath () {
     $reload = data_entry_helper::get_reload_link_parts();
@@ -164,9 +170,9 @@ class iform_group_receive_invite_response {
     }
     return $reloadPath;
   }
-  
+
   /**
-   * A page displayed on following an invite link when logged out. Prompts login. If a login block is on the 
+   * A page displayed on following an invite link when logged out. Prompts login. If a login block is on the
    * page, then the user can log in whilst on the page and the user can then immediately accept the invite.
    * @param array $invite Invitation record
    * @param array $auth Authorisation tokens
@@ -179,15 +185,15 @@ class iform_group_receive_invite_response {
         $siteName, $invite['group_title'], $siteName) . '</p>';
     hostsite_set_page_title(lang::get('Invitation to join {1}', $invite['group_title']));
     return $r;
-  
+
   }
-  
+
   /**
    * Performs the action of accepting an invite.
    * @param array $args Form configuration arguments
    * @param array $invite Invitation record
    * @param array $auth Authorisation tokens
-   * @return type 
+   * @return type
    */
   private static function accept($args, $invite, $auth) {
     // insert a groups_users record
@@ -232,7 +238,7 @@ class iform_group_receive_invite_response {
     }
     return '';
   }
-  
+
   /**
    * Given a reject response, delete the invite, and redirect to the groups home page.
    * @param array $args Form config arguments
@@ -249,7 +255,7 @@ class iform_group_receive_invite_response {
     hostsite_goto_page($args['groups_page_path']);
     return '';
   }
-  
+
   /**
    * Given a maybe response, leave the invite alone, and redirect to the groups home page.
    * @param array $args Form config arguments

@@ -467,7 +467,7 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
   protected static function getHeader(array $args) {
     if (call_user_func([self::$called_class, 'isDataEntryForm'])) {
       // Make sure the form action points back to this page.
-      $reloadPath = call_user_func(array(self::$called_class, 'getReloadPath'));
+      $reloadPath = call_user_func([self::$called_class, 'getReloadPath'], $args['available_for_groups']);
       // Request automatic JS validation.
       if (!isset($args['clientSideValidation']) || $args['clientSideValidation']) {
         data_entry_helper::enable_validation('entry_form');
@@ -533,23 +533,25 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
       '" id="save-button" value="' . lang::get('Submit') . "\" />\n";
   }
 
-  protected static function getReloadPath () {
+  protected static function getReloadPath($availableForGroups) {
     $reload = data_entry_helper::get_reload_link_parts();
     unset($reload['params']['sample_id']);
     unset($reload['params']['occurrence_id']);
     unset($reload['params']['location_id']);
     unset($reload['params']['new']);
     unset($reload['params']['newLocation']);
-    // if editing a group record, ensure group in URL on form post so it carries on to the next record input.
-    if (!empty(data_entry_helper::$entity_to_load['sample:group_id']))
+    // On group enabled forms, if editing a group record, ensure group in URL
+    // on form post so it carries on to the next record input.
+    if (!empty(data_entry_helper::$entity_to_load['sample:group_id']) && $availableForGroups) {
       $reload['params']['group_id'] = data_entry_helper::$entity_to_load['sample:group_id'];
+    }
     $reloadPath = $reload['path'];
-    if(count($reload['params'])) {
-      // decode params prior to encoding to prevent double encoding.
+    if (count($reload['params'])) {
+      // Decode params prior to encoding to prevent double encoding.
       foreach ($reload['params'] as $key => $param) {
         $reload['params'][$key] = urldecode($param);
       }
-      $reloadPath .= '?'.http_build_query($reload['params']);
+      $reloadPath .= '?' . http_build_query($reload['params']);
     }
     return $reloadPath;
   }
@@ -694,7 +696,7 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
             }
             // Outputs a control for which a specific extension function has
             // been written.
-            $path = call_user_func([self::$called_class, 'getReloadPath']);
+            $path = call_user_func([self::$called_class, 'getReloadPath'], $args['available_for_groups']);
             // Pass the classname of the form through to the extension control
             // method to allow access to calling class functions and variables
             $args['calling_class'] = self::$called_class;
