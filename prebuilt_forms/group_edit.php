@@ -356,7 +356,7 @@ class iform_group_edit {
     // Maintain compatibility with form settings from before group type became
     // multiselect.
     if (empty($args['group_type'])) {
-      $args['group_type'] = array();
+      $args['group_type'] = [];
     }
     elseif (!is_array($args['group_type'])) {
       $args['group_type'] = array($args['group_type']);
@@ -600,7 +600,7 @@ $('#entry_form').submit(function() {
       $r .= '<p>' . lang::get('LANG_Pages_Instruct', self::$groupType, lang::get('groups')) . '</p>';
       $pages = hostsite_get_group_compatible_pages(empty($_GET['group_id']) ? NULL : $_GET['group_id']);
       if (empty($_GET['group_id'])) {
-        $default = array();
+        $default = [];
         if (isset($args['default_linked_pages'])) {
           $defaultPages = json_decode($args['default_linked_pages'], TRUE);
           foreach ($defaultPages as $page) {
@@ -671,7 +671,7 @@ $('#entry_form').submit(function() {
       'extraParams' => $auth['read'] + array('group_id' => $_GET['group_id']),
       'nocache' => TRUE,
     ));
-    $r = array();
+    $r = [];
     foreach ($pages as $page) {
       $r[] = array(
         'fieldname' => "group+:pages:$page[id]",
@@ -976,20 +976,22 @@ $('#entry_form').submit(function() {
         }
       }
     }
-    // scan the posted values for group pages. This search grabs the first column value keys, or if this
-    // is disabled then the hidden deleted field.
+    // Scan the posted values for group pages. This search grabs the first
+    // column value keys, or if this is disabled then the hidden deleted field.
     $pageKeys = preg_grep('/^group\+:pages:\d*:\d+:(0|deleted)$/', array_keys($values));
-    $pages = array();
+    $pages = [];
     foreach ($pageKeys as $key) {
-      // skip empty rows, unless they were rows loaded for an existing group_pages record. Also
-      // skip deletions of non-existing rows or non-deletions of any row.
+      // Skip empty rows, unless they were rows loaded for an existing
+      // group_pages record. Also skip deletions of non-existing rows or
+      // non-deletions of any row.
       if ((!empty($values[$key]) || preg_match('/^group\+:pages:(\d+)/', $key))
           && !preg_match('/::(\d+):deleted$/', $key)
           && !(preg_match('/:deleted$/', $key) && $values[$key]==='f')) {
-        // get the key without the column index, so we can access any column we want
+        // Get the key without the column index, so we can access any column we want.
         $base = preg_replace('/(0|deleted)$/', '', $key);
-        if ((isset($values[$base . 'deleted']) && $values[$base . 'deleted']==='t') || empty($values[$base . '0']))
-          $page = array('deleted' => 't');
+        if ((isset($values[$base . 'deleted']) && $values[$base . 'deleted']==='t') || empty($values[$base . '0'])) {
+          $page = ['deleted' => 't'];
+        }
         else {
           $tokens = explode(':', $values[$base.'0']);
           $path = $tokens[0];
@@ -998,14 +1000,14 @@ $('#entry_form').submit(function() {
           $administrator = empty($administrator) ? NULL : $administrator[0];
           $access_level = isset($values[$base . '3']) ? explode(':', $values[$base . '3']) : NULL;
           $access_level = empty($access_level) ? NULL : $access_level[0];
-          $page = array(
+          $page = [
             'caption' => $caption,
             'path' => $path,
             'administrator' => $administrator,
-            'access_level' => $access_level
-          );
+            'access_level' => $access_level,
+          ];
         }
-        // if existing group page, hook up to the id
+        // If existing group page, hook up to the id.
         if (preg_match('/^group\+:pages:(\d+)/', $key, $matches)) {
           $page['id'] = $matches[1];
         }
@@ -1013,18 +1015,28 @@ $('#entry_form').submit(function() {
       }
     }
     if (!empty($pages)) {
-      if (!isset($s['subModels']))
-        $s['subModels'] = array();
+      if (!isset($s['subModels'])) {
+        $s['subModels'] = [];
+      }
       foreach ($pages as $page) {
-        $s['subModels'][] = array('fkId' => 'group_id', 'model' => array('id' => 'group_page', 'fields' => $page));
+        $s['subModels'][] = [
+          'fkId' => 'group_id',
+          'model' => ['id' => 'group_page', 'fields' => $page],
+        ];
       }
     }
     // Need to manually build the submission for the admins sub_list, since we
     // are hijacking what is intended to be a custom attribute control.
     if (self::extractUserInfoFromFormValues($s, $values, 'admin_user_id', 't') === 0 && empty($values['group:id'])) {
-      // No admins created when setting up the group initially, so need to set the current user as an admin.
-      $s['subModels'][] = array('fkId' => 'group_id',
-          'model' => submission_builder::wrap(array('user_id' => hostsite_get_user_field('indicia_user_id'), 'administrator' => 't'), 'groups_user'));
+      // No admins created when setting up the group initially, so need to set
+      // the current user as an admin.
+      $s['subModels'][] = [
+        'fkId' => 'group_id',
+        'model' => submission_builder::wrap([
+          'user_id' => hostsite_get_user_field('indicia_user_id'),
+          'administrator' => 't',
+        ], 'groups_user'),
+      ];
     };
     self::extractUserInfoFromFormValues($s, $values, 'user_id', 'f');
     self::deleteExistingUsers($s, $values);
@@ -1038,8 +1050,10 @@ $('#entry_form').submit(function() {
     foreach ($existingUsers as $user) {
       if (empty($values[$user])) {
         $id = substr($user, 20);
-        $s['subModels'][] = array('fkId' => 'group_id',
-            'model' => submission_builder::wrap(array('id' => $id, 'deleted' => 't'), 'groups_user'));
+        $s['subModels'][] = [
+          'fkId' => 'group_id',
+          'model' => submission_builder::wrap(['id' => $id, 'deleted' => 't'], 'groups_user'),
+        ];
       }
     }
   }
@@ -1051,16 +1065,16 @@ $('#entry_form').submit(function() {
     $count = 0;
     if (!empty($values["groups_user:$fieldname"])) {
       if (!isset($s['subModels'])) {
-        $s['subModels'] = array();
+        $s['subModels'] = [];
       }
       if (!empty($values["groups_user:$fieldname"])) {
         foreach ($values["groups_user:$fieldname"] as $userId) {
           if ($userId) {
-            $values = array('user_id' => $userId, 'administrator' => $isAdmin);
-            $s['subModels'][] = array(
+            $values = ['user_id' => $userId, 'administrator' => $isAdmin];
+            $s['subModels'][] = [
               'fkId' => 'group_id',
               'model' => submission_builder::wrap($values, 'groups_user')
-            );
+            ];
             $count++;
           }
         }
@@ -1079,7 +1093,7 @@ $('#entry_form').submit(function() {
     $users = array_merge(array_values($existingUsers), array_values($newUsers));
     if (count($users)) {
       $userData = array_intersect_key($values, array_combine($users, $users));
-      $foundUsers = array();
+      $foundUsers = [];
       foreach ($userData as $value) {
         if (is_array($value)) {
           foreach ($value as $item) {
@@ -1096,17 +1110,19 @@ $('#entry_form').submit(function() {
           $foundUsers[] = $value;
         }
       }
-      if ($duplicate)
-        return array('groups_user:general' => lang::get("Please ensure that the list of administrators and group members only includes each person once."));
+      if ($duplicate) {
+        return ['groups_user:general' => lang::get("Please ensure that the list of administrators and group members only includes each person once.")];
+      }
     }
     // Default is no errors.
-    return array();
+    return [];
   }
 
   /**
    * Retrieve the path to the current page, so the form can submit to itself.
    *
    * @return string
+   *   Reload path.
    */
   private static function getReloadPath() {
     $reload = data_entry_helper::get_reload_link_parts();
@@ -1123,24 +1139,28 @@ $('#entry_form').submit(function() {
 
   /**
    * Fetch an existing group's information from the database when editing.
-   * @param integer $id Group ID
-   * @param array $auth Authorisation tokens
+   *
+   * @param int $id
+   *   Group ID.
+   * @param array $auth
+   *   Authorisation tokens.
    * @param $args
+   *
    * @throws \exception
    */
   private static function loadExistingGroup($id, $auth, $args) {
-    $group = data_entry_helper::get_population_data(array(
+    $group = data_entry_helper::get_population_data([
       'table' => 'group',
-      'extraParams' => $auth['read'] + array('view' => 'detail', 'id' => $id),
-      'nocache' => TRUE
-    ));
+      'extraParams' => $auth['read'] + ['view' => 'detail', 'id' => $id],
+      'nocache' => TRUE,
+    ]);
     if (empty($group)) {
       hostsite_show_message("The group with ID $id could not be found.");
       return;
     }
     $group = $group[0];
     self::checkAdminRights($group, $args, $auth);
-    data_entry_helper::$entity_to_load = array(
+    data_entry_helper::$entity_to_load = []
       'group:id' => $group['id'],
       'group:title' => $group['title'],
       'group:code' => $group['code'],
@@ -1155,8 +1175,8 @@ $('#entry_form').submit(function() {
       'group:logo_path' => $group['logo_path'],
       'group:implicit_record_inclusion' => $group['implicit_record_inclusion'],
       'group:licence_id' => $group['licence_id'],
-      'filter:id' => $group['filter_id']
-    );
+      'filter:id' => $group['filter_id'],
+    ];
     if ($args['include_report_filter']) {
       $def = $group['filter_definition'] ? $group['filter_definition'] : '{}';
       data_entry_helper::$javascript .=
@@ -1168,8 +1188,8 @@ $('#entry_form').submit(function() {
         'extraParams' => $auth['read'] + array('view' => 'detail', 'group_id' => $id),
         'nocache' => TRUE
       ));
-      $admins = array();
-      $others = array();
+      $admins = [];
+      $others = [];
       foreach ($members as $member) {
         if ($member['administrator'] === 't') {
           $admins[] = array(
