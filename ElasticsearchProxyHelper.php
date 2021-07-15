@@ -461,7 +461,6 @@ class ElasticsearchProxyHelper {
     ];
     $headers = implode("\r\n", $headers) . PHP_EOL;
     $emailBody = $_POST['body'];
-    $emailBody = str_replace("\n", "<br/>", $emailBody);
     // Send email. Depends upon settings in php.ini being correct.
     $success = mail($_POST['to'],
          $_POST['subject'],
