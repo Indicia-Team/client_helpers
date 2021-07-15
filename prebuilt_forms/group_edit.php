@@ -1160,7 +1160,7 @@ $('#entry_form').submit(function() {
     }
     $group = $group[0];
     self::checkAdminRights($group, $args, $auth);
-    data_entry_helper::$entity_to_load = []
+    data_entry_helper::$entity_to_load = [
       'group:id' => $group['id'],
       'group:title' => $group['title'],
       'group:code' => $group['code'],
@@ -1183,27 +1183,27 @@ $('#entry_form').submit(function() {
           "indiciaData.filter.def=$def;\n";
     }
     if ($args['include_administrators'] || $args['include_members']) {
-      $members = data_entry_helper::get_population_data(array(
+      $members = data_entry_helper::get_population_data([
         'table' => 'groups_user',
-        'extraParams' => $auth['read'] + array('view' => 'detail', 'group_id' => $id),
-        'nocache' => TRUE
-      ));
+        'extraParams' => $auth['read'] + ['view' => 'detail', 'group_id' => $id],
+        'nocache' => TRUE,
+      ]);
       $admins = [];
       $others = [];
       foreach ($members as $member) {
         if ($member['administrator'] === 't') {
-          $admins[] = array(
-              'fieldname' => 'groups_user:user_id:' . $member['id'],
-              'caption' => $member['person_name_unique'],
-              'default' => $member['user_id']
-          );
+          $admins[] = [
+            'fieldname' => 'groups_user:user_id:' . $member['id'],
+            'caption' => $member['person_name_unique'],
+            'default' => $member['user_id'],
+          ];
         }
         else {
-          $others[] = array(
-              'fieldname' => 'groups_user:user_id:' . $member['id'],
-              'caption' => $member['person_name_unique'],
-              'default' => $member['user_id']
-          );
+          $others[] = [
+            'fieldname' => 'groups_user:user_id:' . $member['id'],
+            'caption' => $member['person_name_unique'],
+            'default' => $member['user_id'],
+          ];
         }
       }
       data_entry_helper::$entity_to_load['groups_user:admin_user_id'] = $admins;
