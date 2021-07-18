@@ -298,6 +298,8 @@ class extension_extra_data_entry_controls {
       $options['extraParams']['group_type_id'] = $options['group_type_id'];
     }
     if (isset(data_entry_helper::$entity_to_load['sample:group_id'])) {
+      // Informs the report to include current record's group even if it has
+      // expired.
       $options['extraParams']['current_record_group_id'] = data_entry_helper::$entity_to_load['sample:group_id'];
     }
     return data_entry_helper::select($options);
