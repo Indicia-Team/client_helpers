@@ -859,6 +859,7 @@ class helper_base {
           ],
         ],
         'datepicker' => [
+          'deps' => ['jquery_cookie'],
           'javascript' => [
             self::$js_path . 'indicia.datepicker.js',
             self::$js_path . 'date.polyfill/better-dom/dist/better-dom.min.js',
