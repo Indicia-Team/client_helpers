@@ -143,7 +143,8 @@ Sample ID',
             'The following types of component can be specified. <br/>' .
             '<strong>[control name]</strong> indicates a predefined control is to be added to the form with the following predefined controls available: <br/>' .
                 '&nbsp;&nbsp;<strong>[sample details]</strong> - displays information relating to the sample<br/>' .
-                '&nbsp;&nbsp;<strong>[records grid]</strong> - records associated with the sample<br/>' .
+                '&nbsp;&nbsp;<strong>[records grid]</strong> - a grid of records associated with the sample<br/>' .
+                '&nbsp;&nbsp;<strong>[records list]</strong> - a simple list of records associated with the sample<br/>' .
                 '&nbsp;&nbsp;<strong>[sample photos]</strong> - photos associated with the sample<br/>' .
                 "&nbsp;&nbsp;<strong>[parent sample photos]</strong> - photos associated with the sample's parent<br/>" .
                 '&nbsp;&nbsp;<strong>[map]</strong> - a map that links to the spatial reference and location<br/>' .
