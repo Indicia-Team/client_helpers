@@ -277,7 +277,8 @@ Sample ID',
       // If sensitive, hide all images.
       $columns[] = ['fieldname' => 'images', 'visible' => FALSE];
     }
-    $r = report_helper::report_grid([
+    $r = '<div class="detail-panel" id="detail-panel-recordsgrid"><h3>' . lang::get('Occurrences') . '</h3>';
+    $r .= report_helper::report_grid([
       'readAuth' => $auth['read'],
       'dataSource' => 'reports_for_prebuilt_forms/sample_details/occurrences_list',
       'ajax' => FALSE,
@@ -290,8 +291,45 @@ Sample ID',
       ],
       'caching' => TRUE,
       'cacheTimeout' => 60,
+      'cachePerUser' => FALSE,
       'columns' => $columns,
     ]);
+    $r .= '</div>';
+    return $r;
+  }
+
+  /**
+   * A simplified list of the records in the sample.
+   */
+  protected static function get_control_recordslist($auth, $args, $tabalias, $options) {
+    $records = report_helper::get_report_data([
+      'readAuth' => $auth['read'],
+      'dataSource' => 'reports_for_prebuilt_forms/sample_details/occurrences_list',
+      'extraParams' => [
+        'smpattrs' => '',
+        'occattrs' => implode(',', $occAttrIds),
+        'limit' => 200,
+        'useJsonAttributes' => TRUE,
+        'sample_id' => $_GET['sample_id'],
+      ],
+      'caching' => TRUE,
+      'cacheTimeout' => 60,
+      'cachePerUser' => FALSE,
+    ]);
+    $r = '<div class="detail-panel" id="detail-panel-recordslist"><h3>' . lang::get('Occurrences') . '</h3>';
+    $r .= lang::get('{1} species seen', count($records));
+    $r .= '<ul>';
+    if (count($records) > 0) {
+      foreach ($records as $record) {
+        $label = $record['attr_sex_stage_count'] === '' ? '' : "$record[attr_sex_stage_count] ";
+        $label .= "<em>$record[taxon]</em>";
+        if (!empty($record['common']) && $record['common'] !== $record['taxon']) {
+          $label .= " ($record[common])";
+        }
+        $r .= "<li>$label</li>";
+      }
+    }
+    $r .= '</ul></div>';
     return $r;
   }
 
@@ -384,13 +422,13 @@ Sample ID',
       ]);
     }
 
-    $r = '<h3>' . lang::get('Sample Details') . '</h3><dl class="detail-panel dl-horizontal" id="detail-panel-sampledetails">';
+    $r = '<div class="detail-panel" id="detail-panel-sampledetails"><h3>' . lang::get('Sample details') . '</h3><dl class="dl-horizontal">';
 
     $r .= $details_report;
     if (isset($attrs_report)) {
       $r .= $attrs_report;
     }
-    $r .= '</dl>';
+    $r .= '</dl></div>';
     return $r;
   }
 
@@ -468,7 +506,7 @@ Sample ID',
       'extraParams' => $extraParams,
     ]);
     $r = <<<HTML
-<div class="detail-panel" id="detail-panel-photos">
+<div class="detail-panel" id="detail-panel-photos-$options[table]">
   <h3>$options[title]</h3>
   <div class="$options[class]">
 
@@ -505,6 +543,10 @@ HTML;
   /**
    * Render the Map section of the page.
    *
+   * Option @showParentChildSampleGeoms can be set to true for data in a
+   * parent/child sample hierarchy (like a UKBMS transect walk) to show the
+   * parent transect, child sections and occurrence data points.
+   *
    * @return string
    *   The output map panel.
    */
@@ -513,19 +555,34 @@ HTML;
     self::load_sample($auth, $args);
     $options = array_merge(
       iform_map_get_map_options($args, $auth['read']),
-      ['maxZoom' => 14, 'maxZoomBuffer' => 4],
+      [
+        'maxZoom' => 16,
+        'maxZoomBuffer' => 4,
+        'showParentChildSampleGeoms' => FALSE,
+        'clickForSpatialRef' => FALSE,
+      ],
       $options
     );
     if (isset(self::$sample['geom'])) {
       $options['initialFeatureWkt'] = self::$sample['geom'];
     }
+    if ($options['showParentChildSampleGeoms']) {
+      $params = [
+        'sample_id' => $_GET['sample_id'],
+        'sharing' => $args['sharing'],
+      ];
+      $geoms = report_helper::get_report_data([
+        'readAuth' => $auth['read'],
+        'dataSource' => 'reports_for_prebuilt_forms/sample_details/extra_geoms_for_parent_child_sample_details',
+        'extraParams' => $params,
+      ]);
+      if (count($geoms) > 0) {
+        map_helper::$indiciaData['parentChildGeoms'] = $geoms;
+      }
+    }
     if (!empty(self::$sample['sref_precision'])) {
       // Set radius if imprecise.
-      $p = self::$sample['sref_precision'];
-      map_helper::$javascript .= <<<JS
-indiciaData.srefPrecision = $p;
-
-JS;
+      map_helper::$indiciaData['srefPrecision'] = self::$sample['sref_precision'];
     }
 
     if ($tabalias) {
