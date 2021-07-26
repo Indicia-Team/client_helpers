@@ -1134,7 +1134,9 @@ class ElasticsearchProxyHelper {
       throw new exception("Group $groupFilter[id] not found");
     }
     // Load the filter into user filters, so it gets applied with the rest.
-    $query['user_filters'][] = $groupData[0]['filter_id'];
+    if (!empty($groupData[0]['filter_id'])) {
+      $query['user_filters'][] = $groupData[0]['filter_id'];
+    }
   }
 
   /**
