@@ -138,9 +138,17 @@ class ElasticsearchReportHelper {
       'caption' => 'Taxon name',
       'description' => 'Name as recorded for the taxon.',
     ],
+    'taxon.taxon_name_authorship' => [
+      'caption' => 'Taxon name author',
+      'description' => 'Author and date of the recorded accepted name.',
+    ],
     'taxon.accepted_name' => [
       'caption' => 'Accepted name',
       'description' => 'Currently accepted name for the recorded taxon.',
+    ],
+    'taxon.accepted_name_authorship' => [
+      'caption' => 'Accepted name author',
+      'description' => 'Author and date of the published accepted name.',
     ],
     'taxon.vernacular_name' => [
       'caption' => 'Common name',
@@ -185,6 +193,18 @@ class ElasticsearchReportHelper {
     'taxon.genus' => [
       'caption' => 'Genus',
       'description' => 'Taxonomic genus associated with the current identification of this record.',
+    ],
+    'taxon.species' => [
+      'caption' => 'Species',
+      'description' => 'Species name associated with the current identification of this record. Will still return the species ranked name where the record is of a taxon below species level.',
+    ],
+    'taxon.species_authorship' => [
+      'caption' => 'Species name author',
+      'description' => 'Species name author and date associated with the current identification of this record. Will still return the species ranked name\'s author where the record is of a taxon below species level.',
+    ],
+    'taxon.species_vernacular' => [
+      'caption' => 'Species common name',
+      'description' => 'Species name associated with the current identification of this record. Will still return the species ranked name where the record is of a taxon below species level.',
     ],
     'location.verbatim_locality' => [
       'caption' => 'Location name',
