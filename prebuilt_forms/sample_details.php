@@ -308,7 +308,7 @@ Sample ID',
       'dataSource' => 'reports_for_prebuilt_forms/sample_details/occurrences_list',
       'extraParams' => [
         'smpattrs' => '',
-        'occattrs' => implode(',', $occAttrIds),
+        'occattrs' => '',
         'limit' => 200,
         'useJsonAttributes' => TRUE,
         'sample_id' => $_GET['sample_id'],
@@ -710,6 +710,13 @@ STRUCT;
       $iform_page_metadata['latitude'] = number_format((float) self::$sample['lat'], 5, '.', '');
       $iform_page_metadata['longitude'] = number_format((float) self::$sample['long'], 5, '.', '');
     }
+  }
+
+  /**
+   * Override some default behaviour in dynamic.
+   */
+  protected static function getFirstTabAdditionalContent($args, $auth, &$attributes) {
+    return '';
   }
 
 }
