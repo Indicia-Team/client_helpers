@@ -305,7 +305,7 @@ Sample ID',
   protected static function get_control_recordslist($auth, $args, $tabalias, $options) {
     $records = report_helper::get_report_data([
       'readAuth' => $auth['read'],
-      'dataSource' => 'reports_for_prebuilt_forms/sample_details/occurrences_list',
+      'dataSource' => 'reports_for_prebuilt_forms/sample_details/occurrences_list_simple',
       'extraParams' => [
         'smpattrs' => '',
         'occattrs' => '',
@@ -322,7 +322,7 @@ Sample ID',
     $r .= '<ul>';
     if (count($records) > 0) {
       foreach ($records as $record) {
-        $label = $record['attr_sex_stage_count'] === '' ? '' : "$record[attr_sex_stage_count] ";
+        $label = $record['count'] === '' ? '' : "$record[count] ";
         $label .= "<em>$record[taxon]</em>";
         if (!empty($record['common']) && $record['common'] !== $record['taxon']) {
           $label .= " ($record[common])";
