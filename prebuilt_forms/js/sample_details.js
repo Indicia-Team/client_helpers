@@ -15,7 +15,8 @@ jQuery(document).ready(function ($) {
     map.editLayer.addFeatures([feature]);
     // Force the correct style.
     feature.style = $.extend({}, map.editLayer.styleMap.styles.default.defaultStyle);
-    feature.style.strokeWidth = 2;
+    // Fatten lines for visibility.
+    feature.style.strokeWidth = feature.geometry.CLASS_NAME === 'OpenLayers.Geometry.LineString' ? 5 : 2;
     if (type === 'child') {
       feature.style.strokeColor = '#d95f02';
       feature.style.fillColor = '#d95f02';
@@ -30,6 +31,7 @@ jQuery(document).ready(function ($) {
       addGeom(this.geom, this.type, this.id);
     });
     indiciaData.mapdiv.map.editLayer.redraw();
+    indiciaData.mapdiv.map.zoomToExtent(indiciaData.mapdiv.map.editLayer.getDataExtent());
   }
 
   if (indiciaData.parentChildGeoms) {
