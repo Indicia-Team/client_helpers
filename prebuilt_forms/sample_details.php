@@ -558,7 +558,7 @@ HTML;
       iform_map_get_map_options($args, $auth['read']),
       [
         'maxZoom' => 16,
-        'maxZoomBuffer' => 4,
+        'maxZoomBuffer' => 1,
         'showParentChildSampleGeoms' => FALSE,
         'clickForSpatialRef' => FALSE,
       ],
