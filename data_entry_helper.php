@@ -5018,7 +5018,7 @@ HTML;
       'attrtable' => 'sample_attribute',
       'key' => 'sample_id',
       'fieldprefix' => 'smpAttr',
-      'extraParams' => ['auth_token' => $options['extraParams']['auth_token'], 'nonce' => $options['extraParams']['nonce']],
+      'extraParams' => ['auth_token' => $options['readAuth']['auth_token'], 'nonce' => $options['readAuth']['nonce']],
       'survey_id' => $options['survey_id'],
       'sample_method_id' => $options['sample_method_id'],
     ];
