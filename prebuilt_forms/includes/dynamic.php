@@ -661,7 +661,7 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
         if (count($parts) === 1 && method_exists(self::$called_class, $method)) {
           // Outputs a control for which a specific output function has been
           // written.
-          $html .= call_user_func(array(self::$called_class, $method), $auth, $args, $tabalias, array_merge($defAttrOptions, $options));
+          $html .= call_user_func(array(self::$called_class, $method), $auth, $args, $tabalias, array_merge(['extraParams'=>$auth['read']], $options));
           $hasControls = TRUE;
         }
         elseif (count($parts) === 2) {
