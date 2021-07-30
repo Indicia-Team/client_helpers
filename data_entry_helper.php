@@ -3064,6 +3064,10 @@ RIJS;
   * checklist control so the locations of spatial references can be visualised, otherwise data entry errors are likely.
   * A button inside the control allows the user to enable a mode where the grid ref can be set by clicking a location
   * on the map.</li>
+  * <li><b>spatialRefPerRowUseFullscreenMap</b><br/>
+  * If using spatialRefPerRow and this option is set to true, then when the button is clicked to enable fetching a grid
+  * ref from the map, the map is automatically placed into fullscreen mode until the user clicks to set the grid ref
+  * location.</li>
   * <li><b>spatialRefPrecisionAttrId</b><br/>
   * Optional. If set to the ID of a sample attribute and spatialRefPerRow is enabled, then a spatial reference
   * precision column is included on each row. When submitted, each unique spatial reference and precision value will
@@ -3326,6 +3330,7 @@ RIJS;
     self::$indiciaData["editTaxaNames-$options[id]"] = $options['editTaxaNames'];
     self::$indiciaData["subSpeciesColumn-$options[id]"] = $options['subSpeciesColumn'];
     self::$indiciaData["subSamplePerRow-$options[id]"] = $options['subSamplePerRow'];
+    self::$indiciaData["spatialRefPerRowUseFullscreenMap-$options[id]"] = $options['spatialRefPerRowUseFullscreenMap'];
     self::$indiciaData["enableDynamicAttrs-$options[id]"] = $options['enableDynamicAttrs'];
     self::$indiciaData["limitDynamicAttrsTaxonGroupIds-$options[id]"] = $options['limitDynamicAttrsTaxonGroupIds'];
     if ($options['copyDataFromPreviousRow']) {
@@ -4614,6 +4619,7 @@ JS;
       'occurrenceComment' => FALSE,
       'occurrenceSensitivity' => NULL,
       'spatialRefPerRow' => FALSE,
+      'spatialRefPerRowUseFullscreenMap' => FALSE,
       'spatialRefPrecisionAttrId' => NULL,
       'id' => 'species-grid-' . rand(0,1000),
       'colWidths' => array(),
