@@ -1,6 +1,9 @@
 <?php
 
 /**
+ * @file
+ * Dynamic sample occurrence prebuilt form class.
+ *
  * Indicia, the OPAL Online Recording Toolkit.
  *
  * This program is free software: you can redistribute it and/or modify
@@ -21,6 +24,7 @@
 
 /**
  * Prebuilt Indicia data entry form.
+ *
  * NB has Drupal specific code. Relies on presence of IForm Proxy.
  */
 
@@ -28,7 +32,9 @@ require_once 'includes/dynamic.php';
 require_once 'includes/groups.php';
 
 /**
- * Store remembered field settings, since these need to be accessed from a hook function which runs outside the class.
+ * Store remembered field settings.
+ *
+ * These need to be accessed from a hook function which runs outside the class.
  *
  * @var string
  */
@@ -36,12 +42,27 @@ global $remembered;
 
 class iform_dynamic_sample_occurrence extends iform_dynamic {
 
-  // The ids we are loading if editing existing data.
+  /**
+   * The sample ID we are loading if editing existing data.
+   *
+   * @var int
+   */
   protected static $loadedSampleId;
-  protected static $loadedOccurrenceId;
-  protected static $group = false;
 
-  protected static $availableForGroups = false;
+  /**
+   * The occurrence ID we are loading if editing existing data.
+   *
+   * Only if loading a single occurrence by ID.
+   *
+   * @var int
+   */
+  protected static $loadedOccurrenceId;
+
+  /**
+   * Flag indicating if this is a group-linked form.
+   */
+  protected static $group = FALSE;
+
   protected static $limitToGroupId = 0;
 
   /**
@@ -807,7 +828,6 @@ TXT;
     $mode = (isset($args['no_grid']) && $args['no_grid']) ? self::MODE_NEW : self::MODE_GRID;
     self::$loadedSampleId = null;
     self::$loadedOccurrenceId = null;
-    self::$availableForGroups = $args['available_for_groups'];
     self::$limitToGroupId = isset($args['limit_to_group_id']) ? $args['limit_to_group_id'] : 0;
     if ($_POST && array_key_exists('website_id', $_POST) && !is_null(data_entry_helper::$entity_to_load)) {
       // errors with new sample or entity populated with post, so display this data.
@@ -1131,7 +1151,7 @@ HTML;
     if (isset(data_entry_helper::$entity_to_load['occurrence:id']) && !$gridMode) {
       $r .= '<input type="hidden" id="occurrence:id" name="occurrence:id" value="' . data_entry_helper::$entity_to_load['occurrence:id'] . '" />' . PHP_EOL;
     }
-    $r .= self::get_group_licence_html();
+    $r .= self::getGroupLicenceHtml();
     if (!empty(data_entry_helper::$entity_to_load['sample:group_id'])) {
       $r .= "<input type=\"hidden\" id=\"group_id\" name=\"sample:group_id\" value=\"" . data_entry_helper::$entity_to_load['sample:group_id'] . "\" />\n";
       // If the group does not release it's records, set the release_status
@@ -1143,7 +1163,7 @@ HTML;
         data_entry_helper::$entity_to_load['sample:group_title'] = self::$group['title'];
       }
       // If a possibility of confusion when using this form, add info to
-      // clarify which group you are posting to
+      // clarify which group you are posting to.
       if (empty(self::$limitToGroupId)) {
         $msg = empty(self::$loadedSampleId) ?
             'The records you enter using this form will be added to the <strong>{1}</strong> group.' :
@@ -1151,7 +1171,7 @@ HTML;
         $r .= '<p>' . lang::get($msg, data_entry_helper::$entity_to_load['sample:group_title']) . '</p>';
       }
     }
-    elseif (self::$availableForGroups && !isset(data_entry_helper::$entity_to_load['sample:id'])) {
+    elseif ($args['available_for_groups'] && !isset(data_entry_helper::$entity_to_load['sample:id'])) {
       // Group enabled form being used to add new records, but no group specified in URL path, so give
       // the user a chance to pick from their list of possible groups for this form.
       // Get the list of possible groups they might be posting into using this form. To do this we need the page
@@ -1162,36 +1182,39 @@ HTML;
       $dirname = preg_replace('/^\//', '', dirname($_SERVER['SCRIPT_NAME'])) . '/';
       $reload['path'] = str_replace($dirname, '', $reload['path']);
       iform_load_helpers(['report_helper']);
-      $possibleGroups = report_helper::get_report_data(array(
+      $possibleGroups = report_helper::get_report_data([
         'dataSource' => 'library/groups/groups_for_page',
         'readAuth' => $auth['read'],
         'caching' => TRUE,
-        'extraParams' => array(
+        'extraParams' => [
             'currentUser' => hostsite_get_user_field('indicia_user_id'),
             'path' => $reload['path']
-        )
-      ));
+        ],
+      ]);
       // Output a drop down so they can select the appropriate group.
       if (count($possibleGroups) > 1) {
-        $options = array('' => lang::get('Ad-hoc non-group records'));
+        $options = ['' => lang::get('Ad-hoc non-group records')];
         foreach ($possibleGroups as $group) {
           $options[$group['id']] = "$group[group_type]: $group[title]";
         }
-        $r .= data_entry_helper::select(array(
-            'label' => lang::get('Record destination'),
-            'helpText' => lang::get('Choose whether to post your records into a group that you belong to.'),
-            'fieldname' => 'sample:group_id',
-            'lookupValues' => $options
-        ));
+        $r .= data_entry_helper::select([
+          'label' => lang::get('Record destination'),
+          'helpText' => lang::get('Choose whether to post your records into a group that you belong to.'),
+          'fieldname' => 'sample:group_id',
+          'lookupValues' => $options,
+        ]);
       }
       elseif (count($possibleGroups) === 1) {
-        $r .= data_entry_helper::radio_group(array(
-            'label' => lang::get('Post to {1}', $possibleGroups[0]['title']),
-            'labelClass' => 'auto',
-            'helpText' => lang::get('Choose whether to post your records into {1}.', $possibleGroups[0]['title']),
-            'fieldname' => 'sample:group_id',
-            'lookupValues' => array('' => lang::get('No'), $possibleGroups[0]['id'] => lang::get('Yes'))
-        ));
+        $r .= data_entry_helper::radio_group([
+          'label' => lang::get('Post to {1}', $possibleGroups[0]['title']),
+          'labelClass' => 'auto',
+          'helpText' => lang::get('Choose whether to post your records into {1}.', $possibleGroups[0]['title']),
+          'fieldname' => 'sample:group_id',
+          'lookupValues' => [
+            '' => lang::get('No'),
+            $possibleGroups[0]['id'] => lang::get('Yes'),
+          ],
+        ]);
       }
     }
     // Check if Record Status is included as a control. If not, then add it as a hidden.
@@ -1211,24 +1234,28 @@ HTML;
   }
 
   /**
-   * Retrieves the licence message and licence ID to add to the page, if relevant.
-   * E.g. if the sample is already licenced, or the group you are posting to has selected
-   * a licence.
+   * Retrieves the licence message and licence ID to add to the page.
+   *
+   * E.g. if the sample is already licenced, or the group you are posting to
+   * has selected a licence.
+   *
    * @return string
+   *   HTML describing the license.
    */
-  private static function get_group_licence_html() {
+  private static function getGroupLicenceHtml() {
     $r = '';
     if (!empty(data_entry_helper::$entity_to_load['sample:licence_id']) || !empty(self::$group['licence_id'])) {
       if (!empty(data_entry_helper::$entity_to_load['sample:licence_id'])) {
         $msg = 'The records on this form are licenced as <strong>{1}</strong>.';
         $licence_id = data_entry_helper::$entity_to_load['sample:licence_id'];
         $code = data_entry_helper::$entity_to_load['sample:licence_code'];
-      } else {
+      }
+      else {
         $msg = 'The records you enter using this form will be licenced as <strong>{1}</strong>.';
         $licence_id = self::$group['licence_id'];
-        $code =  self::$group['licence_code'];
+        $code = self::$group['licence_code'];
       }
-      $licence = self::licence_code_to_text($code);
+      $licence = self::licenceCodeToText($code);
       $r .= '<p class="licence licence-' . strtolower($code) . '">' . lang::get($msg, $licence) . '</p>';
       $r .= "<input type=\"hidden\" name=\"sample:licence_id\" value=\"$licence_id\" />";
       $r .= "<input type=\"hidden\" name=\"sample:licence_code\" value=\"licence_code\" />";
@@ -1238,11 +1265,16 @@ HTML;
 
   /**
    * Converts a licence code (e.g. CC BY) to readable text.
+   *
    * @param string $code
+   *   Licence code.
+   *
    * @return string
+   *   Expanded licence name.
    */
-  private static function licence_code_to_text($code) {
-    return str_replace([
+  private static function licenceCodeToText($code) {
+    return str_replace(
+      [
         'CC',
         'BY',
         'NC',
@@ -1286,13 +1318,15 @@ HTML;
           throw new Exception('The link species popups form argument contains an invalid value');
         }
 
-        // insert a save button into the fancyboxed fieldset, since the normal close X looks like it cancels changes
+        // Insert a save button into the fancyboxed fieldset, since the normal
+        // close X looks like it cancels changes.
         data_entry_helper::$javascript .= "$('#$fieldset').append('<input type=\"button\" value=\"".lang::get('Close')."\" onclick=\"jQuery.fancybox.close();\" ?>');\n";
-        // add a hidden div to the page so we can put the popup fieldset into it when not popped up
+        // Add a hidden div to the page so we can put the popup fieldset into
+        // it when not popped up.
         data_entry_helper::$javascript .= "$('#$fieldset').after('<div style=\"display:none;\" id=\"hide-$fieldset\"></div>');\n";
-        // put the popup fieldset into the hidden div
+        // Put the popup fieldset into the hidden div.
         data_entry_helper::$javascript .= "$('#hide-$fieldset').append($('#$fieldset'));\n";
-        // capture new row events on the grid
+        // Capture new row events on the grid.
         data_entry_helper::$javascript .= "hook_species_checklist_new_row.push(function(data) {
   if (data.preferred_taxon === '$tokens[0]') {
     $.fancybox.open($('#$fieldset'));
@@ -1311,14 +1345,17 @@ HTML;
       iform_map_get_map_options($args, $auth['read']),
       $options
     );
-    if (!empty(data_entry_helper::$entity_to_load['sample:wkt']))
+    if (!empty(data_entry_helper::$entity_to_load['sample:wkt'])) {
       $options['initialFeatureWkt'] = data_entry_helper::$entity_to_load['sample:wkt'];
-    if ($tabalias)
+    }
+    if ($tabalias) {
       $options['tabDiv'] = $tabalias;
+    }
     $olOptions = iform_map_get_ol_options($args);
-    if (!isset($options['standardControls']))
-      $options['standardControls']=array('layerSwitcher','panZoom');
-    iform_load_helpers(array('map_helper'));
+    if (!isset($options['standardControls'])) {
+      $options['standardControls'] = ['layerSwitcher', 'panZoom'];
+    }
+    iform_load_helpers(['map_helper']);
     return map_helper::map_panel($options, $olOptions);
   }
 

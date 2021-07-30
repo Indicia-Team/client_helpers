@@ -461,7 +461,6 @@ class ElasticsearchProxyHelper {
     ];
     $headers = implode("\r\n", $headers) . PHP_EOL;
     $emailBody = $_POST['body'];
-    $emailBody = str_replace("\n", "<br/>", $emailBody);
     // Send email. Depends upon settings in php.ini being correct.
     $success = mail($_POST['to'],
          $_POST['subject'],
@@ -1135,7 +1134,9 @@ class ElasticsearchProxyHelper {
       throw new exception("Group $groupFilter[id] not found");
     }
     // Load the filter into user filters, so it gets applied with the rest.
-    $query['user_filters'][] = $groupData[0]['filter_id'];
+    if (!empty($groupData[0]['filter_id'])) {
+      $query['user_filters'][] = $groupData[0]['filter_id'];
+    }
   }
 
   /**

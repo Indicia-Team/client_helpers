@@ -270,7 +270,7 @@ class iform_verification_template_edit extends iform_dynamic {
      * Retrieve the path to the current page, so the form can submit to itself.
      * @return string
      */
-    protected static function getReloadPath () {
+    protected static function getReloadPath($availableForGroups) {
         $reload = data_entry_helper::get_reload_link_parts();
         unset($reload['params']['id']);
         unset($reload['params']['new']);

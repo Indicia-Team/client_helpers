@@ -66,8 +66,7 @@ class iform_record_details_2 extends iform_dynamic {
     return [
       'title' => 'View details of a record 2',
       'category' => 'Utilities',
-      'description' => 'A summary view of a record with commenting capability. Pass a parameter in the URL called ' .
-        'occurrence_id to define which occurrence to show.',
+      'description' => 'A summary view of a record with commenting capability. Pass a parameter in the URL called occurrence_id to define which occurrence to show.',
       'supportsGroups' => TRUE,
       'recommended' => TRUE,
     ];
@@ -86,8 +85,7 @@ class iform_record_details_2 extends iform_dynamic {
         [
           'name' => 'interface',
           'caption' => 'Interface Style Option',
-          'description' => 'Choose the style of user interface, either dividing the form up onto separate tabs, ' .
-            'wizard pages or having all controls on a single page.',
+          'description' => 'Choose the style of user interface, either dividing the form up onto separate tabs, wizard pages or having all controls on a single page.',
           'type' => 'select',
           'options' => [
             'tabs' => 'Tabs',
@@ -177,16 +175,14 @@ Record ID',
         [
           'name' => 'default_input_form',
           'caption' => 'Default input form path',
-          'description' => 'Default path to use to the edit form for old records which did not have their input form recorded in the database. Specify the ' .
-              'path to a general purpose list entry form.',
+          'description' => 'Default path to use to the edit form for old records which did not have their input form recorded in the database. Specify the path to a general purpose list entry form.',
           'type' => 'text_input',
           'group' => 'Path configuration',
         ],
         [
           'name' => 'explore_url',
           'caption' => 'Explore URL',
-          'description' => 'When you click on the Explore this species\' records button you are taken to this URL. Use {rootfolder} as a replacement ' .
-              'token for the site\'s root URL.',
+          'description' => 'When you click on the Explore this species\' records button you are taken to this URL. Use {rootfolder} as a replacement token for the site\'s root URL.',
           'type' => 'string',
           'required' => FALSE,
           'default' => '',
@@ -215,8 +211,7 @@ Record ID',
         [
           'name' => 'map_geom_precision',
           'caption' => 'Map geometry precision',
-          'description' => 'If you want to output a lower precision map geometry than was actually recorded, ' .
-              'select the precision here',
+          'description' => 'If you want to output a lower precision map geometry than was actually recorded, select the precision here',
           'type' => 'select',
           'options' => ['1' => '1km', '2' => '2km', '10' => '10km'],
           'required' => FALSE,
@@ -249,8 +244,7 @@ Record ID',
         [
           'name' => 'sharing',
           'caption' => 'Record sharing mode',
-          'description' => 'Identify the task this page is being used for, which determines the websites that will ' .
-            'share records for use here.',
+          'description' => 'Identify the task this page is being used for, which determines the websites that will share records for use here.',
           'type' => 'select',
           'options' => [
             'reporting' => 'Reporting',
@@ -275,7 +269,7 @@ Record ID',
     if (!preg_match('/^\d+$/', trim($_GET['occurrence_id']))) {
       return 'The occurrence_id parameter in the URL must be a valid record ID.';
     }
-    iform_load_helpers(array('report_helper'));
+    iform_load_helpers(['report_helper']);
     if ($args['available_for_groups'] === '1') {
       if (empty($_GET['group_id'])) {
         return 'This page needs a group_id URL parameter.';
@@ -327,9 +321,9 @@ Record ID',
    */
   protected static function get_control_recorddetails($auth, $args, $tabalias, $options) {
     global $indicia_templates;
-    $options = array_merge(array(
+    $options = array_merge([
       'dataSource' => 'reports_for_prebuilt_forms/record_details_2/record_data_attributes_with_hiddens'
-    ), $options);
+    ], $options);
     $fields = helper_base::explode_lines($args['fields']);
     $fieldsLower = helper_base::explode_lines(strtolower($args['fields']));
     // Draw the Record Details, but only if they aren't requested as hidden by the administrator.
@@ -352,7 +346,7 @@ Record ID',
       'occurrence_comment' => lang::get('Record comment'),
       'location_name' => lang::get('Site name'),
       'sample_comment' => lang::get('Sample comment'),
-      'licence_code' => lang::get('Licence')
+      'licence_code' => lang::get('Licence'),
     );
     self::load_record($auth, $args);
     if (!empty(self::$record['sensitivity_precision'] && !$args['allow_sensitive_full_precision'])) {
@@ -364,7 +358,7 @@ Record ID',
       unset($availableFields['sample_comment']);
     }
 
-    $flags = array();
+    $flags = [];
     if (!empty(self::$record['sensitive'])) {
       $flags[] = lang::get('sensitive');
     }
@@ -376,7 +370,8 @@ Record ID',
     }
     if (!empty($flags)) {
       $details_report = '<div id="record-flags"><span>' . implode('</span><span>', $flags) . '</span></div>';
-    } else {
+    }
+    else {
       $details_report = '';
     }
 
@@ -407,8 +402,8 @@ Record ID',
           $value = '<a href="' . self::$record['licence_url'] . "\">$value</a>";
         }
         $details_report .= str_replace(
-          array('{caption}', '{value}', '{class}'),
-          array(lang::get($caption), $value, $class),
+          ['{caption}', '{value}', '{class}'],
+          [lang::get($caption), $value, $class],
           $indicia_templates['dataValue']
         );
       }
@@ -420,8 +415,8 @@ Record ID',
       $dateInfo .= lang::get(' and last updated on {1}', $updated);
     }
     if ($test === in_array('submission date', $fieldsLower)) {
-      $details_report .= str_replace(array('{caption}', '{value}', '{class}'),
-          array(lang::get('Submission date'), $dateInfo, ''), $indicia_templates['dataValue']);
+      $details_report .= str_replace(['{caption}', '{value}', '{class}'],
+          [lang::get('Submission date'), $dateInfo, ''], $indicia_templates['dataValue']);
     }
     $details_report .= '</div>';
 
@@ -431,7 +426,7 @@ Record ID',
         'readAuth' => $auth['read'],
         'class' => 'record-details-fields ui-helper-clearfix',
         'dataSource' => $options['dataSource'],
-        'bands' => array(array('content' => str_replace(array('{class}'), '', $indicia_templates['dataValue']))),
+        'bands' => [['content' => str_replace(['{class}'], '', $indicia_templates['dataValue'])]],
         'extraParams' => array(
           'occurrence_id' => $_GET['occurrence_id'],
           // The SQL needs to take a set of the hidden fields, so this needs to be converted from an array.
@@ -474,14 +469,14 @@ Record ID',
    */
   protected static function get_control_photos($auth, $args, $tabalias, $options) {
     iform_load_helpers(array('data_entry_helper'));
-    $options = array_merge(array(
+    $options = array_merge([
       'title' => lang::get('Photos and media'),
-    ), $options);
-    $settings = array(
+    ], $options);
+    $settings = [
       'table' => 'occurrence_medium',
       'key' => 'occurrence_id',
       'value' => $_GET['occurrence_id'],
-    );
+    ];
     return self::commonControlPhotos($auth, $args, $options, $settings);
   }
 
@@ -621,7 +616,7 @@ HTML;
     self::load_record($auth, $args);
     $options = array_merge(
       iform_map_get_map_options($args, $auth['read']),
-      array('maxZoom' => 14, 'maxZoomBuffer' => 4),
+      ['maxZoom' => 14, 'maxZoomBuffer' => 4, 'clickForSpatialRef' => FALSE],
       $options
     );
     if (isset(self::$record['geom'])) {
@@ -820,7 +815,7 @@ JS;
     }
     if ($options['module'] === 'addtoany') {
       self::load_record($auth, $args);
-      // lets not promote sharing of sensitive stuff
+      // Don't promote sharing of sensitive stuff.
       if (self::$record['sensitivity_precision']) {
         return '';
       }
@@ -838,9 +833,10 @@ JS;
     }
     else {
       $block_manager = \Drupal::service('plugin.manager.block');
-      $plugin_block = $block_manager->createInstance($options['block'], $options['args']);
+      $plugin_block = $block_manager->createInstance($options['block'], empty($options['args']) ? [] : $options['args']);
       $render = $plugin_block->build();
-      $r .= $render[$options['rendered_item_key']];
+      $renderer = \Drupal::service('renderer');
+      $r .= $renderer->render($render);
     }
     if (!empty($options['title'])) {
       $r .= "</fieldset>";

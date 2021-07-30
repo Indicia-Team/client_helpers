@@ -8,23 +8,6 @@
 table.report-grid {
   width: 100%;
 }
-/* line 23, sass/verification_samples.scss */
-table.report-grid tr:hover, table.report-grid table.report-grid tr.odd:hover {
-  background-color: #ffffcc;
-}
-/* line 26, sass/verification_samples.scss */
-table.report-grid tr.selected, table.report-grid tr.selected td {
-  background-color: #027AC6;
-  color: white;
-}
-/* line 30, sass/verification_samples.scss */
-table.report-grid tr.zero-t {
-  text-decoration: line-through;
-}
-/* line 33, sass/verification_samples.scss */
-table.report-grid .nowrap {
-  whitespace: nowrap;
-}
 
 /* line 38, sass/verification_samples.scss */
 ul.gallery li {

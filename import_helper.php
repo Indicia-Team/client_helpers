@@ -907,7 +907,7 @@ JS;
       // about to attempt to upload, however we need to skip straight to results if we detected any errors
       $output=self::collect_errors($options,$filename);
       if (!is_array($output) || (isset($output['problems'])&&$output['problems']>0)) {
-        return self::display_result_as_error_check_stage_failed($options,$output);
+        return self::displayResultAsErrorCheckStageFailed($options,$output);
       }
       //Need to re-send metadata as we need to call warehouse again for upload (rather than error check)
       $mappingsAndSettings=self::getMappingsAndSettings($options);
@@ -991,38 +991,45 @@ JS;
    * Collect errors from error checking stage
    */
   private static function collect_errors($options, $filename) {
-    $request = parent::$base_url."index.php/services/import/get_upload_result?uploaded_csv=".$filename;
+    $request = parent::$base_url . "index.php/services/import/get_upload_result?uploaded_csv=" . $filename;
     $request .= '&'.self::array_to_query_string($options['auth']['read']);
     $response = self::http_post($request, array());
     if (isset($response['output'])) {
-      $output = json_decode($response['output'], true);
+      $output = json_decode($response['output'], TRUE);
     } else {
       $output = array();
     }
     return $output;
   }
 
+  private static function getErrorsMessage($output, $msgLangKey) {
+    $downloadInstructions = lang::get($msgLangKey);
+    $r = '<p>' . lang::get('{1} problems were detected during the import.', $output['problems']) . ' ' . $downloadInstructions . '</p>';
+    $r .= "<div><a class=\"btn btn-primary\" href=\"$output[file]\">" . lang::get('Download the records that did not import.') . '</a></div>';
+    return $r;
+  }
+
   /*
-   * Jump to the results screen if errors have been detected during the error checking stage.
-   * This only applies if we are preventing all commits if any errors are detected (otherwise uploadResult function is called instead)
+   * Jump to the results screen if errors have been detected.
+   *
+   * This only applies if we are preventing all commits if any errors are
+   * detected (otherwise uploadResult function is called instead).
    */
-  private static function display_result_as_error_check_stage_failed($options,$output) {
-    // get the path back to the same page
+  private static function displayResultAsErrorCheckStageFailed($options, $output) {
+    // Get the path back to the same page.
     $reload = self::get_reload_link_parts();
     $reloadpath = $reload['path'] . '?' . self::array_to_query_string($reload['params']);
-    $downloadInstructions=lang::get('no_commits_download_error_file_instructions');
     if (function_exists('hostsite_show_message')) {
-      hostsite_show_message(lang::get('Errors were encountered.'), 'error');
+      hostsite_show_message(lang::get('Some of the rows in the import file could not be imported.'), 'error');
     }
-    $r = lang::get('{1} problems were detected during the import.', $output['problems']) . ' ' .
-        $downloadInstructions .
-        " <a href=\"$output[file]\">" . lang::get('Download the records that did not import.') . '</a>';
-    $r .= "<p>".lang::get('Once you have finished making corrections ')."<a href=\"$reloadpath\">".lang::get('please reupload the file.')."</a></p>";
+    $r = self::getErrorsMessage($output, 'no_commits_download_error_file_instructions');
+    $r .= "<p>" . lang::get('Once you have finished making corrections ') . "<a href=\"$reloadpath\">" . lang::get('please reupload the file.') . "</a></p>";
     return $r;
   }
 
   /**
    * Displays the upload result page.
+   *
    * @param array $options Array of options passed to the import control.
    */
   private static function uploadResult($options) {
@@ -1031,21 +1038,19 @@ JS;
     ], $options);
     $request = parent::$base_url . "index.php/services/import/get_upload_result?uploaded_csv=" . $_GET['uploaded_csv'];
     $request .= '&' . self::array_to_query_string($options['auth']['read']);
-    $response = self::http_post($request, array());
+    $response = self::http_post($request, []);
     $r = '';
     if (isset($response['output'])) {
       $output = json_decode($response['output'], TRUE);
-      if (!is_array($output) || !isset($output['problems']))
+      if (!is_array($output) || !isset($output['problems'])) {
         return lang::get('An error occurred during the upload.') . '<br/>' . print_r($response, TRUE);
+      }
       if ($output['problems'] > 0) {
         $class = 'upload-results-errors';
         if (function_exists('hostsite_show_message')) {
-          hostsite_show_message(lang::get('Errors were encountered.'), 'error');
+          hostsite_show_message(lang::get('Some of the rows in the import file could not be imported.'), 'error');
         }
-        $downloadInstructions = lang::get('partial_commits_download_error_file_instructions');
-        $r = lang::get('{1} problems were detected during the import.', $output['problems']) . ' ' .
-          $downloadInstructions .
-          " <a href=\"$output[file]\">" . lang::get('Download the records that did not import.') . '</a>';
+        $r = self::getErrorsMessage($output, 'partial_commits_download_error_file_instructions');
       }
       else {
         $class = 'upload-results-success';
@@ -1064,13 +1069,13 @@ JS;
     unset($reload['params']['total']);
     unset($reload['params']['uploaded_csv']);
     $reloadpath = $reload['path'] . '?' . self::array_to_query_string($reload['params']);
-    $r = "<p>$r</p>";
+
     if (isset($response['output'])) {
-      if ($options['embed_reupload'] === EMBED_REUPLOAD_ON && $output['problems'] === 0) {
+      if ((int) $options['embed_reupload'] === EMBED_REUPLOAD_ON && $output['problems'] === 0) {
         $r .= '<p>' . lang::get('If you would like to upload another file you can use the form below.') . '</p>';
         $r .= self::uploadForm($options);
       }
-      elseif ($options['embed_reupload'] !== EMBED_REUPLOAD_OFF && $output['problems'] > 0) {
+      elseif ((int) $options['embed_reupload'] !== EMBED_REUPLOAD_OFF && $output['problems'] > 0) {
         $r .= '<p>' . lang::get('Once you have downloaded the file containing errors and corrected them you can ' .
           'upload the file again using the form below.') . '</p>';
         $r .= self::uploadForm($options);

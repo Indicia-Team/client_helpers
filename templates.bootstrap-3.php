@@ -22,6 +22,7 @@ $indicia_templates['buttonWarningClass'] = 'indicia-button btn btn-danger';
 $indicia_templates['anchorButtonClass'] = 'indicia-button btn btn-default';
 
 $indicia_templates['messageBox'] = '<div class="alert alert-info">{message}</div>';
+$indicia_templates['warningBox'] = '<div class="alert alert-warning"><span class="fas fa-exclamation-triangle"></span>{message}</div>';
 
 $indicia_templates['speciesDetailsThumbnail'] = <<<HTML
 <div class="thumbnail">

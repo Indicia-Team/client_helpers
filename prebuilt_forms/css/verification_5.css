@@ -25,23 +25,6 @@
 table.report-grid {
   width: 100%;
 }
-/* line 39, sass/verification_5.scss */
-table.report-grid tr:hover, table.report-grid table.report-grid tr.odd:hover {
-  background-color: #ffffcc;
-}
-/* line 42, sass/verification_5.scss */
-table.report-grid tr.selected, table.report-grid tr.selected td {
-  background-color: #027AC6;
-  color: white;
-}
-/* line 46, sass/verification_5.scss */
-table.report-grid tr.zero-t {
-  text-decoration: line-through;
-}
-/* line 49, sass/verification_5.scss */
-table.report-grid .nowrap {
-  whitespace: nowrap;
-}
 
 /* line 54, sass/verification_5.scss */
 ul.gallery li {

@@ -138,9 +138,17 @@ class ElasticsearchReportHelper {
       'caption' => 'Taxon name',
       'description' => 'Name as recorded for the taxon.',
     ],
+    'taxon.taxon_name_authorship' => [
+      'caption' => 'Taxon name author',
+      'description' => 'Author and date of the recorded accepted name.',
+    ],
     'taxon.accepted_name' => [
       'caption' => 'Accepted name',
       'description' => 'Currently accepted name for the recorded taxon.',
+    ],
+    'taxon.accepted_name_authorship' => [
+      'caption' => 'Accepted name author',
+      'description' => 'Author and date of the published accepted name.',
     ],
     'taxon.vernacular_name' => [
       'caption' => 'Common name',
@@ -185,6 +193,18 @@ class ElasticsearchReportHelper {
     'taxon.genus' => [
       'caption' => 'Genus',
       'description' => 'Taxonomic genus associated with the current identification of this record.',
+    ],
+    'taxon.species' => [
+      'caption' => 'Species',
+      'description' => 'Species name associated with the current identification of this record. Will still return the species ranked name where the record is of a taxon below species level.',
+    ],
+    'taxon.species_authorship' => [
+      'caption' => 'Species name author',
+      'description' => 'Species name author and date associated with the current identification of this record. Will still return the species ranked name\'s author where the record is of a taxon below species level.',
+    ],
+    'taxon.species_vernacular' => [
+      'caption' => 'Species common name',
+      'description' => 'Species name associated with the current identification of this record. Will still return the species ranked name where the record is of a taxon below species level.',
     ],
     'location.verbatim_locality' => [
       'caption' => 'Location name',
@@ -1313,6 +1333,7 @@ HTML;
       'editPath' => helper_base::getRootFolder(TRUE) . $options['editPath'],
       'taxon_list_id' => hostsite_get_config_value('iform', 'master_checklist_id'),
       'viewPath' => helper_base::getRootFolder(TRUE) . $options['viewPath'],
+      'redeterminerNameAttributeHandling' => 'overwriteOnRedet',
     ], $options);
     $dataOptions = helper_base::getOptionsForJs($options, [
       'editPath',
@@ -1393,7 +1414,7 @@ HTML;
       'speciesIncludeBothNames' => TRUE,
       'speciesNameFilterMode' => 'all',
       'validation' => ['required'],
-      'class' => 'control-width-5',
+      'wrapClasses' => ['not-full-width-md'],
     ]);
     $altListCheckbox = data_entry_helper::checkbox([
       'fieldname' => 'redet-from-full-list',
@@ -1405,11 +1426,21 @@ HTML;
     ]);
     // Remember which is the master list.
     helper_base::$indiciaData['mainTaxonListId'] = $options['taxon_list_id'];
+    // Option to allow verified to control if determiner name updated after
+    // redet.
+    $redetNameBehaviourOption = '';
+    if ($options['redeterminerNameAttributeHandling'] === 'allowChoice') {
+      $redetNameBehaviourOption = data_entry_helper::checkbox([
+        'label' => lang::get("Don't update the determiner"),
+        'helpText' => lang::get('If you are changing the record determination on behalf of the original recorder and their name should be stored against the determination, please check this box.'),
+        'fieldname' => 'no-update-determiner',
+      ]);
+    }
     $commentInput = data_entry_helper::textarea([
       'label' => lang::get('Explanation comment'),
       'helpText' => lang::get('Please give reasons why you are changing this record.'),
       'fieldname' => 'redet-comment',
-      'class' => 'control-width-5',
+      'wrapClasses' => ['not-full-width-lg'],
     ]);
     $btnClass = $indicia_templates['buttonDefaultClass'];
     $uploadButton = empty($options['includeUploadButton']) ? '' : <<<HTML
@@ -1448,6 +1479,7 @@ HTML;
     <div class="alt-taxon-list-controls alt-taxon-list-message">$indicia_templates[messageBox]</div>
     $speciesInput
     $altListCheckbox
+    $redetNameBehaviourOption
     $commentInput
     <button type="submit" class="btn btn-primary" id="apply-redet">Apply redetermination</button>
     <button type="button" class="btn btn-danger" id="cancel-redet">Cancel</button>
