@@ -4858,7 +4858,12 @@ JS;
       $idx++;
     }
     if ($options['spatialRefPerRow']) {
-      $getFromMapHint = lang::get('Toggle this button to allow you to click on the map to set the spatial reference for this record.');
+      if ($options['spatialRefPerRowUseFullscreenMap']) {
+        $getFromMapHint = lang::get('Click this button to allow you to access map to set the spatial reference for this record. Click once to set the precise location.');
+      }
+      else {
+        $getFromMapHint = lang::get('Toggle this button to allow you to click on the map to set the spatial reference for this record.');
+      }
       $r .= <<<HTML
 <td class="ui-widget-content scSpatialRefCell" headers="$options[id]-spatialref-0">
   <input class="scSpatialRef" type="text" id="$fieldname:occurrence:spatialref"
