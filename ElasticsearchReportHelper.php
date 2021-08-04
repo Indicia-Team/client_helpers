@@ -560,8 +560,10 @@ HTML;
     if (!empty($group_id)) {
       // Apply filtering by group.
       helper_base::$indiciaData['filter_group_id'] = $group_id;
-      $implicitVal = ['f' => FALSE, 't' => TRUE, '' => NULL][$implicit];
-      helper_base::$indiciaData['filter_group_implicit'] = $implicitVal;
+      if (is_string($implicit)) {
+        $implicit = ['f' => FALSE, 't' => TRUE, '' => NULL][$implicit];
+      }
+      helper_base::$indiciaData['filter_group_implicit'] = $implicit;
       if ($options['showGroupSummary'] || $options['showGroupPages']) {
         $groups = data_entry_helper::get_population_data(array(
           'table' => 'group',
@@ -585,7 +587,7 @@ HTML;
     }
     $filterBoundaries = helper_base::get_population_data([
       'report' => 'library/groups/group_boundary_transformed',
-      'extraParams' => $options['readAuth'] + ['group_id' => $_GET['group_id']],
+      'extraParams' => $options['readAuth'] + ['group_id' => $group_id],
       'cachePerUser' => FALSE,
     ]);
     if (count($filterBoundaries) > 0) {
