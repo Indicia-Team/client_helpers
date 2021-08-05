@@ -326,10 +326,12 @@ class extension_notifications_centre {
       'occurrence_id' => ['fieldname' => 'occurrence_id'],
       'actions' => [
         'actions' => $availableActions,
-        'responsive-hide' => ['phone' => TRUE],
       ],
       'triggered_date' => [
         'fieldname' => 'triggered_date',
+        'visible' => FALSE,
+      ],
+      'linked_id' => [
         'visible' => FALSE,
       ],
     ];
