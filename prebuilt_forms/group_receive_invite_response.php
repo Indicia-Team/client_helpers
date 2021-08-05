@@ -20,6 +20,8 @@
  * @link  http://code.google.com/p/indicia/
  */
 
+use Masterminds\HTML5;
+
 require_once('includes/report_filters.php');
 
 /**
@@ -95,10 +97,10 @@ class iform_group_receive_invite_response {
     elseif ($_POST && !empty($_POST['maybe']))
       return self::maybe($args, $invite, $auth);
     if (hostsite_get_user_field('id')) {
-      return self::logged_in_page($invite, $auth);
+      return self::loggedInPage($invite, $auth);
     }
     else {
-      return self::logged_out_page($invite, $auth);
+      return self::loggedOutPage($invite, $auth);
     }
   }
 
@@ -117,19 +119,39 @@ class iform_group_receive_invite_response {
     return $r;
   }
 
-  private static function logged_in_page($invite, $auth) {
+  /**
+   * If the user is logged in, returns the acceptance form.
+   *
+   * @return string
+   *   Form HTML.
+   */
+  private static function loggedInPage($invite, $auth) {
     if (self::existingUser($invite, $auth)) {
       return lang::get('There is no need to accept this invitation as you are already a member of {1}.',
           $invite['group_title']);
     }
+    global $indicia_templates;
     $reloadPath = self::getReloadPath();
-    $r = '<p>' . lang::get('You are logged in to {1} as {2} and have been invited to join the recording group {3}.',
-        hostsite_get_config_value('site', 'name'), hostsite_get_user_field('name'), $invite['group_title']) . '</p>';
-    $r .= '<form id="entry_form" action="$reloadPath" method="POST">';
-    $r .= '<input type="hidden" name="token" value="'.$_GET['token'] . '"/>';
-    $r .= '<input type="submit" id="btn-accept" name="accept" value="' . lang::get('Accept invitation') . '"/>';
-    $r .= '<input type="submit" id="btn-reject" name="reject" value="' . lang::get('Reject invitation') . '"/>';
-    $r .= '<input type="submit" id="btn-maybe" name="maybe" value="' . lang::get('Maybe later') . '"/>';
+    $site = hostsite_get_config_value('site', 'name');
+    $username = hostsite_get_user_field('name');
+    $r = str_replace(
+      '{message}',
+      lang::get('You are logged in to {1} as {2} and have been invited to join the recording group {3}.',  $site, $username, $invite['group_title']),
+      $indicia_templates['messageBox']
+    );
+    $lang = [
+      'accept' => lang::get('Accept invitation'),
+      'reject' => lang::get('Reject invitation'),
+      'later' => lang::get('Maybe later'),
+    ];
+    $r .= <<<HTML
+<form id="entry_form" action="$reloadPath" method="POST">
+  <input type="hidden" name="token" value="$_GET[token]"/>
+  <input type="submit" id="btn-accept" class="$indicia_templates[buttonPrimaryClass]" name="accept" value="$lang[accept]"/>
+  <input type="submit" id="btn-reject" class="$indicia_templates[buttonDefaultClass]" name="reject" value="$lang[reject]"/>
+  <input type="submit" id="btn-maybe" class="$indicia_templates[buttonDefaultClass]" name="maybe" value="$lang[later]"/>
+</form>
+HTML;
     hostsite_set_page_title(lang::get('Invitation to join {1}', $invite['group_title']));
     return $r;
   }
@@ -178,7 +200,7 @@ class iform_group_receive_invite_response {
    * @param array $auth Authorisation tokens
    * @return string HTML to add to the page.
    */
-  private static function logged_out_page($invite, $auth) {
+  private static function loggedOutPage($invite, $auth) {
     $siteName = hostsite_get_config_value('site', 'name');
     $r = '<p>'.lang::get('If you would like to join the {1} group called {2} then please log in or register an account for {3} then '.
             'follow the link in your invitation email again once registered.',
