@@ -1016,9 +1016,9 @@ JS;
     if (!empty($options['subType'])) {
       self::$upload_file_types[$options['subType']] = self::$upload_file_types['image'];
     }
-    // Allow options to be defaulted and overridden
+    // Allow options to be defaulted and overridden.
     $protocol = empty($_SERVER['HTTPS']) || $_SERVER['HTTPS'] === 'off' ? 'http' : 'https';
-    $defaults = array(
+    $defaults = [
       'id' => 'default',
       'upload' => TRUE,
       'maxFileCount' => 4,
@@ -1049,7 +1049,7 @@ JS;
       'msgDelete' => lang::get('Delete this item'),
       'msgUseAddFileBtn' => lang::get('Use the Add file button to select a file from your local disk. Files of type {1} are allowed.'),
       'msgUseAddLinkBtn' => lang::get('Use the Add link button to add a link to information stored elsewhere on the internet. You can enter links from {1}.')
-    );
+    ];
     $defaults['caption'] = (!isset($options['mediaTypes']) || $options['mediaTypes'] ===  array('Image:Local')) ? lang::get('Photos') : lang::get('Media files');
     if (isset(self::$final_image_folder_thumbs)) {
       $defaults['finalImageFolderThumbs'] = self::getRootFolder() . self::client_helper_path() . self::$final_image_folder_thumbs;
@@ -1066,9 +1066,9 @@ JS;
     }
     $options = array_merge($defaults, $options);
     $options['id'] = "$options[table]-$options[id]";
-    $containerId = 'container-'.$options['id'];
+    $containerId = 'container-' . $options['id'];
 
-    if ($options['codeGenerated']!='php') {
+    if ($options['codeGenerated'] !== 'php') {
       // build the JavaScript including the required file links
       self::add_resource('plupload');
       foreach($options['runtimes'] as $runtime) {
@@ -2835,7 +2835,7 @@ function(item) {
   var speciesIncludeTaxonGroup = $options[speciesIncludeTaxonGroup];
   var speciesIncludeIdDiff = $options[speciesIncludeIdDiff];
 
-  if (item.language_iso!==NULL && item.language_iso.toLowerCase() === 'lat') {
+  if (item.language_iso !== null && item.language_iso.toLowerCase() === 'lat') {
     r = '<em>' + item.taxon + '</em>';
   } else {
     r = '<span>' + item.taxon + '</span>';
@@ -3059,6 +3059,8 @@ RIJS;
   *       specified in at least one of its columns.
   *     This option supercedes the checkboxCol option which is still recognised
   *     for backwards compatibility.
+  *   * **absenceCol** - if true, then adds a column to the grid containing a
+  *     checkbox that can be ticked to indicate an absence record.
   *   * **hasDataIgnoreAttrs** - Optional integer array, where each entry
   *     corresponds to the id of an attribute that should be ignored when doing
   *     the hasData row inclusion check. If a column has a default value,
@@ -3292,8 +3294,8 @@ RIJS;
     }
 
     self::$indiciaData["rowInclusionCheck-$options[id]"] = $options['rowInclusionCheck'];
+    self::$indiciaData["absenceCol-$options[id]"] = $options['absenceCol'];
     self::$indiciaData["copyDataFromPreviousRow-$options[id]"] = $options['copyDataFromPreviousRow'];
-    self::$indiciaData["rowInclusionCheck-$options[id]"] = $options['rowInclusionCheck'];
     self::$indiciaData["copyDataFromPreviousRow-$options[id]"] = $options['copyDataFromPreviousRow'];
     self::$indiciaData["includeSpeciesGridLinkPage-$options[id]"] = $options['includeSpeciesGridLinkPage'];
     self::$indiciaData['speciesGridPageLinkUrl'] = $options['speciesGridPageLinkUrl'];
@@ -3455,15 +3457,16 @@ RIJS;
           continue;
         }
         $taxon = $taxalist[$taxonIdx];
-        // If we are using the sub-species column then when the taxon has a parent (=species) this goes in the
-        // first column and we put the subsp in the second column in a moment.
+        // If we are using the sub-species column then when the taxon has a
+        // parent (=species) this goes in the first column and we put the subsp
+        // in the second column in a moment.
         if ($options['subSpeciesColumn'] && !empty($taxon['parent'])) {
           $firstColumnTaxon = $taxon['parent'];
         }
         else {
           $firstColumnTaxon = $taxon;
         }
-        // Get the cell content from the taxon_label template
+        // Get the cell content from the taxon_label template.
         $firstCell = self::mergeParamsIntoTemplate($firstColumnTaxon, 'taxon_label');
         // If the taxon label template is PHP, evaluate it.
         if ($options['PHPtaxonLabel']) {
@@ -3493,7 +3496,7 @@ RIJS;
             $row .= '</td>';
           }
         }
-        // if editing a specific occurrence, mark it up
+        // If editing a specific occurrence, mark it up.
         $editedRecord = isset($_GET['occurrence_id']) && $_GET['occurrence_id'] == $existingRecordId;
         $editClass = $editedRecord ? ' edited-record ui-state-highlight' : '';
         $hasEditedRecord = $hasEditedRecord || $editedRecord;
@@ -3531,34 +3534,43 @@ RIJS;
             data_entry_helper::$uncheckedRecordsCount++;
           }
         }
-        $row .= str_replace(array('{content}', '{colspan}', '{editClass}', '{tableId}', '{idx}'),
-          array($firstCell, $colspan, $editClass, $options['id'], $colIdx), $indicia_templates['taxon_label_cell']);
+        $row .= str_replace(
+          ['{content}', '{colspan}', '{editClass}', '{tableId}', '{idx}'],
+          [$firstCell, $colspan, $editClass, $options['id'], $colIdx],
+          $indicia_templates['taxon_label_cell']
+        );
         $row .= self::speciesChecklistGetSubspCell($taxon, $txIdx, $existingRecordId, $options, $options['id']);
         $hidden = ($options['rowInclusionCheck'] === 'checkbox' ? '' : ' style="display:none"');
+        $existingRecordPresence = self::$entity_to_load != NULL &&
+          array_key_exists("sc:$loadedTxIdx:$existingRecordId:present", self::$entity_to_load) &&
+          self::$entity_to_load["sc:$loadedTxIdx:$existingRecordId:present"] == TRUE;
+        $existingRecordAbsence = self::$entity_to_load != NULL &&
+          array_key_exists("sc:$loadedTxIdx:$existingRecordId:zero_abundance", self::$entity_to_load) &&
+          self::$entity_to_load["sc:$loadedTxIdx:$existingRecordId:zero_abundance"] == 't';
         // AlwaysFixed mode means all rows in the default checklist are included as occurrences. Same for
         // AlwayeRemovable except that the rows can be removed.
         // If we are reloading a record there will be an entity_to_load which will indicate whether present should be checked.
         // This has to be evaluated true or false if reloading a submission with errors.
         if ($options['rowInclusionCheck'] === 'alwaysFixed' || $options['rowInclusionCheck'] === 'alwaysRemovable' ||
-          (self::$entity_to_load != NULL && array_key_exists("sc:$loadedTxIdx:$existingRecordId:present", self::$entity_to_load) &&
-            self::$entity_to_load["sc:$loadedTxIdx:$existingRecordId:present"] == TRUE)) {
+            ($existingRecordPresence && !$existingRecordAbsence)) {
           $checked = ' checked="checked"';
-        } else {
+        }
+        else {
           $checked = '';
         }
         $row .= "\n<td class=\"scPresenceCell\" headers=\"$options[id]-present-$colIdx\"$hidden>";
         $fieldname = "sc:$options[id]-$txIdx:$existingRecordId:present";
         if ($options['rowInclusionCheck'] === 'hasData') {
-          $row .= "<input type=\"hidden\" name=\"$fieldname\" id=\"$fieldname\" value=\"$taxon[taxa_taxon_list_id]\"/>";
+          $row .= "<input type=\"hidden\" name=\"$fieldname\" id=\"$fieldname\" class=\"presence-checkbox\" value=\"$taxon[taxa_taxon_list_id]\"/>";
         }
         else {
           // This includes a control to force out a 0 value when the checkbox
           // is unchecked.
-          $row .= "<input type=\"hidden\" class=\"scPresence\" name=\"$fieldname\" value=\"0\"/>".
+          $row .= "<input type=\"hidden\" class=\"scPresence\" name=\"$fieldname\" value=\"0\"/>" .
             "<input type=\"checkbox\" class=\"scPresence\" name=\"$fieldname\" id=\"$fieldname\" value=\"$taxon[taxa_taxon_list_id]\" $checked />";
         }
         // Store additional useful info about the taxon.
-        $row .= "<input type=\"hidden\" class=\"scTaxaTaxonListId\" value=\"$taxon[taxa_taxon_list_id]\" />";
+        $row .= "<input type=\"hidden\" class=\"scTaxaTaxonListId\" name=\"sc:$options[id]-$txIdx:$existingRecordId:ttlId\" value=\"$taxon[taxa_taxon_list_id]\" />";
         $row .= "<input type=\"hidden\" class=\"scTaxonGroupId\" value=\"$taxon[taxon_group_id]\" />";
         // If we have a grid ID attribute, output a hidden.
         if (!empty($options['gridIdAttributeId'])) {
@@ -3567,7 +3579,8 @@ RIJS;
             // If in add mode we don't need to include the occurrence attribute id.
             $fieldname = "sc:$options[id]-$txIdx::occAttr:$gridAttributeId";
             $row .= "<input type=\"hidden\" name=\"$fieldname\" id=\"$fieldname\" value=\"$options[id]\"/>";
-          } else {
+          }
+          else {
             $search = preg_grep("/^sc:[0-9]*:$existingRecordId:occAttr:$gridAttributeId:" . '[0-9]*$/', array_keys(self::$entity_to_load));
             if (!empty($search)) {
               $match = array_pop($search);
@@ -3583,6 +3596,15 @@ RIJS;
           }
         }
         $row .= "</td>";
+        if ($options['absenceCol']) {
+          $checked = $existingRecordAbsence ? ' checked="checked"' : '';
+          $fieldname = "sc:$options[id]-$txIdx:$existingRecordId:zero_abundance";
+          $row .= <<<HTML
+<td class="scAbsenceCell" headers="$options[id]-absent-0">
+  <input type="checkbox" class="scAbsence" name="$fieldname" id="$fieldname" value="t"$checked />
+</td>
+HTML;
+        }
         if ($options['speciesControlToUseSubSamples']) {
           $row .= "\n<td class=\"scSampleCell\" style=\"display:none\">";
           $fieldname = "sc:$options[id]-$txIdx:$existingRecordId:occurrence:sampleIDX";
@@ -4280,6 +4302,7 @@ JS;
             }
           }
           self::$entity_to_load['sc:'.$idx.':'.$occurrence['id'].':present'] = $occurrence['taxa_taxon_list_id'];
+          self::$entity_to_load['sc:'.$idx.':'.$occurrence['id'].':zero_abundance'] = $occurrence['zero_abundance'];
           self::$entity_to_load['sc:'.$idx.':'.$occurrence['id'].':record_status'] = $occurrence['record_status'];
           self::$entity_to_load['sc:'.$idx.':'.$occurrence['id'].':occurrence:comment'] = $occurrence['comment'];
           self::$entity_to_load['sc:'.$idx.':'.$occurrence['id'].':occurrence:sensitivity_precision'] = $occurrence['sensitivity_precision'];
@@ -4387,6 +4410,10 @@ JS;
         }
         $r .= self::get_species_checklist_col_header($options['id']."-present-$i", lang::get('species_checklist.present'),
           $visibleColIdx, $options['colWidths'], $attrs);
+        if ($options['absenceCol']) {
+          $r .= self::get_species_checklist_col_header($options['id']."-absent-$i", lang::get('species_checklist.absent'),
+            $visibleColIdx, $options['colWidths'], '');
+        }
         if ($options['speciesControlToUseSubSamples']) {
           // Need a dummy header for this cell even though never visible to
           // keep things aligned after responsive changes.
@@ -4597,10 +4624,14 @@ JS;
   }
 
   /**
-   * Internal method to prepare the options array for a species_checklist control.
+   * Internal method to prepare the options for a species_checklist control.
    *
-   * @param array $options Options array passed to the control
-   * @return array Options array prepared with defaults and other values required by the control.
+   * @param array $options
+   *   Options array passed to the control.
+   *
+   * @return array
+   *   Options array prepared with defaults and other values required by the
+   *   control.
    */
   public static function get_species_checklist_options($options) {
     // validate some options
@@ -4620,7 +4651,8 @@ JS;
       'userControlsTaxonFilter'=>FALSE,
       'header' => 'true',
       'columns'=>1,
-      'rowInclusionCheck'=>$rowInclusionCheck,
+      'rowInclusionCheck' => $rowInclusionCheck,
+      'absenceCol' => FALSE,
       'attrCellTemplate' => 'attribute_cell',
       'PHPtaxonLabel' => FALSE,
       'occurrenceComment' => FALSE,
@@ -4844,14 +4876,23 @@ JS;
       $r .= '</select><span class="species-checklist-select-species">' . lang::get('Select a species first') . '</span></td>';
     }
     $hidden = ($options['rowInclusionCheck']=='checkbox' ? '' : ' style="display:none"');
-    $r .= '<td class="scPresenceCell" headers="'.$options['id'].'-present-0"'.$hidden.'>';
-    $r .= "<input type=\"checkbox\" class=\"scPresence\" name=\"$fieldname:present\" id=\"$fieldname:present\" value=\"\" />";
-    $r .= '<input type="hidden" class="scTaxaTaxonListId" value="" />';
-    $r .= '<input type="hidden" class="scTaxonGroupId" value="" />';
+    $r .= <<<HTML
+<td class="scPresenceCell" headers="$options[id]-present-0"$hidden>
+<input type="checkbox" class="scPresence" name="$fieldname:present" id="$fieldname:present" value="" />
+<input type="hidden" class="scTaxaTaxonListId" name="$fieldname:ttlId" value="" />
+<input type="hidden" class="scTaxonGroupId" value="" />
+HTML;
     // If we have a grid ID attribute, output a hidden
     if (!empty($options['gridIdAttributeId']))
       $r .= "<input type=\"hidden\" name=\"$fieldname:occAttr:$options[gridIdAttributeId]\" id=\"$fieldname:occAttr:$options[gridIdAttributeId]\" value=\"$options[id]\"/>";
     $r .= '</td>';
+    if ($options['absenceCol']) {
+      $r .= <<<HTML
+<td class="scAbsenceCell" headers="$options[id]-absent-0">
+  <input type="checkbox" class="scAbsence" name="$fieldname:zero_abundance" id="$fieldname:zero_abundance" value="t" />
+</td>
+HTML;
+    }
     if ($options['speciesControlToUseSubSamples'])
       $r .= '<td class="scSampleCell" style="display:none"><input type="hidden" class="scSample" name="'.
         $fieldname.':occurrence:sampleIDX" id="'.$fieldname.':occurrence:sampleIDX" value="" /></td>';
@@ -6644,7 +6685,7 @@ if (errors$uniq.length>0) {
         if (preg_match('/-idx-$/', $a[1]))
           continue;
         // skip the extra row at the end for input of new rows
-        if (!array_key_exists("$a[0]:$a[1]:$a[2]:present", $arr))
+        if (!array_key_exists("$a[0]:$a[1]:$a[2]:ttlId", $arr))
           continue;
         if (is_array($value) && count($value) > 0) {
           // The value is an array, so might contain existing database ID info in the value to link to existing records
@@ -6700,7 +6741,7 @@ if (errors$uniq.length>0) {
           $record['deleted'] = 't';
         else
           $record['zero_abundance']=$present ? 'f' : 't';
-        $record['taxa_taxon_list_id'] = $record['present'];
+        $record['taxa_taxon_list_id'] = $record['ttlId'];
         $record['website_id'] = $website_id;
         self::speciesChecklistApplyFieldDefaults($fieldDefaults, $record);
         // Handle subsamples indicated by a row specific map ref
@@ -6929,12 +6970,14 @@ if (errors$uniq.length>0) {
   public static function wrap_species_checklist_record_present($record, $includeIfAnyData, $zeroAttrs, $zeroValues, $hasDataIgnoreAttrs) {
     // Present should contain the ttl ID, or zero if the present box was
     // unchecked.
-    $gotTtlId = array_key_exists('present', $record) && $record['present']!='0';
+    $gotTtlId = array_key_exists('present', $record) && $record['present'] != '0';
     // As we are working on a copy of the record, discard the ID and
     // taxa_taxon_list_id so it is easy to check if there is any other data
     // for the row.
     unset($record['id']);
     unset($record['present']); // stores ttl id
+    $explicitlyAbsent = !empty($record['zero_abundance']) && $record['zero_abundance'] === 't';
+    unset($record['absent']);
     // Also discard any attributes we included in $hasDataIgnoreAttrs.
     foreach ($hasDataIgnoreAttrs as $attrID) {
       unset($record['occAttr:' . $attrID]);
@@ -6968,7 +7011,7 @@ if (errors$uniq.length>0) {
         }
       }
       // return false (zero) if there are no non-zero abundance data, and at least one zero abundance indicators
-      if ($zeroCount && !$nonZeroCount)
+      if ($explicitlyAbsent || $zeroCount && !$nonZeroCount)
         return FALSE;
       elseif (!$zeroCount && !$nonZeroCount && $includeIfAnyData)
         return NULL;
