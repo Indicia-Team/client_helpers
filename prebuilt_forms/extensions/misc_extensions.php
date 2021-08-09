@@ -566,10 +566,10 @@ $('form#entry_form').tooltip({
         'fieldname' => 'scratchpad_list_id',
         'default' => $scratchpad_list_id,
       ]);
-      $r .= data_entry_helper::hidden_text(array(
+      $r .= data_entry_helper::hidden_text([
         'fieldname' => 'submission_extensions[]',
-        'default' => 'misc_extensions.remove_scratchpad'
-      ));
+        'default' => 'misc_extensions.remove_scratchpad',
+      ]);
     }
     return $r;
   }
@@ -577,27 +577,29 @@ $('form#entry_form').tooltip({
   /**
    * Scratchpad deletion request callback.
    *
-   * An extension for the submission building code that adds a deletion request for a scratchpad that has now been
-   * converted into a list of records. Automatically called when the load_species_list_from_scratchpad control is
-   * used.
+   * An extension for the submission building code that adds a deletion
+   * request for a scratchpad that has now been converted into a list of
+   * records. Automatically called when the load_species_list_from_scratchpad
+   * control is used.
    */
   public static function remove_scratchpad($values, $s_array) {
-    // Convert to a list submission so we can send a scratchpad list deletion as well as the main submission.
-    $s_array[0] = array(
+    // Convert to a list submission so we can send a scratchpad list deletion
+    // as well as the main submission.
+    $s_array[0] = [
       'id' => 'sample',
-      'submission_list' => array(
-        'entries' => array(
-          array(
+      'submission_list' => [
+        'entries' => [
+          [
             'id' => 'scratchpad_list',
-            'fields' => array(
-              'id' => array('value' => $values['scratchpad_list_id']),
-              'deleted' => array('value' => 't')
-            )
-          ),
-          $s_array[0]
-        )
-      )
-    );
+            'fields' => [
+              'id' => ['value' => $values['scratchpad_list_id']],
+              'deleted' => ['value' => 't'],
+            ],
+          ],
+          $s_array[0],
+        ],
+      ],
+    ];
   }
 
   /**

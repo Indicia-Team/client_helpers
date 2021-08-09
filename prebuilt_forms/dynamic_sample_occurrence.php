@@ -819,15 +819,19 @@ TXT;
   /**
    * Determine whether to show a grid of existing records or a form for either adding a new record, editing an existing one,
    * or creating a new record from an existing one.
-   * @param array $args iform parameters.
-   * @param object $nid node being shown.
+   *
+   * @param array $args
+   *   Iiform parameters.
+   * @param object $nid
+   *   Node being shown.
+   *
    * @return int The mode [MODE_GRID|MODE_NEW|MODE_EXISTING|MODE_CLONE].
    */
   protected static function getMode($args, $nid) {
     // Default to mode MODE_GRID or MODE_NEW depending on no_grid parameter
     $mode = (isset($args['no_grid']) && $args['no_grid']) ? self::MODE_NEW : self::MODE_GRID;
-    self::$loadedSampleId = null;
-    self::$loadedOccurrenceId = null;
+    self::$loadedSampleId = NULL;
+    self::$loadedOccurrenceId = NULL;
     self::$limitToGroupId = isset($args['limit_to_group_id']) ? $args['limit_to_group_id'] : 0;
     if ($_POST && array_key_exists('website_id', $_POST) && !is_null(data_entry_helper::$entity_to_load)) {
       // errors with new sample or entity populated with post, so display this data.
@@ -837,15 +841,15 @@ TXT;
       $mode = self::MODE_EXISTING;
       self::$loadedSampleId = $_GET['sample_id'];
     }
-    if (!empty($_GET['occurrence_id']) && $_GET['occurrence_id']!='{occurrence_id}'){
+    if (!empty($_GET['occurrence_id']) && $_GET['occurrence_id'] !== '{occurrence_id}'){
       $mode = self::MODE_EXISTING;
       self::$loadedOccurrenceId = $_GET['occurrence_id'];
     }
-    if ($mode != self::MODE_EXISTING && array_key_exists('new', $_GET)){
+    if ($mode != self::MODE_EXISTING && array_key_exists('new', $_GET)) {
       $mode = self::MODE_NEW;
       data_entry_helper::$entity_to_load = [];
     }
-    if ($mode == self::MODE_EXISTING && array_key_exists('new', $_GET)){
+    if ($mode == self::MODE_EXISTING && array_key_exists('new', $_GET)) {
       $mode = self::MODE_CLONE;
     }
     return $mode;

@@ -4512,11 +4512,16 @@ JS;
 
   /**
    * Method to build the list of taxa to add to a species checklist grid.
-   * @param array $options Options array for the control
-   * @param array $taxonRows Array that is modified by this method to contain a list of
-   * the rows to load onto the grid. Each row contains a sub-array with ttlId entry plus
-   * occId if the row represents an existing record
-   * @return array The taxon list to use in the grid.
+   *
+   * @param array $options
+   *   Options array for the control
+   * @param array $taxonRows
+   *   Array that is modified by this method to contain a list of the rows to
+   *   load onto the grid. Each row contains a sub-array with ttlId entry plus
+   *   occId if the row represents an existing record.
+   *
+   * @return array
+   *   The taxon list to use in the grid.
    */
   public static function get_species_checklist_taxa_list($options, &$taxonRows) {
     // Get the list of species that are always added to the grid, by first
@@ -4568,10 +4573,10 @@ JS;
       // than multiple requests. We'll populate it in a moment
       $taxa_taxon_list_ids = [];
       // look through the data being loaded for the ttlIds associated with existing occurrences
-      foreach(self::$entity_to_load as $key => $value) {
+      foreach (self::$entity_to_load as $key => $value) {
         $parts = explode(':', $key);
         // Is this an occurrence?
-        $loadIntoList = count($parts) > 2 && $parts[0] === 'sc' && $parts[1]!='-idx-' && ($parts[3] === 'present' || $parts[3] === 'preloadUnticked');
+        $loadIntoList = count($parts) > 2 && $parts[0] === 'sc' && $parts[1] !== '-idx-' && ($parts[3] === 'present' || $parts[3] === 'preloadUnticked');
         if ($loadIntoList && !empty($options['gridIdAttributeId'])) {
           // filtering records by grid ID. Skip them if from a different input grid (multiple grids on one form scenario).
           // The suffix containing attr_value_id will not be present if reloading due to error on submission
