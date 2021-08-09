@@ -48,6 +48,7 @@ $default_terms = array(
   'spatial ref' => 'Spatial ref.',
   'species_checklist.species' => 'Species',
   'species_checklist.present' => 'Present',
+  'species_checklist.absent' => 'Absent',
   'submit ok but file failed' => 'Your record was successfully submitted. However, an error occurred when saving an image file. The error was:',
   'surname' => 'Surname',
   'unlocked tool-tip' => 'Click here to lock the control\'s current value so that it is reused the next time you input data using this form.',
