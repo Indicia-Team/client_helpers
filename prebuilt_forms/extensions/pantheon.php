@@ -95,8 +95,8 @@ class extension_pantheon {
                 $sample['date'],
                 $sample['entered_sref'],
               ];
-              if (!empty($sample[0]['location_name'])) {
-                $parts[] = $sample[0]['location_name'];
+              if (!empty($sample['location_name'])) {
+                $parts[] = $sample['location_name'];
               }
               $titles[] = implode(', ', $parts);
             }
