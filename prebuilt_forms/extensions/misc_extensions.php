@@ -512,6 +512,8 @@ $('form#entry_form').tooltip({
    * and uses it to load the list onto a species grid on the page. This allows
    * a scratchpad to be used as the first step in data entry.
    *
+   * Should only be used on forms that have a single species_checklist control.
+   *
    * @param array $auth
    * @param array $args
    * @param string $tabalias
@@ -525,15 +527,18 @@ $('form#entry_form').tooltip({
    *     species when initially loaded.
    *   * **showMessage** can be set to FALSE to disable the explanatory
    *     message.
-   * @return string HTML to add to the page. Contains hidden inputs which set values required for functionality to work.
+   *
+   * @return string
+   *   HTML to add to the page. Contains hidden inputs which set values
+   *   required for functionality to work.
    */
   public static function load_species_list_from_scratchpad($auth, $args, $tabalias, $options) {
     $options = array_merge(
-      array(
+      [
         'parameter' => 'scratchpad_list_id',
         'tickAll' => TRUE,
         'showMessage' => TRUE,
-      ), $options
+      ], $options
     );
     if (empty($options['scratchpad_list_id']) && empty($_GET[$options['parameter']])) {
       // No list to load.
@@ -570,6 +575,7 @@ $('form#entry_form').tooltip({
         'fieldname' => 'submission_extensions[]',
         'default' => 'misc_extensions.remove_scratchpad',
       ]);
+      data_entry_helper::$indiciaData['speciesChecklistScratchpadListId'] = $options['scratchpad_list_id'];
     }
     return $r;
   }

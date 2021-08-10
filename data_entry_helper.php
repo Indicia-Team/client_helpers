@@ -4232,17 +4232,20 @@ JS;
    */
   public static function preload_species_checklist_occurrences($sampleId, $readAuth, $loadMedia, $extraParams,
        &$subSamples, $useSubSamples, $subSampleMethodID='',
-       $subSamplesOptional=FALSE, $spatialRefPrecisionAttrId = NULL) {
+       $subSamplesOptional=FALSE, $spatialRefPrecisionAttrId = NULL, $gridId = NULL) {
     $occurrenceIds = [];
     // don't load from the db if there are validation errors, since the $_POST will already contain all the
     // data we need.
     if (is_null(self::$validation_errors)) {
-      // strip out any occurrences we've already loaded into the entity_to_load, in case there are other
-      // checklist grids on the same page. Otherwise we'd double up the record data.
-      foreach(data_entry_helper::$entity_to_load as $key => $value) {
-        $parts = explode(':', $key);
-        if (count($parts) > 2 && $parts[0] == 'sc' && $parts[1]!='-idx-') {
-          unset(data_entry_helper::$entity_to_load[$key]);
+      // Strip out any occurrences we've already loaded into the entity_to_load
+      // in case there are other checklist grids on the same page. Otherwise
+      // we'd double up the record data.
+      if (empty(data_entry_helper::$indiciaData['speciesChecklistScratchpadListId'])) {
+        foreach(array_keys(data_entry_helper::$entity_to_load) as $key) {
+          $parts = explode(':', $key);
+          if (count($parts) > 2 && $parts[0] == 'sc' && $parts[1]!='-idx-') {
+            unset(data_entry_helper::$entity_to_load[$key]);
+          }
         }
       }
       if($useSubSamples) {
