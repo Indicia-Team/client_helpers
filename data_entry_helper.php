@@ -3642,42 +3642,48 @@ HTML;
               // Warning - if there are multi-values in play here then it will just load one, because this is NOT an array control.
               // use our preg search result as the field name to load from the existing data array.
               $loadedCtrlFieldName = array_pop($search);
-              // Convert loaded field name to our output row index
+              // Convert loaded field name to our output row index.
               $ctrlId = str_replace("sc:$loadedTxIdx:", "sc:$options[id]-$txIdx:", $loadedCtrlFieldName);
-              // find out the loaded value record ID
+              // Find out the loaded value record ID.
               preg_match("/occAttr:[0-9]+:(?P<valId>[0-9]+)$/", $loadedCtrlFieldName, $matches);
-              if (!empty($matches['valId']))
+              if (!empty($matches['valId'])) {
                 $valId = $matches['valId'];
-              else
+              }
+              else {
                 $valId = NULL;
+              }
             }
             else {
               // Go for the default, which has no suffix.
-              $loadedCtrlFieldName = str_replace('-idx-:', $loadedTxIdx.':'.$existingRecordId, $attributes[$attrId]['fieldname']);
+              $loadedCtrlFieldName = str_replace('-idx-:', "$loadedTxIdx:$existingRecordId", $attributes[$attrId]['fieldname']);
               $ctrlId = str_replace('-idx-:', "$options[id]-$txIdx:$existingRecordId", $attributes[$attrId]['fieldname']);
             }
             if (isset(self::$entity_to_load[$loadedCtrlFieldName])) {
               $existing_value = self::$entity_to_load[$loadedCtrlFieldName];
             }
-          } else {
+          }
+          else {
             // No existing record, so use a default control ID which excludes
             // the existing record ID.
             $ctrlId = str_replace('-idx-', "$options[id]-$txIdx", $attributes[$attrId]['fieldname']);
-            $loadedCtrlFieldName='-';
+            $loadedCtrlFieldName = '-';
           }
-          if (!$existingRecordId && $existing_value==='' && array_key_exists('default', $attributes[$attrId])) {
+          if (!$existingRecordId && $existing_value === '' && array_key_exists('default', $attributes[$attrId])) {
             // This case happens when reloading an existing record.
             $existing_value = $attributes[$attrId]['default'];
+            if (is_array($existing_value)) {
+              $existing_value = count($existing_value) > 0 ? $existing_value[0] : NULL;
+            }
           }
-          // Inject the field name into the control HTML
+          // Inject the field name into the control HTML.
           $oc = str_replace('{fieldname}', $ctrlId, $control);
           if ($existing_value !== '') {
             // For select controls, specify which option is selected from the
             // existing value.
             if (strpos($oc, '<select') !== FALSE) {
-              if (strpos($oc, 'value="'.$existing_value.'"')) {
-                $oc = str_replace('value="'.$existing_value.'"',
-                  'value="'.$existing_value.'" selected="selected"', $oc);
+              if (strpos($oc, 'value="' . $existing_value . '"')) {
+                $oc = str_replace('value="' . $existing_value . '"',
+                  'value="' . $existing_value . '" selected="selected"', $oc);
               }
               elseif (isset(self::$entity_to_load["$loadedCtrlFieldName:term"])) {
                 // Value not available for some reason, e.g. editing record in
