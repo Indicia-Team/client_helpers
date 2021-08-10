@@ -4237,14 +4237,23 @@ JS;
     // don't load from the db if there are validation errors, since the $_POST will already contain all the
     // data we need.
     if (is_null(self::$validation_errors)) {
+      $scratchpadTaxa = [];
       // Strip out any occurrences we've already loaded into the entity_to_load
       // in case there are other checklist grids on the same page. Otherwise
-      // we'd double up the record data.
-      if (empty(data_entry_helper::$indiciaData['speciesChecklistScratchpadListId'])) {
-        foreach(array_keys(data_entry_helper::$entity_to_load) as $key) {
-          $parts = explode(':', $key);
-          if (count($parts) > 2 && $parts[0] == 'sc' && $parts[1]!='-idx-') {
+      // we'd double up the record data. Though, if loading a list from a
+      // species scratchpad then we don't do this, instead we capture
+      // information about the ordering of the scratchpad list.
+      foreach (data_entry_helper::$entity_to_load as $key => $value) {
+        $parts = explode(':', $key);
+        if (count($parts) > 2 && $parts[0] == 'sc' && $parts[1]!='-idx-') {
+          if (empty(data_entry_helper::$indiciaData['speciesChecklistScratchpadListId'])) {
             unset(data_entry_helper::$entity_to_load[$key]);
+          }
+          else {
+            // Remember the position of the preloaded scratchpad list, so we
+            // can splice existing data into the correct place - $value is the
+            // taxa_taxon_list_id.
+            $scratchpadTaxa[$value] = $key;
           }
         }
       }
@@ -4297,11 +4306,26 @@ JS;
           'nocache' => TRUE,
           'sharing' => 'editing'
         ));
-        foreach($occurrences as $idx => $occurrence){
-          if($useSubSamples){
-            foreach($subSamples as $sidx => $subsample){
-              if($subsample['id'] == $occurrence['sample_id'])
-                self::$entity_to_load['sc:'.$idx.':'.$occurrence['id'].':occurrence:sampleIDX'] = $sidx;
+        foreach ($occurrences as $idx => $occurrence) {
+          $idx=2;
+          if ($useSubSamples) {
+            foreach ($subSamples as $sidx => $subsample) {
+              if($subsample['id'] == $occurrence['sample_id']) {
+                self::$entity_to_load["sc:$idx:$occurrence[id]:occurrence:sampleIDX"] = $sidx;
+              }
+            }
+          }
+          // If loading a scratchpad list of species (a checklist to tick),
+          // then need to splice any existing occurrences into the correct
+          // position in the list.
+          if (isset($scratchpadTaxa[$occurrence['taxa_taxon_list_id']])) {
+            $existingKeyInCorrectPos = $scratchpadTaxa[$occurrence['taxa_taxon_list_id']];
+            $keys = array_keys(data_entry_helper::$entity_to_load);
+            $index = array_search($existingKeyInCorrectPos, $keys);
+            if ($index !== FALSE) {
+              // Replace the key.
+              $keys[$index] = "sc:$idx:$occurrence[id]:present";
+              data_entry_helper::$entity_to_load = array_combine($keys, data_entry_helper::$entity_to_load);
             }
           }
           self::$entity_to_load['sc:'.$idx.':'.$occurrence['id'].':present'] = $occurrence['taxa_taxon_list_id'];
