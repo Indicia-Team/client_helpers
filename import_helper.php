@@ -1255,8 +1255,24 @@ JS;
             $selected = $nonSaveDetectRulesResult['selected'];
           }
         }
-        //As a last resort. If we have a match and find that there is more than one caption with this match, then flag a multiMatch to deal with it later
-        if (strcasecmp($strippedScreenCaption, $column) == 0 && $labelList[strtolower($strippedScreenCaption)] > 1) {
+        // As a last resort. If we have a match and find that there is more than
+        // one caption with this match, then flag a multiMatch to deal with it
+        // later.
+        if (
+          (
+            strcasecmp($strippedScreenCaption, $column) == 0 &&
+            $labelList[strtolower($strippedScreenCaption)] > 1
+          ) ||
+          // There is a special case, due to regex auto detection, where the
+          // column, 'location' can ambiguously match either 'Location name' or
+          // 'Location (from controlled termlist)'.
+          (
+            $selected &&
+            strcasecmp($column, 'location') == 0 &&
+            array_key_exists('location', $labelList) &&
+            array_key_exists('location name', $labelList)
+          )
+        ) {
           $multiMatch[] = $column;
           $optionID = $idColumn . 'Duplicate';
         }
