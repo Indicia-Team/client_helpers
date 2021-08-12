@@ -48,6 +48,7 @@ $default_terms = array(
   'spatial ref' => 'Spatial ref.',
   'species_checklist.species' => 'Species',
   'species_checklist.present' => 'Present',
+  'species_checklist.absent' => 'Absent',
   'submit ok but file failed' => 'Your record was successfully submitted. However, an error occurred when saving an image file. The error was:',
   'surname' => 'Surname',
   'unlocked tool-tip' => 'Click here to lock the control\'s current value so that it is reused the next time you input data using this form.',
@@ -120,10 +121,10 @@ re-upload the CSV file containing <strong>only</strong> the rows of data which d
 re-upload the whole dataset again.
 TEXT;
 $default_terms['no_commits_download_error_file_instructions'] = <<<TEXT
-'Problems have been found in your upload file. Please download the generated CSV file
- which holds the rows of data that did not upload and find the column called "Problem" which lists the associated
- error for each row. Once you have corrected all the errors in the <strong>original file</strong>, please re-upload the original file again.
- No rows will be uploaded to the database until all errors have been corrected.
+Problems have been found in your upload file. Please download the generated CSV file
+which holds the rows of data that did not upload and find the column called "Problem" which lists the associated
+error for each row. Once you have corrected all the errors in the <strong>original file</strong>, please re-upload the original file again.
+No rows will be uploaded to the database until all errors have been corrected.
 TEXT;
 
 $default_terms['gps_precision_instructions'] = <<<TEXT

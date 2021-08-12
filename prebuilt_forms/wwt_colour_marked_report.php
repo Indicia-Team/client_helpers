@@ -1832,7 +1832,7 @@ class iform_wwt_colour_marked_report {
   private static function get_control_recordstatus($auth, $args) {
     $default = isset(data_entry_helper::$entity_to_load['occurrence:record_status']) ?
         data_entry_helper::$entity_to_load['occurrence:record_status'] :
-        isset($args['defaults']['occurrence:record_status']) ? $args['defaults']['occurrence:record_status'] : 'C';
+        (isset($args['defaults']['occurrence:record_status']) ? $args['defaults']['occurrence:record_status'] : 'C');
     $values = array('I', 'C'); // not initially doing V=Verified
     $r = '<label for="occurrence:record_status">'.lang::get('LANG_Record_Status_Label')."</label>\n";
     $r .= '<select id="occurrence:record_status" name="occurrence:record_status">';

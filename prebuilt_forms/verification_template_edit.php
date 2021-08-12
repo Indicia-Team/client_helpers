@@ -270,7 +270,7 @@ class iform_verification_template_edit extends iform_dynamic {
      * Retrieve the path to the current page, so the form can submit to itself.
      * @return string
      */
-    protected static function getReloadPath () {
+    protected static function getReloadPath($availableForGroups) {
         $reload = data_entry_helper::get_reload_link_parts();
         unset($reload['params']['id']);
         unset($reload['params']['new']);
@@ -319,7 +319,7 @@ class iform_verification_template_edit extends iform_dynamic {
      * @param array $auth authentication tokens for accessing the warehouse.
      * @return string HTML for grid.
      */
-    protected static function getGrid($args, $nid, $auth) {
+    protected static function getGrid($args, $nid, array $auth) {
         iform_load_helpers(['report_helper']);
         return '<div id="templateList">' .
             report_helper::report_grid(

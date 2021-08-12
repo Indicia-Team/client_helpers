@@ -466,6 +466,7 @@ jQuery('#".$ctrlid."').change(function(){
   // Future enhancement? manager user access right who can see all walks by all people, with a person filter drop down.
   // Future enhancement? Download list of surveys used as basis for calendar
 
+    helper_base::add_resource('fancybox');
     $logged_in = hostsite_get_user_field('id') > 0;
     if(!$logged_in) {
       return('<p>'.lang::get('Please log in before attempting to use this form.').'</p>');

@@ -44,6 +44,7 @@ class extension_misc_extensions {
    *     requires paramNameToPass when in use.
    *   * User can also provide a value in braces to replace with the Drupal
    *     field for current user e.g. {field_indicia_user_id}.
+   *   * User can also provide a value in square brackets to replace it with URL parameter value e.g. [user_id].
    *   * onlyShowWhenLoggedInStatus - If 1, then only show button for logged in
    *     users. If 2, only show link for users who are not logged in.
    */
@@ -80,6 +81,13 @@ class extension_misc_extensions {
             // overwrite the existing value.
             if (!empty($paramValueFromUserField)) {
               $options['paramValueToPass'] = $paramValueFromUserField;
+            }
+          }
+          if (substr($options['paramValueToPass'], 0, 1) === '['&&substr($options['paramValueToPass'], -1) === ']') {
+            $options['paramValueToPass'] = substr($options['paramValueToPass'], 1, -1);
+            // Try and get it from the URL
+            if (!empty($_GET[$options['paramValueToPass']])) {
+              $options['paramValueToPass'] = $_GET[$options['paramValueToPass']];
             }
           }
           $paramToPass = array($options['paramNameToPass'] => $options['paramValueToPass']);
@@ -122,6 +130,7 @@ class extension_misc_extensions {
    *     requires paramNameToPass when in use. User can also provide a value
    *     in braces to replace with the Drupal field for current user e.g.
    *     {field_indicia_user_id}.
+   *   * User can also provide a value in square brackets to replace it with URL parameter value e.g. [user_id].
    *   * onlyShowWhenLoggedInStatus - If 1, then only show link for logged in
    *     users. If 2, only show link for users who are not logged in.
    *   * anchorId - Optional id for anchor link. This might be useful, for
@@ -156,6 +165,13 @@ class extension_misc_extensions {
             //If we have collected the user field from the profile, then overwrite the existing value.
             if (!empty($paramValueFromUserField))
               $options['paramValueToPass']=$paramValueFromUserField;
+          }
+          if (substr($options['paramValueToPass'], 0, 1) === '['&&substr($options['paramValueToPass'], -1) === ']') {
+            $options['paramValueToPass'] = substr($options['paramValueToPass'], 1, -1);
+            // Try and get it from the URL
+            if (!empty($_GET[$options['paramValueToPass']])) {
+              $options['paramValueToPass'] = $_GET[$options['paramValueToPass']];
+            }
           }
           $paramToPass=array($options['paramNameToPass']=>$options['paramValueToPass']);
         }
@@ -496,6 +512,8 @@ $('form#entry_form').tooltip({
    * and uses it to load the list onto a species grid on the page. This allows
    * a scratchpad to be used as the first step in data entry.
    *
+   * Should only be used on forms that have a single species_checklist control.
+   *
    * @param array $auth
    * @param array $args
    * @param string $tabalias
@@ -509,15 +527,18 @@ $('form#entry_form').tooltip({
    *     species when initially loaded.
    *   * **showMessage** can be set to FALSE to disable the explanatory
    *     message.
-   * @return string HTML to add to the page. Contains hidden inputs which set values required for functionality to work.
+   *
+   * @return string
+   *   HTML to add to the page. Contains hidden inputs which set values
+   *   required for functionality to work.
    */
   public static function load_species_list_from_scratchpad($auth, $args, $tabalias, $options) {
     $options = array_merge(
-      array(
+      [
         'parameter' => 'scratchpad_list_id',
         'tickAll' => TRUE,
         'showMessage' => TRUE,
-      ), $options
+      ], $options
     );
     if (empty($options['scratchpad_list_id']) && empty($_GET[$options['parameter']])) {
       // No list to load.
@@ -525,11 +546,14 @@ $('form#entry_form').tooltip({
     }
     $scratchpad_list_id = empty($options['scratchpad_list_id'])
       ? $_GET[$options['parameter']] : $options['scratchpad_list_id'];
-    $entries = data_entry_helper::get_population_data(array(
+    $entries = data_entry_helper::get_population_data([
       'table' => 'scratchpad_list_entry',
-      'extraParams' => $auth['read'] + array('scratchpad_list_id' => $scratchpad_list_id),
-      'caching' => FALSE
-    ));
+      'extraParams' => $auth['read'] + [
+        'scratchpad_list_id' => $scratchpad_list_id,
+        'orderby' => 'id',
+      ],
+      'caching' => FALSE,
+    ]);
     $r = '';
     // Are the taxa pre-ticked, or just loaded.
     $mode = $options['tickAll'] ? 'present' : 'preloadUnticked';
@@ -547,10 +571,11 @@ $('form#entry_form').tooltip({
         'fieldname' => 'scratchpad_list_id',
         'default' => $scratchpad_list_id,
       ]);
-      $r .= data_entry_helper::hidden_text(array(
+      $r .= data_entry_helper::hidden_text([
         'fieldname' => 'submission_extensions[]',
-        'default' => 'misc_extensions.remove_scratchpad'
-      ));
+        'default' => 'misc_extensions.remove_scratchpad',
+      ]);
+      data_entry_helper::$indiciaData['speciesChecklistScratchpadListId'] = $options['scratchpad_list_id'];
     }
     return $r;
   }
@@ -558,27 +583,29 @@ $('form#entry_form').tooltip({
   /**
    * Scratchpad deletion request callback.
    *
-   * An extension for the submission building code that adds a deletion request for a scratchpad that has now been
-   * converted into a list of records. Automatically called when the load_species_list_from_scratchpad control is
-   * used.
+   * An extension for the submission building code that adds a deletion
+   * request for a scratchpad that has now been converted into a list of
+   * records. Automatically called when the load_species_list_from_scratchpad
+   * control is used.
    */
   public static function remove_scratchpad($values, $s_array) {
-    // Convert to a list submission so we can send a scratchpad list deletion as well as the main submission.
-    $s_array[0] = array(
+    // Convert to a list submission so we can send a scratchpad list deletion
+    // as well as the main submission.
+    $s_array[0] = [
       'id' => 'sample',
-      'submission_list' => array(
-        'entries' => array(
-          array(
+      'submission_list' => [
+        'entries' => [
+          [
             'id' => 'scratchpad_list',
-            'fields' => array(
-              'id' => array('value' => $values['scratchpad_list_id']),
-              'deleted' => array('value' => 't')
-            )
-          ),
-          $s_array[0]
-        )
-      )
-    );
+            'fields' => [
+              'id' => ['value' => $values['scratchpad_list_id']],
+              'deleted' => ['value' => 't'],
+            ],
+          ],
+          $s_array[0],
+        ],
+      ],
+    ];
   }
 
   /**

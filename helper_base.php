@@ -32,7 +32,7 @@ global $indicia_templates;
 $indicia_templates = [
   'blank' => '',
   'prefix' => '',
-  'controlWrap' => "<div id=\"ctrl-wrap-{id}\" class=\"form-row ctrl-wrap\">{control}</div>\n",
+  'controlWrap' => "<div id=\"ctrl-wrap-{id}\" class=\"form-row ctrl-wrap{wrapClasses}\">{control}</div>\n",
   'controlWrapErrorClass' => '',
   // Template for control with associated buttons/icons to appear to the side.
   'controlAddonsWrap' => "{control}{addons}",
@@ -54,7 +54,8 @@ $indicia_templates = [
   'anchorButtonClass' => 'indicia-button',
   'submitButton' => '<input id="{id}" type="submit"{class} name="{name}" value="{caption}" />',
   // Message boxes
-  'messageBox' => '<div class="page-notice ui-state-highlight ui-corner-all">{message}</div>',
+  'messageBox' => '<div class="page-notice ui-state-default ui-corner-all">{message}</div>',
+  'warningBox' => '<div class="page-notice ui-state-highlight ui-corner-all"><span class="fas fa-exclamation-triangle"></span>{message}</div>',
   // Lock icons.
   'lock_icon' => '<span id="{id}_lock" class="unset-lock">&nbsp;</span>',
   'lock_javascript' => "indicia.locks.initControls (
@@ -90,10 +91,10 @@ $indicia_templates = [
   'textarea' => '<textarea id="{id}" name="{fieldname}"{class} {disabled} cols="{cols}" rows="{rows}" {title}>{default}</textarea>'."\n",
   'checkbox' => '<input type="hidden" name="{fieldname}" value="0"/><input type="checkbox" id="{id}" name="{fieldname}" value="1"{class}{checked}{disabled} {title} />'."\n",
   'training' => '<input type="hidden" name="{fieldname}" value="{hiddenValue}"/><input type="checkbox" id="{id}" name="{fieldname}" value="1"{class}{checked}{disabled} {title} />'."\n",
-  'date_picker' => '<input type="text" {attribute_list} {class} id="{id}" name="{fieldname}" value="{default}" style="{textDisplay}" {title}/>
-      <input type="date" {attribute_list_date} class="{datePickerClass}" style="{dateDisplay}">' . "\n",
-  'date_picker_mode_toggle' => '{vagueLabel}: <label class="switch">
-        <input type="checkbox" class="date-mode-toggle" checked>
+  'date_picker' => '<input type="text" {attribute_list} {class} id="{id}" name="{fieldname}" value="{default}" style="display: none" {title}/>
+      <input type="date" {attribute_list_date} class="{datePickerClass}" id="{id}:date">' . "\n",
+  'date_picker_mode_toggle' => '<span>{vagueLabel}:</span> <label class="switch">
+        <input type="checkbox" class="date-mode-toggle" id="{id}:toggle">
         <span class="slider round"></span>
       </label>' . "\n",
   'select' => '<select {attribute_list} id="{id}" name="{fieldname}"{class} {disabled} {title}>{items}</select>',
@@ -121,7 +122,9 @@ $indicia_templates = [
       '<input id="{inputId}" name="{inputId}" type="text" value="{defaultCaption}" {class} {disabled} {title}/>' . "\n",
   'autocomplete_javascript' => "
 $('input#{escaped_input_id}').change(function() {
-  $('input#{escaped_id}').val('');
+  if ($('input#{escaped_id}').data('set-for') !== $('input#{escaped_input_id}').val()) {
+    $('input#{escaped_id}').val('');
+  }
 });
 $('input#{escaped_input_id}').autocomplete('{url}',
   {
@@ -158,6 +161,8 @@ $('input#{escaped_input_id}').autocomplete('{url}',
 });
 $('input#{escaped_input_id}').result(function(event, data) {
   $('input#{escaped_id}').attr('value', data.{valueField});
+  // Remember what text string this value was for.
+  $('input#{escaped_id}').data('set-for', $('input#{escaped_input_id}').val());
   $('.item-icon').remove();
   if (typeof data.icon!=='undefined') {
     $('input#{escaped_input_id}').after(data.icon).next().hover(indiciaFns.hoverIdDiffIcon);
@@ -374,18 +379,26 @@ class helper_base {
   public static $css_path = NULL;
 
   /**
-   * @var string Path to Indicia Images folder.
+   * Path to Indicia Images folder.
+   *
+   * @var string
    */
   public static $images_path = NULL;
 
   /**
-   * @var string Path to Indicia cache folder. Defaults to client_helpers/cache.
+   * Path to Indicia cache folder. Defaults to client_helpers/cache.
+   *
+   * @var string
    */
   public static $cache_folder = FALSE;
 
   /**
-   * @var array List of resources that have already been dumped out, so we don't duplicate them. For example, if the
-   * site template includes JQuery set $dumped_resources[]='jquery'.
+   * List of resources that have already been dumped out.
+   *
+   * Avoids duplication. For example, if the site template includes JQuery set
+   * $dumped_resources[]='jquery'.
+   *
+   * @var array
    */
   public static $dumped_resources = [];
 
@@ -397,62 +410,73 @@ class helper_base {
   public static $indiciaData = [];
 
   /**
-   * @var string JavaScript text to be emitted after the data entry form. Each control that
-   * needs custom JavaScript can append the script to this variable.
+   * Inline JavaScript to be added to the page.
+   *
+   * Each control that needs custom JavaScript can append the script to this
+   * variable. Will be enclosed in a document ready event hander.
+   *
+   * @var string
    */
   public static $javascript = '';
 
   /**
-   * @var string JavaScript text to be emitted after the data entry form and all other JavaScript.
+   * JavaScript text to be emitted after all other JavaScript.
+   *
+   * @var string
    */
   public static $late_javascript = '';
 
   /**
-   * @var string JavaScript text to be emitted during window.onload.
+   * JavaScript text to be emitted during window.onload.
+   *
+   * @var string
    */
   public static $onload_javascript = '';
 
   /**
-   * @var boolean Setting to completely disable loading from the cache
+   * Setting to completely disable loading from the cache
+   *
+   * @var bool
    */
   public static $nocache = FALSE;
 
- /**
-  * @var integer On average, every 1 in $interim_image_chance_purge times the
-  * Warehouse is called for data, all interim images older than $interim_image_expiry
-  * seconds will be deleted. These are images that should have uploaded to the
-  * warehouse but the form was not finally submitted.
-  */
-  public static $interim_image_chance_purge = 100;
-
   /**
-   * @var integer On average, every 1 in $cache_chance_expire times the Warehouse
-   * is called for data which is
+   * Age of image files in seconds before they will be considered for purging.
+   *
+   * @var int
    */
   public static $interim_image_expiry = 14400;
 
   /**
-   * @var array Contains elements for each media type that can be uploaded. Each
-   * element is an array of allowed file extensions for that media type. Used
-   * for filtering files to upload on client side. File extensions must be in
-   * lower case. Each entry should have its mime type included in
-   * $upload_mime_types.
+   * File types and extensions allowed for upload.
+   *
+   * Contains elements for each media type that can be uploaded. Each element
+   * is an array of allowed file extensions for that media type. Used for
+   * filtering files to upload on client side. File extensions must be in lower
+   * case. Each entry should have its mime type included in $upload_mime_types.
+   *
+   * @var array
    */
   public static $upload_file_types = [
     'image' => ['jpg', 'gif', 'png', 'jpeg'],
     'pdf' => ['pdf'],
     'audio' => ['mp3', 'wav'],
+    'zerocrossing' => ['zc'],
   ];
 
   /**
-   * @var array Contains elements for each media type that can be uploaded. Each
-   * element is an array of the allowed mime subtypes for that media type. Used
-   * for testing uploaded files. Each entry in $upload_file_types should have
-   * its mime type in this list.
+   * Mime types allowed for upload.
+   *
+   * Contains elements for each media type that can be uploaded. Each element
+   * is an array of the allowed mime subtypes for that media type. Used for
+   * testing uploaded files. Each entry in $upload_file_types should have its
+   * mime type in this list.
+   *
+   * @var array
    */
   public static $upload_mime_types = [
     'image' => ['jpeg', 'gif', 'png'],
-    'application' => ['pdf'],
+    'application' => ['pdf', 'octet-stream'],
     'audio' => ['mpeg', 'x-wav'],
   ];
 
@@ -472,6 +496,13 @@ class helper_base {
    * @var array
    */
   public static $validated_form_id = NULL;
+
+  /**
+   * jQuery Validation should only initialise once.
+   *
+   * @var bool
+   */
+  private static $validationInitialised = FALSE;
 
   /**
    * @var string Helptext positioning. Determines where the information is displayed when helpText is defined for a control.
@@ -494,14 +525,18 @@ class helper_base {
   public static $validation_errors = NULL;
 
   /**
-   * @var Array of default validation rules to apply to the controls on the form if the
-   * built in client side validation is used (with the jQuery validation plugin). This array
-   * can be replaced if required.
-   * @todo This array could be auto-populated with validation rules for a survey's fields from the
-   * Warehouse.
+   * Default validation rules to apply to the controls on the form.
+   *
+   * Used if the built in client side validation is used (with the jQuery
+   * validation plugin). This array can be replaced if required.
+   *
+   * @var array
+   *
+   * @todo This array could be auto-populated with validation rules for a
+   * survey's fields from the Warehouse.
    */
   public static $default_validation_rules = [
-    'sample:date' => ['required','date'],
+    'sample:date' => ['required', 'date'],
     'sample:entered_sref' => ['required'],
     'occurrence:taxa_taxon_list_id' => ['required'],
     'location:name' => ['required'],
@@ -517,16 +552,22 @@ class helper_base {
   /**
    * Length of time in seconds after which cached Warehouse responses will start to expire.
    *
-   * @var integer
+   * @var int
    */
   public static $cache_timeout = 3600;
 
   /**
-   * @var integer On average, every 1 in $cache_chance_expire times the Warehouse is called for data which is
-   * cached but older than the cache timeout, the cached data will be refreshed. This introduces a random element to
-   * cache refreshes so that no single form load event is responsible for refreshing all cached content.
+   * Chance of a cached file being refreshed after expiry.
+   *
+   * On average, every 1 in $cache_chance_expire times the Warehouse is called
+   * for data which is cached but older than the cache timeout, the cached data
+   * will be refreshed. This introduces a random element to cache refreshes so
+   * that no single form load event is responsible for refreshing all cached
+   * content.
+   *
+   * @var int
    */
-  public static $cache_chance_refresh_file=10;
+  public static $cache_chance_refresh_file = 10;
 
   /**
    * Chance of a cache purge evemt.
@@ -535,12 +576,12 @@ class helper_base {
    * for data, all files older than 5 times the cache_timeout will be purged,
    * apart from the most recent $cache_allowed_file_count files.
    *
-   * @var integer
+   * @var int
    */
   public static $cache_chance_purge = 500;
 
   /**
-   * @var integer Number of recent files allowed in the cache which the cache will not bother clearing during a deletion operation.
+   * @var int Number of recent files allowed in the cache which the cache will not bother clearing during a deletion operation.
    * They will be refreshed occasionally when requested anyway.
    */
   public static $cache_allowed_file_count = 50;
@@ -560,19 +601,23 @@ class helper_base {
    * @todo Need to ensure this setting is utilised every where it should be.
    *
    */
-  public static $date_format='d/m/Y';
+  public static $date_format = 'd/m/Y';
 
   /**
-   * @var Boolean indicates if any form controls have specified the lockable option.
+   * @var bool indicates if any form controls have specified the lockable option.
    * If so, we will need to output some javascript.
    */
-  protected static $using_locking = false;
+  protected static $using_locking = FALSE;
 
   /**
-   * @var Boolean Are we linking in the default stylesheet? Handled sligtly different to the others so it can be added to the end of the
-   * list, allowing our CSS to override other stuff.
+   * Are we linking in the default stylesheet?
+   *
+   * Handled sligtly different to the others so it can be added to the end of
+   * the list, allowing our CSS to override other stuff.
+   *
+   * @var bool
    */
-  protected static $default_styles = false;
+  protected static $default_styles = FALSE;
 
   /**
    * Array of html attributes. When replacing items in a template, these get automatically wrapped. E.g.
@@ -750,13 +795,14 @@ class helper_base {
    *   * leaflet_google
    */
   public static function add_resource($resource) {
-    // Ensure indiciaFns is always the first resource added
+    // Ensure indiciaFns is always the first resource added.
     if (!self::$indiciaFnsDone) {
       self::$indiciaFnsDone = TRUE;
       self::add_resource('indiciaFns');
     }
     $resourceList = self::get_resources();
-    // If this is an available resource and we have not already included it, then add it to the list
+    // If this is an available resource and we have not already included it,
+    // then add it to the list.
     if (array_key_exists($resource, $resourceList) && !in_array($resource, self::$required_resources)) {
       if (isset($resourceList[$resource]['deps'])) {
         foreach ($resourceList[$resource]['deps'] as $dep) {
@@ -797,40 +843,83 @@ class helper_base {
         $indicia_theme_path = preg_replace('/css\/$/', 'themes/', self::$css_path);
       }
       // Ensure a trailing slash.
-      if (substr($indicia_theme_path, -1) !== '/')
+      if (substr($indicia_theme_path, -1) !== '/') {
         $indicia_theme_path .= '/';
+      }
       $protocol = empty($_SERVER['HTTPS']) || $_SERVER['HTTPS'] === 'off' ? 'http' : 'https';
       self::$resource_list = array (
-        'indiciaFns' => ['deps' => ['jquery'], 'javascript' => [self::$js_path."indicia.functions.js"]],
-        'jquery' => array('javascript' => array(self::$js_path."jquery.js", self::$js_path."ie_vml_sizzlepatch_2.js")),
+        'indiciaFns' => [
+          'deps' => ['jquery'],
+          'javascript' => [self::$js_path . "indicia.functions.js"],
+        ],
+        'jquery' => [
+          'javascript' => [
+            self::$js_path . 'jquery.js',
+            self::$js_path . 'ie_vml_sizzlepatch_2.js',
+          ],
+        ],
         'datepicker' => [
-          'javascript' => [self::$js_path . 'indicia.datepicker.js']
+          'deps' => ['jquery_cookie'],
+          'javascript' => [
+            self::$js_path . 'indicia.datepicker.js',
+            self::$js_path . 'date.polyfill/better-dom/dist/better-dom.min.js',
+            self::$js_path . 'date.polyfill/better-dateinput-polyfill/dist/better-dateinput-polyfill.min.js',
+          ]
         ],
         'sortable' => [
           'javascript' => ['https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.js'],
         ],
-        'openlayers' => array('javascript' => array(self::$js_path.(function_exists('iform_openlayers_get_file') ? iform_openlayers_get_file() : 'OpenLayers.js'),
-            self::$js_path . 'proj4js.js', self::$js_path . 'proj4defs.js', self::$js_path . 'lang/en.js')),
-        'graticule' => array('deps' =>array('openlayers'), 'javascript' => array(self::$js_path."indiciaGraticule.js")),
-        'clearLayer' => array('deps' =>array('openlayers'), 'javascript' => array(self::$js_path."clearLayer.js")),
-        'hoverControl' => array('deps' =>array('openlayers'), 'javascript' => array(self::$js_path."hoverControl.js")),
-        'addrowtogrid' => array('deps' => array('validation'), 'javascript' => array(self::$js_path."addRowToGrid.js")),
-        'speciesFilterPopup' => array('deps' => array('addrowtogrid'), 'javascript' => array(self::$js_path."speciesFilterPopup.js")),
-        'indiciaMapPanel' => array('deps' =>array('jquery', 'openlayers', 'jquery_ui', 'jquery_cookie','hoverControl'), 'javascript' => array(self::$js_path."jquery.indiciaMapPanel.js")),
-        'indiciaMapEdit' => array('deps' =>array('indiciaMap'), 'javascript' => array(self::$js_path."jquery.indiciaMap.edit.js")),
+        'openlayers' => [
+          'javascript' => [
+            self::$js_path . (function_exists('iform_openlayers_get_file') ? iform_openlayers_get_file() : 'OpenLayers.js'),
+            self::$js_path . 'proj4js.js',
+            self::$js_path . 'proj4defs.js',
+            self::$js_path . 'lang/en.js',
+          ],
+        ],
+        'graticule' => [
+          'deps' => ['openlayers'],
+          'javascript' => [self::$js_path . 'indiciaGraticule.js'],
+        ],
+        'clearLayer' => [
+          'deps' => ['openlayers'],
+          'javascript' => [self::$js_path . 'clearLayer.js'],
+        ],
+        'hoverControl' => array('deps' =>array('openlayers'), 'javascript' => array(self::$js_path . 'hoverControl.js')),
+        'addrowtogrid' => array('deps' => array('validation'), 'javascript' => array(self::$js_path . "addRowToGrid.js")),
+        'speciesFilterPopup' => array('deps' => array('addrowtogrid'), 'javascript' => array(self::$js_path . "speciesFilterPopup.js")),
+        'indiciaMapPanel' => array('deps' => array('jquery', 'openlayers', 'jquery_ui', 'jquery_cookie', 'hoverControl'), 'javascript' => array(self::$js_path . "jquery.indiciaMapPanel.js")),
+        'indiciaMapEdit' => array('deps' => array('indiciaMap'), 'javascript' => array(self::$js_path . "jquery.indiciaMap.edit.js")),
         'postcode_search' => array('javascript' => array(self::$js_path."postcode_search.js")),
-        'locationFinder' => array('deps' =>array('indiciaMapEdit'), 'javascript' => array(self::$js_path."jquery.indiciaMap.edit.locationFinder.js")),
-        'createPersonalSites' => array('deps' => array('jquery'), 'javascript' => array(self::$js_path."createPersonalSites.js")),
-        'autocomplete' => array('deps' => array('jquery'), 'stylesheets' => array(self::$css_path."jquery.autocomplete.css"), 'javascript' => array(self::$js_path."jquery.autocomplete.js")),
+        'locationFinder' => array('deps' => array('indiciaMapEdit'), 'javascript' => array(self::$js_path . "jquery.indiciaMap.edit.locationFinder.js")),
+        'createPersonalSites' => array('deps' => array('jquery'), 'javascript' => array(self::$js_path . "createPersonalSites.js")),
+        'autocomplete' => array('deps' => array('jquery'), 'stylesheets' => array(self::$css_path . "jquery.autocomplete.css"), 'javascript' => array(self::$js_path."jquery.autocomplete.js")),
         'addNewTaxon' => array('javascript' => array(self::$js_path."addNewTaxon.js")),
         'import' => array('javascript' => array(self::$js_path . "import.js")),
         'indicia_locks' => array('deps' =>array('jquery_cookie', 'json'), 'javascript' => array(self::$js_path."indicia.locks.js")),
         'jquery_cookie' => array('deps' =>array('jquery'), 'javascript' => array(self::$js_path."jquery.cookie.js")),
-        'jquery_ui' => array('deps' => array('jquery'), 'stylesheets' => array("$indicia_theme_path$indicia_theme/jquery-ui.custom.css"), 'javascript' => array(self::$js_path."jquery-ui.custom.min.js", self::$js_path."jquery-ui.effects.js")),
-        'jquery_form' => array('deps' => array('jquery'), 'javascript' => array(self::$js_path."jquery.form.js")),
+        'jquery_ui' => [
+          'deps' => ['jquery'],
+          'stylesheets' => [
+            self::$css_path . 'jquery-ui.min.css',
+            "$indicia_theme_path$indicia_theme/jquery-ui.theme.min.css",
+          ],
+          'javascript' => [
+            self::$js_path . 'jquery-ui.min.js',
+            self::$js_path . 'jquery-ui.effects.js',
+          ]
+        ],
+        'jquery_ui_fr' => [
+          'deps' => ['jquery_ui'],
+          'javascript' => [self::$js_path . "jquery.ui.datepicker-fr.js"]
+        ],
+        'jquery_form' => [
+          'deps' => ['jquery'],
+          'javascript' => [self::$js_path . "jquery.form.min.js"],
+        ],
         'reportPicker' => [
           'deps' => ['treeview', 'fancybox'],
-          'javascript' => [self::$js_path."reportPicker.js"],
+          'javascript' => [self::$js_path . "reportPicker.js"],
         ],
         'treeview' => array('deps' => array('jquery'), 'stylesheets' => array(self::$css_path."jquery.treeview.css"), 'javascript' => array(self::$js_path."jquery.treeview.js")),
         'treeview_async' => array('deps' => array('treeview'), 'javascript' => array(self::$js_path."jquery.treeview.async.js", self::$js_path."jquery.treeview.edit.js")),
@@ -840,11 +929,28 @@ class helper_base {
         'fancybox' => [
           'deps' => ['jquery'],
           'stylesheets' => [self::$js_path . 'fancybox/dist/jquery.fancybox.min.css'],
-          'javascript' => [self::$js_path.'fancybox/dist/jquery.fancybox.min.js'],
+          'javascript' => [self::$js_path . 'fancybox/dist/jquery.fancybox.min.js'],
         ],
-        'treeBrowser' => array('deps' => array('jquery','jquery_ui'), 'javascript' => array(self::$js_path."jquery.treebrowser.js")),
-        'defaultStylesheet' => array('deps' => array(''), 'stylesheets' => array(self::$css_path."default_site.css", self::$css_path."theme-generic.css"), 'javascript' => array()),
-        'validation' => array('deps' => array('jquery'), 'javascript' => array(self::$js_path.'jquery.metadata.js', self::$js_path.'jquery.validate.js', self::$js_path.'additional-methods.js')),
+        'treeBrowser' => [
+          'deps' => ['jquery', 'jquery_ui'],
+          'javascript' => [self::$js_path . 'jquery.treebrowser.js']
+        ],
+        'defaultStylesheet' => [
+          'deps' => [''],
+          'stylesheets' => [
+            self::$css_path . 'default_site.css',
+            self::$css_path . 'theme-generic.css'
+          ],
+          'javascript' => []
+        ],
+        'validation' => [
+          'deps' => ['jquery'],
+          'javascript' => [
+            self::$js_path . 'jquery.metadata.js',
+            self::$js_path . 'jquery.validate.js',
+            self::$js_path . 'additional-methods.js',
+          ],
+        ],
         'plupload' => [
           'deps' => ['jquery_ui', 'fancybox'],
           'javascript' => [
@@ -1275,7 +1381,7 @@ class helper_base {
 </div>
 
 HTML;
-          $r .= str_replace(array('{control}', '{id}'), [$ctrl, 'map-toolbar'], $indicia_templates['controlWrap']);
+          $r .= str_replace(array('{control}', '{id}', '{wrapClasses}'), [$ctrl, 'map-toolbar', ''], $indicia_templates['controlWrap']);
         }
         $r .= '<input type="hidden" name="'.$fieldname.'" id="hidden-wkt" value="'.
             (isset($_POST[$fieldname]) ? $_POST[$fieldname] : '').'"/>';
@@ -1621,27 +1727,32 @@ HTML;
    * @param string $service Path to the service URL used. Default is data/handle_media, but could be import/upload_csv.
    * @return string Error message, or true if successful.
    */
-  public static function send_file_to_warehouse($path, $persist_auth=false, $readAuth = NULL, $service='data/handle_media', $removeLocalCopy=true) {
+  public static function send_file_to_warehouse($path, $persist_auth=false, $readAuth = NULL, $service='data/handle_media', $removeLocalCopy = TRUE) {
     if ($readAuth == NULL) {
       $readAuth = $_POST;
     }
     $interimPath = self::getInterimImageFolder('fullpath');
-    if (!file_exists($interimPath.$path))
+    if (!file_exists($interimPath.$path)) {
       return "The file $interimPath$path does not exist and cannot be uploaded to the Warehouse.";
+    }
     $serviceUrl = self ::$base_url . "index.php/services/$service";
     // This is used by the file box control which renames uploaded files using a guid system, so disable renaming on the server.
     $postargs = array('name_is_guid' => 'true');
     // attach authentication details
-    if (array_key_exists('auth_token', $readAuth))
+    if (array_key_exists('auth_token', $readAuth)) {
       $postargs['auth_token'] = $readAuth['auth_token'];
-    if (array_key_exists('nonce', $readAuth))
+    }
+    if (array_key_exists('nonce', $readAuth)) {
       $postargs['nonce'] = $readAuth['nonce'];
-    if ($persist_auth)
+    }
+    if ($persist_auth) {
       $postargs['persist_auth'] = 'true';
-    $file_to_upload = array('media_upload'=>'@'.realpath($interimPath.$path));
+    }
+    $file_to_upload = ['media_upload' => '@' . realpath($interimPath.$path)];
     $response = self::http_post($serviceUrl, $file_to_upload + $postargs);
     $output = json_decode($response['output'], true);
-    $r = true; // default is success
+    // Default is success.
+    $r = TRUE;
     if (is_array($output)) {
       //an array signals an error
       if (array_key_exists('error', $output)) {
@@ -1652,8 +1763,8 @@ HTML;
           $r = $output['error'];
       }
     }
-    if ($removeLocalCopy==true) {
-      unlink(realpath($interimPath.$path));
+    if ($removeLocalCopy) {
+      unlink(realpath($interimPath . $path));
     }
     return $r;
   }
@@ -2032,12 +2143,13 @@ JS;
   public static function setup_jquery_validation_js() {
     // In the following block, we set the validation plugin's error class to our template.
     // We also define the error label to be wrapped in a <p> if it is on a newline.
-    if (self::$validated_form_id) {
+    if (self::$validated_form_id && !self::$validationInitialised) {
+      self::$validationInitialised = TRUE;
       global $indicia_templates;
       self::$javascript .= "
 indiciaData.controlWrapErrorClass = '$indicia_templates[controlWrapErrorClass]';
 var validator = $('#".self::$validated_form_id."').validate({
-  ignore: \":hidden,.inactive\",
+  ignore: \":hidden:not(.date-text),.inactive\",
   errorClass: \"$indicia_templates[error_class]\",
   ". (in_array('inline', self::$validation_mode) ? "" : "errorElement: 'p',") ."
   highlight: function(el, errorClass) {
@@ -2059,9 +2171,6 @@ var validator = $('#".self::$validated_form_id."').validate({
   },
   unhighlight: function(el, errorClass) {
     var controlWrap = $(el).closest('.ctrl-wrap');
-    if (controlWrap.length > 0) {
-      $(controlWrap).removeClass(indiciaData.controlWrapErrorClass);
-    }
     if ($(el).is(':radio') || $(el).is(':checkbox')) {
       //if the element is a radio or checkbox group then highlight the group
       var jqBox = $(el).parents('.control-box');
@@ -2072,6 +2181,9 @@ var validator = $('#".self::$validated_form_id."').validate({
       }
     } else {
       $(el).removeClass('ui-state-error');
+    }
+    if (controlWrap.length > 0 && $(controlWrap).find('.ui-state-error').length === 0) {
+      $(controlWrap).removeClass(indiciaData.controlWrapErrorClass);
     }
   },
   invalidHandler: $indicia_templates[invalid_handler_javascript],
@@ -2150,7 +2262,9 @@ if (typeof validator!=='undefined') {
       'class' => '',
       'disabled' => '',
       'readonly' => '',
+      'wrapClasses' => [],
     ), $options);
+    $options['wrapClasses'] = empty($options['wrapClasses']) ? '' : ' ' . implode(' ', $options['wrapClasses']);
     if (array_key_exists('maxlength', $options)) {
       $options['maxlength']='maxlength="'.$options['maxlength'].'"';
     } else {
@@ -2256,7 +2370,7 @@ if (typeof validator!=='undefined') {
     $r .= self::get_help_text($options, 'after');
     if (isset($options['id']) ) {
       $wrap = empty($options['controlWrapTemplate']) ? $indicia_templates['controlWrap'] : $indicia_templates[$options['controlWrapTemplate']];
-      $r = str_replace(array('{control}', '{id}'), array("\n$r", str_replace(':', '-', $options['id'])), $wrap);
+      $r = str_replace(array('{control}', '{id}', '{wrapClasses}'), array("\n$r", str_replace(':', '-', $options['id']), $options['wrapClasses']), $wrap);
     }
     if (!empty($options['tooltip'])) {
       // preliminary support for
@@ -2562,8 +2676,8 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
         'integer' => ['jqRule' => 'integer'],
         'digit' => ['jqRule' => 'digits'],
         'numeric' => ['jqRule' => 'number'],
-        'maximum' => ['jqRule' => 'max', 'valRegEx' => '-?\d+'],
-        'minimum' => ['jqRule' => 'min', 'valRegEx' => '-?\d+'],
+        'maximum' => ['jqRule' => 'max', 'valRegEx' => '-?\d*(\.\d+)?'],
+        'minimum' => ['jqRule' => 'min', 'valRegEx' => '-?\d*(\.\d+)?'],
         'mingridref' => ['jqRule' => 'mingridref', 'valRegEx' => '\d+'],
         'maxgridref' => ['jqRule' => 'maxgridref', 'valRegEx' => '\d+'],
         'regex' => ['jqRule' => 'pattern', 'valRegEx' => '.*'],
@@ -3050,11 +3164,11 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
       $exclude = array('.', '..', '.htaccess', 'web.config', '.gitignore');
       if ($dir) {
         while ($filename = readdir($dir)) {
-          if (in_array($filename, $exclude) || !is_file($filename)) {
+          if (in_array($filename, $exclude) || !is_file($folder . $filename)) {
             continue;
           }
           $lastModified = filemtime($folder . $filename);
-          $files[] = array($folder .$filename, $lastModified);
+          $files[] = array($folder . $filename, $lastModified);
         }
       }
       // Sort the file array by date, oldest first.
@@ -3068,8 +3182,9 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
           break;
         }
         // Clear out the old file.
-        if (is_file($files[$i][0]))
+        if (is_file($files[$i][0])) {
           unlink($files[$i][0]);
+        }
       }
     }
   }

@@ -7,9 +7,7 @@ $reject-color: #a00000;
 $query-color: #f0a000;
 $default-color: #4ba3cc;
 $hover-color: #ffffcc;
-$selected-color: #027AC6;
 $header-font-color: #027AC6;
-$selected-font-color: #ffffff;
 $verify-button-width: 16%;
 $verify-button-margin: 4%;
 
@@ -20,19 +18,6 @@ $verify-button-margin: 4%;
 
 table.report-grid {
   width: 100%;
-  tr:hover, table.report-grid tr.odd:hover {
-    background-color: $hover-color;
-  }
-  tr.selected, tr.selected td {
-    background-color: $selected-color;
-    color: white;
-  }
-  tr.zero-t {
-    text-decoration: line-through;
-  }
-  .nowrap {
-    whitespace: nowrap;
-  }
 }
 
 ul.gallery li {

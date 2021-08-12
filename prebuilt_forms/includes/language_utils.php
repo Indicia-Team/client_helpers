@@ -52,6 +52,7 @@ function iform_lang_iso_639_2($lang = NULL) {
     'cs' => 'cze',
     'lb' => 'ltz',
     'fr' => 'fra',
+    'cy' => 'cym'
   ];
   return $list[$lang];
 }

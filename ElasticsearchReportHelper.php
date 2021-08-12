@@ -138,9 +138,17 @@ class ElasticsearchReportHelper {
       'caption' => 'Taxon name',
       'description' => 'Name as recorded for the taxon.',
     ],
+    'taxon.taxon_name_authorship' => [
+      'caption' => 'Taxon name author',
+      'description' => 'Author and date of the recorded accepted name.',
+    ],
     'taxon.accepted_name' => [
       'caption' => 'Accepted name',
       'description' => 'Currently accepted name for the recorded taxon.',
+    ],
+    'taxon.accepted_name_authorship' => [
+      'caption' => 'Accepted name author',
+      'description' => 'Author and date of the published accepted name.',
     ],
     'taxon.vernacular_name' => [
       'caption' => 'Common name',
@@ -185,6 +193,18 @@ class ElasticsearchReportHelper {
     'taxon.genus' => [
       'caption' => 'Genus',
       'description' => 'Taxonomic genus associated with the current identification of this record.',
+    ],
+    'taxon.species' => [
+      'caption' => 'Species',
+      'description' => 'Species name associated with the current identification of this record. Will still return the species ranked name where the record is of a taxon below species level.',
+    ],
+    'taxon.species_authorship' => [
+      'caption' => 'Species name author',
+      'description' => 'Species name author and date associated with the current identification of this record. Will still return the species ranked name\'s author where the record is of a taxon below species level.',
+    ],
+    'taxon.species_vernacular' => [
+      'caption' => 'Species common name',
+      'description' => 'Species name associated with the current identification of this record. Will still return the species ranked name where the record is of a taxon below species level.',
     ],
     'location.verbatim_locality' => [
       'caption' => 'Location name',
@@ -540,8 +560,10 @@ HTML;
     if (!empty($group_id)) {
       // Apply filtering by group.
       helper_base::$indiciaData['filter_group_id'] = $group_id;
-      $implicitVal = ['f' => FALSE, 't' => TRUE, '' => NULL][$implicit];
-      helper_base::$indiciaData['filter_group_implicit'] = $implicitVal;
+      if (is_string($implicit)) {
+        $implicit = ['f' => FALSE, 't' => TRUE, '' => NULL][$implicit];
+      }
+      helper_base::$indiciaData['filter_group_implicit'] = $implicit;
       if ($options['showGroupSummary'] || $options['showGroupPages']) {
         $groups = data_entry_helper::get_population_data(array(
           'table' => 'group',
@@ -565,7 +587,7 @@ HTML;
     }
     $filterBoundaries = helper_base::get_population_data([
       'report' => 'library/groups/group_boundary_transformed',
-      'extraParams' => $options['readAuth'] + ['group_id' => $_GET['group_id']],
+      'extraParams' => $options['readAuth'] + ['group_id' => $group_id],
       'cachePerUser' => FALSE,
     ]);
     if (count($filterBoundaries) > 0) {
@@ -1276,11 +1298,15 @@ HTML;
       return '';
     }
     else {
+      $classes = ['user-filter'];
+      if ($options['definesPermissions']) {
+        $classes[] = 'defines-permissions';
+      }
       $controlOptions = [
         'label' => $options['label'],
         'fieldname' => $options['id'],
         'lookupValues' => $optionArr,
-        'class' => 'user-filter',
+        'class' => implode(' ', $classes),
       ];
       if (!$options['definesPermissions']) {
         $controlOptions['blankText'] = '- ' . lang::get('Please select') . ' - ';
@@ -1298,17 +1324,24 @@ HTML;
    *   Panel HTML;
    */
   public static function verificationButtons(array $options) {
+    global $indicia_templates;
+    if (!empty($options['includeUploadButton'])) {
+      $config = hostsite_get_es_config($nid);
+      helper_base::$indiciaData['esEndpoint'] = $config['es']['endpoint'];
+      helper_base::$indiciaData['idPrefix'] = $config['es']['warehouse_prefix'];
+    }
     self::checkOptions('verificationButtons', $options, ['showSelectedRow'], []);
-    if (!empty($options['editPath'])) {
-      $options['editPath'] = helper_base::getRootFolder(TRUE) . $options['editPath'];
-    }
-    if (!empty($options['viewPath'])) {
-      $options['viewPath'] = helper_base::getRootFolder(TRUE) . $options['viewPath'];
-    }
+    $options = array_merge([
+      'editPath' => helper_base::getRootFolder(TRUE) . $options['editPath'],
+      'taxon_list_id' => hostsite_get_config_value('iform', 'master_checklist_id'),
+      'viewPath' => helper_base::getRootFolder(TRUE) . $options['viewPath'],
+      'redeterminerNameAttributeHandling' => 'overwriteOnRedet',
+    ], $options);
     $dataOptions = helper_base::getOptionsForJs($options, [
       'editPath',
       'keyboardNavigation',
       'showSelectedRow',
+      'uploadButtonContainerElement',
       'viewPath',
     ], TRUE);
     $userId = hostsite_get_user_field('indicia_user_id');
@@ -1340,6 +1373,7 @@ HTML;
       'commentTabTitle' => 'Comment on the record',
       'elasticsearchUpdateError' => 'An error occurred whilst updating the reporting index. It may not reflect your changes temporarily but will be updated automatically later.',
       'commentReplyInstruct' => 'Click here to add a publicly visible comment to the record on iRecord.',
+      'csvDisallowedMessage' => 'Uploading verification decisions is only allowed when there is a filter that defines the scope of the records you can verify.',
       'emailLoggedAsComment' => 'I emailed this record to the recorder for checking.',
       'emailQueryBodyHeader' => 'The following record requires confirmation. Please could you reply to this email ' .
         'stating how confident you are that the record is correct and any other information you have which may help ' .
@@ -1358,13 +1392,14 @@ HTML;
       'queryCommentTabUserIsNotified' => 'Adding your query as a comment should be OK as this recorder normally checks their notifications.',
       'queryCommentTabUserIsNotNotified' => 'Although you can add a comment, sending the query as an email is preferred as the recorder does not check their notifications.',
       'queryInMultiselectMode' => 'As you are in multi-select mode, email facilities cannot be used and queries can only be added as comments to the record.',
+      'redetPartialListInfo' => 'This record was originally input using a taxon checklist which may not be a complete list of all species. If you cannot find the species you wish to redetermine it to using the search box below, then please tick the "Search all species" checkbox and try again.',
       'requestManualEmail' => 'The webserver is not correctly configured to send emails. Please send the following email usual your email client:',
       'saveQueryToComments' => 'Save query to comments log',
       'sendQueryAsEmail' => 'Send query as email',
+      'uploadError' => 'An error occurred whilst uploading your spreadsheet.',
     ]);
-    $redetTaxonListId = hostsite_get_config_value('iform', 'master_checklist_id');
-    if (!$redetTaxonListId) {
-      throw new Exception('[verificationButtons] requires the Indicia setting Master Checklist ID to be set. This ' .
+    if (empty($options['taxon_list_id'])) {
+      throw new Exception('[verificationButtons] requires a @taxon_list_id option, or the Indicia setting Master Checklist ID to be set. This ' .
         'is required to provide a list to select the redetermination from.');
     }
     $redetUrl = iform_ajaxproxy_url(NULL, 'occurrence');
@@ -1374,39 +1409,67 @@ HTML;
       'label' => lang::get('Redetermine to'),
       'helpText' => lang::get('Select the new taxon name.'),
       'fieldname' => 'redet-species',
-      'extraParams' => $options['readAuth'] + ['taxon_list_id' => $redetTaxonListId],
+      // Default to the master list, but can switch if taxon from a different
+      // list.
+      'extraParams' => $options['readAuth'] + ['taxon_list_id' => $options['taxon_list_id']],
       'speciesIncludeAuthorities' => TRUE,
       'speciesIncludeBothNames' => TRUE,
       'speciesNameFilterMode' => 'all',
       'validation' => ['required'],
-      'class' => 'control-width-5',
+      'wrapClasses' => ['not-full-width-md'],
     ]);
+    $altListCheckbox = data_entry_helper::checkbox([
+      'fieldname' => 'redet-from-full-list',
+      'label' => lang::get('Search all species'),
+      'labelClass' => 'auto',
+      'helpText' => lang::get('This record was identified against a restricted list of taxa. Check this box if ' .
+          'you want to redetermine to a taxon selected from the unrestricted full list available.'),
+      'wrapClasses' => ['alt-taxon-list-controls'],
+    ]);
+    // Remember which is the master list.
+    helper_base::$indiciaData['mainTaxonListId'] = $options['taxon_list_id'];
+    // Option to allow verified to control if determiner name updated after
+    // redet.
+    $redetNameBehaviourOption = '';
+    if ($options['redeterminerNameAttributeHandling'] === 'allowChoice') {
+      $redetNameBehaviourOption = data_entry_helper::checkbox([
+        'label' => lang::get("Don't update the determiner"),
+        'helpText' => lang::get('If you are changing the record determination on behalf of the original recorder and their name should be stored against the determination, please check this box.'),
+        'fieldname' => 'no-update-determiner',
+      ]);
+    }
     $commentInput = data_entry_helper::textarea([
       'label' => lang::get('Explanation comment'),
       'helpText' => lang::get('Please give reasons why you are changing this record.'),
       'fieldname' => 'redet-comment',
+      'wrapClasses' => ['not-full-width-lg'],
     ]);
-    return <<<HTML
+    $btnClass = $indicia_templates['buttonDefaultClass'];
+    $uploadButton = empty($options['includeUploadButton']) ? '' : <<<HTML
+      <button class="upload-decisions $btnClass" title="Upload a CSV file of verification decisions"><span class="fas fa-file-upload"></span></button>
+HTML;
+    $r = <<<HTML
 <div id="$options[id]" class="idc-verification-buttons" style="display: none;" data-idc-config="$dataOptions">
   <div class="selection-buttons-placeholder">
     <div class="all-selected-buttons idc-verification-buttons-row">
       Actions:
       <span class="fas fa-toggle-on toggle fa-2x" title="Toggle additional status levels"></span>
-      <button class="verify l1" data-status="V" title="Accepted"><span class="far fa-check-circle status-V"></span></button>
-      <button class="verify l2" data-status="V1" title="Accepted :: correct"><span class="fas fa-check-double status-V1"></span></button>
-      <button class="verify l2" data-status="V2" title="Accepted :: considered correct"><span class="fas fa-check status-V2"></span></button>
-      <button class="verify" data-status="C3" title="Plausible"><span class="fas fa-check-square status-C3"></span></button>
-      <button class="verify l1" data-status="R" title="Not accepted"><span class="far fa-times-circle status-R"></span></button>
-      <button class="verify l2" data-status="R4" title="Not accepted :: unable to verify"><span class="fas fa-times status-R4"></span></button>
-      <button class="verify l2" data-status="R5" title="Not accepted :: incorrect"><span class="fas fa-times status-R5"></span></button>
+      <button class="verify l1 $btnClass" data-status="V" title="Accepted"><span class="far fa-check-circle status-V"></span></button>
+      <button class="verify l2 $btnClass" data-status="V1" title="Accepted :: correct"><span class="fas fa-check-double status-V1"></span></button>
+      <button class="verify l2 $btnClass" data-status="V2" title="Accepted :: considered correct"><span class="fas fa-check status-V2"></span></button>
+      <button class="verify $btnClass" data-status="C3" title="Plausible"><span class="fas fa-check-square status-C3"></span></button>
+      <button class="verify l1 $btnClass" data-status="R" title="Not accepted"><span class="far fa-times-circle status-R"></span></button>
+      <button class="verify l2 $btnClass" data-status="R4" title="Not accepted :: unable to verify"><span class="fas fa-times status-R4"></span></button>
+      <button class="verify l2 $btnClass" data-status="R5" title="Not accepted :: incorrect"><span class="fas fa-times status-R5"></span></button>
       <div class="multi-only apply-to">
         <span>Apply decision to:</span>
-        <button class="multi-mode-selected active">selected</button>
+        <button class="multi-mode-selected active $btnClass">selected</button>
         |
-        <button class="multi-mode-table">all</button>
+        <button class="multi-mode-table $btnClass">all</button>
       </div>
       <span class="sep"></span>
-      <button class="query" data-query="Q" title="Raise a query"><span class="fas fa-question-circle query-Q"></span></button>
+      <button class="query $btnClass" data-query="Q" title="Raise a query"><span class="fas fa-question-circle query-Q"></span></button>
+      $uploadButton
     </div>
   </div>
   <div class="single-record-buttons idc-verification-buttons-row">
@@ -1415,14 +1478,63 @@ HTML;
 </div>
 <div id="redet-panel-wrap" style="display: none">
   <form id="redet-form" class="verification-popup">
+    <div class="alt-taxon-list-controls alt-taxon-list-message">$indicia_templates[messageBox]</div>
     $speciesInput
+    $altListCheckbox
+    $redetNameBehaviourOption
     $commentInput
     <button type="submit" class="btn btn-primary" id="apply-redet">Apply redetermination</button>
     <button type="button" class="btn btn-danger" id="cancel-redet">Cancel</button>
   </form>
 </div>
 HTML;
+    if (!empty($options['includeUploadButton'])) {
+      $instruct = <<<TXT
+This form can be used to upload a spreadsheet of verification decisions. First, use the
+Download button to obtain a list of the records in your current verification grid. This has columns
+called *Decision status* and *Decision comment*. For rows you wish to verify, enter one of the
+status terms in the *Decision status* column and optionally fill in the *Decision comment*. Any
+comments without an associated status will be attached to the record without changing the status.
+When ready, save the spreadsheet and upload it using this tool. Valid status terms include:
+<ul>
+  <li>Accepted</li>
+  <li>Accepted as correct</li>
+  <li>Accepted as considered correct</li>
+  <li>Plausible</li>
+  <li>Not accepted</li>
+  <li>Not accepted as unable to verify</li>
+  <li>Not accepted as incorrect</li>
+  <li>Queried</li>
+</ul>
+TXT;
+      $instruct = lang::get($instruct);
+      $r .= <<<HTML
+<div id="upload-decisions-form-cntr" style="display: none">
+  <div id="upload-decisions-form">
+    <div class="instruct">$instruct</div>
+    <div class="form-group">
+      <label for="decisions-file">Excel or CSV file:</label>
+      <input type="file" class="form-control" id="decisions-file" accept=".csv, .xls, .xlsx" />
+    </div>
+    <button type="button" id="upload-decisions-file" class="btn btn-primary">Upload</button>
+    <div class="upload-output alert alert-info" style="display: none">
+      <div class="msg"></div>
+      <progress value="0" max="100" style="display: none"></progress>
+      <dl class="dl-horizontal">
+        <dt>Rows checked:</dt>
+        <dd class="checked">0</dd>
+        <dt>Verifications, comments or queries found:</dt>
+        <dd class="verifications">0</dd>
+        <dt>Errors found:</dt>
+        <dd class="errors">0</dd>
+      </dl>
+    </div>
+  </div>
+</div>
+HTML;
 
+    }
+    return $r;
   }
 
   /**
@@ -1778,7 +1890,6 @@ HTML;
         ? $error['message']
         : curl_errno($session) . ': ' . curl_error($session);
       throw new Exception(lang::get('An error occurred whilst connecting to Elasticsearch. {1}', $msg));
-
     }
     curl_close($session);
     $mappingData = json_decode($response, TRUE);

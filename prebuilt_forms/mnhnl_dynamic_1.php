@@ -126,7 +126,7 @@ class iform_mnhnl_dynamic_1 extends iform_dynamic_sample_occurrence {
     return $r;
   }
 
-  protected static function getGrid($args, $nid, $auth) {
+  protected static function getGrid($args, $nid, array $auth) {
     $r = call_user_func(array(self::$called_class, 'getHeaderHTML'), $args);
     $r .= parent::getGrid($args, $nid, $auth);
     $r .= call_user_func(array(self::$called_class, 'getTrailerHTML'), $args);

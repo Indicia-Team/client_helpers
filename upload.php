@@ -1,7 +1,8 @@
 <?php
 
 /**
- * upload.php
+ * @file
+ * Upload handler for media files.
  *
  * Copyright 2013, Moxiecode Systems AB
  * Released under GPL License.
@@ -146,10 +147,10 @@ if (!data_entry_helper::checkUploadSize($file)) {
   die('{"jsonrpc" : "2.0", "error" : {"code": 104, "message": "Uploaded file too big."}, "id" : "id"}');
 }
 
-// Check if file has been uploaded
+// Check if file has been uploaded.
 if (!$chunks || $chunk == $chunks - 1) {
   if (function_exists('finfo_open')) {
-    // Check MIME type of file
+    // Check MIME type of file.
     $finfo = finfo_open(FILEINFO_MIME_TYPE);
     $mimeType = finfo_file($finfo, "{$filePath}.part");
     finfo_close($finfo);
@@ -157,6 +158,7 @@ if (!$chunks || $chunk == $chunks - 1) {
       unlink("{$filePath}.part");
       die('{"jsonrpc" : "2.0", "error" : {"code": 110, "message": "File type not known."}, "id" : "id"}');
     }
+
     list($mediaType, $mimeSubType) = explode('/', $mimeType);
     if (!in_array($mimeSubType, data_entry_helper::$upload_mime_types[$mediaType], TRUE)) {
       unlink("{$filePath}.part");

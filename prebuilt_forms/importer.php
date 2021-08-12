@@ -83,8 +83,9 @@ class iform_importer {
         'name' => 'presetSettings',
         'caption' => 'Preset Settings',
         'description' => 'Provide a list of predetermined settings which the user does not need to specify, one on each line in the form name=value. ' .
-            'The preset settings available are those which are available for input on the first page of the import wizard, depending on the table you ' .
-            'are inputting data for. You can use the following replacement tokens in the values: {user_id}, {username}, {email} or {profile_*} (i.e. any ' .
+            'The preset settings available should be chosen from those available for input on the Import settings page of the import wizard, depending ' .
+            'on the table you are inputting data for. It is also possible to specify preset settings for the field names available for selection on the ' .
+            'mappings page. You can use the following replacement tokens in the values: {user_id}, {username}, {email} or {profile_*} (i.e. any ' .
             'field in the user profile data).',
         'type' => 'textarea',
         'required' => FALSE,

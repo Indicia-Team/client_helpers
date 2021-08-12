@@ -18,7 +18,7 @@ jQuery(document).ready(function docReady($) {
   function repositionDynamicAttributes(div) {
     // Locate each dynamic attribute.
     $.each($(div).find('[class*=system-function-][class*=dynamic-attr]'), function() {
-      var ctrlWrap = $(this).parent();
+      var ctrlWrap = $(this).closest('.ctrl-wrap');
       // Find the system-function-* class.
       $(this)[0].classList.forEach(function(c) {
         var standardControl;
@@ -32,7 +32,7 @@ jQuery(document).ready(function docReady($) {
             // control at this location in the form.
             standardControl
               .prop('disabled', true)
-              .parent()
+              .closest('.ctrl-wrap')
                 .addClass('dynamically-replaced').hide()
                 .after(ctrlWrap);
             // Tag the moved dynamic control so we can clear it out if a
@@ -124,4 +124,9 @@ jQuery(document).ready(function docReady($) {
     $(taxonRestrictionInputSelectors).change(changeTaxonRestrictionInputs);
   }
 
+  // If dynamic attrs loaded for existing record on initial page load, ensure
+  // they replace existing non-dynamic attributes of the same system function.
+  $.each($('.species-dynamic-attributes'), function loadAttrDiv() {
+    repositionDynamicAttributes(this);
+  });
 });

@@ -4,7 +4,7 @@ global $indicia_templates;
 
 $indicia_templates['formControlClass'] = 'form-control';
 $indicia_templates['controlWrap'] =
-  '<div id="ctrl-wrap-{id}" class="form-group ctrl-wrap">{control}</div>' . "\n";
+  '<div id="ctrl-wrap-{id}" class="form-group ctrl-wrap{wrapClasses}">{control}</div>' . "\n";
 $indicia_templates['controlWrapErrorClass'] = 'has-error';
 $indicia_templates['controlAddonsWrap'] =
   '<div class="input-group">{control}<div class="input-group-addon ctrl-addons">{addons}</div></div>';
@@ -22,6 +22,7 @@ $indicia_templates['buttonWarningClass'] = 'indicia-button btn btn-danger';
 $indicia_templates['anchorButtonClass'] = 'indicia-button btn btn-default';
 
 $indicia_templates['messageBox'] = '<div class="alert alert-info">{message}</div>';
+$indicia_templates['warningBox'] = '<div class="alert alert-warning"><span class="fas fa-exclamation-triangle"></span>{message}</div>';
 
 $indicia_templates['speciesDetailsThumbnail'] = <<<HTML
 <div class="thumbnail">
