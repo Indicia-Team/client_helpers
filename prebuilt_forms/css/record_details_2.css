@@ -4,3 +4,10 @@
 #comment-text {
   width: 100%;
 }
+.comment-person {
+  font-weight: bold;
+}
+.comment-date {
+  font-size: 90%;
+  font-style: italic;
+}

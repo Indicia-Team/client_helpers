@@ -682,6 +682,19 @@ JS;
    */
   protected static function get_control_comments($auth, $args, $tabalias, $options) {
     iform_load_helpers(['data_entry_helper']);
+    data_entry_helper::add_resource('font_awesome');
+    $statusClasses = [
+      'V' => 'far fa-check-circle status-V',
+      'V1' => 'fas fa-check-double status-V1',
+      'V2' => 'fas fa-check status-V2',
+      'C' => 'fas fa-clock status-C',
+      'C3' => 'fas fa-check-square status-C3',
+      'R' => 'far fa-times-circle status-R',
+      'R4' => 'fas fa-times status-R4',
+      'R5' => 'fas fa-times status-R5',
+      'Q' => 'fas fa-question-circle',
+      'A' => 'fas fa-reply',
+    ];
     $options = array_merge([
       'allowAnonymousComment' => FALSE,
       'showCorrespondence' => FALSE,
@@ -709,16 +722,27 @@ JS;
       foreach ($comments as $comment) {
         $r .= '<div class="comment">';
         $r .= '<div class="header">';
-        $r .= "<strong>$comment[person_name]</strong> ";
+        if (!empty($comment['person_name'])) {
+          $r .= "<span class=\"comment-person\">$comment[person_name]</span> ";
+        }
         $commentTime = strtotime($comment['updated_on']);
         // Output the comment time. Skip if in future (i.e. server/client date
         // settings don't match).
         if ($commentTime < time()) {
-          $r .= helper_base::ago($commentTime);
+          $r .= '<span class="comment-date">' . helper_base::ago($commentTime) . '</span>';
         }
         $r .= '</div>';
-        $c = str_replace("\n", '<br/>', $comment['comment']);
-        $r .= "<div>$c</div>";
+        $icons = '';
+        if (!empty($comment['record_status'])) {
+          $status = $comment['record_status'] . (empty($comment['record_substatus']) ? '' : $comment['record_substatus']);
+          $icons = '<span class="' . $statusClasses[$status] . '"></span>';
+        }
+        if ($comment['query'] === 't') {
+          $icons .= '<span class="' . $statusClasses['Q'] . '"></span>';
+        }
+        // Reformat to HTML line breaks.
+        $comment = str_replace("\n", '<br/>', $comment['comment']);
+        $r .= "<div>$icons$comment</div>";
         if ($options['showCorrespondence'] && !empty($comment['correspondence_data'])) {
           $data = str_replace("\n", '<br/>', $comment['correspondence_data']);
           $correspondenceData = json_decode($data, TRUE);
