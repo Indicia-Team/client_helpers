@@ -1345,7 +1345,12 @@ JS;
       "sample:entered sref" => array("/(sample)?((spatial|grid|map)ref(erence)?|lat(\/?)lon(g?))/"),
       "occurrence_2:taxa taxon list (from controlled termlist)" => array("/(2nd|second)(species(latin)?|taxon(latin)?|latin)(name)?/"),
       "occurrence:taxa taxon list (from controlled termlist)" => array("/(species(latin)?|taxon(latin)?|latin)(name)?/"),
-      "sample:location name" => array("/(site|location)(name)?/"),
+      // The following regex was originally /(site|location)(name)?/.
+      // It probably should have been bounded by ^ and $.
+      // As was, it would match 'location external key', 'location code' and
+      // 'location indicia id' which should be reserved for other columns.
+      // The backwards compatible fix is kind of ugly :-( .
+      "sample:location name" => array("/(site|location(?!code|externalkey|indiciaid))(name)?/"),
       "smpAttr:eunis habitat (from controlled termlist)" => array("/(habitat|eunishabitat)/")
     );
     $selected = FALSE;
