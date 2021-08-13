@@ -143,13 +143,13 @@ Record ID',
           'name' => 'structure',
           'caption' => 'Form Structure',
           'description' => 'Define the structure of the form. Each component must be placed on a new line. <br/>' .
-            "The following types of component can be specified. <br/>" .
-            "<strong>[control name]</strong> indicates a predefined control is to be added to the form with the following predefined controls available: <br/>" .
-                "&nbsp;&nbsp;<strong>[recorddetails]</strong> - displays information relating to the occurrence and its sample<br/>" .
-                "&nbsp;&nbsp;<strong>[buttons]</strong> - outputs a row of edit and explore buttons. Use the @buttons option to change the list of buttons to output ".
-                "by setting this to an array, e.g. [edit] will output just the edit button, [explore] outputs just the explore button, [species details] outputs a species details button. ".
-                "The edit button is automatically skipped if the user does not have rights to edit the record.<br/>" .
-                "&nbsp;&nbsp;<strong>[comments]</strong> - lists any comments associated with the occurrence. Also includes the ability to add a comment<br/>" .
+            'The following types of component can be specified. <br/>' .
+            '<strong>[control name]</strong> indicates a predefined control is to be added to the form with the following predefined controls available: <br/>' .
+                '&nbsp;&nbsp;<strong>[recorddetails]</strong> - displays information relating to the occurrence and its sample<br/>' .
+                '&nbsp;&nbsp;<strong>[buttons]</strong> - outputs a row of edit and explore buttons. Use the @buttons option to change the list of buttons to output ' .
+                'by setting this to an array, e.g. [edit] will output just the edit button, [explore] outputs just the explore button, [species details] outputs a species details button. ' .
+                'The edit button is automatically skipped if the user does not have rights to edit the record.<br/>' .
+                "&nbsp;&nbsp;<strong>[comments]</strong> - lists any comments associated with the occurrence. Also includes the ability to add a comment, only for logged in users unless @allowAnonymousComment=true.<br/>" .
                 "&nbsp;&nbsp;<strong>[photos]</strong> - photos associated with the occurrence<br/>" .
                 "&nbsp;&nbsp;<strong>[map]</strong> - a map that links to the spatial reference and location<br/>" .
                 "&nbsp;&nbsp;<strong>[previous determinations]</strong> - a list of previous determinations for this record<br/>" .
@@ -191,8 +191,7 @@ Record ID',
         [
           'name' => 'species_details_url',
           'caption' => 'Species details URL',
-          'description' => 'When you click on the ... species page button you are taken to this URL with taxon_meaning_id as a parameter. Use {rootfolder} as a replacement ' .
-              'token for the site\'s root URL.',
+          'description' => 'When you click on the ... species page button you are taken to this URL with taxon_meaning_id as a parameter. Use {rootfolder} as a replacement token for the site\'s root URL.',
           'type' => 'string',
           'required' => FALSE,
           'default' => '',
@@ -645,11 +644,21 @@ JS;
   /**
    * Draw the Comments section of the page.
    *
+   * Options include:
+   * * **allowAnonymousComment** - set to true to allow comments by users who
+   *   aren't logged on.
+   * * **showCorrespondence** - show verification correspondance (typically
+   *   only for alert species).
+   *
    * @return string
    *   The output HTML string.
    */
   protected static function get_control_comments($auth, $args, $tabalias, $options) {
-    iform_load_helpers(array('data_entry_helper'));
+    iform_load_helpers(['data_entry_helper']);
+    $options = array_merge([
+      'allowAnonymousComment' => FALSE,
+      'showCorrespondence' => FALSE,
+    ], $options);
     $r = '<div>';
     $params = [
       'occurrence_id' => $_GET['occurrence_id'],
@@ -659,12 +668,12 @@ JS;
     if (!$args['allow_confidential']) {
       $params['confidential'] = 'f';
     }
-    $comments = data_entry_helper::get_population_data(array(
+    $comments = data_entry_helper::get_population_data([
       'table' => 'occurrence_comment',
       'extraParams' => $auth['read'] + $params,
       'nocache' => TRUE,
       'sharing' => $args['sharing'],
-    ));
+    ]);
     $r .= '<div id="comment-list">';
     if (count($comments) === 0) {
       $r .= '<p id="no-comments">' . lang::get('No comments have been made.') . '</p>';
@@ -675,14 +684,15 @@ JS;
         $r .= '<div class="header">';
         $r .= "<strong>$comment[person_name]</strong> ";
         $commentTime = strtotime($comment['updated_on']);
-        // Output the comment time. Skip if in future (i.e. server/client date settings don't match).
+        // Output the comment time. Skip if in future (i.e. server/client date
+        // settings don't match).
         if ($commentTime < time()) {
           $r .= helper_base::ago($commentTime);
         }
         $r .= '</div>';
         $c = str_replace("\n", '<br/>', $comment['comment']);
         $r .= "<div>$c</div>";
-        if (!empty($options['showCorrespondence']) && !empty($comment['correspondence_data'])) {
+        if ($options['showCorrespondence'] && !empty($comment['correspondence_data'])) {
           $data = str_replace("\n", '<br/>', $comment['correspondence_data']);
           $correspondenceData = json_decode($data, TRUE);
           foreach ($correspondenceData as $type => $items) {
@@ -700,12 +710,14 @@ JS;
       }
     }
     $r .= '</div>';
-    $r .= '<form><fieldset><legend>' . lang::get('Add new comment') . '</legend>';
-    $r .= '<input type="hidden" id="comment-by" value="' . hostsite_get_user_field('name') . '"/>';
-    $r .= '<textarea id="comment-text"></textarea><br/>';
-    $r .= '<button type="button" class="default-button" onclick="indiciaFns.saveComment(';
-    $r .= $_GET['occurrence_id'] . ');">' . lang::get('Save') . '</button>';
-    $r .= '</fieldset></form>';
+    if (hostsite_get_user_field('id') || $options['allowAnonymousComment']) {
+      $r .= '<form><fieldset><legend>' . lang::get('Add new comment') . '</legend>';
+      $r .= '<input type="hidden" id="comment-by" value="' . hostsite_get_user_field('name') . '"/>';
+      $r .= '<textarea id="comment-text"></textarea><br/>';
+      $r .= '<button type="button" class="default-button" onclick="indiciaFns.saveComment(';
+      $r .= $_GET['occurrence_id'] . ');">' . lang::get('Save') . '</button>';
+      $r .= '</fieldset></form>';
+    }
     $r .= '</div>';
 
     return '<div class="detail-panel" id="detail-panel-comments"><h3>' . lang::get('Comments') . '</h3>' . $r . '</div>';
