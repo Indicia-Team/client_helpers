@@ -145,7 +145,7 @@ Record ID',
           'description' => 'Define the structure of the form. Each component must be placed on a new line. <br/>' .
             'The following types of component can be specified. <br/>' .
             '<strong>[control name]</strong> indicates a predefined control is to be added to the form with the following predefined controls available: <br/>' .
-                '&nbsp;&nbsp;<strong>[recorddetails]</strong> - displays information relating to the occurrence and its sample<br/>' .
+                '&nbsp;&nbsp;<strong>[recorddetails]</strong> - displays information relating to the occurrence and its sample. Set @fieldsToExcludeIfLoggedOut to an array of field names to skip for anonymous users.<br/>' .
                 '&nbsp;&nbsp;<strong>[buttons]</strong> - outputs a row of edit and explore buttons. Use the @buttons option to change the list of buttons to output ' .
                 'by setting this to an array, e.g. [edit] will output just the edit button, [explore] outputs just the explore button, [species details] outputs a species details button. ' .
                 'The edit button is automatically skipped if the user does not have rights to edit the record.<br/>' .
@@ -315,6 +315,10 @@ Record ID',
   /**
    * Draw Record Details section of the page.
    *
+   * Options include:
+   * * **fieldsToExcludeIfLoggedOut** - array of field names to exclude for
+   *   anonymous users.
+   *
    * @return string
    *   The output freeform report.
    */
@@ -322,7 +326,10 @@ Record ID',
     global $indicia_templates;
     $options = array_merge([
       'dataSource' => 'reports_for_prebuilt_forms/record_details_2/record_data_attributes_with_hiddens',
+      'fieldsToExcludeIfLoggedOut' => [],
     ], $options);
+    $fieldsToExcludeIfLoggedOut = array_map('strtolower', $options['fieldsToExcludeIfLoggedOut']);
+    $loggedIn = hostsite_get_user_field('id') !== 0;
     $fields = helper_base::explode_lines($args['fields']);
     $fieldsLower = helper_base::explode_lines(strtolower($args['fields']));
     // Draw the Record Details, but only if they aren't requested as hidden by
@@ -383,6 +390,10 @@ Record ID',
     $title = lang::get('Record of {1}', $nameLabel);
     hostsite_set_page_title($title);
     foreach ($availableFields as $field => $caption) {
+      // Skip some fields if logged out.
+      if (!$loggedIn && in_array(strtolower($caption), $fieldsToExcludeIfLoggedOut)) {
+        continue;
+      }
       if ($test === in_array(strtolower($caption), $fieldsLower) && !empty(self::$record[$field])) {
         $class = self::getFieldClass($field);
         $caption = self::$record[$field] === 'This record is sensitive' ? '' : $caption;
@@ -403,7 +414,7 @@ Record ID',
         }
         $details_report .= str_replace(
           ['{caption}', '{value}', '{class}'],
-          [lang::get($caption), $value, $class],
+          [$caption, $value, $class],
           $indicia_templates['dataValue']
         );
       }
