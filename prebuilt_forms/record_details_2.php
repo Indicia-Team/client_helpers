@@ -321,13 +321,14 @@ Record ID',
   protected static function get_control_recorddetails($auth, $args, $tabalias, $options) {
     global $indicia_templates;
     $options = array_merge([
-      'dataSource' => 'reports_for_prebuilt_forms/record_details_2/record_data_attributes_with_hiddens'
+      'dataSource' => 'reports_for_prebuilt_forms/record_details_2/record_data_attributes_with_hiddens',
     ], $options);
     $fields = helper_base::explode_lines($args['fields']);
     $fieldsLower = helper_base::explode_lines(strtolower($args['fields']));
-    // Draw the Record Details, but only if they aren't requested as hidden by the administrator.
+    // Draw the Record Details, but only if they aren't requested as hidden by
+    // the administrator.
     $test = $args['operator'] === 'in';
-    $availableFields = array(
+    $availableFields = [
       'occurrence_id' => lang::get('Record ID'),
       'occurrence_external_key' => lang::get('Record external key'),
       'preferred_taxon' => lang::get('Recommended name'),
@@ -346,7 +347,7 @@ Record ID',
       'location_name' => lang::get('Site name'),
       'sample_comment' => lang::get('Sample comment'),
       'licence_code' => lang::get('Licence'),
-    );
+    ];
     self::load_record($auth, $args);
     if (!empty(self::$record['sensitivity_precision'] && !$args['allow_sensitive_full_precision'])) {
       unset($availableFields['recorder']);
@@ -420,22 +421,24 @@ Record ID',
     $details_report .= '</div>';
 
     if (!self::$record['sensitivity_precision'] || $args['allow_sensitive_full_precision']) {
-      // Draw any custom attributes added by the user, but only for a non-sensitive record.
-      $attrs_report = report_helper::freeform_report(array(
+      // Draw any custom attributes added by the user, but only for a
+      // non-sensitive record.
+      $attrs_report = report_helper::freeform_report([
         'readAuth' => $auth['read'],
         'class' => 'record-details-fields ui-helper-clearfix',
         'dataSource' => $options['dataSource'],
         'bands' => [['content' => str_replace(['{class}'], '', $indicia_templates['dataValue'])]],
-        'extraParams' => array(
+        'extraParams' => [
           'occurrence_id' => $_GET['occurrence_id'],
-          // The SQL needs to take a set of the hidden fields, so this needs to be converted from an array.
+          // The SQL needs to take a set of the hidden fields, so this needs to
+          // be converted from an array.
           'attrs' => strtolower(self::convert_array_to_set($fields)),
           'testagainst' => $args['testagainst'],
           'operator' => $args['operator'],
           'sharing' => $args['sharing'],
           'language' => iform_lang_iso_639_2(hostsite_get_user_field('language')),
-        ),
-      ));
+        ],
+      ]);
     }
 
     $r = '<h3>' . lang::get('Record Details') . '</h3><dl class="detail-panel dl-horizontal" id="detail-panel-recorddetails">';
@@ -449,14 +452,18 @@ Record ID',
   }
 
   /**
-   * Used to convert an array of attributes to a string formatted like a set,
-   * this is then used by the record_data_attributes_with_hiddens report to return
-   * custom attributes which aren't in the hidden attributes list.
+   * Used to convert an array of attributes to a string formatted like a set.
+   *
+   * This is then used by the record_data_attributes_with_hiddens report to
+   * return custom attributes which aren't in the hidden attributes list.
+   *
+   * @param array
+   *   Attributes.
    *
    * @return string
    *   The set of hidden custom attributes.
    */
-  protected static function convert_array_to_set($theArray) {
+  protected static function convert_array_to_set(array $theArray) {
     return "'" . implode("','", str_replace("'", "''", $theArray)) . "'";
   }
 
@@ -467,7 +474,7 @@ Record ID',
    *   The output report grid.
    */
   protected static function get_control_photos($auth, $args, $tabalias, $options) {
-    iform_load_helpers(array('data_entry_helper'));
+    iform_load_helpers(['data_entry_helper']);
     $options = array_merge([
       'title' => lang::get('Photos and media'),
     ], $options);
@@ -486,19 +493,22 @@ Record ID',
    *   The output report grid.
    */
   protected static function get_control_samplephotos($auth, $args, $tabalias, $options) {
-    iform_load_helpers(array('data_entry_helper'));
-    $options = array_merge(array(
+    iform_load_helpers(['data_entry_helper']);
+    $options = array_merge([
       'title' => lang::get('Sample photos and media'),
-    ), $options);
-    $occurrence = data_entry_helper::get_population_data(array(
+    ], $options);
+    $occurrence = data_entry_helper::get_population_data([
       'table' => 'occurrence',
-      'extraParams' => $auth['read'] + array('id' => $_GET['occurrence_id'], 'view' => 'detail'),
-    ));
-    $settings = array(
+      'extraParams' => $auth['read'] + [
+        'id' => $_GET['occurrence_id'],
+        'view' => 'detail',
+      ],
+    ]);
+    $settings = [
       'table' => 'sample_medium',
       'key' => 'sample_id',
       'value' => $occurrence[0]['sample_id'],
-    );
+    ];
     return self::commonControlPhotos($auth, $args, $options, $settings);
   }
 
@@ -509,23 +519,29 @@ Record ID',
    *   The output report grid.
    */
   protected static function get_control_parentsamplephotos($auth, $args, $tabalias, $options) {
-    iform_load_helpers(array('data_entry_helper'));
-    $options = array_merge(array(
-      'title' => lang::get('Parent sample photos and media')
-    ), $options);
+    iform_load_helpers(['data_entry_helper']);
+    $options = array_merge([
+      'title' => lang::get('Parent sample photos and media'),
+    ], $options);
     $occurrence = data_entry_helper::get_population_data(array(
       'table' => 'occurrence',
-      'extraParams' => $auth['read'] + array('id' => $_GET['occurrence_id'], 'view' => 'detail'),
+      'extraParams' => $auth['read'] + [
+        'id' => $_GET['occurrence_id'],
+        'view' => 'detail',
+      ],
     ));
-    $sample = data_entry_helper::get_population_data(array(
+    $sample = data_entry_helper::get_population_data([
       'table' => 'sample',
-      'extraParams' => $auth['read'] + array('id' => $occurrence[0]['sample_id'], 'view' => 'detail'),
-    ));
-    $settings = array(
-        'table' => 'sample_image',
-        'key' => 'sample_id',
-        'value' => $sample[0]['parent_id'],
-    );
+      'extraParams' => $auth['read'] + [
+        'id' => $occurrence[0]['sample_id'],
+        'view' => 'detail',
+      ],
+    ]);
+    $settings = [
+      'table' => 'sample_image',
+      'key' => 'sample_id',
+      'value' => $sample[0]['parent_id'],
+    ];
     return self::commonControlPhotos($auth, $args, $options, $settings);
   }
 
@@ -724,29 +740,30 @@ JS;
   }
 
   /**
-   * Displays a list of determinations associated with an occurrence record. This particular panel
-   * is ommitted if there are no determinations.
+   * Displays a list of determinations associated with an occurrence record.
+   *
+   * This particular panel is ommitted if there are no determinations.
    *
    * @return string
    *   The determinations report grid.
    */
   protected static function get_control_previousdeterminations($auth, $args, $tabalias, $options) {
-    $options = array_merge(array(
+    $options = array_merge([
       'report' => 'library/determinations/determinations_list'
-    ));
-    return report_helper::freeform_report(array(
+    ]);
+    return report_helper::freeform_report([
       'readAuth' => $auth['read'],
       'dataSource' => $options['report'],
       'mode' => 'report',
       'autoParamsForm' => FALSE,
       'header' => '<div class="detail-panel" id="detail-panel-previousdeterminations"><h3>' . lang::get('Previous determinations') . '</h3>',
-      'bands' => array(array('content' => '<div class="field ui-helper-clearfix">{taxon_html} by {person_name} on {date}</div>')),
+      'bands' => [['content' => '<div class="field ui-helper-clearfix">{taxon_html} by {person_name} on {date}</div>']],
       'footer' => '</div>',
-      'extraParams' => array(
+      'extraParams' => [
         'occurrence_id' => $_GET['occurrence_id'],
         'sharing' => $args['sharing'],
-      ),
-    ));
+      ],
+    ]);
   }
 
   /**
@@ -762,16 +779,16 @@ JS;
    * @throws \exception
    */
   protected static function get_control_occurrenceassociations($auth, $args, $tabalias, $options) {
-    $options = array_merge(array(
+    $options = array_merge([
       'dataSource' => 'library/occurrence_associations/filterable_explore_list',
       'itemsPerPage' => 100,
       'header' => '<ul>',
       'footer' => '</ul>',
-      'bands' => array(array('content' => '<li>{association_detail}</li>')),
-      'emptyText' => '<p>No association information available</p>'
-    ), $options);
+      'bands' => [['content' => '<li>{association_detail}</li>']],
+      'emptyText' => '<p>No association information available</p>',
+    ], $options);
     return '<div class="detail-panel" id="detail-panel-occurrenceassociations"><h3>' . lang::get('Associations') . '</h3>' .
-    report_helper::freeform_report(array(
+    report_helper::freeform_report([
       'readAuth' => $auth['read'],
       'dataSource' => $options['dataSource'],
       'itemsPerPage' => $options['itemsPerPage'],
@@ -781,11 +798,11 @@ JS;
       'emptyText' => $options['emptyText'],
       'mode' => 'report',
       'autoParamsForm' => FALSE,
-      'extraParams' => array(
+      'extraParams' => [
         'occurrence_id' => $_GET['occurrence_id'],
         'sharing' => $args['sharing'],
-      )
-    )) . '</div>';
+      ],
+    ]) . '</div>';
   }
 
   /**
