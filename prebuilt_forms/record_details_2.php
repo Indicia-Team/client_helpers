@@ -867,7 +867,7 @@ JS;
         'species details',
       ),
     ));
-    $r = '';
+    $r = '<div class="record-details-buttons">';
     foreach ($options['buttons'] as $button) {
       if ($button === 'edit') {
         $r .= self::buttons_edit($auth, $args, $tabalias, $options);
@@ -882,6 +882,7 @@ JS;
         throw new exception("Unknown button $button");
       }
     }
+    $r .= '</div>';
     return $r;
   }
 
