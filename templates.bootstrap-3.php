@@ -36,7 +36,7 @@ HTML;
 
 $indicia_templates['autocomplete_new_taxon_form'] = <<<HTML
 <div style="display: none">
-  <fieldset class="popup-form" id="new-taxon-form" >
+  <fieldset class="popup-form" id="new-taxon-form" disabled >
     <legend>{title}</legend>
     <p>{helpText}</p>
     <div class="form-group">

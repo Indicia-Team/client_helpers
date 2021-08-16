@@ -2765,9 +2765,10 @@ JS;
         'extraParams' => [
           'nonce' => $options['extraParams']['nonce'],
           'auth_token' => $options['extraParams']['auth_token'],
-        ] + [
           $idField => $options['default'],
           'columns' => "taxon",
+          'orderby' => 'preferred',
+          'sortdir' => 'DESC',
         ],
       ]);
       $options['defaultCaption']=$r[0]['taxon'];

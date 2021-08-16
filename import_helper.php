@@ -1255,8 +1255,24 @@ JS;
             $selected = $nonSaveDetectRulesResult['selected'];
           }
         }
-        //As a last resort. If we have a match and find that there is more than one caption with this match, then flag a multiMatch to deal with it later
-        if (strcasecmp($strippedScreenCaption, $column) == 0 && $labelList[strtolower($strippedScreenCaption)] > 1) {
+        // As a last resort. If we have a match and find that there is more than
+        // one caption with this match, then flag a multiMatch to deal with it
+        // later.
+        if (
+          (
+            strcasecmp($strippedScreenCaption, $column) == 0 &&
+            $labelList[strtolower($strippedScreenCaption)] > 1
+          ) ||
+          // There is a special case, due to regex auto detection, where the
+          // column, 'location' can ambiguously match either 'Location name' or
+          // 'Location (from controlled termlist)'.
+          (
+            $selected &&
+            strcasecmp($column, 'location') == 0 &&
+            array_key_exists('location', $labelList) &&
+            array_key_exists('location name', $labelList)
+          )
+        ) {
           $multiMatch[] = $column;
           $optionID = $idColumn . 'Duplicate';
         }
@@ -1329,7 +1345,12 @@ JS;
       "sample:entered sref" => array("/(sample)?((spatial|grid|map)ref(erence)?|lat(\/?)lon(g?))/"),
       "occurrence_2:taxa taxon list (from controlled termlist)" => array("/(2nd|second)(species(latin)?|taxon(latin)?|latin)(name)?/"),
       "occurrence:taxa taxon list (from controlled termlist)" => array("/(species(latin)?|taxon(latin)?|latin)(name)?/"),
-      "sample:location name" => array("/(site|location)(name)?/"),
+      // The following regex was originally /(site|location)(name)?/.
+      // It probably should have been bounded by ^ and $.
+      // As was, it would match 'location external key', 'location code' and
+      // 'location indicia id' which should be reserved for other columns.
+      // The backwards compatible fix is kind of ugly :-( .
+      "sample:location name" => array("/(site|location(?!code|externalkey|indiciaid))(name)?/"),
       "smpAttr:eunis habitat (from controlled termlist)" => array("/(habitat|eunishabitat)/")
     );
     $selected = FALSE;
