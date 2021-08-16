@@ -6272,8 +6272,9 @@ HTML;
       $url = parent::getProxiedBaseUrl() . "index.php/services/data";
       $request = "$url/$options[table]?mode=json&callback=?";
       $inArray = array('val');
-      if (!isset($options['filterIncludesNulls']) || $options['filterIncludesNulls'])
+      if (isset($options['filterIncludesNulls']) && $options['filterIncludesNulls']) {
         $inArray[] = NULL;
+      }
       $query = 'query=' .urlencode(json_encode(array('in' => array($options['filterField'], $inArray))));
     }
     if (isset($options['parentControlLabel']))
