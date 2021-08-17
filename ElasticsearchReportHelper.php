@@ -1360,11 +1360,11 @@ HTML;
     }
     $optionalLinkArray = [];
     if (!empty($options['editPath'])) {
-      $optionalLinkArray[] = '<a class="edit" title="Edit this record"><span class="fas fa-edit"></span></a>';
+      $optionalLinkArray[] = '<a class="edit" title="Edit this record" target="_blank"><span class="fas fa-edit"></span></a>';
     }
     $optionalLinkArray[] = '<button class="redet" title="Redetermine this record"><span class="fas fa-tag"></span></button>';
     if (!empty($options['viewPath'])) {
-      $optionalLinkArray[] = '<a class="view" title="View this record\'s details page"><span class="fas fa-file-invoice"></span></a>';
+      $optionalLinkArray[] = '<a class="view" title="View this record\'s details page" target="_blank"><span class="fas fa-file-invoice"></span></a>';
     }
     $optionalLinks = implode("\n  ", $optionalLinkArray);
     helper_base::add_resource('fancybox');
