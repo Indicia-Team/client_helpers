@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Indicia, the OPAL Online Recording Toolkit.
  *
@@ -13,38 +14,36 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package    Client
- * @subpackage PrebuiltForms
- * @author    Indicia Team
- * @license    http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link     http://code.google.com/p/indicia/
+ * @author Indicia Team
+ * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
+ * @link http://code.google.com/p/indicia/
  */
 
 /**
  * Prebuilt Indicia data entry form.
- * NB has Drupal specific code.
  *
- * @package    Client
- * @subpackage PrebuiltForms
+ * NB has Drupal specific code.
  */
 
-require_once('includes/dynamic.php');
+require_once 'includes/dynamic.php';
 
 class iform_dynamic_location extends iform_dynamic {
 
   /**
    * Return the form metadata.
-   * @return array The definition of the form.
+   *
+   * @return array
+   *   The definition of the form.
    */
   public static function get_dynamic_location_definition() {
-    return array(
-      'title'=>'Enter a location (customisable)',
+    return [
+      'title' => 'Enter a location (customisable)',
       'category' => 'Data entry forms',
       'description'=>'A data entry form for defining locations that can later be used to enter samples against. '.
           'An optional grid listing the user\'s locations allows them to be reloaded for editing. '.
           'The attributes on the form are dynamically generated from the survey setup on the Indicia Warehouse.',
-      'recommended'=>true
-    );
+      'recommended' => TRUE,
+    ];
   }
 
   /**
@@ -54,23 +53,22 @@ class iform_dynamic_location extends iform_dynamic {
   public static function get_parameters() {
     $retVal = array_merge(
       parent::get_parameters(),
-      array(
-        array(
+      [
+        [
           'name' => 'location_type_id',
           'caption' => 'Location type',
           'type' => 'select',
           'table' => 'termlists_term',
           'captionField' => 'term',
           'valueField' => 'id',
-          'extraParams' => array('termlist_external_key' => 'indicia:location_types'),
+          'extraParams' => ['termlist_external_key' => 'indicia:location_types'],
           'required' => FALSE,
-          'helpText' => 'The location type that will be used for all created locations. Alternatively use a ' .
-            '[location type] control in the form structure.',
-        ),
-        array(
-          'name'=>'structure',
-          'caption'=>'Form Structure',
-          'description'=>'Define the structure of the form. Each component goes on a new line and is nested inside the previous component where appropriate. The following types of '.
+          'helpText' => 'The location type that will be used for all created locations. Alternatively use a [location type] control in the form structure.',
+        ],
+        [
+          'name' => 'structure',
+          'caption' => 'Form Structure',
+          'description' => 'Define the structure of the form. Each component goes on a new line and is nested inside the previous component where appropriate. The following types of '.
             "component can be specified. <br/>".
             "<strong>=tab/page name=</strong> is used to specify the name of a tab or wizard page. (Alpha-numeric characters only)<br/>".
             "<strong>=*=</strong> indicates a placeholder for putting any custom attribute tabs not defined in this form structure. <br/>".
@@ -95,54 +93,54 @@ class iform_dynamic_location extends iform_dynamic {
             "<strong>[locAttr:<i>n</i>]</strong> is used to insert a particular custom attribute identified by its ID number<br/>".
             "<strong>?help text?</strong> is used to define help text to add to the tab, e.g. ?Enter the name of the site.? <br/>".
             "<strong>all else</strong> is copied to the output html so you can add structure for styling.",
-          'type'=>'textarea',
+          'type' => 'textarea',
           'default' =>
-              "=Place=\r\n".
+              "=Place=\r\n" .
               "?Please provide the spatial reference of the location. You can enter the reference directly, or search for a place then click on the map to set it.?\r\n".
-              "[location name]\r\n".
-              "[location code]\r\n".
-              "[location type]\r\n".
-              "[spatial reference]\r\n".
-              "[place search]\r\n".
-              "[map]\r\n".
-              "[*]\r\n".
+              "[location name]\r\n" .
+              "[location code]\r\n" .
+              "[location type]\r\n" .
+              "[spatial reference]\r\n" .
+              "[place search]\r\n" .
+              "[map]\r\n" .
+              "[*]\r\n" .
               "=Other Information=\r\n".
               "?Please provide the following additional information.?\r\n".
               "[location comment]\r\n".
               "[*]\r\n".
               "=*=",
-          'group' => 'User Interface'
-        ),
-        array(
+          'group' => 'User Interface',
+        ],
+        [
           'name' => 'grid_report',
           'caption' => 'Grid Report',
           'description' => 'Name of the report to use to populate the grid for selecting existing data from. The report must return a location_id '.
               'field for linking to the data entry form. As a starting point, try reports_for_prebuilt_forms/simple_location_list.',
-          'type'=>'string',
+          'type' => 'string',
           'group' => 'User Interface',
-          'default' => 'reports_for_prebuilt_forms/simple_location_list'
-        ),
-        array(
-          'name'=>'list_all_locations',
-          'caption'=>'List all locations',
-          'description'=>'Should the user be given the option to list all locations in the grid rather than just their own? '.
+          'default' => 'reports_for_prebuilt_forms/simple_location_list',
+        ],
+        [
+          'name' => 'list_all_locations',
+          'caption' => 'List all locations',
+          'description' => 'Should the user be given the option to list all locations in the grid rather than just their own? '.
               'To use this, the selected report must have an ownData parameter and return an editable field. ' .
               'See reports_for_prebuilt_forms/simple_location_list_2 for an example.',
-          'type'=>'boolean',
-          'required' => false,
-          'default'=>false,
-          'group'=>'User Interface'
-        ),
-        array(
-          'name'=>'defaults',
-          'caption'=>'Default Values',
-          'description'=>'Supply default values for each field as required. On each line, enter fieldname=value. For custom attributes, '.
+          'type' => 'boolean',
+          'required' => FALSE,
+          'default' => FALSE,
+          'group' => 'User Interface',
+        ],
+        [
+          'name' => 'defaults',
+          'caption' => 'Default Values',
+          'description' => 'Supply default values for each field as required. On each line, enter fieldname=value. For custom attributes, '.
               'the fieldname is the untranslated caption. For other fields, it is the model and fieldname, e.g. occurrence.record_status. '.
               'For date fields, use today to dynamically default to today\'s date. NOTE, currently only supports occurrence:record_status and '.
               'sample:date but will be extended in future.',
-          'type'=>'textarea',
-          'required' => false,
-        ),
+          'type' => 'textarea',
+          'required' => FALSE,
+        ],
         [
           'name' => 'edit_permission',
           'caption' => 'Permission required for editing other people\'s data',
@@ -151,41 +149,57 @@ class iform_dynamic_location extends iform_dynamic {
           'required' => FALSE,
           'default' => 'indicia data admin',
         ],
-      )
+      ]
     );
     return $retVal;
   }
 
   /**
-   * Determine whether to show a gird of existing records or a form for either adding a new record or editing an existing one.
-   * @param array $args iform parameters.
-   * @param object $nid ID of node being shown.
-   * @return const The mode [MODE_GRID|MODE_NEW|MODE_EXISTING].
+   * Gets the form mode.
+   *
+   * Determine whether to show a gird of existing records or a form for either
+   * adding a new record or editing an existing one.
+   *
+   * @param array $args
+   *   Iform parameters.
+   * @param object $nid
+   *   ID of node being shown.
+   *
+   * @return const
+   *   The mode [MODE_GRID|MODE_NEW|MODE_EXISTING].
    */
   protected static function getMode($args, $nid) {
-    // Default to mode MODE_GRID or MODE_NEW depending on no_grid parameter
+    // Default to mode MODE_GRID or MODE_NEW depending on no_grid parameter.
     $mode = (isset($args['no_grid']) && $args['no_grid']) ? self::MODE_NEW : self::MODE_GRID;
 
     if ($_POST && !is_null(data_entry_helper::$entity_to_load)) {
-      // errors with new sample or entity populated with post, so display this data.
+      // Errors with new sample or entity populated with post, so display this data.
       $mode = self::MODE_EXISTING;
-    } else if (array_key_exists('location_id', $_GET)||array_key_exists('zoom_id', $_GET)){
-      // request for display of existing record
+    }
+    elseif (array_key_exists('location_id', $_GET)||array_key_exists('zoom_id', $_GET)) {
+      // Request for display of existing record.
       $mode = self::MODE_EXISTING;
-    } else if (array_key_exists('new', $_GET)){
-      // request to create new record (e.g. by clicking on button in grid view)
+    }
+    elseif (array_key_exists('new', $_GET)) {
+      // Request to create new record (e.g. by clicking on button in grid view).
       $mode = self::MODE_NEW;
-      data_entry_helper::$entity_to_load = array();
+      data_entry_helper::$entity_to_load = [];
     }
     return $mode;
   }
 
   /**
    * Construct a grid of existing records.
-   * @param array $args iform parameters.
-   * @param object $nid ID of node being shown.
-   * @param array $auth authentication tokens for accessing the warehouse.
-   * @return string HTML for grid.
+   *
+   * @param array $args
+   *   Iform parameters.
+   * @param object $nid
+   *   ID of node being shown.
+   * @param array $auth
+   *   Authentication tokens for accessing the warehouse.
+   *
+   * @return string
+   *   HTML for grid.
    */
   protected static function getGrid($args, $nid, array $auth) {
     $r = '<div id="locationList">' .
@@ -196,11 +210,11 @@ class iform_dynamic_location extends iform_dynamic {
 
   // Get an existing location.
   protected static function getEntity($args, $auth) {
-    data_entry_helper::$entity_to_load = array();
+    data_entry_helper::$entity_to_load = [];
     if (!empty($_GET['zoom_id'])) {
       self::zoom_map_when_adding($auth['read'], 'location', $_GET['zoom_id']);
     } else
-      data_entry_helper::load_existing_record($auth['read'], 'location', $_GET['location_id'], 'detail', false, true);
+      data_entry_helper::load_existing_record($auth['read'], 'location', $_GET['location_id'], 'detail', FALSE, TRUE);
   }
 
   /**
@@ -234,7 +248,7 @@ class iform_dynamic_location extends iform_dynamic {
     $loc = data_entry_helper::get_population_data(array(
       'table' => $entity,
       'extraParams' => $readAuth + array('id' => $id, 'view' => $view),
-      'nocache' => true
+      'nocache' => TRUE
     ));
 
     if (isset($loc['error'])) throw new Exception($loc['error']);
@@ -262,7 +276,7 @@ mapInitialisationHooks.push(function(mapdiv) {
 
   protected static function getAttributes($args, $auth) {
     $id = isset(data_entry_helper::$entity_to_load['location:id']) ?
-            data_entry_helper::$entity_to_load['location:id'] : null;
+            data_entry_helper::$entity_to_load['location:id'] : NULL;
     $attrOpts = array(
       'id' => $id,
       'valuetable' => 'location_attribute_value',
@@ -275,7 +289,7 @@ mapInitialisationHooks.push(function(mapdiv) {
     if (!empty($args['location_type_id'])) {
       $attrOpts['location_type_id'] = $args['location_type_id'];
     }
-    $attributes = data_entry_helper::getAttributes($attrOpts, false);
+    $attributes = data_entry_helper::getAttributes($attrOpts, FALSE);
     return $attributes;
   }
 
@@ -314,12 +328,12 @@ mapInitialisationHooks.push(function(mapdiv) {
       $options
     );
     // If a drawing tool is on the map we can support boundaries or if automatic plot creation is enabled.
-    $boundaries = false;
-    if (!empty($options['clickForPlot']) && $options['clickForPlot']==true)
-      $boundaries = true;
+    $boundaries = FALSE;
+    if (!empty($options['clickForPlot']) && $options['clickForPlot']==TRUE)
+      $boundaries = TRUE;
     foreach ($options['standardControls'] as $ctrl) {
       if (substr($ctrl, 0, 4)==='draw') {
-        $boundaries = true;
+        $boundaries = TRUE;
         break;
       }
     }
@@ -375,19 +389,19 @@ mapInitialisationHooks.push(function(mapdiv) {
     // @terms=["City","Town","Village"]
 
     // get the list of terms
-    $filter = null;
+    $filter = NULL;
     if (array_key_exists('terms', $options)) {
       $filter = $options['terms'];
     }
     $terms = helper_base::get_termlist_terms($auth, 'indicia:location_types', $filter);
 
     if (count($terms) == 1) {
-      //only one location type so output as hidden control
+      // Only one location type so output as hidden control.
       return '<input type="hidden" id="location:location_type_id" name="location:location_type_id" value="' . $terms[0]['id'] . '" />' . PHP_EOL;
     }
     elseif (count($terms) > 1) {
-      // convert the $terms to an array of id => term
-      $lookup = array();
+      // Convert the $terms to an array of id => term.
+      $lookup = [];
       foreach ($terms as $term) {
         $lookup[$term['id']] = $term['term'];
       }
@@ -400,11 +414,11 @@ mapInitialisationHooks.push(function(mapdiv) {
     }
   }
 
-    protected static function get_control_locationcomment($auth, $args, $tabalias, $options) {
-    return data_entry_helper::textarea(array_merge(array(
+  protected static function get_control_locationcomment($auth, $args, $tabalias, $options) {
+    return data_entry_helper::textarea(array_merge([
       'fieldname' => 'location:comment',
       'label' => lang::get('LANG_Comment'),
-    ), $options));
+    ], $options));
   }
 
     protected static function get_control_spatialreference($auth, $args, $tabalias, $options) {
