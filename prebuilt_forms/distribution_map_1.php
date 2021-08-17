@@ -239,7 +239,7 @@ class iform_distribution_map_1 {
             'view' => 'detail',
             'external_key' => $taxonIdentifier,
             'taxon_list_id' => $args['taxon_list_id'],
-            'preferred' => true
+            'preferred' => 't'
           )
         );
         $prefRecords = data_entry_helper::get_population_data($fetchOpts);

@@ -388,7 +388,7 @@ class iform_distribution_map_3 {
         'view' => 'detail',
         'external_key' => $key,
         'taxon_list_id' => $list,
-        'preferred' => true
+        'preferred' => 't'
     )
     );
     $prefRecords = data_entry_helper::get_population_data($fetchOpts);
