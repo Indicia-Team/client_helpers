@@ -458,8 +458,7 @@ Sample ID',
       'title' => lang::get('Sample photos and media'),
     ], $options);
     $settings = [
-      'table' => 'sample_medium',
-      'key' => 'sample_id',
+      'type' => 'sample',
       'value' => $_GET['sample_id'],
     ];
     return self::commonControlPhotos($auth, $args, $options, $settings);
@@ -475,9 +474,11 @@ Sample ID',
     if (empty($sample[0]['parent_sample_id'])) {
       return '<p>' . lang::get('No photos or media files available') . '</p>';
     }
+    $options = array_merge([
+      'title' => lang::get('Parent sample photos and media'),
+    ], $options);
     $settings = [
-      'table' => 'sample_image',
-      'key' => 'sample_id',
+      'type' => 'parentsample',
       'value' => $sample[0]['parent_sample_id'],
     ];
     return self::commonControlPhotos($auth, $args, $options, $settings);
@@ -501,13 +502,13 @@ Sample ID',
       'sharing' => $args['sharing'],
       'limit' => $options['itemsPerPage'],
     ];
-    $extraParams[$settings['key']] = $settings['value'];
+    $extraParams['sample_id'] = $settings['value'];
     $media = data_entry_helper::get_population_data([
-      'table' => $settings['table'],
+      'table' => 'sample_medium',
       'extraParams' => $extraParams,
     ]);
     $r = <<<HTML
-<div class="detail-panel" id="detail-panel-photos-$options[table]">
+<div class="detail-panel" id="detail-panel-photos-$settings[type]">
   <h3>$options[title]</h3>
   <div class="$options[class]">
 
