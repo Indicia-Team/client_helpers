@@ -82,6 +82,30 @@ class ElasticsearchReportHelper {
       'caption' => 'Submitted on',
       'description' => 'Date the record was submitted.',
     ],
+    'metadata.website.id' => [
+      'caption' => 'Website ID',
+      'description' => 'Unique ID of the website the record was submitted from.',
+    ],
+    'metadata.website.title' => [
+      'caption' => 'Website title',
+      'description' => 'Title of the website the record was submitted from.',
+    ],
+    'metadata.survey.id' => [
+      'caption' => 'Survey dataset ID',
+      'description' => 'Unique ID of the survey dataset the record was submitted to.',
+    ],
+    'metadata.survey.title' => [
+      'caption' => 'Survey dataset title',
+      'description' => 'Title of the survey dataset the record was submitted to.',
+    ],
+    'metadata.group.id' => [
+      'caption' => 'Group ID',
+      'description' => 'Unique ID of the recording group the record was submitted to.',
+    ],
+    'metadata.group.title' => [
+      'caption' => 'Group title',
+      'description' => 'Title of the recording group the record was submitted to.',
+    ],
     '#event_date#' => [
       'caption' => 'Date',
       'description' => 'Date of the record.',
