@@ -12,11 +12,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package Client
- * @subpackage PrebuiltForms
  * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link    http://code.google.com/p/indicia/
+ * @link https://github.com/indicia-team/client_helpers/
  */
 
 jQuery(document).ready(function ($) {
@@ -53,7 +51,8 @@ jQuery(document).ready(function ($) {
         'groups_location:group_id': indiciaData.group_id,
         'groups_location:location_id': locationId
       };
-      $.post(indiciaData.baseUrl + '/?q=ajaxproxy&node=' + indiciaData.nodeId+'&index=groups_location',
+      var urlSep = indiciaData.ajaxUrlAddExisting.indexOf('?') === -1 ? '?' : '&';
+      $.post(indiciaData.ajaxUrlAddExisting,
         s,
         function (data) {
           if (typeof data.error === 'undefined') {
