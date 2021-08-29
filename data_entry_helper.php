@@ -2837,9 +2837,9 @@ function(item) {
   var speciesIncludeIdDiff = $options[speciesIncludeIdDiff];
 
   if (item.language_iso !== null && item.language_iso.toLowerCase() === 'lat') {
-    r = '<em>' + item.taxon + '</em>';
+    r = '<em class="taxon-name">' + item.taxon + '</em>';
   } else {
-    r = '<span>' + item.taxon + '</span>';
+    r = '<span class="taxon-name">' + item.taxon + '</span>';
   }
   if (speciesIncludeAuthorities) {
     if (item.authority) {

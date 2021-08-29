@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Indicia, the OPAL Online Recording Toolkit.
  *
@@ -13,11 +14,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package Client
- * @subpackage PrebuiltForms
- * @author  Indicia Team
+ * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link  http://code.google.com/p/indicia/
+ * @link https://github.com/indicia-team/client_helpers/
  */
 
 require_once('includes/map.php');
@@ -31,14 +30,14 @@ require_once('includes/language_utils.php');
  */
 class iform_distribution_map_1 {
 
-  /** 
+  /**
    * Return the form metadata.
    * @return string The definition of the form.
    */
   public static function get_distribution_map_1_definition() {
     return array(
       'title'=>'Distribution Map 1',
-      'category' => 'Reporting',      
+      'category' => 'Reporting',
       'description'=>'Outputs a distribution map using Indicia data from GeoServer. Can output a map for a single species '.
           'or all data from a website. Also features clicking on the data points to see details.'
     );
@@ -168,7 +167,7 @@ class iform_distribution_map_1 {
           'type' => 'checkbox',
           'group' => 'Distribution Layer',
           'required' => 'false'
-        ), 
+        ),
         array(
           'fieldname'=>'taxon_list_id',
           'label'=>'Species List used to find external key',
@@ -194,7 +193,7 @@ class iform_distribution_map_1 {
           'description' => 'Provide the full URL of a page to reload after the number of seconds indicated above.',
           'type' => 'string',
           'required' => false
-        )  
+        )
       )
     );
   }
@@ -210,7 +209,7 @@ class iform_distribution_map_1 {
     // setup the map options
     $options = iform_map_get_map_options($args, $readAuth);
     $olOptions = iform_map_get_ol_options($args);
- 
+
     if (!$args['show_all_species']) {
       if (isset($args['taxon_identifier']) && !empty($args['taxon_identifier'])) {
         // This page is for a predefined species map
@@ -224,14 +223,14 @@ class iform_distribution_map_1 {
           return lang::get("The distribution map cannot be displayed without a taxon identifier");
         }
       }
-      
+
       if ($args['external_key']==true) {
         if (empty($args['taxon_list_id'])) {
           return lang::get('This form is configured with the Distribution Layer - External Key '
                   . 'option ticked, but no species list has been configured to '
                   . 'lookup the external keys against.');
         }
-        
+
         // The taxon identifier is an external key, so we need to translate to a meaning ID.
         $fetchOpts = array(
         'table' => 'taxa_taxon_list',
@@ -255,12 +254,12 @@ class iform_distribution_map_1 {
         if ($meaningId == 0) {
           return lang::get("The taxon identified by the taxon identifier cannot be found.");
         }
-      } 
+      }
       else {
         // the taxon identifier is the meaning ID.
         $meaningId = $taxonIdentifier;
       }
-      
+
       if (strstr($args['layer_title'], '{species}') !== FALSE) {
         // We still need to fetch the species record, to get its common name
         // to be inserted in the layer title.
@@ -296,7 +295,7 @@ class iform_distribution_map_1 {
 
     $url = map_helper::$geoserver_url.'wms';
     // Get the style if there is one selected
-    $style = $args["wms_style"] ? ", styles: '".$args["wms_style"]."'" : '';   
+    $style = $args["wms_style"] ? ", styles: '".$args["wms_style"]."'" : '';
     map_helper::$onload_javascript .= "\n    var filter='website_id=".$args['website_id']."';";
     if (!$args['show_all_species']) {
       map_helper::$onload_javascript .= "\n    filter += ' AND taxon_meaning_id=$meaningId';\n";
@@ -304,7 +303,7 @@ class iform_distribution_map_1 {
     if (!empty($args['cql_filter'])) {
       map_helper::$onload_javascript .= "\n    filter += ' AND(".str_replace("'","\'",$args['cql_filter']).")';\n";
     }
-    
+
     $layerTitle = str_replace("'","\'",$layerTitle);
     map_helper::$onload_javascript .= "\n    var distLayer = new OpenLayers.Layer.WMS(
           '".$layerTitle."',
@@ -347,7 +346,7 @@ class iform_distribution_map_1 {
         'includeHiddenLayers' => true,
         'layerTypes' => $layerTypes
       ));
-    // output a map    
+    // output a map
     $r .= map_helper::map_panel($options, $olOptions);
     // add an empty div for the output of getinfo requests
     if (isset($args['click_on_occurrences_mode']) && $args['click_on_occurrences_mode']=='div') {

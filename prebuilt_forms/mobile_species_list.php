@@ -15,14 +15,14 @@
  *
  * @package Client
  * @subpackage PrebuiltForms
- * @author  Indicia Team
+ * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link  http://code.google.com/p/indicia/
+ * @link https://github.com/indicia-team/client_helpers/
  */
 
 /**
- * 
- * 
+ *
+ *
  * @package Client
  * @subpackage PrebuiltForms
  * @todo Provide form description in this comment block.
@@ -83,7 +83,7 @@ class iform_mobile_species_list{
    */
   protected $pages_array = array();
 
-  /** 
+  /**
    * Return the form metadata. Note the title of this method includes the name of the form file. This ensures
    * that if inheritance is used in the forms, subclassed forms don't return their parent's form definition.
    * @return array The definition of the form.
@@ -97,7 +97,7 @@ class iform_mobile_species_list{
       'description'=>'Generates a species list.'
     );
   }
-  
+
   /**
    * Get the list of parameters for this form.
    * @return array List of parameters that this form requires.
@@ -130,20 +130,20 @@ class iform_mobile_species_list{
                       "taxon":{"type":"str", "title": "taxon", "required":"true"},
                       "taxon_id":{"type":"str", "title": "taxon id", "required":"true"},
                       "pic":{"type":"str", "title": "pic", "required":"true"},
-                      "content":{"type":"map", "title":"content", 
+                      "content":{"type":"map", "title":"content",
                                  "mapping":{description:{"type":"str", "title":"description"},
                                             distribution:{"type":"str", "title":"distribution"},
                                             habitat:{"type":"str", "title":"habitat"}
                                  }
                       },
-                      "gallery":{"type":"seq", "title":"gallery", 
+                      "gallery":{"type":"seq", "title":"gallery",
                                  "sequence":[{"type":"str","title":"pic" }]
                       }
-                      
+
                   }
                 }
               ]
-              
+
             }',
           'required' => false
           ),
@@ -156,19 +156,19 @@ class iform_mobile_species_list{
               <center>
                 <ul data-role="listview" data-inset="true" style="max-width:800px;">
                     <li><strong>Scientific name</strong>: <p><em>{taxon}</em></p></li>
-                    <li ><strong>Description</strong>: 
+                    <li ><strong>Description</strong>:
                          <p style="white-space: normal;">{description}</p>
                     </li>
-                    <li><strong>Distribution</strong>: 
+                    <li><strong>Distribution</strong>:
                          <p style="white-space: normal;">{distribution}</p></li>
-                    <li><strong>Habitat</strong>: 
+                    <li><strong>Habitat</strong>:
                          <p style="white-space: normal;">{habitat}</p></li>
                 </ul>
               </center>'
           )
         );
   }
-  
+
   /**
    * Return the generated form output.
    * @param array $args List of parameter values passed through to the form depending on how the form has been configured.
@@ -177,7 +177,7 @@ class iform_mobile_species_list{
    * @param array $response When this form is reloading after saving a submission, contains the response from the service call.
    * Note this does not apply when redirecting (in this case the details of the saved object are in the $_GET data).
    * @return Form HTML.
-   * @todo: Implement this method 
+   * @todo: Implement this method
    */
   public static function get_form($args, $nid, $response=null) {
     global $pages_array;
@@ -213,12 +213,12 @@ class iform_mobile_species_list{
         $content_keys = array('{taxon}', '{description}', '{distribution}', '{habitat}');
         $content_args = array($entry['taxon'], $entry['content']['description'], $entry['content']['distribution'], $entry['content']['habitat']);
         $content = str_replace($content_keys, $content_args, $args['content']);
-            
+
         //creating gallery
         if (array_key_exists('gallery', $entry)){
           foreach ($entry['gallery'] as $gallery_pic){
             $gallery .= str_replace('{url}', $gallery_pic, $list_templates['picture_link']);
-          } 
+          }
         }
         //todo: add _ instead of spaces in id
         $caption = "<h1 id='" . $entry['name'] . "_heading'>" . $entry['name'] . "</h1>";

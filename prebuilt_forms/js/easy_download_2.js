@@ -14,15 +14,15 @@
  *
  * @package Client
  * @subpackage PrebuiltForms
- * @author  Indicia Team
+ * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link    http://code.google.com/p/indicia/
  */
- 
+
 var setAvailableDownloadFilters;
- 
+
 (function ($) {
-  // Function called on selection of a download sharing type (and context filter) to 
+  // Function called on selection of a download sharing type (and context filter) to
   // set the available subfilters and surveys into the form controls.
   setAvailableDownloadFilters=function() {
     // first char of type drop down value is always the sharing type code (e.g. R for reporting)
@@ -62,7 +62,7 @@ var setAvailableDownloadFilters;
             id = id.replace(/^survey-/, '');
             $('select#survey_id').append('<option value="'+id+'">'+title+'</option>');
           });
-        
+
         }
       );
     }

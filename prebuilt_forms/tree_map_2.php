@@ -15,9 +15,9 @@
  *
  * @package Client
  * @subpackage PrebuiltForms
- * @author  Indicia Team
+ * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link  http://code.google.com/p/indicia/
+ * @link https://github.com/indicia-team/client_helpers/
  */
 
 require_once('includes/map.php');
@@ -38,7 +38,7 @@ require_once('includes/report.php');
  */
 class iform_tree_map_2 {
 
-  /** 
+  /**
    * Return the form metadata.
    * @return string The definition of the form.
    */
@@ -49,7 +49,7 @@ class iform_tree_map_2 {
       'description'=>'Outputs data from a report onto a map. To work, the report must include a column containing spatial data.'
     );
   }
-  
+
   /**
    * Get the list of parameters for this form.
    * @return array List of parameters that this form requires.
@@ -145,14 +145,14 @@ class iform_tree_map_2 {
     	hostsite_add_library('jquery-ui-slider');
     }
     $readAuth = data_entry_helper::get_read_auth($args['website_id'], $args['password']);
-    
+
     $now = new DateTime('now');
     $year = (isset($_REQUEST['year']) ? $_REQUEST['year'] : $year = $now->format('Y'));
 
     iform_load_helpers(array('report_helper','map_helper'));
     $args['param_defaults'] = '';
     $options = iform_report_get_report_options($args, $readAuth);
-    
+
     $currentParamValues = array();
     if (isset($options['extraParams'])) {
     	foreach ($options['extraParams'] as $key=>$value) {
@@ -166,7 +166,7 @@ class iform_tree_map_2 {
     }
     $extras = '&wantColumns=1&wantParameters=1&'.report_helper::array_to_query_string($currentParamValues, true);
     $canIDuser = false;
-    
+
     // Report record should have location_id, sample_date, species ttl_id, attributes, geometry. created_by_id is optional
     // Event definition: Name|attribute_id|attribute_values
     // Loop through event definitions
@@ -179,7 +179,7 @@ class iform_tree_map_2 {
     $events = explode("\n", trim($events));
 	foreach($events as $idx => $event) $events[$idx] = explode(':',$event);
 	$triggerEvents = array();
-	
+
     $SpeciesEventSelections = array();
     $Species = array();
     $r .= '<div id="errorMsg"></div>'.
@@ -203,7 +203,7 @@ class iform_tree_map_2 {
     if(isset($args['twinMaps']) && $args['twinMaps'])
     	$r .= '<th><label for="rhsCtrl">'.lang::get("Compare").' : </label><select id="rhsCtrl" name="rhsCtrl"><option value="">'.lang::get("Please select.").'</option><option value="Test">'.lang::get("Test.")."</option></select></th>\n";
     $r .= '</tr></thead></table>'."\n";
-    
+
     $args['map_width']="auto";
     $options = iform_map_get_map_options($args, $readAuth);
     $olOptions = iform_map_get_ol_options($args);
@@ -214,7 +214,7 @@ class iform_tree_map_2 {
     $options['divId']='map2';
     if(isset($args['twinMaps']) && $args['twinMaps'])
     	$r .= '<div class="rightMap mapContainers leftMapOnly">'.map_helper::map_panel($options, $olOptions).'</div>';
-    
+
     $r .= '<div class="ui-helper-clearfix"></div><div id="timeControls">'.
     		(isset($args['advancedUI']) && $args['advancedUI'] ? '<div id="timeSlider"></div>' : '').
     		'<div id="toolbar">'.
@@ -222,8 +222,8 @@ class iform_tree_map_2 {
     		'<button id="beginning">go to beginning</button><button id="playMap">play</button><button id="end">go to end</button>'.
     		'<span id="dateControlLabel">'.lang::get("Date Currently displayed").' : '.(isset($args['advancedUI']) && $args['advancedUI'] ? '<span id="displayDate" ></span>' : '<select id="timeSelect"><option value="">'.lang::get("Please select date").'</option></select>').'</span>'.
     		'</div>';
-    
-    $imgPath = empty(data_entry_helper::$images_path) ? data_entry_helper::relative_client_helper_path()."../media/images/" : data_entry_helper::$images_path;    
+
+    $imgPath = empty(data_entry_helper::$images_path) ? data_entry_helper::relative_client_helper_path()."../media/images/" : data_entry_helper::$images_path;
     data_entry_helper::$javascript .= "
 initTreeMap2({
   advanced_UI: ".(isset($args['advancedUI']) && $args['advancedUI'] ? "true" : "false").",

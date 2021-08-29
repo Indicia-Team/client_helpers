@@ -13,40 +13,38 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package	Client
- * @subpackage PrebuiltForms
  * @author	Indicia Team
  * @license	http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link 	http://code.google.com/p/indicia/
+ * @link https://github.com/indicia-team/client_helpers/
  */
 
 /**
  * Prebuilt Indicia data entry form that presents taxon search box, date control, map picker,
  * survey selector and comment entry controls.
- * 
+ *
  * @package	Client
  * @subpackage PrebuiltForms
  */
 class iform_basic_1 {
 
-  /** 
+  /**
    * Return the form metadata.
    * @return string The definition of the form.
    */
   public static function get_basic_1_definition() {
     return array(
       'title'=>'Basic 1 - species, date, place, survey and comment',
-      'category' => 'Training/Testing forms',      
+      'category' => 'Training/Testing forms',
       'description'=>'A very simple form designed to illustrate the prebuilt form development and setup process.'
     );
   }
-  
+
   /**
    * Get the list of parameters for this form.
    * @return array List of parameters that this form requires.
    */
-  public static function get_parameters() {   
-    return array(      
+  public static function get_parameters() {
+    return array(
       array(
       	'fieldname'=>'species_ctrl',
         'label'=>'Species Control Type',
@@ -57,7 +55,7 @@ class iform_basic_1 {
           'select' => 'Select',
           'listbox' => 'List box',
           'radio_group' => 'Radio group',
-          'species_checklist' => 'Checkbox grid'         
+          'species_checklist' => 'Checkbox grid'
         )
       ),
       array(
@@ -85,7 +83,7 @@ class iform_basic_1 {
       )
     );
   }
-  
+
   /**
    * Return the generated form output.
    * @return Form HTML.
@@ -107,8 +105,8 @@ class iform_basic_1 {
       data_entry_helper::enable_tabs(array(
           'divId'=>'controls'
       ));
-    }   
-    
+    }
+
     $r .= "<div id=\"species\">\n";
     $extraParams = $readAuth + array('taxon_list_id' => $args['list_id']);
     if ($args['preferred']) {
@@ -122,9 +120,9 @@ class iform_basic_1 {
         'captionField'=>'taxon',
         'valueField'=>'id',
         'columns'=>2,
-        'extraParams'=>$extraParams 
+        'extraParams'=>$extraParams
     );
-    // Dynamically generate the species selection control required.        
+    // Dynamically generate the species selection control required.
     $r .= call_user_func(array('data_entry_helper', $args['species_ctrl']), $species_list_args);
     $r .= "</div>\n";
     $r .= "<div id=\"place\">\n";
@@ -138,7 +136,7 @@ class iform_basic_1 {
       $mapOptions['tabDiv']='place';
     }
     $r .= data_entry_helper::map($mapOptions);
-    $r .= "</div>\n";    
+    $r .= "</div>\n";
     $r .= "<div id=\"other\">\n";
     $r .= data_entry_helper::date_picker(array(
         'label'=>'Date',
@@ -159,22 +157,22 @@ class iform_basic_1 {
     ));
     $r .= "</div>\n";
     $r .= "</div>\n";
-    $r .= "<input type=\"submit\" class=\"ui-state-default ui-corner-all\" value=\"Save\" />\n";    
+    $r .= "<input type=\"submit\" class=\"ui-state-default ui-corner-all\" value=\"Save\" />\n";
     $r .= "</form>";
-        
+
     return $r;
   }
-  
+
   /**
    * Handles the construction of a submission array from a set of form values.
-   * @param array $values Associative array of form data values. 
-   * @param array $args iform parameters. 
+   * @param array $values Associative array of form data values.
+   * @param array $args iform parameters.
    * @return array Submission structure.
    */
   public static function get_submission($values, $args) {
-    return data_entry_helper::build_sample_occurrence_submission($values);     
-  }  
-  
-  
-  
+    return data_entry_helper::build_sample_occurrence_submission($values);
+  }
+
+
+
 }

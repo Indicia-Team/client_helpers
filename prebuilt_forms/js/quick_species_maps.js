@@ -14,7 +14,7 @@
  *
  * @package Client
  * @subpackage PrebuiltForms
- * @author  Indicia Team
+ * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link    http://code.google.com/p/indicia/
  */
@@ -22,7 +22,7 @@
 var grid_load;
 
 (function ($) {
-  
+
 var layers=[];
 
 /**
@@ -41,7 +41,7 @@ grid_load = function() {
 
 $(document).ready(function () {
   var sequence=0, remove, removeIdx, img, title, key, filter, sld;
-  
+
   /**
    * Catch change of state on the show instructins checkbox.
    */
@@ -97,7 +97,7 @@ $(document).ready(function () {
         title += ' - ' + indiciaData.indiciaSpeciesLayer.myRecords;
       }
       sld=indiciaData.indiciaSpeciesLayer.slds[sequence % indiciaData.indiciaSpeciesLayer.slds.length];
-      var layer = new OpenLayers.Layer.WMS(title, indiciaData.indiciaSpeciesLayer.wmsUrl, 
+      var layer = new OpenLayers.Layer.WMS(title, indiciaData.indiciaSpeciesLayer.wmsUrl,
           {layers: indiciaData.indiciaSpeciesLayer.featureType, transparent: true, CQL_FILTER: filter, STYLES: sld},
           {isBaseLayer: false, sphericalMercator: true, singleTile: true, opacity: 0.5});
       indiciaData.mapdiv.map.addLayer(layer);
@@ -109,14 +109,14 @@ $(document).ready(function () {
         if (img.length){
           //If row not currently visible in grid, img.length will be zero
           img.attr('src', img.attr('src').replace('delete.png','add.png'));
-          img.removeClass('on-map'); 
+          img.removeClass('on-map');
         }
       }
       $(evt.target).attr('src', $(evt.target).attr('src').replace('add.png','delete.png'));
       $(evt.target).addClass('on-map');
       sequence++;
     }
-  }); 
+  });
 });
 
 }(jQuery));
