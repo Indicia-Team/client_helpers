@@ -28,7 +28,7 @@ jQuery(document).ready(function ($) {
         'groups_location:id': groupsLocationId,
         'groups_location:deleted': 't'
       };
-      $.post(indiciaData.baseUrl + '/?q=ajaxproxy&node=' + indiciaData.nodeId + '&index=groups_location',
+      $.post(indiciaData.ajaxUrlAddExisting,
         s,
         function (data) {
           if (typeof data.error === 'undefined') {
@@ -51,7 +51,6 @@ jQuery(document).ready(function ($) {
         'groups_location:group_id': indiciaData.group_id,
         'groups_location:location_id': locationId
       };
-      var urlSep = indiciaData.ajaxUrlAddExisting.indexOf('?') === -1 ? '?' : '&';
       $.post(indiciaData.ajaxUrlAddExisting,
         s,
         function (data) {
