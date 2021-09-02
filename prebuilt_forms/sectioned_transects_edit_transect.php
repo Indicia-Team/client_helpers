@@ -774,8 +774,8 @@ $('#delete-transect').click(deleteSurvey);
           $users[$result->uid] = $result->name;
       }
     } else {
-      $result = \Drupal::entityTypeManager()->getStorage('user')->getQuery()->sort('name', 'DESC')->execute();
-      $userList = \Drupal\user\Entity\User::loadMultiple($result[['user']]);
+      $result = \Drupal::entityTypeManager()->getStorage('user')->getQuery()->sort('name', 'ASC')->execute();
+      $userList = \Drupal\user\Entity\User::loadMultiple($result);
       foreach ($userList as $user) {
         if ($user->id() != 0) {
           $users[$user->id()] = $user->getDisplayName();
