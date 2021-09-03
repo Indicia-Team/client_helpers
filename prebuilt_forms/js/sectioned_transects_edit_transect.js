@@ -202,6 +202,16 @@ deleteSections = function(sectionIDs) {
   $('#delete-transect').html('Deleting Sections 100%');
 };
 
+findTotalSectionLength = function() {
+  var transectLen = 0;
+  $.each(indiciaData.mapdiv.map.editLayer.features, function() {
+    if (this.attributes.section) {
+      transectLen += Math.round(this.geometry.clone().transform(indiciaData.mapdiv.map.projection, 'EPSG:27700').getLength());
+    }
+  });
+  return transectLen;
+};
+
 //delete a section
 deleteSection = function(section) {
   var data;
@@ -252,25 +262,19 @@ deleteSection = function(section) {
   data[indiciaData.numSectionsAttrName] = ''+(numSections-1);
   // and finally update the total transect length on the transect.
   if (typeof indiciaData.autocalcTransectLengthAttrId != 'undefined' &&
-		indiciaData.autocalcTransectLengthAttrId &&
-		indiciaData.autocalcSectionLengthAttrId) {
-	// add all sections lengths together
-	var transectLen = 0;
-	for(var i = 1; i <= numSections; i++){
-		if(typeof indiciaData.sections['S'+i] !== "undefined" && typeof indiciaData.sections['S'+i].sectionLen !== "undefined"){
-			transectLen += indiciaData.sections['S'+i].sectionLen;
-		}
-	}
-    data[indiciaData.autocalcTransectLengthAttrName] = ''+transectLen;
+      indiciaData.autocalcTransectLengthAttrId &&
+      indiciaData.autocalcSectionLengthAttrId) {
+    data['locAttr:' + indiciaData.autocalcTransectLengthAttrId] = findTotalSectionLength();
   }
   // reload the form when all ajax done. This will reload the new section list and total transect length into the form
-  $( document ).ajaxStop(function(event){
+  $( document ).ajaxStop(function() {
     window.location = window.location.href.split('#')[0]; // want to GET even if last was a POST. Plus don't want to go to the tab bookmark after #
   });
-  $.post(indiciaData.ajaxFormPostUrl,
-          data,
-          function(data) { if (typeof(data.error)!=="undefined") { alert(data.error); }},
-          'json');
+  $.post(indiciaData.ajaxFormPostUrl, data, function(data) {
+    if (typeof(data.error)!=="undefined") {
+      alert(data.error);
+    }
+  }, 'json');
 };
 
 //insert a section
@@ -469,22 +473,17 @@ $(document).ready(function() {
             		indiciaData.autocalcTransectLengthAttrId &&
             		indiciaData.autocalcSectionLengthAttrId) {
             	// add all sections lengths together
-            	var transectLen = 0;
-                var ldata = {'location:id':$('#location\\:id').val(), 'website_id':indiciaData.website_id};
-            	for(var i = 1; i <= numSections; i++){
-            		if(typeof indiciaData.sections['S'+i] !== "undefined" && typeof indiciaData.sections['S'+i].sectionLen !== "undefined"){
-            			transectLen += indiciaData.sections['S'+i].sectionLen;
-            		}
-            	}
+            	var transectLen = findTotalSectionLength();
+              var ldata = {'location:id':$('#location\\:id').val(), 'website_id':indiciaData.website_id};
             	// load into form.
-                $('#locAttr\\:'+indiciaData.autocalcTransectLengthAttrId).val(transectLen);
-                data[indiciaData.autocalcTransectLengthAttrName] = ''+transectLen;
-                $.post(indiciaData.ajaxFormPostUrl,
-                        ldata,
-                        function(data) { if (typeof(data.error)!=="undefined") { alert(data.error); }},
-                        'json');
-              }
-
+              $('#locAttr\\:'+indiciaData.autocalcTransectLengthAttrId).val(transectLen);
+              ldata['locAttr:' + indiciaData.autocalcTransectLengthAttrId] = transectLen;
+              $.post(indiciaData.ajaxFormPostUrl, ldata, function(data) {
+                if (typeof(data.error)!=="undefined") {
+                  alert(data.error);
+                }
+              }, 'json');
+            }
           },
           'json'
         );
@@ -679,25 +678,23 @@ $(document).ready(function() {
                 loadSectionDetails(current); // this will load the newly calculate section length into the form field.
 
                 if (typeof indiciaData.autocalcTransectLengthAttrId != 'undefined' &&
-                			indiciaData.autocalcTransectLengthAttrId &&
-                			indiciaData.autocalcSectionLengthAttrId) {
+                      indiciaData.autocalcTransectLengthAttrId &&
+                      indiciaData.autocalcSectionLengthAttrId) {
                   // add all sections lengths together
-                  var numSections = parseInt($('[name='+indiciaData.numSectionsAttrName.replace(/:/g,'\\:')+']').val(),10);
-                  var transectLen = 0;
-                  for(var i = 1; i <= numSections; i++){
-                    if(typeof indiciaData.sections['S'+i] !== "undefined" && typeof indiciaData.sections['S'+i].sectionLen !== "undefined"){
-                    	transectLen += indiciaData.sections['S'+i].sectionLen;
-                    }
-                  }
-              	  // set the transect length attribute on local form, in case the transect tab is saved
+                  var transectLen = findTotalSectionLength();
+                  // set the transect length attribute on local form, in case the transect tab is saved
                   $('#locAttr\\:'+indiciaData.autocalcTransectLengthAttrId).val(transectLen);
-              	  // save the attribute value into the warehouse, in case transect tab is not saved.
-                  data = {'location:id':$('#location\\:id').val(), 'website_id':indiciaData.website_id};
-                  data[indiciaData.autocalcTransectLengthAttrName] = ''+transectLen;
-                  $.post(indiciaData.ajaxFormPostUrl,
-                          data,
-                          function(data) { if (typeof(data.error)!=="undefined") { alert(data.error); }},
-                          'json');
+                  // save the attribute value into the warehouse, in case transect tab is not saved.
+                  transectLengthFormData = {
+                    'location:id': $('#location\\:id').val(),
+                    'website_id': indiciaData.website_id
+                  };
+                  transectLengthFormData['locAttr:' + indiciaData.autocalcTransectLengthAttrId] = transectLen;
+                  $.post(indiciaData.ajaxFormPostUrl, transectLengthFormData, function(response) {
+                    if (typeof(response.error)!=="undefined") {
+                      alert(response.error);
+                    }
+                  }, 'json');
                 }
               }
             },
