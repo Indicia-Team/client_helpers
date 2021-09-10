@@ -70,15 +70,23 @@ class iform_report_calendar_grid {
   public static function get_parameters() {
     return
       array(
-        array(
+        [
           'name' => 'report_name',
           'caption' => 'Report Name',
           'description' => 'Select the report to provide the output for this page.',
           'type' => 'report_helper::report_picker',
           'default' => 'library/samples/samples_list_for_cms_user2',
-          'group' => 'Report Settings'
-        ),
-        array(
+          'group' => 'Report Settings',
+        ],
+        [
+          'name' => 'location_selector_report_name',
+          'caption' => 'Report Name for the location selector',
+          'description' => 'Select the report to provide the list of locations available to choose from.',
+          'type' => 'report_helper::report_picker',
+          'default' => 'reports_for_prebuilt_forms/report_calendar_grid/locations_for_cms_user',
+          'group' => 'Report Settings',
+        ],
+        [
           'name' => 'param_presets',
           'caption' => 'Preset Parameter Values',
           'description' => 'To provide preset values for any report parameter and avoid the user having to enter them, enter each parameter into this '.
@@ -86,17 +94,17 @@ class iform_report_calendar_grid {
               'user ID from the CMS logged in user or {username} as a value replaces with the logged in username.',
           'type' => 'textarea',
           'required' => FALSE,
-          'group' => 'Report Settings'
-        ),
-        array(
+          'group' => 'Report Settings',
+        ],
+        [
           'name' => 'report_group',
           'caption' => 'Report group',
           'description' => 'When using several reports on a single page (e.g. <a href="http://code.google.com/p/indicia/wiki/DrupalDashboardReporting">dashboard reporting</a>) '.
             'you must ensure that all reports that share a set of input parameters have the same report group as the parameters report.',
           'type' => 'text_input',
           'default' => 'report',
-          'group' => 'Report Settings'
-        ),
+          'group' => 'Report Settings',
+        ],
         array(
           'name' => 'remember_params_report_group',
           'caption' => 'Remember report parameters group',
@@ -394,60 +402,21 @@ jQuery('#".$ctrlid."').change(function(){
       return ('<p>' . lang::get('The location selection control requires that survey_id {' .
         $siteUrlParams[self::$SurveyKey]['value'] . '} is set in either the presets or mapped against the location_type, in the form parameters.') . '</p>');
     }
-    $attrArgs = [
-      'valuetable' => 'location_attribute_value',
-      'attrtable' => 'location_attribute',
-      'key' => 'location_id',
-      'fieldprefix' => 'locAttr',
-      'extraParams' => $readAuth,
+    $params = [
+      'cms_user_id' => hostsite_get_user_field('id'),
       'survey_id' => $siteUrlParams[self::$SurveyKey]['value'],
     ];
-    if (!empty($presets['location_type_id'])) {
-      $attrArgs['location_type_id'] = $presets['location_type_id'];
-    }
     if ($siteUrlParams[self::$locationTypeKey]['value'] !== '') {
-      $attrArgs['location_type_id'] = $siteUrlParams[self::$locationTypeKey]['value'];
+      $$params['location_type_id'] = $siteUrlParams[self::$locationTypeKey]['value'];
     }
-    $locationAttributes = data_entry_helper::getAttributes($attrArgs, FALSE);
-    $cmsAttr = extract_cms_user_attr($locationAttributes, FALSE);
-    if (!$cmsAttr) {
-      return ('<p>' . lang::get('The location selection control requires that CMS User ID location attribute is defined for locations in this survey {' .
-        $siteUrlParams[self::$SurveyKey]['value'] . '}. If restricting to a particular location type, this must be set in the parameters page for this form instance.').'</p>');
+    elseif (!empty($presets['location_type_id'])) {
+      $$params['location_type_id'] = $presets['location_type_id'];
     }
-    $attrListArgs = [
-      'nocache' => TRUE,
-      'extraParams' => array_merge([
-        'view' => 'list',
-        'website_id' => $args['website_id'],
-        'location_attribute_id' => $cmsAttr['attributeId'],
-        'raw_value' => hostsite_get_user_field('id'),
-      ],
-      $readAuth),
-      'table' => 'location_attribute_value',
-    ];
-    $attrList = data_entry_helper::get_population_data($attrListArgs);
-    if (isset($attrList['error'])) {
-      return $attrList['error'];
-    }
-    $locationIDList = [];
-    foreach ($attrList as $attr) {
-      $locationIDList[] = $attr['location_id'];
-    }
-    $locationListArgs = [
-      'nocache' => TRUE,
-      'extraParams' => array_merge([
-        'view' => 'list',
-        'website_id' => $args['website_id'],
-        'id' => $locationIDList,
-        'orderby' => 'name',
-      ],
-      $readAuth),
-      'table' => 'location',
-    ];
-    if ($siteUrlParams[self::$locationTypeKey]['value'] != "") {
-      $locationListArgs['extraParams']['location_type_id'] = $siteUrlParams[self::$locationTypeKey]['value'];
-    }
-    $locationList = data_entry_helper::get_population_data($locationListArgs);
+    $locationList = report_helper::get_report_data([
+      'dataSource' => $args['location_selector_report_name'],
+      'readAuth' => $readAuth,
+      'extraParams' => $params,
+    ]);
     if (isset($locationList['error'])) {
       return $locationList['error'];
     }
@@ -504,7 +473,7 @@ jQuery('#".$ctrlid."').change(function(){
     if(isset($args['locationTypeFilter'])) {
       return('<p>'.lang::get('Please contact the site administrator. This version of the form uses a different method of specifying the location types.').'</p>');
     }
-    iform_load_helpers(array('report_helper'));
+    iform_load_helpers(['report_helper']);
     $auth = report_helper::get_read_auth($args['website_id'], $args['password']);
 
     $grid = self::location_type_control($args, $auth, $nid).
