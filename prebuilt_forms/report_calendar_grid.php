@@ -407,10 +407,10 @@ jQuery('#".$ctrlid."').change(function(){
       'survey_id' => $siteUrlParams[self::$SurveyKey]['value'],
     ];
     if ($siteUrlParams[self::$locationTypeKey]['value'] !== '') {
-      $$params['location_type_id'] = $siteUrlParams[self::$locationTypeKey]['value'];
+      $params['location_type_id'] = $siteUrlParams[self::$locationTypeKey]['value'];
     }
     elseif (!empty($presets['location_type_id'])) {
-      $$params['location_type_id'] = $presets['location_type_id'];
+      $params['location_type_id'] = $presets['location_type_id'];
     }
     $locationList = report_helper::get_report_data([
       'dataSource' => $args['location_selector_report_name'],
