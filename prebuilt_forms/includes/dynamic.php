@@ -621,8 +621,8 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
         ];
         while ($i < count($tabContent) - 1 && substr($tabContent[$i + 1], 0, 1) === '@' || trim($tabContent[$i]) === '') {
           $i++;
-          // Ignore empty lines.
-          if (trim($tabContent[$i]) !== '') {
+          // Ignore empty lines or lines which don't have key/value pairing.
+          if (trim($tabContent[$i]) !== '' && strpos($tabContent[$i], '=') !== FALSE) {
             $option = explode('=', substr($tabContent[$i], 1), 2);
             if (substr(trim($option[1]), 0, 4) === '<!--') {
               $option[1] = preg_replace('/^<!\-\-/', '', trim($option[1]));
@@ -665,7 +665,8 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
           $options['caching'] = empty($options['caching']) ? TRUE : $options['caching'];
           $options['cachetimeout'] = empty($options['cachetimeout']) ? HIGH_VOLUME_CONTROL_CACHE_TIMEOUT : $options['cachetimeout'];
         }
-        // Allow user settings to override the control - see iform_user_ui_options.module.
+        // Allow user settings to override the control - see
+        // iform_user_ui_options.module.
         if (isset(data_entry_helper::$data['structureControlOverrides']) && !empty(data_entry_helper::$data['structureControlOverrides'][$component])) {
           $options = array_merge($options, data_entry_helper::$data['structureControlOverrides'][$component]);
         }
