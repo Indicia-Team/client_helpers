@@ -87,8 +87,8 @@ class iform_dynamic {
           'caption'=>'Show Progress through Wizard/Tabs',
           'description'=>'For Wizard or Tabs interfaces, check this option to show a progress summary above the controls.',
           'type'=>'boolean',
-          'default' => false,
-          'required' => false,
+          'default' => FALSE,
+          'required' => FALSE,
           'group' => 'User Interface'
         ),
         array(
@@ -97,8 +97,8 @@ class iform_dynamic {
           'description'=>'Should the wizard style Next & Previous buttons be shown even when in tab mode? This option does '.
               'not apply when the option "Submit button below all pages" is set.',
           'type'=>'boolean',
-          'default' => false,
-          'required' => false,
+          'default' => FALSE,
+          'required' => FALSE,
           'group' => 'User Interface'
         ),
         array(
@@ -106,8 +106,8 @@ class iform_dynamic {
           'caption'=>'Client Side Validation',
           'description'=>'Enable client side validation of controls using JavaScript.',
           'type'=>'boolean',
-          'default' => true,
-          'required' => false,
+          'default' => TRUE,
+          'required' => FALSE,
           'group' => 'User Interface'
         ),
         [
@@ -130,8 +130,8 @@ class iform_dynamic {
               'the default of displaying a grid of the user\'s data which they can add to. By ticking this box, it is possible to use this form '.
               'for data entry by anonymous users though they cannot then list the data they have entered.',
           'type'=>'boolean',
-          'default' => true,
-          'required' => false,
+          'default' => TRUE,
+          'required' => FALSE,
           'group' => 'User Interface'
         ),
         array(
@@ -148,8 +148,8 @@ class iform_dynamic {
           'description'=>'Should the submit button be present below all the pages (checked), or should it be only on the last page (unchecked)? '.
               'Only applies to the Tabs interface style.',
           'type'=>'boolean',
-          'default' => false,
-          'required' => false,
+          'default' => FALSE,
+          'required' => FALSE,
           'group' => 'User Interface'
         ),
         array(
@@ -169,7 +169,7 @@ class iform_dynamic {
           'table'=>'survey',
           'captionField'=>'title',
           'valueField'=>'id',
-          'siteSpecific'=>true
+          'siteSpecific'=>TRUE
         ),
         array(
           'name'=>'high_volume',
@@ -177,8 +177,8 @@ class iform_dynamic {
           'description'=>'Tick this box to enable caching which prevents reporting pages with a high number of hits from generating ' .
               'excessive server load. Currently compatible only with reporting pages that do not integrate with the user profile.',
           'type'=>'boolean',
-          'default' => false,
-          'required' => false
+          'default' => FALSE,
+          'required' => FALSE
         )
       )
     );
@@ -499,19 +499,22 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
     return $r;
   }
 
- /**
-   * Overridable function to retrieve the additional HTML to appear at the top of the first
-   * tab or form section. This is normally a set of hidden inputs, containing things like the
-   * website ID to post with a form submission.
+  /**
+   * Retrieve hidden inputs to add to a form.
+   *
+   * Overridable function to retrieve the additional HTML to appear at the top
+   * of the first tab or form section. This is normally a set of hidden inputs,
+   * containing things like the website ID to post with a form submission.
+   *
    * @param type $args
    */
   protected static function getFormHiddenInputs($args, $auth, &$attributes) {
     $r = '';
     if (call_user_func([self::$called_class, 'isDataEntryForm'])) {
       // Get authorisation tokens to update the Warehouse, plus any other hidden data.
-      $r = $auth['write'].
-            "<input type=\"hidden\" id=\"website_id\" name=\"website_id\" value=\"".$args['website_id']."\" />\n".
-            "<input type=\"hidden\" id=\"survey_id\" name=\"survey_id\" value=\"".$args['survey_id']."\" />\n";
+      $r = $auth['write'] .
+            "<input type=\"hidden\" id=\"website_id\" name=\"website_id\" value=\"$args[website_id]\" />\n".
+            "<input type=\"hidden\" id=\"survey_id\" name=\"survey_id\" value=\"$args[survey_id]\" />\n";
       $r .= get_user_profile_hidden_inputs($attributes, $args, isset(data_entry_helper::$entity_to_load['sample:id']), $auth['read']);
     }
     return $r;
@@ -519,6 +522,7 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
 
   /**
    * Overridable function to supply default values to a new record from the entity_to_load.
+   *
    * @param type $args
    */
   protected static function cloneEntity($args, $auth, &$attributes) {
@@ -557,17 +561,20 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
   }
 
   protected static function get_tab_html($tabs, $auth, $args, $attributes) {
-    $tabHtml = array();
-    foreach ($tabs as $tab=>$tabContent) {
-      // keep track on if the tab actually has real content, so we can avoid floating instructions if all the controls
-      // were removed by user profile integration for example.
-      $hasControls = false;
-      // get a machine readable alias for the heading, if we are showing tabs and we are loading
-      // anything other than the first tab.
-      if ($args['interface']==='one_page' || count($tabHtml)===0)
-        $tabalias = null;
-      else
-        $tabalias = 'tab-'.preg_replace('/[^a-zA-Z0-9]/', '', strtolower($tab));
+    $tabHtml = [];
+    foreach ($tabs as $tab => $tabContent) {
+      // Keep track on if the tab actually has real content, so we can avoid
+      // floating instructions if all the controls were removed by user profile
+      // integration for example.
+      $hasControls = FALSE;
+      // Get a machine readable alias for the heading, if we are showing tabs
+      // and we are loading anything other than the first tab.
+      if ($args['interface'] === 'one_page' || count($tabHtml) === 0) {
+        $tabalias = NULL;
+      }
+      else {
+        $tabalias = 'tab-' . preg_replace('/[^a-zA-Z0-9]/', '', strtolower($tab));
+      }
       $html = self::get_tab_content($auth, $args, $tab, $tabContent, $tabalias, $attributes, $hasControls);
       if (!empty($html) && $hasControls) {
         $tabHtml[$tab] = $html;
@@ -578,9 +585,9 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
 
   protected static function get_tab_content($auth, $args, $tab, $tabContent, $tabalias, &$attributes, &$hasControls) {
     global $indicia_templates;
-    // cols array used if we find | splitters
-    $cols = array();
-    $defAttrOptions = array('extraParams'=>$auth['read']);
+    // Cols array used if we find | splitters.
+    $cols = [];
+    $defAttrOptions = ['extraParams' => $auth['read']];
     if (isset($args['attribute_termlist_language_filter'])) {
       if ($args['attribute_termlist_language_filter'] === '1') {
         $defAttrOptions['language'] = iform_lang_iso_639_2($args['language']);
@@ -590,13 +597,14 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
         $defAttrOptions['translate'] = 't';
       }
     }
-    //create array of attribute field names to test against later
+    // Create array of attribute field names to test against later.
     $attribNames = [];
     foreach ($attributes as $key => $attrib) {
       $attribNames[$key] = $attrib['id'];
     }
     $html = '';
-    // Now output the content of the tab. Use a for loop, not each, so we can treat several rows as one object
+    // Now output the content of the tab. Use a for loop, not each, so we can
+    // treat several rows as one object.
     for ($i = 0; $i < count($tabContent); $i++) {
       $component = trim($tabContent[$i]);
       if (preg_match('/\A\?[^�]*\?\z/', $component) === 1) {
@@ -645,9 +653,11 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
             }
           }
         }
-        // if @permission specified as an option, then check that the user has access to this control
-        if (!empty($options['permission']) && !hostsite_user_has_permission($options['permission']))
+        // If @permission specified as an option, then check that the user has
+        // access to this control.
+        if (!empty($options['permission']) && !hostsite_user_has_permission($options['permission'])) {
           continue;
+        }
         $parts = explode('.', str_replace(['[', ']'], '', $component));
         $method = 'get_control_' . preg_replace('/[^a-zA-Z0-9]/', '', strtolower($component));
         if (!empty($args['high_volume']) && $args['high_volume']) {
@@ -655,13 +665,14 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
           $options['caching'] = empty($options['caching']) ? TRUE : $options['caching'];
           $options['cachetimeout'] = empty($options['cachetimeout']) ? HIGH_VOLUME_CONTROL_CACHE_TIMEOUT : $options['cachetimeout'];
         }
-        // allow user settings to override the control - see iform_user_ui_options.module
-        if (isset(data_entry_helper::$data['structureControlOverrides']) && !empty(data_entry_helper::$data['structureControlOverrides'][$component]))
+        // Allow user settings to override the control - see iform_user_ui_options.module.
+        if (isset(data_entry_helper::$data['structureControlOverrides']) && !empty(data_entry_helper::$data['structureControlOverrides'][$component])) {
           $options = array_merge($options, data_entry_helper::$data['structureControlOverrides'][$component]);
+        }
         if (count($parts) === 1 && method_exists(self::$called_class, $method)) {
           // Outputs a control for which a specific output function has been
           // written.
-          $html .= call_user_func(array(self::$called_class, $method), $auth, $args, $tabalias, array_merge(['extraParams'=>$auth['read']], $options));
+          $html .= call_user_func([self::$called_class, $method], $auth, $args, $tabalias, array_merge(['extraParams' => $auth['read']], $options));
           $hasControls = TRUE;
         }
         elseif (count($parts) === 2) {
@@ -698,25 +709,29 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
             // been written.
             $path = call_user_func([self::$called_class, 'getReloadPath'], $args['available_for_groups']);
             // Pass the classname of the form through to the extension control
-            // method to allow access to calling class functions and variables
+            // method to allow access to calling class functions and variables.
             $args['calling_class'] = self::$called_class;
             $html .= call_user_func(['extension_' . $parts[0], $parts[1]], $auth, $args, $tabalias, $options, $path, $attributes);
-            $hasControls = true;
+            $hasControls = TRUE;
             // Auto-add JavaScript for the extension.
             $d6 = (defined('DRUPAL_CORE_COMPATIBILITY') && DRUPAL_CORE_COMPATIBILITY === '6.x');
             $d7 = (defined('DRUPAL_CORE_COMPATIBILITY') && DRUPAL_CORE_COMPATIBILITY === '7.x');
-            // Ignore D8 as it uses asset libraries instead of drupal_add_js
-            if (file_exists(iform_client_helpers_path().'prebuilt_forms/extensions/' . $parts[0] . '.js')) {
-              if ($d6)
-                drupal_add_js(iform_client_helpers_path().'prebuilt_forms/extensions/' . $parts[0] . '.js', 'module', 'header', FALSE, TRUE, FALSE);
-              elseif ($d7)
-                drupal_add_js(iform_client_helpers_path().'prebuilt_forms/extensions/' . $parts[0] . '.js', array('preprocess' => FALSE));
+            // Ignore D8+ as it uses asset libraries instead of drupal_add_js.
+            if (file_exists(iform_client_helpers_path() . 'prebuilt_forms/extensions/' . $parts[0] . '.js')) {
+              if ($d6) {
+                drupal_add_js(iform_client_helpers_path() . 'prebuilt_forms/extensions/' . $parts[0] . '.js', 'module', 'header', FALSE, TRUE, FALSE);
+              }
+              elseif ($d7) {
+                drupal_add_js(iform_client_helpers_path() . 'prebuilt_forms/extensions/' . $parts[0] . '.js', ['preprocess' => FALSE]);
+              }
             }
-            if (file_exists(iform_client_helpers_path().'prebuilt_forms/extensions/' . $parts[0] . '.css')) {
-              if ($d6)
-                drupal_add_css(iform_client_helpers_path().'prebuilt_forms/extensions/' . $parts[0] . '.css', 'module', 'all', FALSE);
-              elseif ($d7)
-                drupal_add_css(iform_client_helpers_path().'prebuilt_forms/extensions/' . $parts[0] . '.css', array('preprocess' => FALSE));
+            if (file_exists(iform_client_helpers_path() . 'prebuilt_forms/extensions/' . $parts[0] . '.css')) {
+              if ($d6) {
+                drupal_add_css(iform_client_helpers_path() . 'prebuilt_forms/extensions/' . $parts[0] . '.css', 'module', 'all', FALSE);
+              }
+              elseif ($d7) {
+                drupal_add_css(iform_client_helpers_path() . 'prebuilt_forms/extensions/' . $parts[0] . '.css', ['preprocess' => FALSE]);
+              }
             }
           }
           else {
@@ -725,7 +740,7 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
         }
         elseif (($attribKey = array_search(substr($component, 1, -1), $attribNames)) !== FALSE
             || preg_match('/^\[[a-zA-Z]+:(?P<ctrlId>[0-9]+)\]/', $component, $matches)) {
-          // control is a smpAttr or other attr control.
+          // Control is a smpAttr or other attr control.
           if (empty($options['extraParams'])) {
             $options['extraParams'] = array_merge($defAttrOptions['extraParams']);
           }
@@ -734,13 +749,13 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
           }
           // Merge extraParams first so we don't loose authentication.
           $options = array_merge($defAttrOptions, $options);
-          foreach ($options as $key=>&$value) {
+          foreach ($options as $key => &$value) {
             $value = apply_user_replacements($value);
           }
           if ($attribKey !== FALSE) {
             // A smpAttr control.
             $html .= data_entry_helper::outputAttribute($attributes[$attribKey], $options);
-            $attributes[$attribKey]['handled'] = true;
+            $attributes[$attribKey]['handled'] = TRUE;
           }
           else {
             // if the control name of form name:id, then we will call get_control_name passing the id as a parameter
@@ -752,7 +767,7 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
             else
               $html .= "Unsupported control $component<br/>";
           }
-          $hasControls = true;
+          $hasControls = TRUE;
         }
         elseif ($component === '[*]'){
           // this outputs any custom attributes that remain for this tab. The custom attributes can be configured in the
@@ -784,12 +799,12 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
           $attrHtml = get_attribute_html($attributes, $args, $defAttrOptions, $tab,
             array_merge($attrGenericOptions, $attrSpecificOptions));
           if (!empty($attrHtml))
-            $hasControls = true;
+            $hasControls = TRUE;
           $html .= $attrHtml;
         } else {
           $html .= "The form structure includes a control called $component which is not recognised.<br/>";
           //ensure $hasControls is true so that the error message is shown
-          $hasControls = true;
+          $hasControls = TRUE;
         }
       } elseif ($component === '|') {
         // Column splitter. So, store the col html and start on the next
