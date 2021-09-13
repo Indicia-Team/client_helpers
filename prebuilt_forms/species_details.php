@@ -679,7 +679,7 @@ class iform_species_details extends iform_dynamic {
     }
     else {
       foreach ($media as $medium) {
-        $r .= iform_report_get_gallery_item('occurrence', $medium['id'], $options['imageSize']);
+        $r .= iform_report_get_gallery_item('occurrence', $medium, $options['imageSize']);
       }
     }
     $r .= '</div>';
