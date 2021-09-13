@@ -33,9 +33,9 @@ require_once 'includes/report.php';
 class iform_species_details extends iform_dynamic {
 
   private static $preferred;
-  private static $synonyms = array();
-  private static $commonNames = array();
-  private static $taxonomy = array();
+  private static $synonyms = [];
+  private static $commonNames = [];
+  private static $taxonomy = [];
   private static $taxa_taxon_list_id;
   private static $taxon_meaning_id;
 
@@ -156,7 +156,7 @@ class iform_species_details extends iform_dynamic {
         'description' => 'When you click on the Explore this species\' records button you are taken to this URL. Use {rootfolder} as a replacement '.
             'token for the site\'s root URL.',
         'type' => 'string',
-        'required'=>false,
+        'required' => FALSE,
         'default' => '',
         'group' => 'User Interface'
       ),
@@ -166,7 +166,7 @@ class iform_species_details extends iform_dynamic {
         'description' => 'Name of the parameter added to the Explore URL to pass through the taxon_meaning_id of the species being explored. '.
             'The default provided (filter-taxon_meaning_list) is correct if your report uses the standard parameters configuration.',
         'type' => 'string',
-        'required'=>false,
+        'required' => FALSE,
         'default' => 'filter-taxon_meaning_list',
         'group' => 'User Interface'
       ),
@@ -175,8 +175,8 @@ class iform_species_details extends iform_dynamic {
         'caption' => 'Include Legend',
         'description' => 'Should a legend be shown on the page?',
         'type' => 'boolean',
-        'required'=>false,
-        'default'=>false,
+        'required' => FALSE,
+        'default' => FALSE,
         'group' => 'Other Map Settings'
       ),
       array(
@@ -184,8 +184,8 @@ class iform_species_details extends iform_dynamic {
         'caption' => 'Include Layer switchers',
         'description' => 'Should the legend include checkboxes and/or radio buttons for controlling layer visibility?',
         'type' => 'boolean',
-        'required'=>false,
-        'default'=>false,
+        'required' => FALSE,
+        'default' => FALSE,
         'group' => 'Other Map Settings'
       ),
       array(
@@ -222,7 +222,7 @@ class iform_species_details extends iform_dynamic {
         'caption' => 'Style',
         'description' => 'Name of the SLD style file that describes how the distribution points are shown. Leave blank if not sure.',
         'type' => 'textfield',
-        'required' => false,
+        'required' => FALSE,
         'group' => 'Distribution Layer'
       ),
       array(
@@ -231,7 +231,7 @@ class iform_species_details extends iform_dynamic {
         'description' => 'Any additional filter to apply to the loaded data, using the CQL format. For example "record_status<>\'R\'"',
         'type' => 'textarea',
         'group' => 'Distribution Layer',
-        'required' => false
+        'required' => FALSE
       ),
       array(
         'name' => 'refresh_timer',
@@ -239,14 +239,14 @@ class iform_species_details extends iform_dynamic {
         'description' => 'Set this value to the number of seconds you want to elapse before the report will be automatically reloaded, useful for '.
             'displaying live data updates at BioBlitzes. Combine this with Page to reload to define a sequence of pages that load in turn.',
         'type' => 'int',
-        'required' => false
+        'required' => FALSE
       ),
       array(
         'name' => 'load_on_refresh',
         'caption' => 'Page to reload',
         'description' => 'Provide the full URL of a page to reload after the number of seconds indicated above.',
         'type' => 'string',
-        'required' => false
+        'required' => FALSE
       ))
     );
     return $retVal;
@@ -273,7 +273,7 @@ class iform_species_details extends iform_dynamic {
    * @subpackage PrebuiltForms
    */
   protected static function getMode() {
-    return array();
+    return [];
   }
 
 
@@ -285,7 +285,7 @@ class iform_species_details extends iform_dynamic {
   * @subpackage PrebuiltForms
   */
  protected static function getAttributes() {
-   return array();
+   return [];
  }
 
   /**
@@ -387,10 +387,10 @@ class iform_species_details extends iform_dynamic {
     //If the user sets the option to exclude particular fields then we set to the hide flag
     //on the name types they have specified.
     if ($args['operator']=='not in') {
-      $hidePreferred = false;
-      $hideCommon = false;
-      $hideSynonym = false;
-      $hideTaxonomy = false;
+      $hidePreferred = FALSE;
+      $hideCommon = FALSE;
+      $hideSynonym = FALSE;
+      $hideTaxonomy = FALSE;
       foreach ($fieldsLower as $theField) {
         if ($theField=='preferred names'|| $theField=='preferred name'|| $theField=='preferred')
           $hidePreferred = true;
@@ -412,13 +412,13 @@ class iform_species_details extends iform_dynamic {
       $hideTaxonomy = true;
       foreach ($fieldsLower as $theField) {
         if ($theField=='preferred names'|| $theField=='preferred name'|| $theField=='preferred')
-          $hidePreferred = false;
+          $hidePreferred = FALSE;
         elseif ($theField=='common names' || $theField=='common name'|| $theField=='common')
-          $hideCommon = false;
+          $hideCommon = FALSE;
         elseif ($theField=='synonym names' || $theField=='synonym name'|| $theField=='synonym')
-          $hideSynonym = false;
+          $hideSynonym = FALSE;
         elseif ($theField=='taxonomy')
-          $hideTaxonomy = false;
+          $hideTaxonomy = FALSE;
       }
     }
     //Draw the names on the page
@@ -519,15 +519,15 @@ class iform_species_details extends iform_dynamic {
     if (!empty($options['headingsToInclude'])) {
       $headingsToInclude = explode(',', $options['headingsToInclude']);
     } else {
-      $headingsToInclude = array();
+      $headingsToInclude = [];
     }
     if (!empty($options['headingsToExclude'])) {
       $headingsToExclude = explode(',', $options['headingsToExclude']);
     } else {
-      $headingsToExclude = array();
+      $headingsToExclude = [];
     }
 
-    $mainHeadingsToInclude = $subHeadingsToInclude = $mainHeadingsToExclude = $subHeadingsToExclude = array();
+    $mainHeadingsToInclude = $subHeadingsToInclude = $mainHeadingsToExclude = $subHeadingsToExclude = [];
     // Cycle through all the headings we want to include
     foreach ($headingsToInclude as $headingSubCatToInclude) {
       // See if a sub-category has been specified
@@ -655,11 +655,11 @@ class iform_species_details extends iform_dynamic {
   protected static function get_control_photos($auth, $args, $tabalias, $options) {
     iform_load_helpers(['report_helper']);
     data_entry_helper::add_resource('fancybox');
-    $options = array_merge(array(
+    $options = array_merge([
       'itemsPerPage' => 20,
       'imageSize' => 'thumb',
       'class' => 'media-gallery',
-    ), $options);
+    ], $options);
 
     // Use this report to return the photos.
     $reportName = 'reports_for_prebuilt_forms/species_details/occurrences_thumbnails';
@@ -715,15 +715,15 @@ class iform_species_details extends iform_dynamic {
   }
 
   protected static function get_control_occurrenceassociations($auth, $args, $tabalias, $options) {
-    iform_load_helpers(array('report_helper'));
+    iform_load_helpers(['report_helper']);
     $currentUrl = report_helper::get_reload_link_parts();
     // amend currentUrl path if we have drupal dirty URLs so javascript will work properly
-    if (isset($currentUrl['params']['q']) && strpos($currentUrl['path'], '?')===false) {
+    if (isset($currentUrl['params']['q']) && strpos($currentUrl['path'], '?') === FALSE) {
       $currentUrl['path'] .= '?q='.$currentUrl['params']['q'].'&taxon_meaning_id=';
     } else {
       $currentUrl['path'] .= '&taxon_meaning_id=';
     }
-    $options = array_merge(array(
+    $options = array_merge([
       'dataSource' => 'library/occurrence_associations/filterable_associated_species_list_cloud',
       'itemsPerPage' => 20,
       'class' => 'cloud',
@@ -732,8 +732,8 @@ class iform_species_details extends iform_dynamic {
       'bands' => array(array('content' => '<li style="font-size: {font_size}px">' .
           "<a href=\"$currentUrl[path]{taxon_meaning_id}\">{species}<a/></li>")),
       'emptyText' => '<p>No association species information available</p>',
-      'extraParams' => array()
-    ), $options);
+      'extraParams' => [],
+    ], $options);
     $extraParams = array_merge(
         $options['extraParams'],
         array('taxon_meaning_list'=> self::$taxon_meaning_id)
@@ -749,7 +749,7 @@ class iform_species_details extends iform_dynamic {
       'bands'=> $options['bands'],
       'emptyText' => $options['emptyText'],
       'mode' => 'report',
-      'autoParamsForm' => false,
+      'autoParamsForm' => FALSE,
       'extraParams' => $extraParams
     )).'</div>';
   }
@@ -796,7 +796,7 @@ class iform_species_details extends iform_dynamic {
     $options['layers'][]='distLayer';
 
     // This is not a map used for input
-    $options['editLayer'] = false;
+    $options['editLayer'] = FALSE;
     // if in Drupal, and IForm proxy is installed, then use this path as OpenLayers proxy
     if (function_exists('hostsite_module_exists') && hostsite_module_exists('iform_proxy')) {
       $options['proxy'] = data_entry_helper::getRootFolder(true) .
@@ -923,7 +923,7 @@ class iform_species_details extends iform_dynamic {
       if (strcasecmp(substr($url, 0, 12), '{rootfolder}')!==0 && strcasecmp(substr($url, 0, 4), 'http')!==0)
           $url='{rootFolder}'.$url;
       $url = str_replace('{rootFolder}', data_entry_helper::getRootFolder(true), $url);
-      $url .= (strpos($url, '?')===false) ? '?' : '&';
+      $url .= (strpos($url, '?')===FALSE) ? '?' : '&';
       $url .= $args['explore_param_name'] . '=' . self::$taxon_meaning_id;
       $r='<a class="button" href="'.$url.'">' . lang::get('Explore records of {1}', self::get_best_name()) . '</a>';
     }
@@ -943,7 +943,7 @@ class iform_species_details extends iform_dynamic {
     $reportResult = report_helper::get_report_data(array(
       'readAuth' => $auth['read'],
       'dataSource' => 'library/taxa/species_notes_and_images',
-      'useCache' => false,
+      'useCache' => FALSE,
       'extraParams'=>array(
         'taxa_taxon_list_id'=>self::$taxa_taxon_list_id,
         'taxon_meaning_id'=>self::$taxon_meaning_id,
@@ -982,9 +982,9 @@ class iform_species_details extends iform_dynamic {
         )
       ),
       'mode' => 'report',
-      'autoParamsForm' => false,
-      'includeAllColumns' => false,
-      'headers' => false,
+      'autoParamsForm' => FALSE,
+      'includeAllColumns' => FALSE,
+      'headers' => FALSE,
       'galleryColCount' => $options['galleryColCount'],
       'extraParams' => array(
         'taxa_taxon_list_id' => self::$taxa_taxon_list_id,
