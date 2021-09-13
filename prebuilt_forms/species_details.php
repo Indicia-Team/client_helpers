@@ -677,7 +677,7 @@ class iform_species_details extends iform_dynamic {
       $r .= '<p>No photos or media files available</p>';
     }
     else {
-      foreach ($media['records'] as $medium) {
+      foreach ($media as $medium) {
         $r .= iform_report_get_gallery_item('occurrence', $medium, $options['imageSize']);
       }
     }
