@@ -315,6 +315,13 @@ class extension_notifications_centre {
     if (!empty($options['groupIds'])) {
       $extraParams['group_ids'] = $options['groupIds'];
     }
+    // Other optional parameters.
+    if (!empty($options['taxon_meaning_id'])) {
+      $extraParams['taxon_meaning_id'] = $options['taxon_meaning_id'];
+    }
+    if (!empty($options['taxon_group_id'])) {
+      $extraParams['taxon_group_id'] = $options['taxon_group_id'];
+    }
     $columns = [
       'data' => [
         'fieldname' => 'data',
