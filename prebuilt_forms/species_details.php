@@ -670,6 +670,7 @@ class iform_species_details extends iform_dynamic {
       'extraParams' => [
         'taxon_meaning_list' => self::$taxon_meaning_id,
         'limit' => $options['itemsPerPage'],
+        'wantCount' => 0,
       ],
     ]);
     $r = '<div class="detail-panel" id="detail-panel-photos"><h3>' . lang::get('Photos and media') . '</h3>';
@@ -678,7 +679,7 @@ class iform_species_details extends iform_dynamic {
     }
     else {
       foreach ($media as $medium) {
-        $r .= iform_report_get_gallery_item('occurrence', $medium, $options['imageSize']);
+        $r .= iform_report_get_gallery_item('occurrence', $medium['id'], $options['imageSize']);
       }
     }
     $r .= '</div>';
