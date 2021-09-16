@@ -30,10 +30,18 @@ $custom_terms = array_merge($custom_terms, array(
   'LANG_Location_Name' => 'Location Name',
   'LANG_Location_Code' => 'Location Code',
   'LANG_Location_Type' => 'Location Type',
+  'LANG_Location_Parent' => 'Parent Location',
   'LANG_Add_Location' => 'Add New Location',
   'LANG_No_User_Id' => 'This form is configured to show the user a grid of their existing records which they can add to or edit. ' .
     'To do this, the form requires that a function hostsite_get_user_field exists and returns their Indicia User ID' .
     'In Drupal, the Easy Login module in conjuction with the iForm module achieves this. '.
-    'Alternatively you can tick the box "Skip initial grid of data" in the "User Interface" section of the Edit page for the form.'
+    'Alternatively you can tick the box "Skip initial grid of data" in the "User Interface" section of the Edit page for the form.',
+  'LANG_Location_outside_parent' => 'Location outside parent',
+  'LANG_New_location_outside_parent' => 'The new location is outside the ' .
+  'boundary of the previously selected parent.',
+  'LANG_Location_outside_new_parent' => 'The location is outside the newly ' .
+  'selected parent.',
+  'LANG_OK' => 'OK',
+  'LANG_Parent_layer_title' => 'Parent location',
   )
 );

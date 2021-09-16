@@ -81,6 +81,7 @@ class iform_dynamic_location extends iform_dynamic {
                 "&nbsp;&nbsp;<strong>[location name]</strong> - a text box to enter a descriptive name for the locataion.<br/>".
                 "&nbsp;&nbsp;<strong>[location code]</strong> - a text box to enter an identifying code for the location.<br/>".
                 "&nbsp;&nbsp;<strong>[location type]</strong> - a list to select the location type (hidden if a filter limits this to a single type).<br/>".
+                '&nbsp;&nbsp;<strong>[location parent]</strong> - a list to select the location parent (use e.g. @extraParams={"location_type_id":16516} to filter the list).<br/>'.
                 "&nbsp;&nbsp;<strong>[location comment]</strong> - a text box for comments.<br/>".
                 "&nbsp;&nbsp;<strong>[location photo]</strong> - a photo upload for location images. <br/>".
             "<strong>@option=value</strong> on the line(s) following any control allows you to override one of the options passed to the control. The options ".
@@ -400,7 +401,31 @@ mapInitialisationHooks.push(function(mapdiv) {
     }
   }
 
-    protected static function get_control_locationcomment($auth, $args, $tabalias, $options) {
+  protected static function get_control_locationparent($auth, $args, $tabalias, $options) {
+
+    data_entry_helper::$javascript .=
+      "indiciaData.langLocationOutsideParent=\"" . lang::get('LANG_Location_outside_parent') . "\";\n" .
+      "indiciaData.langNewLocationOutsideParent=\"" . lang::get('LANG_New_location_outside_parent') . "\";\n" .
+      "indiciaData.langLocationOutsideNewParent=\"" . lang::get('LANG_Location_outside_new_parent') . "\";\n" .
+      "indiciaData.langOK=\"" . lang::get('LANG_OK') . "\";\n" .
+      "indiciaData.langParentLayerTitle=\"" . lang::get('LANG_Parent_layer_title') . "\";\n";
+
+    $extraParams = $auth['read'];
+    if (array_key_exists('extraParams', $options)) {
+      $extraParams = array_merge($extraParams, $options['extraParams']);
+    }
+    $options['extraParams'] = $extraParams;
+    return data_entry_helper::select(array_merge([
+      'label' => lang::get('LANG_Location_Parent'),
+      'fieldname' => 'location:parent_id',
+      'table' => 'location',
+      'valueField' => 'id',
+      'captionField' => 'name',
+      'blankText' => lang::get('LANG_Blank_Text'),
+    ], $options));
+  }
+
+  protected static function get_control_locationcomment($auth, $args, $tabalias, $options) {
     return data_entry_helper::textarea(array_merge(array(
       'fieldname' => 'location:comment',
       'label' => lang::get('LANG_Comment'),
