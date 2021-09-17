@@ -1,0 +1,9 @@
+select.loading {
+  background: url(../../../media/images/ajax-loader.gif) no-repeat right;
+  font-style: italic;
+  background-position: right 16px center;
+}
+
+.above-map.ui-dialog {
+  z-index: 2000;
+}
