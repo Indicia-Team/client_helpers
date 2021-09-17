@@ -4228,7 +4228,7 @@ JS;
    * of occurrences loaded is returned.
    * @param int $sampleId ID of the sample to load
    * @param array $readAuth Read authorisation array
-   * @param boolean $loadMedia Array of media type terms to load.
+   * @param array $loadMedia Array of media type terms to load.
    * @param array $extraParams Extra params to pass to the web service call for filtering.
    * @param boolean $useSubSamples Enable loading of records from subsamples of the main sample
    * @param boolean $subSamplesOptional If using subsamples but they are optional, records are also loaded that are
@@ -4237,7 +4237,7 @@ JS;
    * each subsample where relevant.
    * @return array Array with key of occurrence_id and value of $taxonInstance.
    */
-  public static function preload_species_checklist_occurrences($sampleId, $readAuth, $loadMedia, $extraParams,
+  public static function preload_species_checklist_occurrences($sampleId, $readAuth, array $loadMedia, $extraParams,
        &$subSamples, $useSubSamples, $subSampleMethodID='',
        $subSamplesOptional=FALSE, $spatialRefPrecisionAttrId = NULL, $gridId = NULL) {
     $occurrenceIds = [];
@@ -4300,13 +4300,13 @@ JS;
         }
         unset($extraParams['parent_id']);
         unset($extraParams['sample_method_id']);
-        $extraParams['sample_id']=$subSampleList;
+        $extraParams['sample_id'] = $subSampleList;
         $sampleCount = count($subSampleList);
       } else {
         $extraParams += $readAuth + array('view' => 'detail','sample_id'=>$sampleId,'deleted' => 'f', 'orderby' => 'id', 'sortdir' => 'ASC' );
         $sampleCount = 1;
       }
-      if($sampleCount>0) {
+      if ($sampleCount>0) {
         $occurrences = self::get_population_data(array(
           'table' => 'occurrence',
           'extraParams' => $extraParams,
@@ -4314,7 +4314,6 @@ JS;
           'sharing' => 'editing'
         ));
         foreach ($occurrences as $idx => $occurrence) {
-          $idx=2;
           if ($useSubSamples) {
             foreach ($subSamples as $sidx => $subsample) {
               if($subsample['id'] == $occurrence['sample_id']) {
@@ -4335,28 +4334,28 @@ JS;
               data_entry_helper::$entity_to_load = array_combine($keys, data_entry_helper::$entity_to_load);
             }
           }
-          self::$entity_to_load['sc:'.$idx.':'.$occurrence['id'].':present'] = $occurrence['taxa_taxon_list_id'];
-          self::$entity_to_load['sc:'.$idx.':'.$occurrence['id'].':zero_abundance'] = $occurrence['zero_abundance'];
-          self::$entity_to_load['sc:'.$idx.':'.$occurrence['id'].':record_status'] = $occurrence['record_status'];
-          self::$entity_to_load['sc:'.$idx.':'.$occurrence['id'].':occurrence:comment'] = $occurrence['comment'];
-          self::$entity_to_load['sc:'.$idx.':'.$occurrence['id'].':occurrence:sensitivity_precision'] = $occurrence['sensitivity_precision'];
+          self::$entity_to_load["sc:$idx:$occurrence[id]:present"] = $occurrence['taxa_taxon_list_id'];
+          self::$entity_to_load["sc:$idx:$occurrence[id]:zero_abundance"] = $occurrence['zero_abundance'];
+          self::$entity_to_load["sc:$idx:$occurrence[id]:record_status"] = $occurrence['record_status'];
+          self::$entity_to_load["sc:$idx:$occurrence[id]:occurrence:comment"] = $occurrence['comment'];
+          self::$entity_to_load["sc:$idx:$occurrence[id]:occurrence:sensitivity_precision"] = $occurrence['sensitivity_precision'];
           // Warning. I observe that, in cases where more than one occurrence is loaded, the following entries in
           // $entity_to_load will just take the value of the last loaded occurrence.
-          self::$entity_to_load['occurrence:record_status']=$occurrence['record_status'];
-          self::$entity_to_load['occurrence:taxa_taxon_list_id']=$occurrence['taxa_taxon_list_id'];
-          self::$entity_to_load['occurrence:taxa_taxon_list_id:taxon']=$occurrence['taxon'];
-          // Keep a list of all Ids
+          self::$entity_to_load['occurrence:record_status'] = $occurrence['record_status'];
+          self::$entity_to_load['occurrence:taxa_taxon_list_id'] = $occurrence['taxa_taxon_list_id'];
+          self::$entity_to_load['occurrence:taxa_taxon_list_id:taxon'] = $occurrence['taxon'];
+          // Keep a list of all Ids.
           $occurrenceIds[$occurrence['id']] = $idx;
         }
         if(count($occurrenceIds)>0) {
-          // load the attribute values into the entity to load as well
+          // Load the attribute values into the entity to load as well.
           $attrValues = self::get_population_data(array(
             'table' => 'occurrence_attribute_value',
             'extraParams' => $readAuth + array('occurrence_id' => array_keys($occurrenceIds)),
             'nocache' => TRUE,
             'sharing' => 'editing'
           ));
-          foreach($attrValues as $attrValue) {
+          foreach ($attrValues as $attrValue) {
             // vague date controls need the processed vague date put back in, not the raw parts.
             $valueField = $attrValue['data_type'] === 'Vague Date' ? 'value' : 'raw_value';
             $attrFieldName = 'sc:'.$occurrenceIds[$attrValue['occurrence_id']].':'.$attrValue['occurrence_id'].':occAttr:'.$attrValue['occurrence_attribute_id'].(isset($attrValue['id'])?':'.$attrValue['id']:'');
@@ -4367,7 +4366,7 @@ JS;
               self::$entity_to_load["$attrFieldName:term"] = $attrValue['value'];
             }
           }
-          if (count($loadMedia)>0) {
+          if (count($loadMedia) > 0) {
             // @todo: Filter to the appropriate list of media types
             $media = self::get_population_data(array(
               'table' => 'occurrence_medium',
@@ -4376,15 +4375,15 @@ JS;
               'sharing' => 'editing'
             ));
             foreach($media as $medium) {
-              self::$entity_to_load['sc:'.$occurrenceIds[$medium['occurrence_id']].':'.$medium['occurrence_id'].':occurrence_medium:id:'.$medium['id']]
+              self::$entity_to_load['sc:' . $occurrenceIds[$medium['occurrence_id']] . ":$medium[occurrence_id]:occurrence_medium:id:$medium[id]"]
                 = $medium['id'];
-              self::$entity_to_load['sc:'.$occurrenceIds[$medium['occurrence_id']].':'.$medium['occurrence_id'].':occurrence_medium:path:'.$medium['id']]
+              self::$entity_to_load['sc:' . $occurrenceIds[$medium['occurrence_id']] . ":$medium[occurrence_id]:occurrence_medium:path:$medium[id]"]
                 = $medium['path'];
-              self::$entity_to_load['sc:'.$occurrenceIds[$medium['occurrence_id']].':'.$medium['occurrence_id'].':occurrence_medium:caption:'.$medium['id']]
+              self::$entity_to_load['sc:' . $occurrenceIds[$medium['occurrence_id']] . ":$medium[occurrence_id]:occurrence_medium:caption:$medium[id]"]
                 = $medium['caption'];
-              self::$entity_to_load['sc:'.$occurrenceIds[$medium['occurrence_id']].':'.$medium['occurrence_id'].':occurrence_medium:media_type_id:'.$medium['id']]
+              self::$entity_to_load['sc:' . $occurrenceIds[$medium['occurrence_id']] . ":$medium[occurrence_id]:occurrence_medium:media_type_id:$medium[id]"]
                 = $medium['media_type_id'];
-              self::$entity_to_load['sc:'.$occurrenceIds[$medium['occurrence_id']].':'.$medium['occurrence_id'].':occurrence_medium:media_type:'.$medium['id']]
+              self::$entity_to_load['sc:'.$occurrenceIds[$medium['occurrence_id']] . ":$medium[occurrence_id]:occurrence_medium:media_type:$medium[id]"]
                 = $medium['media_type'];
             }
           }
