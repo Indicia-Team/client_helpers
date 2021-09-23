@@ -2961,15 +2961,14 @@ JS;
         "[*]\r\n" .
         "=*=";
     }
-    // @todo Check equality rather than assignment.
     if (!isset($args['occurrence_comment'])) {
-      $args['occurrence_comment'] == FALSE;
+      $args['occurrence_comment'] = FALSE;
     }
     if (!isset($args['occurrence_images'])) {
-      $args['occurrence_images'] == FALSE;
+      $args['occurrence_images'] = FALSE;
     }
     if (!isset($args['attribute_termlist_language_filter'])) {
-      $args['attribute_termlist_language_filter'] == '0';
+      $args['attribute_termlist_language_filter'] = '0';
     }
     if (!isset($args['grid_report'])) {
       $args['grid_report'] = 'reports_for_prebuilt_forms/simple_sample_list_1';
