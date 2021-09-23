@@ -15,9 +15,9 @@
  *
  * @package Client
  * @subpackage PrebuiltForms
- * @author  Indicia Team
+ * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link  http://code.google.com/p/indicia/
+ * @link https://github.com/indicia-team/client_helpers/
  */
 
 require_once('includes/map.php');
@@ -25,13 +25,13 @@ require_once('includes/report.php');
 
 /**
  * Map Explorer. A prebuilt form integrating a map and grid with various options for exploring the data.
- * 
+ *
  * @package Client
  * @subpackage PrebuiltForms
  */
 class iform_map_explorer {
-  
-  /** 
+
+  /**
    * Return the form metadata. Note the title of this method includes the name of the form file. This ensures
    * that if inheritance is used in the forms, subclassed forms don't return their parent's form definition.
    * @return array The definition of the form.
@@ -44,13 +44,13 @@ class iform_map_explorer {
           'preferred taxon groups and locality for the logged in user and is therefore specific to Drupal.'
     );
   }
-  
+
   /**
    * Get the list of parameters for this form.
    * @return array List of parameters that this form requires.
    * @todo: Implement this method
    */
-  public static function get_parameters() {   
+  public static function get_parameters() {
     $r = array_merge(
       iform_map_get_map_parameters(),
       iform_report_get_minimal_report_parameters(),
@@ -161,16 +161,16 @@ class iform_map_explorer {
             '<strong>currentUser</strong> Warehouse User ID of the logged in user, used to filter records to their own data. Only applied if ownData is 1.<br/>'.
             '<strong>ownData</strong> - Boolean (1 or 0) parameter which defines if the output should be filtered to the user\'s own records.';
       }
-      elseif ($param['name']==='param_presets') 
+      elseif ($param['name']==='param_presets')
         $param['default'] = "smpattrs=\noccattrs=\nlocation_id={profile_location}\ntaxon_groups={profile_taxon_groups}\ncurrentUser={profile_indicia_user_id}";
-      elseif ($param['name']==='param_defaults') 
+      elseif ($param['name']==='param_defaults')
         $param['default'] = "idlist=\nsearchArea=";
-      elseif ($param['name']==='standard_controls') 
+      elseif ($param['name']==='standard_controls')
         $param['default'] = "layerSwitcher\npanZoomBar";
     }
     return $r;
   }
-  
+
   /**
    * Return the generated output.
    * @param array $args List of parameter values passed through to the form depending on how the form has been configured.
@@ -195,11 +195,11 @@ class iform_map_explorer {
         'paramsFormButtonCaption'=>lang::get('Filter'),
         'rowId'=>'occurrence_id',
       )
-    );    
+    );
     iform_report_apply_explore_user_own_preferences($reportOptions);
     $reportOptions['extraParams']['limit']=3000;
     $r = report_helper::report_grid($reportOptions);
-   
+
     $r .= report_helper::report_map(array(
       'readAuth' => $readAuth,
       'dataSource'=>$args['report_name'],

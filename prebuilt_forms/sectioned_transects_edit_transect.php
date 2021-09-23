@@ -16,9 +16,9 @@
  *
  * @package Client
  * @subpackage PrebuiltForms
- * @author  Indicia Team
+ * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link  http://code.google.com/p/indicia/
+ * @link https://github.com/indicia-team/client_helpers/
  */
 
 require_once 'includes/map.php';
@@ -195,6 +195,17 @@ class iform_sectioned_transects_edit_transect {
             'required' => FALSE,
             'group' => 'Transects Editor Settings',
           ),
+          [
+            'name' => 'autocalc_transect_length_attr_id',
+            'caption' => 'Location attribute to autocalc transect length',
+            'description' => 'Location attribute that stores the total transect length: summed from the lengths of the individual sections.',
+            'type' => 'select',
+            'table' => 'location_attribute',
+            'valueField' => 'id',
+            'captionField' => 'caption',
+            'group' => 'Transects Editor Settings',
+            'required' => FALSE,
+          ],
           array(
             'name' => 'autocalc_section_length_attr_id',
             'caption' => 'Location attribute to autocalc section length',
@@ -339,6 +350,7 @@ class iform_sectioned_transects_edit_transect {
     $settings['numSectionsAttr'] = "";
     $settings['maxSectionCount'] = $args['maxSectionCount'];
     $settings['autocalcSectionLengthAttrId'] = empty($args['autocalc_section_length_attr_id']) ? 0 : $args['autocalc_section_length_attr_id'];
+    $settings['autocalcTransectLengthAttrId'] = empty($args['autocalc_transect_length_attr_id']) ? 0 : $args['autocalc_transect_length_attr_id'];
     $settings['defaultSectionGridRef'] = empty($args['default_section_grid_ref']) ? 'parent' : $args['default_section_grid_ref'];
     if ($settings['locationId']) {
       data_entry_helper::load_existing_record($auth['read'], 'location', $settings['locationId']);
@@ -452,7 +464,7 @@ class iform_sectioned_transects_edit_transect {
         $breadcrumb[] = lang::get('New Site');
       drupal_set_breadcrumb($breadcrumb);
     }
-    // Inform JS where to post data to for AJAX form saving
+    // Inform JS where to post data to for AJAX form saving.
     data_entry_helper::$javascript .= 'indiciaData.ajaxFormPostUrl="'.self::$ajaxFormUrl."\";\n";
     data_entry_helper::$javascript .= 'indiciaData.ajaxFormPostSampleUrl="'.self::$ajaxFormSampleUrl."\";\n";
     data_entry_helper::$javascript .= "indiciaData.indiciaSvc = '".data_entry_helper::$base_url."';\n";
@@ -464,10 +476,12 @@ class iform_sectioned_transects_edit_transect {
     data_entry_helper::$javascript .= "indiciaData.sectionChangeConfirm = \"".lang::get('Do you wish to save the currently unsaved changes you have made to the Section Details?')."\";\n";
     data_entry_helper::$javascript .= "indiciaData.numSectionsAttrName = \"".$settings['numSectionsAttr']."\";\n";
     data_entry_helper::$javascript .= "indiciaData.maxSectionCount = \"".$settings['maxSectionCount']."\";\n";
-    data_entry_helper::$javascript .= "indiciaData.autocalcSectionLengthAttrId = ".$settings['autocalcSectionLengthAttrId'].";\n";
+    data_entry_helper::$javascript .= "indiciaData.autocalcTransectLengthAttrId = $settings[autocalcTransectLengthAttrId];\n";
+    data_entry_helper::$javascript .= "indiciaData.autocalcSectionLengthAttrId = $settings[autocalcSectionLengthAttrId];\n";
     data_entry_helper::$javascript .= "indiciaData.defaultSectionGridRef = '".$settings['defaultSectionGridRef']."';\n";
-    if ($settings['locationId'])
+    if ($settings['locationId']) {
       data_entry_helper::$javascript .= "selectSection('S1', true);\n";
+    }
     return $r;
   }
 
@@ -774,8 +788,8 @@ $('#delete-transect').click(deleteSurvey);
           $users[$result->uid] = $result->name;
       }
     } else {
-      $result = \Drupal::entityTypeManager()->getStorage('user')->getQuery()->sort('name', 'DESC')->execute();
-      $userList = \Drupal\user\Entity\User::loadMultiple($result[['user']]);
+      $result = \Drupal::entityTypeManager()->getStorage('user')->getQuery()->sort('name', 'ASC')->execute();
+      $userList = \Drupal\user\Entity\User::loadMultiple($result);
       foreach ($userList as $user) {
         if ($user->id() != 0) {
           $users[$user->id()] = $user->getDisplayName();

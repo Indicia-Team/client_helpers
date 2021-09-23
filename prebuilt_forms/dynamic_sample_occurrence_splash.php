@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Indicia, the OPAL Online Recording Toolkit.
  *
@@ -13,19 +14,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package    Client
- * @subpackage PrebuiltForms
- * @author    Indicia Team
- * @license    http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link     http://code.google.com/p/indicia/
+ * @author Indicia Team
+ * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
+ * @link https://github.com/indicia-team/client_helpers/
  */
 
 /**
  * Prebuilt Indicia data entry form.
  * NB has Drupal specific code. Relies on presence of IForm Proxy.
- *
- * @package    Client
- * @subpackage PrebuiltForms
  */
 
 require_once('includes/dynamic.php');

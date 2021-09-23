@@ -263,54 +263,88 @@ class extension_notifications_centre {
     }
     if (!empty($_GET['group_id']))
       $urlParams['group_id']=$_GET['group_id'];
-    $availableActions =
-      array(
-        array('caption'=>lang::get('Edit this record'), 'class'=>'edit-notification',
-            'url'=>'{rootFolder}{editing_form}', 'urlParams'=>$urlParams,
-            'img'=>$imgPath.'nuvola/package_editors-22px.png', 'visibility_field'=>'editable_flag'),
-        array('caption'=>lang::get('View this record'), 'class'=>'view-notification',
-            'url'=>'{rootFolder}{viewing_form}', 'urlParams'=>$urlParams,
-            'img'=>$imgPath.'nuvola/find-22px.png', 'visibility_field'=>'viewable_flag' ),
-        array('caption'=>lang::get('Mark as read'), 'javascript'=>'remove_message({notification_id});',
-            'img'=>$imgPath.'nuvola/kmail-22px.png')
-      );
+    $availableActions = [
+      [
+        'caption' => lang::get('Edit this record'),
+        'class' => 'edit-notification',
+        'url' => '{rootFolder}{editing_form}',
+        'urlParams' => $urlParams,
+        'img' => $imgPath . 'nuvola/package_editors-22px.png',
+        'visibility_field' => 'editable_flag',
+      ],
+      [
+        'caption' => lang::get('View this record'),
+        'class' => 'view-notification',
+        'url' => '{rootFolder}{viewing_form}',
+        'urlParams' => $urlParams,
+        'img' => $imgPath . 'nuvola/find-22px.png',
+        'visibility_field' => 'viewable_flag',
+      ],
+      [
+        'caption' => lang::get('Mark as read'),
+        'javascript' => 'remove_message({notification_id});',
+        'img' => $imgPath . 'nuvola/kmail-22px.png',
+      ],
+    ];
     if (!empty($options['manage_members_page_path']))
       $availableActions[] = array('caption'=>lang::get('Manage members'), 'class'=>'manage-members',
         'visibility_field'=>'manage_members_flag', 'img'=>$imgPath.'nuvola/invite-22px.png',
         'url'=>'{rootFolder}' . $options['manage_members_page_path'] . '{linked_id}');
     //Only allow replying for 'user' messages.
-    if (isset($options['allowReply']) && $options['allowReply']===true)
-      $availableActions = array_merge($availableActions,array(array('caption'=>lang::get('Reply to this message'), 'img'=>$imgPath.'nuvola/mail_reply-22px.png', 'visibility_field'=>'reply_flag',
+    if (isset($options['allowReply']) && $options['allowReply'] === TRUE)
+      $availableActions = array_merge($availableActions, array(array('caption'=>lang::get('Reply to this message'), 'img'=>$imgPath.'nuvola/mail_reply-22px.png', 'visibility_field'=>'reply_flag',
           'javascript'=>"indiciaData.reply_to_message(".'{notification_id}'.",".'{occurrence_id}'.");")));
-    $extraParams= array(
-      'user_id'=>$user_id,
-      'system_name'=>'indicia',
-      'orderby'=>'triggered_on',
-      'sortdir'=>'DESC',
-      'default_edit_page_path'=>$options['default_edit_page_path'],
-      'view_record_page_path'=>$options['view_record_page_path'],
-      'website_id'=>$website_id);
+    $extraParams = [
+      'user_id' => $user_id,
+      'system_name' => 'indicia',
+      'orderby' => 'triggered_on',
+      'sortdir' => 'DESC',
+      'default_edit_page_path' => $options['default_edit_page_path'],
+      'view_record_page_path' => $options['view_record_page_path'],
+      'website_id' => $website_id,
+    ];
     //Implode the source types so we can submit to the database in one text field.
     if (!empty($sourceType)) {
       $extraParams['source_types'] = "'" . implode("','", $sourceType) . "'";
-      //If the user has supplied some config options for the different source types then we don't need the
-      // source filter drop down.
+      // If the user has supplied some config options for the different source
+      // types then we don't need the source filter drop down.
       $extraParams['source_filter'] = 'all';
     }
-    //Only include notifications associated with a set of recording group ids if option is supplied.
-    if (!empty($options['groupIds']))
+    // Only include notifications associated with a set of recording group ids
+    // if option is supplied.
+    if (!empty($options['groupIds'])) {
       $extraParams['group_ids'] = $options['groupIds'];
-    $columns = array(
-        'data' => array('fieldname'=>'data','json'=>true,
-            'template'=>'<div class="type-{source_type}"><div class="status-{record_status}"></div></div><div class="note-type-{source_type}">{comment}</div>'.
-            '<div class="comment-from helpText" style="margin-left: 34px; display: block;">from {username} on {triggered_date}</div>', 'display'=>'Message'),
-        'occurrence_id' => array('fieldname'=>'occurrence_id'),
-        'actions' => array('actions' => $availableActions, 'responsive-hide' => array('phone' => true)),
-        'triggered_date' => array('fieldname'=>'triggered_date', 'visible' => false)
-    );
-    // allow columns config to override our default setup
+    }
+    // Other optional parameters.
+    if (!empty($options['taxon_meaning_id'])) {
+      $extraParams['taxon_meaning_id'] = $options['taxon_meaning_id'];
+    }
+    if (!empty($options['taxon_group_id'])) {
+      $extraParams['taxon_group_id'] = $options['taxon_group_id'];
+    }
+    $columns = [
+      'data' => [
+        'fieldname' => 'data',
+        'json' => TRUE,
+        'template' => '<div class="type-{source_type}"><div class="status-{record_status}"></div></div><div class="note-type-{source_type}">{comment}</div>' .
+          '<div class="comment-from helpText" style="margin-left: 34px; display: block;">from {username} on {triggered_date}</div>',
+        'display' => 'Message',
+      ],
+      'occurrence_id' => ['fieldname' => 'occurrence_id'],
+      'actions' => [
+        'actions' => $availableActions,
+      ],
+      'triggered_date' => [
+        'fieldname' => 'triggered_date',
+        'visible' => FALSE,
+      ],
+      'linked_id' => [
+        'visible' => FALSE,
+      ],
+    ];
+    // Allow columns config to override our default setup.
     if (!empty($options['columns'])) {
-      foreach($options['columns'] as $column) {
+      foreach ($options['columns'] as $column) {
         if (!empty($column['actions'])) {
           $columns['actions'] = $column;
         }
@@ -319,26 +353,26 @@ class extension_notifications_centre {
         }
       }
     }
-    $r = report_helper::report_grid(array(
-      'id'=>'notifications-'.$options['id'],
+    $r = report_helper::report_grid([
+      'id' => "notifications-$options[id]",
       'readAuth' => $auth['read'],
-      'itemsPerPage'=>10,
-      'dataSource'=>$options['dataSource'],
-      'rowId'=>'notification_id',
-      'ajax'=>true,
-      'mode'=>'report',
-      'extraParams'=>$extraParams,
-      'paramDefaults'=>array('source_filter'=>'all'),
-      'paramsFormButtonCaption'=>lang::get('Filter'),
-      'columns'=>array_values($columns),
-      'responsiveOpts' => array(
-        'breakpoints' => array(
+      'itemsPerPage' => 10,
+      'dataSource' => $options['dataSource'],
+      'rowId' => 'notification_id',
+      'ajax' => TRUE,
+      'mode' => 'report',
+      'extraParams' => $extraParams,
+      'paramDefaults' => ['source_filter' => 'all'],
+      'paramsFormButtonCaption' => lang::get('Filter'),
+      'columns' => array_values($columns),
+      'responsiveOpts' => [
+        'breakpoints' => [
           'phone' => 480,
           'tablet-portrait' => 768,
           'tablet-landscape' => 1024,
-        ),
-      ),
-    ));
+        ],
+      ],
+    ]);
     return $r;
   }
 

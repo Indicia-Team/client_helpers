@@ -143,13 +143,13 @@ Record ID',
           'name' => 'structure',
           'caption' => 'Form Structure',
           'description' => 'Define the structure of the form. Each component must be placed on a new line. <br/>' .
-            "The following types of component can be specified. <br/>" .
-            "<strong>[control name]</strong> indicates a predefined control is to be added to the form with the following predefined controls available: <br/>" .
-                "&nbsp;&nbsp;<strong>[recorddetails]</strong> - displays information relating to the occurrence and its sample<br/>" .
-                "&nbsp;&nbsp;<strong>[buttons]</strong> - outputs a row of edit and explore buttons. Use the @buttons option to change the list of buttons to output ".
-                "by setting this to an array, e.g. [edit] will output just the edit button, [explore] outputs just the explore button, [species details] outputs a species details button. ".
-                "The edit button is automatically skipped if the user does not have rights to edit the record.<br/>" .
-                "&nbsp;&nbsp;<strong>[comments]</strong> - lists any comments associated with the occurrence. Also includes the ability to add a comment<br/>" .
+            'The following types of component can be specified. <br/>' .
+            '<strong>[control name]</strong> indicates a predefined control is to be added to the form with the following predefined controls available: <br/>' .
+                '&nbsp;&nbsp;<strong>[recorddetails]</strong> - displays information relating to the occurrence and its sample. Set @fieldsToExcludeIfLoggedOut to an array of field names to skip for anonymous users.<br/>' .
+                '&nbsp;&nbsp;<strong>[buttons]</strong> - outputs a row of edit and explore buttons. Use the @buttons option to change the list of buttons to output ' .
+                'by setting this to an array, e.g. [edit] will output just the edit button, [explore] outputs just the explore button, [species details] outputs a species details button. ' .
+                'The edit button is automatically skipped if the user does not have rights to edit the record.<br/>' .
+                "&nbsp;&nbsp;<strong>[comments]</strong> - lists any comments associated with the occurrence. Also includes the ability to add a comment, only for logged in users unless @allowAnonymousComment=true.<br/>" .
                 "&nbsp;&nbsp;<strong>[photos]</strong> - photos associated with the occurrence<br/>" .
                 "&nbsp;&nbsp;<strong>[map]</strong> - a map that links to the spatial reference and location<br/>" .
                 "&nbsp;&nbsp;<strong>[previous determinations]</strong> - a list of previous determinations for this record<br/>" .
@@ -191,8 +191,7 @@ Record ID',
         [
           'name' => 'species_details_url',
           'caption' => 'Species details URL',
-          'description' => 'When you click on the ... species page button you are taken to this URL with taxon_meaning_id as a parameter. Use {rootfolder} as a replacement ' .
-              'token for the site\'s root URL.',
+          'description' => 'When you click on the ... species page button you are taken to this URL with taxon_meaning_id as a parameter. Use {rootfolder} as a replacement token for the site\'s root URL.',
           'type' => 'string',
           'required' => FALSE,
           'default' => '',
@@ -316,19 +315,27 @@ Record ID',
   /**
    * Draw Record Details section of the page.
    *
+   * Options include:
+   * * **fieldsToExcludeIfLoggedOut** - array of field names to exclude for
+   *   anonymous users.
+   *
    * @return string
    *   The output freeform report.
    */
   protected static function get_control_recorddetails($auth, $args, $tabalias, $options) {
     global $indicia_templates;
     $options = array_merge([
-      'dataSource' => 'reports_for_prebuilt_forms/record_details_2/record_data_attributes_with_hiddens'
+      'dataSource' => 'reports_for_prebuilt_forms/record_details_2/record_data_attributes_with_hiddens',
+      'fieldsToExcludeIfLoggedOut' => [],
     ], $options);
+    $fieldsToExcludeIfLoggedOut = array_map('strtolower', $options['fieldsToExcludeIfLoggedOut']);
+    $loggedIn = hostsite_get_user_field('id') !== 0;
     $fields = helper_base::explode_lines($args['fields']);
     $fieldsLower = helper_base::explode_lines(strtolower($args['fields']));
-    // Draw the Record Details, but only if they aren't requested as hidden by the administrator.
+    // Draw the Record Details, but only if they aren't requested as hidden by
+    // the administrator.
     $test = $args['operator'] === 'in';
-    $availableFields = array(
+    $availableFields = [
       'occurrence_id' => lang::get('Record ID'),
       'occurrence_external_key' => lang::get('Record external key'),
       'preferred_taxon' => lang::get('Recommended name'),
@@ -347,7 +354,7 @@ Record ID',
       'location_name' => lang::get('Site name'),
       'sample_comment' => lang::get('Sample comment'),
       'licence_code' => lang::get('Licence'),
-    );
+    ];
     self::load_record($auth, $args);
     if (!empty(self::$record['sensitivity_precision'] && !$args['allow_sensitive_full_precision'])) {
       unset($availableFields['recorder']);
@@ -383,6 +390,10 @@ Record ID',
     $title = lang::get('Record of {1}', $nameLabel);
     hostsite_set_page_title($title);
     foreach ($availableFields as $field => $caption) {
+      // Skip some fields if logged out.
+      if (!$loggedIn && in_array(strtolower($caption), $fieldsToExcludeIfLoggedOut)) {
+        continue;
+      }
       if ($test === in_array(strtolower($caption), $fieldsLower) && !empty(self::$record[$field])) {
         $class = self::getFieldClass($field);
         $caption = self::$record[$field] === 'This record is sensitive' ? '' : $caption;
@@ -403,7 +414,7 @@ Record ID',
         }
         $details_report .= str_replace(
           ['{caption}', '{value}', '{class}'],
-          [lang::get($caption), $value, $class],
+          [$caption, $value, $class],
           $indicia_templates['dataValue']
         );
       }
@@ -421,22 +432,24 @@ Record ID',
     $details_report .= '</div>';
 
     if (!self::$record['sensitivity_precision'] || $args['allow_sensitive_full_precision']) {
-      // Draw any custom attributes added by the user, but only for a non-sensitive record.
-      $attrs_report = report_helper::freeform_report(array(
+      // Draw any custom attributes added by the user, but only for a
+      // non-sensitive record.
+      $attrs_report = report_helper::freeform_report([
         'readAuth' => $auth['read'],
         'class' => 'record-details-fields ui-helper-clearfix',
         'dataSource' => $options['dataSource'],
         'bands' => [['content' => str_replace(['{class}'], '', $indicia_templates['dataValue'])]],
-        'extraParams' => array(
+        'extraParams' => [
           'occurrence_id' => $_GET['occurrence_id'],
-          // The SQL needs to take a set of the hidden fields, so this needs to be converted from an array.
+          // The SQL needs to take a set of the hidden fields, so this needs to
+          // be converted from an array.
           'attrs' => strtolower(self::convert_array_to_set($fields)),
           'testagainst' => $args['testagainst'],
           'operator' => $args['operator'],
           'sharing' => $args['sharing'],
           'language' => iform_lang_iso_639_2(hostsite_get_user_field('language')),
-        ),
-      ));
+        ],
+      ]);
     }
 
     $r = '<h3>' . lang::get('Record Details') . '</h3><dl class="detail-panel dl-horizontal" id="detail-panel-recorddetails">';
@@ -450,14 +463,18 @@ Record ID',
   }
 
   /**
-   * Used to convert an array of attributes to a string formatted like a set,
-   * this is then used by the record_data_attributes_with_hiddens report to return
-   * custom attributes which aren't in the hidden attributes list.
+   * Used to convert an array of attributes to a string formatted like a set.
+   *
+   * This is then used by the record_data_attributes_with_hiddens report to
+   * return custom attributes which aren't in the hidden attributes list.
+   *
+   * @param array
+   *   Attributes.
    *
    * @return string
    *   The set of hidden custom attributes.
    */
-  protected static function convert_array_to_set($theArray) {
+  protected static function convert_array_to_set(array $theArray) {
     return "'" . implode("','", str_replace("'", "''", $theArray)) . "'";
   }
 
@@ -468,7 +485,7 @@ Record ID',
    *   The output report grid.
    */
   protected static function get_control_photos($auth, $args, $tabalias, $options) {
-    iform_load_helpers(array('data_entry_helper'));
+    iform_load_helpers(['data_entry_helper']);
     $options = array_merge([
       'title' => lang::get('Photos and media'),
     ], $options);
@@ -487,19 +504,22 @@ Record ID',
    *   The output report grid.
    */
   protected static function get_control_samplephotos($auth, $args, $tabalias, $options) {
-    iform_load_helpers(array('data_entry_helper'));
-    $options = array_merge(array(
+    iform_load_helpers(['data_entry_helper']);
+    $options = array_merge([
       'title' => lang::get('Sample photos and media'),
-    ), $options);
-    $occurrence = data_entry_helper::get_population_data(array(
+    ], $options);
+    $occurrence = data_entry_helper::get_population_data([
       'table' => 'occurrence',
-      'extraParams' => $auth['read'] + array('id' => $_GET['occurrence_id'], 'view' => 'detail'),
-    ));
-    $settings = array(
+      'extraParams' => $auth['read'] + [
+        'id' => $_GET['occurrence_id'],
+        'view' => 'detail',
+      ],
+    ]);
+    $settings = [
       'table' => 'sample_medium',
       'key' => 'sample_id',
       'value' => $occurrence[0]['sample_id'],
-    );
+    ];
     return self::commonControlPhotos($auth, $args, $options, $settings);
   }
 
@@ -510,23 +530,29 @@ Record ID',
    *   The output report grid.
    */
   protected static function get_control_parentsamplephotos($auth, $args, $tabalias, $options) {
-    iform_load_helpers(array('data_entry_helper'));
-    $options = array_merge(array(
-      'title' => lang::get('Parent sample photos and media')
-    ), $options);
+    iform_load_helpers(['data_entry_helper']);
+    $options = array_merge([
+      'title' => lang::get('Parent sample photos and media'),
+    ], $options);
     $occurrence = data_entry_helper::get_population_data(array(
       'table' => 'occurrence',
-      'extraParams' => $auth['read'] + array('id' => $_GET['occurrence_id'], 'view' => 'detail'),
+      'extraParams' => $auth['read'] + [
+        'id' => $_GET['occurrence_id'],
+        'view' => 'detail',
+      ],
     ));
-    $sample = data_entry_helper::get_population_data(array(
+    $sample = data_entry_helper::get_population_data([
       'table' => 'sample',
-      'extraParams' => $auth['read'] + array('id' => $occurrence[0]['sample_id'], 'view' => 'detail'),
-    ));
-    $settings = array(
-        'table' => 'sample_image',
-        'key' => 'sample_id',
-        'value' => $sample[0]['parent_id'],
-    );
+      'extraParams' => $auth['read'] + [
+        'id' => $occurrence[0]['sample_id'],
+        'view' => 'detail',
+      ],
+    ]);
+    $settings = [
+      'table' => 'sample_image',
+      'key' => 'sample_id',
+      'value' => $sample[0]['parent_id'],
+    ];
     return self::commonControlPhotos($auth, $args, $options, $settings);
   }
 
@@ -645,11 +671,34 @@ JS;
   /**
    * Draw the Comments section of the page.
    *
+   * Options include:
+   * * **allowAnonymousComment** - set to true to allow comments by users who
+   *   aren't logged on.
+   * * **showCorrespondence** - show verification correspondance (typically
+   *   only for alert species).
+   *
    * @return string
    *   The output HTML string.
    */
   protected static function get_control_comments($auth, $args, $tabalias, $options) {
-    iform_load_helpers(array('data_entry_helper'));
+    iform_load_helpers(['data_entry_helper']);
+    data_entry_helper::add_resource('font_awesome');
+    $statusClasses = [
+      'V' => 'far fa-check-circle status-V',
+      'V1' => 'fas fa-check-double status-V1',
+      'V2' => 'fas fa-check status-V2',
+      'C' => 'fas fa-clock status-C',
+      'C3' => 'fas fa-check-square status-C3',
+      'R' => 'far fa-times-circle status-R',
+      'R4' => 'fas fa-times status-R4',
+      'R5' => 'fas fa-times status-R5',
+      'Q' => 'fas fa-question-circle',
+      'A' => 'fas fa-reply',
+    ];
+    $options = array_merge([
+      'allowAnonymousComment' => FALSE,
+      'showCorrespondence' => FALSE,
+    ], $options);
     $r = '<div>';
     $params = [
       'occurrence_id' => $_GET['occurrence_id'],
@@ -659,12 +708,12 @@ JS;
     if (!$args['allow_confidential']) {
       $params['confidential'] = 'f';
     }
-    $comments = data_entry_helper::get_population_data(array(
+    $comments = data_entry_helper::get_population_data([
       'table' => 'occurrence_comment',
       'extraParams' => $auth['read'] + $params,
       'nocache' => TRUE,
       'sharing' => $args['sharing'],
-    ));
+    ]);
     $r .= '<div id="comment-list">';
     if (count($comments) === 0) {
       $r .= '<p id="no-comments">' . lang::get('No comments have been made.') . '</p>';
@@ -673,16 +722,28 @@ JS;
       foreach ($comments as $comment) {
         $r .= '<div class="comment">';
         $r .= '<div class="header">';
-        $r .= "<strong>$comment[person_name]</strong> ";
+        if (!empty($comment['person_name'])) {
+          $r .= "<span class=\"comment-person\">$comment[person_name]</span> ";
+        }
         $commentTime = strtotime($comment['updated_on']);
-        // Output the comment time. Skip if in future (i.e. server/client date settings don't match).
+        // Output the comment time. Skip if in future (i.e. server/client date
+        // settings don't match).
         if ($commentTime < time()) {
-          $r .= helper_base::ago($commentTime);
+          $r .= '<span class="comment-date">' . helper_base::ago($commentTime) . '</span>';
         }
         $r .= '</div>';
-        $c = str_replace("\n", '<br/>', $comment['comment']);
-        $r .= "<div>$c</div>";
-        if (!empty($options['showCorrespondence']) && !empty($comment['correspondence_data'])) {
+        $icons = '';
+        if (!empty($comment['record_status'])) {
+          $status = $comment['record_status'] . (empty($comment['record_substatus']) ? '' : $comment['record_substatus']);
+          $icons = '<span class="' . $statusClasses[$status] . '"></span>';
+        }
+        if ($comment['query'] === 't') {
+          $icons .= '<span class="' . $statusClasses['Q'] . '"></span>';
+        }
+        // Reformat to HTML line breaks.
+        $comment = str_replace("\n", '<br/>', $comment['comment']);
+        $r .= "<div>$icons$comment</div>";
+        if ($options['showCorrespondence'] && !empty($comment['correspondence_data'])) {
           $data = str_replace("\n", '<br/>', $comment['correspondence_data']);
           $correspondenceData = json_decode($data, TRUE);
           foreach ($correspondenceData as $type => $items) {
@@ -700,41 +761,44 @@ JS;
       }
     }
     $r .= '</div>';
-    $r .= '<form><fieldset><legend>' . lang::get('Add new comment') . '</legend>';
-    $r .= '<input type="hidden" id="comment-by" value="' . hostsite_get_user_field('name') . '"/>';
-    $r .= '<textarea id="comment-text"></textarea><br/>';
-    $r .= '<button type="button" class="default-button" onclick="indiciaFns.saveComment(';
-    $r .= $_GET['occurrence_id'] . ');">' . lang::get('Save') . '</button>';
-    $r .= '</fieldset></form>';
+    if (hostsite_get_user_field('id') || $options['allowAnonymousComment']) {
+      $r .= '<form><fieldset><legend>' . lang::get('Add new comment') . '</legend>';
+      $r .= '<input type="hidden" id="comment-by" value="' . hostsite_get_user_field('name') . '"/>';
+      $r .= '<textarea id="comment-text"></textarea><br/>';
+      $r .= '<button type="button" class="default-button" onclick="indiciaFns.saveComment(';
+      $r .= $_GET['occurrence_id'] . ');">' . lang::get('Save') . '</button>';
+      $r .= '</fieldset></form>';
+    }
     $r .= '</div>';
 
     return '<div class="detail-panel" id="detail-panel-comments"><h3>' . lang::get('Comments') . '</h3>' . $r . '</div>';
   }
 
   /**
-   * Displays a list of determinations associated with an occurrence record. This particular panel
-   * is ommitted if there are no determinations.
+   * Displays a list of determinations associated with an occurrence record.
+   *
+   * This particular panel is ommitted if there are no determinations.
    *
    * @return string
    *   The determinations report grid.
    */
   protected static function get_control_previousdeterminations($auth, $args, $tabalias, $options) {
-    $options = array_merge(array(
+    $options = array_merge([
       'report' => 'library/determinations/determinations_list'
-    ));
-    return report_helper::freeform_report(array(
+    ]);
+    return report_helper::freeform_report([
       'readAuth' => $auth['read'],
       'dataSource' => $options['report'],
       'mode' => 'report',
       'autoParamsForm' => FALSE,
       'header' => '<div class="detail-panel" id="detail-panel-previousdeterminations"><h3>' . lang::get('Previous determinations') . '</h3>',
-      'bands' => array(array('content' => '<div class="field ui-helper-clearfix">{taxon_html} by {person_name} on {date}</div>')),
+      'bands' => [['content' => '<div class="field ui-helper-clearfix">{taxon_html} by {person_name} on {date}</div>']],
       'footer' => '</div>',
-      'extraParams' => array(
+      'extraParams' => [
         'occurrence_id' => $_GET['occurrence_id'],
         'sharing' => $args['sharing'],
-      ),
-    ));
+      ],
+    ]);
   }
 
   /**
@@ -750,16 +814,16 @@ JS;
    * @throws \exception
    */
   protected static function get_control_occurrenceassociations($auth, $args, $tabalias, $options) {
-    $options = array_merge(array(
+    $options = array_merge([
       'dataSource' => 'library/occurrence_associations/filterable_explore_list',
       'itemsPerPage' => 100,
       'header' => '<ul>',
       'footer' => '</ul>',
-      'bands' => array(array('content' => '<li>{association_detail}</li>')),
-      'emptyText' => '<p>No association information available</p>'
-    ), $options);
+      'bands' => [['content' => '<li>{association_detail}</li>']],
+      'emptyText' => '<p>No association information available</p>',
+    ], $options);
     return '<div class="detail-panel" id="detail-panel-occurrenceassociations"><h3>' . lang::get('Associations') . '</h3>' .
-    report_helper::freeform_report(array(
+    report_helper::freeform_report([
       'readAuth' => $auth['read'],
       'dataSource' => $options['dataSource'],
       'itemsPerPage' => $options['itemsPerPage'],
@@ -769,11 +833,11 @@ JS;
       'emptyText' => $options['emptyText'],
       'mode' => 'report',
       'autoParamsForm' => FALSE,
-      'extraParams' => array(
+      'extraParams' => [
         'occurrence_id' => $_GET['occurrence_id'],
         'sharing' => $args['sharing'],
-      )
-    )) . '</div>';
+      ],
+    ]) . '</div>';
   }
 
   /**
@@ -867,7 +931,7 @@ JS;
         'species details',
       ),
     ));
-    $r = '';
+    $r = '<div class="record-details-buttons">';
     foreach ($options['buttons'] as $button) {
       if ($button === 'edit') {
         $r .= self::buttons_edit($auth, $args, $tabalias, $options);
@@ -882,6 +946,7 @@ JS;
         throw new exception("Unknown button $button");
       }
     }
+    $r .= '</div>';
     return $r;
   }
 

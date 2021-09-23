@@ -512,6 +512,8 @@ $('form#entry_form').tooltip({
    * and uses it to load the list onto a species grid on the page. This allows
    * a scratchpad to be used as the first step in data entry.
    *
+   * Should only be used on forms that have a single species_checklist control.
+   *
    * @param array $auth
    * @param array $args
    * @param string $tabalias
@@ -525,15 +527,18 @@ $('form#entry_form').tooltip({
    *     species when initially loaded.
    *   * **showMessage** can be set to FALSE to disable the explanatory
    *     message.
-   * @return string HTML to add to the page. Contains hidden inputs which set values required for functionality to work.
+   *
+   * @return string
+   *   HTML to add to the page. Contains hidden inputs which set values
+   *   required for functionality to work.
    */
   public static function load_species_list_from_scratchpad($auth, $args, $tabalias, $options) {
     $options = array_merge(
-      array(
+      [
         'parameter' => 'scratchpad_list_id',
         'tickAll' => TRUE,
         'showMessage' => TRUE,
-      ), $options
+      ], $options
     );
     if (empty($options['scratchpad_list_id']) && empty($_GET[$options['parameter']])) {
       // No list to load.
@@ -566,10 +571,11 @@ $('form#entry_form').tooltip({
         'fieldname' => 'scratchpad_list_id',
         'default' => $scratchpad_list_id,
       ]);
-      $r .= data_entry_helper::hidden_text(array(
+      $r .= data_entry_helper::hidden_text([
         'fieldname' => 'submission_extensions[]',
-        'default' => 'misc_extensions.remove_scratchpad'
-      ));
+        'default' => 'misc_extensions.remove_scratchpad',
+      ]);
+      data_entry_helper::$indiciaData['speciesChecklistScratchpadListId'] = $options['scratchpad_list_id'];
     }
     return $r;
   }
@@ -577,27 +583,29 @@ $('form#entry_form').tooltip({
   /**
    * Scratchpad deletion request callback.
    *
-   * An extension for the submission building code that adds a deletion request for a scratchpad that has now been
-   * converted into a list of records. Automatically called when the load_species_list_from_scratchpad control is
-   * used.
+   * An extension for the submission building code that adds a deletion
+   * request for a scratchpad that has now been converted into a list of
+   * records. Automatically called when the load_species_list_from_scratchpad
+   * control is used.
    */
   public static function remove_scratchpad($values, $s_array) {
-    // Convert to a list submission so we can send a scratchpad list deletion as well as the main submission.
-    $s_array[0] = array(
+    // Convert to a list submission so we can send a scratchpad list deletion
+    // as well as the main submission.
+    $s_array[0] = [
       'id' => 'sample',
-      'submission_list' => array(
-        'entries' => array(
-          array(
+      'submission_list' => [
+        'entries' => [
+          [
             'id' => 'scratchpad_list',
-            'fields' => array(
-              'id' => array('value' => $values['scratchpad_list_id']),
-              'deleted' => array('value' => 't')
-            )
-          ),
-          $s_array[0]
-        )
-      )
-    );
+            'fields' => [
+              'id' => ['value' => $values['scratchpad_list_id']],
+              'deleted' => ['value' => 't'],
+            ],
+          ],
+          $s_array[0],
+        ],
+      ],
+    ];
   }
 
   /**
@@ -697,6 +705,25 @@ JS;
       $r .= lang::get($options['text']);
     }
     return $r;
+  }
+
+  /**
+   * Takes an array of localisation strings and adds them to indiciaData.lang.
+   *
+   * For use by custom JS code. Options include:
+   * * @group - set to the named group to place the strings inside, which will
+   *   the name of a property added to indiciaData.lang.
+   * * @strings - a JSON object containing key/value pairs where the key is the
+   *   language string key and the value is the text in the default language.
+   */
+  public static function localised_text_js($auth, $args, $tabalias, $options) {
+    if (empty($options['group'])) {
+      return 'The misc_extensions.localised_text_js control needs a @group parameter';
+    }
+    if (empty($options['strings'])) {
+      return 'The misc_extensions.localised_text_js control needs a @strings parameter';
+    }
+    helper_base::addLanguageStringsToJs($options['group'], $options['strings']);
   }
 
   /**

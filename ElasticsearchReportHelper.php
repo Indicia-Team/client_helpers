@@ -82,6 +82,30 @@ class ElasticsearchReportHelper {
       'caption' => 'Submitted on',
       'description' => 'Date the record was submitted.',
     ],
+    'metadata.website.id' => [
+      'caption' => 'Website ID',
+      'description' => 'Unique ID of the website the record was submitted from.',
+    ],
+    'metadata.website.title' => [
+      'caption' => 'Website title',
+      'description' => 'Title of the website the record was submitted from.',
+    ],
+    'metadata.survey.id' => [
+      'caption' => 'Survey dataset ID',
+      'description' => 'Unique ID of the survey dataset the record was submitted to.',
+    ],
+    'metadata.survey.title' => [
+      'caption' => 'Survey dataset title',
+      'description' => 'Title of the survey dataset the record was submitted to.',
+    ],
+    'metadata.group.id' => [
+      'caption' => 'Group ID',
+      'description' => 'Unique ID of the recording group the record was submitted to.',
+    ],
+    'metadata.group.title' => [
+      'caption' => 'Group title',
+      'description' => 'Title of the recording group the record was submitted to.',
+    ],
     '#event_date#' => [
       'caption' => 'Date',
       'description' => 'Date of the record.',
@@ -560,8 +584,10 @@ HTML;
     if (!empty($group_id)) {
       // Apply filtering by group.
       helper_base::$indiciaData['filter_group_id'] = $group_id;
-      $implicitVal = ['f' => FALSE, 't' => TRUE, '' => NULL][$implicit];
-      helper_base::$indiciaData['filter_group_implicit'] = $implicitVal;
+      if (is_string($implicit)) {
+        $implicit = ['f' => FALSE, 't' => TRUE, '' => NULL][$implicit];
+      }
+      helper_base::$indiciaData['filter_group_implicit'] = $implicit;
       if ($options['showGroupSummary'] || $options['showGroupPages']) {
         $groups = data_entry_helper::get_population_data(array(
           'table' => 'group',
@@ -585,7 +611,7 @@ HTML;
     }
     $filterBoundaries = helper_base::get_population_data([
       'report' => 'library/groups/group_boundary_transformed',
-      'extraParams' => $options['readAuth'] + ['group_id' => $_GET['group_id']],
+      'extraParams' => $options['readAuth'] + ['group_id' => $group_id],
       'cachePerUser' => FALSE,
     ]);
     if (count($filterBoundaries) > 0) {
@@ -1358,11 +1384,11 @@ HTML;
     }
     $optionalLinkArray = [];
     if (!empty($options['editPath'])) {
-      $optionalLinkArray[] = '<a class="edit" title="Edit this record"><span class="fas fa-edit"></span></a>';
+      $optionalLinkArray[] = '<a class="edit" title="Edit this record" target="_blank"><span class="fas fa-edit"></span></a>';
     }
     $optionalLinkArray[] = '<button class="redet" title="Redetermine this record"><span class="fas fa-tag"></span></button>';
     if (!empty($options['viewPath'])) {
-      $optionalLinkArray[] = '<a class="view" title="View this record\'s details page"><span class="fas fa-file-invoice"></span></a>';
+      $optionalLinkArray[] = '<a class="view" target="_blank" title="View this record\'s details page" target="_blank"><span class="fas fa-file-invoice"></span></a>';
     }
     $optionalLinks = implode("\n  ", $optionalLinkArray);
     helper_base::add_resource('fancybox');

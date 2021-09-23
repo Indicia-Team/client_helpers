@@ -1,0 +1,13 @@
+.record-details-buttons a {
+  margin: 15px 15px 0  0;
+}
+#comment-text {
+  width: 100%;
+}
+.comment-person {
+  font-weight: bold;
+}
+.comment-date {
+  font-size: 90%;
+  font-style: italic;
+}

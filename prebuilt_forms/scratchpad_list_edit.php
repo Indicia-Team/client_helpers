@@ -16,9 +16,9 @@
  *
  * @package Client
  * @subpackage PrebuiltForms
- * @author  Indicia Team
+ * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link  http://code.google.com/p/indicia/
+ * @link https://github.com/indicia-team/client_helpers/
  */
 
 /**

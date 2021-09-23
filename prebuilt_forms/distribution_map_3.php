@@ -13,11 +13,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package Client
- * @subpackage PrebuiltForms
- * @author  Indicia Team
+ * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link  http://code.google.com/p/indicia/
+ * @link https://github.com/indicia-team/client_helpers/
  */
 
 require_once('includes/map.php');
@@ -31,14 +29,14 @@ require_once('includes/language_utils.php');
  */
 class iform_distribution_map_3 {
 
-  /** 
+  /**
    * Return the form metadata.
    * @return string The definition of the form.
    */
   public static function get_distribution_map_3_definition() {
     return array(
       'title'=>'Distribution Map 3',
-      'category' => 'Reporting',      
+      'category' => 'Reporting',
       'description'=>'Outputs a distribution map using Indicia data from GeoServer. '.
         'Can output a map with up to three layers, each for a single species '
     );
@@ -113,7 +111,7 @@ class iform_distribution_map_3 {
           'type' => 'checkbox',
           'required' => false,
           'group' => 'Distribution Layer 1',
-        ), 
+        ),
         array(
           'name' => 'layer_title_2',
           'caption' => 'Layer Caption',
@@ -177,7 +175,7 @@ class iform_distribution_map_3 {
           'type' => 'checkbox',
           'required' => false,
           'group' => 'Distribution Layer 2',
-        ), 
+        ),
         array(
           'name' => 'layer_title_3',
           'caption' => 'Layer Caption',
@@ -241,7 +239,7 @@ class iform_distribution_map_3 {
           'type' => 'checkbox',
           'required' => false,
           'group' => 'Distribution Layer 3',
-        ), 
+        ),
         array(
           'name' => 'refresh_timer',
           'caption' => 'Automatic reload seconds',
@@ -256,7 +254,7 @@ class iform_distribution_map_3 {
           'description' => 'Provide the full URL of a page to reload after the number of seconds indicated above.',
           'type' => 'string',
           'required' => false
-        )  
+        )
       )
     );
   }
@@ -271,7 +269,7 @@ class iform_distribution_map_3 {
     // setup the map options
     $options = iform_map_get_map_options($args, $readAuth);
     $olOptions = iform_map_get_ol_options($args);
-    
+
     for ($layer = 1; $layer <= 3; $layer++) {
       $argTitle = $args["layer_title_$layer"];
       if (isset($argTitle) && !empty($argTitle)) {
@@ -286,7 +284,7 @@ class iform_distribution_map_3 {
         $layers = "layers: '$argFeature'";
 
         $argStyle = $args["wms_style_$layer"];
-        $style = $argStyle ? ", styles: '$argStyle'" : ''; 
+        $style = $argStyle ? ", styles: '$argStyle'" : '';
 
         $argWebsite = $args["website_id"];
         $filter = ", CQL_FILTER: 'website_id=$argWebsite AND taxon_meaning_id=$meaningId";
@@ -302,14 +300,14 @@ class iform_distribution_map_3 {
         $script = "  var distLayer$layer = new OpenLayers.Layer.WMS(";
         $script .= "'$layerTitle', '$url',";
         $script .= "{" ."$layers, transparent: true $filter $style},";
-        $script .= "{isBaseLayer: false, sphericalMercator: true, singleTile: true}";     
-        $script .= ");\n";                 
+        $script .= "{isBaseLayer: false, sphericalMercator: true, singleTile: true}";
+        $script .= ");\n";
         map_helper::$onload_javascript .= $script;
 
         $options['layers'][] = "distLayer$layer";
       }
     }
-    
+
     // This is not a map used for input
     $options['editLayer'] = false;
     // output a legend
@@ -317,7 +315,7 @@ class iform_distribution_map_3 {
       'includeSwitchers' => true,
       'includeHiddenLayers' => true
     ));
-    // output a map    
+    // output a map
     $r .= map_helper::map_panel($options, $olOptions);
     // Set up a page refresh for dynamic update of the map at set intervals
     if ($args['refresh_timer']!==0 && is_numeric($args['refresh_timer'])) { // is_int prevents injection
@@ -339,7 +337,7 @@ class iform_distribution_map_3 {
   public static function get_submission($values, $args) {
     return null;
   }
-  
+
   /**
    * Figures out the meaning ID of the taxon to show on the layer.
    *
@@ -372,7 +370,7 @@ class iform_distribution_map_3 {
 
     return $meaningId;
   }
-  
+
   /**
    * Converts an external key to a meaning ID for a taxon.
    *
@@ -388,7 +386,7 @@ class iform_distribution_map_3 {
         'view' => 'detail',
         'external_key' => $key,
         'taxon_list_id' => $list,
-        'preferred' => true
+        'preferred' => 't'
     )
     );
     $prefRecords = data_entry_helper::get_population_data($fetchOpts);
@@ -402,8 +400,8 @@ class iform_distribution_map_3 {
     }
     if ($meaningId==0)
     return lang::get("The taxon identified by the taxon identifier cannot be found.");
-    
-    return $meaningId;    
+
+    return $meaningId;
   }
 
   /**

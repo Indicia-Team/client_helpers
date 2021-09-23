@@ -15,9 +15,9 @@
  *
  * @package Client
  * @subpackage PrebuiltForms
- * @author  Indicia Team
+ * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link  http://code.google.com/p/indicia/
+ * @link https://github.com/indicia-team/client_helpers/
  */
 
 require_once('includes/report.php');
@@ -32,7 +32,7 @@ require_once('includes/map.php');
  */
 class iform_report_map {
 
-  /** 
+  /**
    * Return the form metadata.
    * @return string The definition of the form.
    */
@@ -45,7 +45,7 @@ class iform_report_map {
       'recommended' => true
     );
   }
-  
+
   /**
    * Get the list of parameters for this form.
    * @return array List of parameters that this form requires.
@@ -188,8 +188,8 @@ class iform_report_map {
       $reportOptions['clickableLayersOutputColumns'] = helper_base::explode_lines_key_value_pairs($args['click_on_map_columns']);
     if ($args['click_on_map_mode']<>'none')
       $reportOptions['clickableLayersOutputMode'] = $args['click_on_map_mode'];
-    
-    // Use the proxy module if enabled, to get round limitations in URL length for 
+
+    // Use the proxy module if enabled, to get round limitations in URL length for
     // filtered WMS requests.
     if (function_exists('hostsite_module_exists') && hostsite_module_exists('iform_proxy')) {
       $reportOptions['proxy'] = map_helper::getRootFolder(true) .
@@ -230,14 +230,14 @@ class iform_report_map {
     }
     if (isset($args['map_toolbar_pos']))
       $options['toolbarDiv'] = $args['map_toolbar_pos'];
-      
+
     $r .= map_helper::map_panel($options, $olOptions);
     if ($args['layer_picker']=='after')
       $r .= map_helper::layer_list($picker);
     if ($args['legend']=='after')
       $r .= map_helper::layer_list($legend);
     $r .= '</div>';
-    
+
     return $r;
   }
 

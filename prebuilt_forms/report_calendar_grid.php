@@ -15,9 +15,9 @@
  *
  * @package Client
  * @subpackage PrebuiltForms
- * @author  Indicia Team
+ * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link  http://code.google.com/p/indicia/
+ * @link https://github.com/indicia-team/client_helpers/
  */
 
 require_once('includes/form_generation.php');
@@ -56,9 +56,9 @@ class iform_report_calendar_grid {
    */
   public static function get_report_calendar_grid_definition() {
     return array(
-      'title'=>'Report Calendar Grid',
+      'title' => 'Report Calendar Grid',
       'category' => 'Reporting',
-      'description'=>'Outputs a grid of data loaded from an Indicia report, arranged as a calendar.',
+      'description' => 'Outputs a grid of data loaded from an Indicia report, arranged as a calendar.',
       'helpLink' => 'http://code.google.com/p/indicia/wiki/PrebuiltFormReportCalendarGrid'
     );
   }
@@ -70,33 +70,41 @@ class iform_report_calendar_grid {
   public static function get_parameters() {
     return
       array(
-        array(
-          'name'=>'report_name',
-          'caption'=>'Report Name',
-          'description'=>'Select the report to provide the output for this page.',
-          'type'=>'report_helper::report_picker',
-          'default'=>'library/samples/samples_list_for_cms_user2',
-          'group'=>'Report Settings'
-        ),
-        array(
+        [
+          'name' => 'report_name',
+          'caption' => 'Report Name',
+          'description' => 'Select the report to provide the output for this page.',
+          'type' => 'report_helper::report_picker',
+          'default' => 'library/samples/samples_list_for_cms_user2',
+          'group' => 'Report Settings',
+        ],
+        [
+          'name' => 'location_selector_report_name',
+          'caption' => 'Report Name for the location selector',
+          'description' => 'Select the report to provide the list of locations available to choose from.',
+          'type' => 'report_helper::report_picker',
+          'default' => 'reports_for_prebuilt_forms/report_calendar_grid/locations_for_cms_user',
+          'group' => 'Report Settings',
+        ],
+        [
           'name' => 'param_presets',
           'caption' => 'Preset Parameter Values',
           'description' => 'To provide preset values for any report parameter and avoid the user having to enter them, enter each parameter into this '.
               'box one per line. Each parameter is followed by an equals then the value, e.g. survey_id=6. You can use {user_id} as a value which will be replaced by the '.
               'user ID from the CMS logged in user or {username} as a value replaces with the logged in username.',
           'type' => 'textarea',
-          'required' => false,
-          'group'=>'Report Settings'
-        ),
-        array(
+          'required' => FALSE,
+          'group' => 'Report Settings',
+        ],
+        [
           'name' => 'report_group',
           'caption' => 'Report group',
           'description' => 'When using several reports on a single page (e.g. <a href="http://code.google.com/p/indicia/wiki/DrupalDashboardReporting">dashboard reporting</a>) '.
             'you must ensure that all reports that share a set of input parameters have the same report group as the parameters report.',
           'type' => 'text_input',
           'default' => 'report',
-          'group' => 'Report Settings'
-        ),
+          'group' => 'Report Settings',
+        ],
         array(
           'name' => 'remember_params_report_group',
           'caption' => 'Remember report parameters group',
@@ -104,119 +112,119 @@ class iform_report_calendar_grid {
             'The parameters are saved site wide, so if several reports share the same value and the same report group then the parameter '.
             'settings will be shared across the reports even if they are on different pages of the site. This functionality '.
             'requires cookies to be enabled on the browser.',
-          'type'=>'text_input',
-          'required'=>false,
+          'type' => 'text_input',
+          'required'=>FALSE,
           'default' => '',
-          'group'=>'Report Settings'
+          'group' => 'Report Settings'
         ),
         array(
-          'name'=>'includeLocationFilter',
-          'caption'=>'Include user specific location filter',
-          'description'=>'Choose whether to include a filter on the locations assigned to this user using the CMS User ID location attribute. This alters how the links are highlighted, and provides a default site when creating a new sample.',
-          'type'=>'boolean',
-          'default' => false,
-          'required' => false,
+          'name' => 'includeLocationFilter',
+          'caption' => 'Include user specific location filter',
+          'description' => 'Choose whether to include a filter on the locations assigned to this user using the CMS User ID location attribute. This alters how the links are highlighted, and provides a default site when creating a new sample.',
+          'type' => 'boolean',
+          'default' => FALSE,
+          'required' => FALSE,
           'group' => 'Controls'
         ),
         array(
-          'name'=>'locationTypesFilter',
-          'caption'=>'Restrict locations to types',
-          'description'=>'Implies a location type selection control. Comma separated list of the [location types]:[survey_id]:[url extension] to be included in the control. '.
+          'name' => 'locationTypesFilter',
+          'caption' => 'Restrict locations to types',
+          'description' => 'Implies a location type selection control. Comma separated list of the [location types]:[survey_id]:[url extension] to be included in the control. '.
               'Retricts the locations in the user specific location filter to the selected location type. '.
               'The CMS User ID attribute must be defined for all the individual location types listed, or for all location types. '.
               'If provided the survey_id is used to override any preset values when running the report. '.
               'If provided the url extension is added to the New Sample URL and Existing Sample URL. To add it as part of the path, prefix with a "/", and to add as a parameter, prefix with a "&amp".',
-          'type'=>'string',
-          'default' => false,
-          'required' => false,
+          'type' => 'string',
+          'default' => FALSE,
+          'required' => FALSE,
           'group' => 'Controls'
         ),
       	array(
-      		'name'=>'first_year',
-      		'caption'=>'First Year of Data',
-      		'description'=>'Used to determine first year displayed in the year control. Final Year will be current year.',
-      		'type'=>'int',
-          	'required' => false,
-      		'group'=>'Controls'
+      		'name' => 'first_year',
+      		'caption' => 'First Year of Data',
+      		'description' => 'Used to determine first year displayed in the year control. Final Year will be current year.',
+      		'type' => 'int',
+          	'required' => FALSE,
+      		'group' => 'Controls'
       	),
         array(
-          'name'=>'includeSrefInLocationFilter',
-          'caption'=>'Include Sref in location filter name',
-          'description'=>'When including a user specific location filter, choose whether to include the sref when generating the select name.',
-          'type'=>'boolean',
-          'default' => true,
-          'required' => false,
+          'name' => 'includeSrefInLocationFilter',
+          'caption' => 'Include Sref in location filter name',
+          'description' => 'When including a user specific location filter, choose whether to include the sref when generating the select name.',
+          'type' => 'boolean',
+          'default' => TRUE,
+          'required' => FALSE,
           'group' => 'Controls'
         ),
         array(
-          'name'=>'weekstart',
-          'caption'=>'Start of week definition',
-          'description'=>'Define the first day of the week. There are 2 options.<br/>'.
+          'name' => 'weekstart',
+          'caption' => 'Start of week definition',
+          'description' => 'Define the first day of the week. There are 2 options.<br/>'.
                         "&nbsp;&nbsp;<strong>weekday=&lt;n&gt;</strong> where <strong>&lt;n&gt;</strong> is a number between 1 (for Monday) and 7 (for Sunday).<br/>".
                         "&nbsp;&nbsp;<strong>date=MMM/DD</strong> where <strong>MMM/DD</strong> is a month/day combination: e.g. choosing Apr-1 will start each week on the day of the week on which the 1st of April occurs.",
-          'type'=>'string',
+          'type' => 'string',
           'default' => 'weekday=7',
           'group' => 'Report Settings'
         ),
         array(
-          'name'=>'includeWeekNumber',
-          'caption'=>'Include Week Number column in calendar grid',
-          'description'=>'Choose whether to include the week number column in the calendar grid.',
-          'type'=>'boolean',
-          'default' => false,
-          'required' => false,
+          'name' => 'includeWeekNumber',
+          'caption' => 'Include Week Number column in calendar grid',
+          'description' => 'Choose whether to include the week number column in the calendar grid.',
+          'type' => 'boolean',
+          'default' => FALSE,
+          'required' => FALSE,
           'group' => 'Report Settings'
         ),
         array(
-          'name'=>'weekOneContains',
-          'caption'=>'Week One Contains',
-          'description'=>'When including a week number column, calculate week one as the week containing this date: value should be in the format <strong>MMM/DD</strong>, which is a month/day combination: e.g. choosing Apr-1 will mean week one contains the date of the 1st of April. Default is the Jan-01',
-          'type'=>'string',
-          'required' => false,
+          'name' => 'weekOneContains',
+          'caption' => 'Week One Contains',
+          'description' => 'When including a week number column, calculate week one as the week containing this date: value should be in the format <strong>MMM/DD</strong>, which is a month/day combination: e.g. choosing Apr-1 will mean week one contains the date of the 1st of April. Default is the Jan-01',
+          'type' => 'string',
+          'required' => FALSE,
           'group' => 'Report Settings'
         ),
         array(
-          'name'=>'weekNumberFilter',
-          'caption'=>'Restrict displayed weeks',
-          'description'=>'Restrict displayed weeks to between 2 weeks defined by their week numbers. Colon separated.<br />'.
+          'name' => 'weekNumberFilter',
+          'caption' => 'Restrict displayed weeks',
+          'description' => 'Restrict displayed weeks to between 2 weeks defined by their week numbers. Colon separated.<br />'.
                          'Leaving an empty value means the end of the year. Blank means no restrictions.<br />'.
                          'Examples: "1:30" - Weeks one to thirty inclusive. "4:" - Week four onwards. ":5" - Upto and including week five.',
-          'type'=>'string',
-          'required' => false,
+          'type' => 'string',
+          'required' => FALSE,
           'group' => 'Report Settings'
         ),
         array(
-          'name'=>'newURL',
-          'caption'=>'New Sample URL',
-          'description'=>'The URL to invoke when selecting a date which does not have a previous sample associated with it.<br />'.
+          'name' => 'newURL',
+          'caption' => 'New Sample URL',
+          'description' => 'The URL to invoke when selecting a date which does not have a previous sample associated with it.<br />'.
                          'To the end of this will be appended "&date=&lt;X&gt;" whose value will be the date selected (see also "New Sample Location Parameter").',
-          'type'=>'string',
+          'type' => 'string',
           'group' => 'Report Settings'
         ),
         array(
-          'name'=>'newURLLocationParam',
-          'caption'=>'New Sample Location Parameter',
-          'description'=>'When generating a new sample and the location filter has been set, use this parameter to pass the location '.
+          'name' => 'newURLLocationParam',
+          'caption' => 'New Sample Location Parameter',
+          'description' => 'When generating a new sample and the location filter has been set, use this parameter to pass the location '.
                          'ID to the next form.',
-          'default'=>'location_id',
-          'type'=>'string',
+          'default' => 'location_id',
+          'type' => 'string',
           'group' => 'Report Settings'
         ),
         array(
-          'name'=>'newURLLocationTypeParam',
-          'caption'=>'New Sample Location Type Parameter',
-          'description'=>'When generating a new sample and the location type filter has been set, use this parameter to pass the location '.
+          'name' => 'newURLLocationTypeParam',
+          'caption' => 'New Sample Location Type Parameter',
+          'description' => 'When generating a new sample and the location type filter has been set, use this parameter to pass the location '.
                          'type ID to the next form.',
-          'default'=>'location_type_id',
-          'type'=>'string',
+          'default' => 'location_type_id',
+          'type' => 'string',
           'group' => 'Report Settings'
         ),
         array(
-          'name'=>'existingURL',
-          'caption'=>'Existing Sample URL',
-          'description'=>'The URL to invoke when selecting an existing sample.<br />'.
+          'name' => 'existingURL',
+          'caption' => 'Existing Sample URL',
+          'description' => 'The URL to invoke when selecting an existing sample.<br />'.
                          'To the end of this will be appended "&sample_id=&lt;n&gt;".',
-          'type'=>'string',
+          'type' => 'string',
           'group' => 'Report Settings'
         ),
         array(
@@ -224,28 +232,28 @@ class iform_report_calendar_grid {
           'caption' => 'Footer',
           'description' => 'Additional HTML to include in the report footer area. If using this to create internal links, the replacement {rootFolder} can be used to give the path to the root of the site.',
           'type' => 'textarea',
-          'required' => false,
+          'required' => FALSE,
           'group' => 'Report Settings'
         )
     );
   }
 
   // Although public, this function is only to be used as a callback.
-  public static function build_link($records, $options, $cellContents){
+  public static function build_link($records, $options, $cellContents) {
     // siteIDFilter not present if all selected.
     $cellclass="newLink";
     foreach($records as $record){
       $location=empty($record["location_name"]) ? $record["entered_sref"] : $record["location_name"];
-      $cellContents .= '<a href="'.$options["existingURL"].'sample_id='.$record["sample_id"].'" title="'.sprintf(lang::get('View existing sample for %s on %s (ID=%d)'), $location, $options['consider_date'], $record["sample_id"]).'" >'.$location.'</a> ';
+      $cellContents .= '<a href="' . $options["existingURL"].'sample_id=' . $record["sample_id"] . '" title="' . sprintf(lang::get('View existing sample for %s on %s (ID=%d)'), $location, $options['consider_date'], $record["sample_id"]).'" >' . $location.'</a> ';
       // we assume that the location has been filtered in the report.
       $cellclass='existingLink';
     }
     // we want to be able to add more.
     $c = count($records);
     if(!isset($options['siteIDFilter']) || $c==0)
-      $cellContents .= ' <a href="'.$options["newURL"].'date='.$options['consider_date'].'" class="newLink" title="'.sprintf(lang::get('Create a new sample on %s'),$options['consider_date']).
+      $cellContents .= ' <a href="' . $options["newURL"].'date=' . $options['consider_date'].'" class="newLink" title="'.sprintf(lang::get('Create a new sample on %s'),$options['consider_date']).
         (isset($options['siteIDFilter']) && ($c==0 || $records[0]['location_id']!=$options['siteIDFilter']) ? lang::get(' for the selected location.') : '').'"></a> ';
-    return array('cellclass'=>$cellclass, 'cellContents'=>$cellContents);
+    return array('cellclass' => $cellclass, 'cellContents' => $cellContents);
   }
 
   /**
@@ -270,9 +278,9 @@ class iform_report_calendar_grid {
       'paramDefaults' => array()
     );
     $reportOptions['extraParams']['survey_id'] = $siteUrlParams[self::$SurveyKey]['value']; // location_type mapping overrides preset
-    if ($siteUrlParams[self::$locationKey]['value'] != null)
+    if ($siteUrlParams[self::$locationKey]['value'] != NULL)
       $reportOptions['extraParams']['location_id'] = $siteUrlParams[self::$locationKey]['value'];
-    if ($siteUrlParams[self::$locationTypeKey]['value'] != null) {
+    if ($siteUrlParams[self::$locationTypeKey]['value'] != NULL) {
       $reportOptions['paramDefaults']['location_type_id'] = $siteUrlParams[self::$locationTypeKey]['value'];
     }
     return $reportOptions;
@@ -293,7 +301,7 @@ class iform_report_calendar_grid {
         self::$URLExtensionKey => array('name' => self::$URLExtensionKey,'value' => '')
       );
       if (isset($_COOKIE['providedParams']) && !empty($args['remember_params_report_group'])) {
-        $cookieData = json_decode($_COOKIE['providedParams'], true);
+        $cookieData = json_decode($_COOKIE['providedParams'], TRUE);
         // guard against a corrupt cookie
         if (is_array($cookieData) && !empty($cookieData[$args['remember_params_report_group']])) {
           $cookieParams = $cookieData[$args['remember_params_report_group']];
@@ -317,7 +325,7 @@ class iform_report_calendar_grid {
   	return $retVal;
   }
 
-  private static function set_up_control_change($ctrlid, $urlparam, $skipParams, $checkBox=false) {
+  private static function set_up_control_change($ctrlid, $urlparam, $skipParams, $checkBox=FALSE) {
   	// Need to use a global for pageURI as the internal controls may have changed, and we want
   	// their values to be carried over.
   	$prop = ($checkBox) ? 'attr("checked")' : 'val()';
@@ -339,16 +347,16 @@ jQuery('#".$ctrlid."').change(function(){
       self::$siteUrlParams[self::$SurveyKey]['value'] = $presets['survey_id'];
     }
 
-    if(isset($args['locationTypesFilter']) && $args['locationTypesFilter']!=""){
+    if(isset($args['locationTypesFilter']) && $args['locationTypesFilter'] != ''){
       $types = explode(',',$args['locationTypesFilter']);
-      $types1=array();
-      $types2=array();
+      $types1 = [];
+      $types2 = [];
       foreach($types as $type){
         $parts = explode(':',$type);
         $types1[] = $parts[0];
         $types2[] = $parts;
       }
-      $terms = self::get_sorted_termlist_terms(array('read'=>$readAuth), 'indicia:location_types', $types1);
+      $terms = self::get_sorted_termlist_terms(array('read' => $readAuth), 'indicia:location_types', $types1);
       $default = $siteUrlParams[self::$locationTypeKey]['value'] == '' ? $terms[0]['id'] : $siteUrlParams[self::$locationTypeKey]['value'];
       self::$siteUrlParams[self::$locationTypeKey]['value'] = $default;
       for($i = 0; $i < count($terms); $i++){
@@ -365,7 +373,7 @@ jQuery('#".$ctrlid."').change(function(){
           $lookUpValues[$termDetails['id']] = $termDetails['term'];
         }
         // if location is predefined, can not change unless a 'managerPermission'
-        $ctrlid='calendar-location-type-'.$nid;
+        $ctrlid='calendar-location-type-' . $nid;
         self::set_up_control_change($ctrlid, $siteUrlParams[self::$locationTypeKey]['name'], array(self::$locationKey));
         return data_entry_helper::select(array(
             'label' => lang::get('Site Type'),
@@ -379,87 +387,77 @@ jQuery('#".$ctrlid."').change(function(){
     return '';
   }
 
-  private static function location_control($args, $readAuth, $nid)
-  {
+  /**
+   * Select control for filtering the report to a location.
+   */
+  private static function locationControl($args, $readAuth, $nid) {
     $siteUrlParams = self::get_site_url_params($args);
     $ctrl = '';
-    // survey_id either comes from the location_type control, or from presets; in that order.
-    // need to scan param_presets for survey_id..
+    // Survey_id either comes from the location_type control, or from presets;
+    // in that order.
+    // Need to scan param_presets for survey_id..
     $presets = get_options_array_with_user_data($args['param_presets']);
 
-    if($siteUrlParams[self::$SurveyKey]['value']==''){
-      return('<p>'.lang::get('The location selection control requires that survey_id {'.$siteUrlParams[self::$SurveyKey]['value'].'} is set in either the presets or mapped against the location_type, in the form parameters.').'</p>');
+    if ($siteUrlParams[self::$SurveyKey]['value'] === '') {
+      return ('<p>' . lang::get('The location selection control requires that survey_id {' .
+        $siteUrlParams[self::$SurveyKey]['value'] . '} is set in either the presets or mapped against the location_type, in the form parameters.') . '</p>');
     }
-    $attrArgs = array(
-        'valuetable'=>'location_attribute_value',
-        'attrtable'=>'location_attribute',
-        'key'=>'location_id',
-        'fieldprefix'=>'locAttr',
-        'extraParams'=>$readAuth,
-        'survey_id'=>$siteUrlParams[self::$SurveyKey]['value']);
-    if (!empty($presets['location_type_id']))
-      $attrArgs['location_type_id'] = $presets['location_type_id'];
-    if($siteUrlParams[self::$locationTypeKey]['value']!="")
-      $attrArgs['location_type_id'] = $siteUrlParams[self::$locationTypeKey]['value'];
-    $locationAttributes = data_entry_helper::getAttributes($attrArgs, false);
-    $cmsAttr=extract_cms_user_attr($locationAttributes,false);
-    if(!$cmsAttr){
-      return('<p>'.lang::get('The location selection control requires that CMS User ID location attribute is defined for locations in this survey {'.$siteUrlParams[self::$SurveyKey]['value'].'}. If restricting to a particular location type, this must be set in the parameters page for this form instance.').'</p>');
+    $params = [
+      'cms_user_id' => hostsite_get_user_field('id'),
+      'survey_id' => $siteUrlParams[self::$SurveyKey]['value'],
+    ];
+    if ($siteUrlParams[self::$locationTypeKey]['value'] !== '') {
+      $params['location_type_id'] = $siteUrlParams[self::$locationTypeKey]['value'];
     }
-    $attrListArgs=array('nocache'=>true,
-        'extraParams'=>array_merge(array('view'=>'list', 'website_id'=>$args['website_id'],
-            'location_attribute_id'=>$cmsAttr['attributeId'], 'raw_value'=> hostsite_get_user_field('id')),
-                     $readAuth),
-        'table'=>'location_attribute_value');
-    $attrList = data_entry_helper::get_population_data($attrListArgs);
-    if (isset($attrList['error'])){
-      return $attrList['error'];
+    elseif (!empty($presets['location_type_id'])) {
+      $params['location_type_id'] = $presets['location_type_id'];
     }
-    $locationIDList=array();
-    foreach($attrList as $attr) {
-      $locationIDList[] = $attr['location_id'];
-    }
-    $locationListArgs=array('nocache'=>true,
-        'extraParams'=>array_merge(array('view'=>'list', 'website_id'=>$args['website_id'], 'id'=>$locationIDList, 'orderby'=>'name'),
-                     $readAuth),
-        'table'=>'location');
-    if($siteUrlParams[self::$locationTypeKey]['value']!="")
-      $locationListArgs['extraParams']['location_type_id'] = $siteUrlParams[self::$locationTypeKey]['value'];
-    $locationList = data_entry_helper::get_population_data($locationListArgs);
+    $locationList = report_helper::get_report_data([
+      'dataSource' => $args['location_selector_report_name'],
+      'readAuth' => $readAuth,
+      'extraParams' => $params,
+    ]);
     if (isset($locationList['error'])) {
       return $locationList['error'];
     }
-    $ctrlid='calendar-location-select-'.$nid;
-    $ctrl .='<label for="'.$ctrlid.'" class="location-select-label">'.lang::get('Filter by site').
-          ':</label> <select id="'.$ctrlid.'" class="location-select">'.
-          '<option value="" class="location-select-option" '.(self::$siteUrlParams[self::$locationKey]['value']==null ? 'selected=\"selected\" ' : '').'>'.lang::get('All sites').'</option>';
-    foreach($locationList as $location){
-      $ctrl .= '<option value='.$location['id'].' class="location-select-option" '.(self::$siteUrlParams[self::$locationKey]['value']==$location['id'] ? 'selected=\"selected\" ' : '').'>'.
-               $location['name'].(isset($args['includeSrefInLocationFilter']) && $args['includeSrefInLocationFilter'] ? ' ('.$location['centroid_sref'].')' : '').
+    $ctrlid = "calendar-location-select-$nid";
+    $ctrl .= '<label for="' . $ctrlid . '" class="location-select-label">' . lang::get('Filter by site') .
+          ':</label> <select id="' . $ctrlid . '" class="location-select">' .
+          '<option value="" class="location-select-option" ' . (self::$siteUrlParams[self::$locationKey]['value'] == NULL ? 'selected=\"selected\" ' : '') . '>' . lang::get('All sites') . '</option>';
+    foreach ($locationList as $location) {
+      $ctrl .= '<option value=' . $location['id'] . ' class="location-select-option" ' . (self::$siteUrlParams[self::$locationKey]['value'] == $location['id'] ? 'selected=\"selected\" ' : '') . '>'.
+               $location['name'] . (isset($args['includeSrefInLocationFilter']) && $args['includeSrefInLocationFilter'] ? ' (' . $location['centroid_sref'] . ')' : '') .
                '</option>';
     }
-    $ctrl.='</select>';
+    $ctrl .= '</select>';
     /*
-    // get the url parameters. Don't use $_GET, because it contains any parameters that are not in the
-    // URL when search friendly URLs are used (e.g. a Drupal path node/123 is mapped to index.php?q=node/123
-    // using Apache mod_alias but we don't want to know about that)
+    Get the url parameters. Don't use $_GET, because it contains any parameters
+    that are not in the URL when search friendly URLs are used (e.g. a Drupal
+    path node/123 is mapped to index.php?q=node/123 using Apache mod_alias but
+    we don't want to know about that).
     $reloadUrl = data_entry_helper::get_reload_link_parts();
     // find the names of the params we must not include
     foreach ($reloadUrl['params'] as $key => $value) {
       if (!array_key_exists($key, self::$siteUrlParams)){
-        $reloadUrl['path'] .= (strpos($reloadUrl['path'],'?')===false ? '?' : '&')."$key=$value";
+        $reloadUrl['path'] .= (strpos($reloadUrl['path'],'?')===FALSE ? '?' : '&')."$key=$value";
       }
     }
-    $param=(strpos($reloadUrl['path'],'?')===false ? '?' : '&').self::$locationKey.'='; */
-    self::set_up_control_change($ctrlid, self::$locationKey, array());
+    $param=(strpos($reloadUrl['path'],'?')===FALSE ? '?' : '&').self::$locationKey.'=';
+    */
+    self::set_up_control_change($ctrlid, self::$locationKey, []);
     return $ctrl;
   }
 
   /**
-   * Return the Indicia form code
-   * @param array $args Input parameters.
-   * @param array $nid Drupal node object's ID
-   * @param array $response Response from Indicia services after posting a verification.
+   * Return the Indicia form code.
+   *
+   * @param array $args
+   *   Input parameters.
+   * @param array $nid
+   *   Drupal node object's ID.
+   * @param array $response
+   *   Response from Indicia services after posting a verification.
+   *
    * @return HTML string
    */
   public static function get_form($args, $nid, $response) {
@@ -475,23 +473,23 @@ jQuery('#".$ctrlid."').change(function(){
     if(isset($args['locationTypeFilter'])) {
       return('<p>'.lang::get('Please contact the site administrator. This version of the form uses a different method of specifying the location types.').'</p>');
     }
-    iform_load_helpers(array('report_helper'));
+    iform_load_helpers(['report_helper']);
     $auth = report_helper::get_read_auth($args['website_id'], $args['password']);
 
     $grid = self::location_type_control($args, $auth, $nid).
             (isset($args['includeLocationFilter']) && $args['includeLocationFilter'] ?
-              self::location_control($args, $auth, $nid) : '');
+              self::locationControl($args, $auth, $nid) : '');
 
     /* survey_id should be set in param_presets $args entry.  */
     $reportOptions = self::get_report_calendar_options($args, $auth);
     // get the grid output before outputting the download link, so we can check if the download link is needed.
-    $reportOptions['id']='calendar-grid-'.$nid;
+    $reportOptions['id']='calendar-grid-' . $nid;
     if(isset($_GET['year'])) {
       $reportOptions['year']=$_GET['year'];
-      $reportOptions['viewPreviousIfTooEarly']=false;
+      $reportOptions['viewPreviousIfTooEarly']=FALSE;
     }
     $reportOptions['weekstart']= $args['weekstart'];
-    $reportOptions['includeWeekNumber']=(isset($args['includeWeekNumber']) && $args['includeWeekNumber']==true);
+    $reportOptions['includeWeekNumber']=(isset($args['includeWeekNumber']) && $args['includeWeekNumber']==TRUE);
     if(isset($args['weekOneContains'])) {
       $reportOptions['weekOneContains']= $args['weekOneContains'];
     }
@@ -503,11 +501,11 @@ jQuery('#".$ctrlid."').change(function(){
     $siteUrlParams = self::get_site_url_params($args);
     $extensions = array($siteUrlParams[self::$URLExtensionKey]['value']);
     $reportOptions['existingURL'] = self::get_url($args['existingURL'], $extensions);
-    if($siteUrlParams[self::$locationKey]['value'] != null){
+    if($siteUrlParams[self::$locationKey]['value'] != NULL){
     	$reportOptions['siteIDFilter']=$siteUrlParams[self::$locationKey]['value']; // this gets passed through to buildLinkFunc Callback
-    	$extensions[] = '&'.$args['newURLLocationParam'].'='.$siteUrlParams[self::$locationKey]['value'];
-    } else if($siteUrlParams[self::$locationTypeKey]['value'] != null){
-    	$extensions[] = '&'.$args['newURLLocationTypeParam'].'='.$siteUrlParams[self::$locationTypeKey]['value'];
+    	$extensions[] = '&' . $args['newURLLocationParam'] . '=' . $siteUrlParams[self::$locationKey]['value'];
+    } else if($siteUrlParams[self::$locationTypeKey]['value'] != NULL){
+    	$extensions[] = '&' . $args['newURLLocationTypeParam'] . '=' . $siteUrlParams[self::$locationTypeKey]['value'];
     }
     $reportOptions['newURL'] = self::get_url($args['newURL'], $extensions);
     if (isset($args['footer']))
@@ -521,17 +519,17 @@ jQuery('#".$ctrlid."').change(function(){
   private static function get_url($url, $extensions) {
     $split = strpos($url, '?');
     // convert the query parameters into an array
-    $gets = ($split!==false && strlen($url) > $split+1) ? explode('&', substr($url, $split+1)) : array();
+    $gets = ($split!==FALSE && strlen($url) > $split+1) ? explode('&', substr($url, $split+1)) : array();
     $getsAssoc = array();
     foreach ($gets as $get) {
       $tokens = explode('=', $get);
       if (count($tokens)===1) $tokens[] = '';
       $getsAssoc[$tokens[0]] = $tokens[1];
     }
-    $path = $split!==false ? substr($url, 0, $split) : $url;
+    $path = $split!==FALSE ? substr($url, 0, $split) : $url;
     foreach($extensions as $extension){
 //    var_dump($extension);
-      if(strpos($extension, '&') !== false) {
+      if(strpos($extension, '&') !== FALSE) {
         $tokens = explode('=', substr($extension, 1));
         $getsAssoc[$tokens[0]] = $tokens[1]; // this means that the extension can/will override the original url it the same.
       } else

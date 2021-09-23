@@ -1643,7 +1643,7 @@ function report_filters_full_term_to_sharing_code($term) {
  * Utility function to add laguage strings to Javascript for the JS filter parser.
  */
 function report_filters_set_parser_language_strings() {
-  report_helper::addLanguageStringsToJs('reportFilters', [
+  report_helper::addLanguageStringsToJs('reportFilterParser', [
     'AutochecksFailed' => 'Automated checks failed',
     'AutochecksPassed' => 'Automated checks passed',
     'IdentificationDifficulty' => 'Identification difficulty',

@@ -57,8 +57,7 @@ class extension_my_sites {
         'parentControlId' => 'location_type_id',
         'parentControlLabel' => lang::get('Site type to search'),
         'filterField' => 'location_type_id',
-        'filterIncludesNulls' => false,
-        'emptyFilterIsUnfiltered' => true
+        'emptyFilterIsUnfiltered' => TRUE,
       ), $localityOpts);
     }
     else {

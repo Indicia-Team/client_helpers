@@ -16,36 +16,39 @@
  *
  * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link http://code.google.com/p/indicia/
+ * @link https://github.com/indicia-team/client_helpers/
  */
 
-require_once('includes/dynamic.php');
-require_once('includes/report.php');
-require_once('includes/report_filters.php');
+require_once 'includes/dynamic.php';
+require_once 'includes/report.php';
+require_once 'includes/report_filters.php';
 
 /**
- * Provides a dynamically output page which can contain a map and several reports, potentially
- * organised onto several tabs.
- * @package Client
- * @subpackage PrebuiltForms
+ * Customisable reporting page.
+ *
+ * Provides a dynamically output page which can contain a map and several
+ * reports, potentially organised onto several tabs.
  */
 class iform_dynamic_report_explorer extends iform_dynamic {
 
   /**
    * Count the total number of reports for this page request so we can generate unique ids.
-   * @var integer
+   *
+   * @var int
    */
   private static $requestReportCount = 0;
 
   /**
    * Count the reports on this node instance to link reports to the correct set of column configurations.
-   * * @var integer
+   *
+   * @var int
    */
   private static $reportCount = 0;
 
   /**
    * If using the standard params system then the way of supplying user prefs is different. Default to
    * use the old ownData/ownGroups/ownLocality way.
+   *
    * @var bool
    */
   private static $applyUserPrefs = TRUE;

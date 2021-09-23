@@ -13,13 +13,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package Client
- * @subpackage PrebuiltForms
- * @author  Indicia Team
+ * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link  http://code.google.com/p/indicia/
+ * @link https://github.com/indicia-team/client_helpers/
  */
- 
+
 require_once('dynamic_sample_occurrence.php');
 
 // TO DO
@@ -29,8 +27,8 @@ require_once('dynamic_sample_occurrence.php');
 
 
 /**
- * An input form to support the Big Sea Survey methodology. 
- * 
+ * An input form to support the Big Sea Survey methodology.
+ *
  * @package Client
  * @subpackage PrebuiltForms
  */
@@ -42,9 +40,9 @@ class iform_big_sea_survey extends iform_dynamic_sample_occurrence {
   private static $transectCountAttrs;
   private static $selectedTransect;
   private static $selectedZoneAttrId;
-  
-  /** 
-   * Return the form metadata. 
+
+  /**
+   * Return the form metadata.
    * @return array The definition of the form.
    */
   public static function get_big_sea_survey_definition() {
@@ -55,12 +53,12 @@ class iform_big_sea_survey extends iform_dynamic_sample_occurrence {
           'a set of zones and multiple copies of the second page allow data to be input per transect.'
     );
   }
-  
+
   /**
    * Get the list of parameters for this form.
    * @return array List of parameters that this form requires.
    */
-  public static function get_parameters() {   
+  public static function get_parameters() {
     $r = array_merge(
       parent::get_parameters(),
       array(
@@ -76,7 +74,7 @@ class iform_big_sea_survey extends iform_dynamic_sample_occurrence {
           'name'=>'transect_captions',
           'caption'=>'Transect captions',
           'description'=>'Comma separated list of captions to use for each of the above attributes, in the same order.',
-          'type'=>'textfield',          
+          'type'=>'textfield',
           'required' => true,
           'group' => 'Big Sea setup'
         ),
@@ -112,7 +110,7 @@ class iform_big_sea_survey extends iform_dynamic_sample_occurrence {
           'name'=>'front_page_path',
           'caption'=>'Front page path',
           'description'=>'Path to the front page input form.',
-          'type'=>'textfield',          
+          'type'=>'textfield',
           'required' => true,
           'group'=>'Big Sea setup'
         ),
@@ -132,18 +130,18 @@ class iform_big_sea_survey extends iform_dynamic_sample_occurrence {
     );
     return $r;
   }
-  
+
   /**
    * Override get_form_html. We remove the second tab when first inputting a new sample, because
    * the second tab can't save unless there is a parent sample available to link to.
    */
-  protected static function get_form_html($args, $auth, $attributes) { 
-    if (empty($_GET['id'])) 
+  protected static function get_form_html($args, $auth, $attributes) {
+    if (empty($_GET['id']))
       return 'This form must be called with an id in the URL parameters';
     data_entry_helper::$javascript .= "indiciaData.latLongNotationPrecision=5;\n";
     return parent::get_form_html($args, $auth, $attributes);
   }
-  
+
   protected static function getEntity(&$args, $auth) {
     self::$parentSample =  data_entry_helper::get_population_data(array(
       'table' => 'sample',
@@ -156,20 +154,20 @@ class iform_big_sea_survey extends iform_dynamic_sample_occurrence {
     $attrs = self::getAttributesForSample($parentargs, $auth, $_GET['id']);
     self::$parentSampleAttrs = array();
     // convert to keyed array
-    foreach ($attrs as $attr) 
+    foreach ($attrs as $attr)
       self::$parentSampleAttrs[$attr['id']]=$attr;
     self::$thisSampleAttrs = array();
     $attrs = self::getAttributes($args, $auth);
     // convert to keyed array
-    foreach ($attrs as $attr) 
-      self::$thisSampleAttrs[$attr['id']]=$attr; 
-      
+    foreach ($attrs as $attr)
+      self::$thisSampleAttrs[$attr['id']]=$attr;
+
     self::$parentSample = self::$parentSample[0];
     self::$transectCountAttrs = explode(',', $args['transect_count_attr_ids']);
     self::$selectedTransect =  empty($_GET['transect']) ? 1 : $_GET['transect'];
     // Get the attribute ID from the parent sample which holds the count in the active shore zone
     self::$selectedZoneAttrId = empty($_GET['zone']) ? self::$parentSampleAttrs['smpAttr:'.self::$transectCountAttrs[0]]['id'] : "smpAttr:$_GET[zone]";
-    
+
     // Work out the zone caption - a bit convoluted
     $captions = explode(',', $args['transect_captions']);
     foreach(self::$transectCountAttrs as $idx=>$id) {
@@ -181,11 +179,11 @@ class iform_big_sea_survey extends iform_dynamic_sample_occurrence {
     // See if an existing sample is available to link to
     $sample = data_entry_helper::get_population_data(array(
       'report' => 'reports_for_prebuilt_forms/big_sea/find_sample',
-      'extraParams' => $auth['read'] + array('parent_sample_id' => $_GET['id'], 
+      'extraParams' => $auth['read'] + array('parent_sample_id' => $_GET['id'],
         'zone' => $zone, 'transect' => self::$selectedTransect,
         'zone_attr_id' => $args['child_sample_zone_attr_id'], 'transect_attr_id' => $args['child_sample_transect_attr_id']),
       'nocache' => true
-    ));    
+    ));
     if (count($sample)>0) {
       self::$loadedSampleId=$sample[0]['id'];
       foreach ($sample[0] as $key=>$value)
@@ -198,19 +196,19 @@ class iform_big_sea_survey extends iform_dynamic_sample_occurrence {
       data_entry_helper::$entity_to_load["sample:wkt"]=self::$parentSample['geom'];
     }
   }
-  
+
   protected static function getMode($args, $nid) {
     // reload the page after initial save - show parent sample so we can enter the transect data.
     if (!empty($_GET['id']) && !empty($_GET['table']) && $_GET['table']==='sample')
       $_GET['sample_id']=$_GET['id'];
     return parent::getMode($args, $nid);
   }
-  
+
   /**
    * Save button takes us to the next transect.
    */
   public static function get_redirect_on_success($values, $args) {
-    
+
     if (!empty($values['next-zone']) && !empty($values['next-transect']))
       return $args['redirect_on_success'] . '?' . data_entry_helper::array_to_query_string(array(
         'table'=>'sample',
@@ -218,10 +216,10 @@ class iform_big_sea_survey extends iform_dynamic_sample_occurrence {
         'zone'=>$values['next-zone'],
         'transect'=>$values['next-transect']
       ));
-    else 
+    else
       return $args['front_page_path'];
   }
-  
+
   protected static function get_control_transectsbar($auth, $args, $tabAlias, $options) {
     $captions = explode(',', $args['transect_captions']);
     $r = '<input type="hidden" name="sample:parent_id" value="'.$_GET['id'].'"/>';
@@ -233,7 +231,7 @@ class iform_big_sea_survey extends iform_dynamic_sample_occurrence {
     $r .= '<div class="ui-helper-clearfix">';
     $ids = array();
     $wantNext = false;
-    // loop through the list of attributes which hold a transect count (one per shore zone)    
+    // loop through the list of attributes which hold a transect count (one per shore zone)
     foreach (self::$transectCountAttrs as $idx => $id) {
       $attr = self::$parentSampleAttrs["smpAttr:$id"];
       // output a fieldset per zone
@@ -255,7 +253,7 @@ class iform_big_sea_survey extends iform_dynamic_sample_occurrence {
           $r .= "<input type=\"hidden\" name=\"next-transect\" value=\"$i\"/>";
           $wantNext=false;
         }
-        if ($selected) 
+        if ($selected)
           $r .= "<span class=\"button select-transect ui-state-highlight\" id=\"sel-$attr[id]-$i\">$i</span>";
         else {
           $link=hostsite_get_url($args['redirect_on_success'], array(
@@ -274,7 +272,7 @@ class iform_big_sea_survey extends iform_dynamic_sample_occurrence {
     data_entry_helper::$javascript .= "indiciaData.transectCountAttrs=".json_encode($ids).";\n";
     return $r;
   }
-  
+
   /**
    * A variant of the species grid control with just the fixed species categories available.
    */
@@ -284,7 +282,7 @@ class iform_big_sea_survey extends iform_dynamic_sample_occurrence {
     $options['id']='fixed-list';
     return parent::get_control_species($auth, $args, $tabAlias, $options);
   }
-  
+
   /**
    * A variant of the species grid control with just the flexible search species available.
    */
@@ -304,7 +302,7 @@ class iform_big_sea_survey extends iform_dynamic_sample_occurrence {
     unset($args['extra_list_id']);
     return parent::get_control_species($auth, $args, $tabAlias, $options);
   }
-  
+
   /**
    * A set of input controls for defining the transect.
    */
@@ -321,7 +319,7 @@ class iform_big_sea_survey extends iform_dynamic_sample_occurrence {
     ));
     return $r;
   }
-  
+
   protected static function get_control_map($auth, $args, $tabAlias, $options) {
     $file = data_entry_helper::$js_path.strtolower("drivers/sref/4326.js");
     // dynamically build a resource to link us to the handler js file.

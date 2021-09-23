@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Indicia, the OPAL Online Recording Toolkit.
  *
@@ -13,28 +14,26 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package Client
- * @subpackage PrebuiltForms
- * @author  Indicia Team
+ * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link  http://code.google.com/p/indicia/
+ * @link https://github.com/indicia-team/client_helpers/
  */
- 
+
 require_once('dynamic_sample_occurrence.php');
 
 /**
- * A input form with a grid for entering species counts against a grid of weeks, species names. 
- * 
+ * A input form with a grid for entering species counts against a grid of weeks, species names.
+ *
  * @package Client
  * @subpackage PrebuiltForms
  */
 class iform_dynamic_weekly_counts extends iform_dynamic_sample_occurrence {
-  
+
   private static $existingSamples=array();
   private static $sampleIdsByDate=array();
-  
-  /** 
-   * Return the form metadata. 
+
+  /**
+   * Return the form metadata.
    * @return array The definition of the form.
    */
   public static function get_dynamic_weekly_counts_definition() {
@@ -44,12 +43,12 @@ class iform_dynamic_weekly_counts extends iform_dynamic_sample_occurrence {
       'description' => 'A dynamic form which supports a grid of species counts per week.'
     );
   }
-  
+
   /**
    * Get the list of parameters for this form.
    * @return array List of parameters that this form requires.
    */
-  public static function get_parameters() {   
+  public static function get_parameters() {
     $r = array_merge(
       parent::get_parameters(),
       array(
@@ -105,9 +104,9 @@ class iform_dynamic_weekly_counts extends iform_dynamic_sample_occurrence {
     }
     return $r;
   }
-    
+
   /**
-   * Output the weekly counts grid. This integrates with the dynamic form user interface definition - use [weekly_counts_grid] 
+   * Output the weekly counts grid. This integrates with the dynamic form user interface definition - use [weekly_counts_grid]
    * to output the form.
    * @param array $auth Authorisation tokens
    * @param array $args Form configuration arguments
@@ -128,7 +127,7 @@ class iform_dynamic_weekly_counts extends iform_dynamic_sample_occurrence {
         preg_match_all('/[a-zA-Z]+/', $format, $matches);
         if (!empty($matches)) {
           foreach($matches[0] as $token) {
-            if ($token==='week') 
+            if ($token==='week')
               $format = str_replace($token, $i, $format);
             else {
               if (substr($token, 0, 3)==='end') {
@@ -140,13 +139,13 @@ class iform_dynamic_weekly_counts extends iform_dynamic_sample_occurrence {
               }
               $format = str_replace($token, date($dateFormat, $useDate), $format);
             }
-          }          
+          }
         }
         if (count($ths[$idx])===0 || $format!==$lastHeadings[$idx]) {
           $ths[$idx][]=$format;
           $lastHeadings[$idx]=$format;
         } else
-          $ths[$idx][]='';        
+          $ths[$idx][]='';
       }
       $currentDate = strtotime('+1 week', $currentDate);
     }
@@ -165,23 +164,23 @@ class iform_dynamic_weekly_counts extends iform_dynamic_sample_occurrence {
         'extraParams'=>$auth['read'] + array('parent_id'=>$_GET['sample_id'], 'view'=>'detail'),
         'nocache'=>true
       ));
-      // We want a list of sample IDs, keyed by date for lookup later.      
-      foreach (self::$existingSamples as $sample) 
+      // We want a list of sample IDs, keyed by date for lookup later.
+      foreach (self::$existingSamples as $sample)
         self::$sampleIdsByDate[strtotime($sample['date_start'])]=$sample['id'];
     }
     $r .= self::sampleAttrRows($args, $auth);
     $r .= self::speciesRows($args, $auth, $tableData);
     $r .= '</tbody></table>';
-    if (!empty(self::$sampleIdsByDate)) 
+    if (!empty(self::$sampleIdsByDate))
       // store existing sample IDs in form so we can post edits against them
       $r .= '<input type="hidden" name="samples-dates" value="'.htmlspecialchars(json_encode(self::$sampleIdsByDate)).'"/>';
     // JavaScript will populate this for us to post the count data.
     $r .= '<input id="table-data" name="table-data" type="hidden" value="'.htmlspecialchars(json_encode($tableData)).'"/>';
     return $r;
   }
-  
+
   /**
-   * Retrieves the start date for the series of weeks. Uses this year's season, unless before the 
+   * Retrieves the start date for the series of weeks. Uses this year's season, unless before the
    * start in which case it returns last year's season.
    * @param array $args Form configuration arguments
    */
@@ -200,7 +199,7 @@ class iform_dynamic_weekly_counts extends iform_dynamic_sample_occurrence {
       $startDate = self::getStartDateForYear($args, $now['year']-1);
     return $startDate;
   }
-      
+
   /**
    * Retrieves the start date for the series of weeks, given a year of the season start.
    * @param array $args Form arguments array, containing start setting (ddmm format) and optional weekday (full name day of week).
@@ -218,7 +217,7 @@ class iform_dynamic_weekly_counts extends iform_dynamic_sample_occurrence {
     }
     return $proposedStart;
   }
-  
+
   private static function sampleAttrRows($args, $auth) {
     $sampleAttrs = self::getAttributes($args, $auth);
     $controls=array();
@@ -263,28 +262,28 @@ class iform_dynamic_weekly_counts extends iform_dynamic_sample_occurrence {
             if ($sampleAttrs[$idx]['data_type']==='B' && $val==='1')
               // Currently only supporting checkboxes here
               $thisCtrl = str_replace('type="checkbox"', 'type="checkbox" checked="checked"', $thisCtrl);
-            
+
           }
           $r .= "<td class=\"col-$i\">$thisCtrl</td>";
         }
         $weekstart=strtotime('+7 days', $weekstart);
       }
       $r .= "</tr>\n";
-      
+
     }
     return $r;
   }
-  
-  /** 
+
+  /**
    * Returns the rows for the species grid.
    * @param array $args Form configuration arguments
    * @param array $auth Authorisation tokens
-   * @param array $tableData For any existing data loaded into the grid, returns an array of values keyed by fieldname. 
+   * @param array $tableData For any existing data loaded into the grid, returns an array of values keyed by fieldname.
    * @return string HTML for the list of tr elements to insert.
    */
   private static function speciesRows($args, $auth, &$tableData) {
     $tableData=array();
-    if (!empty($_GET['sample_id'])) {      
+    if (!empty($_GET['sample_id'])) {
       $existingValues=data_entry_helper::get_population_data(array(
         'report'=>'library/occurrence_attribute_values/occurrence_attribute_values_list',
         'extraParams'=>$auth['read'] + array('parent_sample_id'=>$_GET['sample_id']),
@@ -338,7 +337,7 @@ class iform_dynamic_weekly_counts extends iform_dynamic_sample_occurrence {
         }
         if ($weekstart>time())
           $r .= "<td class=\"col-$i\"><span class=\"disabled\"></span></td>";
-        else 
+        else
           // we don't use name for the inputs, as there are too many to post! JS will store all info in a single JSON hidden input.
           $r .= "<td class=\"col-$i\"><input type=\"text\" class=\"count-input\" id=\"$fieldname\" value=\"$val\"/></td>";
         $weekstart=strtotime('+7 days', $weekstart);
@@ -352,11 +351,11 @@ class iform_dynamic_weekly_counts extends iform_dynamic_sample_occurrence {
     $r .= '</tr>';
     return $r;
   }
-  
+
   /**
-   * Handles the construction of a submission array from a set of form values. 
+   * Handles the construction of a submission array from a set of form values.
    *
-   * @param array $values Associative array of form data values. 
+   * @param array $values Associative array of form data values.
    * @param array $args iform parameters.
    * @param integer $nid The node's ID
    * @return array Submission structure.
@@ -384,7 +383,7 @@ class iform_dynamic_weekly_counts extends iform_dynamic_sample_occurrence {
       if (($value!=='' || count($tokens)===6) && preg_match('/^sc([0-9]+):/', $key, $matches)) {
         $weekIdx=$matches[1];
         if (!isset($weekData["week$weekIdx"]))
-          $weekData["week$weekIdx"]=array();        
+          $weekData["week$weekIdx"]=array();
         $datelessKey=preg_replace('/^sc([0-9]+):/', 'sc:', $key);
         $weekData["week$weekIdx"][$datelessKey]=$value;
         $presenceKey=preg_replace('/occAttr:[0-9]+(:[0-9]+)?$/', 'present', $datelessKey);
@@ -421,6 +420,6 @@ class iform_dynamic_weekly_counts extends iform_dynamic_sample_occurrence {
     }
     return $parentSample;
   }
-  
+
 
 }

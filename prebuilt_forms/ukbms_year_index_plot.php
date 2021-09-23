@@ -15,9 +15,9 @@
  *
  * @package Client
  * @subpackage PrebuiltForms
- * @author  Indicia Team
+ * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link  http://code.google.com/p/indicia/
+ * @link https://github.com/indicia-team/client_helpers/
  */
 
 /*
@@ -36,7 +36,7 @@ require_once('includes/user.php');
  */
 class iform_ukbms_year_index_plot {
 
-  /** 
+  /**
    * Return the form metadata.
    * @return string The definition of the form.
    */
@@ -66,7 +66,7 @@ class iform_ukbms_year_index_plot {
       		'default' => false,
       		'required' => false,
         ),
-      		
+
       	array(
           'name'=>'manager_permission',
           'caption'=>'Drupal Permission for Manager mode',
@@ -236,7 +236,7 @@ class iform_ukbms_year_index_plot {
       						'default' => '',
       						'group'=>'Report Settings'
       				),
-      		
+
       	array(
       		'name'=>'locationTypesFilter',
       		'caption'=>'Restrict locations to types',
@@ -289,7 +289,7 @@ class iform_ukbms_year_index_plot {
         "sequence":[{"type":"str"}]
     },
     "highlightColor":{"type":"str","desc":"A colour to use when highlighting an area on a filled line plot."}
-  }  
+  }
 }',
           'required' => false,
           'group'=>'Chart Options'
@@ -458,16 +458,16 @@ class iform_ukbms_year_index_plot {
     // Branch Manager: all sites allocated to me via CMS User or Branch CMS User
     // Admin: all sites.
     // assume if a sensitive site is allocated to a user, they have permission to see it.
-  	// note that when in user specific mode it returns the list currently assigned to the user: it does not give 
+  	// note that when in user specific mode it returns the list currently assigned to the user: it does not give
   	// locations which the user previously recorded data against, but is no longer allocated to.
     $userUID = hostsite_get_user_field('id');
     $superManager = (isset($args['manager_permission']) && $args['manager_permission']!="" && hostsite_user_has_permission($args['manager_permission']));
     $branchManager = (isset($args['branch_manager_permission']) && $args['branch_manager_permission']!="" && hostsite_user_has_permission($args['branch_manager_permission']));
-    
+
     $ctrl = '<label class="location-select-label">'.lang::get('Site').':</label>';
 
     $cmsAttr = $args['cmsLocAttrId'];
-    
+
     $locationListArgs=array(// 'nocache'=>true,
     		'extraParams'=>array_merge(array('website_id'=>$args['website_id'], 'location_type_id' => '',
     		    'sensattr' => '',
@@ -477,14 +477,14 @@ class iform_ukbms_year_index_plot {
             'readAuth' => $readAuth,
             'caching' => true,
             'dataSource' => 'library/locations/locations_list_exclude_sensitive');
-	// could use locattrs to fetch sensitive 
+	// could use locattrs to fetch sensitive
     $attrArgs = array(
     		'valuetable'=>'location_attribute_value',
     		'attrtable'=>'location_attribute',
     		'key'=>'location_id',
     		'fieldprefix'=>'locAttr',
     		'extraParams'=>$readAuth);
-    
+
     // loop through all entries in the locationTypesFilter, and build an array of locations.
     $locationTypeLookUpValues = array();
     $default = false;
@@ -552,14 +552,14 @@ class iform_ukbms_year_index_plot {
             }
         }
         $locationListArgs['extraParams']['idlist'] = implode(',', $locationIDList);
-      	
+
         // unless decided on the future, if allocated to you, you can see the results: i.e. no sensitivity filtering.
         // if(isset($args['sensitivityAccessPermission']) && $args['sensitivityAccessPermission']!="" &&
         //   !hostsite_user_has_permission($args['sensitivityAccessPermission']) &&
         //   !empty($args['sensitivityLocAttrId'])) {
         //   $locationListArgs['extraParams']['attr_location_'.$args['sensitivityLocAttrId']] = '0';
         // }
-      	
+
         if($locationListArgs['extraParams']['idlist'] != '') {
   	    	$locationList = report_helper::get_report_data($locationListArgs);
       	} else $locationList = array();
@@ -583,7 +583,7 @@ class iform_ukbms_year_index_plot {
       			$name.($options['surveyMapping'][$location_type_id]['includeSref'] ? ' ('.$locs[$id]['centroid_sref'].')' : '').
       			'</option>';
       	}
-      } else 
+      } else
       	$ctrl .= '<option value="" class="location-select-option" >&lt;'.lang::get('No sites available').'&gt;</option>';
       $ctrl .='</select>';
     }
@@ -625,7 +625,7 @@ class iform_ukbms_year_index_plot {
   			'<option value="" class="location-select-option" >&lt;'.lang::get('No data loaded yet').'&gt;</option>' .
   			'</select>';
   }
-  
+
   private static function _copy_args($args, &$options, $list){
     foreach($list as $arg){
       if(isset($args[$arg]) && $args[$arg]!="")
@@ -663,13 +663,13 @@ class iform_ukbms_year_index_plot {
            'title="'.lang::get('Click this button to fetch the data from the database in order to display the graph. You must specify a site before you can fetch the data.').'" '.
            '/>';
   }
-  
+
   private static function _trendline_control($args, $auth, $nid, $options)
   {
   	return '<label for="add-trendline" >'.lang::get("Add trendline").' </label>'.
   			'<input type="checkbox" name="add-trendline" id="add-trendline" check="checked"/>';
   }
-  
+
   private static function _build_primary_toolbar($args, $auth, $nid, &$options)
   {
   	/* NB only interested in complete data picture - not user specific */
@@ -698,11 +698,11 @@ class iform_ukbms_year_index_plot {
    */
   public static function get_form($args, $arg2, $response) {
     $retVal = '';
-    
+
     if(isset($args['nidvsnode']) && $args['nidvsnode'])
     	$nid = $arg2;
     else $nid = $arg2->nid;
-    
+
     if(hostsite_get_user_field('id') <= 0) { // we are assuming Drupal.
       return('<p>'.lang::get('Please log in before attempting to use this form.').'</p>');
     }
@@ -710,7 +710,7 @@ class iform_ukbms_year_index_plot {
     if (!function_exists('hostsite_module_exists') || !hostsite_module_exists('easy_login')) {
       return('<p>'.lang::get('This form must be used with the easy_login module.').'</p>');
     }
-    
+
     iform_load_helpers(array('report_helper'));
     data_entry_helper::add_resource('jquery_ui');
     data_entry_helper::add_resource('jqplot');
@@ -718,9 +718,9 @@ class iform_ukbms_year_index_plot {
     data_entry_helper::add_resource('jqplot_category_axis_renderer');
     data_entry_helper::add_resource('jquery_cookie');
     $renderer='$.jqplot.BarRenderer';
-    
+
     $auth = report_helper::get_read_auth($args['website_id'], $args['password']);
-    
+
     $options = array(
       'indexDataSource' => $args['index_report_name'],
       'countDataSource' => $args['count_report_name'],
@@ -760,7 +760,7 @@ class iform_ukbms_year_index_plot {
     $options['indexCountField']  = $args['index_report_count_field'];
     $options['indexJSONEncoded'] = false;
     $options['indexExtraParams'] = get_options_array_with_user_data($args['index_param_presets']);
-    
+
     if (function_exists('hostsite_get_user_field')) {
     	// If the host environment (e.g. Drupal module) can tell us which Indicia user is logged in, pass that
     	// to the report call as it might be required for filters.
@@ -774,16 +774,16 @@ class iform_ukbms_year_index_plot {
     	$options['countExtraParams']['taxon_list_id']=$args['taxonList'];
     	$options['indexExtraParams']['taxon_list_id']=$args['taxonList'];
     }
-    
+
     foreach($options['countExtraParams'] as $key => $value) {
     	$options['countReportExtraParams'] .= '&'.$key.'='.$value;
     }
     foreach($options['indexExtraParams'] as $key => $value) {
     	$options['indexReportExtraParams'] .= '&'.$key.'='.$value;
     }
-    
+
     data_entry_helper::add_resource('jqplot_trendline');
-    
+
     $opts = array();
     $rendererOptions = trim($args['renderer_options']);
     if (!empty($rendererOptions))
@@ -802,7 +802,7 @@ class iform_ukbms_year_index_plot {
     	if (!empty($options[$settings]))
     		$opts[$key] = $options[$settings];
     }
-    
+
     // X axis values are going to be section names, Y is the count.
     // Going to be 2 series max - one for each species.
     $axesOptions = trim($args['axes_options']);
@@ -811,10 +811,10 @@ class iform_ukbms_year_index_plot {
     else $axesOptions = array();
     $axesOptions['xaxis']['renderer'] = '$.jqplot.CategoryAxisRenderer';
 
-    $axesOptions['xaxis']['ticks'] = array();    
+    $axesOptions['xaxis']['ticks'] = array();
     $opts['axes'] = $axesOptions;
     $options['opts'] = $opts;
-    
+
     // We need to fudge the json so the renderer class is not a string
     data_entry_helper::$javascript .= "
 uyipPrepChart(" . str_replace(array('"$.jqplot.CategoryAxisRenderer"','"$.jqplot.CanvasAxisLabelRenderer"','"$.jqplot.BarRenderer"'), array('$.jqplot.CategoryAxisRenderer','$.jqplot.CanvasAxisLabelRenderer','$.jqplot.BarRenderer'), json_encode($options)) . ");
@@ -823,7 +823,7 @@ uyipPrepChart(" . str_replace(array('"$.jqplot.CategoryAxisRenderer"','"$.jqplot
     $heightStyle = (!empty($options['height']) ? "height: $options[height]px;" : '');
     $widthStyle = "width: 100%;";
     // Add controls first: set up a control bar
-    
+
     $retVal .= "\n".'<table id="primary-controls-table" class="ui-widget ui-widget-content ui-corner-all controls-table">' .
     				'<thead class="ui-widget-header">' .
 	    				self::_build_primary_toolbar($args, $auth, $nid, $options) .

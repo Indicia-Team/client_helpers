@@ -13,11 +13,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package	Client
- * @subpackage PrebuiltForms
  * @author	Indicia Team
  * @license	http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link 	http://code.google.com/p/indicia/
+ * @link https://github.com/indicia-team/client_helpers/
  */
 
 require_once('includes/form_generation.php');
@@ -25,7 +23,7 @@ require_once('includes/form_generation.php');
 /**
  * Prebuilt Indicia data entry form that presents taxon search box, date control, map picker,
  * survey selector and comment entry controls.
- * 
+ *
  * @package	Client
  * @subpackage PrebuiltForms
  */
@@ -44,13 +42,13 @@ class iform_change_identification {
           'of the record with a list of the sample and occurrence attributes and a control for changing the identification. '
     );
   }
-  
+
   /**
    * Get the list of parameters for this form.
    * @return array List of parameters that this form requires.
    */
-  public static function get_parameters() {   
-    return array(      
+  public static function get_parameters() {
+    return array(
       array(
       	'name'=>'species_ctrl',
         'caption'=>'Species Control Type',
@@ -61,7 +59,7 @@ class iform_change_identification {
           'select' => 'Select',
           'listbox' => 'List box',
           'radio_group' => 'Radio group',
-          'species_checklist' => 'Checkbox grid'         
+          'species_checklist' => 'Checkbox grid'
         )
       ),
       array(
@@ -82,7 +80,7 @@ class iform_change_identification {
       )
     );
   }
-  
+
   /**
    * Return the generated form output.
    * @return Form HTML.
@@ -96,7 +94,7 @@ class iform_change_identification {
     $auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
     data_entry_helper::load_existing_record($auth['read'], 'occurrence', $_GET['occurrence_id']);
     data_entry_helper::load_existing_record($auth['read'], 'sample', data_entry_helper::$entity_to_load['occurrence:sample_id']);
-    $r .= $auth['write'];    
+    $r .= $auth['write'];
     $r .= "<input type=\"hidden\" id=\"website_id\" name=\"website_id\" value=\"".$args['website_id']."\" />\n";
     $r .= "<input type=\"hidden\" id=\"occurrence:id\" name=\"occurrence:id\" value=\"".$_GET['occurrence_id']."\" />\n";
     $r .= "<input type=\"hidden\" id=\"occurrence:sample_id\" name=\"occurrence:sample_id\" value=\"".data_entry_helper::$entity_to_load['sample:id']."\" />\n";
@@ -128,9 +126,9 @@ class iform_change_identification {
     ));
     $attributes = array_merge($smpAttrs, $occAttrs);
     foreach($attributes as $attr) {
-      
+
       $r .= "<tr><td><strong>".$attr['caption']."</strong></td><td>".$attr['displayValue']."</td></tr>\n";
-    }    
+    }
     $extraParams = $auth['read'] + array('taxon_list_id' => $args['list_id']);
     if ($args['preferred']) {
       $extraParams += array('preferred' => 't');
@@ -143,25 +141,25 @@ class iform_change_identification {
         'valueField'=>'id',
         'columns'=>2,
         'extraParams'=>$extraParams
-    );    
-    // Dynamically generate the species selection control required.        
+    );
+    // Dynamically generate the species selection control required.
     $r .= '<tr/><td><strong>Species</strong></td><td>'.call_user_func(array('data_entry_helper', $args['species_ctrl']), $species_list_args)."</td></tr>\n";
     $r .= "</table>\n";
     $r .= "</div>\n";
-    $r .= "<input type=\"submit\" class=\"ui-state-default ui-corner-all\" value=\"Save\" />\n";    
+    $r .= "<input type=\"submit\" class=\"ui-state-default ui-corner-all\" value=\"Save\" />\n";
     $r .= "</form>";
-        
+
     return $r;
   }
-  
+
   /**
    * Handles the construction of a submission array from a set of form values.
-   * @param array $values Associative array of form data values. 
-   * @param array $args iform parameters. 
+   * @param array $values Associative array of form data values.
+   * @param array $args iform parameters.
    * @return array Submission structure.
    */
   public static function get_submission($values, $args) {
     return submission_builder::build_submission($values, array('model'=>'occurrence'));
-  }  
-  
+  }
+
 }

@@ -15,24 +15,24 @@
  *
  * @package Client
  * @subpackage PrebuiltForms
- * @author  Indicia Team
+ * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link  http://code.google.com/p/indicia/
+ * @link https://github.com/indicia-team/client_helpers/
  */
- 
+
 require_once('includes/report.php');
 
 /**
  * A prebuilt form which wraps the freeform_report control, allowing report output to be displayed as a flexible
  * freeform banded output.
- * 
+ *
  * @package Client
  * @subpackage PrebuiltForms
  * @todo Rename the form class to iform_...
  */
 class iform_freeform_report {
-  
-  /** 
+
+  /**
    * Return the form metadata. Note the title of this method includes the name of the form file. This ensures
    * that if inheritance is used in the forms, subclassed forms don't return their parent's form definition.
    * @return array The definition of the form.
@@ -45,13 +45,13 @@ class iform_freeform_report {
       'description'=>'Report which allows output to be displayed as a flexible freeform banded output.'
     );
   }
-  
+
   /**
    * Get the list of parameters for this form.
    * @return array List of parameters that this form requires.
    * @todo: Implement this method
    */
-  public static function get_parameters() {   
+  public static function get_parameters() {
     return array_merge(
       iform_report_get_report_parameters(),
       array(
@@ -70,7 +70,7 @@ class iform_freeform_report {
           'type'=>'textarea',
           'required'=>false,
           'group'=>'Output templates'
-        ), 
+        ),
         array(
           'name'=>'bands',
           'caption'=>'Report Bands',
@@ -103,7 +103,7 @@ class iform_freeform_report {
       )
     );
   }
-  
+
   /**
    * Return the generated form output.
    * @param array $args List of parameter values passed through to the form depending on how the form has been configured.
@@ -112,7 +112,7 @@ class iform_freeform_report {
    * @param array $response When this form is reloading after saving a submission, contains the response from the service call.
    * Note this does not apply when redirecting (in this case the details of the saved object are in the $_GET data).
    * @return Form HTML.
-   * @todo: Implement this method 
+   * @todo: Implement this method
    */
   public static function get_form($args, $nid, $response=null) {
     iform_load_helpers(array('report_helper'));
@@ -123,5 +123,5 @@ class iform_freeform_report {
     $reportOptions['bands'] = json_decode($args['bands'], true);
     return report_helper::freeform_report($reportOptions);
   }
-  
+
 }
