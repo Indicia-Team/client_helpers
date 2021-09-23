@@ -8380,7 +8380,9 @@ HTML;
                   $values[$prefix.':id'.$uniqueId] : '',
               'path' => $value,
               'caption' => isset($values[$prefix.':caption'.$uniqueId]) ?
-                  $values[$prefix.':caption'.$uniqueId] : ''
+                  $values[$prefix.':caption'.$uniqueId] : '',
+              'licence_id' => isset($values[$prefix.':licence_id'.$uniqueId]) ?
+                  $values[$prefix.':licence_id'.$uniqueId] : NULL,
             );
             if (!empty($thisMediaTypeId)) {
               $mediaValues['media_type_id'] = $thisMediaTypeId;
