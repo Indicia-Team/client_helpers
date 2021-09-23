@@ -2182,11 +2182,13 @@ JS;
         'validation' => "required",
         'blankText' => "Select...",
     ), $options);
-    // Choose autocomplete control if specified in $options
-if($options["locationControl"]="autocomplete")
-    $r = self::get_control_locationautocomplete($auth, $args, $tabAlias, $options);
-else
-    $r = self::get_control_locationselect($auth, $args, $tabAlias, $options);
+    // Choose autocomplete control by default or if specified in $options.
+    // Slightly cack-handed due to fixing a bug while maintaining compatibility
+    // with how it previously behaved.
+    if(!isset($options["locationControl"]) || $options["locationControl"] == "autocomplete")
+      $r = self::get_control_locationautocomplete($auth, $args, $tabAlias, $options);
+    else
+      $r = self::get_control_locationselect($auth, $args, $tabAlias, $options);
 
     //only show helpText once
     unset($options['helpText']);
