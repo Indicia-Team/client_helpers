@@ -1768,7 +1768,6 @@ HTML;
       'speciesGridPageLinkParameter' => $args['species_grid_page_link_parameter'],
       'speciesGridPageLinkTooltip' => $args['species_grid_page_link_tooltip'],
     ], $options);
-    // @todo Check assignment rather than equality.
     if ($groups = hostsite_get_user_field('taxon_groups')) {
       $species_ctrl_opts['usersPreferredGroups'] = unserialize($groups);
     }
