@@ -810,7 +810,7 @@ TXT;
    * @return array
    *   List of distinct permissions.
    */
-  public static function get_perms($nid, array $args) {
+  public static function get_perms($nid, $args) {
     $perms = [];
     if (!empty($args['edit_permission'])) {
       $perms[] = $args['edit_permission'];
