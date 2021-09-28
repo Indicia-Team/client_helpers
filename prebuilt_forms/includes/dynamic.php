@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Indicia, the OPAL Online Recording Toolkit.
  *
@@ -23,36 +24,42 @@
  * NB has Drupal specific code.
  */
 
-require_once('map.php');
-require_once('user.php');
-require_once('language_utils.php');
-require_once('form_generation.php');
+require_once 'map.php';
+require_once 'user.php';
+require_once 'language_utils.php';
+require_once 'form_generation.php';
 
 define('HIGH_VOLUME_CACHE_TIMEOUT', 30);
 define('HIGH_VOLUME_CONTROL_CACHE_TIMEOUT', 5);
 
 class iform_dynamic {
-  // Hold the single species name to be shown on the page to the user. Inherited by dynamic_sample_occurrence
+  // Hold the single species name to be shown on the page to the user.
+  // Inherited by dynamic_sample_occurrence.
   protected static $singleSpeciesName;
 
-  // The node id upon which this form appears
+  // The node id upon which this form appears.
   protected static $nid;
 
-  // The class called by iform.module which may be a subclass of iform_location_dynamic
+  // The class called by iform.module which may be a subclass of iform_location_dynamic.
   protected static $called_class;
 
-  // The authorisation tokens for accessing the warehouse
+  // The authorisation tokens for accessing the warehouse.
   protected static $auth = array();
 
   // The form mode. Stored in case other inheriting forms need it.
   protected static $mode;
 
-  // Values that $mode can take
-  const MODE_GRID = 0; // default mode when no grid set to false - display grid of existing data
-  const MODE_NEW = 1; // default mode when no_grid set to true - display an empty form for adding a new sample
-  const MODE_EXISTING = 2; // display existing sample for editing
-  const MODE_EXISTING_RO = 3; // display existing sample for reading only
-  const MODE_CLONE = 4; // display form for adding a new sample containing values of an existing sample.
+  // Values that $mode can take.
+  // MODE_GRID, default mode when no grid set to false - display grid of existing data.
+  // MODE_NEW, default mode when no_grid set to true - display an empty form for adding a new sample.
+  // MODE_EXISTING, display existing sample for editing.
+  // MODE_EXISTING_RO, display existing sample for reading only.
+  // MODE_CLONE, display form for adding a new sample containing values of an existing sample.
+  const MODE_GRID = 0;
+  const MODE_NEW = 1;
+  const MODE_EXISTING = 2;
+  const MODE_EXISTING_RO = 3;
+  const MODE_CLONE = 4;
 
   /**
    * Controls whether a form element wrapped around output.
@@ -63,138 +70,161 @@ class iform_dynamic {
     return TRUE;
   }
 
+  /**
+   * Function get_parameters()
+   */
   public static function get_parameters() {
     $retVal = array_merge(
       iform_map_get_map_parameters(),
       iform_map_get_georef_parameters(),
-      array(
-        array(
-          'name'=>'interface',
-          'caption'=>'Interface Style Option',
-          'description'=>'Choose the style of user interface, either dividing the form up onto separate tabs, '.
-              'wizard pages or having all controls on a single page.',
-          'type'=>'select',
-          'options' => array(
+      [
+        [
+          'name' => 'interface',
+          'caption' => 'Interface Style Option',
+          'description' => 'Choose the style of user interface, either dividing
+          the form up onto separate tabs, wizard pages or having all controls on
+          a single page.',
+          'type' => 'select',
+          'options' => [
             'tabs' => 'Tabs',
             'wizard' => 'Wizard',
-            'one_page' => 'All One Page'
-          ),
+            'one_page' => 'All One Page',
+          ],
           'group' => 'User Interface',
-          'default' => 'tabs'
-        ),
-        array(
-          'name'=>'tabProgress',
-          'caption'=>'Show Progress through Wizard/Tabs',
-          'description'=>'For Wizard or Tabs interfaces, check this option to show a progress summary above the controls.',
-          'type'=>'boolean',
+          'default' => 'tabs',
+        ],
+        [
+          'name' => 'tabProgress',
+          'caption' => 'Show Progress through Wizard/Tabs',
+          'description' => 'For Wizard or Tabs interfaces, check this option to
+          show a progress summary above the controls.',
+          'type' => 'boolean',
           'default' => FALSE,
           'required' => FALSE,
-          'group' => 'User Interface'
-        ),
-        array(
-          'name'=>'force_next_previous',
-          'caption'=>'Next/previous buttons shown in tab mode?',
-          'description'=>'Should the wizard style Next & Previous buttons be shown even when in tab mode? This option does '.
-              'not apply when the option "Submit button below all pages" is set.',
-          'type'=>'boolean',
+          'group' => 'User Interface',
+        ],
+        [
+          'name' => 'force_next_previous',
+          'caption' => 'Next/previous buttons shown in tab mode?',
+          'description' => 'Should the wizard style Next & Previous buttons be 
+          shown even when in tab mode? This option does not apply when the
+          option "Submit button below all pages" is set.',
+          'type' => 'boolean',
           'default' => FALSE,
           'required' => FALSE,
-          'group' => 'User Interface'
-        ),
-        array(
-          'name'=>'clientSideValidation',
-          'caption'=>'Client Side Validation',
-          'description'=>'Enable client side validation of controls using JavaScript.',
-          'type'=>'boolean',
+          'group' => 'User Interface',
+        ],
+        [
+          'name' => 'clientSideValidation',
+          'caption' => 'Client Side Validation',
+          'description' => 'Enable client side validation of controls using
+          JavaScript.',
+          'type' => 'boolean',
           'default' => TRUE,
           'required' => FALSE,
-          'group' => 'User Interface'
-        ),
+          'group' => 'User Interface',
+        ],
         [
-          'name'=>'attribute_termlist_language_filter',
+          'name' => 'attribute_termlist_language_filter',
           'caption' => 'Internationalise lookups mode',
-          'description' => 'In lookup custom attribute controls, how should term translation be handled?',
+          'description' => 'In lookup custom attribute controls, how should term
+          translation be handled?',
           'type' => 'select',
           'lookupValues' => [
             '0' => 'Show all terms in the termlist',
             '1' => 'Show only terms in selected language',
-            'clientI18n' => 'Show only preferred terms but enable localisation (e.g. Drupal or Indicia translation)',
+            'clientI18n' => 'Show only preferred terms but enable localisation
+            (e.g. Drupal or Indicia translation)',
           ],
           'default' => '0',
-          'group' => 'User Interface'
+          'group' => 'User Interface',
         ],
-        array(
-          'name'=>'no_grid',
-          'caption'=>'Skip initial grid of data',
-          'description'=>'If checked, then when initially loading the form the data entry form is immediately displayed, as opposed to '.
-              'the default of displaying a grid of the user\'s data which they can add to. By ticking this box, it is possible to use this form '.
-              'for data entry by anonymous users though they cannot then list the data they have entered.',
-          'type'=>'boolean',
+        [
+          'name' => 'no_grid',
+          'caption' => 'Skip initial grid of data',
+          'description' => 'If checked, then when initially loading the form the
+          data entry form is immediately displayed, as opposed to the default of
+          displaying a grid of the user\'s data which they can add to. By
+          ticking this box, it is possible to use this form for data entry by
+          anonymous users though they cannot then list the data they have
+          entered.',
+          'type' => 'boolean',
           'default' => TRUE,
           'required' => FALSE,
-          'group' => 'User Interface'
-        ),
-        array(
-          'name'=>'grid_num_rows',
-          'caption'=>'Number of rows displayed in grid',
-          'description'=>'Number of rows display on each page of the grid.',
-          'type'=>'int',
+          'group' => 'User Interface',
+        ],
+        [
+          'name' => 'grid_num_rows',
+          'caption' => 'Number of rows displayed in grid',
+          'description' => 'Number of rows display on each page of the grid.',
+          'type' => 'int',
           'default' => 10,
-          'group' => 'User Interface'
-        ),
-        array(
-          'name'=>'save_button_below_all_pages',
-          'caption'=>'Submit button below all pages?',
-          'description'=>'Should the submit button be present below all the pages (checked), or should it be only on the last page (unchecked)? '.
-              'Only applies to the Tabs interface style.',
-          'type'=>'boolean',
+          'group' => 'User Interface',
+        ],
+        [
+          'name' => 'save_button_below_all_pages',
+          'caption' => 'Submit button below all pages?',
+          'description' => 'Should the submit button be present below all the
+          pages (checked), or should it be only on the last page (unchecked)?
+          Only applies to the Tabs interface style.',
+          'type' => 'boolean',
           'default' => FALSE,
           'required' => FALSE,
-          'group' => 'User Interface'
-        ),
-        array(
-          'name'=>'spatial_systems',
-          'caption'=>'Allowed Spatial Ref Systems',
-          'description'=>'List of allowable spatial reference systems, comma separated. Use the spatial ref system code (e.g. OSGB or the EPSG code number such as 4326). '.
-              'Set to "default" to use the settings defined in the IForm Settings page.',
-          'type'=>'string',
+          'group' => 'User Interface',
+        ],
+        [
+          'name' => 'spatial_systems',
+          'caption' => 'Allowed Spatial Ref Systems',
+          'description' => 'List of allowable spatial reference systems, comma
+          separated. Use the spatial ref system code (e.g. OSGB or the EPSG code
+          number such as 4326). Set to "default" to use the settings defined in
+          the IForm Settings page.',
+          'type' => 'string',
           'default' => 'default',
-          'group'=>'Other Map Settings'
-        ),
-        array(
-          'name'=>'survey_id',
-          'caption'=>'Survey dataset',
-          'description'=>'The survey dataset that data will be posted into and that defines custom attributes.',
-          'type'=>'select',
-          'table'=>'survey',
-          'captionField'=>'title',
-          'valueField'=>'id',
-          'siteSpecific'=>TRUE
-        ),
-        array(
-          'name'=>'high_volume',
-          'caption'=>'High volume reporting',
-          'description'=>'Tick this box to enable caching which prevents reporting pages with a high number of hits from generating ' .
-              'excessive server load. Currently compatible only with reporting pages that do not integrate with the user profile.',
-          'type'=>'boolean',
+          'group' => 'Other Map Settings',
+        ],
+        [
+          'name' => 'survey_id',
+          'caption' => 'Survey dataset',
+          'description' => 'The survey dataset that data will be posted into and
+          that defines custom attributes.',
+          'type' => 'select',
+          'table' => 'survey',
+          'captionField' => 'title',
+          'valueField' => 'id',
+          'siteSpecific' => TRUE,
+        ],
+        [
+          'name' => 'high_volume',
+          'caption' => 'High volume reporting',
+          'description' => 'Tick this box to enable caching which prevents
+          reporting pages with a high number of hits from generating excessive
+          server load. Currently compatible only with reporting pages that do
+          not integrate with the user profile.',
+          'type' => 'boolean',
           'default' => FALSE,
-          'required' => FALSE
-        )
-      )
+          'required' => FALSE,
+        ],
+      ]
     );
     return $retVal;
   }
 
   /**
    * Declare the list of permissions we've got set up to pass to the CMS' permissions code.
-   * @param int $nid Node ID, not used
-   * @param array $args Form parameters array, used to extract the defined permissions.
-   * @return array List of distinct permissions.
+   *
+   * @param int $nid
+   *   Node ID, not used.
+   * @param array $args
+   *   Form parameters array, used to extract the defined permissions.
+   *
+   * @return array
+   *   List of distinct permissions.
    */
   public static function get_perms($nid, $args) {
-    $perms = array();
+    $perms = [];
     if (!empty($args['structure'])) {
-      // scan for @permission=... in the form structure
+      // Scan for @permission=... in the form structure.
       $structure = data_entry_helper::explode_lines($args['structure']);
       $permissions = preg_grep('/^@((smp|occ|loc)Attr:\d+|)?permission=/', $structure);
       foreach ($permissions as $permission) {
@@ -214,7 +244,7 @@ class iform_dynamic {
   public static function get_form($args, $nid) {
     data_entry_helper::$website_id = $args['website_id'];
     if (!empty($args['high_volume']) && $args['high_volume']) {
-      // node level caching for most page hits
+      // Node level caching for most page hits.
       $cached = data_entry_helper::cache_get(['node' => $nid], HIGH_VOLUME_CACHE_TIMEOUT);
       if ($cached !== FALSE) {
         $cached = explode('|!|', $cached);
@@ -230,43 +260,48 @@ class iform_dynamic {
 
     // Convert parameter, defaults, into structured array.
     self::parse_defaults($args);
-    // Supply parameters that may be missing after form upgrade
-    if (method_exists(self::$called_class, 'getArgDefaults'))
-      $args = call_user_func(array(self::$called_class, 'getArgDefaults'), $args);
+    // Supply parameters that may be missing after form upgrade.
+    if (method_exists(self::$called_class, 'getArgDefaults')) {
+      $args = call_user_func([self::$called_class, 'getArgDefaults'], $args);
+    }
 
-    // Get authorisation tokens to update and read from the Warehouse. We allow child classes to generate this first if subclassed.
-    if (self::$auth)
+    // Get authorisation tokens to update and read from the Warehouse. We allow
+    // child classes to generate this first if subclassed.
+    if (self::$auth) {
       $auth = self::$auth;
+    }
     else {
       $auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
       self::$auth = $auth;
     }
     // Determine how the form was requested and therefore what to output.
-    $mode = (method_exists(self::$called_class, 'getMode'))
-      ? call_user_func(array(self::$called_class, 'getMode'), $args, $nid)
-      : '';
+    $mode = (method_exists(self::$called_class, 'getMode')) ?
+      call_user_func([self::$called_class, 'getMode'], $args, $nid) : '';
     self::$mode = $mode;
-    if ($mode ===  self::MODE_GRID) {
+    if ($mode === self::MODE_GRID) {
       // Output a grid of existing records.
-      $r = call_user_func(array(self::$called_class, 'getGrid'), $args, $nid, $auth);
-    } else {
+      $r = call_user_func([self::$called_class, 'getGrid'], $args, $nid, $auth);
+    }
+    else {
       if (($mode === self::MODE_EXISTING || $mode === self::MODE_EXISTING_RO || $mode === self::MODE_CLONE) && is_null(data_entry_helper::$entity_to_load)) {
-        // only load if not in error situation.
-        call_user_func_array(array(self::$called_class, 'getEntity'), array(&$args, $auth));
+        // Only load if not in error situation.
+        call_user_func_array([self::$called_class, 'getEntity'], [&$args, $auth]);
         // When editing, no need to step through all the pages to save a change.
-        if ($mode === self::MODE_EXISTING)
+        if ($mode === self::MODE_EXISTING) {
           $args['save_button_below_all_pages'] = TRUE;
+        }
       }
-      // attributes must be fetched after the entity to load is filled in - this is because the id gets filled in then!
+      // Attributes must be fetched after the entity to load is filled in - this
+      // is because the id gets filled in then!
       $attributes = (method_exists(self::$called_class, 'getAttributes'))
-          ? call_user_func(array(self::$called_class, 'getAttributes'), $args, $auth)
-          : array();
-      $r = call_user_func(array(self::$called_class, 'get_form_html'), $args, $auth, $attributes);
+          ? call_user_func([self::$called_class, 'getAttributes'], $args, $auth)
+          : [];
+      $r = call_user_func([self::$called_class, 'get_form_html'], $args, $auth, $attributes);
     }
     if (!empty($args['high_volume']) && $args['high_volume']) {
       $c = $r . '|!|' . data_entry_helper::$javascript . '|!|' . data_entry_helper::$late_javascript . '|!|' .
           data_entry_helper::$onload_javascript . '|!|' . json_encode(data_entry_helper::$required_resources);
-      data_entry_helper::cache_set(array('node' => $nid), $c, HIGH_VOLUME_CACHE_TIMEOUT);
+      data_entry_helper::cache_set(['node' => $nid], $c, HIGH_VOLUME_CACHE_TIMEOUT);
     }
     return $r;
   }
@@ -343,11 +378,11 @@ class iform_dynamic {
 
   protected static function get_form_html($args, $auth, $attributes) {
     global $indicia_templates;
-    $params = array($args, $auth, &$attributes);
-    $r = call_user_func(array(self::$called_class, 'getHeader'), $args);
-    $r .= call_user_func_array(array(self::$called_class, 'getFormHiddenInputs'), $params);
+    $params = [$args, $auth, &$attributes];
+    $r = call_user_func([self::$called_class, 'getHeader'], $args);
+    $r .= call_user_func_array([self::$called_class, 'getFormHiddenInputs'], $params);
     if (self::$mode === self::MODE_CLONE) {
-      call_user_func_array(array(self::$called_class, 'cloneEntity'), $params);
+      call_user_func_array([self::$called_class, 'cloneEntity'], $params);
     }
     $customAttributeTabs = get_attribute_tabs($attributes);
     $tabs = self::get_all_tabs($args['structure'], $customAttributeTabs);
@@ -362,7 +397,7 @@ class iform_dynamic {
     $tabHtml = self::get_tab_html($tabs, $auth, $args, $attributes);
     // Output the dynamic tab headers.
     if ($args['interface'] !== 'one_page') {
-      $headerOptions = array('tabs' => array());
+      $headerOptions = ['tabs' => []];
       foreach ($tabHtml as $tab => $tabContent) {
         $alias = preg_replace('/[^a-zA-Z0-9]/', '', strtolower($tab));
         $tabtitle = lang::get("LANG_Tab_$alias");
@@ -373,13 +408,13 @@ class iform_dynamic {
         $headerOptions['tabs']['#tab-' . $alias] = $tabtitle;
       }
       $r .= data_entry_helper::tab_header($headerOptions);
-      data_entry_helper::enable_tabs(array(
+      data_entry_helper::enable_tabs([
         'divId' => 'controls',
         'style' => $args['interface'],
         'progressBar' => isset($args['tabProgress']) && $args['tabProgress'] == TRUE,
         'progressBarOptions' => isset($args['progressBarOptions']) ? $args['progressBarOptions'] : array(),
         'navButtons' => isset($args['force_next_previous']) && $args['force_next_previous'],
-      ));
+      ]);
     }
     else {
       // Ensure client side validation is activated if requested on single page
@@ -437,7 +472,7 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
       elseif ($pageIdx === count($tabHtml) - 1) {
         // We need the verify button as well if this option is enabled
         if (isset($args['verification_panel']) && $args['verification_panel']) {
-          $r .= '<button type="button" class="' . $indicia_templates['buttonDefaultClass'] . '" id="verify-btn">' . lang::get('Precheck my records')."</button>\n";
+          $r .= '<button type="button" class="' . $indicia_templates['buttonDefaultClass'] . '" id="verify-btn">' . lang::get('Precheck my records') . "</button>\n";
         }
         if (call_user_func([self::$called_class, 'isDataEntryForm']) && method_exists(self::$called_class, 'getSubmitButtons')
             && !($args['interface'] === 'tabs' && !empty($args['save_button_below_all_pages']))) {
@@ -470,7 +505,7 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
 
   /**
    * Overridable function to retrieve the HTML to appear above the dynamically constructed form,
-   * which by default is an HTML form for data submission
+   * which by default is an HTML form for data submission.
    *
    * @param array $args
    *   Form parameters.
@@ -488,10 +523,10 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
     return '';
   }
 
-
   /**
    * Overridable function to retrieve the HTML to appear below the dynamically constructed form,
-   * which by default is the closure of the HTML form for data submission
+   * which by default is the closure of the HTML form for data submission.
+   *
    * @param type $args
    */
   protected static function getFooter($args) {
@@ -500,9 +535,9 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
       // Add a single submit button outside the tabs if a button needs to be
       // visible all the time.
       if ($args['interface'] === 'tabs' && $args['save_button_below_all_pages'] && method_exists(self::$called_class, 'getSubmitButtons')) {
-        $r .= call_user_func(array(self::$called_class, 'getSubmitButtons'), $args);
+        $r .= call_user_func([self::$called_class, 'getSubmitButtons'], $args);
       }
-      if(!empty(data_entry_helper::$validation_errors)){
+      if (!empty(data_entry_helper::$validation_errors)) {
         $r .= data_entry_helper::dump_remaining_errors();
       }
       $r .= "</form>";
@@ -524,7 +559,7 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
     if (call_user_func([self::$called_class, 'isDataEntryForm'])) {
       // Get authorisation tokens to update the Warehouse, plus any other hidden data.
       $r = $auth['write'] .
-            "<input type=\"hidden\" id=\"website_id\" name=\"website_id\" value=\"$args[website_id]\" />\n".
+            "<input type=\"hidden\" id=\"website_id\" name=\"website_id\" value=\"$args[website_id]\" />\n" .
             "<input type=\"hidden\" id=\"survey_id\" name=\"survey_id\" value=\"$args[survey_id]\" />\n";
       $r .= get_user_profile_hidden_inputs($attributes, $args, isset(data_entry_helper::$entity_to_load['sample:id']), $auth['read']);
     }
@@ -540,7 +575,9 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
   }
 
   /**
-   * Overridable method to get the buttons to include for form submission. Might be overridden to include a delete button for example.
+   * Overridable method to get the buttons to include for form submission.
+   *
+   * Might be overridden to include a delete button for example.
    */
   protected static function getSubmitButtons($args) {
     global $indicia_templates;
@@ -770,75 +807,87 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
             $attributes[$attribKey]['handled'] = TRUE;
           }
           else {
-            // if the control name of form name:id, then we will call get_control_name passing the id as a parameter
-            $method = 'get_control_'.preg_replace('/[^a-zA-Z]/', '', strtolower($component));
+            // If the control name of form name:id, then we will call
+            // get_control_name passing the id as a parameter.
+            $method = 'get_control_' . preg_replace('/[^a-zA-Z]/', '', strtolower($component));
             if (method_exists(self::$called_class, $method)) {
               $options['ctrlId'] = $matches['ctrlId'];
-              $html .= call_user_func(array(self::$called_class, $method), $auth, $args, $tabalias, $options);
+              $html .= call_user_func([self::$called_class, $method], $auth, $args, $tabalias, $options);
             }
-            else
+            else {
               $html .= "Unsupported control $component<br/>";
+            }
           }
           $hasControls = TRUE;
         }
-        elseif ($component === '[*]'){
-          // this outputs any custom attributes that remain for this tab. The custom attributes can be configured in the
-          // settings text using something like @smpAttr:4|label=My label. The next bit of code parses these out into an
-          // array used when building the html.
-          // Alternatively, a setting like @option=value is applied to all the attributes.
+        elseif ($component === '[*]') {
+          // This outputs any custom attributes that remain for this tab. The
+          // custom attributes can be configured in the settings text using
+          // something like @smpAttr:4|label=My label. The next bit of code
+          // parses these out into an array used when building the html.
+          // Alternatively, a setting like @option=value is applied to all the
+          // attributes.
           $attrSpecificOptions = [];
           $attrGenericOptions = [];
           foreach ($options as $option => $value) {
-            // split the id of the option into the control name and option name.
+            // Split the id of the option into the control name and option name.
             $optionId = explode('|', $option);
-            if(count($optionId) > 1) {
-              // Found an option like @smpAttr:4|label=My label
+            if (count($optionId) > 1) {
+              // Found an option like @smpAttr:4|label=My label.
               if (!isset($attrSpecificOptions[$optionId[0]])) {
-                $attrSpecificOptions[$optionId[0]]=array();
+                $attrSpecificOptions[$optionId[0]] = [];
               }
               // Ensure default extraParams (such as auth tokens) not
               // overwritten by a custom option.
               if ($optionId[1] === 'extraParams') {
-                $value = array_merge($defAttrOptions['extraParams'], (array)$value);
+                $value = array_merge($defAttrOptions['extraParams'], (array) $value);
               }
               $attrSpecificOptions[$optionId[0]][$optionId[1]] = apply_user_replacements($value);
             }
             else {
               // Found an option like @option=value
-              $attrGenericOptions = array_merge($attrGenericOptions, array($option => $value));
+              $attrGenericOptions = array_merge($attrGenericOptions, [$option => $value]);
             }
           }
           $attrHtml = get_attribute_html($attributes, $args, $defAttrOptions, $tab,
             array_merge($attrGenericOptions, $attrSpecificOptions));
-          if (!empty($attrHtml))
+          if (!empty($attrHtml)) {
             $hasControls = TRUE;
+          }
           $html .= $attrHtml;
-        } else {
+        }
+        else {
           $html .= "The form structure includes a control called $component which is not recognised.<br/>";
-          //ensure $hasControls is true so that the error message is shown
+          // Ensure $hasControls is true so that the error message is shown.
           $hasControls = TRUE;
         }
-      } elseif ($component === '|') {
+      }
+      elseif ($component === '|') {
         // Column splitter. So, store the col html and start on the next
         // column.
         $cols[] = $html;
         $html = '';
-      } else {
+      }
+      else {
         // Output anything else as is. This allow us to add html to the form
         // structure.
         $html .= helper_base::getStringReplaceTokens($component, $auth['read']);
       }
     }
-    if (count($cols)>0) {
+    if (count($cols) > 0) {
       $cols[] = $html;
-      // a splitter in the structure so put the stuff so far in a 50% width left float div, and the stuff that follows in a 50% width right float div.
-      $html = str_replace(array('{col-1}', '{col-2}', '{attrs}'), array_merge($cols, ['']), $indicia_templates['two-col-50']);
-      if(count($cols)>2){
+      // A splitter in the structure so put the stuff so far in a 50% width left
+      // float div, and the stuff that follows in a 50% width right float div.
+      $html = str_replace(['{col-1}', '{col-2}', '{attrs}'], array_merge($cols, ['']), $indicia_templates['two-col-50']);
+      if (count($cols) > 2) {
         unset($cols[1]);
         unset($cols[0]);
-        $html .= '<div class="follow_on_block" style="clear:both;">'.implode('',$cols).'</div>';
-      } else
-        $html .= '<div class="follow_on_block" style="clear:both;"></div>'; // needed so any tab div is stretched around them
+        $html .= '<div class="follow_on_block" style="clear:both;">' . implode('', $cols) . '</div>';
+      }
+      else {
+        // Needed so any tab div is stretched around them.
+        $html .= '<div class="follow_on_block" style="clear:both;"></div>';
+      }
     }
     return $html;
   }
@@ -849,30 +898,35 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
    */
   protected static function get_all_tabs($structure, $attrTabs) {
     $structureArr = helper_base::explode_lines($structure);
-    $structureTabs = array();
+    $structureTabs = [];
     // A default 'tab' for content that must appear above the set of tabs.
-    $currentTab='-';
+    $currentTab = '-';
     foreach ($structureArr as $component) {
-      if (preg_match('/^=[A-Za-z0-9, \'\-\*\?]+=$/', trim($component), $matches)===1) {
+      if (preg_match('/^=[A-Za-z0-9, \'\-\*\?]+=$/', trim($component), $matches) === 1) {
         $currentTab = substr($matches[0], 1, -1);
-        $structureTabs[$currentTab] = array();
-      } else {
+        $structureTabs[$currentTab] = [];
+      }
+      else {
         $structureTabs[$currentTab][] = $component;
       }
     }
-    // If any additional tabs are required by attributes, add them to the position marked by a dummy tab named [*].
-    // First get rid of any tabs already in the structure
+    // If any additional tabs are required by attributes, add them to the
+    // position marked by a dummy tab named [*].
+    // First get rid of any tabs already in the structure.
     foreach ($attrTabs as $tab => $tabContent) {
-      // case -insensitive check if attribute tab already in form structure
-      if (in_array(strtolower($tab), array_map('strtolower', array_keys($structureTabs))))
+      // Case-insensitive check if attribute tab already in form structure..
+      if (in_array(strtolower($tab), array_map('strtolower', array_keys($structureTabs)))) {
         unset($attrTabs[$tab]);
+      }
     }
-    // Now we have a list of form structure tabs, with the position of the $attrTabs marked by *. So join it all together.
+    // Now we have a list of form structure tabs, with the position of the
+    // $attrTabs marked by *. So join it all together.
     // Maybe there is a better way to do this?
-    $allTabs = array();
-    foreach($structureTabs as $tab => $tabContent) {
-      if ($tab=='*')
+    $allTabs = [];
+    foreach ($structureTabs as $tab => $tabContent) {
+      if ($tab == '*') {
         $allTabs += $attrTabs;
+      }
       else {
         $allTabs[$tab] = $tabContent;
       }
@@ -883,11 +937,12 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
   /**
    * Convert the unstructured textarea of default values into a structured array.
    */
-    protected static function parse_defaults(&$args) {
-    $result=array();
-    if (isset($args['defaults']))
+  protected static function parse_defaults(&$args) {
+    $result = [];
+    if (isset($args['defaults'])) {
       $result = helper_base::explode_lines_key_value_pairs($args['defaults']);
-    $args['defaults']=$result;
+    }
+    $args['defaults'] = $result;
   }
 
   /**
@@ -896,15 +951,15 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
    */
   protected static function get_control_spatialreference($auth, $args, $tabalias, $options) {
     // Build the array of spatial reference systems into a format Indicia can use.
-    $systems=array();
+    $systems = [];
     $list = explode(',', str_replace(' ', '', $args['spatial_systems']));
-    foreach($list as $system) {
+    foreach ($list as $system) {
       $systems[$system] = lang::get("sref:$system");
     }
-    return data_entry_helper::sref_and_system(array_merge(array(
+    return data_entry_helper::sref_and_system(array_merge([
       'label' => lang::get('LANG_SRef_Label'),
-      'systems' => $systems
-    ), $options));
+      'systems' => $systems,
+    ], $options));
   }
 
   /**
@@ -917,7 +972,6 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
       $options
     ));
   }
-
 
   /**
    * Get a key name which defines the type of an attribute.
