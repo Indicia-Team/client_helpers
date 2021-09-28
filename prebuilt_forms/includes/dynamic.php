@@ -449,6 +449,17 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
       $pageIdx++;
       $r .= "</div>\n";
     }
+
+    // Add a save button for a one-page form with no =tabs= in form structure.
+    if (
+      call_user_func([self::$called_class, 'isDataEntryForm']) &&
+      method_exists(self::$called_class, 'getSubmitButtons') &&
+      $args['interface'] === 'one_page' &&
+      $pageIdx === 0
+    ) {
+      $r .= call_user_func([self::$called_class, 'getSubmitButtons'], $args);
+    }
+
     $r .= "</div>\n";
     $r .= call_user_func([self::$called_class, 'getFooter'], $args);
     if (method_exists(self::$called_class, 'linkSpeciesPopups')) {
