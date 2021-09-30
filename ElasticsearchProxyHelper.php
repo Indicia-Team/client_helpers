@@ -143,7 +143,16 @@ class ElasticsearchProxyHelper {
    *   URL.
    */
   private static function getEsUrl() {
-    return self::$config['indicia']['base_url'] . 'index.php/services/rest/' . self::$config['es']['endpoint'];
+    // Request can modify the endpoint, but only if on a list of allowed
+    // endpoints.
+    if (!empty($_GET['endpoint']) && !empty(self::$config['es']['alternative_endpoints'])
+        && in_array($_GET['endpoint'], helper_base::explode_lines(self::$config['es']['alternative_endpoints']))) {
+      $endpoint = $_GET['endpoint'];
+    }
+    else {
+      $endpoint = self::$config['es']['endpoint'];
+    }
+    return self::$config['indicia']['base_url'] . "index.php/services/rest/$endpoint";
   }
 
   /**

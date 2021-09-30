@@ -1126,6 +1126,7 @@ HTML;
     self::applySourceModeDefaults($options);
     $jsOptions = [
       'aggregation',
+      'endpoint',
       'fields',
       'filterBoolClauses',
       'filterBoundsUsingMap',

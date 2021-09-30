@@ -123,6 +123,14 @@ TXT;
         'required' => FALSE,
       ],
       [
+        'name' => 'alternative_endpoints',
+        'caption' => 'Alternative endpoints',
+        'description' => 'If this page allows sources to access any alternative Elasticsearch endpoints (e.g. for samples data), then specify the endpoints here, one per line.',
+        'type' => 'textarea',
+        'group' => 'Elasticsearch settings',
+        'required' => FALSE,
+      ],
+      [
         'name' => 'scope',
         'caption' => 'Data scope (for identifying which websites will share records)',
         'description' => 'Scope or sharing mode. Not used when authenticating as a client configured in the Warehouse REST API.',
