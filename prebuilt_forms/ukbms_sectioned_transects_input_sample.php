@@ -77,7 +77,7 @@ class iform_ukbms_sectioned_transects_input_sample {
   public static function get_ukbms_sectioned_transects_input_sample_definition() {
     return array(
       'title'=>'UKBMS Sectioned Transects Sample Input',
-      'category' => 'Sectioned Transects',
+      'category' => 'BMS Specific forms',
       'description'=>'A form for inputting the counts of species observed at each section along a transect. Can be called with site=<id> in the URL to force the '.
           'selection of a fixed site, or sample=<id> to edit an existing sample.'
     );

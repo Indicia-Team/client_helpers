@@ -38,7 +38,7 @@ class iform_ukbms_sectioned_transects_edit_transect extends iform_sectioned_tran
   public static function get_ukbms_sectioned_transects_edit_transect_definition() {
     return array(
       'title'=>'UKBMS Location editor',
-      'category' => 'Sectioned Transects',
+      'category' => 'BMS Specific forms',
       'description'=>'Form for adding or editing the site details on a transect style location which has a number of sub-sections, but which can have various location types.'
     );
   }

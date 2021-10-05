@@ -33,7 +33,7 @@ class iform_ukbms_assign_transects {
   public static function get_ukbms_assign_transects_definition() {
     return array(
       'title'=>'UKBMS Location assigner',
-      'category' => 'UKBMS custom forms',
+      'category' => 'BMS Specific forms',
       'description'=>'Form for requesting exsting sites be assigned to a user.'
     );
   }
