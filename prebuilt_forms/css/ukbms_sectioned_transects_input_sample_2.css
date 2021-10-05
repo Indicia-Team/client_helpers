@@ -1,0 +1,204 @@
+.helpText {
+  margin-left: 144px;
+}
+
+table.species_grid td {
+  border: none;
+}
+
+table.species_grid {
+  border-collapse: separate;
+}
+table.species_grid.simple {
+  width: auto;
+}
+
+table.species_grid td, table.species_grid input, table.species_grid select
+{
+  margin: auto;
+  padding: 1px;
+}
+
+
+table.species_grid input {
+  width: 50px;
+  border: solid silver 1px;
+  text-align: center;
+}
+table.species_grid input.ac_input {
+  width: auto;
+}
+
+table.species_grid input.ui-state-error {
+  width: 50px;
+  border: solid #cd0a0a 1px;
+}
+table.species_grid select.ui-state-error {
+  border: solid #cd0a0a 1px;
+}
+table.species_grid p.inline-error {
+  margin: 0;
+}
+
+table th, table td {
+  text-align: center;
+}
+
+table .alt-row {
+  background-color: #e7e7e7;
+}
+
+table tr.table-selected {
+  border-top: solid blue 1px;
+  border-bottom: solid blue 1px;
+}
+
+table td.table-selected  {
+  border-left: solid blue 1px;
+  border-right: solid blue 1px;
+}
+
+table thead.table-header {
+  display: table-header-group;
+}
+
+table td.first {
+  border-left: dashed grey 2px;
+}
+
+input.edited[type="text"], input.edited[type="password"], select.edited {
+  border: solid green 1px;
+  box-shadow: 0px 0px 5px 5px grey
+}
+
+input.savingSpinner[type="text"], input.savingSpinner[type="password"], select.savingSpinner, textarea.savingSpinner {
+  background: url(../../../media/images/ajax-loader.gif) no-repeat right;
+  font-style: italic;
+}
+input.savingSpinner[type="checkbox"] {
+   -webkit-animation: rotation 1s infinite linear;
+   -moz-animation: rotation 1s infinite linear;
+   -o-animation: rotation 1s infinite linear;
+   animation: rotation 1s infinite linear;
+   border:3px solid rgba(0,174,239,.1);
+   border-top:3px solid rgba(0,174,239,.8);
+}
+select.savingSpinner {
+  background-position: right 16px center;
+}
+label.working, label.btn.working.active {
+  background-image: url(../../../media/images/ajax-loader.gif);
+  background-repeat: no-repeat;
+  background-position: right;
+  font-style: italic;
+}
+.range-warning-icon {
+  width: 22px;
+  height: 16px;
+  display: inline-block;
+  background: url("../../../media/images/warning.png") no-repeat center;
+}
+table tr.range-warning td.taxon {
+  background-color: #ffcece;
+}
+
+#sample div.form-group input[type="checkbox"] {
+  margin-left: 8px;
+}
+
+table.species_grid thead th {
+  background: none;
+  color: #3c3c3b;
+  font-size: 1em;
+}
+.keepHidden {
+  display: none;
+}
+
+table.species_grid .section-S6,
+table.species_grid .section-S11,
+table.species_grid .section-S16 {
+  border-left: dashed grey 2px;
+}
+.btn:active, .btn.active {
+    -webkit-box-shadow: 0 0 3px 2px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 0 3px 2px rgba(0, 0, 0, 0.5);
+}
+a.top-link {
+  display: none;
+}
+table.sticky-header a.top-link {
+  display: inline-block;
+  color: #e73c00;
+}
+
+div.species_grid_flex {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 5px;
+}
+input.btn-lg[type="submit"] {
+  padding: 10px 16px;
+  border: 1px solid transparent;
+}
+button.btn-lg, a.btn-lg{
+  margin: 10px;
+}
+p.gdpr {
+  margin-top: 10px;
+}
+table.species_grid button {
+  margin: 0px;
+}
+#grid-loading {
+  position: fixed; /* Sit on top of the page content */
+  display: none; /* Hidden by default */
+  width: 100%; /* Full width (cover the whole page) */
+  height: 100%; /* Full height (cover the whole page) */
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0,0,0,0.5); /* Black background with opacity */
+  z-index: 1000; /* Specify a stack order in case you're using a different order for other elements */
+  cursor: pointer; /* Add a pointer on hover */
+}
+.spinner {
+   position: absolute;
+   left: 50%;
+   top: 50%;
+   height:100px;
+   width:100px;
+   margin:0px auto;
+   -webkit-animation: rotation 1s infinite linear;
+   -moz-animation: rotation 1s infinite linear;
+   -o-animation: rotation 1s infinite linear;
+   animation: rotation 1s infinite linear;
+   border:6px solid rgba(0,174,239,.1);
+   border-top:6px solid rgba(0,174,239,.8);
+   border-radius:100%;
+}
+
+@-webkit-keyframes rotation {
+   from {-webkit-transform: rotate(0deg);}
+   to {-webkit-transform: rotate(359deg);}
+}
+@-moz-keyframes rotation {
+   from {-moz-transform: rotate(0deg);}
+   to {-moz-transform: rotate(359deg);}
+}
+@-o-keyframes rotation {
+   from {-o-transform: rotate(0deg);}
+   to {-o-transform: rotate(359deg);}
+}
+@keyframes rotation {
+   from {transform: rotate(0deg);}
+   to {transform: rotate(359deg);}
+}
+input[type="checkbox"]:focus {
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075), 0 0 8px rgba(102, 175, 233, 0.6);
+}
+div.file-box button:focus {
+    background-color: #286090;
+    border-color: #122b40;
+}

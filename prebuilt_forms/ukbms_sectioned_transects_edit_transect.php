@@ -38,7 +38,7 @@ class iform_ukbms_sectioned_transects_edit_transect extends iform_sectioned_tran
   public static function get_ukbms_sectioned_transects_edit_transect_definition() {
     return array(
       'title'=>'UKBMS Location editor',
-      'category' => 'Sectioned Transects',
+      'category' => 'BMS Specific forms',
       'description'=>'Form for adding or editing the site details on a transect style location which has a number of sub-sections, but which can have various location types.'
     );
   }
@@ -380,7 +380,7 @@ class iform_ukbms_sectioned_transects_edit_transect extends iform_sectioned_tran
       } // for an admin user the defaults apply, which will be can do everything.
       // find the number of sections attribute.
       foreach($settings['attributes'] as $attr) {
-        if ($attr['caption']==='No. of sections') {
+        if ($attr['untranslatedCaption']==='No. of sections') {
           $settings['numSectionsAttr'] = $attr['fieldname'];
           if($fixedSectionNumber) {
             for ($i=1; $i<=$fixedSectionNumber; $i++)
@@ -434,7 +434,7 @@ class iform_ukbms_sectioned_transects_edit_transect extends iform_sectioned_tran
       }
     } else { // not an existing site therefore no walks or sections. On initial save, no section data is created.
       foreach($settings['attributes'] as $attr) {
-        if ($attr['caption']==='No. of sections') {
+        if ($attr['untranslatedCaption']==='No. of sections') {
           $settings['numSectionsAttr'] = $attr['fieldname'];
           data_entry_helper::$javascript .= "$('#".str_replace(':','\\\\:',$attr['id'])."').attr('min',1).attr('max',".$args['maxSectionCount'].");\n";
         }

@@ -43,7 +43,7 @@ class iform_ukbms_year_index_plot {
   public static function get_ukbms_year_index_plot_definition() {
     return array(
       'title'=>'UKBMS Year by Year Index Plot',
-      'category' => 'Reporting',
+      'category' => 'BMS Specific forms',
       'description'=>'This shows the year by year counts, and is able to show this for individual species as well as all-species.',
     );
   }
