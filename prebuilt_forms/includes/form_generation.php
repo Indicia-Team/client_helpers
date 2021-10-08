@@ -25,69 +25,88 @@
 
 /**
  * Retrieve the html for a block of attributes.
- * @param array $attributes Array of attributes as returned from a call to data_entry_helper::getAttributes.
- * @param array $args Form argument array.
- * @param array $ctrlOptions Array of default options to apply to every attribute control.
- * @param array $outerFilter Name of the outer block to get controls for. Leave null for all outer blocks.
- * @param array $attrSpecificOptions Associative array of control names that have non-default options. Each entry
- * is keyed by the control name and has an array of the options and values to override.
- * @param array $idPrefix Optional prefix to give to IDs (e.g. for fieldsets) to allow you to ensure they remain unique.
+ *
+ * @param array $attributes
+ *   Array of attributes as returned from a call to
+ *   data_entry_helper::getAttributes.
+ * @param array $args
+ *   Form argument array.
+ * @param array $ctrlOptions
+ *   Array of default options to apply to every attribute control.
+ * @param string $outerFilter
+ *   Name of the outer block to get controls for. Leave null for all outer
+ *   blocks.
+ * @param array $attrSpecificOptions
+ *   Associative array of control names that have non-default options. Each
+ *   entry is keyed by the control name and has an array of the options and
+ *   values to override.
+ * @param array $idPrefix
+ *   Optional prefix to give to IDs (e.g. for fieldsets) to allow you to ensure
+ *   they remain unique.
  */
 
-function get_attribute_html(&$attributes, $args, $ctrlOptions, $outerFilter=null,
-    $attrSpecificOptions=null, $idPrefix='', $helperClass = 'data_entry_helper') {
-  $lastOuterBlock='';
-  $lastInnerBlock='';
+function get_attribute_html(&$attributes, $args, $ctrlOptions, $outerFilter = NULL,
+    $attrSpecificOptions = NULL, $idPrefix = '', $helperClass = 'data_entry_helper') {
+  $lastOuterBlock = '';
+  $lastInnerBlock = '';
   $r = '';
   foreach ($attributes as &$attribute) {
-    if (in_array($attribute['id'],data_entry_helper::$handled_attributes))
-      $attribute['handled']=1;
+    if (in_array($attribute['id'], data_entry_helper::$handled_attributes)) {
+      $attribute['handled'] = 1;
+    }
     // Apply filter to only output 1 block at a time. Also hide controls that have already been handled.
-    if (($outerFilter===null || strcasecmp($outerFilter,$attribute['outer_structure_block'])==0) && !isset($attribute['handled'])) {
-      if (empty($outerFilter) && $lastOuterBlock!=$attribute['outer_structure_block']) {
+    if (($outerFilter === NULL || strcasecmp($outerFilter, $attribute['outer_structure_block']) == 0) && !isset($attribute['handled'])) {
+      if (empty($outerFilter) && $lastOuterBlock != $attribute['outer_structure_block']) {
         if (!empty($lastInnerBlock)) {
           $r .= '</fieldset>';
         }
         if (!empty($lastOuterBlock)) {
           $r .= '</fieldset>';
         }
-        if (!empty($attribute['outer_structure_block']))
-          $r .= '<fieldset id="'.get_fieldset_id($attribute['outer_structure_block'], $idPrefix).
-              '"><legend>'.lang::get($attribute['outer_structure_block']).'</legend>';
-        if (!empty($attribute['inner_structure_block']))
-          $r .= '<fieldset id="'.get_fieldset_id($attribute['outer_structure_block'], $attribute['inner_structure_block'], $idPrefix).
-              '"><legend>'.lang::get($attribute['inner_structure_block']).'</legend>';
+        if (!empty($attribute['outer_structure_block'])) {
+          $r .= '<fieldset id="' . get_fieldset_id($attribute['outer_structure_block'], $idPrefix) .
+              '"><legend>' . lang::get($attribute['outer_structure_block']) . '</legend>';
+        }
+        if (!empty($attribute['inner_structure_block'])) {
+          $r .= '<fieldset id="' . get_fieldset_id($attribute['outer_structure_block'], $attribute['inner_structure_block'], $idPrefix) .
+              '"><legend>' . lang::get($attribute['inner_structure_block']) . '</legend>';
+        }
       }
-      elseif ($lastInnerBlock!=$attribute['inner_structure_block']) {
+      elseif ($lastInnerBlock != $attribute['inner_structure_block']) {
         if (!empty($lastInnerBlock)) {
           $r .= '</fieldset>';
         }
-        if (!empty($attribute['inner_structure_block']))
-          $r .= '<fieldset id="'.get_fieldset_id($lastOuterBlock, $attribute['inner_structure_block'], $idPrefix).
-              '"><legend>'.lang::get($attribute['inner_structure_block']).'</legend>';
+        if (!empty($attribute['inner_structure_block'])) {
+          $r .= '<fieldset id="' . get_fieldset_id($lastOuterBlock, $attribute['inner_structure_block'], $idPrefix) .
+              '"><legend>' . lang::get($attribute['inner_structure_block']) . '</legend>';
+        }
       }
-      $lastInnerBlock=$attribute['inner_structure_block'];
-      $lastOuterBlock=$attribute['outer_structure_block'];
+      $lastInnerBlock = $attribute['inner_structure_block'];
+      $lastOuterBlock = $attribute['outer_structure_block'];
       $options = $ctrlOptions + get_attr_validation($attribute, $args);
-      // when getting the options, only use the first 2 parts of the fieldname as any further imply an existing record ID so would differ.
-      $fieldNameParts=explode(':',$attribute['fieldname']);
-      if (preg_match('/[a-z][a-z][a-z]Attr/', $fieldNameParts[count($fieldNameParts)-2]))
-        $optionFieldName = $fieldNameParts[count($fieldNameParts)-2] . ':' . $fieldNameParts[count($fieldNameParts)-1];
-      elseif (preg_match('/[a-za-za-z]Attr/', $fieldNameParts[count($fieldNameParts)-3]))
-        $optionFieldName = $fieldNameParts[count($fieldNameParts)-3] . ':' . $fieldNameParts[count($fieldNameParts)-2];
-      else
+      // When getting the options, only use the first 2 parts of the fieldname
+      // as any further imply an existing record ID so would differ.
+      $fieldNameParts = explode(':', $attribute['fieldname']);
+      if (preg_match('/[a-z][a-z][a-z]Attr/', $fieldNameParts[count($fieldNameParts) - 2])) {
+        $optionFieldName = $fieldNameParts[count($fieldNameParts) - 2] . ':' . $fieldNameParts[count($fieldNameParts) - 1];
+      }
+      elseif (preg_match('/[a-za-za-z]Attr/', $fieldNameParts[count($fieldNameParts) - 3])) {
+        $optionFieldName = $fieldNameParts[count($fieldNameParts) - 3] . ':' . $fieldNameParts[count($fieldNameParts) - 2];
+      }
+      else {
         throw new exception('Option fieldname not found ' . $attribute['fieldname']);
+      }
       if (isset($attrSpecificOptions[$optionFieldName])) {
         $options = array_merge($options, $attrSpecificOptions[$optionFieldName]);
       }
       $r .= call_user_func($helperClass . '::outputAttribute', $attribute, $options);
-      $attribute['handled']=true;
+      $attribute['handled'] = TRUE;
     }
   }
   if (!empty($lastInnerBlock)) {
     $r .= '</fieldset>';
   }
-  if (!empty($lastOuterBlock) && strcasecmp($outerFilter,$lastOuterBlock)!==0) {
+  if (!empty($lastOuterBlock) && strcasecmp($outerFilter, $lastOuterBlock) !== 0) {
     $r .= '</fieldset>';
   }
   return $r;
@@ -99,23 +118,28 @@ function get_attribute_html(&$attributes, $args, $ctrlOptions, $outerFilter=null
  * This allows the validation rules to be defined by a $args entry.
  */
 function get_attr_validation($attribute, $args) {
-  $retVal = array();
+  $retVal = [];
   if (!empty($args['attributeValidation'])) {
-    $rules = array();
+    $rules = [];
     $argRules = explode(';', $args['attributeValidation']);
-    foreach($argRules as $rule){
+    foreach ($argRules as $rule) {
       $rules[] = explode(',', $rule);
     }
-    foreach($rules as $rule){
-      if($attribute['fieldname'] == $rule[0] || substr($attribute['fieldname'], 0, strlen($rule[0])+1) == $rule[0].':') {
-        // But only do if no parameter given as rule:param - eg min:-40, these have to be treated as attribute validation rules.
+    foreach ($rules as $rule) {
+      if ($attribute['fieldname'] == $rule[0] || substr($attribute['fieldname'], 0, strlen($rule[0]) + 1) == $rule[0] . ':') {
+        // But only do if no parameter given as rule:param - eg min:-40, these
+        // have to be treated as attribute validation rules.
         // It is much easier to deal with these elsewhere.
-        for($i=1; $i<count($rule); $i++)
-          if(strpos($rule[$i], ':') === false) $retVal[] = $rule[$i];
+        for ($i = 1; $i < count($rule); $i++) {
+          if (strpos($rule[$i], ':') === FALSE) {
+            $retVal[] = $rule[$i];
+          }
+        }
       }
     }
-    if(count($retVal) > 0)
-      return array('validation' => $retVal);
+    if (count($retVal) > 0) {
+      return ['validation' => $retVal];
+    }
   }
   return $retVal;
 }
@@ -124,17 +148,20 @@ function get_attr_validation($attribute, $args) {
  * Function to build an id for a fieldset from the block nesting data. Giving them a unique id helps if
  * you want to do interesting things with JavaScript for example.
  */
-function get_fieldset_id($outerBlock, $innerBlock='', $idPrefix='') {
-  $parts = array();
-  if (!empty($idPrefix))
+function get_fieldset_id($outerBlock, $innerBlock = '', $idPrefix = '') {
+  $parts = [];
+  if (!empty($idPrefix)) {
     $parts[] = $idPrefix;
+  }
   $parts[] = 'fieldset';
-  if (!empty($outerBlock))
-    $parts[]=substr($outerBlock, 0, 20);
-  if (!empty($innerBlock))
-    $parts[]=substr($innerBlock, 0, 20);
+  if (!empty($outerBlock)) {
+    $parts[] = substr($outerBlock, 0, 20);
+  }
+  if (!empty($innerBlock)) {
+    $parts[] = substr($innerBlock, 0, 20);
+  }
   $r = implode('-', $parts);
-  // Make it lowercase and no whitespace or other special chars
+  // Make it lowercase and no whitespace or other special chars.
   $r = strtolower(preg_replace('/[\s\'()]+/', '-', $r));
   $r = strtolower(preg_replace('/[()]+/', '', $r));
   return $r;
@@ -146,15 +173,17 @@ function get_fieldset_id($outerBlock, $innerBlock='', $idPrefix='') {
  * to a tab called Other Information.
  */
 function get_attribute_tabs(&$attributes) {
-  $r = array();
-  foreach($attributes as &$attribute) {
-    if (!isset($attribute['handled']) || $attribute['handled']!=true) {
-      // Assign any ungrouped attributes to a block called Other Information
-      if (empty($attribute['outer_structure_block']))
-        $attribute['outer_structure_block']='Other Information';
-      if (!array_key_exists($attribute['outer_structure_block'], $r))
-        // Create a tab for this structure block and mark it with [*] so the content goes in
-        $r[$attribute['outer_structure_block']] = array("[*]");
+  $r = [];
+  foreach ($attributes as &$attribute) {
+    if (!isset($attribute['handled']) || $attribute['handled'] != TRUE) {
+      // Assign any ungrouped attributes to a block called Other Information.
+      if (empty($attribute['outer_structure_block'])) {
+        $attribute['outer_structure_block'] = 'Other Information';
+      }
+      if (!array_key_exists($attribute['outer_structure_block'], $r)) {
+        // Create a tab for this structure block and mark it with [*] so the content goes in.
+        $r[$attribute['outer_structure_block']] = ["[*]"];
+      }
     }
   }
   return $r;
@@ -162,22 +191,30 @@ function get_attribute_tabs(&$attributes) {
 
 /**
  * Find the attribute called CMS User ID, or return false.
- * @param array $attributes List of attributes returned by a call to data_entry_helper::getAttributes.
- * @param bool $unset If true (default) then the CMS User ID attributes are removed from the array.
- * @return array Single attribute definition, or false if none found.
+ *
+ * @param array $attributes
+ *   List of attributes returned by a call to data_entry_helper::getAttributes.
+ * @param bool $unset
+ *   If true (default) then the CMS User ID attributes are removed from the
+ *   array.
+ *
+ * @return array
+ *   Single attribute definition, or false if none found.
  */
-function extract_cms_user_attr(&$attributes, $unset=true) {
-  $found=false;
-  foreach($attributes as $idx => $attr) {
-    if (strcasecmp($attr['caption'], 'CMS User ID')===0) {
-      // found will pick up just the first one
+function extract_cms_user_attr(&$attributes, $unset = TRUE) {
+  $found = FALSE;
+  foreach ($attributes as $idx => $attr) {
+    if (strcasecmp($attr['caption'], 'CMS User ID') === 0) {
+      // Found will pick up just the first one.
       if (!$found)
-        $found=$attr;
-      if ($unset)
+        $found = $attr;
+      if ($unset) {
         unset($attributes[$idx]);
-      else
-        // don't bother looking further if not unsetting them all
+      }
+      else {
+        // Don't bother looking further if not unsetting them all.
         break;
+      }
     }
   }
   return $found;
