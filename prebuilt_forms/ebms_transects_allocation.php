@@ -36,7 +36,7 @@ class iform_ebms_transects_allocation {
   public static function get_ebms_transects_allocation_definition() {
     return array(
       'title'=>'EBMS Location allocator',
-      'category' => 'UKBMS Specific forms',
+      'category' => 'BMS Specific forms',
       'description'=>'Form assigning locations to normal users or region/country controllers.'
     );
   }
@@ -203,9 +203,8 @@ class iform_ebms_transects_allocation {
       'base_url' => data_entry_helper::getProxiedBaseUrl(),
       'config' => $current,
       'alt_row_class' => 'odd',
-//      'ajax_location_post_URL' => url('iform/ajax/ebms_transects_allocation') . '/saveLocationAttribute/' . $nid,
-//      Drupal 8
-      'ajax_location_post_URL' => hostsite_get_url('iform/ajax/ebms_transects_allocation' . '/saveLocationAttribute/' . $nid),
+      'ajax_location_post_URL' => hostsite_get_url('iform/ajax/ebms_transects_allocation/saveLocationAttribute/' . $nid),
+      'ajax_fetch_user_list_URL' => hostsite_get_url('iform/ajax/ebms_transects_allocation/fetchUserListForScheme/' . $nid),
 //        'ajax_person_post_URL' => iform_ajaxproxy_url($nid, 'person_attribute_value'),
       'website_id' => $args['website_id'],
       'select_all_button' => lang::get('Select All'),
@@ -377,12 +376,12 @@ class iform_ebms_transects_allocation {
   }
 
   private static function _user_control($auth, $args, $nid, &$settings) {
-    // user is assumed to be a manager, and has access to the full list of users. Do not cache.
+    // TODO I18N of JS
     // Want users available as soon as they are created.
     $ctrl = '';
     $user_list=array();
-    $user_list_arr = array();
 
+    // Check how a location is allocated to a user: location attribute holding either the users indicia ID or their CMS ID
     if((empty($settings['config']->indicia_location) || !$settings['config']->indicia_location) &&
         (empty($settings['config']->cms_location) || !$settings['config']->cms_location))
       throw new exception('Form configuration error: A attribute assignment methodology must be defined for allocation index '.$settings['config']->index);
@@ -392,6 +391,21 @@ class iform_ebms_transects_allocation {
     else
       $settings['config']->user_prefix = lang::get("CMS User ");
 
+    // In the case where there is a region control, the users are populated depending on the region: this is done from JS.
+    // can't use the default linked list functionality as this only deals with calls to the warehouse.
+    if(!empty($settings['config']->region_control_location_type)) {
+      data_entry_helper::$javascript .= "indiciaData.full_user_list = [];\n";
+      return '<th>' .
+          data_entry_helper::select(array(
+              'fieldname' => $settings['user_select_id'],
+              'label' => lang::get('User'),
+              'lookupValues' => [],
+              'blankText' => lang::get('<Please select user>')
+          )) .
+          '</th>';
+    }
+    // No region control: all users.
+    // User is assumed to be a manager, and has access to the full list of users. Do not cache.
     // look up all users, not just those that have entered data.
     if(version_compare(hostsite_get_cms_version(), '8', '<')) {
       $results = db_query('SELECT uid, name FROM {users} WHERE uid <> 0'); // assume drupal7
@@ -400,29 +414,27 @@ class iform_ebms_transects_allocation {
     }
     foreach ($results as $result) {
       if($result->uid){ // ignore unauthorised user, uid zero
-        // FutureDev: confirm they have data entry permission
+        // FutureDev: confirm user has data entry permission
         // FutureDev: use first/surname rather than account name
         if(!empty($settings['config']->indicia_location) && $settings['config']->indicia_location) {
           // for Indicia id allocation, can't add users if they don't have a indicia user id (yet).
           $indicia_user_id = hostsite_get_user_field('indicia_user_id', 0, false, $result->uid);
           if($indicia_user_id>0)
-            $user_list[$indicia_user_id] = array('name'=>$result->name.' ('.$indicia_user_id.')');
+            $user_list["".$indicia_user_id] = array('name'=>$result->name.' ('.$indicia_user_id.')');
         } else
-          $user_list[$result->uid] = array('name'=>$result->name.' ('.$result->uid.')');
+          $user_list["".$result->uid] = array('name'=>$result->name.' ('.$result->uid.')');
       }
     }
-    foreach($user_list as $id => $account)
-      $user_list_arr[$id] = $account['name'];
 
     data_entry_helper::$javascript .= "indiciaData.full_user_list = ".json_encode(array_keys($user_list)).";\n";
 
-    natcasesort($user_list_arr);
+    natcasesort($user_list);
 
     return '<th>' .
       data_entry_helper::select(array(
         'fieldname' => $settings['user_select_id'],
         'label' => lang::get('User'),
-        'lookupValues' => $user_list_arr,
+        'lookupValues' => $user_list,
         'blankText' => lang::get('<Please select user>')
       )) .
       '</th>';
@@ -480,6 +492,49 @@ class iform_ebms_transects_allocation {
       '</table>';
   }
 
+  public static function ajax_fetchUserListForScheme($website_id, $password, $nid) {
+      if(!($cmsID = hostsite_get_user_field('id')) || empty($_GET['region_id'])) {
+          echo "[]"; //  Not Logged in
+          return;
+      }
+      $userList = [];
+      if(version_compare(hostsite_get_cms_version(), '8', '<')) {
+          $results = db_query('SELECT uid, name FROM {users} WHERE uid <> 0'); // assume drupal7
+      } else {
+          $results = db_query('SELECT uid, name FROM {users_field_data} WHERE uid <> 0'); // drupal8
+      }
+      foreach ($results as $result) {
+          if($result->uid){ // ignore unauthorised user, uid zero
+              // FutureDev: confirm user has data entry permission
+              // FutureDev: use first/surname rather than account name
+              $userSchemes = ebms_scheme_list_user_schemes($result->uid);
+              $found = false;
+              foreach ($userSchemes as $userScheme) {
+                  if ($userScheme['country_id'] == $_GET['region_id']) {
+                      $found = true;
+                  }
+                  break;
+              }
+              if ($found) {
+                  if(!empty($settings['config']->indicia_location) && $settings['config']->indicia_location) {
+                      // for Indicia id allocation, can't add users if they don't have a indicia user id (yet).
+                      $indicia_user_id = hostsite_get_user_field('indicia_user_id', 0, false, $result->uid);
+                      if($indicia_user_id>0)
+                          $userList[] = [$indicia_user_id, $result->name.' ('.$indicia_user_id.')'];
+                  } else {
+                      $userList[] = [$result->uid, $result->name.' ('.$result->uid.')'];
+                  }
+              }
+          }
+      }
+      usort($userList, function($a,$b){return strcasecmp($a[1],$b[1]);});
+      header('Content-type: application/json');
+      header("Pragma: no-cache");
+      header("Expires: 0");
+      echo json_encode($userList);
+      return;
+  }
+  
   public static function ajax_saveLocationAttribute($website_id, $password, $nid) {
     $conn = iform_get_connection_details($nid);
     iform_load_helpers(array('data_entry_helper'));

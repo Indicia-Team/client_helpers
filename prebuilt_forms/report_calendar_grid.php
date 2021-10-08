@@ -199,6 +199,7 @@ class iform_report_calendar_grid {
           'description' => 'The URL to invoke when selecting a date which does not have a previous sample associated with it.<br />'.
                          'To the end of this will be appended "&date=&lt;X&gt;" whose value will be the date selected (see also "New Sample Location Parameter").',
           'type' => 'string',
+          'required' => FALSE,
           'group' => 'Report Settings'
         ),
         array(
@@ -225,6 +226,7 @@ class iform_report_calendar_grid {
           'description' => 'The URL to invoke when selecting an existing sample.<br />'.
                          'To the end of this will be appended "&sample_id=&lt;n&gt;".',
           'type' => 'string',
+          'required' => FALSE,
           'group' => 'Report Settings'
         ),
         array(
@@ -352,7 +354,7 @@ jQuery('#".$ctrlid."').change(function(){
       $types1 = [];
       $types2 = [];
       foreach($types as $type){
-        $parts = explode(':',$type);
+        $parts = explode(':', $type, 3);
         $types1[] = $parts[0];
         $types2[] = $parts;
       }
@@ -534,6 +536,12 @@ jQuery('#".$ctrlid."').change(function(){
         $getsAssoc[$tokens[0]] = $tokens[1]; // this means that the extension can/will override the original url it the same.
       } else
         $path .= $extension;
+    }
+    if (substr($path, 0, 12) == 'Drupal:node:') {
+      $parts = explode(':', $path);
+      return \Drupal\Core\Url::fromRoute('entity.node.canonical',
+            ['node' => $parts[2]],
+            ['query' => $getsAssoc])->toString();
     }
     return hostsite_get_url($path, $getsAssoc);
   }

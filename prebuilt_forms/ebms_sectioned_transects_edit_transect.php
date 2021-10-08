@@ -175,7 +175,7 @@ class iform_ebms_sectioned_transects_edit_transect extends iform_sectioned_trans
   public static function get_ebms_sectioned_transects_edit_transect_definition() {
     return array(
       'title'=>'EBMS Location editor',
-      'category' => 'Sectioned Transects',
+      'category' => 'BMS Specific forms',
       'description'=>'Form for adding or editing the site details on a transect style location which has a number of sub-sections, but which can have various location types.'
     );
   }
@@ -543,7 +543,7 @@ class iform_ebms_sectioned_transects_edit_transect extends iform_sectioned_trans
       } // for an admin user the defaults apply, which will be can do everything.
       // find the number of sections attribute.
       foreach($settings['attributes'] as $attr) {
-        if ($attr['caption']==='No. of sections') {
+        if ($attr['untranslatedCaption']==='No. of sections') {
           $settings['numSectionsAttr'] = $attr['fieldname'];
           $settings['numSectionsAttrOriginalValue'] = $attr['displayValue'];
           for ($i=1; $i<=$attr['displayValue']; $i++) {
@@ -588,7 +588,7 @@ class iform_ebms_sectioned_transects_edit_transect extends iform_sectioned_trans
       }
     } else { // not an existing site therefore no walks or sections. On initial save, no section data is created.
       foreach($settings['attributes'] as $attr) {
-        if ($attr['caption']==='No. of sections') {
+        if ($attr['untranslatedCaption']==='No. of sections') {
           $settings['numSectionsAttr'] = $attr['fieldname'];
           $settings['numSectionsAttrOriginalValue'] = 1;
         }
@@ -1089,7 +1089,7 @@ $('#delete-transect').click(deleteSurvey);
         'multiValue'=>false // ensures that array_keys are the list of attribute IDs.
     ));
     foreach($transectAttributes as $transectAttribute) {
-        if ($transectAttribute['caption']==='No. of sections') {
+        if ($transectAttribute['untranslatedCaption']==='No. of sections') {
             foreach($values as $key => $value) {
                 if ($key === $transectAttribute['fieldname'] ||
                         substr_compare($key, $transectAttribute['fieldname'].':' , 0, strlen($transectAttribute['fieldname'])+1) === 0) {
@@ -1235,7 +1235,7 @@ $('#delete-transect').click(deleteSurvey);
           'website_id' => $website_id];
       // Add one to the section count on the transect
       foreach($transectAttributes as $transectAttribute) {
-          if ($transectAttribute['caption']==='No. of sections') {
+          if ($transectAttribute['untranslatedCaption']==='No. of sections') {
               // this should always have a value.
               $transectPostData[$transectAttribute['fieldname']] = $transectAttribute['displayValue'] + 1;
           }
@@ -1349,7 +1349,7 @@ $('#delete-transect').click(deleteSurvey);
           'website_id' => $website_id,];
       // Subtract one to the section count on the transect
       foreach($transectAttributes as $transectAttribute) {
-          if ($transectAttribute['caption']==='No. of sections') {
+          if ($transectAttribute['untranslatedCaption']==='No. of sections') {
               // this should always have a value.
               $transectPostData[$transectAttribute['fieldname']] = $transectAttribute['displayValue'] - 1;
           }
