@@ -16,7 +16,7 @@
  *
  * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link http://code.google.com/p/indicia/
+ * @link https://github.com/indicia-team/client_helpers
  */
 
 /**
@@ -1595,7 +1595,7 @@ JS;
     $options['class'] = trim($options['class'].' control-box jsonwidget');
 
     self::add_resource('jsonwidget');
-    $options['default'] = str_replace(["\\n", "\r", "\n", "'"], ['\\\n', '\r','\n',"\'"], $options['default']);
+    $options['default'] = str_replace(["\\n", "\r", "\n", "'"], ['\\\n', '\r', '\n', "\'"], $options['default']);
     self::$javascript .= <<<JS
 $('#$options[id]').jsonedit({
   schema: $options[schema],
@@ -3084,26 +3084,6 @@ RIJS;
   *     also be set to the size of a grid square as an integer and a checkbox
   *     will be made available for enabling this level of blur. Options for the
   *     grid square size are in metres, e.g. 100, 1000, 2000, 10000, 100000.
-  *   * **spatialRefPerRow** - Optional. If set to true, then a spatial
-  *     reference column is included on each row. When submitted, each unique
-  *     spatial reference will cause a subsample to be included in the
-  *     submission allowing more precise locations to be defined for some
-  *     records. This option should ideally be used on a form where the map is
-  *     visible near to the species checklist control so the locations of
-  *     spatial references can be visualised, otherwise data entry errors are
-  *     likely. A button inside the control allows the user to enable a mode
-  *     where the grid ref can be set by clicking a location on the map.
-  *   * **spatialRefPerRowUseFullscreenMap** - If using spatialRefPerRow and
-  *     this option is set to true, then when the button is clicked to enable
-  *     fetching a grid ref from the map, the map is automatically placed into
-  *     fullscreen mode until the user clicks to set the grid ref location.
-  *   * **spatialRefPrecisionAttrId** - Optional. If set to the ID of a sample
-  *     attribute and spatialRefPerRow is enabled, then a spatial reference
-  *     precision column is included on each row. When submitted, each unique
-  *     spatial reference and precision value will cause a subsample to be
-  *     included in the submission with the attribute set to this value. The
-  *     sample attribute must be a float, configured for the survey with the
-  *     system function set to sref_precision.
   *   * **mediaTypes** - Optional. Array of media types that can be uploaded.
   *     Choose from Audio:Local, Audio:SoundCloud, Image:Flickr,
   *     Image:Instagram, Image:Local, Image:Twitpic, Pdf:Local,
@@ -3181,6 +3161,37 @@ RIJS;
   *     the reticules and bearing for a cetacean sighting.
   *   * **subSampleSampleMethodID** - Optional. sample_method_id to use for the
   *     sub-samples.
+  *   * **spatialRefPerRow** - Optional. Requires subSamplePerRow and
+  *     speciesControlToUseSubSamples to be true. If true then a spatial
+  *     reference column is included on each row, allowing more precise
+  *     locations to be defined for some records. One of several sample level
+  *     inputs, unique combinations of which will cause a separate subSample to
+  *     be included in the submission. This option should ideally be used on a
+  *     form where the map is visible near to the species checklist control so
+  *     the locations of spatial references can be visualised, otherwise data
+  *     entry errors are likely. A button inside the control allows the user to
+  *     enable a mode where the grid ref can be set by clicking a location on
+  *     the map.
+  *   * **spatialRefPerRowUseFullscreenMap** - If using spatialRefPerRow and
+  *     this option is set to true, then when the button is clicked to enable
+  *     fetching a grid ref from the map, the map is automatically placed into
+  *     fullscreen mode until the user clicks to set the grid ref location.
+  *   * **spatialRefPrecisionAttrId** - Optional. If set to the ID of a sample
+  *     attribute and spatialRefPerRow is enabled, then a spatial reference
+  *     precision column is included on each row. One of several sample level
+  *     inputs, unique combinations of which will cause a separate subSample to
+  *     be included in the submission. The sample attribute must be have the
+  *     float data type, configured for the survey with the system function set
+  *     to sref_precision.
+  *     **datePerRow** - Optional. Requires subSamplePerRow and
+  *     speciesControlToUseSubSamples to be true. If set to true, then a date
+  *     column is  included so a different date can be set per row. One of
+  *     several sample level inputs, unique combinations of which will cause a
+  *     separate subSample to be included in the submission.
+  *   * **subSampleAttrs** - Optional integer array of attribute IDs of sample
+  *     attributes that should be added as separate columns. The attribute
+  *     inputs are sample level inputs, unique combinations of which will cause
+  *     a separate subSample to be included in the submission.
   *   * **copyDataFromPreviousRow** - Optional. When enabled, the system will
   *     copy data from the previous row into new rows on the species grid. The
   *     data are copied automatically when the new row is created and also when
@@ -3366,9 +3377,9 @@ RIJS;
     if (isset(self::$entity_to_load['sample:id']) && $options['useLoadedExistingRecords'] === FALSE) {
       self::preload_species_checklist_occurrences(self::$entity_to_load['sample:id'], $options['readAuth'],
           $options['mediaTypes'], $options['reloadExtraParams'], $subSampleRows,
-          $options['speciesControlToUseSubSamples'] || $options['spatialRefPerRow'],
+          $useSubsamples = $options['speciesControlToUseSubSamples'],
           (isset($options['subSampleSampleMethodID']) ? $options['subSampleSampleMethodID'] : ''),
-          $options['spatialRefPerRow'], $options['spatialRefPrecisionAttrId']);
+          !$options['subSamplePerRow'], $options['spatialRefPrecisionAttrId'], $options['subSampleAttrs']);
     }
     // Load the full list of species for the grid, including the main checklist
     // plus any additional species in the reloaded occurrences.
@@ -3402,9 +3413,11 @@ RIJS;
           }
         }
       }
-      // Get the attribute and control information required to build the custom occurrence attribute columns
+      // Get the attribute and control information required to build the custom
+      // attribute columns.
       self::species_checklist_prepare_attributes($options, $attributes, $occAttrControls, $occAttrControlsExisting, $occAttrs);
       self::speciesChecklistPrepareDynamicAttributes($options, $attributes);
+      self::speciesChecklistPrepareSubSampleAttributes($options);
       $beforegrid = '<span style="display: none;">Step 1</span>'."\n";
       if (!empty($options['allowAdditionalTaxa'])) {
         $beforegrid .= self::get_species_checklist_clonable_row($options, $occAttrControls, $attributes);
@@ -3637,8 +3650,9 @@ HTML;
               // Remove [] from the end of the fieldname if present, as it is
               // already in the row template.
               $ctrlId = preg_replace('/\[\]$/', '', $ctrlId);
-              $loadedCtrlFieldName='-';
-            } elseif (count($search)>0) {
+              $loadedCtrlFieldName = '-';
+            }
+            elseif (count($search) > 0) {
               // Got an existing value.
               // Warning - if there are multi-values in play here then it will just load one, because this is NOT an array control.
               // use our preg search result as the field name to load from the existing data array.
@@ -3693,10 +3707,12 @@ HTML;
                 $term = self::$entity_to_load["$loadedCtrlFieldName:term"];
                 $oc = str_replace('</select>', "<option selected=\"selected\" value=\"$existing_value\">$term</option></select>", $oc);
               }
-            } else if(strpos($oc, 'type="checkbox"') !== FALSE) {
+            }
+            else if(strpos($oc, 'type="checkbox"') !== FALSE) {
               if($existing_value=="1")
                 $oc = str_replace('type="checkbox"', 'type="checkbox" checked="checked"', $oc);
-            } else {
+            }
+            else {
               // Dates (including single day vague dates) need formatting to the local date format.
               if ($attributes[$attrId]['data_type'] === 'D' || $attributes[$attrId]['data_type'] === 'V'
                   && preg_match('/^\d{2}\/\d{2}\/\d{4}$/', $existing_value)) {
@@ -3720,8 +3736,11 @@ HTML;
             $indicia_templates[$options['attrCellTemplate']]);
           $idx++;
         }
-        $row .= self::speciesChecklistSpatialRefCell($options, $colIdx, $txIdx, $existingRecordId);
-        $row .= self::speciesChecklistSpatialRefPrecisionCell($options, $colIdx, $txIdx, $existingRecordId);
+        $sampleId = self::getExistingSpeciesRowSampleId($txIdx, $existingRecordId);
+        $row .= self::speciesChecklistDateCell($options, $colIdx, $txIdx, $existingRecordId, $sampleId);
+        $row .= self::speciesChecklistSpatialRefCell($options, $colIdx, $txIdx, $existingRecordId, $sampleId);
+        $row .= self::speciesChecklistSpatialRefPrecisionCell($options, $colIdx, $txIdx, $existingRecordId, $sampleId);
+        $row .= self::speciesChecklistSubSampleAttrCells($options, $colIdx, $txIdx, $existingRecordId, $sampleId);
         $row .= self::speciesChecklistCommentCell($options, $colIdx, $txIdx, $loadedTxIdx, $existingRecordId);
         $row .= self::speciesChecklistSensitivityCell($options, $colIdx, $txIdx, $existingRecordId);
 
@@ -3763,24 +3782,25 @@ HTML;
         // Are we in the first column of a multicolumn grid, or doing single column grid? If so start new row.
         if ($colIdx === 0) {
           $rows[$rowIdx] = $row;
-        } else {
+        }
+        else {
           $rows[$rowIdx % (ceil(count($taxonRows)/$options['columns']))] .= $row;
         }
         $rowIdx++;
-
         // Add media in a following row when not in responsive mode.
         if ($options['mediaTypes'] && count($existingImages) > 0 && !$options['responsive']) {
           $totalCols = ($options['lookupListId'] ? 2 : 1) + 1 /*checkboxCol*/ + count($occAttrControls) +
             ($options['spatialRefPerRow'] ? 1 : 0) + ($options['spatialRefPrecisionAttrId'] ? 1 : 0) +
+            ($options['datePerRow'] ? 1 : 0) + count($options['subSampleAttrs']) +
             ($options['occurrenceComment'] ? 1 : 0) + ($options['occurrenceSensitivity'] ? 1 : 0) +
             (count($options['mediaTypes']) ? 1 : 0);
-          $rows[$rowIdx]='<td colspan="'.$totalCols.'">'.data_entry_helper::file_box(array(
-              'table'=>"sc:$options[id]-$txIdx:$existingRecordId:occurrence_medium",
-              'loadExistingRecordKey'=>"sc:$loadedTxIdx:$existingRecordId:occurrence_medium",
+          $rows[$rowIdx] = "<td colspan=\"$totalCols\">" . data_entry_helper::file_box([
+              'table' => "sc:$options[id]-$txIdx:$existingRecordId:occurrence_medium",
+              'loadExistingRecordKey' => "sc:$loadedTxIdx:$existingRecordId:occurrence_medium",
               'mediaTypes' => $options['mediaTypes'],
               'readAuth' => $options['readAuth']
-            )).'</td>';
-          $imageRowIdxs[]=$rowIdx;
+            ]) . '</td>';
+          $imageRowIdxs[] = $rowIdx;
           $rowIdx++;
         }
       }
@@ -3823,19 +3843,19 @@ HTML;
       $options['helpTextClass'] = (isset($options['helpTextClass'])) ? $options['helpTextClass'] : 'helpTextLeft';
       $r = self::get_help_text($options, 'before');
       $r .= $beforegrid . $grid;
-      $r .= self::speciesChecklistSrefPerRowExistingIds($options);
+      $r .= self::speciesChecklistSubsamplePerRowExistingIds($options);
       if ($options['spatialRefPerRow'] && $options['spatialRefPrecisionAttrId']) {
         $r .= "<input type=\"hidden\" name=\"scSpatialRefPrecisionAttrId\" value=\"$options[spatialRefPrecisionAttrId]\" />";
       }
       $r .= self::get_help_text($options, 'after');
-      self::$javascript .= "$('#".$options['id']."').find('input,select').keydown(keyHandler);\n";
+      self::$javascript .= "$('#$options[id]').find('input,select').keydown(keyHandler);\n";
       //nameFilter is an array containing all the parameters required to return data for each of the
       //"Choose species names available for selection" filter types
       self::species_checklist_filter_popup($options, $nameFilter);
       if ($options['subSamplePerRow']) {
-        // output a hidden block to contain sub-sample hidden input values.
-        $r .= '<div id="'.$options['id'].'-blocks">'.
-          self::get_subsample_per_row_hidden_inputs().
+        // Output a hidden block to contain sub-sample hidden input values.
+        $r .= '<div id="' . $options['id'] . '-blocks">' .
+          self::get_subsample_per_row_hidden_inputs() .
           '</div>';
       }
       if ($hasEditedRecord) {
@@ -3995,8 +4015,8 @@ if ($('#$options[id]').parents('.ui-tabs-panel').length) {
   }
 
   /**
-   * For each subsample found in the entity to load, output a block of hidden inputs which contain the required
-   * values for the subsample.
+   * For each subSample found in the entity to load, output a block of hidden inputs which contain the required
+   * values for the subSample.
    */
   public static function get_subsample_per_row_hidden_inputs() {
     $blocks = "";
@@ -4226,20 +4246,32 @@ JS;
    * However, when a form needs access to occurrence data before loading the species checklist, this method
    * can be called to preload the data. The data is loaded into data_entry_helper::$entity_to_load and an array
    * of occurrences loaded is returned.
-   * @param int $sampleId ID of the sample to load
-   * @param array $readAuth Read authorisation array
-   * @param array $loadMedia Array of media type terms to load.
-   * @param array $extraParams Extra params to pass to the web service call for filtering.
-   * @param boolean $useSubSamples Enable loading of records from subsamples of the main sample
-   * @param boolean $subSamplesOptional If using subsamples but they are optional, records are also loaded that are
-   * directly attached to the main sample.
-   * @param string $spatialRefPrecisionAttrId Provide the ID of the attribute which defines the spatial ref precision of
-   * each subsample where relevant.
-   * @return array Array with key of occurrence_id and value of $taxonInstance.
+   *
+   * @param int $sampleId
+   *   ID of the sample to load.
+   * @param array $readAuth
+   *   Read authorisation array.
+   * @param array $loadMedia
+   *   Array of media type terms to load.
+   * @param array $extraParams
+   *   Extra params to pass to the web service call for filtering.
+   * @param bool $useSubSamples
+   *   Enable loading of records from subSamples of the main sample.
+   * @param bool $subSamplesOptional
+   *   If using subSamples but they are optional, records are also loaded that
+   *   are directly attached to the main sample.
+   * @param string $spatialRefPrecisionAttrId
+   *   Provide the ID of the attribute which defines the spatial ref precision
+   *   of each subSample where relevant.
+   *  @param string $subSampleAttrs
+   *   Array of attribute IDs to load for the sub-samples.
+   *
+   * @return array
+   *   Array with key of occurrence_id and value of $taxonInstance.
    */
   public static function preload_species_checklist_occurrences($sampleId, $readAuth, array $loadMedia, $extraParams,
        &$subSamples, $useSubSamples, $subSampleMethodID='',
-       $subSamplesOptional=FALSE, $spatialRefPrecisionAttrId = NULL, $gridId = NULL) {
+       $subSamplesOptional = FALSE, $spatialRefPrecisionAttrId = NULL, $subSampleAttrs = []) {
     $occurrenceIds = [];
     // don't load from the db if there are validation errors, since the $_POST will already contain all the
     // data we need.
@@ -4264,8 +4296,8 @@ JS;
           }
         }
       }
-      if($useSubSamples) {
-        $extraParams += $readAuth + array('view' => 'detail','parent_id'=>$sampleId,'deleted' => 'f', 'orderby' => 'id', 'sortdir' => 'ASC' );
+      if ($useSubSamples) {
+        $extraParams += $readAuth + ['view' => 'detail','parent_id'=>$sampleId,'deleted' => 'f', 'orderby' => 'id', 'sortdir' => 'ASC'];
         if($subSampleMethodID != '')
           $extraParams['sample_method_id'] = $subSampleMethodID;
         $params = array(
@@ -4279,25 +4311,29 @@ JS;
         }
         $subSamples = data_entry_helper::get_population_data($params);
         $subSampleList = [];
-        if ($subSamplesOptional)
+        if ($subSamplesOptional) {
           $subSampleList[] = $sampleId;
-        foreach($subSamples as $idx => $subsample){
-          $subSampleList[] = $subsample['id'];
-          data_entry_helper::$entity_to_load['sc:'.$idx.':'.$subsample['id'].':sample:id'] = $subsample['id'];
-          data_entry_helper::$entity_to_load['sc:'.$idx.':'.$subsample['id'].':sample:geom'] = $subsample['wkt'];
-          data_entry_helper::$entity_to_load['sc:'.$idx.':'.$subsample['id'].':sample:wkt'] = $subsample['wkt'];
-          data_entry_helper::$entity_to_load['sc:'.$idx.':'.$subsample['id'].':sample:location_id'] = $subsample['location_id'];
-          data_entry_helper::$entity_to_load['sc:'.$idx.':'.$subsample['id'].':sample:entered_sref'] = $subsample['entered_sref'];
-          data_entry_helper::$entity_to_load['sc:'.$idx.':'.$subsample['id'].':sample:entered_sref_system'] = $subsample['entered_sref_system'];
-          if ($spatialRefPrecisionAttrId) {
-            data_entry_helper::$entity_to_load['sc:'.$idx.':'.$subsample['id'].':sample:sref_precision'] =
-                $subsample["attr_sample_$spatialRefPrecisionAttrId"];
-          }
-          data_entry_helper::$entity_to_load['sc:'.$idx.':'.$subsample['id'].':sample:date_start'] = $subsample['date_start'];
-          data_entry_helper::$entity_to_load['sc:'.$idx.':'.$subsample['id'].':sample:date_end'] = $subsample['date_end'];
-          data_entry_helper::$entity_to_load['sc:'.$idx.':'.$subsample['id'].':sample:date_type'] = $subsample['date_type'];
-          data_entry_helper::$entity_to_load['sc:'.$idx.':'.$subsample['id'].':sample:sample_method_id'] = $subsample['sample_method_id'];
         }
+        $subSampleIdxById = [];
+        foreach($subSamples as $idx => $subSample) {
+          $subSampleList[] = $subSample['id'];
+          $subSampleIdxById[$subSample['id']] = $idx;
+          data_entry_helper::$entity_to_load['sc:'.$idx.':'.$subSample['id'].':sample:id'] = $subSample['id'];
+          data_entry_helper::$entity_to_load['sc:'.$idx.':'.$subSample['id'].':sample:geom'] = $subSample['wkt'];
+          data_entry_helper::$entity_to_load['sc:'.$idx.':'.$subSample['id'].':sample:wkt'] = $subSample['wkt'];
+          data_entry_helper::$entity_to_load['sc:'.$idx.':'.$subSample['id'].':sample:location_id'] = $subSample['location_id'];
+          data_entry_helper::$entity_to_load['sc:'.$idx.':'.$subSample['id'].':sample:entered_sref'] = $subSample['entered_sref'];
+          data_entry_helper::$entity_to_load['sc:'.$idx.':'.$subSample['id'].':sample:entered_sref_system'] = $subSample['entered_sref_system'];
+          if ($spatialRefPrecisionAttrId) {
+            data_entry_helper::$entity_to_load['sc:'.$idx.':'.$subSample['id'].':sample:sref_precision'] =
+                $subSample["attr_sample_$spatialRefPrecisionAttrId"];
+          }
+          data_entry_helper::$entity_to_load['sc:'.$idx.':'.$subSample['id'].':sample:date_start'] = $subSample['date_start'];
+          data_entry_helper::$entity_to_load['sc:'.$idx.':'.$subSample['id'].':sample:date_end'] = $subSample['date_end'];
+          data_entry_helper::$entity_to_load['sc:'.$idx.':'.$subSample['id'].':sample:date_type'] = $subSample['date_type'];
+          data_entry_helper::$entity_to_load['sc:'.$idx.':'.$subSample['id'].':sample:sample_method_id'] = $subSample['sample_method_id'];
+        }
+        self::loadExistingSubsampleAttrValues($readAuth, $subSampleList, $subSampleAttrs);
         unset($extraParams['parent_id']);
         unset($extraParams['sample_method_id']);
         $extraParams['sample_id'] = $subSampleList;
@@ -4315,8 +4351,8 @@ JS;
         ));
         foreach ($occurrences as $idx => $occurrence) {
           if ($useSubSamples) {
-            foreach ($subSamples as $sidx => $subsample) {
-              if($subsample['id'] == $occurrence['sample_id']) {
+            foreach ($subSamples as $sidx => $subSample) {
+              if ($subSample['id'] == $occurrence['sample_id']) {
                 self::$entity_to_load["sc:$idx:$occurrence[id]:occurrence:sampleIDX"] = $sidx;
               }
             }
@@ -4394,6 +4430,56 @@ JS;
   }
 
   /**
+   * Find existing sub-sample attribute data values for a species_checklist.
+   *
+   * When loading a species_checklist with sub-sample attribute controls in the
+   * columns, if there are existing records in sub-samples, load the attribute
+   * values into $entity_to_load.
+   *
+   * @param array $readAuth
+   *   Read authorisation tokens.
+   * @param array $subSampleList
+   *   List of sample IDs for the sub-samples being loaded onto the form.
+   * @param array $subSampleAttrs
+   *   List of sample attribute IDs being loaded into the grid.
+   * @param array $subSampleIdxById
+   *   Mapping of sample IDs to sample IDX (loading order).
+   */
+  private static function loadExistingSubsampleAttrValues(array $readAuth, array $subSampleList, array $subSampleAttrs, array $subSampleIdxById) {
+    if (!empty($subSampleAttrs) && !empty($subSampleList)) {
+      $params = array(
+        'table' => 'sample_attribute_value',
+        'extraParams' => $readAuth + [
+          'query' => json_encode(['in' => [
+            'sample_id' => $subSampleList,
+            'sample_attribute_id' => $subSampleAttrs,
+          ]]),
+        ],
+        'nocache' => TRUE,
+        'sharing' => 'editing',
+      );
+      $subSampleAttrValues = data_entry_helper::get_population_data($params);
+      foreach ($subSampleAttrValues as $attrValue) {
+        if ($attrValue['raw_value'] !== NULL) {
+          $idx = $subSampleIdxById[$attrValue['sample_id']];
+          $key = "sc:$idx:$attrValue[sample_id]:sample:smpAttr:$attrValue[sample_attribute_id]";
+          // If already a value for this key, then must be a multi-value,
+          // so convert to array.
+          if (!empty(data_entry_helper::$entity_to_load[$key])) {
+            if (!is_array(data_entry_helper::$entity_to_load[$key])) {
+              data_entry_helper::$entity_to_load[$key] = [data_entry_helper::$entity_to_load[$key]];
+            }
+            data_entry_helper::$entity_to_load[$key][] = $attrValue['raw_value'];
+          }
+          else {
+            data_entry_helper::$entity_to_load[$key] = $attrValue['raw_value'];
+          }
+        }
+      }
+    }
+  }
+
+  /**
    * Retrieve the grid header row for the species checklist grid control.
    * @param array $options Control options array.
    * @param array $occAttrs Array of custom attributes included in the grid.
@@ -4457,29 +4543,43 @@ JS;
         // All attributes - may be hidden in responsive mode, depending upon
         // the settings in the responsiveCols array.
         foreach ($occAttrs as $idx=>$a) {
-          $attrs = self::get_species_checklist_col_responsive($options, "attr$idx");
+          $attrs = self::getSpeciesChecklistColResponsive($options, "attr$idx");
           $r .= self::get_species_checklist_col_header(
             $options['id']."-attr$idx-$i", $a, $visibleColIdx, $options['colWidths'], $attrs);
         }
+        if ($options['datePerRow']) {
+          $attrs = self::getSpeciesChecklistColResponsive($options, 'date');
+          $r .= self::get_species_checklist_col_header(
+            $options['id']."-date-$i", lang::get('Date'), $visibleColIdx, $options['colWidths'], $attrs);
+        }
         if ($options['spatialRefPerRow']) {
-          $attrs = self::get_species_checklist_col_responsive($options, 'spatialref');
+          $attrs = self::getSpeciesChecklistColResponsive($options, 'spatialref');
           $r .= self::get_species_checklist_col_header(
             $options['id']."-spatialref-$i", lang::get('Spatial ref'), $visibleColIdx, $options['colWidths'], $attrs);
         }
         if ($options['spatialRefPrecisionAttrId']) {
-          $attrs = self::get_species_checklist_col_responsive($options, 'spatialrefprecision');
+          $attrs = self::getSpeciesChecklistColResponsive($options, 'spatialrefprecision');
           $r .= self::get_species_checklist_col_header(
             $options['id']."-spatialrefprecision-$i", lang::get('GPS precision (m)'), $visibleColIdx, $options['colWidths'],
             $attrs
           );
         }
+        foreach ($options['subSampleAttrs'] as $subSampleAttrId) {
+          if (isset($options['subSampleAttrInfo'][$subSampleAttrId])) {
+            $attrs = self::getSpeciesChecklistColResponsive($options, "sampleAttr$subSampleAttrId");
+            $r .= self::get_species_checklist_col_header(
+              $options['id']."-sampleAttr$subSampleAttrId-$i",
+              lang::get($options['subSampleAttrInfo'][$subSampleAttrId]['caption']),
+              $visibleColIdx, $options['colWidths'], $attrs);
+          }
+        }
         if ($options['occurrenceComment']) {
-          $attrs = self::get_species_checklist_col_responsive($options, 'comment');
+          $attrs = self::getSpeciesChecklistColResponsive($options, 'comment');
           $r .= self::get_species_checklist_col_header(
             $options['id']."-comment-$i", lang::get('Comment'), $visibleColIdx, $options['colWidths'], $attrs);
         }
         if ($options['occurrenceSensitivity']) {
-          $attrs = self::get_species_checklist_col_responsive($options, 'sensitivity');
+          $attrs = self::getSpeciesChecklistColResponsive($options, 'sensitivity');
           $r .= self::get_species_checklist_col_header(
             $options['id']."-sensitivity-$i", lang::get('Sensitivity'), $visibleColIdx, $options['colWidths'], $attrs);
         }
@@ -4488,7 +4588,7 @@ JS;
         // which, when clicked, adds a row to the grid for files and hides the
         // button. Column can be hidden in responsive mode.
         if (count($options['mediaTypes'])) {
-          $attrs = self::get_species_checklist_col_responsive($options, 'media');
+          $attrs = self::getSpeciesChecklistColResponsive($options, 'media');
           $r .= self::get_species_checklist_col_header($options['id']."-images-$i", lang::get($onlyImages ? 'Add photos' : 'Add media'), $visibleColIdx, $options['colWidths'], $attrs);
           // In responsive mode, add an additional column for files which is
           // always hidden so it appears in a row below.
@@ -4526,12 +4626,17 @@ JS;
 
   /**
    * Returns attributes to define responsive behaviour of column.
-   * @param array $options Control options array.
-   * @param string $column The column identifier which is the key to the
-   * $options['responsiveHide'] array.
-   * @return string CSS attributes to attach to column header.
+   *
+   * @param array $options
+   *   Control options array.
+   * @param string $column
+   *   The column identifier which is the key to the $options['responsiveHide']
+   *   array.
+   *
+   * @return string
+   *   CSS attributes to attach to column header.
    */
-  private static function get_species_checklist_col_responsive($options, $column) {
+  private static function getSpeciesChecklistColResponsive($options, $column) {
     // Create a data-hide attribute for responsive tables.
     $attrs = '';
     if (isset($options['responsiveCols'][$column])) {
@@ -4628,15 +4733,15 @@ JS;
           else
             $smpIdx = NULL;
           // Find an existing row for this species that is not already linked to an occurrence
-          $done=FALSE;
-          foreach($taxonRows as &$row) {
-            if ($row['ttlId']===$ttlId && !isset($row['occId'])) {
+          $done = FALSE;
+          foreach ($taxonRows as &$row) {
+            if ($row['ttlId'] === $ttlId && !isset($row['occId'])) {
               // the 2nd part of the loaded value's key row index we loaded from.
-              $row['loadedTxIdx']=$parts[1];
+              $row['loadedTxIdx'] = $parts[1];
               // the 3rd part of the loaded value's key is the occurrence ID.
-              $row['occId']=$parts[2];
-              $row['smpIdx']=$smpIdx;
-              $done=TRUE;
+              $row['occId'] = $parts[2];
+              $row['smpIdx'] = $smpIdx;
+              $done = TRUE;
             }
           }
           if (!$done)
@@ -4695,7 +4800,9 @@ JS;
       'PHPtaxonLabel' => FALSE,
       'occurrenceComment' => FALSE,
       'occurrenceSensitivity' => NULL,
+      'datePerRow' => FALSE,
       'spatialRefPerRow' => FALSE,
+      'subSampleAttrs' => [],
       'spatialRefPerRowUseFullscreenMap' => FALSE,
       'spatialRefPrecisionAttrId' => NULL,
       'id' => 'species-grid-' . rand(0,1000),
@@ -4726,6 +4833,9 @@ JS;
     ), $options);
     // subSamplesPerRow can't be set without speciesControlToUseSubSamples
     $options['subSamplePerRow'] = $options['subSamplePerRow'] && $options['speciesControlToUseSubSamples'];
+    // spatialRefPerRow and datePerRow require subSamplePerRow.
+    $options['spatialRefPerRow'] = $options['spatialRefPerRow'] && $options['subSamplePerRow'];
+    $options['datePerRow'] = $options['datePerRow'] && $options['subSamplePerRow'];
     // spatialRefPrecisionAttrId can't be set without spatialRefPerRow
     $options['spatialRefPrecisionAttrId'] = $options['spatialRefPerRow'] ? $options['spatialRefPrecisionAttrId'] : null;
     if (array_key_exists('readAuth', $options)) {
@@ -4890,6 +5000,33 @@ JS;
   }
 
   /**
+   * Loads the custom attributes for sub-samples.
+   *
+   * @param array $options
+   *   Species checklist control options. Will have subSampleAttrInfo option
+   *   loaded with the custom attribute information.
+   */
+  private static function speciesChecklistPrepareSubSampleAttributes(array &$options) {
+    if (!empty($options['subSampleAttrs'])) {
+      $options['subSampleAttrInfo'] = [];
+      $attrOptions = [
+        'valuetable' => 'sample_attribute_value',
+        'attrtable' => 'sample_attribute',
+        'key' => 'sample_id',
+        'fieldprefix' => 'smpAttr',
+        'extraParams' => $options['readAuth'] + ['query' => json_encode([
+          'in' => ['id', $options['subSampleAttrs']],
+        ])],
+        'survey_id' => $options['survey_id'],
+      ];
+      $attrInfoList = self::getAttributes($attrOptions, FALSE);
+      foreach ($attrInfoList as $attrInfo) {
+        $options['subSampleAttrInfo'][$attrInfo['attributeId']] = $attrInfo;
+      }
+    }
+  }
+
+  /**
    * When the species checklist grid has a lookup list associated with it, this is a
    * secondary checklist which you can pick species from to add to the grid. As this happens,
    * a hidden table is used to store a clonable row which provides the template for new rows
@@ -4943,31 +5080,10 @@ HTML;
       );
       $idx++;
     }
-    if ($options['spatialRefPerRow']) {
-      if ($options['spatialRefPerRowUseFullscreenMap']) {
-        $getFromMapHint = lang::get('Click this button to allow you to access map to set the spatial reference for this record. Click once to set the precise location.');
-      }
-      else {
-        $getFromMapHint = lang::get('Toggle this button to allow you to click on the map to set the spatial reference for this record.');
-      }
-      $r .= <<<HTML
-<td class="ui-widget-content scSpatialRefCell" headers="$options[id]-spatialref-0">
-  <input class="scSpatialRef" type="text" id="$fieldname:occurrence:spatialref"
-     name="$fieldname:occurrence:spatialref" value="" />
-  <button class="scSpatialRefFromMap" type="button" title="$getFromMapHint"><i class="fas fa-map-pin"></i></button>
-</td>
-HTML;
-    }
-    if ($options['spatialRefPrecisionAttrId']) {
-      $title = preg_replace('/[\r\n]/', ' ', lang::get('gps_precision_instructions'));
-      $r .= <<<HTML
-<td class="ui-widget-content scSpatialRefPrecisionCell" headers="$options[id]-spatialrefprecision-0">
-  <input class="scSpatialRefPrecision" type="number" id="$fieldname:occurrence:spatialrefprecision"
-      min="0" name="$fieldname:occurrence:spatialrefprecision" value=""
-      title="$title" />
-</td>
-HTML;
-    }
+    $r .= self::speciesChecklistDateCell($options, 0, '-idx-', NULL);
+    $r .= self::speciesChecklistSpatialRefCell($options, 0, '-idx-', NULL);
+    $r .= self::speciesChecklistSpatialRefPrecisionCell($options, 0, '-idx-', NULL);
+    $r .= self::speciesChecklistSubSampleAttrCells($options, 0, '-idx-', NULL);
     if ($options['occurrenceComment']) {
       $r .= <<<HTML
 <td class="ui-widget-content scCommentCell" headers="$options[id]-comment-0">
@@ -5205,8 +5321,8 @@ HTML;
           if (!empty($options['sample_method_id'])) {
             $sampleAttrs = self::getMultiplePlacesSpeciesChecklistSubsampleAttrs($options, empty($sampleId) ? NULL : $sampleId);
             foreach ($sampleAttrs as &$attr) {
-              $attr['fieldname'] = 'sc:'.$a[1].':'.$a[2].':'.$attr['fieldname'];
-              $attr['id'] = 'sc:'.$a[1].':'.$a[2].':'.$attr['id'];
+              $attr['fieldname'] = "sc:$a[1]:$a[2]:$attr[fieldname]";
+              $attr['id'] = "sc:$a[1]:$a[2]:$attr[id]";
             }
             $attrOptions = self::getAttrSpecificOptions($options);
             $sampleCtrls = get_attribute_html($sampleAttrs, [], array('extraParams' =>  $options['readAuth']), NULL, $attrOptions);
@@ -6105,7 +6221,7 @@ JS;
         // still want linked lists, even though we will have some items initially populated
         self::initLinkedLists($options);
       }
-      $lookupItems = self::get_list_items_from_options($options, 'selected');
+      $lookupItems = self::getListItemsFromOptions($options, 'selected');
       $options['items'] = "";
       if (array_key_exists('blankText', $options)) {
         $options['blankText'] = lang::get($options['blankText']);
@@ -6133,7 +6249,7 @@ JS;
    * option elements, pass "selected", for checkbox inputs, pass "checked".
    * @return array Associative array of the lookup values and templated list items.
    */
-  private static function get_list_items_from_options($options, $selectedItemAttribute) {
+  private static function getListItemsFromOptions($options, $selectedItemAttribute) {
     global $indicia_templates;
     if (!isset($options['lookupValues']) && empty($options['report']) && empty($options['table'])) {
       $name = empty($options['id']) ? $options['fieldname'] : $options['id'];
@@ -6148,8 +6264,7 @@ JS;
     if (isset($options['lookupValues'])) {
       // lookup values are provided, so run these through the item template
       foreach ($options['lookupValues'] as $key => $caption) {
-        $selected=self::get_list_item_selected_attribute($key, $selectedItemAttribute, $options, $itemFieldname);
-
+        $selected = self::get_list_item_selected_attribute($key, $selectedItemAttribute, $options, $itemFieldname);
         $r[$key] = str_replace(
           array('{sortHandle}', '{value}', '{caption}', '{'.$selectedItemAttribute.'}', '{title}'),
           array($sortHandle, htmlspecialchars($key), htmlspecialchars($caption), $selected, (isset($hints[$caption]) ? ' title="'.$hints[$caption].'" ' : '')),
@@ -6183,11 +6298,11 @@ JS;
             else {
               $caption = $record[$options['captionField']];
             }
-            if(isset($options['listCaptionSpecialChars'])) {
-              $caption=htmlspecialchars($caption);
+            if (isset($options['listCaptionSpecialChars'])) {
+              $caption = htmlspecialchars($caption);
             }
-            $value=$record[$options['valueField']];
-            $selected=self::get_list_item_selected_attribute($value, $selectedItemAttribute, $options, $itemFieldname);
+            $value = $record[$options['valueField']];
+            $selected = self::get_list_item_selected_attribute($value, $selectedItemAttribute, $options, $itemFieldname);
             // If an array field and we are loading an existing value, then the value needs to store the db ID otherwise we loose the link
             if ($itemFieldname)
               $value .= ":$itemFieldname";
@@ -6232,7 +6347,7 @@ HTML;
         foreach ($default as $defVal) {
           // default value array entries can be themselves an array, so that they store the fieldname as well as the value.
           // Or they can be just a plain value.
-          if (is_array($defVal)){
+          if (is_array($defVal)) {
             if ($defVal['default'] == $value) {
               $selected = TRUE;
               // for an array field
@@ -6244,8 +6359,10 @@ HTML;
           elseif ($value == $defVal)
             $selected = TRUE;
         }
-      } else
+      }
+      else {
         $selected = ($default == $value);
+      }
       return $selected ? " $selectedItemAttribute=\"$selectedItemAttribute\"" : '';
     }
     else
@@ -6311,8 +6428,7 @@ HTML;
    */
   private static function check_or_radio_group($options, $type) {
     $checkboxOtherIdx=FALSE;
-    // checkboxes are inherantly multivalue, whilst radio buttons are single value
-    global $indicia_templates;
+    // Checkboxes are inherantly multivalue, whilst radio buttons are single value.
     $options = array_merge(
       array(
         'sep' => ' ', // space allows lines to flow, otherwise all one line.
@@ -6333,7 +6449,7 @@ HTML;
     } else {
       $itemClass='';
     }
-    $lookupItems = self::get_list_items_from_options($options, 'checked');
+    $lookupItems = self::getListItemsFromOptions($options, 'checked');
     $items = "";
     $idx = 0;
     foreach ($lookupItems as $value => $template) {
@@ -6348,13 +6464,13 @@ HTML;
           'itemId' => $options['id'].':'.$idx
         )
       );
-      $item['fieldname']=$fieldName;
+      $item['fieldname'] = $fieldName;
       $items .= self::mergeParamsIntoTemplate($item, $template, TRUE, TRUE);
       $idx++;
       if (!empty($options['otherItemId']) && $value==$options['otherItemId'])
-        $checkboxOtherIdx=$idx-1;
+        $checkboxOtherIdx = $idx - 1;
     }
-    $options['items']=$items;
+    $options['items'] = $items;
     // We don't want to output for="" in the top label, as it is not directly associated to a button
     $options['labelTemplate'] = (isset($options['label']) && substr($options['label'], -1) == '?' ? 'toplabelNoColon' : 'toplabel');
     if (isset($itemClass) && !empty($itemClass) && strpos($itemClass, 'required')!==FALSE) {
@@ -6766,9 +6882,9 @@ if (errors$uniq.length>0) {
     $assocDataKeys = preg_grep('/occurrence_association:\d+:(\d+)?:from_occurrence_id/', array_keys($arr));
     $assocData = count($assocDataKeys) ?
         array_intersect_key($arr, array_combine($assocDataKeys, $assocDataKeys)) : [];
-    $existingSampleIdsBySref = !empty($_POST['existingSampleIdsBySref']) ?
-        json_decode($_POST['existingSampleIdsBySref'], TRUE) : [];
-    $unusedExistingSampleIds = array_values($existingSampleIdsBySref);
+    $existingSampleIdsByOccIds = !empty($_POST['existingSampleIdsByOccIds']) ?
+        json_decode($_POST['existingSampleIdsByOccIds'], TRUE) : [];
+    $unusedExistingSampleIds = array_values($existingSampleIdsByOccIds);
     foreach ($records as $id => $record) {
       // Determine the id of the grid this record is from.
       // $id = <grid_id>-<rowIndex> but <grid_id> could contain a hyphen
@@ -6793,62 +6909,61 @@ if (errors$uniq.length>0) {
         $record['taxa_taxon_list_id'] = $record['ttlId'];
         $record['website_id'] = $website_id;
         self::speciesChecklistApplyFieldDefaults($fieldDefaults, $record);
-        // Handle subsamples indicated by a row specific map ref
+        // Handle subSamples indicated by row specific sample values.
+        $date = self::extractValueFromArray($record, 'occurrence:date');
         $sref = self::extractValueFromArray($record, 'occurrence:spatialref');
         $srefPrecision = self::extractValueFromArray($record, 'occurrence:spatialrefprecision');
+        $sampleAttrKeys = preg_grep('/^occurrence:smpAttr:/', array_keys($record));
         $occ = submission_builder::wrap($record, 'occurrence');
         self::attachOccurrenceMediaToModel($occ, $record);
         self::attachAssociationsToModel($id, $occ, $assocData, $arr);
-        // If we have a record-level spatial reference, then we need to attach the record to a subsample to capture the
-        // exact sref.
-        if ($sref) {
-          $submodelKey = strtoupper(trim($sref));
+        // If we have subSample date, sref or attrs in the grid row, then must
+        // be doing subSamplePerRow. So build a sub-sample submission.
+        if ($date || $sref || count($sampleAttrKeys)) {
+          $system = empty($arr['sample:entered_sref_system']) ? '' : $arr['sample:entered_sref_system'];
+          // If the main sample is a grid system (not x,y or lat long which would be a numeric EPSG code) and the sref
+          // provided in finer grid ref looks like a lat long, treat it as a lat long.
+          if (!preg_match('/^\d+$/', $system) &&
+              preg_match('/^[+-]?[0-9]*(\.[0-9]*)?[NS]?,?\s+[+-]?[0-9]*(\.[0-9]*)?[EW]?$/', $sref)) {
+            $system = 4326;
+          }
+          $subSample = [
+            'website_id' => $website_id,
+            'survey_id' => !empty($arr['survey_id']) ? $arr['survey_id'] : '',
+            'date' => !empty($date) ? $date : (!empty($arr['sample:date']) ? $arr['sample:date'] : ''),
+            'entered_sref' => !empty($sref) ? $sref : $arr['sample:entered_sref'],
+            'entered_sref_system' => $system,
+            'location_name' => !empty($arr['sample:location_name']) ? $arr['sample:location_name'] : '',
+            'input_form' => !empty($arr['sample:input_form']) ? $arr['sample:input_form'] : '',
+          ];
           if ($srefPrecision) {
-            $submodelKey .= ".$srefPrecision";
+            $subSample['smpAttr:' . $arr['scSpatialRefPrecisionAttrId']] = $srefPrecision;
           }
-          if (!isset($subModels[$submodelKey])) {
-            $system = empty($arr['sample:entered_sref_system']) ? '' : $arr['sample:entered_sref_system'];
-            // If the main sample is a grid system (not x,y or lat long which would be a numeric EPSG code) and the sref
-            // provided in finer grid ref looks like a lat long, treat it as a lat long.
-            if (!preg_match('/^\d+$/', $system) &&
-                preg_match('/^[+-]?[0-9]*(\.[0-9]*)?[NS]?,?\s+[+-]?[0-9]*(\.[0-9]*)?[EW]?$/', $sref)) {
-              $system = 4326;
-            }
-            $subSample = array(
-              'website_id' => $website_id,
-              'survey_id' => empty($arr['survey_id']) ? '' : $arr['survey_id'],
-              'date' => empty($arr['sample:date']) ? '' : $arr['sample:date'],
-              'entered_sref' => $sref,
-              'entered_sref_system' => $system,
-              'location_name' => empty($arr['sample:location_name']) ? '' : $arr['sample:location_name'],
-              'input_form' => empty($arr['sample:input_form']) ? '' : $arr['sample:input_form'],
-            );
-            if ($srefPrecision) {
-              $subSample['smpAttr:' . $arr['scSpatialRefPrecisionAttrId']] = $srefPrecision;
-            }
-            // set an existing ID on the sample if editing
-            if (!empty($existingSampleIdsBySref[$submodelKey])) {
-              $subSample['id'] = $existingSampleIdsBySref[$submodelKey];
-              $key = array_search($subSample['id'], $unusedExistingSampleIds);
-              if ($key !== FALSE) {
-                unset($unusedExistingSampleIds[$key]);
-              }
-            }
-            $subModels[$submodelKey] = array(
-              'fkId' => 'parent_id',
-              'model' => submission_builder::wrap($subSample, 'sample'),
-            );
-            $subModels[$submodelKey]['model']['subModels'] = [];
+          foreach ($sampleAttrKeys as $key) {
+            $subSample[str_replace('occurrence:', '' , $key)] = $record[$key];
           }
-          $subModels[$submodelKey]['model']['subModels'][] = array(
-            'fkId' => 'sample_id',
-            'model' => $occ
-          );
-        } else {
+          // Set an existing ID on the sample if editing.
+          if (!empty($record['id']) && !empty($existingSampleIdsByOccIds[$record['id']])) {
+            $subSample['id'] = $existingSampleIdsByOccIds[$record['id']];
+            $key = array_search($subSample['id'], $unusedExistingSampleIds);
+            if ($key !== FALSE) {
+              unset($unusedExistingSampleIds[$key]);
+            }
+          }
           $subModels[$id] = array(
+            'fkId' => 'parent_id',
+            'model' => submission_builder::wrap($subSample, 'sample'),
+          );
+          $subModels[$id]['model']['subModels'] = [[
+            'fkId' => 'sample_id',
+            'model' => $occ,
+          ]];
+        }
+        else {
+          $subModels[$id] = [
             'fkId' => 'sample_id',
             'model' => $occ
-          );
+          ];
         }
       }
     }
@@ -6867,7 +6982,7 @@ if (errors$uniq.length>0) {
   }
 
   /**
-   * Wraps data from a species checklist grid with subsamples (generated by
+   * Wraps data from a species checklist grid with subSamples (generated by
    * data_entry_helper::species_checklist) into a suitable format for submission. This will
    * return an array of submodel entries which can be dropped directly into the subModel
    * section of the submission array. If there is a field occurrence:determiner_id or
@@ -6901,11 +7016,11 @@ if (errors$uniq.length>0) {
     // Set the default method of looking for rows to include - either using data, or the checkbox (which could be hidden)
     $include_if_any_data = $include_if_any_data || (isset($arr['rowInclusionCheck']) && $arr['rowInclusionCheck']=='hasData');
     // Species checklist entries take the following format.
-    // sc:<subsampleIndex>:[<sample_id>]:sample:deleted
-    // sc:<subsampleIndex>:[<sample_id>]:sample:geom
-    // sc:<subsampleIndex>:[<sample_id>]:sample:entered_sref
-    // sc:<subsampleIndex>:[<sample_id>]:smpAttr:[<sample_attribute_id>]
-    // sc:<rowIndex>:[<occurrence_id>]:occurrence:sampleIDX (val set to subsample index)
+    // sc:<subSampleIndex>:[<sample_id>]:sample:deleted
+    // sc:<subSampleIndex>:[<sample_id>]:sample:geom
+    // sc:<subSampleIndex>:[<sample_id>]:sample:entered_sref
+    // sc:<subSampleIndex>:[<sample_id>]:smpAttr:[<sample_attribute_id>]
+    // sc:<rowIndex>:[<occurrence_id>]:occurrence:sampleIDX (val set to subSample index)
     // sc:<rowIndex>:[<occurrence_id>]:present (checkbox with val set to ttl_id
     // sc:<rowIndex>:[<occurrence_id>]:occAttr:<occurrence_attribute_id>[:<occurrence_attribute_value_id>]
     // sc:<rowIndex>:[<occurrence_id>]:occurrence:comment
@@ -6962,7 +7077,7 @@ if (errors$uniq.length>0) {
       $occs = $sampleRecord['occurrences'];
       unset($sampleRecord['occurrences']);
       $sampleRecord['website_id'] = $website_id;
-      // copy essentials down to each subsample
+      // copy essentials down to each subSample
       if (!empty($arr['survey_id']))
         $sampleRecord['survey_id'] = $arr['survey_id'];
       if (!empty($arr['sample:date']))
@@ -6974,7 +7089,7 @@ if (errors$uniq.length>0) {
       if (!empty($arr['sample:input_form']))
         $sampleRecord['input_form'] = $arr['sample:input_form'];
       $subSample = submission_builder::wrap($sampleRecord, 'sample');
-      // Add the subsample/soccurrences in as subModels without overwriting others such as a sample image
+      // Add the subSample/soccurrences in as subModels without overwriting others such as a sample image
       if (array_key_exists('subModels', $subSample)) {
         $subSample['subModels'] = array_merge($subSample['subModels'], $occs);
       } else {
@@ -7106,34 +7221,113 @@ if (errors$uniq.length>0) {
   }
 
   /**
-   * Return the HTML for the td element which allows a spatial ref to be entered seperately for each row in a
-   * species checklist grid.
-   * @param $options array Options passed to the control
-   * @param $colIdx integer Index of the column position allowing the td to be linked to its header
-   * @param $rowIdx integer Index of the grid row
-   * @param $existingRecordId integer If an existing occurrence record, pass the ID
-   * @return string HTML to insert into the grid
+   * Find the sample ID for an existing species_checklist occurrence row.
+   *
+   * Uses the sampleIDX for the row to find the sample:id field for the
+   * matching sampleIDX in the entity to load data.
+   *
+   * @param int $txIdx
+   *   Taxon row index.
+   * @param int $existingRecordId
+   *   Existing row's occurrence ID.
+   *
+   * @return int
+   *   Sample ID or NULL.
    */
-  private static function speciesChecklistSpatialRefCell($options, $colIdx, $rowIdx, $existingRecordId) {
+  private static function getExistingSpeciesRowSampleId($txIdx, $existingRecordId) {
+    if (!empty(self::$entity_to_load["sc:$txIdx:$existingRecordId:occurrence:sampleIDX"])) {
+      $sampleIdx = self::$entity_to_load["sc:$txIdx:$existingRecordId:occurrence:sampleIDX"];
+      $keys = preg_grep("/^sc:$sampleIdx:\d+:sample:id$/", array_keys(self::$entity_to_load));
+      if (count($keys)) {
+        $key = array_pop($keys);
+        return self::$entity_to_load[$key];
+      }
+    }
+    return NULL;
+  }
+
+  /**
+   * Returns the date cell for an existing row in a species checklist.
+   *
+   * Return the HTML for the td element which allows a date to be entered
+   * seperately for each row in a species checklist grid.
+   *
+   * @param $options array
+   *   Options passed to the control.
+   * @param $colIdx int
+   *   Index of the column position allowing the td to be linked to its header.
+   * @param $rowIdx int
+   *   Index of the grid row.
+   * @param $existingRecordId int
+   *   If an existing occurrence record, pass the ID.
+   * @param $existingSampleId int
+   *   If an existing sample record, pass the ID when using sub-samples.
+   *
+   * @return string
+   *   HTML to insert into the grid
+   */
+  private static function speciesChecklistDateCell($options, $colIdx, $rowIdx, $existingRecordId, $existingSampleId = NULL) {
+    $r = '';
+    if ($options['datePerRow']) {
+      $value = NULL;
+      $fieldname = "sc:$options[id]-$rowIdx:$existingRecordId:occurrence:date";
+      if ($existingSampleId) {
+        $key = "sc:$rowIdx:$existingSampleId:sample:date_start";
+        $value = isset(self::$entity_to_load[$key]) ? self::$entity_to_load[$key] : NULL;
+      }
+      $dateInput = self::date_picker([
+        'fieldname' => $fieldname,
+        'default' => $value,
+      ]);
+      $r .= <<<HTML
+  <td class="ui-widget-content scDateCell" headers="$options[id]-date-$colIdx">
+    $dateInput
+  </td>
+  HTML;
+    }
+    return $r;
+  }
+
+  /**
+   * Returns the spatial ref cell for an existing row in a species checklist.
+   *
+   * Return the HTML for the td element which allows a spatial ref to be
+   * entered seperately for each row in a species checklist grid.
+   *
+   * @param $options array
+   *   Options passed to the control.
+   * @param $colIdx int
+   *   Index of the column position allowing the td to be linked to its header.
+   * @param $rowIdx int
+   *   Index of the grid row.
+   * @param $existingRecordId int
+   *   If an existing occurrence record, pass the ID.
+   * @param $existingSampleId int
+   *   If an existing sample record, pass the ID when using sub-samples.
+   *
+   * @return string
+   *   HTML to insert into the grid
+   */
+  private static function speciesChecklistSpatialRefCell($options, $colIdx, $rowIdx, $existingRecordId, $existingSampleId = NULL) {
     $r = '';
     if ($options['spatialRefPerRow']) {
       $value = '';
-      if (isset(self::$entity_to_load['sample:id']) &&
-          isset(self::$entity_to_load["sc:$rowIdx:$existingRecordId:occurrence:sampleIDX"])) {
-        $sampleIdx = self::$entity_to_load["sc:$rowIdx:$existingRecordId:occurrence:sampleIDX"];
-        $keys = preg_grep("/^sc:$sampleIdx:\d+:sample:id$/", array_keys(self::$entity_to_load));
-        if (count($keys)) {
-          $key = array_pop($keys);
-          $srefKey = preg_replace('/:id$/', ':entered_sref', $key);
-          if (isset(self::$entity_to_load[$srefKey])) {
-            $value = self::$entity_to_load[$srefKey];
-          }
-        }
+      $fieldname = "sc:$options[id]-$rowIdx:$existingRecordId:occurrence:spatialref";
+      if ($existingSampleId) {
+        $key = "sc:$rowIdx:$existingSampleId:sample:entered_sref";
+        $value = isset(self::$entity_to_load[$key]) ? self::$entity_to_load[$key] : '';
       }
       $fieldname = "sc:$options[id]-$rowIdx:$existingRecordId:occurrence:spatialref";
+      if ($options['spatialRefPerRowUseFullscreenMap']) {
+        $getFromMapHint = lang::get('Click this button to allow you to access map to set the spatial reference for this record. Click once to set the precise location.');
+      }
+      else {
+        $getFromMapHint = lang::get('Toggle this button to allow you to click on the map to set the spatial reference for this record.');
+      }
       $r = <<<HTML
 <td class="ui-widget-content scSpatialRefCell" headers="$options[id]-spatialref-$colIdx">
-  <input class="scSpatialRef" type="text\" name="$fieldname" id="$fieldname" value="$value" />
+  <input class="scSpatialRef" type="text" name="$fieldname" id="$fieldname" value="$value" />
+  <button class="scSpatialRefFromMap" type="button" title="$getFromMapHint"><i class="fas fa-map-pin"></i></button>
 </td>
 HTML;
     }
@@ -7143,29 +7337,30 @@ HTML;
   /**
    * Return the HTML for the td element which allows a spatial ref precision to be entered seperately for each row in a
    * species checklist grid.
-   * @param $options array Options passed to the control
-   * @param $colIdx integer Index of the column position allowing the td to be linked to its header
-   * @param $rowIdx integer Index of the grid row
-   * @param $existingRecordId integer If an existing occurrence record, pass the ID
-   * @return string HTML to insert into the grid
+   *
+   * @param $options array
+   *   Options passed to the control.
+   * @param $colIdx int
+   *   Index of the column position allowing the td to be linked to its header.
+   * @param $rowIdx int
+   *   Index of the grid row.
+   * @param $existingRecordId integer
+   *   If an existing occurrence record, pass the ID.
+   * @param $existingSampleId int
+   *   If an existing sample record, pass the ID when using sub-samples.
+   *
+   * @return string
+   *   HTML to insert into the grid
    */
-   private static function speciesChecklistSpatialRefPrecisionCell($options, $colIdx, $rowIdx, $existingRecordId) {
+  private static function speciesChecklistSpatialRefPrecisionCell($options, $colIdx, $rowIdx, $existingRecordId, $existingSampleId = NULL) {
     $r = '';
     if ($options['spatialRefPrecisionAttrId']) {
       $value = '';
-      if (isset(self::$entity_to_load['sample:id']) &&
-          isset(self::$entity_to_load["sc:$rowIdx:$existingRecordId:occurrence:sampleIDX"])) {
-        $sampleIdx = self::$entity_to_load["sc:$rowIdx:$existingRecordId:occurrence:sampleIDX"];
-        $keys = preg_grep("/^sc:$sampleIdx:\d+:sample:id$/", array_keys(self::$entity_to_load));
-        if (count($keys)) {
-          $key = array_pop($keys);
-          $precisionFieldKey = preg_replace('/:id$/', ':sref_precision', $key);
-          if (isset(self::$entity_to_load[$precisionFieldKey])) {
-            $value = self::$entity_to_load[$precisionFieldKey];
-          }
-        }
-      }
       $fieldname = "sc:$options[id]-$rowIdx:$existingRecordId:occurrence:spatialrefprecision";
+      if ($existingSampleId) {
+        $key = "sc:$rowIdx:$existingSampleId:sample:sref_precision";
+        $value = isset(self::$entity_to_load[$key]) ? self::$entity_to_load[$key] : '';
+      }
       $title = preg_replace('/[\r\n]/', ' ', lang::get('gps_precision_instructions'));
       $r = <<<HTML
 <td class="ui-widget-content scSpatialRefPrecisionCell" headers="$options[id]-spatialrefprecision-$colIdx">
@@ -7178,13 +7373,65 @@ HTML;
   }
 
   /**
+   * Add cells to the species checklist for attributes at the sub-sample level.
+   *
+   * @param $options array
+   *   Options passed to the species_checklist control.
+   * @param $colIdx int
+   *   Index of the column position allowing the td to be linked to its header.
+   * @param $rowIdx int
+   *   Index of the grid row.
+   * @param $existingRecordId integer
+   *   If an existing occurrence record, pass the ID.
+   * @param $existingSampleId int
+   *   If an existing sample record, pass the ID when using sub-samples.
+   *
+   * @return string
+   *   HTML to insert into the grid
+   */
+  private static function speciesChecklistSubSampleAttrCells($options, $colIdx, $rowIdx, $existingRecordId, $existingSampleId = NULL) {
+    $r = '';
+    foreach ($options['subSampleAttrs'] as $subSampleAttrId) {
+      if (isset($options['subSampleAttrInfo'][$subSampleAttrId])) {
+        $value = NULL;
+        if ($existingSampleId) {
+          $key = "sc:$rowIdx:$existingSampleId:sample:smpAttr:$subSampleAttrId";
+          $value = isset(self::$entity_to_load[$key]) ? self::$entity_to_load[$key] : NULL;
+        }
+        $control = self::outputAttribute(array_merge(
+          $options['subSampleAttrInfo'][$subSampleAttrId],
+          ['default' => $value],
+        ), [
+          'extraParams' => $options['readAuth'],
+          'label' => '',
+          'id' => "sc:$options[id]-$rowIdx:$existingRecordId:occurrence:" . $options['subSampleAttrInfo'][$subSampleAttrId]['id'],
+          'fieldname' => "sc:$options[id]-$rowIdx:$existingRecordId:occurrence:" . $options['subSampleAttrInfo'][$subSampleAttrId]['id'],
+        ]);
+        $r .= <<<HTML
+<td class="ui-widget-content scSampleAttrCell" headers="$options[id]-sampleAttr$subSampleAttrId-$colIdx">
+  $control
+</td>
+HTML;
+      }
+    }
+    return $r;
+  }
+
+  /**
    * Return the HTML for the td element which allows a comment to be entered for each row in a species checklist grid.
-   * @param $options array Options passed to the control
-   * @param $colIdx integer Index of the column position allowing the td to be linked to its header
-   * @param $rowIdx integer Index of the grid row
-   * @param $loadedTxIdx integer
-   * @param $existingRecordId integer If an existing occurrence record, pass the ID
-   * @return string HTML to insert into the grid
+   *
+   * @param array $options
+   *   Options passed to the control.
+   * @param int $colIdx
+   *   Index of the column position allowing the td to be linked to its header.
+   * @param int $rowIdx
+   *   Index of the grid row.
+   * @param int $loadedTxIdx
+   * @param int $existingRecordId
+   *   If an existing occurrence record, pass the ID.
+   *
+   * @return string
+   *   HTML to insert into the grid.
    */
   private static function speciesChecklistCommentCell($options, $colIdx, $rowIdx, $loadedTxIdx, $existingRecordId) {
     $r = '';
@@ -7202,10 +7449,16 @@ HTML;
 
   /**
    * Return the HTML for the td element which allows sensitivity to be set for each row in a species checklist grid.
-   * @param $options array Options passed to the control
-   * @param $colIdx integer Index of the column position allowing the td to be linked to its header
-   * @param $rowIdx integer Index of the grid row
-   * @param $existingRecordId integer If an existing occurrence record, pass the ID
+   *
+   * @param $options array
+   *   Options passed to the control.
+   * @param $colIdx int
+   *   Index of the column position allowing the td to be linked to its header
+   * @param $rowIdx int
+   *   Index of the grid row.
+   * @param $existingRecordId integer
+   *   If an existing occurrence record, pass the ID.
+   *
    * @return string HTML to insert into the grid
    */
   private static function speciesChecklistSensitivityCell($options, $colIdx, $rowIdx, $existingRecordId) {
@@ -7244,36 +7497,46 @@ HTML;
   }
 
   /**
-   * When the species_checklist grid is in spatialRefPerRow mode and editing existing records, this method outputs any
-   * existing subsample IDs into an array keyed by spatial ref/precision, so they can be looked up and used in the
-   * submission later. It also outputs geoms into an array keyed by sample ID so they can be drawn on the map.
-   * @param array $options Options passed to the species_checklist control.
-   * @return string HTML for a hidden input containing the existing sample data.
+   * Find unique subSamples and sample IDs.
+   *
+   * When the species_checklist grid is in subSample per row mode and editing
+   * existing records, this method outputs any existing subSample IDs into an
+   * array keyed by occurrence ID, so they can be looked up and used in the
+   * submission later. It also outputs geoms into an array keyed by spatial ref
+   * so they can be drawn on the map.
+   *
+   * @param array $options
+   *   Options passed to the species_checklist control.
+   *
+   * @return string
+   *   HTML for a hidden input containing the existing sample data.
    */
-  private static function speciesChecklistSrefPerRowExistingIds($options) {
+  private static function speciesChecklistSubsamplePerRowExistingIds(array $options) {
     $r = '';
-    if ($options['spatialRefPerRow'] && !empty(self::$entity_to_load)) {
+    $data = [];
+    $geomsData = [];
+    if ($options['subSamplePerRow'] && !empty(self::$entity_to_load)) {
       $sampleIdKeys = preg_grep("/^sc:\d+:\d+:sample:id$/", array_keys(self::$entity_to_load));
-      $data = [];
-      $geomsData = [];
       foreach ($sampleIdKeys as $sampleIdKey) {
-        $srefKey = preg_replace('/:id$/', ':entered_sref', $sampleIdKey);
-        $dataKey = strtoupper(self::$entity_to_load[$srefKey]);
-        if ($options['spatialRefPrecisionAttrId']) {
-          $precisionKey = preg_replace('/:id$/', ':sref_precision', $sampleIdKey);
-          if (!empty(self::$entity_to_load[$precisionKey])) {
-            $dataKey .= '.' . self::$entity_to_load[$precisionKey];
+        if (preg_match("/^sc:(?<sampleIdx>\d+):(?<sample_id>\d+):sample:id$/", $sampleIdKey, $matches)) {
+          $sample_id = $matches['sample_id'];
+          $sampleIdx = $matches['sampleIdx'];
+          $sampleIdxKeys = preg_grep("/^sc:$sampleIdx:\d+:occurrence:sampleIDX$/", array_keys(self::$entity_to_load));
+          if ($sampleIdxKeys) {
+            foreach ($sampleIdxKeys as $sampleIdxKey) {
+              if (preg_match("/^sc:$sampleIdx:(?<occurrence_id>\d+):occurrence:sampleIDX$/", $sampleIdxKey, $matches)) {
+                $data[$matches['occurrence_id']] = $sample_id;
+                $geomsData[self::$entity_to_load["sc:$sampleIdx:$sample_id:sample:entered_sref"]]
+                  = self::$entity_to_load["sc:$sampleIdx:$sample_id:sample:geom"];
+              }
+            }
           }
         }
-        $data[$dataKey] = self::$entity_to_load[$sampleIdKey];
-        $geomKey = preg_replace('/:id$/', ':geom', $sampleIdKey);
-        $geom = self::$entity_to_load[$geomKey];
-        $geomsData[strtoupper(self::$entity_to_load[$srefKey])] = $geom;
       }
       $value = htmlspecialchars(json_encode($data));
-      $r .= "<input type=\"hidden\" name=\"existingSampleIdsBySref\" value=\"$value\" />";
+      $r .= "<input type=\"hidden\" name=\"existingSampleIdsByOccIds\" value=\"$value\" />\n";
       $geomsValue = htmlspecialchars(json_encode($geomsData));
-      $r .= "<input type=\"hidden\" id=\"existingSampleGeomsBySref\" value=\"$geomsValue\" />";
+      $r .= "<input type=\"hidden\" id=\"existingSampleGeomsBySref\" value=\"$geomsValue\" />\n";
     }
     return $r;
   }
@@ -7429,7 +7692,7 @@ HTML;
 
   /**
    * Helper function to simplify building of a submission that contains a single supersample,
-   * with multiple subsamples, each of which has multiple occurrences records, as generated
+   * with multiple subSamples, each of which has multiple occurrences records, as generated
    * by a species_checklist control.
    *
    * @param array $values
@@ -7457,7 +7720,7 @@ HTML;
     $subModels = data_entry_helper::wrap_species_checklist_with_subsamples($values, $include_if_any_data,
       $zeroAttrs, $zeroValues);
 
-    // Add the subsamples/occurrences in as subModels without overwriting others such as a sample image
+    // Add the subSamples/occurrences in as subModels without overwriting others such as a sample image
     if (array_key_exists('subModels', $sampleMod)) {
       $sampleMod['subModels'] = array_merge($sampleMod['subModels'], $subModels);
     } else {
@@ -7587,7 +7850,6 @@ HTML;
    * validation_message template for each error.
    */
   public static function dump_remaining_errors() {
-    global $indicia_templates;
     $errors = [];
     if (self::$validation_errors !== NULL) {
       foreach (self::$validation_errors as $errorKey => $error) {
@@ -7939,12 +8201,12 @@ TXT;
           }
         }
       }
-      if(count($item['values'])>=1 && $item['multi_value'] != 't') {
+      if (count($item['values']) >= 1 && $item['multi_value'] != 't') {
         $item['fieldname'] = $item['values'][0]['fieldname'];
         $item['default'] = $item['values'][0]['default'];
         $item['defaultUpper'] = $item['values'][0]['defaultUpper'];
       }
-      if($item['multi_value'] == 't'){
+      if ($item['multi_value'] == 't') {
         $item['default'] = $item['values'];
       }
       unset($item['values']);
@@ -8030,8 +8292,14 @@ TXT;
 
   /**
    * Returns the control required to implement a boolean custom attribute.
-   * @param string $ctrl The control type, should be radio or checkbox.
-   * @param array $options The control's options array.
+   *
+   * @param string $ctrl
+   *   The control type, should be radio or checkbox.
+   * @param array $options
+   *   The control's options array.
+   *
+   * @return string
+   *   Control HTML.
    */
   private static function boolean_attribute($ctrl, $options) {
     global $indicia_templates;
@@ -8074,23 +8342,31 @@ TXT;
   /**
    * Helper function to output an attribute.
    *
-   * @param array $item Attribute definition as returned by a call to getAttributes. The caption of the attribute
-   * will be translated then output as the label.
-   * @param array $options Additional options for the attribute to be output. Array entries can be:
-   *    disabled
-   *    suffixTemplate
-   *    default
-   *    class
-   *    validation
-   *    noBlankText
-   *    extraParams
-   *    booleanCtrl - radio or checkbox for boolean attribute output, default is checkbox. Can also be a checkbox_group, used to
-   *    allow selection of both yes and no, e.g. on a filter form.
-   *    language - iso 639:3 code for the language to output for terms in a termlist. If not set no language filter is used.
-   *    useDescriptionAsHelpText - set to true to load descriptions from server side attribute definitions into the
-   *    helpText.
-   *    attrImageSize - 'thumb', 'med' or 'original' to display the server defined attribute image alongside the caption.
-   * @return string HTML to insert into the page for the control.
+   * @param array $item
+   *   Attribute definition as returned by a call to getAttributes. The caption
+   *   of the attribute will be translated then output as the label. Can
+   *   include an option called default to set the initial control value.
+   * @param array $options
+   *   Additional options for the attribute to be output. Array entries can be:
+   *     disabled
+   *     suffixTemplate
+   *     class
+   *     validation
+   *     noBlankText
+   *     extraParams
+   *     booleanCtrl - radio or checkbox for boolean attribute output, default
+   *       is checkbox. Can also be a checkbox_group, used to allow selection
+   *       of both yes and no, e.g. on a filter form.
+   *     language - iso 639:3 code for the language to output for terms in a
+   *       termlist. If not set no language filter is used.
+   *     useDescriptionAsHelpText - set to true to load descriptions from
+   *       server side attribute definitions into the helpText.
+   *     attrImageSize - 'thumb', 'med' or 'original' to display the server
+   *       defined attribute image alongside the caption.
+   *
+   * @return string
+   *   HTML to insert into the page for the control.
+   *
    * @todo full handling of the control_type. Only works for text data at the moment.
    */
   public static function outputAttribute($item, $options=[]) {
@@ -8278,14 +8554,15 @@ TXT;
           $lookUpKey = 'id';
         }
         $output = "";
-        if($ctrl=='checkbox_group' && isset($attrOptions['default'])){
-          // special case for checkboxes where there are existing values: have to allow them to save unclicked, so need hidden blank field
-          // don't really want to put it in to the main checkbox_group control as don't know what ramifications that would have.
+        if ($ctrl === 'checkbox_group' && isset($attrOptions['default'])){
+          // Special case for checkboxes where there are existing values: have
+          // to allow them to save unclicked, so need hidden blank field.
+          // Don't really want to put it in to the main checkbox_group control
+          // as don't know what ramifications that would have.
           if (is_array($attrOptions['default'])) {
-            $checked = FALSE;
             foreach ($attrOptions['default'] as $defVal) {
-              if(is_array($defVal)){
-                $output .= '<input type="hidden" value="" name="'.$defVal['fieldname'].'">';
+              if (is_array($defVal)) {
+                $output .= "<input type=\"hidden\" value=\"\" name=\"$defVal[fieldname]\">";
               } // really need the field name, so ignore when not provided
             }
           }
@@ -8337,15 +8614,23 @@ HTML;
   /**
    * Retrieves an array of just the image data from a $_POST or set of control values.
    *
-   * @param array $values Pass the $_POST data or other array of form values in this parameter.
-   * @param string $modelName The singular name of the media table, e.g. location_medium or occurrence_medium etc. If
-   * null, then any image model will be used.
-   * @param boolean $simpleFileInputs If true, then allows a file input with name=occurrence:image (or similar)
-   * to be used to point to an image file. The file is uploaded to the interim image folder to ensure that it
-   * can be handled in the same way as a pre-uploaded file.
-   * @param boolean $moveSimpleFiles If true, then any file uploaded by normal means to the server (via multipart form submission
-   * for a field named occurrence:image[:n] or similar) will be moved to the interim image upload folder.
-   * @param integer If specified, limits media data extraction to media with this media type id.
+   * @param array $values
+   *   Pass the $_POST data or other array of form values in this parameter.
+   * @param string $modelName
+   *   The singular name of the media table, e.g. location_medium or
+   *   occurrence_medium etc. If null, then any image model will be used.
+   * @param bool $simpleFileInputs
+   *   If true, then allows a file input with name=occurrence:image (or
+   *   similar) to be used to point to an image file. The file is uploaded to
+   *   the interim image folder to ensure that it can be handled in the same
+   *   way as a pre-uploaded file.
+   * @param bool $moveSimpleFiles
+   *   If true, then any file uploaded by normal means to the server (via
+   *   multipart form submission for a field named occurrence:image[:n] or
+   *   similar) will be moved to the interim image upload folder.
+   * @param int
+   *   If specified, limits media data extraction to media with this media type
+   *   id.
    */
   public static function extract_media_data($values, $modelName=NULL, $simpleFileInputs=FALSE, $moveSimpleFiles=FALSE, $mediaTypeIdToExtract=NULL) {
     $r = [];
@@ -8373,7 +8658,7 @@ HTML;
           $thisMediaTypeId = isset($values[$prefix.':media_type_id'.$uniqueId]) ?
             $values[$prefix.':media_type_id'.$uniqueId] : '';
           //Only extract the media if we are extracting media of any type or the data matches the type we are wanting to extract
-          if ($thisMediaTypeId==$mediaTypeIdToExtract||$mediaTypeIdToExtract===NULL) {
+          if ($thisMediaTypeId == $mediaTypeIdToExtract || $mediaTypeIdToExtract === NULL) {
             $mediaValues = array(
               // Id is set only when saving over an existing record.
               'id' => array_key_exists($prefix.':id'.$uniqueId, $values) ?
