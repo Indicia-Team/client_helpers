@@ -1487,9 +1487,11 @@ jQuery('#".$ctrlid."').change(function(){
     $reportOptions['downloads'] = array();
 
     // add the additional downloads.
-    if((isset($args['manager_permission']) && $args['manager_permission']!="" && hostsite_user_has_permission($args['manager_permission'])) || // if you are super manager then you can see all the downloads.
-        $reportOptions['extraParams']['location_list'] != '' || // only filled in for a branch user in branch mode
-        $reportOptions['extraParams']['user_id'] != '') { // if user specified - either me in normal or branch mode, or a manager
+    $isManager = (!empty($args['manager_permission']) && hostsite_user_has_permission($args['manager_permission']));
+    $isBranchManager = (!empty($args['branch_manager_permission']) && hostsite_user_has_permission($args['branch_manager_permission']));
+    if($isManager || // if you are super manager then you can see all the downloads.
+        ($isBranchManager && (!empty($reportOptions['extraParams']['location_id']) || !empty($reportOptions['extraParams']['location_list']))) || // branch manager does not see all sites.
+        !empty($reportOptions['extraParams']['user_id'])) { // if user specified : 0 is all users, for which downloads is not available for normal users
       for($i=1; $i<=4; $i++){
         if(isset($args['Download'.$i.'Caption']) && $args['Download'.$i.'Caption'] != "" && isset($args['download_report_'.$i]) && $args['download_report_'.$i] != ""){
           $reportOpts = array('caption' => lang::get($args['Download'.$i.'Caption']),

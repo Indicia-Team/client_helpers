@@ -352,9 +352,14 @@ class extension_my_sites {
    * @readAuth read authentication
    * @website_id Website ID.
    * @options Options passed to the control.
+   * Options array including the following possibility
+   * userCaptionField - Override the default caption field. Optional.
    */
-  private static function  user_select_for_add_sites_to_any_user_control($readAuth, $website_id, $options) {
+  private static function  user_select_for_add_sites_to_any_user_control($readAuth,$website_id,$options) {
     $r = '';
+    $userCaptionField = 'fullname_surname_first';
+    if (!empty($options['userCaptionField']))
+      $userCaptionField = $options['userCaptionField'];
     if (!empty($options['useAutocomplete'])&&$options['useAutocomplete']==true) {
       $r .= data_entry_helper::autocomplete(array(
         'report'=>'library/users/get_people_details_for_website_or_user',
@@ -363,16 +368,16 @@ class extension_my_sites {
         'fieldname'=> 'user-select',
         'label' => lang::get('Select a user'),
         'helpText' => lang::get('Select a location to input data for before selecting a site.'),
-        'captionField'=>'fullname_surname_first',
+        'captionField' => $userCaptionField,
         'valueField'=>'id'
-      ));
+      )); 
     } else {
       $reportOptions = array(
         'dataSource'=>'library/users/get_people_details_for_website_or_user',
         'readAuth'=>$readAuth,
         'extraParams' => array('website_id'=>$website_id),
         'valueField'=>'id',
-        'captionField'=>'fullname_surname_first'
+        'captionField'=>$userCaptionField
       );
       iform_load_helpers(['report_helper']);
       $userData = report_helper::get_report_data($reportOptions);

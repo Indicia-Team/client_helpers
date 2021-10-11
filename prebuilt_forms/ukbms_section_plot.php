@@ -42,7 +42,7 @@ class iform_ukbms_section_plot {
    */
   public static function get_ukbms_section_plot_definition() {
     return array(
-      'title'=>'UKBMS Section Plot',
+      'title'=>'BMS Specific forms',
       'category' => 'Reporting',
       'description'=>'This shows the total annual counts section-by-section, and is able to show this for individual species as well as all-species. No estimates - just the numbers actually seen in each section.',
     );
