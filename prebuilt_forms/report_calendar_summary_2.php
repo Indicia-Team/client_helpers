@@ -1385,11 +1385,17 @@ jQuery('#".$ctrlid."').change(function(){
   }
 
   /**
-   * Return the Indicia form code
-   * @param array $args Input parameters.
-   * @param array $nid Drupal node number
-   * @param array $response Response from Indicia services after posting a verification.
+   * Return the Indicia form code.
+   *
+   * @param array $args
+   *   Input parameters.
+   * @param array $nid
+   *   Drupal node number
+   * @param array $response
+   *   Response from Indicia services after posting a verification.
+   *
    * @return HTML string
+   *   Page HTML content.
    */
   public static function get_form($args, $nid, $response) {
     $retVal = '';
@@ -1403,7 +1409,8 @@ jQuery('#".$ctrlid."').change(function(){
       return('<p>'.lang::get('Please contact the site administrator. This version of the form uses a different method of specifying the location types.').'</p>');
     }
 
-    iform_load_helpers(array('report_helper'));
+    iform_load_helpers(['report_helper']);
+    report_helper::add_resource('fancybox');
     $auth = report_helper::get_read_auth($args['website_id'], $args['password']);
     if(!self::set_up_survey($args, $auth))
       return(lang::get('set_up_survey returned false: survey_id missing from presets or location_type definition.'));
