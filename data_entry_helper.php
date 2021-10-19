@@ -292,26 +292,26 @@ class data_entry_helper extends helper_base {
    */
   public static function complex_attr_grid($options) {
     self::add_resource('complexAttrGrid');
-    $options = array_merge(array(
+    $options = array_merge([
       'defaultRows' => 3,
-      'columns' => array(
-        'x' => array(
+      'columns' => [
+        'x' => [
           'label' => 'x',
           'datatype' => 'text',
           'unit' => 'cm',
           'regex' => '/^[0-9]+$/'
-        ),
-        'y' => array(
+        ],
+        'y' => [
           'label' => 'y',
           'datatype' => 'lookup',
           'termlist_id' => '5'
-        )
-      ),
+        ],
+      ],
       'default' => [],
       'deleteRows' => FALSE,
       'rowCountControl' => '',
-      'encoding' => 'json'
-    ), $options);
+      'encoding' => 'json',
+    ], $options);
     list($attrTypeTag, $attrId) = explode(':', $options['fieldname']);
     if (preg_match('/\[\]$/', $attrId)) {
       $attrId = str_replace('[]', '', $attrId);
@@ -359,12 +359,12 @@ class data_entry_helper extends helper_base {
             ]);
           }
           foreach ($termlistData as $term) {
-            $minified[] = array($term['id'], $term['term']);
+            $minified[] = [$term['id'], $term['term']];
           }
         }
         elseif (isset($def['lookupValues'])) {
           foreach ($def['lookupValues'] as $id => $term) {
-            $minified[] = array($id, $term);
+            $minified[] = [$id, $term];
           }
         }
         foreach ($minified as $tokens) {
@@ -387,12 +387,12 @@ class data_entry_helper extends helper_base {
       lang::get('Please clear the values in some more rows before trying to reduce the number of rows further.') . "'\n";
     // Need to unset the variable used in &$def, otherwise it doesn't work in the next iterator.
     unset($def);
-    $jsData = array(
+    $jsData = [
       'cols' => $options['columns'],
       'rowCount' => $options['defaultRows'],
       'rowCountControl' => $options['rowCountControl'],
-      'deleteRows' => $options['deleteRows']
-    );
+      'deleteRows' => $options['deleteRows'],
+    ];
     self::$javascript .= "indiciaData['complexAttrGrid-$attrTypeTag-$attrId']=" . json_encode($jsData) . ";\n";
     // Add delete column and end tr.
     $r .= '<th rowspan="2" class="complex-attr-grid-col-del"></th></tr>';
@@ -477,8 +477,8 @@ $('#$escaped').change(function(e) {
     // Wrap in a table template.
     global $indicia_templates;
     $r = str_replace(
-      array('{class}', '{id}', '{content}'),
-      array(' class="complex-attr-grid"', " id=\"complex-attr-grid-$attrTypeTag-$attrId\"", $r),
+      ['{class}', '{id}', '{content}'],
+      [' class="complex-attr-grid"', " id=\"complex-attr-grid-$attrTypeTag-$attrId\"", $r],
       $indicia_templates['data-input-table']);
     $r .= "<input type=\"hidden\" name=\"complex-attr-grid-encoding-$attrTypeTag-$attrId\" value=\"$options[encoding]\" />\n";
     return $r;
@@ -544,7 +544,6 @@ $('#$escaped').change(function(e) {
    *
    * @return string
    *   HTML to insert into the page for the sub_list control.
-   *
    */
   public static function sub_list(array $options) {
     global $indicia_templates;
@@ -566,7 +565,7 @@ $('#$escaped').change(function(e) {
       ], $options);
     }
     // This control submits many values with the same control name so add [] to
-    // fieldname so PHP puts multiple submitted values in an array
+    // fieldname so PHP puts multiple submitted values in an array.
     if (substr($options['fieldname'], -2) !== '[]') {
       $options['fieldname'] .= '[]';
     }
@@ -590,7 +589,7 @@ $('#$escaped').change(function(e) {
       ["$options[id]:add", lang::get('Add the chosen term to the list.'), " class=\"$indicia_templates[buttonDefaultClass]\"", lang::get('Add')],
       $indicia_templates['button']);
 
-    '<input id="{id}:add" type="button" value="'.lang::get('add').'" />';
+    '<input id="{id}:add" type="button" value="' . lang::get('add') . '" />';
     if (!empty($options['selectMode']) && $options['selectMode']) {
       $ctrlOptions['selectMode'] = TRUE;
     }
@@ -600,36 +599,36 @@ $('#$escaped').change(function(e) {
 
     // Prepare other main control options.
     $options['inputId'] = "$options[id]:$options[captionField]";
-    $options = array_merge(array(
+    $options = array_merge([
       'template' => 'sub_list',
       // Escape the ids for jQuery selectors.
       'escaped_input_id' => self::jq_esc($options['inputId']),
       'escaped_id' => self::jq_esc($options['id']),
       'escaped_captionField' => self::jq_esc($options['captionField'])
-    ), $options);
-    $options['idx']=$sub_list_idx;
-    // set up javascript
+    ], $options);
+    $options['idx'] = $sub_list_idx;
+    // Set up javascript.
     self::$javascript .= <<<JS
 indiciaFns.initSubList('$options[escaped_id]', '$options[escaped_captionField]',
   '$options[fieldname]', '$indicia_templates[sub_list_item]');
 
 JS;
-    // load any default values for list items into display and hidden lists
+    // Load any default values for list items into display and hidden lists.
     $items = "";
     $r = '';
     if (array_key_exists('default', $options) && is_array($options['default'])) {
       foreach ($options['default'] as $item) {
-        $items .= str_replace(array('{caption}', '{value}', '{fieldname}'),
-          array($item['caption'], $item['default'], $item['fieldname']),
+        $items .= str_replace(['{caption}', '{value}', '{fieldname}'],
+          [$item['caption'], $item['default'], $item['fieldname']],
           $indicia_templates['sub_list_item']
         );
-        // a hidden input to put a blank in the submission if it is deleted
+        // A hidden input to put a blank in the submission if it is deleted.
         $r .= "<input type=\"hidden\" value=\"\" name=\"$item[fieldname]\">";
       }
     }
     $options['items'] = $items;
 
-    // layout the control
+    // Layout the control.
     $r .= self::apply_template($options['template'], $options);
     $sub_list_idx++;
     return $r;
