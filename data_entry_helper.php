@@ -3283,6 +3283,7 @@ RIJS;
         'at the same time has having the mediaTypes option in use.');
     }
     self::add_resource('autocomplete');
+    self::add_resource('font_awesome');
     $filterArray = self::getSpeciesNamesFilter($options);
     $filterNameTypes = ['all', 'currentLanguage', 'preferred', 'excludeSynonyms'];
     // Make a copy of the options so that we can maipulate it.
@@ -3489,25 +3490,24 @@ RIJS;
         $colspan = !empty($options['lookupListId']) && $options['rowInclusionCheck'] !== 'alwaysRemovable' ? ' colspan="2"' : '';
         $row = '';
         $imgPath = empty(self::$images_path) ? self::relative_client_helper_path() . "../media/images/" : self::$images_path;
-        // Add a delete button if the user can remove rows, add an edit button if the user has the edit option set, add a page link if user has that option set.
+        // Add a delete button if the user can remove rows, add an edit button
+        // if the user has the edit option set, add a page link if user has
+        // that option set.
         if ($options['rowInclusionCheck'] === 'alwaysRemovable') {
-          $speciesGridLinkPageIconSource = $imgPath . 'nuvola/find-22px.png';
+          self::addLanguageStringsToJs('speciesChecklistRowButtons', [
+            'deleteOccurrence' => 'Delete this occurrence',
+            'editName' => 'Edit the recorded name',
+            'speciesGridPageLinkTooltip' => $options['speciesGridPageLinkTooltip'],
+          ]);
+          $row .= '<td class="row-buttons">';
+          $row .= '<i class="fas fa-trash-alt action-button remove-row" title="' . lang::get('Delete this occurrence') . '"></i>';
           if ($options['editTaxaNames']) {
-            $row .= '<td class="row-buttons">
-                     <img class="action-button remove-row" src=' . $imgPath . 'nuvola/cancel-16px.png>
-                     <img class="action-button edit-taxon-name" src=' . $imgPath . 'nuvola/package_editors-16px.png>';
-            if ($options['includeSpeciesGridLinkPage']) {
-              $row .= '<img class="species-grid-link-page-icon" title="' . $options['speciesGridPageLinkTooltip'] . '" alt="Notes icon" src=' . $speciesGridLinkPageIconSource . '>';
-            }
-            $row .= '</td>';
+            $row .= '<i class="fas fa-edit action-button edit-taxon-name" title="' . lang::get('Edit the recorded name') . '"></i>';
           }
-          else {
-            $row .= '<td class="row-buttons"><img class="action-button remove-row" src=' . $imgPath . 'nuvola/cancel-16px.png>';
-            if ($options['includeSpeciesGridLinkPage']) {
-              $row .= '<img class="species-grid-link-page-icon" title="' . $options['speciesGridPageLinkTooltip'] . '" alt="Notes icon" src=' . $speciesGridLinkPageIconSource . '>';
-            }
-            $row .= '</td>';
+          if ($options['includeSpeciesGridLinkPage']) {
+            $row .= '<i class="fas fa-info-circle" action-button species-grid-link-page-icon" title="' . lang::get($options['speciesGridPageLinkTooltip']) . '"></i>';
           }
+          $row .= '</td>';
         }
         // If editing a specific occurrence, mark it up.
         $editedRecord = isset($_GET['occurrence_id']) && $_GET['occurrence_id'] == $existingRecordId;
@@ -3858,7 +3858,6 @@ HTML;
           '</div>';
       }
       if ($hasEditedRecord) {
-        self::add_resource('font_awesome');
         self::$javascript .= "$('#$options[id] tbody tr').hide();\n";
         self::$javascript .= "$('#$options[id] tbody tr td.edited-record').parent().show();\n";
         self::$javascript .= "$('#$options[id] tbody tr td.edited-record').parent().next('tr.supplementary-row').show();\n";
@@ -4332,7 +4331,7 @@ JS;
           data_entry_helper::$entity_to_load['sc:'.$idx.':'.$subSample['id'].':sample:date_type'] = $subSample['date_type'];
           data_entry_helper::$entity_to_load['sc:'.$idx.':'.$subSample['id'].':sample:sample_method_id'] = $subSample['sample_method_id'];
         }
-        self::loadExistingSubsampleAttrValues($readAuth, $subSampleList, $subSampleAttrs);
+        self::loadExistingSubsampleAttrValues($readAuth, $subSampleList, $subSampleAttrs, $subSampleIdxById);
         unset($extraParams['parent_id']);
         unset($extraParams['sample_method_id']);
         $extraParams['sample_id'] = $subSampleList;
@@ -4848,9 +4847,6 @@ JS;
     // colWidths are disabled for responsive checklists
     if ($options['responsive']) {
       $options['colWidths'] = [];
-    }
-    if ($options['spatialRefPerRow']) {
-      self::add_resource('font_awesome');
     }
     return $options;
   }
