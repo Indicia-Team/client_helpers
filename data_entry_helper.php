@@ -373,7 +373,7 @@ class data_entry_helper extends helper_base {
           }
         }
         $lookupData["tl$idx"] = $minified;
-        self::$javascript .= "indiciaData.tl$idx=" . json_encode($minified) . ";\n";
+        self::$javascript .= "indiciaData.tl$def[termlist_id]=" . json_encode($minified) . ";\n";
       }
       // Checkbox groups output a second row of cells for each checkbox label.
       $rowspan = isset($def['control']) && $def['control'] === 'checkbox_group' ? 1 : 2;
