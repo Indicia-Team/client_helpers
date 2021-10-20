@@ -7230,7 +7230,7 @@ if (errors$uniq.length>0) {
    *   Sample ID or NULL.
    */
   private static function getExistingSpeciesRowSampleId($txIdx, $existingRecordId) {
-    if (!empty(self::$entity_to_load["sc:$txIdx:$existingRecordId:occurrence:sampleIDX"])) {
+    if (isset(self::$entity_to_load["sc:$txIdx:$existingRecordId:occurrence:sampleIDX"])) {
       $sampleIdx = self::$entity_to_load["sc:$txIdx:$existingRecordId:occurrence:sampleIDX"];
       $keys = preg_grep("/^sc:$sampleIdx:\d+:sample:id$/", array_keys(self::$entity_to_load));
       if (count($keys)) {
