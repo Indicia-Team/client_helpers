@@ -3453,6 +3453,11 @@ RIJS;
         $mediaBtnLabel = lang::get($onlyImages ? 'Add images' : 'Add media');
         $mediaBtnClass = 'sc' . ($onlyImages ? 'Image' : 'Media') . 'Link';
       }
+      self::addLanguageStringsToJs('speciesChecklistRowButtons', [
+        'deleteOccurrence' => 'Delete this occurrence',
+        'editName' => 'Edit the recorded name',
+        'speciesGridPageLinkTooltip' => $options['speciesGridPageLinkTooltip'],
+      ]);
       // Loop through all the rows needed in the grid.
       foreach ($taxonRows as $txIdx => $rowIds) {
         $ttlId = $rowIds['ttlId'];
@@ -3494,11 +3499,6 @@ RIJS;
         // if the user has the edit option set, add a page link if user has
         // that option set.
         if ($options['rowInclusionCheck'] === 'alwaysRemovable') {
-          self::addLanguageStringsToJs('speciesChecklistRowButtons', [
-            'deleteOccurrence' => 'Delete this occurrence',
-            'editName' => 'Edit the recorded name',
-            'speciesGridPageLinkTooltip' => $options['speciesGridPageLinkTooltip'],
-          ]);
           $row .= '<td class="row-buttons">';
           $row .= '<i class="fas fa-trash-alt action-button remove-row" title="' . lang::get('Delete this occurrence') . '"></i>';
           if ($options['editTaxaNames']) {
