@@ -60,6 +60,8 @@ class lang {
     global $custom_terms;
     $output = $key;
     $useHostsiteTranslation = function_exists('t') && !empty(helper_base::$delegate_translation_to_hostsite);
+    // Note that if delegating to hostsite, the following will translate to en,
+    // not the current language.
     if (isset($custom_terms) && array_key_exists($key, $custom_terms)) {
       $output = $custom_terms[$key];
     }
@@ -76,6 +78,7 @@ class lang {
     }
     $args = func_get_args();
     if ($useHostsiteTranslation) {
+      // Apply Drupal translation to the English term output.
       $output = self::applyDrupalTranslation($output, $args);
     }
     else {
