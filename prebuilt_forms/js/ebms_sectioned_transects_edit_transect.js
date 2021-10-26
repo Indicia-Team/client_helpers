@@ -11,7 +11,7 @@ MyMousePositionControl=OpenLayers.Class(
   OpenLayers.Control.MousePosition,
   {
     formatOutput: function(lonLat) {
-        
+
         var digits = parseInt(this.numDigits),
             newHtml, lat, latDeg, latMin, latSec, long, longDeg, longMin, longSec,
             LLFormat = 'DMS'; // 'D' = Decimal degrees, 'DM' = Degrees + Decimal Minutes, 'DMS' = Degrees, Minutes + Decimal Seconds
@@ -32,17 +32,17 @@ MyMousePositionControl=OpenLayers.Class(
               longSec = (longMin - Math.floor(longMin))*60
               switch (LLFormat) {
                 case 'DM' :
-                    lat = Math.floor(latDeg)+'&#176;' + 
+                    lat = Math.floor(latDeg)+'&#176;' +
                           (latMin.toFixed(3) < 10 ? '0' : '') + latMin.toFixed(3);
-                    long = Math.floor(longDeg)+'&#176;' + 
+                    long = Math.floor(longDeg)+'&#176;' +
                           (longMin.toFixed(3) < 10 ? '0' : '') + longMin.toFixed(3);
                     break;
                 case 'DMS' :
-                    lat = Math.floor(latDeg)+'&#176;' + 
-                          (latMin < 10 ? '0' : '') + Math.floor(latMin) + '&apos;' + 
+                    lat = Math.floor(latDeg)+'&#176;' +
+                          (latMin < 10 ? '0' : '') + Math.floor(latMin) + '&apos;' +
                           (latSec.toFixed(1) < 10 ? '0' : '') +latSec.toFixed(1) ;
-                    long = Math.floor(longDeg)+'&#176;' + 
-                          (longMin < 10 ? '0' : '') + Math.floor(longMin) + '&apos;' + 
+                    long = Math.floor(longDeg)+'&#176;' +
+                          (longMin < 10 ? '0' : '') + Math.floor(longMin) + '&apos;' +
                           (longSec.toFixed(1) < 10 ? '0' : '') +longSec.toFixed(1) ;
                     break;
                 default : // 'D'
@@ -129,19 +129,19 @@ MyMousePositionControl=OpenLayers.Class(
         success: section_form_ajax_success,
     });
 
-    
+
     // locTypeChange(null);
 
     if($('#location-id').length >0)
       selectSection('S1', true);
   }
 
-  /* 
+  /*
    * The following are the general functions, appropriate to more than one tab.
    */
   check_leaving_tab_handler=function(event, ui) {
     var section = $('#section-select-route li.selected').html();
-   
+
     switch(ui.oldTab[0].id) {
       case 'site-details-tab' :
           tabinputs = $('#input-form').find('input,select,textarea').not(':disabled,[name=""],.inactive');
@@ -218,7 +218,7 @@ MyMousePositionControl=OpenLayers.Class(
         div = div[0]; // equivalent of indiciaData.mapdiv
         copy_over_transects();
         resetMap(div, true, false, true) // when redisplaying route map, include the transect itself.
-        // Reset all the controls 
+        // Reset all the controls
         indiciaData.navControl.deactivate(); // Nav control always exists
         if(typeof indiciaData.modifyFeature !== "undefined")
           indiciaData.modifyFeature.deactivate();
@@ -312,7 +312,7 @@ MyMousePositionControl=OpenLayers.Class(
   countryChange = function(checkOutside) {
     var myVal = $('#'+indiciaData.settings.countryAttr.id.replace(/:/g,'\\:')).val(),
         mainMapDiv = $('#map')[0];
-    
+
     _countryChangeEnd = function(div, oldMapExtent, reproject, oldProjection) {
         var infoExtent = div.map.infoLayer.getDataExtent(),
             bounds;
@@ -333,7 +333,7 @@ MyMousePositionControl=OpenLayers.Class(
 
     // empty info layer on main map: infor layer holds the country on the main map, and the transect on the route map.
     mainMapDiv.map.infoLayer.destroyFeatures();
-    
+
     // record the extent of the edit layer on the main map. The route map is not being displayed and that is re-zoomed on change of tab. Possibly empty.
     mapExtent = mainMapDiv.map.getExtent();
     oldEditLayerProj = mainMapDiv.map.editLayer.projection;
@@ -360,7 +360,7 @@ MyMousePositionControl=OpenLayers.Class(
     }
     if($('#imp-sref-system').val() != system && mainMapDiv.map.editLayer.features.length > 0)
       $.getJSON(indiciaData.indiciaSvc +
-          'index.php/services/spatial/wkt_to_sref&wkt=' + 
+          'index.php/services/spatial/wkt_to_sref&wkt=' +
           $('#imp-geom').val() +
           '&system='+$('#imp-sref-system').val()+
           '&precision=8&callback=?',
@@ -385,15 +385,15 @@ MyMousePositionControl=OpenLayers.Class(
                 features,
                 intersects = true;
             features = parser.read(country.boundary_geom);
-            if (mainMapDiv.map.infoLayer.projection.projCode!='EPSG:900913' && mainMapDiv.map.infoLayer.projection.projCode!='EPSG:3857') { 
+            if (mainMapDiv.map.infoLayer.projection.projCode!='EPSG:900913' && mainMapDiv.map.infoLayer.projection.projCode!='EPSG:3857') {
               var cloned = features.geometry.clone();
               features.geometry = cloned.transform(new OpenLayers.Projection('EPSG:3857'), mainMapDiv.map.infoLayer.projection.projCode);
             }
             if (!Array.isArray(features)) features = [features];
             mainMapDiv.map.infoLayer.addFeatures(features);
-            
+
             if(!checkOutside) return;
-            
+
             $.each(mainMapDiv.map.editLayer.features, function(idx1, editFeature) {
                 if(typeof editFeature.attributes.temp !== 'undefined' &&  editFeature.attributes.temp == true)
                     return;
@@ -588,7 +588,7 @@ MyMousePositionControl=OpenLayers.Class(
             classes: {"ui-dialog": "above-map"},
             buttons: buttons,
           });
-          
+
   };
 
   var erase_route_click_handler = function(evt) {
@@ -605,7 +605,7 @@ MyMousePositionControl=OpenLayers.Class(
         if(div.map.controls[i].handler.line){
           if(div.map.controls[i].handler.line.geometry.components.length <= 2) // start point plus current unselected position)
             div.map.controls[i].cancel();
-          else 
+          else
             div.map.controls[i].undo();
           return;
         }
@@ -675,7 +675,7 @@ MyMousePositionControl=OpenLayers.Class(
     indiciaFns.activeTab($('#controls'), 'section-details');
   };
 
-  /* 
+  /*
    * The following functions are specific to the section details tab
    */
   /**
@@ -708,7 +708,7 @@ MyMousePositionControl=OpenLayers.Class(
   };
 
   /**
-   * This only loads the section data details: this is the third tab, it does not deal 
+   * This only loads the section data details: this is the third tab, it does not deal
    * with the route tab.
    */
   loadSectionDetails = function(section) {
@@ -727,7 +727,7 @@ MyMousePositionControl=OpenLayers.Class(
         $('#section-location-system,#section-location-system-select').val(indiciaData.sections[section].system);
       }
       $.getJSON(indiciaData.indiciaSvc + "index.php/services/data/location_attribute_value?location_id=" + indiciaData.sections[section].id +
-          "&mode=json&view=list&callback=?&auth_token=" + indiciaData.readAuth.auth_token + "&nonce=" + indiciaData.readAuth.nonce, 
+          "&mode=json&view=list&callback=?&auth_token=" + indiciaData.readAuth.auth_token + "&nonce=" + indiciaData.readAuth.nonce,
         function(data) {
           var attrname;
           $.each(data, function(idx, attr) {
@@ -745,11 +745,11 @@ MyMousePositionControl=OpenLayers.Class(
               }
               radioidx=0;
               // check the correct radio
-              while ($('#section-form #locAttr\\:'+attr.location_attribute_id+'\\:'+radioidx).length>0 && 
+              while ($('#section-form #locAttr\\:'+attr.location_attribute_id+'\\:'+radioidx).length>0 &&
                   $('#section-form #locAttr\\:'+attr.location_attribute_id+'\\:'+radioidx).val()!==attr.raw_value) {
                 radioidx++;
               }
-              if ($('#section-form #locAttr\\:'+attr.location_attribute_id+'\\:'+radioidx).length>0 && 
+              if ($('#section-form #locAttr\\:'+attr.location_attribute_id+'\\:'+radioidx).length>0 &&
                   $('#section-form #locAttr\\:'+attr.location_attribute_id+'\\:'+radioidx).val()===attr.raw_value) {
                 $('#section-form #locAttr\\:'+attr.location_attribute_id+'\\:'+radioidx).attr('checked', true);
               }
@@ -761,7 +761,7 @@ MyMousePositionControl=OpenLayers.Class(
               if ($('#section-form #locAttr\\:'+attr.location_attribute_id + " option[value='"+attr.raw_value+"']").length===0) {
                 // no - we'll just put it in at the top level
                 // @todo - NTH should really now fetch the top level in the hierarchy then select that.
-                $('#section-form #locAttr\\:'+attr.location_attribute_id).append('<option value="' + 
+                $('#section-form #locAttr\\:'+attr.location_attribute_id).append('<option value="' +
                     attr.raw_value + '">' + attr.value + '</option>');
               }
               $('#section-form #locAttr\\:'+attr.location_attribute_id).val(attr.raw_value);
@@ -779,7 +779,7 @@ MyMousePositionControl=OpenLayers.Class(
   };
 
   // Two ways the section form is submitted: the user presses the submit button, or the user moves away from this
-  // section: in the first the data will still be for the same section, in the other, the section selector is pointing 
+  // section: in the first the data will still be for the same section, in the other, the section selector is pointing
   // to the requested section. BUT there may be validation errors, so don't load the new section until the form has
   // returned successfully.
   var section_form_ajax_success = function(data) {
@@ -805,7 +805,7 @@ MyMousePositionControl=OpenLayers.Class(
       // fetch and store the Sref...
       // The section form is only available if there is already a section record - generated on the route tab.
       $.getJSON(indiciaData.indiciaSvc + "index.php/services/data/location?id=" + indiciaData.sections[transaction_section].id +
-                "&mode=json&view=list&auth_token=" + indiciaData.readAuth.auth_token + "&nonce=" + indiciaData.readAuth.nonce, 
+                "&mode=json&view=list&auth_token=" + indiciaData.readAuth.auth_token + "&nonce=" + indiciaData.readAuth.nonce,
             function(data) {
               if(data.length>0) {
                 indiciaData.sections[transaction_section].sref = data[0].centroid_sref;
@@ -865,7 +865,7 @@ saveRoute = function(callback) {
     // Leave indiciaData.currentFeature selected
     indiciaData.previousGeometry = geom.clone();
     // Prepare data to post the new or edited section to the db
-    if (indiciaData.mapdiv.map.projection.projCode!='EPSG:900913' && indiciaData.mapdiv.map.projection.projCode!='EPSG:3857') { 
+    if (indiciaData.mapdiv.map.projection.projCode!='EPSG:900913' && indiciaData.mapdiv.map.projection.projCode!='EPSG:3857') {
       geom = geom.transform(indiciaData.mapdiv.map.projection, new OpenLayers.Projection('EPSG:3857'));
     }
 
@@ -965,7 +965,7 @@ updateTransectDetails = function() {
   var transectLen = 0;
   var numSections;
   var ldata = {'location:id':$('#location-id').val(), 'website_id':indiciaData.website_id};
-  
+
   for (prop in indiciaData.sections) {
       if (hasOwnProperty.call(indiciaData.sections, prop) && typeof indiciaData.sections[prop].sectionLen !== "undefined") {
     	  transectLen += indiciaData.sections[prop].sectionLen;
@@ -974,7 +974,7 @@ updateTransectDetails = function() {
   // load into form.
   $('#locAttr\\:'+indiciaData.autocalcTransectLengthAttrId).val(transectLen);
   ldata[indiciaData.autocalcTransectLengthAttrName] = ''+transectLen;
-  
+
   $.ajax({
         type: 'POST',
         url: indiciaData.ajaxFormPostUrl,
@@ -1066,7 +1066,7 @@ function _removeLayers(div) {
           countryVal = $('#'+indiciaData.settings.countryAttr.id.replace(/:/g,'\\:')).val();
 
 //      return retVal;
-      
+
       if(countryVal!==''){
         for(i=0; i < indiciaData.settings.country_configurations.length && !found; i++) {
           if(typeof indiciaData.settings.country_configurations[i].country_names === 'undefined' ||
@@ -1266,7 +1266,11 @@ function _removeLayers(div) {
       indiciaData.currentFeature = null;
       indiciaData.previousGeometry = null;
       indiciaData.routeChanged = false;
-      div.map.infoLayer = new OpenLayers.Layer.Vector('Transect Square', {style: div.map.editLayer.style, 'sphericalMercator': true, displayInLayerSwitcher: true});
+      div.map.infoLayer = new OpenLayers.Layer.Vector('Transect Square', {
+        style: div.map.editLayer.styleMap.styles.default.defaultStyle,
+        sphericalMercator: true,
+        displayInLayerSwitcher: true
+      });
       div.map.addLayer(div.map.infoLayer);
       // If there are any features in the editLayer without a section number, then this is the transect square feature, so move it to the parent (Transect Square) layer,
       // otherwise it will be selectable and will prevent the route features being clicked on to select them. Have to do this each time the tab is displayed
@@ -1353,7 +1357,7 @@ function _removeLayers(div) {
           div: document.getElementById('mousePos'),
           displayProjection: new OpenLayers.Projection('EPSG:4326'),
           emptyString: '',
-          numDigits: 0 
+          numDigits: 0
       });
       div.map.addControl(div.map.mousePosCtrl);
 
@@ -1425,7 +1429,7 @@ function _removeLayers(div) {
       }
 
       div.map.editLayer.events.on({'featureadded': featureRouteAddedEvent}); // called when a new route line added
-      div.map.editLayer.events.on({'featuremodified': function(evt) { indiciaData.routeChanged = true; }}); // called when a vertex is dragged, and mouse released. 
+      div.map.editLayer.events.on({'featuremodified': function(evt) { indiciaData.routeChanged = true; }}); // called when a vertex is dragged, and mouse released.
 
       resetMap(div, true, false, true);
       if($('#section-location-id').val() == '')
@@ -1467,7 +1471,7 @@ function _removeLayers(div) {
 
       resetMap(div, false, true, false);
       countryChange(false);
-      div.map.editLayer.events.on({'featureadded': featureSiteAddedEvent}); 
+      div.map.editLayer.events.on({'featureadded': featureSiteAddedEvent});
     }
   });
 

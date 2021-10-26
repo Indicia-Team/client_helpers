@@ -489,7 +489,11 @@ $(document).ready(function() {
         );
 
       });
-      div.map.parentLayer = new OpenLayers.Layer.Vector('Transect Square', {style: div.map.editLayer.style, 'sphericalMercator': true, displayInLayerSwitcher: true});
+      div.map.parentLayer = new OpenLayers.Layer.Vector('Transect Square', {
+        style: div.map.editLayer.styleMap.styles.default.defaultStyle,
+        sphericalMercator: true,
+        displayInLayerSwitcher: true
+      });
       div.map.addLayer(div.map.parentLayer);
       // If there are any features in the editLayer without a section number, then this is the transect square feature, so move it to the parent layer,
       // otherwise it will be selectable and will prevent the route features being clicked on to select them. Have to do this each time the tab is displayed
