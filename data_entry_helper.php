@@ -2429,6 +2429,8 @@ JS;
    *   * defaultSystem - Optional. Code for the default system value to load.
    *   * defaultGeom - Optional. WKT value for the default geometry to load
    *     (hidden).
+   *   * disallowManualSrefUpdate - set to true to prevent the user from
+   *     setting the value of the sref control (it must then be set by code).
    *
    * @return string
    *   HTML to insert into the page for the spatial reference and system
@@ -2570,6 +2572,8 @@ JS;
    * * findMeButton. Optional, default true. Provides a button for using the
    *   user's current location (as reported by the browser) to populate the
    *   input.
+   * * disallowManualSrefUpdate - set to true to prevent the user from
+   *   setting the value of the sref control (it must then be set by code).
    *
    * @return string HTML to insert into the page for the spatial reference control.
    * @todo This does not work for reloading data at the moment, when using split lat long mode.
@@ -2578,7 +2582,7 @@ JS;
     // get the table and fieldname
     $tokens=explode(':', $options['fieldname']);
     // Merge the default parameters
-    $options = array_merge(array(
+    $options = array_merge([
       'fieldname' => 'sample:entered_sref',
       'hiddenFields' => TRUE,
       'id' => 'imp-sref',
@@ -2587,22 +2591,28 @@ JS;
       'default' => self::check_default_value($options['fieldname']),
       'splitLatLong' => FALSE,
       'findMeButton' => TRUE,
-      'isFormControl' => TRUE
-    ), $options);
+      'isFormControl' => TRUE,
+      'disallowManualSrefUpdate' => FALSE,
+    ], $options);
     $rules = [];
-    if (!empty($options['validation']))
+    if (!empty($options['validation'])) {
       $rules[] = $options['validation'];
-    if (!empty($options['minGridRef']))
-      $rules[] = 'mingridref['.$options['minGridRef'].']';
-    if (!empty($options['maxGridRef']))
-      $rules[] = 'maxgridref['.$options['maxGridRef'].']';
-    if (!empty($rules))
+    }
+    if (!empty($options['minGridRef'])) {
+      $rules[] = 'mingridref[' . $options['minGridRef'] . ']';
+    }
+    if (!empty($options['maxGridRef'])) {
+      $rules[] = 'maxgridref[' . $options['maxGridRef'] . ']';
+    }
+    if (!empty($rules)) {
       $options['validation'] = $rules;
-    if (!isset($options['defaultGeom']))
-      $options['defaultGeom']=self::check_default_value($options['geomFieldname']);
+    }
+    if (!isset($options['defaultGeom'])) {
+      $options['defaultGeom'] = self::check_default_value($options['geomFieldname']);
+    }
     $options = self::check_options($options);
     if ($options['splitLatLong']) {
-      // Outputting separate lat and long fields, so we need a few more options
+      // Outputting separate lat and long fields, so we need a few more options.
       if (!empty($options['default'])) {
         preg_match('/^(?P<lat>[^,]*), ?(?P<long>.*)$/', $options['default'], $matches);
         if (isset($matches['lat']))
@@ -2610,27 +2620,39 @@ JS;
         if (isset($matches['long']))
           $options['defaultLong'] = $matches['long'];
       }
-      $options = array_merge(array(
+      $options = array_merge([
         'defaultLat' => '',
         'defaultLong' => '',
-        'fieldnameLat' => $options['fieldname'].'_lat',
-        'fieldnameLong' => $options['fieldname'].'_long',
+        'fieldnameLat' => "$options[fieldname]_lat",
+        'fieldnameLong' => "$options[fieldname]_long",
         'labelLat' => lang::get('Latitude'),
         'labelLong' => lang::get('Longitude'),
         'idLat' => 'imp-sref-lat',
         'idLong' => 'imp-sref-long'
-      ), $options);
+      ], $options);
       unset($options['label']);
       $r = self::apply_template('sref_textbox_latlong', $options);
-    } else {
+    }
+    else {
       if ($options['findMeButton']) {
-        if (!isset($options['class']))
+        if (!isset($options['class'])) {
           $options['class'] = 'findme';
-        else
+        }
+        else {
           $options['class'] .= ' findme';
+        }
         data_entry_helper::$javascript .= "indiciaFns.initFindMe('" . lang::get('Find my current location') . "');\n";
       }
       $r = self::apply_template('sref_textbox', $options);
+    }
+    if ($options['disallowManualSrefUpdate']) {
+      data_entry_helper::$javascript .= <<<JS
+mapSettingsHooks.push(function(settings) {
+  settings.disallowManualSrefUpdate = true;
+});
+$('#$options[id]').attr('readonly', true);
+
+JS;
     }
     return $r;
   }
@@ -3377,9 +3399,9 @@ RIJS;
     if (isset(self::$entity_to_load['sample:id']) && $options['useLoadedExistingRecords'] === FALSE) {
       self::preload_species_checklist_occurrences(self::$entity_to_load['sample:id'], $options['readAuth'],
           $options['mediaTypes'], $options['reloadExtraParams'], $subSampleRows,
-          $useSubsamples = $options['speciesControlToUseSubSamples'],
+          $options['speciesControlToUseSubSamples'],
           (isset($options['subSampleSampleMethodID']) ? $options['subSampleSampleMethodID'] : ''),
-          !$options['subSamplePerRow'], $options['spatialRefPrecisionAttrId'], $options['subSampleAttrs']);
+          $options['spatialRefPrecisionAttrId'], $options['subSampleAttrs']);
     }
     // Load the full list of species for the grid, including the main checklist
     // plus any additional species in the reloaded occurrences.
@@ -4245,6 +4267,9 @@ JS;
    * can be called to preload the data. The data is loaded into data_entry_helper::$entity_to_load and an array
    * of occurrences loaded is returned.
    *
+   * Occurrences for sub-samples are loaded in addition to the main sample
+   * where appropriate.
+   *
    * @param int $sampleId
    *   ID of the sample to load.
    * @param array $readAuth
@@ -4255,9 +4280,6 @@ JS;
    *   Extra params to pass to the web service call for filtering.
    * @param bool $useSubSamples
    *   Enable loading of records from subSamples of the main sample.
-   * @param bool $subSamplesOptional
-   *   If using subSamples but they are optional, records are also loaded that
-   *   are directly attached to the main sample.
    * @param string $spatialRefPrecisionAttrId
    *   Provide the ID of the attribute which defines the spatial ref precision
    *   of each subSample where relevant.
@@ -4269,7 +4291,7 @@ JS;
    */
   public static function preload_species_checklist_occurrences($sampleId, $readAuth, array $loadMedia, $extraParams,
        &$subSamples, $useSubSamples, $subSampleMethodID='',
-       $subSamplesOptional = FALSE, $spatialRefPrecisionAttrId = NULL, $subSampleAttrs = []) {
+       $spatialRefPrecisionAttrId = NULL, $subSampleAttrs = []) {
     $occurrenceIds = [];
     // don't load from the db if there are validation errors, since the $_POST will already contain all the
     // data we need.
@@ -4309,9 +4331,6 @@ JS;
         }
         $subSamples = data_entry_helper::get_population_data($params);
         $subSampleList = [];
-        if ($subSamplesOptional) {
-          $subSampleList[] = $sampleId;
-        }
         $subSampleIdxById = [];
         foreach($subSamples as $idx => $subSample) {
           $subSampleList[] = $subSample['id'];
@@ -4332,6 +4351,8 @@ JS;
           data_entry_helper::$entity_to_load['sc:'.$idx.':'.$subSample['id'].':sample:sample_method_id'] = $subSample['sample_method_id'];
         }
         self::loadExistingSubsampleAttrValues($readAuth, $subSampleList, $subSampleAttrs, $subSampleIdxById);
+        // Also load the occurrences for the parent sample.
+        $subSampleList[] = $sampleId;
         unset($extraParams['parent_id']);
         unset($extraParams['sample_method_id']);
         $extraParams['sample_id'] = $subSampleList;
