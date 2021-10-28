@@ -116,18 +116,25 @@ class report_helper extends helper_base {
   }
 
   /**
-   * Returns a simple HTML link to download the contents of a report defined by the options. The options arguments supported are the same as for the
-   * report_grid method. Pagination information will be ignored (e.g. itemsPerPage).
-   * If this download link is to be displayed alongside a report_grid to provide a download of the same data, set the id
-   * option to the same value for both the report_download_link and report_grid controls to link them together. Use the itemsPerPage parameter
-   * to control how many records are downloaded.
-   * @param array $options Options array with the following possibilities:
-   * * caption - link caption.
-   * * class - class attribute for the link generated.
-   * * dataSource - path to the report file.
-   * * format - Default to csv. Specify the download format, one of csv, json,
-   *   xml, nbn.
-   * * itemsPerPage - max size of download file. Default 20000.
+   * A link to download the output of a report.
+   *
+   * Returns a simple HTML link to download the contents of a report defined by
+   * the options. The options arguments supported are the same as for the
+   * report_grid method. Pagination information will be ignored (e.g.
+   * itemsPerPage). If this download link is to be displayed alongside a
+   * report_grid to provide a download of the same data, set the id option to
+   * the same value for both the report_download_link and report_grid controls
+   * to link them together. Use the itemsPerPage parameter to control how many
+   * records are downloaded.
+   *
+   * @param array
+   *   $options Options array with the following possibilities:
+   *   * caption - link caption.
+   *   * class - class attribute for the link generated.
+   *   * dataSource - path to the report file.
+   *   * format - Default to csv. Specify the download format, one of csv, json,
+   *     xml, nbn.
+   *   * itemsPerPage - max size of download file. Default 20000.
    */
   public static function report_download_link($options) {
     $options = array_merge(array(
