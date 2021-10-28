@@ -269,7 +269,7 @@ class data_entry_helper extends helper_base {
    * @param array $options
    *   Options array with the following possibilities:
    *   * **fieldname** - The fieldname of the attribute, e.g. smpAttr:10.
-   *   **defaultRows** - Number of rows to show in the grid by default. An Add Another button is available to add more.
+   *   * **defaultRows** - Number of rows to show in the grid by default. An Add Another button is available to add more.
    *     Defaults to 3.
    *   * **columns** - An array defining the columns available in the grid which map to fields in the JSON stored for each
    *     value. The array key is the column name and the value is a sub-array with a column definition. The column
@@ -3193,6 +3193,9 @@ RIJS;
   *     entry errors are likely. A button inside the control allows the user to
   *     enable a mode where the grid ref can be set by clicking a location on
   *     the map.
+  *     If a selectFeature control is added to the map, then the control can be
+  *     used to click on the sub-sample features and they will be highlighted
+  *     in the species_checklist grid.
   *   * **spatialRefPerRowUseFullscreenMap** - If using spatialRefPerRow and
   *     this option is set to true, then when the button is clicked to enable
   *     fetching a grid ref from the map, the map is automatically placed into
@@ -3300,6 +3303,7 @@ RIJS;
       // we'll track 1 sample per grid row.
       $smpIdx = 0;
     }
+    self::speciesChecklistSetupMapSubsampleFeatureSelection($options);
     if ($options['columns'] > 1 && count($options['mediaTypes']) > 1) {
       throw new Exception('The species_checklist control does not support having more than one occurrence per row (columns option > 0) '.
         'at the same time has having the mediaTypes option in use.');
@@ -3884,7 +3888,7 @@ HTML;
         self::$javascript .= "$('#$options[id] tbody tr td.edited-record').parent().show();\n";
         self::$javascript .= "$('#$options[id] tbody tr td.edited-record').parent().next('tr.supplementary-row').show();\n";
         $r = str_replace('{message}',
-          lang::get('You are editing a single record that is part of a larger sample, so any changes to the sample\'s information such as edits to the date or map reference will affect the whole sample.') .
+          lang::get('You are editing a single record that is part of a larger list of records, so any changes to the overall information such as edits to the date or map reference will affect the whole list of records.') .
           "<br/><button type=\"button\" class=\"$indicia_templates[buttonDefaultClass]\" id=\"species-grid-view-all-$options[id]\">".lang::get('Show the full list of records for editing or addition of more records.').'</button>',
           $indicia_templates['warningBox']) . $r;
         self::$javascript .= "$('#species-grid-view-all-$options[id]').click(function(e) {
@@ -3914,6 +3918,42 @@ if ($('#$options[id]').parents('.ui-tabs-panel').length) {
       return "<div class=\"species-checklist-wrap\">$r</div>";
     } else {
       return $taxalist['error'];
+    }
+  }
+
+  /**
+   * If showing sub-sample per row, select a map feature highlights row.
+   *
+   * @param array $options
+   *   Species checklist control options array.
+   */
+  private static function speciesChecklistSetupMapSubsampleFeatureSelection(array $options) {
+    if ($options['spatialRefPerRow']) {
+      // Use JS to modify the select feature control.
+      self::$javascript .= <<<JS
+mapInitialisationHooks.push(function(div) {
+  $.each(div.map.controls, function() {
+    if (this.CLASS_NAME === 'OpenLayers.Control.SelectFeature') {
+      this.onSelect = function(f) {
+        var rowId = f.id.split('-').pop();
+        var input = $('.scSample[value="' + rowId + '"]');
+        if (input) {
+          $(input).closest('tr').addClass('selected-row');
+        }
+      }
+      this.onUnselect = function(f) {
+        var rowId = f.id.split('-').pop();
+        var input = $('.scSample[value="' + rowId + '"]');
+        if (input) {
+          $(input).closest('tr').removeClass('selected-row');
+        }
+      }
+    }
+  });
+
+});
+
+JS;
     }
   }
 
