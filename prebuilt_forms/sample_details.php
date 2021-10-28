@@ -228,6 +228,45 @@ Sample ID',
   }
 
   /**
+   * A set of buttons for navigating from the sample details.
+   *
+   * Options include an edit button (only shown for the sample owner) and
+   * explore link.
+   *
+   * @param array $auth
+   *   Read authorisation array.
+   * @param array $args
+   *   Form options.
+   * @param string $tabalias
+   *   The alias of the tab this appears on.
+   * @param array $options
+   *   Options configured for this control. Specify the following options:
+   *   * buttons - array containing 'edit' to include the edit button. other
+   *   options may be added in future. Defaults to all buttons.
+   *
+   * @return string
+   *   HTML for the buttons.
+   */
+  protected static function get_control_buttons($auth, $args, $tabalias, $options) {
+    $options = array_merge([
+      'buttons' => [
+        'edit',
+      ],
+    ]);
+    $r = '<div class="sample-details-buttons">';
+    foreach ($options['buttons'] as $button) {
+      if ($button === 'edit') {
+        $r .= self::buttons_edit($auth, $args, $tabalias, $options);
+      }
+      else {
+        throw new exception("Unknown button $button");
+      }
+    }
+    $r .= '</div>';
+    return $r;
+  }
+
+  /**
    * A report grid of occurrences in the sample.
    */
   protected static function get_control_recordsgrid($auth, $args, $tabalias, $options) {
@@ -718,6 +757,44 @@ STRUCT;
    */
   protected static function getFirstTabAdditionalContent($args, $auth, &$attributes) {
     return '';
+  }
+
+  /**
+   * Retrieve the HTML required for an edit record button.
+   *
+   * @param array $auth
+   *   Read authorisation array.
+   * @param array $args
+   *   Form options.
+   * @param string $tabalias
+   *   The alias of the tab this appears on.
+   * @param array $options
+   *   Options configured for this control.
+   *
+   * @return string
+   *   HTML for the button.
+   */
+  protected static function buttons_edit($auth, $args, $tabalias, $options) {
+    global $indicia_templates;
+    if (!$args['default_input_form']) {
+      throw new exception('Please set the default input form path setting before using the [edit button] control');
+    }
+    self::load_sample($auth, $args);
+    $sample = self::$sample;
+    if (($user_id = hostsite_get_user_field('indicia_user_id')) && $user_id == $sample['created_by_id']
+        && $args['website_id'] == $sample['website_id']) {
+      if (empty($sample['input_form'])) {
+        $record['input_form'] = $args['default_input_form'];
+      }
+      $rootFolder = data_entry_helper::getRootFolder(TRUE);
+      $paramJoin = strpos($rootFolder, '?') === FALSE ? '?' : '&';
+      $url = "$rootFolder$record[input_form]{$paramJoin}sample_id=$sample[sample_id]";
+      return "<a class=\"$indicia_templates[buttonDefaultClass]\" href=\"$url\">" . lang::get('Edit this sample') . '</a>';
+    }
+    else {
+      // No rights to edit, so button omitted.
+      return '';
+    }
   }
 
 }
