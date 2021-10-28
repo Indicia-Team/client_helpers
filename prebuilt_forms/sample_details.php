@@ -784,11 +784,11 @@ STRUCT;
     if (($user_id = hostsite_get_user_field('indicia_user_id')) && $user_id == $sample['created_by_id']
         && $args['website_id'] == $sample['website_id']) {
       if (empty($sample['input_form'])) {
-        $record['input_form'] = $args['default_input_form'];
+        $sample['input_form'] = $args['default_input_form'];
       }
       $rootFolder = data_entry_helper::getRootFolder(TRUE);
       $paramJoin = strpos($rootFolder, '?') === FALSE ? '?' : '&';
-      $url = "$rootFolder$record[input_form]{$paramJoin}sample_id=$sample[sample_id]";
+      $url = "$rootFolder$sample[input_form]{$paramJoin}sample_id=$sample[sample_id]";
       return "<a class=\"$indicia_templates[buttonDefaultClass]\" href=\"$url\">" . lang::get('Edit this sample') . '</a>';
     }
     else {
