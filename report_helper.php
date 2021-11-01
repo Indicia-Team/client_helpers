@@ -148,7 +148,7 @@ class report_helper extends helper_base {
       $origDataSource = $options['dataSource'];
       $options['dataSource'] = $options['dataSourceDownloadLink'];
     }
-    $options = self::get_report_grid_options($options);
+    $options = self::getReportGridOptions($options);
     $options['linkOnly'] = TRUE;
     $currentParamValues = self::getReportGridCurrentParamValues($options);
     $sortAndPageUrlParams = self::getReportGridSortPageUrlParams($options);
@@ -257,6 +257,10 @@ HTML;
   * settings will be shared across the reports even if they are on different pages of the site. For example if several reports on the
   * site have an ownData boolean parameter which filters the data to the user's own data, this can be set so that the reports all
   * share the setting. This functionality requires cookies to be enabled on the browser.</li>
+  * <li><b>rememberGridPosition</b><br/>
+  * If true, then the grid's last paging position, row filter and sort
+  * information are stored in a cookie and recalled the next time the page is
+  * visited.</li>
   * <li><b>mode</b><br/>
   * Pass report for a report, or direct for an Indicia table or view. Default is report.</li>
   * <li><b>readAuth</b><br/>
@@ -481,8 +485,8 @@ HTML;
   public static function report_grid($options) {
     global $indicia_templates;
     self::add_resource('fancybox');
+    $options = self::getReportGridOptions($options);
     $sortAndPageUrlParams = self::getReportGridSortPageUrlParams($options);
-    $options = self::get_report_grid_options($options);
     $extras = self::getReportSortingPagingParams($options, $sortAndPageUrlParams);
     if ($options['ajax'])
       $options['extraParams']['limit']=0;
@@ -923,6 +927,7 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
   callback: '$options[callback]',
   url: '$warehouseUrl',
   reportGroup: '$options[reportGroup]',
+  rememberGridPosition: " . ($options['rememberGridPosition'] ? 'true' : 'false') . ",
   autoParamsForm: '$options[autoParamsForm]',
   rootFolder: '" . $rootFolder . "',
   imageFolder: '" . self::get_uploaded_image_folder() . "',
@@ -933,8 +938,8 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
   galleryColCount: $options[galleryColCount],
   pagingTemplate: '$indicia_templates[paging]',
   pathParam: '$pathParam',
-  sendOutputToMap: ".((isset($options['sendOutputToMap']) && $options['sendOutputToMap']) ? 'true' : 'false').",
-  linkFilterToMap: ".(!empty($options['rowId']) && $options['linkFilterToMap'] ? 'true' : 'false').",
+  sendOutputToMap: " . ((isset($options['sendOutputToMap']) && $options['sendOutputToMap']) ? 'true' : 'false') . ",
+  linkFilterToMap: " . (!empty($options['rowId']) && $options['linkFilterToMap'] ? 'true' : 'false') . ",
   msgRowLinkedToMapHint: '" . addslashes(lang::get('Click the row to highlight the record on the map. Double click to zoom in.')) . "',
   msgNoInformation: '" . addslashes(lang::get('No information available')) . "',
   langFirst: '" . lang::get('first') . "',
@@ -943,6 +948,7 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
   langLast: '" . lang::get('last') . "',
   langShowing: '" . lang::get('Showing records {1} to {2} of {3}') . "',
   noRecords: '" . lang::get('No records')."',
+  noInfoAsPageTooHigh: '" . lang::get('No information available for the requested page of data. Use the page buttons below to load a different page.')."',
   altRowClass: '$options[altRowClass]',
   actionButtonTemplate: '" . $indicia_templates['report-action-button'] ."'";
       if (!empty($options['rowClass']))
@@ -1320,7 +1326,7 @@ JS;
   * @link http://www.jqplot.com/docs/files/jqplot-core-js.html#Legend
   */
   public static function report_chart($options) {
-    $options = self::get_report_grid_options($options);
+    $options = self::getReportGridOptions($options);
     if (empty($options['rendererOptions']))
       $options['rendererOptions'] = [];
     if (empty($options['axesOptions']))
@@ -1718,7 +1724,7 @@ JS;
     if (empty($options['class']))
       // prevent default report grid classes as this is not a grid
       $options['class'] = 'banded-report';
-    $options = self::get_report_grid_options($options);
+    $options = self::getReportGridOptions($options);
     self::request_report($response, $options, $currentParamValues, false);
     if (isset($response['error'])) return $response['error'];
     $r = self::paramsFormIfRequired($response, $options, $currentParamValues);
@@ -1950,7 +1956,7 @@ JS;
       'dataSourceLoRes' => '',
       'minMapReportZoom' => 'false',
     ), $options);
-    $options = self::get_report_grid_options($options);
+    $options = self::getReportGridOptions($options);
 
     // Keep track of the columns in the report output which we need to draw the layer and popups.
     $colsToInclude=[];
@@ -2508,25 +2514,41 @@ mapSettingsHooks.push(function(opts) { $setLocationJs
    * is an array containing name & value.
    */
   private static function getReportGridSortPageUrlParams($options) {
-    $orderbyKey = 'orderby' . (isset($options['id']) ? '-'.$options['id'] : '');
-    $sortdirKey = 'sortdir' . (isset($options['id']) ? '-'.$options['id'] : '');
-    $pageKey = 'page' . (isset($options['id']) ? '-'.$options['id'] : '');
-    $cookiename = "clientReportSort".(isset($options['id']) ? '-'.$options['id'] : '');
-    $clientReportSort = isset($_COOKIE[$cookiename]) ? explode(':',$_COOKIE[$cookiename],2) : false;
-    return array(
-      'orderby' => array(
-        'name' => $orderbyKey,
-        'value' => isset($_GET[$orderbyKey]) ? $_GET[$orderbyKey] : ($clientReportSort ? $clientReportSort[1] : null)
-      ),
-      'sortdir' => array(
-        'name' => $sortdirKey,
-        'value' => isset($_GET[$sortdirKey]) ? $_GET[$sortdirKey] : ($clientReportSort ? $clientReportSort[0] : null)
-      ),
-      'page' => array(
-        'name' => $pageKey,
-        'value' => isset($_GET[$pageKey]) ? $_GET[$pageKey] : null
-      )
-    );
+    $orderBy = NULL;
+    $sortDir = NULL;
+    $page = NULL;
+    if (isset($_GET["orderby$options[id]"])) {
+      $orderBy = $_GET["orderby$options[id]"];
+    }
+    elseif ($options['rememberGridPosition'] && isset($_COOKIE["report-orderby-$options[id]"])) {
+      $orderBy = $_COOKIE["report-orderby-$options[id]"];
+    }
+    if (isset($_GET["sortdir$options[id]"])) {
+      $sortDir = $_GET["sortdir$options[id]"];
+    }
+    elseif ($options['rememberGridPosition'] && isset($_COOKIE["report-sortdir-$options[id]"])) {
+      $sortDir = $_COOKIE["report-sortdir-$options[id]"];
+    }
+    if (isset($_GET["page$options[id]"])) {
+      $page = $_GET["page$options[id]"];
+    }
+    elseif ($options['rememberGridPosition'] && isset($_COOKIE["report-page-$options[id]"])) {
+      $page = $_COOKIE["report-page-$options[id]"];
+    }
+    return [
+      'orderby' => [
+        'name' => "orderby$options[id]",
+        'value' => $orderBy,
+      ],
+      'sortdir' => [
+        'name' => "sortdir$options[id]",
+        'value' => $sortDir
+      ],
+      'page' => [
+        'name' => "page$options[id]",
+        'value' => $page,
+      ],
+    ];
   }
 
 
@@ -2765,7 +2787,7 @@ if (typeof mapSettingsHooks!=='undefined') {
    * Apply the defaults to the options for the report grid.
    * @param array $options Array of control options.
    */
-  private static function get_report_grid_options($options) {
+  private static function getReportGridOptions($options) {
     $options = array_merge(array(
       'mode' => 'report',
       'id' => 'report-output', // this needs to be set explicitly when more than one report on a page
@@ -2797,6 +2819,7 @@ if (typeof mapSettingsHooks!=='undefined') {
       'pager' => TRUE,
       'imageThumbPreset' => 'thumb',
       'includeColumnsPicker' => FALSE,
+      'rememberGridPosition' => FALSE,
     ), $options);
     // if using AJAX we are only loading parameters and columns, so may as well use local cache
     if ($options['ajax'])
