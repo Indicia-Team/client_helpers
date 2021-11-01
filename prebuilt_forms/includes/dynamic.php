@@ -106,7 +106,7 @@ class iform_dynamic {
         [
           'name' => 'force_next_previous',
           'caption' => 'Next/previous buttons shown in tab mode?',
-          'description' => 'Should the wizard style Next & Previous buttons be 
+          'description' => 'Should the wizard style Next & Previous buttons be
           shown even when in tab mode? This option does not apply when the
           option "Submit button below all pages" is set.',
           'type' => 'boolean',
@@ -727,7 +727,7 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
         elseif (count($parts) === 2) {
           $extensionPath = dirname($_SERVER['SCRIPT_FILENAME']) . '/' .
             data_entry_helper::relative_client_helper_path() . "prebuilt_forms/extensions/$parts[0].php";
-          require_once $extensionPath;
+          include_once $extensionPath;
           if (method_exists("extension_$parts[0]", $parts[1])) {
             if (!empty($options['fieldname'])) {
               // If reloading an existing attribute, set the default and
@@ -784,6 +784,7 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
             }
           }
           else {
+            hostsite_show_message("The form structure references an unrecognised extension control $component.", 'error');
             $html .= lang::get("The $component extension cannot be found.");
           }
         }
