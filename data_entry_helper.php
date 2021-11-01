@@ -7791,12 +7791,18 @@ HTML;
    *
    * @param array $response
    *   Response data from the save operation.
+   * @param $bool $update
+   *   True if updating existing data, otherwise false. Alters the success
+   *   message.
    *
    * @return string
    *   Success message.
    */
-  private static function getSuccessMessage($response) {
+  private static function getSuccessMessage($response, $update) {
     $what = 'data';
+    if ($update) {
+      return lang::get('The information has been updated.');
+    }
     if ($response['success'] === 'multiple records' && $response['outer_table'] === 'sample' && isset($response['struct']['children'])) {
       $count = 0;
       foreach ($response['struct']['children'] as $child) {
@@ -7816,15 +7822,23 @@ HTML;
   }
 
   /**
-   * Takes a response from a call to forward_post_to() and outputs any errors from it onto the screen.
+   * Output success or errors after a form post.
    *
-   * @param string $response Return value from a call to forward_post_to().
-   * @param boolean $inline Set to true if the errors are to be placed alongside the controls rather than at the top of the page.
-   * Default is true.
+   * Takes a response from a call to forward_post_to() and outputs any errors
+   * from it onto the screen.
+   *
+   * @param string $response
+   *   Return value from a call to forward_post_to().
+   * @param bool $inline Set to true if the errors are to be placed
+   *   alongside the controls rather than at the top of the page. Default is
+   *   true.
+   * @param $bool $update
+   *   True if updating existing data, otherwise false. Alters the success
+   *   message.
+   *
    * @see forward_post_to()
-   * @link http://code.google.com/p/indicia/wiki/TutorialBuildingBasicPage#Build_a_data_entry_page
    */
-  public static function dump_errors($response, $inline=TRUE)
+  public static function dump_errors($response, $inline = TRUE, $update = TRUE)
   {
     $r = "";
     if (is_array($response)) {
@@ -7876,7 +7890,7 @@ HTML;
         }
       }
       elseif (array_key_exists('success',$response)) {
-        $successMessage = self::getSuccessMessage($response);
+        $successMessage = self::getSuccessMessage($response, $update);
         if (function_exists('hostsite_show_message'))
           hostsite_show_message($successMessage);
         else
