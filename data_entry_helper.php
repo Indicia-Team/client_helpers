@@ -7934,7 +7934,7 @@ HTML;
 Validation errors occurred when this form was submitted to the server. The form configuration may be incorrect as
 it appears the controls associated with these messages are missing from the form.
 TXT;
-      $r = lang::get($msg) . '<ul><li>' . implode($errors, '</li><li>') . '</li></ul>';
+      $r = lang::get($msg) . '<ul><li>' . implode('</li><li>', $errors) . '</li></ul>';
       if (function_exists('hostsite_show_message')) {
         hostsite_show_message($r, 'error');
       }
