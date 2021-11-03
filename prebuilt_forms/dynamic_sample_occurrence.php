@@ -114,6 +114,29 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
    *   List of parameters that this form requires.
    */
   public static function get_parameters() {
+    $defaultFormStructure = <<<TXT
+=Species=
+?Please enter the species you saw and any other information about them.?
+[species]
+@resizeWidth=1500
+@resizeHeight=1500
+[species attributes]
+[*]
+=Place=
+?Please provide the spatial reference of the record. You can enter
+the reference directly, or search for a place then click on the map
+to set it.?
+[spatial reference]
+[place search]
+[map]
+[*]
+=Other Information=
+?Please provide the following additional information.?
+[date]
+[sample comment]
+[*]
+=*=
+TXT;
     $formStructureDescription = <<<TXT
 <h3>Form structure overview</h3>
 Define the structure of the form. Each component goes on a new line and is nested inside the
@@ -249,7 +272,7 @@ TXT;
         [
           'name' => 'never_load_parent_sample',
           'caption' => 'Never load parent sample',
-          'description' => 'When editing a record in a parent/child sample 
+          'description' => 'When editing a record in a parent/child sample
             hierarchy, tick this box to prevent loading the parent sample into
             the form instead of the child sample.',
           'type' => 'boolean',
@@ -304,28 +327,7 @@ TXT;
           'caption' => 'Form structure',
           'description' => $formStructureDescription,
           'type' => 'textarea',
-          'default' => '
-            =Species=
-            ?Please enter the species you saw and any other information about them.?
-            [species]
-            @resizeWidth=1500
-            @resizeHeight=1500
-            [species attributes]
-            [*]
-            =Place=
-            ?Please provide the spatial reference of the record. You can enter
-            the reference directly, or search for a place then click on the map
-            to set it.?
-            [spatial reference]
-            [place search]
-            [map]
-            [*]
-            =Other Information=
-            ?Please provide the following additional information.?
-            [date]
-            [sample comment]
-            [*]
-            =*=',
+          'default' => $defaultFormStructure,
           'group' => 'User Interface',
         ],
         [
@@ -402,8 +404,8 @@ TXT;
           'name' => 'verification_panel',
           'caption' => 'Include verification precheck button',
           'description' => 'Include a "Precheck my records" button which allows
-            the user to request an automated verification check to be run 
-            against their records before submission, enabling them to provide 
+            the user to request an automated verification check to be run
+            against their records before submission, enabling them to provide
             additional information for any records which are likely to be
             contentious.',
           'type' => 'checkbox',
@@ -420,7 +422,7 @@ TXT;
             control in the User Interface - Form Structure setting. Use
             @searchUpdatesSref=true on the next line in the form structure to
             specify that the grid reference for the site should be automatically
-            filled in after a site has been selected. You can also add 
+            filled in after a site has been selected. You can also add
             @useLocationName=true on a line after the location autocomplete to
             force any unmatched location names to be stored as a free-text
             location name against the sample.',
@@ -666,7 +668,7 @@ TXT;
           'caption' => 'Use URL taxon parameter',
           'description' => 'Use a URL parameter called taxon to get the filter?
             Case sensitive. Uses the "Field used to filter taxa" setting to
-            control what is being filtered against, e.g. 
+            control what is being filtered against, e.g.
             &taxon=Passer+domesticus,Turdus+merula',
           'type' => 'boolean',
           'required' => FALSE,
@@ -686,7 +688,7 @@ TXT;
             species. Therefore there will be no species picker control or input
             grid, and the form will always operate in the single record,
             non-grid mode. You may like to include information about what is
-            being recorded in the body text for the page or by using the 
+            being recorded in the body text for the page or by using the
             <strong>Include a message stating which species you are recording in
             single species mode?</strong> checkbox to automatically add a
             message to the screen. You may also want to configure the User
@@ -756,7 +758,7 @@ TXT;
           'name' => 'defaults',
           'caption' => 'Default Values',
           'description' => 'Supply default values for each field as required. On
-            each line, enter fieldname=value. For custom attributes, the 
+            each line, enter fieldname=value. For custom attributes, the
             fieldname is the untranslated caption. For other fields, it is the
             model and fieldname, e.g. occurrence.record_status. For date fields,
             use today to dynamically default to today\'s date. NOTE, currently
