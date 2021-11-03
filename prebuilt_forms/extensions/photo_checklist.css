@@ -1,0 +1,46 @@
+div.photo-checklist-item-container {
+  display: flex;
+  flex-wrap: wrap;
+  padding: 15px;
+  justify-content: space-around;
+}
+.panel-group div.photo-checklist-item {
+  margin: 15px;
+  justify-content: space-around;
+  width: 200px;
+}
+.photo-checklist-item img {
+  display: block;
+  width: 100%;
+}
+.photo-wrap {
+  position: relative;
+  font-size: 21px;
+  border: solid white 2px;
+}
+/* Photo button toolbar */
+.photo-wrap div {
+  position: absolute;
+  top: 2px;
+}
+.photo-wrap div.shading {
+  background: #ddd;
+  opacity: 0.5;
+  height: 26px;
+  right: 2px;
+  width: 65px;
+  border-radius: 3px;
+}
+.photo-toolbar {
+  right: 2px;
+}
+.photo-toolbar i, .photo-toolbar a i {
+  color: #333;
+}
+.photo-checklist-item .taxon-label {
+  text-align: center;
+  font-weight: bold;
+}
+.photo-wrap.dragover {
+  border: dashed red 2px;
+}
