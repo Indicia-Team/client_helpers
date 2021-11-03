@@ -16,7 +16,7 @@ div.photo-checklist-item-container {
 .photo-wrap {
   position: relative;
   font-size: 21px;
-  border: solid white 2px;
+  border: solid transparent 2px;
 }
 /* Photo button toolbar */
 .photo-wrap div {
@@ -34,8 +34,18 @@ div.photo-checklist-item-container {
 .photo-toolbar {
   right: 2px;
 }
-.photo-toolbar i, .photo-toolbar a i {
+.photo-toolbar .upload-photo, .photo-toolbar a {
   color: #333;
+}
+.photo-toolbar .delete-photo {
+  display: none;
+}
+
+.photo-wrap progress {
+  position: absolute;
+  bottom: 0;
+  width: 98%;
+  margin: 0 1%;
 }
 .photo-checklist-item .taxon-label {
   text-align: center;
@@ -43,4 +53,17 @@ div.photo-checklist-item-container {
 }
 .photo-wrap.dragover {
   border: dashed red 2px;
+}
+/* Style changes once a photo uploaded. */
+.user-photo .photo-toolbar .upload-photo {
+  color: blue;
+}
+.user-photo .photo-toolbar .delete-photo {
+  display: initial;
+}
+.user-photo .photo-wrap div.shading {
+  width: 96px;
+}
+.photo-checklist-item.panel-success {
+  background: #d6e9c6;
 }

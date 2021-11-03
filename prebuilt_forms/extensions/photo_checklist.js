@@ -19,7 +19,8 @@ jQuery(document).ready(function($) {
       $(this).find('.photo-checklist-section .panel-collapse').collapse('show');
     }
 
-    $.each($('.fa-camera'), function() {
+    // Hook up the photo uploader.
+    $.each($('.upload-photo'), function() {
       var button = this;
       var dropEl;
       var uploadOptions = {
@@ -34,7 +35,7 @@ jQuery(document).ready(function($) {
           ]
         },
         resize: resize,
-        chunk_size: '1MB',
+        chunk_size: '500KB',
         init: {
 
           FilesAdded: function(up, files) {
@@ -48,14 +49,35 @@ jQuery(document).ready(function($) {
           },
 
           FileUploaded: function(up, file, response) {
+            var panel = $(button).closest('.photo-checklist-item');
+            var countInput = panel.find('input[type="number"]');
+            var img = panel.find('img');
             // Change the Fancybox link and the image thumbnail to the new image.
-            $(button).closest('.photo-wrap').find('a.fancybox').attr('href', indiciaData.rootFolder + indiciaData.interimImagePath + file.name);
-            $(button).closest('.photo-wrap').find('img').attr('src', indiciaData.rootFolder + indiciaData.interimImagePath + file.name);
+            panel.find('a.fancybox').attr('href', indiciaData.rootFolder + indiciaData.interimImagePath + file.name);
+            img.attr('src', indiciaData.rootFolder + indiciaData.interimImagePath + file.name);
+            // Update classes to reflect photo upload done.
+            panel.find('.photo-wrap').removeClass('dragover');
+            panel.addClass('user-photo');
+            panel.addClass('panel-success');
+            panel.removeClass('panel-default');
+            // Auto-set the count to 1 if a photo uploaded.
+            if (!$(countInput).val()) {
+              $(countInput).val(1);
+            }
           },
 
-          /*UploadProgress: function(up, file) {
-              document.getElementById(file.id).getElementsByTagName('b')[0].innerHTML = '<span>' + file.percent + "%</span>";
-          },*/
+          UploadProgress: function(up, file) {
+            var progress = $(button).closest('.photo-checklist-item').find('progress');
+            if (file.percent === 100) {
+              $(progress).hide();
+            } else {
+              $(progress)
+                .val(file.percent)
+                .text(file.percent + '%')
+                .show();
+            }
+
+          },
 
           Error: function(up, err) {
             console.log("\nError #" + err.code + ": " + err.message);
@@ -63,6 +85,7 @@ jQuery(document).ready(function($) {
         }
       };
 
+      // Enable drag and drop of photos on desktop browser.
       if (!/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
         dropEl = $(button).closest('.photo-wrap');
         dropEl.addClass('image-drop');
@@ -78,6 +101,28 @@ jQuery(document).ready(function($) {
       var uploader = new plupload.Uploader(uploadOptions);
 
       uploader.init();
+    });
+
+    // Set a class to visually indicate which photo panes have a count value.
+    $(this).find('input[type="number"]').change(function(e) {
+      var panel = $(e.currentTarget).closest('.photo-checklist-item');
+      if ($(e.currentTarget).val() === '' || $(e.currentTarget).val() < 1) {
+        $(e.currentTarget).val('');
+        panel.removeClass('panel-success');
+        panel.addClass('panel-default');
+      } else {
+        panel.removeClass('panel-default');
+        panel.addClass('panel-success');
+      }
+    });
+
+    $(this).find('.delete-photo').click(function(e) {
+      var panel = $(e.currentTarget).closest('.photo-checklist-item');
+      var img = panel.find('img');
+      var a = panel.find('a.fancybox');
+      img.attr('src', img.attr('data-orig-src'));
+      a.attr('href', a.attr('data-orig-href'));
+      panel.removeClass('user-photo');
     });
 
   });

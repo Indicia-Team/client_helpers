@@ -153,18 +153,20 @@ class extension_photo_checklist {
     <div class="photo-wrap">
       {{ image }}
       <div class="shading"></div>
-      <div class="photo-toolbar pull-right">
-        <i class="fas fa-camera" id="photo-upload-{{ section_idx }}-{{ item_idx }}"></i>
+      <div class="photo-toolbar">
+        <i class="fas fa-trash-alt delete-photo" title="' . lang::get('Remove the photo you uploaded for this species') . '"></i>
+        <i class="fas fa-camera upload-photo" id="photo-upload-{{ section_idx }}-{{ item_idx }}" title="' . lang::get('Upload a photo for this species') . '"></i>
         {{ speciesInfoLink }}
       </div>
+      <progress value="32" max="100" style="display: none"> 32% </progress>
     </div>
     <div class="taxon-label">{{ formatted_taxon }}</div>
     <input type="hidden" name="photo-checklist-ttlid-{{ section_idx }}-{{ item_idx }}" value="{{ ttl_id }}" />
     <input type="hidden" name="photo-checklist-ttlid-{{ section_idx }}-{{ item_idx }}" value="{{ occ_id }}" />
-    <input type="number" class="form-control" name="photo-checklist-count-{{ section_idx }}-{{ item_idx }}" min="1" placeholder="Count seen">
+    <input type="number" class="form-control" name="photo-checklist-count-{{ section_idx }}-{{ item_idx }}" min="1" placeholder="' . lang::get('Enter count seen') . '">
   </div>
 </div>',
-      'speciesInfoLinkTemplate' => '<a target="_blank" href="{{ species-info-link }}{{ link-common-name }}"><i class="fas fa-info-circle photo-info"></i></a>',
+      'speciesInfoLinkTemplate' => '<a target="_blank" href="{{ species-info-link }}{{ link-common-name }}" title="' . lang::get('Find out more about this species') . '"><i class="fas fa-info-circle photo-info"></i></a>',
     ], $options);
   }
 
@@ -262,7 +264,11 @@ class extension_photo_checklist {
     $path = (substr($path, -1) !== '/') ? "$path/" : "$path";
     $filename = preg_replace('/[^a-z0-9]/', '-', strtolower($taxon['taxon'])) . '.jpg';
     $taxonLabel = self::getFormattedTaxonLabel($taxon, FALSE);
-    return "<a class=\"fancybox\" href=\"$path$filename\"><img src=\"{$path}thumb-$filename\" title=\"$taxonLabel\" alt=\"$taxonLabel\" class=\"img-rounded\"></a>";
+    return <<<HTML
+<a class="fancybox" href="$path$filename" data-orig-href="$path$filename">
+  <img src="{$path}thumb-$filename" data-orig-src="{$path}thumb-$filename" title="$taxonLabel" alt="$taxonLabel" class="img-rounded">
+</a>
+HTML;
   }
 
   /**
