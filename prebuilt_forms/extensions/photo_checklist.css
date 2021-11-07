@@ -52,7 +52,7 @@ div.photo-checklist-item-container {
   font-weight: bold;
 }
 .photo-wrap.dragover {
-  border: dashed red 2px;
+  border: dashed blue 2px;
 }
 /* Style changes once a photo uploaded. */
 .user-photo .photo-toolbar .upload-photo {
