@@ -55,15 +55,15 @@ jQuery(document).ready(function($) {
             // Change the Fancybox link and the image thumbnail to the new image.
             panel.find('a.fancybox').attr('href', indiciaData.rootFolder + indiciaData.interimImagePath + file.name);
             img.attr('src', indiciaData.rootFolder + indiciaData.interimImagePath + file.name);
+            // Store the path to save to the database.
+            panel.find('.photo-checklist-media-path').val(file.name);
             // Update classes to reflect photo upload done.
             panel.find('.photo-wrap').removeClass('dragover');
-            panel.addClass('user-photo');
-            panel.addClass('panel-success');
-            panel.removeClass('panel-default');
             // Auto-set the count to 1 if a photo uploaded.
             if (!$(countInput).val()) {
               $(countInput).val(1);
             }
+            setPanelStyle(panel);
           },
 
           UploadProgress: function(up, file) {
@@ -103,17 +103,34 @@ jQuery(document).ready(function($) {
       uploader.init();
     });
 
+    /**
+     * Sets photo panel style.
+     *
+     * Adds panel-success if the panel has a count (i.e. is a record) and adds
+     * user-photo class if a photo uploaded.
+     */
+    function setPanelStyle(panel) {
+      var countInput = $(panel).find('input[type="number"]');
+      var mediaPathInput = $(panel).find('.photo-checklist-media-path');
+      if ($(countInput).val() === '' || $(countInput).val() < 1) {
+        $(countInput).val('');
+        $(panel).removeClass('panel-success');
+        $(panel).addClass('panel-default');
+      } else {
+        $(panel).removeClass('panel-default');
+        $(panel).addClass('panel-success');
+      }
+      if ($(mediaPathInput).val() === '') {
+        $(panel).removeClass('user-photo');
+      } else {
+        $(panel).addClass('user-photo');
+      }
+    }
+
     // Set a class to visually indicate which photo panes have a count value.
     $(this).find('input[type="number"]').change(function(e) {
       var panel = $(e.currentTarget).closest('.photo-checklist-item');
-      if ($(e.currentTarget).val() === '' || $(e.currentTarget).val() < 1) {
-        $(e.currentTarget).val('');
-        panel.removeClass('panel-success');
-        panel.addClass('panel-default');
-      } else {
-        panel.removeClass('panel-default');
-        panel.addClass('panel-success');
-      }
+      setPanelStyle(panel);
     });
 
     $(this).find('.delete-photo').click(function(e) {
@@ -122,7 +139,13 @@ jQuery(document).ready(function($) {
       var a = panel.find('a.fancybox');
       img.attr('src', img.attr('data-orig-src'));
       a.attr('href', a.attr('data-orig-href'));
-      panel.removeClass('user-photo');
+      panel.find('.photo-checklist-media-path').val('');
+      setPanelStyle(panel);
+    });
+
+    // Initial load of existing sample must style panels to show which are counted.
+    $.each($('.photo-checklist-item'), function() {
+      setPanelStyle(this);
     });
 
   });
