@@ -57,6 +57,14 @@ $custom_terms = array_merge($custom_terms, array(
           'To do this, the form requires that either it must be used with a survey that includes the CMS User ID attribute in the '.
           'list of attributes configured for the survey on the warehouse or that a function hostsite_get_user_field exists and returns' .
           'their Indicia User ID. This allows records to be tagged against the user. ' .
-          'Alternatively you can tick the box "Skip initial grid of data" in the "User Interface" section of the Edit page for the form.'
+          'Alternatively you can tick the box "Skip initial grid of data" in the "User Interface" section of the Edit page for the form.',
+
+  // Taxon list selector.
+  'LANG_taxon_list_label' => 'Use species list',
+  'LANG_taxon_list_all' => 'All species',
+  'LANG_taxon_list_location_id' => 'Species previously recorded at location',
+  'LANG_taxon_list_parent_location_id' => 'Species previously recorded at parent location',
+  'LANG_taxon_list_indicia_user_id' => 'Species previously recorded by user',
+  'LANG_taxon_list_none' => 'None',
 )
 );
