@@ -20,3 +20,9 @@
 .id-diff-5 {
   background-position: -64px 0px;
 }
+
+select.working {
+  background: url(../../../media/images/ajax-loader.gif) no-repeat right;
+  font-style: italic;
+  background-position: right 16px center;
+}
