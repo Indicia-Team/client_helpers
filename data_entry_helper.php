@@ -7373,7 +7373,7 @@ if (errors$uniq.length>0) {
   <td class="ui-widget-content scDateCell" headers="$options[id]-date-$colIdx">
     $dateInput
   </td>
-  HTML;
+HTML;
     }
     return $r;
   }
@@ -7490,7 +7490,7 @@ HTML;
         }
         $control = self::outputAttribute(array_merge(
           $options['subSampleAttrInfo'][$subSampleAttrId],
-          ['default' => $value],
+          ['default' => $value]
         ), [
           'extraParams' => $options['readAuth'],
           'label' => '',
@@ -7968,7 +7968,7 @@ HTML;
 Validation errors occurred when this form was submitted to the server. The form configuration may be incorrect as
 it appears the controls associated with these messages are missing from the form.
 TXT;
-      $r = lang::get($msg) . '<ul><li>' . implode($errors, '</li><li>') . '</li></ul>';
+      $r = lang::get($msg) . '<ul><li>' . implode('</li><li>', $errors) . '</li></ul>';
       if (function_exists('hostsite_show_message')) {
         hostsite_show_message($r, 'error');
       }
