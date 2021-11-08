@@ -7339,7 +7339,7 @@ if (errors$uniq.length>0) {
   <td class="ui-widget-content scDateCell" headers="$options[id]-date-$colIdx">
     $dateInput
   </td>
-  HTML;
+HTML;
     }
     return $r;
   }
