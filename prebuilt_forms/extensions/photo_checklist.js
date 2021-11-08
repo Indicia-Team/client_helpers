@@ -112,6 +112,7 @@ jQuery(document).ready(function($) {
     function setPanelStyle(panel) {
       var countInput = $(panel).find('input[type="number"]');
       var mediaPathInput = $(panel).find('.photo-checklist-media-path');
+      var mediaDeletedInput = $(panel).find('.photo-checklist-media-deleted');
       if ($(countInput).val() === '' || $(countInput).val() < 1) {
         $(countInput).val('');
         $(panel).removeClass('panel-success');
@@ -120,7 +121,7 @@ jQuery(document).ready(function($) {
         $(panel).removeClass('panel-default');
         $(panel).addClass('panel-success');
       }
-      if ($(mediaPathInput).val() === '') {
+      if ($(mediaPathInput).val() === '' || $(mediaDeletedInput).val() === 't') {
         $(panel).removeClass('user-photo');
       } else {
         $(panel).addClass('user-photo');
@@ -139,7 +140,7 @@ jQuery(document).ready(function($) {
       var a = panel.find('a.fancybox');
       img.attr('src', img.attr('data-orig-src'));
       a.attr('href', a.attr('data-orig-href'));
-      panel.find('.photo-checklist-media-path').val('');
+      panel.find('.photo-checklist-media-deleted').val('t');
       setPanelStyle(panel);
     });
 

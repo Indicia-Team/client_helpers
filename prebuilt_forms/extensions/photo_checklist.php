@@ -159,14 +159,13 @@ class extension_photo_checklist {
           if (!empty($values[$mediaIdField])) {
             $occurrence["occurrence_medium:id:$uniqId"] = $values[$mediaIdField];
           }
+          if ($values["occ:photo-checklist-media:deleted:$uniqId"] === 't') {
+            $occurrence["occurrence_medium:deleted:$uniqId"] = 't';
+          }
         }
         // @todo Media deletion if a previously saved one binned.
         $wrappedOccurrence = submission_builder::build_submission($occurrence, [
           'model' => 'occurrence',
-          'submodel' => [
-            'model' => 'occurrence_medium',
-            'fk' => 'occurrence_id',
-          ],
         ]);
         $s_array[0]['subModels'][] = [
           'fkId' => 'sample_id',
@@ -174,7 +173,6 @@ class extension_photo_checklist {
         ];
       }
     }
-    drupal_set_message(json_encode($s_array));
     // @todo Check the existing records in case deleted.
   }
 
@@ -235,6 +233,7 @@ class extension_photo_checklist {
     <input type="hidden" name="occ:photo-checklist-occ:id:{{ section_idx }}-{{ item_idx }}" value="{{ occ_id }}" />
     <input type="hidden" class="photo-checklist-media-path" name="occ:photo-checklist-media:path:{{ section_idx }}-{{ item_idx }}" value="{{ media_path }}" />
     <input type="hidden" class="photo-checklist-mediaid" name="occ:photo-checklist-media:id:{{ section_idx }}-{{ item_idx }}" value="{{ media_id }}" />
+    <input type="hidden" class="photo-checklist-media-deleted" name="occ:photo-checklist-media:deleted:{{ section_idx }}-{{ item_idx }}" value="f" />
     <input type="number" class="form-control" name="occ:photo-checklist-count-{{ section_idx }}-{{ item_idx }}" min="1" placeholder="' . lang::get('Enter count seen') . '" value="{{ count }}">
   </div>
 </div>',
