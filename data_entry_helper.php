@@ -7456,7 +7456,7 @@ HTML;
         }
         $control = self::outputAttribute(array_merge(
           $options['subSampleAttrInfo'][$subSampleAttrId],
-          ['default' => $value],
+          ['default' => $value]
         ), [
           'extraParams' => $options['readAuth'],
           'label' => '',
