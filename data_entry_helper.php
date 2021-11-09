@@ -7426,9 +7426,16 @@ HTML;
       else {
         $getFromMapHint = lang::get('Toggle this button to allow you to click on the map to set the spatial reference for this record.');
       }
+      $input = self::text_input([
+        'class' => 'scSpatialRef',
+        'fieldname' => $fieldname,
+        'default' => $value,
+        'controlWrapTemplate' => 'justControl',
+      ]);
+
       $r = <<<HTML
 <td class="ui-widget-content scSpatialRefCell" headers="$options[id]-spatialref-$colIdx">
-  <input class="scSpatialRef" type="text" name="$fieldname" id="$fieldname" value="$value" />
+  $input
   <button class="scSpatialRefFromMap" type="button" title="$getFromMapHint"><i class="fas fa-map-pin"></i></button>
 </td>
 HTML;
