@@ -329,4 +329,8 @@ jQuery(document).ready(function docReady($) {
   $.each($('.species-dynamic-attributes'), function loadAttrDiv() {
     repositionDynamicAttributes(this);
   });
+
+  // If the Client Selects Taxon Filter option is enabled, attach an event
+  // handler to the select control that is added.
+  $('#taxonListSelect').change(changeTaxonList);
 });
