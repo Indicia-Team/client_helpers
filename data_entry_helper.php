@@ -3047,6 +3047,10 @@ RIJS;
   *   * **occAttrOptions** - array, where the key to each item is the id of an
   *     occurrence attribute and the item is an array of options to pass to the
   *     control for this attribute.
+  *   * **smpAttrOptions** - array, where the key to each item is the id of an
+  *     sample attribute and the item is an array of options to pass to the
+  *     control for this attribute. Use in conjunction with the subSampleAttrs
+  *     option.
   *   * **extraParams** - Associative array of items to pass via the query
   *     string to the service calls used for taxon names lookup. This should at
   *     least contain the read authorisation array.
@@ -5111,6 +5115,14 @@ JS;
       ];
       $attrInfoList = self::getAttributes($attrOptions, FALSE);
       foreach ($attrInfoList as $attrInfo) {
+        // smpAttrOptions in control options provides settings.
+        if (isset($options['smpAttrOptions'][$attrInfo['attributeId']])) {
+          $attrInfo = array_merge($attrInfo, $options['smpAttrOptions'][$attrInfo['attributeId']]);
+        }
+        // Label overrides attribute caption.
+        if (isset($attrInfo['label'])) {
+          $attrInfo['caption'] = $attrInfo['label'];
+        }
         $options['subSampleAttrInfo'][$attrInfo['attributeId']] = $attrInfo;
       }
     }
@@ -7488,10 +7500,14 @@ HTML;
           $key = "sc:$rowIdx:$existingSampleId:sample:smpAttr:$subSampleAttrId";
           $value = isset(self::$entity_to_load[$key]) ? self::$entity_to_load[$key] : NULL;
         }
-        $control = self::outputAttribute(array_merge(
+        $ctrlOpts = array_merge(
           $options['subSampleAttrInfo'][$subSampleAttrId],
           ['default' => $value]
-        ), [
+        );
+        if (isset($options['smpAttrOptions'][$subSampleAttrId])) {
+          $ctrlOpts = array_merge($ctrlOpts, $options['smpAttrOptions'][$subSampleAttrId]);
+        }
+        $control = self::outputAttribute($ctrlOpts, [
           'extraParams' => $options['readAuth'],
           'label' => '',
           'id' => "sc:$options[id]-$rowIdx:$existingRecordId:occurrence:" . $options['subSampleAttrInfo'][$subSampleAttrId]['id'],

@@ -1550,7 +1550,7 @@ HTML;
       $filterLines = helper_base::explode_lines($args['taxon_filter']);
       $options['taxonFilter'] = $filterLines;
     }
-    $occAttrOptions = self::extractOccurrenceAttributeOptions($options);
+    $attrOptions = self::extractAttributeOptions($options);
     $systems = explode(',', str_replace(' ', '', $args['spatial_systems']));
     call_user_func([self::$called_class, 'build_grid_taxon_label_function'], $args, $options);
     return data_entry_helper::multiple_places_species_checklist(array_merge([
@@ -1558,7 +1558,8 @@ HTML;
       'survey_id' => $args['survey_id'],
       'listId' => $args['list_id'],
       'lookupListId' => $args['extra_list_id'],
-      'occAttrOptions' => $occAttrOptions,
+      'occAttrOptions' => $attrOptions['occ'],
+      'smpAttrOptions' => $attrOptions['smp'],
       'systems' => $args['spatial_systems'],
       'occurrenceComment' => $args['occurrence_comment'],
       'occurrenceSensitivity' => (isset($args['occurrence_sensitivity']) ? $args['occurrence_sensitivity'] : FALSE),
@@ -1740,14 +1741,15 @@ HTML;
     if (isset($options['view'])) {
       $extraParams['view'] = $options['view'];
     }
-    $occAttrOptions = self::extractOccurrenceAttributeOptions($options);
+    $attrOptions = self::extractAttributeOptions($options);
     // Make sure that if extraParams is specified as a config option, it does
     // not replace the essential stuff.
     if (isset($options['extraParams'])) {
       $options['extraParams'] = array_merge($extraParams, $options['extraParams']);
     }
     $species_ctrl_opts = array_merge([
-      'occAttrOptions' => $occAttrOptions,
+      'occAttrOptions' => $attrOptions['occ'],
+      'smpAttrOptions' => $attrOptions['smp'],
       'listId' => $args['list_id'],
       'label' => lang::get('occurrence:taxa_taxon_list_id'),
       'columns' => 1,
@@ -1798,10 +1800,18 @@ HTML;
     return data_entry_helper::species_checklist($species_ctrl_opts);
   }
 
-  protected static function extractOccurrenceAttributeOptions(&$options) {
+  /**
+   * Finds options that refer to an attribute column.
+   *
+   * Attribute options can be specified as @occAttr:n|option=value or
+   * @smpAttr:n|option=value so copy them into format required for the
+   * occAttrOptions and smpAttrOptions options of the species_checklist
+   * control.
+   */
+  protected static function extractAttributeOptions(&$options) {
     // There may be options in the form occAttr:n|param => value targetted at
     // specific attributes.
-    $occAttrOptions = [];
+    $attrOptions = ['occ' => [], 'smp' => []];
     $optionToUnset = [];
     foreach ($options as $option => $value) {
       // Split the id of the option into the attribute name and option name.
@@ -1810,14 +1820,11 @@ HTML;
         // An occurrence attribute option was found.
         $attrName = $optionParts[0];
         $optName = $optionParts[1];
-        // Split the attribute name into the type and id (type will always be
-        // occAttr).
+        // Split the attribute name into the type and id.
         $attrParts = explode(':', $attrName);
         $attrId = $attrParts[1];
-        if (!isset($occAttrOptions[$attrId])) {
-          $occAttrOptions[$attrId] = [];
-        }
-        $occAttrOptions[$attrId][$optName] = apply_user_replacements($value);
+        $type = substr($attrParts[0], 0, 3);
+        $attrOptions[$type][$attrId][$optName] = apply_user_replacements($value);
         $optionToUnset[] = $option;
       }
     }
@@ -1825,7 +1832,7 @@ HTML;
     foreach ($optionToUnset as $value) {
       unset($options[$value]);
     }
-    return $occAttrOptions;
+    return $attrOptions;
   }
 
   /**
