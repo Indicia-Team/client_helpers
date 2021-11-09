@@ -714,6 +714,32 @@ TXT;
           'group' => 'Species',
         ],
         [
+          'name' => 'client_taxon_filter',
+          'caption' => 'Client selects taxon filter',
+          'description' => 'Provide selector to allow the user to choose how
+            taxa are filtered. Use the Client Taxon Filter Options to pick what
+            they are presented with.',
+          'type' => 'boolean',
+          'required' => FALSE,
+          'default' => FALSE,
+          'group' => 'Species',
+        ],
+        [
+          'name' => 'client_taxon_filter_options',
+          'caption' => 'Client taxon filter options',
+          'description' => 'If Client Selects Taxon Filter is checked then
+            choose which options you want to provide.',
+          'type' => 'checkbox_group',
+          'options' => [
+            'all' => 'All species',
+            'location_id' => 'Species previously recorded at location',
+            'parent_location_id' => 'Species previously recorded at parent location',
+            'indicia_user_id' => 'Species previously recorded by user',
+          ],
+          'required' => FALSE,
+          'group' => 'Species',
+        ],
+        [
           'name' => 'species_names_filter',
           'caption' => 'Species Names Filter',
           'description' => 'Select the filter to apply to the species names
@@ -1737,6 +1763,25 @@ HTML;
    *   HTML for the species_checklist control.
    */
   protected static function get_control_species_checklist(array $auth, array $args, array $extraParams, array $options) {
+    $r = '';
+    if ($args['client_taxon_filter'] == TRUE) {
+      // Add control to allow taxon list to be loaded at runtime.
+      // To enable this functionality, check the Client Selects Taxon Filter
+      // checkbox on the edit page.
+      $r .= '<label for="taxonListSelect">' . lang::get('LANG_taxon_list_label') . ' :</label>';
+      $r .= '<select id="taxonListSelect">';
+      $r .= '<option value="none" selected="selected">' . lang::get('None') . '</option>';
+      foreach ($args['client_taxon_filter_options'] as $option) {
+        $r .= '<option value="' . $option . '">';
+        $r .= lang::get('LANG_taxon_list_' . $option);
+        $r .= '</option>';
+      }
+      $r .= '</select>';
+
+      data_entry_helper::$javascript .= 'indiciaData.taxonListId=' . $args['list_id'];
+      unset($args['list_id']);
+    }
+
     // Build the configuration options.
     if (isset($options['view'])) {
       $extraParams['view'] = $options['view'];
@@ -1797,7 +1842,8 @@ HTML;
     $speciesInLabel = !empty($options['speciesInLabel']) ? 'true' : 'false';
     data_entry_helper::$javascript .= "\nindiciaData.speciesInLabel=" . $speciesInLabel . ";\n";
 
-    return data_entry_helper::species_checklist($species_ctrl_opts);
+    $r .= data_entry_helper::species_checklist($species_ctrl_opts);
+    return $r;
   }
 
   /**

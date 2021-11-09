@@ -86,6 +86,206 @@ jQuery(document).ready(function docReady($) {
     }
   }
 
+  /**
+   * Handler for changes in the taxon list selector.
+   * 
+   * Updates the list of taxa suggested for recording in the species grid. The
+   * list is filtered by all the taxon_meanings that match the option selected.
+   * To enable this functionality, check the Client Selects Taxon Filter 
+   * checkbox on the edit page.
+   */ 
+   function changeTaxonList() {
+    var $this = $(this);
+    var listChoice = $this.val();
+    gridId = Object.keys(indiciaData.speciesGrid)[0];
+    var param, value;
+    var getMeanings = true;
+
+    // Add visual indicator of data loading.
+    $this.addClass('working');
+
+    // Mark potential rows for removal
+    tagSpeciesNotPresent(gridId);
+
+    // Determine the parameters/values for obtaining taxon meanings
+    switch (listChoice) {
+      case 'location_id':
+        param = 'location_id';
+        value = $('[name="sample\\:location_id"]').val();
+        break;
+      case 'parent_location_id':
+        param = 'parent_location_id';
+        value = indiciaData.parentLocationId;
+        break;
+      case 'indicia_user_id':
+        param = 'user_id';
+        value = indiciaData.user_id;
+        break;
+      default:
+        // In other cases, we don't need to get taxon meanings.
+        getMeanings = false;
+    }
+
+    var gotSpecies;
+    if (getMeanings) {
+      // Get a list of taxon meanings
+      var gotMeanings = requestMeanings(param, value)
+      // Callback when we have got meanings returns a new promise.
+      gotSpecies = gotMeanings.then(function(meaningData) {
+        // data is an array of objects, each with a taxon_meaning_id property.
+        const meanings = meaningData.map(x => x.taxon_meaning_id);
+        // Get a list of species filtered by meanings.
+        return requestSpecies(meanings);
+      });
+      // gotSpecies.done() callback should follow in due course.
+    }
+    else if (listChoice == 'all') {
+      // Get a list of species unfiltered by meanings.
+      gotSpecies = requestSpecies();
+      // gotSpecies.done() callback should follow in due course.
+    }
+    else {
+      // When listChoice is 'none', just remove rows.
+      $(`#${gridId} tr.possibleRemove`).remove();
+      $this.removeClass('working');
+      return;
+    }
+
+    // Callback when we have got species.
+    gotSpecies.done(function(speciesData) {
+      addSpeciesToGrid(speciesData, gridId);
+      // Remove rows no longer required.
+      $(`#${gridId} tr.possibleRemove`).remove();
+      $this.removeClass('working');
+    });
+  }
+ 
+  /**
+   * Tag all rows in species table with presence box unchecked.
+   * 
+   * These may be removed when changing the taxon list selector if they are not
+   * present in the newly selected list.
+   * 
+   * gridId
+   *   The html id attribute for the species grid.
+   */
+  tagSpeciesNotPresent  = function (gridId) {
+    $(`#${gridId} tr.added-row`).each(function(idx, row){
+      if($(row).find('input.scPresence:checked').length == 0)
+        $(row).addClass('possibleRemove');
+    });
+  }
+
+  /**
+   * Make an Ajax request for taxon meanings.
+   * 
+   * param
+   *   The name of a report parameter.
+   * value
+   *   The value to pass to the report for the param.
+   * 
+   * Returns a deferred object.
+   */
+  requestMeanings  = function (param, value){
+    var reportApi = indiciaData.warehouseUrl + 'index.php/services/report/requestReport';
+    var report = 'library/occurrences/list_taxon_meanings.xml';
+    return $.ajax({
+      'url': reportApi,
+      'data': {
+        'auth_token': indiciaData.read.auth_token,
+        'nonce': indiciaData.read.nonce,
+        'mode': 'json',
+        'reportSource': 'local',
+        'report': report,
+        [param]: value
+      },
+      'dataType': 'jsonp',
+    });
+  }
+
+  /**
+   * Make an Ajax request for a list of species.
+   * 
+   * meanings
+   *   An array of meanings to limit the list to. If empty, no species are
+   *   returned. If null, then all species in the list are returned.
+   * 
+   * Returns a deferred object.
+   */  
+  requestSpecies  = function (meanings = null){
+    var data = {
+      'taxon_list_id': indiciaData.taxonListId,
+      'preferred': 't',
+      'auth_token': indiciaData.read.auth_token,
+      'nonce': indiciaData.read.nonce,
+      'mode': 'json',
+      'allow_data_entry': 't',
+      'view': 'cache',
+      'orderby': 'preferred_taxon'
+    };
+
+    if (meanings !== null) {
+      data.query = JSON.stringify({
+        'in': {
+          'taxon_meaning_id': meanings
+        }
+      });
+    }
+
+    return $.ajax({
+      'url': indiciaData.warehouseUrl+'index.php/services/data/taxa_taxon_list',
+      'method': 'POST',
+      'data': data,
+      'dataType': 'jsonp',
+    });
+  }
+ 
+  /**
+   * Adds a list of taxa to the species input grid.
+   * 
+   * If there is already a row for a species in the list that row is moved
+   * so that the order of the supplied list is observed.
+   * 
+   * taxonList
+   *   An array of species where each species is an object with many fields.
+   * gridId
+   *   The html id attribute for the species grid.
+   */
+  addSpeciesToGrid  = function (taxonList, gridId){
+    $.each(taxonList, function(idx, species) {
+      var $autocomplete;
+      var $existingPresence = $(`#${gridId} input.scPresence[value=${species.id}]`);
+      if($existingPresence.length > 0) {
+        // If a row already exists for this species.
+        $row = $existingPresence.closest('tr');
+        // Remove the tag to prevent it being deleted later.
+        $row.removeClass('possibleRemove');
+        // Move it to the end of the table (so we maintain species order).
+        $(`#${gridId} tr.scClonableRow`).before($row);
+      }
+      else {
+        // Add a new row 
+        species.taxa_taxon_list_id = species.id;
+        // Locate the autocomplete control used for adding species.
+        $autocomplete = $(`#${gridId} .scClonableRow .scTaxonCell input`);
+        // Trigger the event in addRowToGrid.js to add the species.
+        $autocomplete.trigger('result', [species, species.id]);
+        // Change the newly added species to not present.
+        var $newRow = $(`#${gridId} .scClonableRow`).prev();
+        $newRow.find('input.scPresence').prop('checked', false);
+      }
+    });
+    // If we have added a lot of rows there may now be a long queue of scroll
+    // animations which need speeding up.
+    if ($('html,body').queue('fx').length > 0) {
+      $('html,body').queue('fx', [function() {
+        $autocomplete = $(`#${gridId} .scClonableRow .scTaxonCell input`); 
+        var newTop = $autocomplete.offset().top - $(window).height() + 180;
+        $(this).animate({ scrollTop: newTop }, 500);
+      }]);
+    }
+  }
+
   indiciaFns.applyTaxonValidationRules = function (typeAbbr, type) {
     $.each(indiciaData[typeAbbr + 'TaxonValidationRules'], function() {
       var rule = '';
@@ -129,4 +329,8 @@ jQuery(document).ready(function docReady($) {
   $.each($('.species-dynamic-attributes'), function loadAttrDiv() {
     repositionDynamicAttributes(this);
   });
+
+  // If the Client Selects Taxon Filter option is enabled, attach an event
+  // handler to the select control that is added.
+  $('#taxonListSelect').change(changeTaxonList);
 });
