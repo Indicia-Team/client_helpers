@@ -6489,7 +6489,7 @@ HTML;
       switch (substr($options['otherValueAttrId'], 0, 3)) {
         case 'smp': $otherAttrTable='sample'; break;
         case 'occ': $otherAttrTable='occurrence'; break;
-        case 'location': $otherAttrTable='location'; break;
+        case 'loc': $otherAttrTable='location'; break;
         default: throw new exception($options['otherValueAttrId'] . ' not supported for otherValueAttrId option.');
       }
       //When in edit mode then we need to collect the Other value the user previously filled in.
