@@ -6627,7 +6627,6 @@ HTML;
       $showHideFn = 'show_hide_other_' . str_replace(':', '', $options['otherValueAttrId']) . '()';
       //Set the visibility of the "Other" textbox based on the checkbox when the page loads, but also when the checkbox changes.
       self::$javascript .= $showHideFn . ';
-        show_hide_other();
         $("input[name='.$mainAttributeNameSafe.']").change(function() {
           ' . $showHideFn . ';
         });
