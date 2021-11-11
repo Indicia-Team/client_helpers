@@ -6591,7 +6591,7 @@ HTML;
       switch (substr($options['otherValueAttrId'], 0, 3)) {
         case 'smp': $otherAttrTable='sample'; break;
         case 'occ': $otherAttrTable='occurrence'; break;
-        case 'location': $otherAttrTable='location'; break;
+        case 'loc': $otherAttrTable='location'; break;
         default: throw new exception($options['otherValueAttrId'] . ' not supported for otherValueAttrId option.');
       }
       //When in edit mode then we need to collect the Other value the user previously filled in.
@@ -6623,16 +6623,18 @@ HTML;
       $mainAttributeIdSafe = helper_base::jq_esc($options['id']);
       $mainAttributeNameSafe = helper_base::jq_esc($options['fieldname']);
       $otherAttributeIdSafe = helper_base::jq_esc($options['otherValueAttrId']);
+      // Unique javascript function name needed for each instance.
+      $showHideFn = 'show_hide_other_' . str_replace(':', '', $options['otherValueAttrId']) . '()';
       //Set the visibility of the "Other" textbox based on the checkbox when the page loads, but also when the checkbox changes.
-      self::$javascript .= '
+      self::$javascript .= $showHideFn . ';
         show_hide_other();
         $("input[name='.$mainAttributeNameSafe.']").change(function() {
-          show_hide_other();
+          ' . $showHideFn . ';
         });
       ';
       //Function that will show and hide the "Other" textbox depending on the value of the checkbox.
       self::$javascript .= '
-      function show_hide_other() {
+      function ' . $showHideFn . ' {
         if ($("#'.$mainAttributeIdSafe.'\\\\:'.$checkboxOtherIdx.'").is(":checked")) {
           $("#'.$otherAttributeIdSafe.'").show();
           $("[for=\"'.$otherAttributeIdSafe.'\"]").show();
