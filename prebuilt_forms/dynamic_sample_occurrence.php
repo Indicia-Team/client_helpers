@@ -1762,21 +1762,37 @@ HTML;
   protected static function get_control_species_checklist(array $auth, array $args, array $extraParams, array $options) {
     $r = '';
     if ($args['client_taxon_filter'] == TRUE) {
-      // Add control to allow taxon list to be loaded at runtime.
-      // To enable this functionality, check the Client Selects Taxon Filter
-      // checkbox on the edit page.
+      /* Add control to allow taxon list to be loaded at runtime.
+      To enable this functionality, check the Client Selects Taxon Filter
+      checkbox on the edit page.*/
+
+      // The filter will respect training mode.
+      $trainingJS = 'false';
+      $trainingHTML = '';
+      if (function_exists('hostsite_get_user_field')) {
+        if (hostsite_get_user_field('training')) {
+          $trainingJS = 'true';
+          $trainingHTML = ' ' . lang::get('LANG_taxon_list_training');
+        }
+      }
+
+      // Generate the HTML output.
       $r .= '<label for="taxonListSelect">' . lang::get('LANG_taxon_list_label') . ' :</label>';
       $r .= '<select id="taxonListSelect">';
       $r .= '<option value="none" selected="selected">' . lang::get('None') . '</option>';
       foreach ($args['client_taxon_filter_options'] as $option) {
         $r .= '<option value="' . $option . '">';
-        $r .= lang::get('LANG_taxon_list_' . $option);
+        $r .= lang::get('LANG_taxon_list_' . $option) . $trainingHTML;
         $r .= '</option>';
       }
       $r .= '</select>';
 
-      data_entry_helper::$javascript .= 'indiciaData.taxonListId=' . $args['list_id'];
+      // Make taxonListId available for filtering the Ajax query.
+      data_entry_helper::$javascript .= 'indiciaData.taxonListId=' . $args['list_id'] . ";\n";
       unset($args['list_id']);
+
+      // Make training mode available for filtering the Ajax query.
+      data_entry_helper::$javascript .= 'indiciaData.training=' . $trainingJS . ";\n";
     }
 
     // Build the configuration options.
