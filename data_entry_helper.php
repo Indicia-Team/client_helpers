@@ -6494,14 +6494,19 @@ HTML;
       }
       //When in edit mode then we need to collect the Other value the user previously filled in.
       if (!empty(self::$entity_to_load["{$otherAttrTable}:id"])) {
-        $readAuth['auth_token']=$options['extraParams']['auth_token'];
-        $readAuth['nonce']=$options['extraParams']['nonce'];
+        $readAuth['auth_token'] = $options['extraParams']['auth_token'];
+        $readAuth['nonce'] = $options['extraParams']['nonce'];
+        $entityId = self::$entity_to_load["{$otherAttrTable}:id"];
+        // $options['otherValueAttrId'] is like xxxAttr:n where n is the attribute Id.
+        $attrId = substr($options['otherValueAttrId'], 8);
         //Get the existing value for the Other textbox
-        $otherAttributeData = data_entry_helper::get_population_data(array(
+        $otherAttributeData = data_entry_helper::get_population_data([
           'table' => "{$otherAttrTable}_attribute_value",
-          'extraParams' => $readAuth + array("{$otherAttrTable}_id" => self::$entity_to_load["{$otherAttrTable}:id"], "{$otherAttrTable}_attribute_id"=>str_replace('smpAttr:', '', $options['otherValueAttrId'])),
+          'extraParams' => $readAuth + [
+            "{$otherAttrTable}_id" => $entityId,
+            "{$otherAttrTable}_attribute_id" => $attrId],
           'nocache' => TRUE,
-        ));
+        ]);
       }
       //Finally draw the Other textbox to the screen, then use jQuery to hide/show the box at the appropriate time.
       $otherBoxOptions['id'] = $options['otherValueAttrId'];
