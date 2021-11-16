@@ -1077,113 +1077,127 @@ class helper_base {
     return self::$resource_list;
   }
 
-    /**
+  /**
    * Causes the default_site.css stylesheet to be included in the list of resources on the
    * page. This gives a basic form layout.
    * This also adds default JavaScript to the page to cause buttons to highlight when you
    * hover the mouse over them.
    */
   public static function link_default_stylesheet() {
-    // make buttons highlight when hovering over them
-    self::$javascript .=  "indiciaFns.enableHoverEffect();\n";
-    self::$default_styles = true;
+    // Make buttons highlight when hovering over them.
+    self::$javascript .= "indiciaFns.enableHoverEffect();\n";
+    self::$default_styles = TRUE;
   }
 
   /**
-   * Returns a span containing any validation errors active on the form for the
-   * control with the supplied ID.
+   * Returns a span containing any validation errors for a control.
    *
-   * @param string $fieldname Fieldname of the control to retrieve errors for.
-   * @param boolean $plaintext Set to true to return just the error text, otherwise it is wrapped in a span.
-   * @return string HTML for the validation error output.
+   * @param string $fieldname
+   *   Fieldname of the control to retrieve errors for.
+   * @param bool $plaintext
+   *   Set to true to return just the error text, otherwise it is wrapped in a span.
+   *
+   * @return string
+   *   HTML for the validation error output.
    */
-  public static function check_errors($fieldname, $plaintext=false)
-  {
-    $error='';
-    if (self::$validation_errors!==NULL) {
-       if (array_key_exists($fieldname, self::$validation_errors)) {
-         $errorKey = $fieldname;
-       }
-       elseif ($fieldname === 'sample:location_id' && array_key_exists('sample:location_name', self::$validation_errors)) {
-         // Location autocompletes can have a linked location ID or a freetext
-         // location name, so outptu both errors against the control.
-         $errorKey = 'sample:location_name';
-       }
-       elseif (substr($fieldname, -4)=='date') {
-          // For date fields, we also include the type, start and end validation problems
-          if (array_key_exists($fieldname.'_start', self::$validation_errors)) {
-            $errorKey = $fieldname.'_start';
-          }
-          if (array_key_exists($fieldname.'_end', self::$validation_errors)) {
-            $errorKey = $fieldname.'_end';
-          }
-          if (array_key_exists($fieldname.'_type', self::$validation_errors)) {
-            $errorKey = $fieldname.'_type';
-          }
-       }
-       if (isset($errorKey)) {
-         $error = self::$validation_errors[$errorKey];
-         // Track errors that were displayed, so we can tell the user about any others.
-         self::$displayed_errors[] = $error;
-       }
+  public static function check_errors($fieldname, $plaintext=false) {
+    $error = '';
+    if (self::$validation_errors !== NULL) {
+      if (array_key_exists($fieldname, self::$validation_errors)) {
+        $errorKey = $fieldname;
+      }
+      elseif ($fieldname === 'sample:location_id' && array_key_exists('sample:location_name', self::$validation_errors)) {
+        // Location autocompletes can have a linked location ID or a freetext
+        // location name, so outptu both errors against the control.
+        $errorKey = 'sample:location_name';
+      }
+      elseif (substr($fieldname, -4) === 'date') {
+        // For date fields, we also include the type, start and end validation
+        // problems.
+        if (array_key_exists($fieldname . '_start', self::$validation_errors)) {
+          $errorKey = $fieldname . '_start';
+        }
+        if (array_key_exists($fieldname . '_end', self::$validation_errors)) {
+          $errorKey = $fieldname . '_end';
+        }
+        if (array_key_exists($fieldname . '_type', self::$validation_errors)) {
+          $errorKey = $fieldname . '_type';
+        }
+      }
+      if (isset($errorKey)) {
+        $error = self::$validation_errors[$errorKey];
+        // Track errors that were displayed, so we can tell the user about any others.
+        self::$displayed_errors[] = $error;
+      }
     }
-    if ($error!='') {
+    if ($error != '') {
       if ($plaintext) {
         return $error;
-      } else {
+      }
+      else {
         return self::apply_error_template($error, $fieldname);
       }
-    } else {
+    }
+    else {
       return '';
     }
   }
 
   /**
    * Sends a POST using the cUrl library.
-   * @param string $url The URL the POST request is sent to.
-   * @param string Arguments to include in the POST data.
-   * @param boolean $output_errors Set to false to prevent echoing of errors. Defaults to true.
-   * @return array An array with a result element set to true or false for successful or failed posts respectively.
-   * The output is returned in an output element in the array. If there is an error, then an errorno element gives the
-   * cUrl error number (as generated by the cUrl library used for the post).
+   *
+   * @param string $url
+   *   The URL the POST request is sent to.
+   * @param string $postargs
+   *   Arguments to include in the POST data.
+   * @param bool $output_errors
+   *   Set to false to prevent echoing of errors. Defaults to true.
+   *
+   * @return array
+   *   An array with a result element set to true or false for successful or
+   *   failed posts respectively. The output is returned in an output element
+   *   in the array. If there is an error, then an errorno element gives the
+   *   cUrl error number (as generated by the cUrl library used for the post).
    */
-  public static function http_post($url, $postargs=NULL, $output_errors=true) {
+  public static function http_post($url, $postargs = NULL, $output_errors = true) {
     $session = curl_init();
     // Set the POST options.
-    curl_setopt ($session, CURLOPT_URL, $url);
-    if ($postargs!==NULL) {
-      curl_setopt ($session, CURLOPT_POST, true);
+    curl_setopt($session, CURLOPT_URL, $url);
+    if ($postargs !== NULL) {
+      curl_setopt($session, CURLOPT_POST, TRUE);
       if (is_array($postargs) && version_compare(phpversion(), '5.5.0') >= 0) {
-        // posting a file using @ prefix is deprecated as of version 5.5.0
+        // Posting a file using @ prefix is deprecated as of version 5.5.0.
         foreach ($postargs as $key => $value) {
-          // loop through postargs to find files where the value is prefixed @
+          // Loop through postargs to find files where the value is prefixed @.
           if (strpos($value, '@') === 0) {
-            // found a file - could be in form @path/to/file;type=mimetype
+            // Found a file - could be in form @path/to/file;type=mimetype.
             $fileparts = explode(';', substr($value, 1));
             $filename = $fileparts[0];
             if (count($fileparts) == 1) {
-              // only filename specified
+              // Only filename specified.
               $postargs[$key] = new CurlFile($filename);
-            } else {
-              //mimetype may be specified too
+            }
+            else {
+              // Mimetype may be specified too.
               $fileparam = explode('=', $fileparts[1]);
               if ($fileparam[0] == 'type' && isset($fileparam[1])) {
-                // found a mimetype
+                // Found a mimetype.
                 $mimetype = $fileparam[1];
                 $postargs[$key] = new CurlFile($filename, $mimetype);
-              } else {
-                // the fileparam didn't seem to be a mimetype
+              }
+              else {
+                // The fileparam didn't seem to be a mimetype.
                 $postargs[$key] = new CurlFile($filename);
               }
             }
           }
         }
       }
-      curl_setopt ($session, CURLOPT_POSTFIELDS, $postargs);
+      curl_setopt($session, CURLOPT_POSTFIELDS, $postargs);
     }
-    curl_setopt($session, CURLOPT_HEADER, false);
-    curl_setopt($session, CURLOPT_RETURNTRANSFER, true);
-    // Do the POST and then close the session
+    curl_setopt($session, CURLOPT_HEADER, FALSE);
+    curl_setopt($session, CURLOPT_RETURNTRANSFER, TRUE);
+    // Do the POST and then close the session.
     $response = curl_exec($session);
     $httpCode = curl_getinfo($session, CURLINFO_HTTP_CODE);
     $curlErrno = curl_errno($session);
@@ -1192,22 +1206,23 @@ class helper_base {
       if ($output_errors) {
         echo '<div class="error">cUrl POST request failed. Please check cUrl is installed on the server and the $base_url setting is correct.<br/>URL:'.$url.'<br/>';
         if ($curlErrno) {
-          echo 'Error number: '.$curlErrno.'<br/>';
-          echo 'Error message: '.curl_error($session).'<br/>';
+          echo 'Error number: ' . $curlErrno . '<br/>';
+          echo 'Error message: ' . curl_error($session) . '<br/>';
         }
         echo "Server response<br/>";
-        echo $response.'</div>';
+        echo $response . '</div>';
       }
-      $return = array(
-          'result'=>false,
-          'output' => $curlErrno ? curl_error($session) : $response,
-          'errno' => $curlErrno,
-          'status' => $httpCode
-      );
-    } else {
-      $arr_response = explode("\r\n\r\n",$response);
-      // last part of response is the actual data
-      $return = array('result' => true,'output' => array_pop($arr_response));
+      $return = [
+        'result' => FALSE,
+        'output' => $curlErrno ? curl_error($session) : $response,
+        'errno' => $curlErrno,
+        'status' => $httpCode
+      ];
+    }
+    else {
+      $arr_response = explode("\r\n\r\n", $response);
+      // Last part of response is the actual data.
+      $return = ['result' => TRUE, 'output' => array_pop($arr_response)];
     }
     curl_close($session);
     return $return;
@@ -1217,9 +1232,10 @@ class helper_base {
    * Calculates the folder that submitted images end up in according to the helper_config.
    */
   public static function get_uploaded_image_folder() {
-    if (!isset(self::$final_image_folder) || self::$final_image_folder=='warehouse') {
+    if (!isset(self::$final_image_folder) || self::$final_image_folder === 'warehouse') {
       return self::getProxiedBaseUrl() . (isset(self::$indicia_upload_path) ? self::$indicia_upload_path : 'upload/');
-    } else {
+    }
+    else {
       return self::getRootFolder() . self::client_helper_path() . self::$final_image_folder;
     }
   }
@@ -2405,24 +2421,24 @@ if (typeof validator!=='undefined') {
 });\n";
     self::add_resource('validation');
     // Allow i18n on validation messages
-    if(lang::get('validation_required') != 'validation_required')
-      data_entry_helper::$late_javascript .= "
-$.validator.messages.required = \"".lang::get('validation_required')."\";";
-    if(lang::get('validation_max') != 'validation_max')
-      data_entry_helper::$late_javascript .= "
-$.validator.messages.max = $.validator.format(\"".lang::get('validation_max')."\");";
-    if(lang::get('validation_min') != 'validation_min')
-      data_entry_helper::$late_javascript .= "
-$.validator.messages.min = $.validator.format(\"".lang::get('validation_min')."\");";
-    if(lang::get('validation_number') != 'validation_number')
-      data_entry_helper::$late_javascript .= "
-$.validator.messages.number = $.validator.format(\"".lang::get('validation_number')."\");";
-    if(lang::get('validation_digits') != 'validation_digits')
-      data_entry_helper::$late_javascript .= "
-$.validator.messages.digits = $.validator.format(\"".lang::get('validation_digits')."\");";
-    if(lang::get('validation_integer') != 'validation_integer')
-      data_entry_helper::$late_javascript .= "
-$.validator.messages.integer = $.validator.format(\"".lang::get('validation_integer')."\");";
+    if (lang::get('validation_required') != 'validation_required') {
+      data_entry_helper::$late_javascript .= "$.validator.messages.required = \"".lang::get('validation_required')."\";\n";
+    }
+    if (lang::get('validation_max') != 'validation_max') {
+      data_entry_helper::$late_javascript .= "$.validator.messages.max = $.validator.format(\"".lang::get('validation_max')."\");\n";
+    }
+    if (lang::get('validation_min') != 'validation_min') {
+      data_entry_helper::$late_javascript .= "$.validator.messages.min = $.validator.format(\"".lang::get('validation_min')."\");\n";
+    }
+    if(lang::get('validation_number') != 'validation_number') {
+      data_entry_helper::$late_javascript .= "$.validator.messages.number = $.validator.format(\"".lang::get('validation_number')."\");\n";
+    }
+    if(lang::get('validation_digits') != 'validation_digits') {
+      data_entry_helper::$late_javascript .= "$.validator.messages.digits = $.validator.format(\"".lang::get('validation_digits')."\");\n";
+    }
+    if(lang::get('validation_integer') != 'validation_integer') {
+      data_entry_helper::$late_javascript .= "$.validator.messages.integer = $.validator.format(\"".lang::get('validation_integer')."\");\n";
+    }
   }
 
   /**
