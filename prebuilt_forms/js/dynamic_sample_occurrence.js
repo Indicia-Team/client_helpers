@@ -197,7 +197,8 @@ jQuery(document).ready(function docReady($) {
         'mode': 'json',
         'reportSource': 'local',
         'report': report,
-        [param]: value
+        [param]: value,
+        'training': indiciaData.training
       },
       'dataType': 'jsonp',
     });

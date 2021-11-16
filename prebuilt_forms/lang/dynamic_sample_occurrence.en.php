@@ -66,5 +66,6 @@ $custom_terms = array_merge($custom_terms, array(
   'LANG_taxon_list_parent_location_id' => 'Species previously recorded at parent location',
   'LANG_taxon_list_indicia_user_id' => 'Species previously recorded by user',
   'LANG_taxon_list_none' => 'None',
+  'LANG_taxon_list_training' => '(in training mode)',
 )
 );
