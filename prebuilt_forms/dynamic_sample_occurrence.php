@@ -827,8 +827,9 @@ TXT;
   }
 
   /**
-   * Declare the list of permissions we've got set up to pass to the CMS'
-   * permissions code.
+   * Declare the list of permissions set up on this page.
+   *
+   * Permissions can then be passed to the CMS' permissions code.
    *
    * @param int $nid
    *   Node ID, not used.
@@ -1412,15 +1413,24 @@ HTML;
         ]);
       }
     }
-    // Check if Record Status is included as a control. If not, then add it as a
-    // hidden.
+    // Check if Record Status is included as a control. If not, set a default.
     $arr = helper_base::explode_lines($args['structure']);
-    if (!in_array('[record status]', $arr)) {
-      $value = isset($args['defaults']['occurrence:record_status']) ? $args['defaults']['occurrence:record_status'] : 'C';
-      $r .= '<input type="hidden" id="occurrence:record_status" name="occurrence:record_status" value="' . $value . '" />' . PHP_EOL;
+    if (!in_array('[record status]', $arr) && empty($args['defaults']['occurrence:record_status'])) {
+      $args['defaults']['occurrence:record_status'] = 'C';
     }
-    if (!empty($args['defaults']['occurrence:release_status'])) {
-      $r .= '<input type="hidden" id="occurrence:release_status" name="occurrence:release_status" value="' . $args['defaults']['occurrence:release_status'] . '" />' . PHP_EOL;
+    // Some defaults need adding to the page as hiddens.
+    $hiddenKeys = [
+      'occurrence:record_status',
+      'occurrence:release_status',
+      'occurrence:licence_id',
+    ];
+    foreach ($hiddenKeys as $key) {
+      if (!empty($args['defaults'][$key])) {
+        $r .= data_entry_helper::hidden_text([
+          'fieldname' => $key,
+          'default' => $args['defaults'][$key],
+        ]);
+      }
     }
     $r .= get_user_profile_hidden_inputs($attributes, $args, isset(data_entry_helper::$entity_to_load['sample:id']), $auth['read']);
     if ($gridMode) {
@@ -3007,29 +3017,33 @@ JS;
   }
 
   /**
+   * Return default form parameters.
+   *
    * When a form version is upgraded introducing new parameters, old forms will
    * not get the defaults for the parameters unless the Edit and Save button is
    * clicked. So, apply some defaults to keep those old forms working.
    */
   protected static function getArgDefaults($args) {
     if (!isset($args['structure']) || empty($args['structure'])) {
-      $args['structure'] = "=Species=\r\n" .
-        "?Please enter the species you saw and any other information about them.?\r\n" .
-        "[species]\r\n" .
-        "[species attributes]\r\n" .
-        "[*]\r\n" .
-        "=Place=\r\n" .
-        "?Please provide the spatial reference of the record. You can enter the reference directly, or search for a place then click on the map.?\r\n" .
-        "[place search]\r\n" .
-        "[spatial reference]\r\n" .
-        "[map]\r\n" .
-        "[*]\r\n" .
-        "=Other Information=\r\n" .
-        "?Please provide the following additional information.?\r\n" .
-        "[date]\r\n" .
-        "[sample comment]\r\n" .
-        "[*]\r\n" .
-        "=*=";
+      $args['structure'] = <<<TXT
+=Species=
+?Please enter the species you saw and any other information about them.?
+[species]
+[species attributes]
+[*]
+=Place=
+?Please provide the spatial reference of the record. You can enter the reference directly, or search for a place then click on the map.?
+"[place search]
+[spatial reference]
+[map]
+[*]
+=Other Information=
+?Please provide the following additional information.?
+[date]
+[sample comment]
+[*]
+=*=
+TXT;
     }
     if (!isset($args['occurrence_comment'])) {
       $args['occurrence_comment'] = FALSE;
