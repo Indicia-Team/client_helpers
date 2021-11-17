@@ -410,7 +410,7 @@ class iform_ebms_transects_allocation {
     if(version_compare(hostsite_get_cms_version(), '8', '<')) {
       $results = db_query('SELECT uid, name FROM {users} WHERE uid <> 0'); // assume drupal7
     } else {
-      $results = \Drupal::database()->query('SELECT uid, name FROM {users_field_data} WHERE uid <> 0'); // drupal8
+      $results = \Drupal::database()->query('SELECT uid, name FROM {users_field_data} WHERE uid <> 0'); // drupal8 & above
     }
     foreach ($results as $result) {
       if($result->uid){ // ignore unauthorised user, uid zero
@@ -501,7 +501,7 @@ class iform_ebms_transects_allocation {
       if(version_compare(hostsite_get_cms_version(), '8', '<')) {
           $results = db_query('SELECT uid, name FROM {users} WHERE uid <> 0'); // assume drupal7
       } else {
-          $results = db_query('SELECT uid, name FROM {users_field_data} WHERE uid <> 0'); // drupal8
+          $results = \Drupal::database()->query('SELECT uid, name FROM {users_field_data} WHERE uid <> 0'); // drupal8 & above
       }
       foreach ($results as $result) {
           if($result->uid){ // ignore unauthorised user, uid zero

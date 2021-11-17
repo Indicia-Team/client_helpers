@@ -857,14 +857,24 @@ $('#fieldset-optional-external-sc').prepend(\"".lang::get('If you choose to reco
   private static function get_user_assignment_control($readAuth, $cmsUserAttr, $args) {
     $r = "";
   	if(self::$cmsUserList == null) {
-      $query = db_query("select uid, name from {users} where name <> '' order by name");
       $users = array();
       // there have been DB API changes for Drupal7: db_query now returns the result array.
-      if(version_compare(VERSION, '7', '<')) {
+      if(version_compare(hostsite_get_cms_version(), '8', '<')) {
+        $query = db_query("select uid, name from {users} where name <> '' order by name");
         while ($user = db_fetch_object($query))
           $users[$user->uid] = $user->name;
       } else {
-        foreach ($query as $user) {
+		$database = \Drupal::database();
+		$query = $database->select('user_field_data', 'u', $options);
+		$query->leftJoin('user__field_first_name', 'uf', 'u.uid = uf.uid');
+		$query->leftJoin('user__field_last_name', 'ul', 'u.uid = ul.uid');
+		$query->fields('u',['uid','name'])
+			->fields('uf', array('field_first_name'))
+			->fields('ul', array('field_last_name'))
+			->orderBy('u.name','DESC');
+		$users = $query->excesute();
+		
+        foreach ($users as $user) {
           $built_name = $user->name;
           $account = user_load($user->uid);
           $fieldname = 'field_first_name';

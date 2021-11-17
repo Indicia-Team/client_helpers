@@ -1,4 +1,8 @@
 <?php
+use Drupal\Core\Breadcrumb\Breadcrumb;
+use Drupal\Core\Breadcrumb\BreadcrumbBuilderInterface;
+use Drupal\Core\Link;
+use Drupal\Core\Url;
 
 /**
  * @file
@@ -311,7 +315,8 @@ class extension_misc_extensions {
     if (!isset($options['path'])) {
       return 'Please set an array of entries in the @path option';
     }
-    $breadcrumb[] = l('Home', '<front>');
+	$breadcrumb = new Breadcrumb();
+    $breadcrumb->addLink(Link::createFromRoute(t('Home'), '<front>'));
     foreach ($options['path'] as $path => $caption) {
       $parts = explode('?', $path, 2);
       $itemOptions = array();
@@ -333,12 +338,15 @@ class extension_misc_extensions {
       }
       // Don't use Drupal l function as a it messes with query params.
       $caption = lang::get($caption);
-      $breadcrumb[] = l($caption, $path, $itemOptions);
+	  $breadcrumb->addLink(Link::createFromRoute($caption, $path));
     }
     if (!isset($options['includeCurrentPage']) || $options['includeCurrentPage'] !== FALSE) {
-      $breadcrumb[] = drupal_get_title();
+		$request = \Drupal::request();
+		// Assuming the Request is $request.
+		if ($request->attributes->has('_title')) {
+			$breadcrumb->addLink($request->attributes->get('_title'), 'iform_page');
+		}	
     }
-    drupal_set_breadcrumb($breadcrumb);
     return '';
   }
 

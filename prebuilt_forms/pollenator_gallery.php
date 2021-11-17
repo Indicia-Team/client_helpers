@@ -4469,7 +4469,11 @@ $('#username').autocomplete([";
 	/* warning Drupal specific code */
     $userList = array();
     if(!($userList = self::_fetchDBCache())) {
-    	$results = db_query('SELECT uid, name FROM {users} ORDER BY name');
+		if(version_compare(hostsite_get_cms_version(), '8', '<')) {
+			$results = db_query('SELECT uid, name FROM {users}');
+		} else {
+		  $results = \Drupal::database()->query('SELECT uid, name FROM {users_field_data} WHERE uid <> 0'); // drupal8 & 9		
+		}
 	    while($result = db_fetch_object($results)){
 	      $account = user_load($result->uid);
 	      if($account->uid != 1)
