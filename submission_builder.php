@@ -229,11 +229,11 @@ class submission_builder {
             $sa['fields'][$key] = ['value' => $value];
           }
         }
-        elseif ($attrEntity && (strpos($key, "$attrEntity+:") === 0)) {
+        elseif ($attrEntity && (strpos($key, "$attrEntity"."Complex:") === 0)) {
           // A complex custom attribute data value which will need to be json
           // encoded.
           $tokens = explode(':', $key);
-          $attrKey = str_replace('+', '', $tokens[0]) . ':' . $tokens[1];
+          $attrKey = str_replace('Complex', '', $tokens[0]) . ':' . $tokens[1];
           if (!empty($tokens[2])) {
             // Existing value record.
             $attrKey .= ":$tokens[2]";

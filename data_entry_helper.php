@@ -414,10 +414,10 @@ class data_entry_helper extends helper_base {
       }
       foreach ($options['columns'] as $idx => $def) {
         if (isset($options['default'][$i])) {
-          $fieldnamePrefix = str_replace('Attr:', 'Attr+:', $options['default'][$i]['fieldname']);
+          $fieldnamePrefix = str_replace('Attr:', 'AttrComplex:', $options['default'][$i]['fieldname']);
         }
         else {
-          $fieldnamePrefix = "$attrTypeTag+:$attrId:";
+          $fieldnamePrefix = "$attrTypeTag"."Complex:".$attrId.":";
         }
         $fieldname = "$fieldnamePrefix:$i:$idx";
         $default = isset(self::$entity_to_load[$fieldname]) ? self::$entity_to_load[$fieldname] :
