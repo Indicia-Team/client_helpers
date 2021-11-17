@@ -986,6 +986,10 @@ JS;
    *     generate code which only generates the uploader when the tab is shown,
    *     reducing problems in certain runtimes. This has no effect if
    *     codeGenerated is not left to the default state of all.
+   *   * mediaLicenceId - to select a licence for newly uploaded photos, set
+   *     the ID here. Overrides other methods of setting media licences via the
+   *     user profile, so if using this option please add a message to the page
+   *     to make the licence clear.
    *
    *   The output of this control can be configured using the following
    *   templates:
@@ -1036,7 +1040,8 @@ JS;
       'table' => 'occurrence_medium',
       'maxUploadSize' => self::convert_to_bytes(parent::$upload_max_filesize),
       'codeGenerated' => 'all',
-      'mediaTypes' => !empty($options['subType']) ? array($options['subType']) : array('Image:Local'),
+      'mediaTypes' => !empty($options['subType']) ? [$options['subType']] : ['Image:Local'],
+      'mediaLicenceId' => NULL,
       'fileTypes' => (object) self::$upload_file_types,
       'imgPath' => empty(self::$images_path) ? self::relative_client_helper_path() . "../media/images/" : self::$images_path,
       'caption' => lang::get('Files'),
@@ -1070,24 +1075,25 @@ JS;
     if ($options['codeGenerated'] !== 'php') {
       // build the JavaScript including the required file links
       self::add_resource('plupload');
-      foreach($options['runtimes'] as $runtime) {
+      foreach ($options['runtimes'] as $runtime) {
         self::add_resource("plupload_$runtime");
       }
-      // convert runtimes list to plupload format
+      // Convert runtimes list to plupload format.
       $options['runtimes'] = implode(',', $options['runtimes']);
 
       $javascript = "\n$('#".str_replace(':','\\\\:',$containerId) . "').uploader({";
-      // Just pass the options array through
+      // Just pass the options array through.
       $idx = 0;
-      foreach($options as $option=>$value) {
-        if (is_array($value) || is_object($value)) {
+      foreach ($options as $option => $value) {
+        if (is_array($value) || is_object($value) || is_null($value)) {
           $value = json_encode($value);
         }
-        else
-          // not an array, so wrap as string
+        else {
+          // Not an array, so wrap as string.
           $value = "'$value'";
+        }
         $javascript .= "\n  $option : $value";
-        // comma separated, except last entry
+        // Comma separated, except last entry.
         if ($idx < count($options)-1) $javascript .= ',';
         $idx++;
       }
@@ -3133,6 +3139,10 @@ RIJS;
   *     Image:Instagram, Image:Local, Image:Twitpic, Pdf:Local,
   *     Social:Facebook, Social:Twitter, Video:Youtube, Video:Vimeo,
   *     Zerocrossing:Local. Currently not supported for multi-column grids.
+  *   * **mediaLicenceId** - to select a licence for newly uploaded photos, set
+  *     the ID here. Overrides other methods of setting media licences via the
+  *     user profile, so if using this option please add a message to the page
+  *     to make the licence clear.
   *   * **resizeWidth** - If set, then the image files will be resized before
   *     upload using this as the maximum pixels width.
   *   * **resizeHeight** - If set, then the image files will be resized before
@@ -3410,6 +3420,9 @@ RIJS;
       }
       if (isset($options['resizeQuality'])) {
         $uploadSettings['resizeQuality'] = $options['resizeQuality'];
+      }
+      if (isset($options['mediaLicenceId'])) {
+        $uploadSettings['mediaLicenceId'] = $options['mediaLicenceId'];
       }
       self::$indiciaData['uploadSettings'] = $uploadSettings;
       if ($indicia_templates['file_box'] != '') {
@@ -4925,6 +4938,7 @@ JS;
       // legacy - occurrenceImages means just local image support
       'mediaTypes' => !empty($options['occurrenceImages']) && $options['occurrenceImages'] ?
         array('Image:Local') : [],
+      'mediaLicenceId' => NULL,
       'responsive' => FALSE,
       'allowAdditionalTaxa' => !empty($options['lookupListId']),
     ), $options);
@@ -5521,34 +5535,34 @@ HTML;
   }
 
   /**
-   * Helper function to output an HTML hidden text input. This includes re-loading of existing values.
-   * Hidden fields should not have any validation.
-   * No Labels allowed, no suffix.
-   * The output of this control can be configured using the following templates:
-   * <ul>
-   * <li><b>hidden_text</b></br>
-   * HTML template used to generate the hidden input element.
-   * </li>
-   * </ul>
+   * Helper function to output an HTML hidden text input.
    *
-   * @param array $options Options array with the following possibilities:<ul>
-   * <li><b>fieldname</b><br/>
-   * Required. The name of the database field this control is bound to.</li>
-   * <li><b>id</b><br/>
-   * Optional. The id to assign to the HTML control. If not assigned the fieldname is used.</li>
-   * <li><b>default</b><br/>
-   * Optional. The default value to assign to the control. This is overridden when reloading a
-   * record with existing data for this control.</li>
-   * </ul>
+   * This includes re-loading of existing values. Hidden fields should not have
+   * any validation. No Labels allowed, no suffix.
+   * The output of this control can be configured using the following
+   * templates:
+   * * hidden_text - HTML template used to generate the hidden input element.
    *
-   * @return string HTML to insert into the page for the hidden text control.
+   * @param array $options
+   *   Options array with the following possibilities:
+   *   * fieldname - Required. The name of the database field this control is
+   *     bound to.
+   *   * id - Optional. The id to assign to the HTML control. If not assigned
+   *     the fieldname is used.
+   *   * default - Optional. The default value to assign to the control. This
+   *     is overridden when reloading a record with existing data for this
+   *     control.
+   *
+   * @return string
+   *   HTML to insert into the page for the hidden text control.
    */
   public static function hidden_text($options) {
-    $options = array_merge(array(
+    $options = array_merge([
       'default' => '',
-      'requiredsuffixTemplate' => 'suffix', // disables output of the required *
+      // Disables output of the required *.
+      'requiredsuffixTemplate' => 'suffix',
       'controlWrapTemplate' => 'justControl'
-    ), self::check_options($options));
+    ], self::check_options($options));
     unset($options['label']);
     return self::apply_template('hidden_text', $options);
   }
