@@ -292,6 +292,7 @@ class data_entry_helper extends helper_base {
    */
   public static function complex_attr_grid($options) {
     self::add_resource('complexAttrGrid');
+    global $indicia_templates;
     $options = array_merge([
       'defaultRows' => 3,
       'columns' => [
@@ -401,6 +402,8 @@ class data_entry_helper extends helper_base {
     $r .= '<tbody>';
     $rowCount = $options['defaultRows'] > count($options['default']) ? $options['defaultRows'] : count($options['default']);
     $extraCols = 0;
+    $controlClass = 'complex-attr-grid-control';
+    $controlClass .= empty($indicia_templates['formControlClass']) ? '' : " $indicia_templates[formControlClass]";
     for ($i = 0; $i <= $rowCount - 1; $i++) {
       $class = ($i % 2 === 1) ? '' : ' class="odd"';
       $r .= "<tr$class>";
@@ -430,13 +433,13 @@ class data_entry_helper extends helper_base {
           $fieldname .= '[]';
           foreach ($lookupData["tl$idx"] as $term) {
             $checked = is_array($default) && in_array($term[0], $default) ? ' checked="checked"' : '';
-            $checkboxes[] = "<input title=\"$term[1]\" type=\"checkbox\" name=\"$fieldname\" value=\"$term[0]:$term[1]\"$checked>";
+            $checkboxes[] = "<input title=\"$term[1]\" type=\"checkbox\" class=\"$controlClass\" name=\"$fieldname\" value=\"$term[0]:$term[1]\"$checked>";
           }
           $r .= implode('</td><td>', $checkboxes);
           $extraCols .= count($checkboxes) - 1;
         }
         elseif ($def['datatype'] === 'lookup') {
-          $r .= "<select name=\"$fieldname\"><option value=''>&lt;" . lang::get('Please select') . "&gt;</option>";
+          $r .= "<select name=\"$fieldname\" class=\"$controlClass\"><option value=''>&lt;" . lang::get('Please select') . "&gt;</option>";
           foreach ($lookupData["tl$idx"] as $term) {
             $selected = $default == "$term[0]" ? ' selected="selected"' : '';
             $r .= "<option value=\"$term[0]:$term[1]\"$selected>$term[1]</option>";
@@ -444,9 +447,9 @@ class data_entry_helper extends helper_base {
           $r .= "</select>";
         }
         else {
-          $class = empty($def['regex']) ? '' : ' class="{pattern:' . $def['regex'] . '}"';
+          $class = empty($def['regex']) ? $controlClass : "$controlClass {pattern:$def[regex]}";
           $default = htmlspecialchars($default);
-          $r .= "<input type=\"text\" name=\"$fieldname\" value=\"$default\"$class/>";
+          $r .= "<input type=\"text\" name=\"$fieldname\" value=\"$default\" class=\"$class\"/>";
         }
         if (!empty($def['unit'])) {
           $r .= '<span class="unit">' . lang::get($def['unit']) . '</span>';
@@ -475,7 +478,6 @@ $('#$escaped').change(function(e) {
 });\n";
     }
     // Wrap in a table template.
-    global $indicia_templates;
     $r = str_replace(
       ['{class}', '{id}', '{content}'],
       [' class="complex-attr-grid"', " id=\"complex-attr-grid-$attrTypeTag-$attrId\"", $r],
