@@ -166,7 +166,7 @@ class iform_subscribe_species_alert {
     }
     // If not logged in, then ask for details to register against.
     global $user;
-    if (!hostsite_get_user_field('id') || !isset($user) || empty($user->mail) || !hostsite_get_user_field('last_name')) {
+    if (!hostsite_get_user_field('indicia_user_id')) {
       $form .= "<fieldset><legend>" . lang::get('Your details') . ":</legend>\n";
       $default = empty($_POST['first_name']) ? hostsite_get_user_field('first_name', '') : $_POST['first_name'];
       $form .= data_entry_helper::text_input([
