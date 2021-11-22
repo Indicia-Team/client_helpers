@@ -859,21 +859,21 @@ $('#fieldset-optional-external-sc').prepend(\"".lang::get('If you choose to reco
   	if(self::$cmsUserList == null) {
       $users = array();
       // there have been DB API changes for Drupal7: db_query now returns the result array.
-      if(version_compare(hostsite_get_cms_version(), '8', '<')) {
+      if(version_compare(VERSION, '7', '<')) {
         $query = db_query("select uid, name from {users} where name <> '' order by name");
         while ($user = db_fetch_object($query))
           $users[$user->uid] = $user->name;
-      } else {
-		$database = \Drupal::database();
-		$query = $database->select('user_field_data', 'u', $options);
-		$query->leftJoin('user__field_first_name', 'uf', 'u.uid = uf.uid');
-		$query->leftJoin('user__field_last_name', 'ul', 'u.uid = ul.uid');
-		$query->fields('u',['uid','name'])
-			->fields('uf', array('field_first_name'))
-			->fields('ul', array('field_last_name'))
-			->orderBy('u.name','DESC');
-		$users = $query->excesute();
-		
+      }
+	  else {
+		if (version_compare(hostsite_get_cms_version(), '8', '<')) {
+	       $users = db_query("select uid, name from {users} where name <> '' order by name");
+		}
+		else {
+           $query = \Drupal::entityQuery('user');
+           $users = $query->condition('name', '', '<>')
+		          ->sort('name', DESC)
+				  ->execute();		
+		}
         foreach ($users as $user) {
           $built_name = $user->name;
           $account = user_load($user->uid);
@@ -891,7 +891,7 @@ $('#fieldset-optional-external-sc').prepend(\"".lang::get('If you choose to reco
           }
           $users[$user->uid] = $built_name;
         }
-      }
+      }	  
       self::$cmsUserList = $users;
     } else $users= self::$cmsUserList;
     $selected = "";

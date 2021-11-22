@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Indicia, the OPAL Online Recording Toolkit.
  *
@@ -14,15 +13,21 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
+ * @package Client
+ * @subpackage PrebuiltForms
+ * @author  Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link https://github.com/indicia-team/client_helpers/
+ * @link  http://code.google.com/p/indicia/
  */
 
 require_once ('includes/report_filters.php');
 
 /**
- *A quick and easy way to download data you have access to.
+ *
+ *
+ * @package Client
+ * @subpackage PrebuiltForms
+ * A quick and easy way to download data you have access to.
  */
 class iform_easy_download {
 
@@ -295,7 +300,14 @@ class iform_easy_download {
     elseif (count($filters)===1) {
       $r .= '<input type="hidden" name="user-filter" value="'.implode('', array_keys($filters)).'"/>';
       // Since there is only one option, we may as well tell the user what it is.
-      drupal_set_title(implode('', array_values($filters)));
+      if(version_compare(hostsite_get_cms_version(), '8', '<')) {	  
+        drupal_set_title(implode('', array_values($filters)));
+	  } else {
+	    $request = \Drupal::request();
+	    if ($route = $request->attributes->get(\Symfony\Cmf\Component\Routing\RouteObjectInterface::ROUTE_OBJECT)) {
+	      $route->setDefault('_title', implode('', array_values($filters)));
+	    }
+	  }
       if (implode('', array_keys($filters))==='mine')
         $r .= '<p>'.lang::get('Use this form to download your own records.').'</p>';
     }

@@ -1,9 +1,4 @@
 <?php
-use Drupal\Core\Breadcrumb\Breadcrumb;
-use Drupal\Core\Breadcrumb\BreadcrumbBuilderInterface;
-use Drupal\Core\Link;
-use Drupal\Core\Url;
-
 /**
  * @file
  * A collection of miscellaneous extension controls for dynamic pages.
@@ -311,12 +306,16 @@ class extension_misc_extensions {
    * * includeCurrentPage - set to false to disable addition of the current page title to the end
    *   of the breadcrumb.
    */
-  public static function breadcrumb($auth, $args, $tabalias, $options, $path) {
+  public static function breadcrumb($auth, $args, $tabalias, $options, $path, $breadcrumb) {
     if (!isset($options['path'])) {
       return 'Please set an array of entries in the @path option';
     }
-	$breadcrumb = new Breadcrumb();
-    $breadcrumb->addLink(Link::createFromRoute(t('Home'), '<front>'));
+	if(version_compare(hostsite_get_cms_version(), '8', '<')) {
+	  $breadcrumb[] = l('Home', '<front>');
+	} else {	
+	  $breadcrumb = new \Drupal\Core\Breadcrumb\Breadcrumb();
+      $breadcrumb->addLink(\Drupal\Core\Link::createFromRoute(t('Home'), '<front>'));
+	}
     foreach ($options['path'] as $path => $caption) {
       $parts = explode('?', $path, 2);
       $itemOptions = array();
@@ -338,16 +337,25 @@ class extension_misc_extensions {
       }
       // Don't use Drupal l function as a it messes with query params.
       $caption = lang::get($caption);
-	  $breadcrumb->addLink(Link::createFromRoute($caption, $path));
+	  if(version_compare(hostsite_get_cms_version(), '8', '<')) {
+		$breadcrumb[] = l($caption, $path, $itemOptions);  
+	  } else {
+	    $breadcrumb->addLink(\Drupal\Core\Link::createFromRoute($caption, $path));
+	  }
     }
     if (!isset($options['includeCurrentPage']) || $options['includeCurrentPage'] !== FALSE) {
+      if(version_compare(hostsite_get_cms_version(), '8', '<')) {
+		$breadcrumb[] = drupal_get_title();
+        drupal_set_breadcrumb($breadcrumb);		
+	  } else {
 		$request = \Drupal::request();
 		// Assuming the Request is $request.
 		if ($request->attributes->has('_title')) {
-			$breadcrumb->addLink($request->attributes->get('_title'), 'iform_page');
+			$breadcrumb->addLink($request->attributes->get('_title'), '<none>');
 		}	
-    }
-    return '';
+	  }	
+    }        
+	return '';
   }
 
   /*
@@ -520,8 +528,6 @@ $('form#entry_form').tooltip({
    * and uses it to load the list onto a species grid on the page. This allows
    * a scratchpad to be used as the first step in data entry.
    *
-   * Should only be used on forms that have a single species_checklist control.
-   *
    * @param array $auth
    * @param array $args
    * @param string $tabalias
@@ -535,18 +541,15 @@ $('form#entry_form').tooltip({
    *     species when initially loaded.
    *   * **showMessage** can be set to FALSE to disable the explanatory
    *     message.
-   *
-   * @return string
-   *   HTML to add to the page. Contains hidden inputs which set values
-   *   required for functionality to work.
+   * @return string HTML to add to the page. Contains hidden inputs which set values required for functionality to work.
    */
   public static function load_species_list_from_scratchpad($auth, $args, $tabalias, $options) {
     $options = array_merge(
-      [
+      array(
         'parameter' => 'scratchpad_list_id',
         'tickAll' => TRUE,
         'showMessage' => TRUE,
-      ], $options
+      ), $options
     );
     if (empty($options['scratchpad_list_id']) && empty($_GET[$options['parameter']])) {
       // No list to load.
@@ -579,11 +582,10 @@ $('form#entry_form').tooltip({
         'fieldname' => 'scratchpad_list_id',
         'default' => $scratchpad_list_id,
       ]);
-      $r .= data_entry_helper::hidden_text([
+      $r .= data_entry_helper::hidden_text(array(
         'fieldname' => 'submission_extensions[]',
-        'default' => 'misc_extensions.remove_scratchpad',
-      ]);
-      data_entry_helper::$indiciaData['speciesChecklistScratchpadListId'] = $options['scratchpad_list_id'];
+        'default' => 'misc_extensions.remove_scratchpad'
+      ));
     }
     return $r;
   }
@@ -591,29 +593,27 @@ $('form#entry_form').tooltip({
   /**
    * Scratchpad deletion request callback.
    *
-   * An extension for the submission building code that adds a deletion
-   * request for a scratchpad that has now been converted into a list of
-   * records. Automatically called when the load_species_list_from_scratchpad
-   * control is used.
+   * An extension for the submission building code that adds a deletion request for a scratchpad that has now been
+   * converted into a list of records. Automatically called when the load_species_list_from_scratchpad control is
+   * used.
    */
   public static function remove_scratchpad($values, $s_array) {
-    // Convert to a list submission so we can send a scratchpad list deletion
-    // as well as the main submission.
-    $s_array[0] = [
+    // Convert to a list submission so we can send a scratchpad list deletion as well as the main submission.
+    $s_array[0] = array(
       'id' => 'sample',
-      'submission_list' => [
-        'entries' => [
-          [
+      'submission_list' => array(
+        'entries' => array(
+          array(
             'id' => 'scratchpad_list',
-            'fields' => [
-              'id' => ['value' => $values['scratchpad_list_id']],
-              'deleted' => ['value' => 't'],
-            ],
-          ],
-          $s_array[0],
-        ],
-      ],
-    ];
+            'fields' => array(
+              'id' => array('value' => $values['scratchpad_list_id']),
+              'deleted' => array('value' => 't')
+            )
+          ),
+          $s_array[0]
+        )
+      )
+    );
   }
 
   /**
@@ -713,25 +713,6 @@ JS;
       $r .= lang::get($options['text']);
     }
     return $r;
-  }
-
-  /**
-   * Takes an array of localisation strings and adds them to indiciaData.lang.
-   *
-   * For use by custom JS code. Options include:
-   * * @group - set to the named group to place the strings inside, which will
-   *   the name of a property added to indiciaData.lang.
-   * * @strings - a JSON object containing key/value pairs where the key is the
-   *   language string key and the value is the text in the default language.
-   */
-  public static function localised_text_js($auth, $args, $tabalias, $options) {
-    if (empty($options['group'])) {
-      return 'The misc_extensions.localised_text_js control needs a @group parameter';
-    }
-    if (empty($options['strings'])) {
-      return 'The misc_extensions.localised_text_js control needs a @strings parameter';
-    }
-    helper_base::addLanguageStringsToJs($options['group'], $options['strings']);
   }
 
   /**
