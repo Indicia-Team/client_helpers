@@ -281,6 +281,8 @@ class data_entry_helper extends helper_base {
    *       control.
    *     * hierarchical - set to true if the termlist is hierarchical. In this case terms shown in the drop down will
    *       include all the ancestors, e.g. coastal->coastal lagoon, rather than just the child term.
+   *     * minDepth - if hierarchical, set the min and max depth to limit the range of levels returned.
+   *     * maxDepth - if hierarchical, set the min and max depth to limit the range of levels returned.
    *     * unit - An optional unit label to display after the control (e.g. 'cm', 'kg').
    *     * regex - A regular expression which validates the controls input value.
    *     * default - default value for this control used for new rows
@@ -350,6 +352,8 @@ class data_entry_helper extends helper_base {
               'dataSource' => '/library/terms/terms_list_with_hierarchy',
               'extraParams' => [
                 'termlist_id' => $def['termlist_id'],
+                'min_depth' => empty($def['minDepth']) ? 0 : $def['minDepth'],
+                'max_depth' => empty($def['maxDepth']) ? 0 : $def['maxDepth'],
               ],
               'readAuth' => [
                 'auth_token' => $options['extraParams']['auth_token'],
