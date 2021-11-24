@@ -402,7 +402,11 @@ class iform_importer {
         'extraParams'=>$auth['read'] + array('id' => $_GET['group_id'], 'view' => 'detail')
       ));
       $group = $group[0];
-      $presets['sample:group_id'] = $_GET['group_id'];
+      if (!empty($model) && $model === 'groups_location') {
+        $presets['groups_location:group_id'] = $_GET['group_id'];
+      } else {
+        $presets['sample:group_id'] = $_GET['group_id'];
+      }
       hostsite_set_page_title(lang::get('Import data into the {1} group', $group['title']));
       // if a single survey specified for this group, then force the data into the correct survey
       $filterdef = json_decode($group['filter_definition'], TRUE);
