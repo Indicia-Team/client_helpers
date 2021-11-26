@@ -348,7 +348,8 @@ class data_entry_helper extends helper_base {
             ]);
           }
           else {
-            $termlistData = self::get_report_data([
+            iform_load_helpers(['report_helper']);
+            $termlistData = report_helper::get_report_data([
               'dataSource' => '/library/terms/terms_list_with_hierarchy',
               'extraParams' => [
                 'termlist_id' => $def['termlist_id'],
