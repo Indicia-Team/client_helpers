@@ -846,8 +846,7 @@ class helper_base {
       if (substr($indicia_theme_path, -1) !== '/') {
         $indicia_theme_path .= '/';
       }
-      $protocol = empty($_SERVER['HTTPS']) || $_SERVER['HTTPS'] === 'off' ? 'http' : 'https';
-      self::$resource_list = array (
+      self::$resource_list = array(
         'indiciaFns' => [
           'deps' => ['jquery'],
           'javascript' => [self::$js_path . "indicia.functions.js"],
@@ -924,7 +923,7 @@ class helper_base {
         'treeview' => array('deps' => array('jquery'), 'stylesheets' => array(self::$css_path."jquery.treeview.css"), 'javascript' => array(self::$js_path."jquery.treeview.js")),
         'treeview_async' => array('deps' => array('treeview'), 'javascript' => array(self::$js_path."jquery.treeview.async.js", self::$js_path."jquery.treeview.edit.js")),
         'googlemaps' => [
-          'javascript' => ["$protocol://maps.google.com/maps/api/js?v=3" . (empty(self::$google_maps_api_key) ? '' : '&key=' . self::$google_maps_api_key)],
+          'javascript' => ["https://maps.google.com/maps/api/js?v=3" . (empty(self::$google_maps_api_key) ? '' : '&key=' . self::$google_maps_api_key)],
         ],
         'fancybox' => [
           'deps' => ['jquery'],
