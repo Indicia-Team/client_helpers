@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Indicia, the OPAL Online Recording Toolkit.
  *
@@ -14,15 +13,21 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
+ * @package Client
+ * @subpackage PrebuiltForms
+ * @author  Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link https://github.com/indicia-team/client_helpers/
+ * @link  http://code.google.com/p/indicia/
  */
 
 require_once ('includes/report_filters.php');
 
 /**
- *A quick and easy way to download data you have access to.
+ *
+ *
+ * @package Client
+ * @subpackage PrebuiltForms
+ * A quick and easy way to download data you have access to.
  */
 class iform_easy_download {
 
@@ -284,28 +289,33 @@ class iform_easy_download {
     if (!empty($_POST))
       self::do_download($args, $nid);
 
-    iform_load_helpers(array('data_entry_helper'));
+    iform_load_helpers(['data_entry_helper']);
     $reload = data_entry_helper::get_reload_link_parts();
     $reloadPath = $reload['path'];
-    if(count($reload['params'])) $reloadPath .= '?'.helper_base::array_to_query_string($reload['params']);
-    $r = '<form method="POST" action="'.$reloadPath.'">';
-    $r .= '<fieldset><legend>'.lang::get('Filters').'</legend>';
-    if (count($filters)===0)
+    if (count($reload['params'])) {
+      $reloadPath .= '?' . helper_base::array_to_query_string($reload['params']);
+    }
+    $r = '<form method="POST" action="' . $reloadPath . '">';
+    $r .= '<fieldset><legend>' . lang::get('Filters') . '</legend>';
+    if (count($filters) === 0) {
       return 'This download page is configured so that no filter options are available.';
-    elseif (count($filters)===1) {
-      $r .= '<input type="hidden" name="user-filter" value="'.implode('', array_keys($filters)).'"/>';
-      // Since there is only one option, we may as well tell the user what it is.
-      drupal_set_title(implode('', array_values($filters)));
-      if (implode('', array_keys($filters))==='mine')
-        $r .= '<p>'.lang::get('Use this form to download your own records.').'</p>';
+    }
+    elseif (count($filters) === 1) {
+      $r .= '<input type="hidden" name="user-filter" value="' . implode('', array_keys($filters)) . '"/>';
+      // Since there is only one option, we may as well tell the user what it
+      // is.
+      hostsite_set_page_title(implode('', array_values($filters)));
+      if (implode('', array_keys($filters)) === 'mine') {
+        $r .= '<p>' . lang::get('Use this form to download your own records.') . '</p>';
+      }
     }
     else {
-      $r .= data_entry_helper::radio_group(array(
+      $r .= data_entry_helper::radio_group([
         'label' => lang::get('User filter'),
-        'fieldname'=>'user-filter',
+        'fieldname' => 'user-filter',
         'lookupValues' => $filters,
-        'default'=>(empty($_POST['user-filter']) ? 'mine' : $_POST['user-filter'])
-      ));
+        'default' => (empty($_POST['user-filter']) ? 'mine' : $_POST['user-filter']),
+      ]);
     }
     if (empty($args['survey_id'])) {
       // A survey picker when downloading my data

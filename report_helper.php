@@ -116,18 +116,25 @@ class report_helper extends helper_base {
   }
 
   /**
-   * Returns a simple HTML link to download the contents of a report defined by the options. The options arguments supported are the same as for the
-   * report_grid method. Pagination information will be ignored (e.g. itemsPerPage).
-   * If this download link is to be displayed alongside a report_grid to provide a download of the same data, set the id
-   * option to the same value for both the report_download_link and report_grid controls to link them together. Use the itemsPerPage parameter
-   * to control how many records are downloaded.
-   * @param array $options Options array with the following possibilities:
-   * * caption - link caption.
-   * * class - class attribute for the link generated.
-   * * dataSource - path to the report file.
-   * * format - Default to csv. Specify the download format, one of csv, json,
-   *   xml, nbn.
-   * * itemsPerPage - max size of download file. Default 20000.
+   * A link to download the output of a report.
+   *
+   * Returns a simple HTML link to download the contents of a report defined by
+   * the options. The options arguments supported are the same as for the
+   * report_grid method. Pagination information will be ignored (e.g.
+   * itemsPerPage). If this download link is to be displayed alongside a
+   * report_grid to provide a download of the same data, set the id option to
+   * the same value for both the report_download_link and report_grid controls
+   * to link them together. Use the itemsPerPage parameter to control how many
+   * records are downloaded.
+   *
+   * @param array
+   *   $options Options array with the following possibilities:
+   *   * caption - link caption.
+   *   * class - class attribute for the link generated.
+   *   * dataSource - path to the report file.
+   *   * format - Default to csv. Specify the download format, one of csv, json,
+   *     xml, nbn.
+   *   * itemsPerPage - max size of download file. Default 20000.
    */
   public static function report_download_link($options) {
     $options = array_merge(array(
@@ -141,13 +148,13 @@ class report_helper extends helper_base {
       $origDataSource = $options['dataSource'];
       $options['dataSource'] = $options['dataSourceDownloadLink'];
     }
-    $options = self::get_report_grid_options($options);
+    $options = self::getReportGridOptions($options);
     $options['linkOnly'] = TRUE;
     $currentParamValues = self::getReportGridCurrentParamValues($options);
-    $sortAndPageUrlParams = self::get_report_grid_sort_page_url_params($options);
+    $sortAndPageUrlParams = self::getReportGridSortPageUrlParams($options);
     // Don't want to paginate the download link.
     unset($sortAndPageUrlParams['page']);
-    $extras = self::get_report_sorting_paging_params($options, $sortAndPageUrlParams);
+    $extras = self::getReportSortingPagingParams($options, $sortAndPageUrlParams);
     $link = self::get_report_data($options, $extras . '&' . self::array_to_query_string($currentParamValues, TRUE), TRUE);
     if (isset($origDataSource)) {
       $options['dataSource'] = $origDataSource;
@@ -250,6 +257,10 @@ HTML;
   * settings will be shared across the reports even if they are on different pages of the site. For example if several reports on the
   * site have an ownData boolean parameter which filters the data to the user's own data, this can be set so that the reports all
   * share the setting. This functionality requires cookies to be enabled on the browser.</li>
+  * <li><b>rememberGridPosition</b><br/>
+  * If true, then the grid's last paging position, row filter and sort
+  * information are stored in a cookie and recalled the next time the page is
+  * visited.</li>
   * <li><b>mode</b><br/>
   * Pass report for a report, or direct for an Indicia table or view. Default is report.</li>
   * <li><b>readAuth</b><br/>
@@ -474,9 +485,9 @@ HTML;
   public static function report_grid($options) {
     global $indicia_templates;
     self::add_resource('fancybox');
-    $sortAndPageUrlParams = self::get_report_grid_sort_page_url_params($options);
-    $options = self::get_report_grid_options($options);
-    $extras = self::get_report_sorting_paging_params($options, $sortAndPageUrlParams);
+    $options = self::getReportGridOptions($options);
+    $sortAndPageUrlParams = self::getReportGridSortPageUrlParams($options);
+    $extras = self::getReportSortingPagingParams($options, $sortAndPageUrlParams);
     if ($options['ajax'])
       $options['extraParams']['limit']=0;
     // Request report data.
@@ -495,12 +506,12 @@ HTML;
     if ($options['ajax'])
       unset($options['extraParams']['limit']);
     if (isset($response['error'])) return $response['error'];
-    $r = self::params_form_if_required($response, $options, $currentParamValues);
+    $r = self::paramsFormIfRequired($response, $options, $currentParamValues);
     // return the params form, if that is all that is being requested, or the parameters are not complete.
     if ((isset($options['paramsOnly']) && $options['paramsOnly']) || !isset($response['records'])) return $r;
     $records = $response['records'];
     self::report_grid_get_columns($response, $options);
-    $pageUrl = self::report_grid_get_reload_url($sortAndPageUrlParams);
+    $pageUrl = self::reportGridGetReloadUrl($sortAndPageUrlParams);
     $thClass = $options['thClass'];
     $r .= $indicia_templates['loading_overlay'];
     $r .= "\n";
@@ -620,7 +631,7 @@ HTML;
       $currentUrl['path'] = $currentUrl['path'].'?q='.$currentUrl['params']['q'];
     }
     $tfoot .= '<tfoot>';
-    $tfoot .= '<tr><td colspan="'.count($options['columns'])*$options['galleryColCount'].'">'.self::output_pager($options, $pageUrl, $sortAndPageUrlParams, $response).'</td></tr>'.
+    $tfoot .= '<tr><td colspan="'.count($options['columns'])*$options['galleryColCount'].'">'.self::outputPager($options, $pageUrl, $sortAndPageUrlParams, $response).'</td></tr>'.
     $extraFooter = '';
     if (isset($options['footer']) && !empty($options['footer'])) {
       $footer = helper_base::getStringReplaceTokens($options['footer'], $options['readAuth']);
@@ -916,6 +927,7 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
   callback: '$options[callback]',
   url: '$warehouseUrl',
   reportGroup: '$options[reportGroup]',
+  rememberGridPosition: " . ($options['rememberGridPosition'] ? 'true' : 'false') . ",
   autoParamsForm: '$options[autoParamsForm]',
   rootFolder: '" . $rootFolder . "',
   imageFolder: '" . self::get_uploaded_image_folder() . "',
@@ -926,8 +938,8 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
   galleryColCount: $options[galleryColCount],
   pagingTemplate: '$indicia_templates[paging]',
   pathParam: '$pathParam',
-  sendOutputToMap: ".((isset($options['sendOutputToMap']) && $options['sendOutputToMap']) ? 'true' : 'false').",
-  linkFilterToMap: ".(!empty($options['rowId']) && $options['linkFilterToMap'] ? 'true' : 'false').",
+  sendOutputToMap: " . ((isset($options['sendOutputToMap']) && $options['sendOutputToMap']) ? 'true' : 'false') . ",
+  linkFilterToMap: " . (!empty($options['rowId']) && $options['linkFilterToMap'] ? 'true' : 'false') . ",
   msgRowLinkedToMapHint: '" . addslashes(lang::get('Click the row to highlight the record on the map. Double click to zoom in.')) . "',
   msgNoInformation: '" . addslashes(lang::get('No information available')) . "',
   langFirst: '" . lang::get('first') . "',
@@ -936,6 +948,7 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
   langLast: '" . lang::get('last') . "',
   langShowing: '" . lang::get('Showing records {1} to {2} of {3}') . "',
   noRecords: '" . lang::get('No records')."',
+  noInfoAsPageTooHigh: '" . lang::get('No information available for the requested page of data. Use the page buttons below to load a different page.')."',
   altRowClass: '$options[altRowClass]',
   actionButtonTemplate: '" . $indicia_templates['report-action-button'] ."'";
       if (!empty($options['rowClass']))
@@ -1065,7 +1078,7 @@ JS;
    * @param string $currentParamValues Array of current parameter values, e.g. the contents
    * of a submitted parameters form.
    */
-  private static function params_form_if_required($response, $options, $currentParamValues) {
+  private static function paramsFormIfRequired($response, $options, $currentParamValues) {
     if (isset($response['parameterRequest'])) {
       // We put report param controls into their own divs, making layout easier. Unless going in the
       // map toolbar as they will then be inline.
@@ -1076,13 +1089,13 @@ JS;
         $indicia_templates['prefix']=$options['paramPrefix'];
       if (isset($options['paramSuffix']))
         $indicia_templates['suffix']=$options['paramSuffix'];
-      $r = self::get_report_grid_parameters_form($response, $options, $currentParamValues);
+      $r = self::getReportGridParametersForm($response, $options, $currentParamValues);
       $indicia_templates['prefix'] = $oldprefix;
       $indicia_templates['suffix'] = $oldsuffix;
       return $r;
     } elseif ($options['autoParamsForm'] && $options['mode']=='direct') {
       // loading records from a view (not a report), so we can put a simple filter parameter form at the top.
-      return self::get_direct_mode_params_form($options);
+      return self::getDirectModeParamsForm($options);
     }
 
     return ''; // no form required
@@ -1097,15 +1110,15 @@ JS;
    * @param array $response Response from the call to reporting services, which we are paginating.
    * @return string The HTML for the paginator.
    */
-  private static function output_pager($options, $pageUrl, $sortAndPageUrlParams, $response) {
+  private static function outputPager($options, $pageUrl, $sortAndPageUrlParams, $response) {
     if ($options['pager']) {
       global $indicia_templates;
       $pagLinkUrl = $pageUrl . ($sortAndPageUrlParams['orderby']['value'] ? $sortAndPageUrlParams['orderby']['name'].'='.$sortAndPageUrlParams['orderby']['value'].'&' : '');
       $pagLinkUrl .= $sortAndPageUrlParams['sortdir']['value'] ? $sortAndPageUrlParams['sortdir']['name'].'='.$sortAndPageUrlParams['sortdir']['value'].'&' : '';
       if (!isset($response['count'])) {
-        $r = self::simple_pager($options, $sortAndPageUrlParams, $response, $pagLinkUrl);
+        $r = self::simplePager($options, $sortAndPageUrlParams, $response, $pagLinkUrl);
       } else {
-        $r = self::advanced_pager($options, $sortAndPageUrlParams, $response, $pagLinkUrl);
+        $r = self::advancedPager($options, $sortAndPageUrlParams, $response, $pagLinkUrl);
       }
       $r = str_replace('{paging}', $r, $indicia_templates['paging_container']);
       if (count($response['records'])===0)
@@ -1124,7 +1137,7 @@ JS;
   * @param string $pagLinkUrl The basic URL used to construct page reload links in the pager.
   * @return string The HTML for the simple paginator.
   */
-  private static function simple_pager($options, $sortAndPageUrlParams, $response, $pagLinkUrl) {
+  private static function simplePager($options, $sortAndPageUrlParams, $response, $pagLinkUrl) {
     // Skip pager if all records fit on one page, or if doing AJAX initial population as JS will add pager
     // when ready.
     if ($sortAndPageUrlParams['page']['value'] == 0 && count($response['records']) <= $options['itemsPerPage']) {
@@ -1158,7 +1171,7 @@ JS;
   * @param string $pagLinkUrl The basic URL used to construct page reload links in the pager.
   * @return string The HTML for the advanced paginator.
   */
-  private static function advanced_pager($options, $sortAndPageUrlParams, $response, $pagLinkUrl) {
+  private static function advancedPager($options, $sortAndPageUrlParams, $response, $pagLinkUrl) {
     global $indicia_templates;
     $replacements = [];
     // build a link URL to an unspecified page
@@ -1313,7 +1326,7 @@ JS;
   * @link http://www.jqplot.com/docs/files/jqplot-core-js.html#Legend
   */
   public static function report_chart($options) {
-    $options = self::get_report_grid_options($options);
+    $options = self::getReportGridOptions($options);
     if (empty($options['rendererOptions']))
       $options['rendererOptions'] = [];
     if (empty($options['axesOptions']))
@@ -1340,7 +1353,7 @@ JS;
         break;
       // default is line
     }
-    self::check_for_jqplot_plugins($options);
+    self::checkForJqplotPlugins($options);
     $opts[] = "seriesDefaults:{\n      " .
       (isset($renderer) ? "renderer:$renderer,\n      " : '') .
       "rendererOptions:" . json_encode($options['rendererOptions']) .
@@ -1395,7 +1408,7 @@ JS;
       if (isset($data['error']))
         // data returned must be an error message so may as well display it
         return $data['error'];
-      $r = self::params_form_if_required($data, $options, $currentParamValues);
+      $r = self::paramsFormIfRequired($data, $options, $currentParamValues);
       //If we don't have any data for the chart, or we only want to display the params form,
       //then return $r before we even reach the chart display code.
       //Use '==' as the comparison once again as am not sure what style the exiting code will provide
@@ -1412,13 +1425,13 @@ JS;
       foreach ($data as $row) {
         if (isset($options['xValues']))
           // 2 dimensional data
-          $values[] = array(self::string_or_float($row[$options['xValues']]), self::string_or_float($row[$options['yValues']]));
+          $values[] = array(self::stringOrFloat($row[$options['xValues']]), self::stringOrFloat($row[$options['yValues']]));
         else {
           // 1 dimensional data, so we should have labels. For a pie chart these are use as x data values. For other charts they are axis labels.
           if ($options['chartType']=='pie') {
-            $values[] = array(lang::get($row[$options['xLabels']]), self::string_or_float($row[$options['yValues']]));
+            $values[] = array(lang::get($row[$options['xLabels']]), self::stringOrFloat($row[$options['yValues']]));
           } else {
-            $values[] = self::string_or_float($row[$options['yValues']]);
+            $values[] = self::stringOrFloat($row[$options['yValues']]);
             if (isset($options['xLabels']) && $idx===0)
               // get x labels from the first series only
               $xLabelsForSeries[] = $row[$options['xLabels']];
@@ -1596,7 +1609,7 @@ JS;
    * So, convert them back to numbers. If the value is a string, then it is run through translation
    * and returned as a string.
    */
-  private static function string_or_float($value) {
+  private static function stringOrFloat($value) {
     return (string)((float) $value) == $value ? (float) $value : lang::get($value);
   }
 
@@ -1606,7 +1619,7 @@ JS;
    * Currently only scans for the trendline and category_axis_rendered plugins.
    * @param Array $options Chart control's options array
    */
-  private static function check_for_jqplot_plugins($options) {
+  private static function checkForJqplotPlugins($options) {
     if (!empty($options['seriesOptions'])) {
       foreach($options['seriesOptions'] as $series) {
         if (isset($series['trendline']))
@@ -1626,7 +1639,7 @@ JS;
    * parameters.
    * @param array $options Options passed to the report control, which should contain the column definitions.
    */
-  private static function get_direct_mode_params_form($options) {
+  private static function getDirectModeParamsForm($options) {
     global $indicia_templates;
     $reloadUrl = self::get_reload_link_parts();
     $r = '<form action="'.$reloadUrl['path'].'" method="get" class="linear-form" id="filterForm-'.$options['id'].'">';
@@ -1711,10 +1724,10 @@ JS;
     if (empty($options['class']))
       // prevent default report grid classes as this is not a grid
       $options['class'] = 'banded-report';
-    $options = self::get_report_grid_options($options);
+    $options = self::getReportGridOptions($options);
     self::request_report($response, $options, $currentParamValues, false);
     if (isset($response['error'])) return $response['error'];
-    $r = self::params_form_if_required($response, $options, $currentParamValues);
+    $r = self::paramsFormIfRequired($response, $options, $currentParamValues);
     // return the params form, if that is all that is being requested, or the parameters are not complete.
     if ($options['paramsOnly'] || !isset($response['records'])) return $r;
     $records = $response['records'];
@@ -1943,7 +1956,7 @@ JS;
       'dataSourceLoRes' => '',
       'minMapReportZoom' => 'false',
     ), $options);
-    $options = self::get_report_grid_options($options);
+    $options = self::getReportGridOptions($options);
 
     // Keep track of the columns in the report output which we need to draw the layer and popups.
     $colsToInclude=[];
@@ -1961,7 +1974,7 @@ JS;
         // Return immediately on error.
         return $response['error'];
       }
-      $r = self::params_form_if_required($response, $options, $currentParamValues);
+      $r = self::paramsFormIfRequired($response, $options, $currentParamValues);
       if ($options['paramsOnly'] || !isset($response['records'])) {
         // Return the params form, if that is all that is being requested, or the parameters are not complete.
         return $r;
@@ -1993,7 +2006,7 @@ JS;
       // We are doing WMS mapping using geoserver, so we just need to know the param values.
       $currentParamValues = self::getReportGridCurrentParamValues($options);
       $response = self::get_report_data($options, self::array_to_query_string($currentParamValues, true).'&wantRecords=0&wantParameters=1');
-      $r = self::get_report_grid_parameters_form($response, $options, $currentParamValues);
+      $r = self::getReportGridParametersForm($response, $options, $currentParamValues);
     }
 
     if (isset($response['records']) ||
@@ -2471,10 +2484,10 @@ mapSettingsHooks.push(function(opts) { $setLocationJs
    * Generates the extra URL parameters that need to be appended to a report service call request, in order to
    * include the sorting and pagination parameters.
    * @param array @options Options array sent to the report.
-   * @param array @sortAndPageUrlParams Paging and sorting info returned from a call to get_report_grid_sort_page_url_params.
+   * @param array @sortAndPageUrlParams Paging and sorting info returned from a call to getReportGridSortPageUrlParams.
    * @return string Snippet of URL containing the required URL parameters.
    */
-  private static function get_report_sorting_paging_params($options, $sortAndPageUrlParams) {
+  private static function getReportSortingPagingParams($options, $sortAndPageUrlParams) {
     // Work out the names and current values of the params we expect in the report request URL for sort and pagination
     $page = (isset($sortAndPageUrlParams['page']) && $sortAndPageUrlParams['page']['value']
         ? $sortAndPageUrlParams['page']['value'] : 0);
@@ -2500,26 +2513,42 @@ mapSettingsHooks.push(function(opts) { $setLocationJs
    * @return array Contains the orderby, sortdir and page params, as an assoc array. Each array value
    * is an array containing name & value.
    */
-  private static function get_report_grid_sort_page_url_params($options) {
-    $orderbyKey = 'orderby' . (isset($options['id']) ? '-'.$options['id'] : '');
-    $sortdirKey = 'sortdir' . (isset($options['id']) ? '-'.$options['id'] : '');
-    $pageKey = 'page' . (isset($options['id']) ? '-'.$options['id'] : '');
-    $cookiename = "clientReportSort".(isset($options['id']) ? '-'.$options['id'] : '');
-    $clientReportSort = isset($_COOKIE[$cookiename]) ? explode(':',$_COOKIE[$cookiename],2) : false;
-    return array(
-      'orderby' => array(
-        'name' => $orderbyKey,
-        'value' => isset($_GET[$orderbyKey]) ? $_GET[$orderbyKey] : ($clientReportSort ? $clientReportSort[1] : null)
-      ),
-      'sortdir' => array(
-        'name' => $sortdirKey,
-        'value' => isset($_GET[$sortdirKey]) ? $_GET[$sortdirKey] : ($clientReportSort ? $clientReportSort[0] : null)
-      ),
-      'page' => array(
-        'name' => $pageKey,
-        'value' => isset($_GET[$pageKey]) ? $_GET[$pageKey] : null
-      )
-    );
+  private static function getReportGridSortPageUrlParams($options) {
+    $orderBy = NULL;
+    $sortDir = NULL;
+    $page = NULL;
+    if (isset($_GET["orderby$options[id]"])) {
+      $orderBy = $_GET["orderby$options[id]"];
+    }
+    elseif ($options['rememberGridPosition'] && isset($_COOKIE["report-orderby-$options[id]"])) {
+      $orderBy = $_COOKIE["report-orderby-$options[id]"];
+    }
+    if (isset($_GET["sortdir$options[id]"])) {
+      $sortDir = $_GET["sortdir$options[id]"];
+    }
+    elseif ($options['rememberGridPosition'] && isset($_COOKIE["report-sortdir-$options[id]"])) {
+      $sortDir = $_COOKIE["report-sortdir-$options[id]"];
+    }
+    if (isset($_GET["page$options[id]"])) {
+      $page = $_GET["page$options[id]"];
+    }
+    elseif ($options['rememberGridPosition'] && isset($_COOKIE["report-page-$options[id]"])) {
+      $page = $_COOKIE["report-page-$options[id]"];
+    }
+    return [
+      'orderby' => [
+        'name' => "orderby$options[id]",
+        'value' => $orderBy,
+      ],
+      'sortdir' => [
+        'name' => "sortdir$options[id]",
+        'value' => $sortDir
+      ],
+      'page' => [
+        'name' => "page$options[id]",
+        'value' => $page,
+      ],
+    ];
   }
 
 
@@ -2530,7 +2559,7 @@ mapSettingsHooks.push(function(opts) { $setLocationJs
    * @param array $sortAndPageUrlParams List of the sorting and pagination parameters which should be excluded.
    * @return string
    */
-  private static function report_grid_get_reload_url($sortAndPageUrlParams) {
+  private static function reportGridGetReloadUrl($sortAndPageUrlParams) {
     // get the url parameters. Don't use $_GET, because it contains any parameters that are not in the
     // URL when search friendly URLs are used (e.g. a Drupal path node/123 is mapped to index.php?q=node/123
     // using Apache mod_alias but we don't want to know about that)
@@ -2557,7 +2586,7 @@ mapSettingsHooks.push(function(opts) { $setLocationJs
    * @param $params
    * @return string HTML for the form.
    */
-  private static function get_report_grid_parameters_form($response, $options, $params) {
+  private static function getReportGridParametersForm($response, $options, $params) {
     if ($options['autoParamsForm'] || $options['paramsOnly']) {
       $r = '';
       // The form must use POST, because polygon parameters can be too large for GET.
@@ -2758,7 +2787,7 @@ if (typeof mapSettingsHooks!=='undefined') {
    * Apply the defaults to the options for the report grid.
    * @param array $options Array of control options.
    */
-  private static function get_report_grid_options($options) {
+  private static function getReportGridOptions($options) {
     $options = array_merge(array(
       'mode' => 'report',
       'id' => 'report-output', // this needs to be set explicitly when more than one report on a page
@@ -2790,6 +2819,7 @@ if (typeof mapSettingsHooks!=='undefined') {
       'pager' => TRUE,
       'imageThumbPreset' => 'thumb',
       'includeColumnsPicker' => FALSE,
+      'rememberGridPosition' => FALSE,
     ), $options);
     // if using AJAX we are only loading parameters and columns, so may as well use local cache
     if ($options['ajax'])

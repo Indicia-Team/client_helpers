@@ -480,12 +480,24 @@ mapInitialisationHooks.push(function(mapdiv) {
 function iform_mnhnl_recordernamesControl($node, $auth, $args, $tabalias, $options) {
     $values = array();
   	$userlist = array();
-    $results = db_query('SELECT uid, name FROM {users}');
-    while($result = db_fetch_object($results)){
-    	$account = user_load($result->uid);
-    	if($account->uid != 1 && hostsite_user_has_permission($args['permission_name'], $account)){
-			$userlist[$result->name] = $result->name;
+    if(version_compare(hostsite_get_cms_version(), '8', '<')) {
+      $result = db_query('SELECT uid, name FROM {users} WHERE uid <> 0'); // assume drupal7
+		while($result = db_fetch_object($results)){
+			$account = user_load($result->uid);
+			if($account->uid != 1 && hostsite_user_has_permission($args['permission_name'], $account)){
+				$userlist[$result->name] = $result->name;
+			}
 		}
+    } else {
+      $results = \Drupal::database()->query('SELECT uid, name FROM {users_field_data} WHERE uid <> 0'); // drupal8 & above
+	  foreach ($results as $result) { // DB processing is different in 8 & above
+		if($result->uid){
+		  $account = user_load($result->uid); /* this loads the field_ fields */
+			if($account->uid != 1 && hostsite_user_has_permission($args['permission_name'], $account)){
+				$userlist[$result->name] = $result->name;
+			}
+		}
+	  }
     }
     if (isset(data_entry_helper::$entity_to_load['sample:recorder_names'])){
       if(!is_array(data_entry_helper::$entity_to_load['sample:recorder_names']))
@@ -4200,13 +4212,22 @@ function iform_mnhnl_listLocations($auth, $args) {
  */
 function iform_mnhnl_listUsers($auth, $args) {
 
-  $user_list = db_query('SELECT uid, name FROM {users}');
-  while($user = db_fetch_object($user_list)){
-    if($user->uid > 1 && hostsite_user_has_permssion('permission_name', $user->uid)) {
-      $account = user_load($user->uid);
-      $retVal[] = $account->name;
-    }
-  }
-
+    if(version_compare(hostsite_get_cms_version(), '8', '<')) {
+		$user_list = db_query('SELECT uid, name FROM {users}');
+		  while($user = db_fetch_object($user_list)){
+			if($user->uid > 1 && hostsite_user_has_permssion('permission_name', $user->uid)) {
+			  $account = user_load($user->uid);
+			  $retVal[] = $account->name;
+			}
+		  }
+	} else {
+		$user_lists = \Drupal::database()->query('SELECT uid, name FROM {users_field_data} WHERE uid <> 0'); // drupal8 & 9	
+		  foreach ($user_lists as $user) { // DB processing is different in 8 & above
+			if($user->uid > 1 && hostsite_user_has_permssion('permission_name', $user->uid)) {
+			  $account = user_load($user->uid);
+			  $retVal[] = $account->name;
+			}
+		  }		
+	}
   return array_unique($ret_val);
 }

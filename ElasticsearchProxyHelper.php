@@ -762,7 +762,7 @@ class ElasticsearchProxyHelper {
     if (in_array($permissionsFilter, $roleBasedPermissionsFilters)) {
       if (!hostsite_user_has_permission(self::$config['es'][$permissionName])) {
         header("HTTP/1.1 401 Unauthorised");
-        echo json_encode(['error' => "User does not have permission to $permissionsName"]);
+        echo json_encode(['error' => "User does not have permission to $permissionName"]);
         throw new ElasticsearchProxyAbort('Unauthorised');
       }
     }

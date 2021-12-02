@@ -1908,15 +1908,27 @@ class iform_wwt_colour_marked_report {
   private static function profile_load_all_profile(&$user) {
     // don't do anything unless in Drupal, with the profile module enabled, and the user logged in.
     if ($user->uid > 0 && function_exists('profile_load_profile')) {
-      $result = db_query('SELECT f.name, f.type, v.value FROM {profile_fields} f LEFT JOIN {profile_values} v ON f.fid = v.fid AND uid = %d', $user->uid);
-      while ($field = db_fetch_object($result)) {
-        if (empty($user->{$field->name})) {
-          if (empty($field->value))
-            $user->{$field->name} = '';
-          else
-            $user->{$field->name} = _profile_field_serialize($field->type) ? unserialize($field->value) : $field->value;
-        }
-      }
+		if(version_compare(hostsite_get_cms_version(), '8', '<')) {
+			$result = db_query('SELECT f.name, f.type, v.value FROM {profile_fields} f LEFT JOIN {profile_values} v ON f.fid = v.fid AND uid = %d', $user->uid);
+		  while ($field = db_fetch_object($result)) {
+			if (empty($user->{$field->name})) {
+			  if (empty($field->value))
+				$user->{$field->name} = '';
+			  else
+				$user->{$field->name} = _profile_field_serialize($field->type) ? unserialize($field->value) : $field->value;
+			}
+		  }
+		}
+		 else {
+		    $results = \Drupal::database()->query('SELECT uid, name FROM {users_field_data} WHERE uid <> 0'); // drupal8 & above
+              foreach ($results as $result) { // DB processing is different in 8 & above
+                if($result->uid){
+                  $account = user_load($result->uid); /* this loads the field_ fields, so no need for profile_load_profile */
+                  if(isset($account->profile_indicia_user_id) && isset($uList[$account->profile_indicia_user_id]) && $uList[$account->profile_indicia_user_id])
+                    $userList[$account->uid] = $account;
+                }
+              }
+		}		
     }
   }
 

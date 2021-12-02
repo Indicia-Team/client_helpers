@@ -165,7 +165,6 @@ class iform_subscribe_species_alert {
       ]);
     }
     // If not logged in, then ask for details to register against.
-    global $user;
     if (!hostsite_get_user_field('indicia_user_id')) {
       $form .= "<fieldset><legend>" . lang::get('Your details') . ":</legend>\n";
       $default = empty($_POST['first_name']) ? hostsite_get_user_field('first_name', '') : $_POST['first_name'];
@@ -184,7 +183,7 @@ class iform_subscribe_species_alert {
         'default' => $default,
         'class' => 'control-width-4',
       ]);
-      $default = empty($_POST['email']) ? (empty($user->mail) ? '' : $user->mail) : $_POST['email'];
+      $default = empty($_POST['email']) ? hostsite_get_user_field('mail', '') : $_POST['email'];
       $form .= data_entry_helper::text_input([
         'label' => lang::get('Email'),
         'fieldname' => 'email',
@@ -205,7 +204,7 @@ class iform_subscribe_species_alert {
       ]);
       $form .= data_entry_helper::hidden_text([
         'fieldname' => 'email',
-        'default' => $user->mail,
+        'default' => hostsite_get_user_field('mail', ''),
       ]);
       $form .= data_entry_helper::hidden_text([
         'fieldname' => 'user_id',

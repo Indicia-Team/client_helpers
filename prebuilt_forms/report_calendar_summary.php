@@ -1280,8 +1280,8 @@ class iform_report_calendar_summary {
               }
             } else {
               // @todo: This needs optimising as in the Drupal 6 version - don't want to load ALL users
-              $results = \Drupal::database()->query('SELECT uid, name FROM {users}');
-              foreach ($results as $result) { // DB processing is different in 7
+              $results = \Drupal::database()->query('SELECT uid, name FROM {users_field_data}');
+              foreach ($results as $result) { // DB processing is different in 8 & above
                 if($result->uid){
                   $account = user_load($result->uid); /* this loads the field_ fields, so no need for profile_load_profile */
                   if(isset($account->profile_indicia_user_id) && isset($uList[$account->profile_indicia_user_id]) && $uList[$account->profile_indicia_user_id])

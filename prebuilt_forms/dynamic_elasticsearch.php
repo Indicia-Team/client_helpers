@@ -213,7 +213,7 @@ TXT;
         'type' => 'text_input',
         'required' => FALSE,
         'group' => 'Permission settings',
-        'default' => 'access iform',
+        'default' => 'access iform content',
       ],
       [
         'name' => 'all_records_permission',

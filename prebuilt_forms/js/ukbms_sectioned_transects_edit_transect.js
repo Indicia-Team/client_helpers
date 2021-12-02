@@ -46,7 +46,7 @@ clearSection = function() {
   });
 };
 /*
- * This only loads the section data details: this is the third tab, it does not deal 
+ * This only loads the section data details: this is the third tab, it does not deal
  * with the route tab.
  */
 loadSectionDetails = function(section) {
@@ -64,7 +64,7 @@ loadSectionDetails = function(section) {
         $('#section-location-system,#section-location-system-select').val(indiciaData.sections[section].system);
     }
     $.getJSON(indiciaData.indiciaSvc + "index.php/services/data/location_attribute_value?location_id=" + indiciaData.sections[section].id +
-        "&mode=json&view=list&callback=?&auth_token=" + indiciaData.readAuth.auth_token + "&nonce=" + indiciaData.readAuth.nonce, 
+        "&mode=json&view=list&callback=?&auth_token=" + indiciaData.readAuth.auth_token + "&nonce=" + indiciaData.readAuth.nonce,
         function(data) {
           var attrname;
           $.each(data, function(idx, attr) {
@@ -82,28 +82,28 @@ loadSectionDetails = function(section) {
               }
               radioidx=0;
               // check the correct radio
-              while ($('#section-form #locAttr\\:'+attr.location_attribute_id+'\\:'+radioidx).length>0 && 
+              while ($('#section-form #locAttr\\:'+attr.location_attribute_id+'\\:'+radioidx).length>0 &&
                   $('#section-form #locAttr\\:'+attr.location_attribute_id+'\\:'+radioidx).val()!==attr.raw_value) {
                 radioidx++;
               }
-              if ($('#section-form #locAttr\\:'+attr.location_attribute_id+'\\:'+radioidx).length>0 && 
+              if ($('#section-form #locAttr\\:'+attr.location_attribute_id+'\\:'+radioidx).length>0 &&
                   $('#section-form #locAttr\\:'+attr.location_attribute_id+'\\:'+radioidx).val()===attr.raw_value) {
                 $('#section-form #locAttr\\:'+attr.location_attribute_id+'\\:'+radioidx).attr('checked', true);
               }
             } else if ($('#section-form #fld-locAttr\\:'+attr.location_attribute_id).length>0) {
               // a hierarchy select outputs a fld control, which needs a special case
-              $('#section-form #fld-locAttr\\:'+attr.location_attribute_id).val(attr.raw_value);              
+              $('#section-form #fld-locAttr\\:'+attr.location_attribute_id).val(attr.raw_value);
               $('#section-form #fld-locAttr\\:'+attr.location_attribute_id).attr('name',attrname);
               // check the option is already in the drop down.
               if ($('#section-form #locAttr\\:'+attr.location_attribute_id + " option[value='"+attr.raw_value+"']").length===0) {
                 // no - we'll just put it in at the top level
                 // @todo - should really now fetch the top level in the hierarchy then select that.
-                $('#section-form #locAttr\\:'+attr.location_attribute_id).append('<option value="' + 
+                $('#section-form #locAttr\\:'+attr.location_attribute_id).append('<option value="' +
                     attr.raw_value + '">' + attr.value + '</option>');
               }
               $('#section-form #locAttr\\:'+attr.location_attribute_id).val(attr.raw_value);
-            } else {              
-              $('#section-form #locAttr\\:'+attr.location_attribute_id).val(attr.raw_value);              
+            } else {
+              $('#section-form #locAttr\\:'+attr.location_attribute_id).val(attr.raw_value);
               $('#section-form #locAttr\\:'+attr.location_attribute_id).attr('name',attrname);
             }
           });
@@ -121,7 +121,7 @@ updateTransectDetails = function(newNumSections) {
   var ldata = {'location:id':$('#location\\:id').val(), 'website_id':indiciaData.website_id};
   var save = (newNumSections !== false);
   var renameAutoCalc = false;
-  
+
   if (typeof indiciaData.autocalcTransectLengthAttrId != 'undefined' &&
 		indiciaData.autocalcTransectLengthAttrId &&
 		indiciaData.autocalcSectionLengthAttrId) {
@@ -139,10 +139,10 @@ updateTransectDetails = function(newNumSections) {
 
   if(newNumSections !== false)
     ldata[indiciaData.numSectionsAttrName] = ''+newNumSections;
-  
+
   if(save)
 	  syncPost(indiciaData.ajaxFormPostUrl, ldata);
-  
+
   if(newNumSections !== false) {
 	window.onbeforeunload = null;
 	setTimeout(function(){
@@ -172,7 +172,7 @@ updateTransectDetails = function(newNumSections) {
 }
 
 /*
- * Check if any route changes or details changes have been saved before allowing 
+ * Check if any route changes or details changes have been saved before allowing
  * a new section to be selected.
  */
 confirmSelectSection = function(section, doFeature, withCancel) {
@@ -181,7 +181,7 @@ confirmSelectSection = function(section, doFeature, withCancel) {
 		  indiciaData.modifyFeature.active && indiciaData.modifyFeature.modified)
 	  indiciaData.routeChanged = true;
   if(indiciaData.routeChanged === true) {
-    var buttons =  { 
+    var buttons =  {
         "No":  function() { $(this).dialog('close');
         	// replace the route with the previous one for this section.
         	// At his point, indiciaData.currentSection should point to existing, previously selected section.
@@ -214,7 +214,7 @@ confirmSelectSection = function(section, doFeature, withCancel) {
         	saveRoute();
         	indiciaData.routeChanged = false;
         	checkIfSectionChanged(section, doFeature, withCancel);
-        } // synchronous for bit that matters. 
+        } // synchronous for bit that matters.
     };
     if(withCancel) {
       buttons.Cancel = function() { $(this).dialog('close'); };
@@ -227,7 +227,7 @@ confirmSelectSection = function(section, doFeature, withCancel) {
 };
 checkIfSectionChanged = function(section, doFeature, withCancel) {
   if(indiciaData.sectionDetailsChanged === true) {
-    var buttons =  { 
+    var buttons =  {
         "Yes": function() { $(this).dialog('close');
         	$('#section-form').submit();
         	selectSection(section, doFeature);
@@ -353,7 +353,7 @@ deleteSection = function(section) {
   // if it has been saved, delete any subsamples lodged against it.
   if(typeof indiciaData.sections[section] !== "undefined"){
     $.getJSON(indiciaData.indiciaSvc + "index.php/services/data/sample?location_id=" + indiciaData.sections[section].id +
-            "&mode=json&view=detail&callback=?&auth_token=" + indiciaData.readAuth.auth_token + "&nonce=" + indiciaData.readAuth.nonce, 
+            "&mode=json&view=detail&callback=?&auth_token=" + indiciaData.readAuth.auth_token + "&nonce=" + indiciaData.readAuth.nonce,
       function(sdata) {
         if (typeof sdata.error==="undefined") {
           $.each(sdata, function(idx, sample) {
@@ -423,7 +423,7 @@ saveRoute = function() {
 	$('.save-route').addClass('waiting-button');
 
 	$('#section-details-tab').show();
-    current = $('#section-select-route li.selected').html();          
+    current = $('#section-select-route li.selected').html();
     saveRouteDialogText = 'Saving the route data for section '+current+'.<br/>';
     // Leave indiciaData.currentFeature selected
     // Prepare data to post the new or edited section to the db
@@ -505,13 +505,13 @@ saveRoute = function() {
 
 $(document).ready(function() {
 
-  var doingSelection=false; 
-  
+  var doingSelection=false;
+
   $('#section-form').ajaxForm({ // pressed save on the form details page.
     async: false,
     dataType:  'json',
     complete: function() {
-      // 
+      //
     },
     success: function(data) {
       // remove existing errors:
@@ -538,8 +538,8 @@ $(document).ready(function() {
         indiciaData.sectionDetailsChanged = false;
       }
     }
-  });  
-  
+  });
+
   $('#section-select li').click(function(evt) {
     var parts = evt.target.id.split('-');
     confirmSelectSection(parts[parts.length-1], true, true);
@@ -553,7 +553,7 @@ $(document).ready(function() {
       indiciaData.currentFeature = null;
       indiciaData.routeChanged = false;
       indiciaData.enableSelectReload = true;
-      
+
       $('#section-select-route li').click(function(evt) {
     		    var parts = evt.target.id.split('-');
     		    confirmSelectSection(parts[parts.length-1], true, true);
@@ -576,7 +576,7 @@ $(document).ready(function() {
               if(div.map.controls[i].handler.line){
                 if(div.map.controls[i].handler.line.geometry.components.length == 2) // start point plus current unselected position)
                   div.map.controls[i].cancel();
-                else 
+                else
                   div.map.controls[i].undo();
                 return;
               }
@@ -629,7 +629,11 @@ $(document).ready(function() {
         );
 
       });
-      div.map.parentLayer = new OpenLayers.Layer.Vector('Transect Square', {style: div.map.editLayer.style, 'sphericalMercator': true, displayInLayerSwitcher: true});
+      div.map.parentLayer = new OpenLayers.Layer.Vector('Transect Square', {
+        style: div.map.editLayer.styleMap.styles.default.defaultStyle,
+        sphericalMercator: true,
+        displayInLayerSwitcher: true
+      });
       div.map.addLayer(div.map.parentLayer);
       // If there are any features in the editLayer without a section number, then this is the transect square feature, so move it to the parent layer,
       // otherwise it will be selectable and will prevent the route features being clicked on to select them. Have to do this each time the tab is displayed
@@ -650,7 +654,7 @@ $(document).ready(function() {
         $.each(routeMapDiv.map.parentLayer.features, function(idx, elem){ oldFeatures.push(elem); });
         if(oldFeatures.length>0)
         	routeMapDiv.map.parentLayer.removeFeatures(oldFeatures);
-        
+
         // next remove edit layer transect feature if present.
         $.each(routeMapDiv.map.editLayer.features, function(idx, elem){
           // there may be route modification circle features
@@ -661,7 +665,7 @@ $(document).ready(function() {
         });
         if(removeFeatures.length>0)
         	routeMapDiv.map.editLayer.removeFeatures(removeFeatures);
- 
+
         // finally copy from main map.
         $.each(mainMapDiv.map.editLayer.features, function(idx, elem){
             if(typeof elem.attributes.type !== "undefined" && elem.attributes.type === "clickPoint"){
@@ -675,16 +679,16 @@ $(document).ready(function() {
         else if(removeFeatures.length>0) // backup just in case
         	routeMapDiv.map.parentLayer.addFeatures(oldFeatures);
       }
-      
+
       function resetMainMap(div) {
           div.map.updateSize();
           if (typeof indiciaData.initialBounds !== "undefined") {
             indiciaFns.zoomToBounds(div, indiciaData.initialBounds);
             delete indiciaData.initialBounds;
           } else if(typeof div.map.baseLayer.onMapResize !== "undefined")
-            div.map.baseLayer.onMapResize();    	  
+            div.map.baseLayer.onMapResize();
       }
-      
+
       function resetRouteMap(div) {
           function _extendBounds(bounds, buffer) {
               var dy = (bounds.top-bounds.bottom) * buffer;
@@ -695,7 +699,7 @@ $(document).ready(function() {
               bounds.left = bounds.left - dx;
               return bounds;
           }
-          
+
           // when the route map is initially created it is hidden, so is not rendered, and the calculations of the map size are wrong
           // (Width is 100 rather than 100%), so any initial zoom in to the transect by the map panel is wrong.
           div.map.updateSize();
@@ -790,7 +794,7 @@ $(document).ready(function() {
           if($('.save-route').hasClass('waiting-button')) return; // prevents double clicking.
           $('.save-route').addClass('waiting-button');
 
-          var buttons =  { 
+          var buttons =  {
         	"Abort changes" : function() {
         	    $(this).dialog('close');
         	    // replace the route with the previous one for this section.
@@ -879,11 +883,11 @@ $(document).ready(function() {
           }
       }
 
-      div.map.editLayer.events.on({'featureadded': featureAddedEvent}); 
-      div.map.editLayer.events.on({'afterfeaturemodified': function() {indiciaData.routeChanged = true;}}); 
+      div.map.editLayer.events.on({'featureadded': featureAddedEvent});
+      div.map.editLayer.events.on({'afterfeaturemodified': function() {indiciaData.routeChanged = true;}});
     }
   });
-  
+
   $('#add-user').click(function(evt) {
     var user=($('#cmsUserId')[0]).options[$('#cmsUserId')[0].selectedIndex];
     if ($('#user-'+user.value).length===0) {
@@ -891,7 +895,7 @@ $(document).ready(function() {
           user.text+'</td><td><div class="ui-state-default ui-corner-all"><span class="remove-user ui-icon ui-icon-circle-close"></span></div></td></tr>');
     }
   });
-  
+
   $('.remove-user').live('click', function(evt) {
     $(evt.target).closest('tr').css('text-decoration','line-through');
     $(evt.target).closest('tr').addClass('ui-state-disabled');

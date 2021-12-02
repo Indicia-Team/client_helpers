@@ -114,6 +114,29 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
    *   List of parameters that this form requires.
    */
   public static function get_parameters() {
+    $defaultFormStructure = <<<TXT
+=Species=
+?Please enter the species you saw and any other information about them.?
+[species]
+@resizeWidth=1500
+@resizeHeight=1500
+[species attributes]
+[*]
+=Place=
+?Please provide the spatial reference of the record. You can enter
+the reference directly, or search for a place then click on the map
+to set it.?
+[spatial reference]
+[place search]
+[map]
+[*]
+=Other Information=
+?Please provide the following additional information.?
+[date]
+[sample comment]
+[*]
+=*=
+TXT;
     $formStructureDescription = <<<TXT
 <h3>Form structure overview</h3>
 Define the structure of the form. Each component goes on a new line and is nested inside the
@@ -249,7 +272,7 @@ TXT;
         [
           'name' => 'never_load_parent_sample',
           'caption' => 'Never load parent sample',
-          'description' => 'When editing a record in a parent/child sample 
+          'description' => 'When editing a record in a parent/child sample
             hierarchy, tick this box to prevent loading the parent sample into
             the form instead of the child sample.',
           'type' => 'boolean',
@@ -304,28 +327,7 @@ TXT;
           'caption' => 'Form structure',
           'description' => $formStructureDescription,
           'type' => 'textarea',
-          'default' => '
-            =Species=
-            ?Please enter the species you saw and any other information about them.?
-            [species]
-            @resizeWidth=1500
-            @resizeHeight=1500
-            [species attributes]
-            [*]
-            =Place=
-            ?Please provide the spatial reference of the record. You can enter
-            the reference directly, or search for a place then click on the map
-            to set it.?
-            [spatial reference]
-            [place search]
-            [map]
-            [*]
-            =Other Information=
-            ?Please provide the following additional information.?
-            [date]
-            [sample comment]
-            [*]
-            =*=',
+          'default' => $defaultFormStructure,
           'group' => 'User Interface',
         ],
         [
@@ -402,8 +404,8 @@ TXT;
           'name' => 'verification_panel',
           'caption' => 'Include verification precheck button',
           'description' => 'Include a "Precheck my records" button which allows
-            the user to request an automated verification check to be run 
-            against their records before submission, enabling them to provide 
+            the user to request an automated verification check to be run
+            against their records before submission, enabling them to provide
             additional information for any records which are likely to be
             contentious.',
           'type' => 'checkbox',
@@ -420,7 +422,7 @@ TXT;
             control in the User Interface - Form Structure setting. Use
             @searchUpdatesSref=true on the next line in the form structure to
             specify that the grid reference for the site should be automatically
-            filled in after a site has been selected. You can also add 
+            filled in after a site has been selected. You can also add
             @useLocationName=true on a line after the location autocomplete to
             force any unmatched location names to be stored as a free-text
             location name against the sample.',
@@ -666,7 +668,7 @@ TXT;
           'caption' => 'Use URL taxon parameter',
           'description' => 'Use a URL parameter called taxon to get the filter?
             Case sensitive. Uses the "Field used to filter taxa" setting to
-            control what is being filtered against, e.g. 
+            control what is being filtered against, e.g.
             &taxon=Passer+domesticus,Turdus+merula',
           'type' => 'boolean',
           'required' => FALSE,
@@ -686,7 +688,7 @@ TXT;
             species. Therefore there will be no species picker control or input
             grid, and the form will always operate in the single record,
             non-grid mode. You may like to include information about what is
-            being recorded in the body text for the page or by using the 
+            being recorded in the body text for the page or by using the
             <strong>Include a message stating which species you are recording in
             single species mode?</strong> checkbox to automatically add a
             message to the screen. You may also want to configure the User
@@ -782,7 +784,7 @@ TXT;
           'name' => 'defaults',
           'caption' => 'Default Values',
           'description' => 'Supply default values for each field as required. On
-            each line, enter fieldname=value. For custom attributes, the 
+            each line, enter fieldname=value. For custom attributes, the
             fieldname is the untranslated caption. For other fields, it is the
             model and fieldname, e.g. occurrence.record_status. For date fields,
             use today to dynamically default to today\'s date. NOTE, currently
@@ -825,8 +827,9 @@ TXT;
   }
 
   /**
-   * Declare the list of permissions we've got set up to pass to the CMS'
-   * permissions code.
+   * Declare the list of permissions set up on this page.
+   *
+   * Permissions can then be passed to the CMS' permissions code.
    *
    * @param int $nid
    *   Node ID, not used.
@@ -1410,15 +1413,24 @@ HTML;
         ]);
       }
     }
-    // Check if Record Status is included as a control. If not, then add it as a
-    // hidden.
+    // Check if Record Status is included as a control. If not, set a default.
     $arr = helper_base::explode_lines($args['structure']);
-    if (!in_array('[record status]', $arr)) {
-      $value = isset($args['defaults']['occurrence:record_status']) ? $args['defaults']['occurrence:record_status'] : 'C';
-      $r .= '<input type="hidden" id="occurrence:record_status" name="occurrence:record_status" value="' . $value . '" />' . PHP_EOL;
+    if (!in_array('[record status]', $arr) && empty($args['defaults']['occurrence:record_status'])) {
+      $args['defaults']['occurrence:record_status'] = 'C';
     }
-    if (!empty($args['defaults']['occurrence:release_status'])) {
-      $r .= '<input type="hidden" id="occurrence:release_status" name="occurrence:release_status" value="' . $args['defaults']['occurrence:release_status'] . '" />' . PHP_EOL;
+    // Some defaults need adding to the page as hiddens.
+    $hiddenKeys = [
+      'occurrence:record_status',
+      'occurrence:release_status',
+      'occurrence:licence_id',
+    ];
+    foreach ($hiddenKeys as $key) {
+      if (!empty($args['defaults'][$key])) {
+        $r .= data_entry_helper::hidden_text([
+          'fieldname' => $key,
+          'default' => $args['defaults'][$key],
+        ]);
+      }
     }
     $r .= get_user_profile_hidden_inputs($attributes, $args, isset(data_entry_helper::$entity_to_load['sample:id']), $auth['read']);
     if ($gridMode) {
@@ -1574,7 +1586,7 @@ HTML;
       $filterLines = helper_base::explode_lines($args['taxon_filter']);
       $options['taxonFilter'] = $filterLines;
     }
-    $occAttrOptions = self::extractOccurrenceAttributeOptions($options);
+    $attrOptions = self::extractAttributeOptions($options);
     $systems = explode(',', str_replace(' ', '', $args['spatial_systems']));
     call_user_func([self::$called_class, 'build_grid_taxon_label_function'], $args, $options);
     return data_entry_helper::multiple_places_species_checklist(array_merge([
@@ -1582,7 +1594,8 @@ HTML;
       'survey_id' => $args['survey_id'],
       'listId' => $args['list_id'],
       'lookupListId' => $args['extra_list_id'],
-      'occAttrOptions' => $occAttrOptions,
+      'occAttrOptions' => $attrOptions['occ'],
+      'smpAttrOptions' => $attrOptions['smp'],
       'systems' => $args['spatial_systems'],
       'occurrenceComment' => $args['occurrence_comment'],
       'occurrenceSensitivity' => (isset($args['occurrence_sensitivity']) ? $args['occurrence_sensitivity'] : FALSE),
@@ -1799,14 +1812,15 @@ HTML;
     if (isset($options['view'])) {
       $extraParams['view'] = $options['view'];
     }
-    $occAttrOptions = self::extractOccurrenceAttributeOptions($options);
+    $attrOptions = self::extractAttributeOptions($options);
     // Make sure that if extraParams is specified as a config option, it does
     // not replace the essential stuff.
     if (isset($options['extraParams'])) {
       $options['extraParams'] = array_merge($extraParams, $options['extraParams']);
     }
     $species_ctrl_opts = array_merge([
-      'occAttrOptions' => $occAttrOptions,
+      'occAttrOptions' => $attrOptions['occ'],
+      'smpAttrOptions' => $attrOptions['smp'],
       'listId' => $args['list_id'],
       'label' => lang::get('occurrence:taxa_taxon_list_id'),
       'columns' => 1,
@@ -1858,10 +1872,18 @@ HTML;
     return $r;
   }
 
-  protected static function extractOccurrenceAttributeOptions(&$options) {
+  /**
+   * Finds options that refer to an attribute column.
+   *
+   * Attribute options can be specified as @occAttr:n|option=value or
+   * @smpAttr:n|option=value so copy them into format required for the
+   * occAttrOptions and smpAttrOptions options of the species_checklist
+   * control.
+   */
+  protected static function extractAttributeOptions(&$options) {
     // There may be options in the form occAttr:n|param => value targetted at
     // specific attributes.
-    $occAttrOptions = [];
+    $attrOptions = ['occ' => [], 'smp' => []];
     $optionToUnset = [];
     foreach ($options as $option => $value) {
       // Split the id of the option into the attribute name and option name.
@@ -1870,14 +1892,11 @@ HTML;
         // An occurrence attribute option was found.
         $attrName = $optionParts[0];
         $optName = $optionParts[1];
-        // Split the attribute name into the type and id (type will always be
-        // occAttr).
+        // Split the attribute name into the type and id.
         $attrParts = explode(':', $attrName);
         $attrId = $attrParts[1];
-        if (!isset($occAttrOptions[$attrId])) {
-          $occAttrOptions[$attrId] = [];
-        }
-        $occAttrOptions[$attrId][$optName] = apply_user_replacements($value);
+        $type = substr($attrParts[0], 0, 3);
+        $attrOptions[$type][$attrId][$optName] = apply_user_replacements($value);
         $optionToUnset[] = $option;
       }
     }
@@ -1885,7 +1904,7 @@ HTML;
     foreach ($optionToUnset as $value) {
       unset($options[$value]);
     }
-    return $occAttrOptions;
+    return $attrOptions;
   }
 
   /**
@@ -2998,29 +3017,33 @@ JS;
   }
 
   /**
+   * Return default form parameters.
+   *
    * When a form version is upgraded introducing new parameters, old forms will
    * not get the defaults for the parameters unless the Edit and Save button is
    * clicked. So, apply some defaults to keep those old forms working.
    */
   protected static function getArgDefaults($args) {
     if (!isset($args['structure']) || empty($args['structure'])) {
-      $args['structure'] = "=Species=\r\n" .
-        "?Please enter the species you saw and any other information about them.?\r\n" .
-        "[species]\r\n" .
-        "[species attributes]\r\n" .
-        "[*]\r\n" .
-        "=Place=\r\n" .
-        "?Please provide the spatial reference of the record. You can enter the reference directly, or search for a place then click on the map.?\r\n" .
-        "[place search]\r\n" .
-        "[spatial reference]\r\n" .
-        "[map]\r\n" .
-        "[*]\r\n" .
-        "=Other Information=\r\n" .
-        "?Please provide the following additional information.?\r\n" .
-        "[date]\r\n" .
-        "[sample comment]\r\n" .
-        "[*]\r\n" .
-        "=*=";
+      $args['structure'] = <<<TXT
+=Species=
+?Please enter the species you saw and any other information about them.?
+[species]
+[species attributes]
+[*]
+=Place=
+?Please provide the spatial reference of the record. You can enter the reference directly, or search for a place then click on the map.?
+"[place search]
+[spatial reference]
+[map]
+[*]
+=Other Information=
+?Please provide the following additional information.?
+[date]
+[sample comment]
+[*]
+=*=
+TXT;
     }
     if (!isset($args['occurrence_comment'])) {
       $args['occurrence_comment'] = FALSE;

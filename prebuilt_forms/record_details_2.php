@@ -909,7 +909,10 @@ JS;
   }
 
   /**
-   * An edit button control which only displays if the user owns the record.
+   * A set of buttons for navigating from the record details.
+   *
+   * Options include an edit button (only shown for the record owner), explore
+   * link, and link to details of the species associated with the record.
    *
    * @param array $auth
    *   Read authorisation array.
@@ -918,19 +921,22 @@ JS;
    * @param string $tabalias
    *   The alias of the tab this appears on.
    * @param array $options
-   *   Options configured for this control.
+   *   Options configured for this control. Specify the following options:
+   *   * buttons - array containing 'edit' to include the edit button,
+   *     'explore' for the explore link button, 'species details' for the
+   *     species details page link. Defaults to all buttons.
    *
    * @return string
    *   HTML for the buttons.
    */
   protected static function get_control_buttons($auth, $args, $tabalias, $options) {
-    $options = array_merge(array(
-      'buttons' => array(
+    $options = array_merge([
+      'buttons' => [
         'edit',
         'explore',
         'species details',
-      ),
-    ));
+      ],
+    ]);
     $r = '<div class="record-details-buttons">';
     foreach ($options['buttons'] as $button) {
       if ($button === 'edit') {
@@ -972,8 +978,8 @@ JS;
     }
     self::load_record($auth, $args);
     $record = self::$record;
-    if (($user_id = hostsite_get_user_field('indicia_user_id')) && $user_id == self::$record['created_by_id']
-        && $args['website_id'] == self::$record['website_id']) {
+    if (($user_id = hostsite_get_user_field('indicia_user_id')) && $user_id == $record['created_by_id']
+        && $args['website_id'] == $record['website_id']) {
       if (empty($record['input_form'])) {
         $record['input_form'] = $args['default_input_form'];
       }
