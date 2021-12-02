@@ -85,33 +85,37 @@ class extension_photo_checklist {
     helper_base::add_resource('font_awesome');
     helper_base::add_resource('plupload');
     self::applyDefaultOptions($options);
-    helper_base::$indiciaData["photo-checklist-$options[id]"] = [
-      'expandSections' => $options['expandSections'],
-    ];
     helper_base::$indiciaData['uploadScript'] = helper_base::getRootFolder() . helper_base::client_helper_path() . 'upload.php';
     helper_base::$indiciaData['imageRelativePath'] = helper_base::getImageRelativePath();
     helper_base::$indiciaData['interimImagePath'] = helper_base::getInterimImageFolder();
     helper_base::$indiciaData['rootFolder'] = helper_base::getRootFolder();
     $occurrences = self::loadExistingSampleOccurrences($auth, $options);
+    helper_base::$indiciaData["photo-checklist-$options[id]"] = [
+      'expandSections' => $options['expandSections'],
+      'speciesSections' => $options['speciesSections'],
+      'occurrences' => $occurrences,
+      'sectionTemplate' => $options['sectionTemplate'],
+    ];
     $r = '';
     $sectionIdx = 0;
     foreach ($options['speciesSections'] as $title => $sectionInfo) {
       if (empty($sectionInfo['params'])) {
         throw new exception('The [photo_checklist.photo_checklist_grid] control @speciesSections array items each need a params configuration to define the taxa to load.');
       }
-      $sectionIdx++;
-      $items = self::getSpeciesPanels($sectionIdx, $auth, $options, $sectionInfo['params'], $occurrences);
+    }
+      /*$sectionIdx++;
+      //$items = self::getSpeciesPanels($sectionIdx, $auth, $options, $sectionInfo['params'], $occurrences);
       $r .= str_replace([
-        '{{ items }}',
+        //'{{ items }}',
         '{{ section_id }}',
         '{{ section_title }}',
       ], [
-        implode('', $items),
+        //implode('', $items),
         "$options[id]-section-$sectionIdx",
         $title,
       ], $options['sectionTemplate']);
-    }
-    $r = str_replace(['{{ id }}', '{{ sections }}'], [$options['id'], $r], $options['containerTemplate']);
+    }*/
+    $r = str_replace(['{{ id }}'], [$options['id']], $options['containerTemplate']);
     // Enable custom submission handling.
     $r .= data_entry_helper::hidden_text([
       'fieldname' => 'submission_extensions[]',
@@ -203,7 +207,7 @@ class extension_photo_checklist {
       'resizeWidth' => 1500,
       'resizeQuality' => 90,
       // Templates.
-      'containerTemplate' => '<div class="panel-group photo-checklist" id="{{ id }}">{{ sections }}</div>',
+      'containerTemplate' => '<div class="panel-group photo-checklist" id="{{ id }}"></div>',
       'sectionTemplate' => '
 <div class="panel panel-default photo-checklist-section">
   <div class="panel-heading">
@@ -212,7 +216,7 @@ class extension_photo_checklist {
     </h4>
   </div>
   <div id="{{ section_id }}" class="panel-collapse collapse">
-    <div class="panel-body photo-checklist-item-container">{{ items }}</div>
+    <div class="panel-body photo-checklist-item-container"></div>
   </div>
 </div>',
       'itemTemplate' => '

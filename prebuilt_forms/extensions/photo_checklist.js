@@ -1,9 +1,28 @@
 jQuery(document).ready(function($) {
 
+  indiciaFns.populatePhotoChecklist = function populatePhotoChecklist(el, speciesSections) {
+    var id = $(el).attr('id');
+    var config = indiciaData['photo-checklist-' + id];
+    var sectionIdx = 0;
+    $.each(speciesSections, function(title, sectionInfo) {
+      var sectionId;
+      console.log(title);
+      console.log(sectionInfo);
+      sectionIdx++;
+      sectionId = config.id + '-section-' + sectionId;
+      $(config.sectionTemplate
+        .replace('{{ section_title }}', title)
+        .replace('{{ section_id }}', sectionId)
+        ).appendTo(el);
+    });
+  }
+
   $.each($('.photo-checklist'), function() {
     var id = $(this).attr('id');
     var config = indiciaData['photo-checklist-' + id];
     var resize = null;
+
+    indiciaFns.populatePhotoChecklist(this, config.speciesSections);
     if (config.resizeWidth && config.resizeHeight) {
       resize = {
         width: config.resizeWidth,
