@@ -6816,14 +6816,11 @@ if (errors$uniq.length>0) {
             if (!empty($_POST[$field]))
               $arr[$field]=$_POST[$field];
           }
-          // put them in a cookie with a 30 day expiry
-          setcookie('indicia_remembered', serialize($arr), time()+60*60*24*30);
-          // cookies are only set when the page is loaded. So if we are reloading the same form after submission,
-          // we need to fudge the cookie
-          $_COOKIE['indicia_remembered'] = serialize($arr);
-        } else {
-          // the user opted out of having a cookie - delete one if present.
-          setcookie('indicia_remembered', '');
+          hostsite_set_cookie('indicia_remembered', serialize($arr), time()+60*60*24*30);
+        }
+        else {
+          // The user opted out of having a cookie - delete one if present.
+          hostsite_set_cookie('indicia_remembered', '');
         }
       }
 
@@ -8982,6 +8979,9 @@ HTML;
    * </ul>
    *
    * @return string HTML to insert into the page for the cookie optin control.
+   *
+   * @deprecated
+   *   Should use integration with EU Cookie Compliance module instead.
    */
   public static function remembered_fields_optin($options) {
     $options['fieldname'] = 'cookie_optin';

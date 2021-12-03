@@ -5,10 +5,10 @@ var uspPrepChart, _get_week_number;
 var reportOptions;
 
 (function ($) {
-  
+
   // Initially the chart is blank.
   uspPrepChart = function(options) {
-    
+
     reportOptions = options;
 
     $('#'+reportOptions.species1SelectID+',#'+reportOptions.species2SelectID+',#'+reportOptions.weekNumSelectID).attr('disabled',true);
@@ -43,7 +43,7 @@ var reportOptions;
           }
         }
         cookieData[reportOptions.rememberParamsReportGroup][reportOptions.reportGroup+'-location_type_id'] = locationType;
-        $.cookie('providedParams', JSON.stringify(cookieData));
+        indiciaFns.cookie('providedParams', JSON.stringify(cookieData));
       }
 
       reportOptions.loadedSurveyID = reportOptions.surveyMapping[locationType].survey_id;
@@ -68,7 +68,7 @@ var reportOptions;
 
       // scan back to start of week one, then back 7 days to start of week zero
       // these work across month & year boundaries
-      if(weekOne_date_weekday >= reportOptions.weekStartDay) 
+      if(weekOne_date_weekday >= reportOptions.weekStartDay)
         reportOptions.zeroWeekStartDate.setDate(weekOne_date.getDate() - (weekOne_date_weekday-reportOptions.weekStartDay) - 7);
       else
         reportOptions.zeroWeekStartDate.setDate(weekOne_date.getDate() - (7+weekOne_date_weekday-reportOptions.weekStartDay) - 7);
@@ -94,10 +94,10 @@ var reportOptions;
           });
           reportOptions.opts.axes.xaxis.ticks = chartLabels;
           // convert the location_type into a survey_id
-            
+
           $.getJSON(reportOptions.base_url+'/index.php/services/report/requestReport?report='+reportOptions.dataSource+'.xml' +
                     '&reportSource=local&mode=json' +
-                    '&auth_token='+indiciaData.read.auth_token+'&reset_timeout=true&nonce='+indiciaData.read.nonce + 
+                    '&auth_token='+indiciaData.read.auth_token+'&reset_timeout=true&nonce='+indiciaData.read.nonce +
                     reportOptions.reportExtraParams +
                     '&callback=?' +
                     '&year='+reportOptions.loadedYear+'&date_from='+reportOptions.loadedYear+'-01-01&date_to='+reportOptions.loadedYear+'-12-31' +
@@ -146,7 +146,7 @@ var reportOptions;
                       break;
                   }
               });
-              
+
               // Next sort out the species list drop downs.
               $('#'+reportOptions.species1SelectID+' option,#'+reportOptions.species2SelectID+' option').remove();
               if(reportOptions.species.length) {
@@ -222,14 +222,14 @@ var reportOptions;
 //      reportOptions.opts.title.text = reportOptions.loadedYear + ' : ' + reportOptions.loadedLocation + ' : ';
       if(week == 'all') {
         week = reportOptions.allWeeksMax+1;
-//        reportOptions.opts.title.text += reportOptions.allWeeksDescription + ' (' + reportOptions.allWeeksMin + ' &gt ' + reportOptions.allWeeksMax + ')'; 
+//        reportOptions.opts.title.text += reportOptions.allWeeksDescription + ' (' + reportOptions.allWeeksMin + ' &gt ' + reportOptions.allWeeksMax + ')';
       } else if(week == 'season') {
         week = reportOptions.allWeeksMax+2;
-//        reportOptions.opts.title.text += reportOptions.seasonWeeksDescription + ' (' + reportOptions.seasonWeeksMin + ' &gt ' + reportOptions.seasonWeeksMax + ')'; 
+//        reportOptions.opts.title.text += reportOptions.seasonWeeksDescription + ' (' + reportOptions.seasonWeeksMin + ' &gt ' + reportOptions.seasonWeeksMax + ')';
       } else if(week == '') {
         return;
 //      } else {
-//        reportOptions.opts.title.text += reportOptions.weekLabel + ' ' + week;   
+//        reportOptions.opts.title.text += reportOptions.weekLabel + ' ' + week;
       }
       if($('#'+reportOptions.species1SelectID).val() != '') {
         $.each(reportOptions.values[$('#'+reportOptions.species1SelectID).val()][week], function(idx, val) {
@@ -305,7 +305,7 @@ var reportOptions;
         scaling = (width - 480) / (1024 - 480);
         location = (reportOptions.opts.legend.placement == 'outsideGrid' ? 's' : 'n');
       }
-      reportOptions.opts.legend.location = location;  
+      reportOptions.opts.legend.location = location;
       reportOptions.opts.seriesDefaults.rendererOptions.shadow = shadow;
       reportOptions.opts.seriesDefaults.rendererOptions.shadowWidth = scaling * 3;
       reportOptions.opts.seriesDefaults.rendererOptions.barMargin = 8 * scaling + 2;
@@ -315,7 +315,7 @@ var reportOptions;
       $.jqplot(reportOptions.id, reportOptions.seriesData, reportOptions.opts);
     });
   }
-  
+
   _get_week_number = function(o) { // occurrence object
     var d = new Date (o.date),
         yn = d.getFullYear(),
@@ -329,5 +329,5 @@ var reportOptions;
         ddiff = Math.round((d2-zeroDay)/8.64e7); // gets around Daylight Saving.
     return Math.floor(ddiff/7);
   }
-  
+
 }) (jQuery);

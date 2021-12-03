@@ -2888,7 +2888,7 @@ if (typeof mapSettingsHooks!=='undefined') {
       if (!isset($cookieData))
         $cookieData = [];
       $cookieData[$options['rememberParamsReportGroup']]=$providedParams;
-      setcookie('providedParams', json_encode($cookieData));
+      hostsite_set_cookie('providedParams', json_encode($cookieData));
     }
     // Get the report group prefix required for each relevant parameter
     $paramKey = (isset($options['reportGroup']) ? $options['reportGroup'] : '').'-';
