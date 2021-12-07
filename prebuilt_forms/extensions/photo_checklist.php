@@ -58,9 +58,11 @@ class extension_photo_checklist {
    *   supports replacements {{ species-info-link }} {{ link-common-name }}.
    *   Use this option only when the link HTML needs to be overridde.
    * * speciesSections - An array of sections to include in the grid, keyed
-   *   by the title. Each section contains a child object with a `params`
-   *   property, which defines the array of filter values to pass to the
-   *   taxa_search API when requesting the list of taxa to display. E.g.:
+   *   by the title. Sections can have their data loaded by an AJAX request to
+   *   the warehouse. To enable this, each section must contain a child object
+   *   with a `params` property, which defines the array of filter values to
+   *   pass to the taxa_search API when requesting the list of taxa to display.
+   *   E.g.:
    *
    *   ```
    *   @speciesSections=<!--{
@@ -70,6 +72,39 @@ class extension_photo_checklist {
    *         "external_key": "[\"NHMSYS0000504624\",\"NHMSYS0000523344\",\"NHMSYS0000516260\",\"NBNSYS0100005950\",\"NHMSYS0000501034\",\"NHMSYS0000503827\",\"NHMSYS0000503832\",\"NHMSYS0000516186\"]",
    *         "preferred": true
    *       }
+   *     }
+   *   }-->
+   *   ```
+   *
+   *   Alternatively, a preloaded taxon list can be specified as follows
+   *   (example loads one species only, the format is the same as the output of
+   *   the taxa_search web-service):
+   *   ```
+   *   @speciesSections=<!--{
+   *     "Common species": {
+   *       "taxaList": [
+   *         {
+   *           "taxa_taxon_list_id": "4999",
+   *           "searchterm": "Aglais urticae (Linnaeus, 1758)",
+   *           "original": "Aglais urticae",
+   *           "taxon": "Aglais urticae",
+   *           "authority": "(Linnaeus, 1758)",
+   *           "language_iso": "lat",
+   *           "preferred_taxon": "Aglais urticae",
+   *           "preferred_authority": "(Linnaeus, 1758)",
+   *           "default_common_name": "Small Tortoiseshell",
+   *           "taxon_group": "insect - butterfly",
+   *           "preferred": "t",
+   *           "preferred_taxa_taxon_list_id": "4999",
+   *           "taxon_meaning_id": "2556",
+   *           "external_key": "NHMSYS0000501034",
+   *           "taxon_group_id": "44",
+   *           "parent_id": "4993",
+   *           "identification_difficulty": null,
+   *           "id_diff_verification_rule_id": null,
+   *           "taxon_rank_sort_order": "300"
+   *         }
+   *       ]
    *     }
    *   }-->
    *   ```
@@ -89,32 +124,25 @@ class extension_photo_checklist {
     helper_base::$indiciaData['imageRelativePath'] = helper_base::getImageRelativePath();
     helper_base::$indiciaData['interimImagePath'] = helper_base::getInterimImageFolder();
     helper_base::$indiciaData['rootFolder'] = helper_base::getRootFolder();
+    foreach ($options['speciesSections'] as $sectionInfo) {
+      if (empty($sectionInfo['params'])) {
+        throw new exception('The [photo_checklist.photo_checklist_grid] control @speciesSections array items each need a params configuration to define the taxa to load.');
+      }
+    }
     $occurrences = self::loadExistingSampleOccurrences($auth, $options);
     helper_base::$indiciaData["photo-checklist-$options[id]"] = [
       'expandSections' => $options['expandSections'],
       'speciesSections' => $options['speciesSections'],
       'occurrences' => $occurrences,
       'sectionTemplate' => $options['sectionTemplate'],
+      'itemTemplate' => $options['itemTemplate'],
+      'imagesPath' => $options['imagesPath'],
+      'speciesInfoLink' => $options['speciesInfoLink'],
+      'speciesInfoLinkTemplate' => $options['speciesInfoLinkTemplate'],
+      'resizeHeight' => $options['resizeHeight'],
+      'resizeWidth' => $options['resizeWidth'],
+      'resizeQuality' => $options['resizeQuality'],
     ];
-    $r = '';
-    $sectionIdx = 0;
-    foreach ($options['speciesSections'] as $title => $sectionInfo) {
-      if (empty($sectionInfo['params'])) {
-        throw new exception('The [photo_checklist.photo_checklist_grid] control @speciesSections array items each need a params configuration to define the taxa to load.');
-      }
-    }
-      /*$sectionIdx++;
-      //$items = self::getSpeciesPanels($sectionIdx, $auth, $options, $sectionInfo['params'], $occurrences);
-      $r .= str_replace([
-        //'{{ items }}',
-        '{{ section_id }}',
-        '{{ section_title }}',
-      ], [
-        //implode('', $items),
-        "$options[id]-section-$sectionIdx",
-        $title,
-      ], $options['sectionTemplate']);
-    }*/
     $r = str_replace(['{{ id }}'], [$options['id']], $options['containerTemplate']);
     // Enable custom submission handling.
     $r .= data_entry_helper::hidden_text([
@@ -126,6 +154,56 @@ class extension_photo_checklist {
       'default' => $options['countOccAttrId'],
     ]);
     return $r;
+  }
+
+  /**
+   * A location picker that loads the photo list according to an attribute.
+   *
+   * E.g. a list of locations with a "Region" attribute can be shown, when the
+   * user picks a location, the photo checklist control is populated with
+   * species for that region.
+   *
+   * If there is only one site, then it will be selected by default and the
+   * list is immediately populated.
+   *
+   * Options include:
+   * * dataFile - name of a json format file in the public
+   *   files/indicia/photo-checklist folder which defines the list of species
+   *   for each region.
+   * * extraParams - provide any filters for the list of locations, e.g. a
+   *   location_type_id.
+   * * label - control label.
+   * * locAttrId - ID of the location attribute ID to load the photo checklist
+   *   based on the value of.
+   * * limitToCreatedByUser - if true, then only locations created by the user
+   *   are listed.
+   *
+   * Other options for the data_entry_helper::location_select control can also
+   * be used.
+   */
+  public static function photo_checklist_by_location_attr($auth, $args, $tabalias, $options, $path) {
+    if (empty($options['locAttrId'])) {
+      hostsite_show_message(lang::get('The [photo_checklist.photo_checklist_by_location_attr] control needs a @locAttrId option.'));
+      return '';
+    }
+    if (empty($options['dataFile'])) {
+      hostsite_show_message(lang::get('The [photo_checklist.photo_checklist_by_location_attr] control needs a @dataFile option.'));
+      return '';
+    }
+    $options = array_merge([
+      'blankText' => lang::get('- Please select -'),
+      'extraParams' => [],
+      'label' => lang::get('Site'),
+      'searchUpdatesSref' => TRUE,
+    ], $options);
+    $options['extraParams'] += $auth['read'];
+    if (!empty($options['limitToCreatedByUser'])) {
+      $options['extraParams'] += ['created_by_id' => hostsite_get_user_field('indicia_user_id')];
+    }
+    data_entry_helper::$indiciaData['useLocAttrToPopulatePhotoChecklist'] = $options['locAttrId'];
+    $filepath = hostsite_get_public_file_path();
+    data_entry_helper::$indiciaData['photoChecklistDataFile'] = data_entry_helper::getRootFolder() . "$filepath/indicia/photo-checklist/$options[dataFile]";
+    return data_entry_helper::location_select($options);
   }
 
   /**
@@ -193,14 +271,12 @@ class extension_photo_checklist {
     if (empty($options['countOccAttrId'])) {
       throw new exception('The [photo_checklist.photo_checklist_grid] control requires a @countOccAttrId option.');
     }
-    if (empty($options['speciesSections'])) {
-      throw new exception('The [photo_checklist.photo_checklist_grid] control requires a @speciesSections option.');
-    }
-    if (!is_array($options['speciesSections'])) {
+    if (!empty($options['speciesSections']) && !is_array($options['speciesSections'])) {
       throw new exception('The [photo_checklist.photo_checklist_grid] @speciesSections is not a valid JSON object.');
     }
     $options = array_merge([
       'expandSections' => 'first',
+      'speciesSections' => [],
       'id' => "photo-checklist-$photoChecklistCount",
       'imagesPath' => helper_base::getRootFolder() . hostsite_get_public_file_path() . '/indicia/photo-checklist',
       'resizeHeight' => 1500,
@@ -238,158 +314,11 @@ class extension_photo_checklist {
     <input type="hidden" class="photo-checklist-media-path" name="occ:photo-checklist-media:path:{{ section_idx }}-{{ item_idx }}" value="{{ media_path }}" />
     <input type="hidden" class="photo-checklist-mediaid" name="occ:photo-checklist-media:id:{{ section_idx }}-{{ item_idx }}" value="{{ media_id }}" />
     <input type="hidden" class="photo-checklist-media-deleted" name="occ:photo-checklist-media:deleted:{{ section_idx }}-{{ item_idx }}" value="f" />
-    <input type="number" class="form-control" name="occ:photo-checklist-count-{{ section_idx }}-{{ item_idx }}" min="1" placeholder="' . lang::get('Enter count seen') . '" value="{{ count }}">
+    <input type="number" class="form-control" name="occ:photo-checklist-count-{{ section_idx }}-{{ item_idx }}" min="1" placeholder="' . lang::get('Enter number seen') . '" value="{{ count }}">
   </div>
 </div>',
       'speciesInfoLinkTemplate' => '<a target="_blank" href="{{ species-info-link }}{{ link-common-name }}" title="' . lang::get('Find out more about this species') . '"><i class="fas fa-info-circle photo-info"></i></a>',
     ], $options);
-  }
-
-  /**
-   * Returns an array of species panel HTML blocks for a single section.
-   *
-   * @param int $sectionIdx
-   *   Section unique identifier.
-   * @param array $auth
-   *   Authorisation tokens.
-   * @param array $options
-   *   Control options.
-   * @param array $params
-   *   Filter parameters for the web-service that retrieves the list of taxa.
-   * @param array $occurrences
-   *   Existing occurrence data to load when in editing mode.
-   *
-   * @return array
-   *   Species panel HTML list.
-   */
-  private static function getSpeciesPanels($sectionIdx, array $auth, array $options, array $params, array $occurrences) {
-    $taxa = helper_base::get_population_data([
-      'table' => 'taxa_search',
-      'extraParams' => $auth['read'] + $params,
-    ]);
-    $items = [];
-    foreach ($taxa as $itemIdx => $taxon) {
-      $existingOccurrence = isset($occurrences[$taxon['preferred_taxa_taxon_list_id']]) ? $occurrences[$taxon['preferred_taxa_taxon_list_id']] : NULL;
-      drupal_set_message(var_export($existingOccurrence, TRUE));
-      $items[] = str_replace([
-        '{{ taxon }}',
-        '{{ preferred_taxon }}',
-        '{{ default_common_name }}',
-        '{{ formatted_taxon }}',
-        '{{ image }}',
-        '{{ speciesInfoLink }}',
-        '{{ section_idx }}',
-        '{{ item_idx }}',
-        '{{ occ_id }}',
-        '{{ media_id }}',
-        '{{ media_path }}',
-        '{{ ttl_id }}',
-        '{{ count }}',
-      ], [
-        $taxon['taxon'],
-        $taxon['preferred_taxon'],
-        $taxon['default_common_name'],
-        self::getFormattedTaxonLabel($taxon),
-        self::getTaxonImage($options, $taxon, $existingOccurrence),
-        self::getSpeciesInfoLink($options, $taxon),
-        $sectionIdx,
-        $itemIdx,
-        // Existing occurrence_id, media_id and path will go here.
-        $existingOccurrence ? $existingOccurrence['occurrence_id'] : '',
-        $existingOccurrence ? $existingOccurrence['media_id'] : '',
-        $existingOccurrence ? $existingOccurrence['media_path'] : '',
-        $taxon['taxa_taxon_list_id'],
-        $existingOccurrence ? $existingOccurrence['count'] : '',
-      ], $options['itemTemplate']);
-    }
-    return $items;
-  }
-
-  /**
-   * Retrieves a taxon label.
-   *
-   * @param array $taxon
-   *   Taxonomic data read from the database.
-   * @param bool $italicise
-   *   Should scientific species (or sub-species) names be italicised?
-   *
-   * @return string
-   *   Returns the common name, if available, or the scientific name otherwise
-   *   (italicised where appropriate).
-   */
-  private static function getFormattedTaxonLabel(array $taxon, $italicise = TRUE) {
-    if (!empty($taxon['default_common_name'])) {
-      return $taxon['default_common_name'];
-    }
-    elseif ($italicise && $taxon['taxon_rank_sort_order'] >= 300) {
-      return $taxon["<em>$taxon[preferred_taxon]</em>"];
-    }
-    else {
-      return $taxon["$taxon[preferred_taxon]"];
-    }
-  }
-
-  /**
-   * Returns the taxon image to add to each panel.
-   *
-   * Calculates the file name using the taxon name and builds a FancyBox
-   * thumbnail.
-   *
-   * @param array $options
-   *   Control options.
-   * @param array $taxon
-   *   Taxonomic data read from the database.
-   * @param array|null $existingOccurrence
-   *   If editing a sample, the existing occurrence data loaded for this panel.
-   *
-   * @return string
-   *   HTML for the image (including wrapping anchor element).
-   */
-  private static function getTaxonImage(array $options, array $taxon, $existingOccurrence) {
-    $path = $options['imagesPath'];
-    // Ensure trailing slash.
-    $path = (substr($path, -1) !== '/') ? "$path/" : "$path";
-    // Get the original default image details.
-    $origfilename = $path . preg_replace('/[^a-z0-9]/', '-', strtolower($taxon['taxon'])) . '.jpg';
-    $origThumbFilename = $path . 'thumb-' . preg_replace('/[^a-z0-9]/', '-', strtolower($taxon['taxon'])) . '.jpg';
-    if (!empty($existingOccurrence['media_path'])) {
-      $filename = helper_base::$base_url . "upload/$existingOccurrence[media_path]";
-      $thumbFilename = helper_base::$base_url . "upload/thumb-$existingOccurrence[media_path]";
-    }
-    else {
-      $filename = $origfilename;
-      $thumbFilename = $origThumbFilename;
-    }
-    $taxonLabel = self::getFormattedTaxonLabel($taxon, FALSE);
-    return <<<HTML
-<a class="fancybox" href="$filename" data-orig-href="$origfilename">
-  <img src="$thumbFilename" data-orig-src="$origThumbFilename" title="$taxonLabel" alt="$taxonLabel" class="img-rounded">
-</a>
-HTML;
-  }
-
-  /**
-   * Returns the species info link for each species panel.
-   *
-   * @param array $options
-   *   Control options.
-   * @param array $taxon
-   *   Taxonomic data read from the database.
-   *
-   * @return string
-   *   HTML for the link.
-   */
-  private static function getSpeciesInfoLink(array $options, array $taxon) {
-    if (!empty($options['speciesInfoLink'])) {
-      return str_replace([
-        '{{ species-info-link }}',
-        '{{ link-common-name }}'
-      ], [
-        $options['speciesInfoLink'],
-        preg_replace('/[^a-z0-9]/', '-', strtolower($taxon['default_common_name'])),
-      ], $options['speciesInfoLinkTemplate']);
-    }
-    return '';
   }
 
   /**
@@ -403,7 +332,7 @@ HTML;
    * @return array
    *   List of occurrence data, keyed by preferred taxa_taxon_list ID.
    */
-  private static function loadExistingSampleOccurrences($auth, $options) {
+  private static function loadExistingSampleOccurrences(array $auth, $options) {
     if (!empty(data_entry_helper::$entity_to_load['sample:id'])) {
       iform_load_helpers(['report_helper']);
       $occurrences = report_helper::get_report_data([

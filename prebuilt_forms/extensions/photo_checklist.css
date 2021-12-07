@@ -34,13 +34,16 @@ div.photo-checklist-item-container {
 .photo-toolbar {
   right: 2px;
 }
-.photo-toolbar .upload-photo, .photo-toolbar a {
+.photo-toolbar i, .photo-toolbar a {
   color: #333;
+  cursor: pointer;
+}
+.photo-toolbar i:hover, .photo-toolbar a:hover {
+  color: #447;
 }
 .photo-toolbar .delete-photo {
   display: none;
 }
-
 .photo-wrap progress {
   position: absolute;
   bottom: 0;
