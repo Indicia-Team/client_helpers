@@ -40,7 +40,7 @@ jQuery(document).ready(function($) {
           var countInput = photoPanel.find('input[type="number"]');
           var img = photoPanel.find('img');
           // Change the Fancybox link and the image thumbnail to the new image.
-          photoPanel.find('a.fancybox').attr('href', indiciaData.rootFolder + indiciaData.interimImagePath + file.name);
+          photoPanel.find('a.photo-popup').attr('href', indiciaData.rootFolder + indiciaData.interimImagePath + file.name);
           img.attr('src', indiciaData.rootFolder + indiciaData.interimImagePath + file.name);
           // Store the path to save to the database.
           photoPanel.find('.photo-checklist-media-path').val(file.name);
@@ -175,7 +175,7 @@ jQuery(document).ready(function($) {
       filename = origfilename;
       thumbFilename = origThumbFilename;
     }
-    return '<a class="fancybox" href="' + filename + '" data-orig-href="' + origfilename + '">' +
+    return '<a class="photo-popup" data-fancybox="fancybox" href="' + filename + '" data-orig-href="' + origfilename + '">' +
       '<img src="' + thumbFilename + '" data-orig-src="' + origThumbFilename + '" title="' + taxonLabel + '" alt="' + taxonLabel + '" class="img-rounded">' +
       '</a>';
   }
@@ -240,7 +240,7 @@ jQuery(document).ready(function($) {
     $(sectionBody).find('.delete-photo').click(function(e) {
       var panel = $(e.currentTarget).closest('.photo-checklist-item');
       var img = panel.find('img');
-      var a = panel.find('a.fancybox');
+      var a = panel.find('a.photo-popup');
       img.attr('src', img.attr('data-orig-src'));
       a.attr('href', a.attr('data-orig-href'));
       panel.find('.photo-checklist-media-deleted').val('t');
