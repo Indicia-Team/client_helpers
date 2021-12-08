@@ -175,7 +175,7 @@ jQuery(document).ready(function($) {
       filename = origfilename;
       thumbFilename = origThumbFilename;
     }
-    return '<a class="photo-popup" data-fancybox="fancybox" href="' + filename + '" data-orig-href="' + origfilename + '">' +
+    return '<a class="photo-popup" data-fancybox="fancybox" href="' + filename + '" data-orig-href="' + origfilename + '" data-caption="' + taxonLabel + '">' +
       '<img src="' + thumbFilename + '" data-orig-src="' + origThumbFilename + '" title="' + taxonLabel + '" alt="' + taxonLabel + '" class="img-rounded">' +
       '</a>';
   }
