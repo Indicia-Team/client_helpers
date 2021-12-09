@@ -357,7 +357,8 @@ jQuery(document).ready(function($) {
     // If only one location option, then select it.
     if ($('#imp-location option:not([value=""])').length === 1) {
       $('#imp-location').val($('#imp-location option:not([value=""])').val());
-      $('#imp-location').change();
     }
   }
+  // Force initial entry to load list.
+  $('#imp-location').change();
 });
