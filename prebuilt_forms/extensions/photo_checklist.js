@@ -344,11 +344,12 @@ jQuery(document).ready(function($) {
               // attribute values to the checklist data.
               if (indiciaData.photoChecklistData) {
                 populateFromPhotoChecklistData(attrValResponse[0].value);
+              } else {
+                $.getJSON(indiciaData.photoChecklistDataFile, function(dataFile) {
+                  indiciaData.photoChecklistData = dataFile;
+                  populateFromPhotoChecklistData(attrValResponse[0].value);
+                });
               }
-              $.getJSON(indiciaData.photoChecklistDataFile, function(dataFile) {
-                indiciaData.photoChecklistData = dataFile;
-                populateFromPhotoChecklistData(attrValResponse[0].value);
-              });
             }
           }
         );
