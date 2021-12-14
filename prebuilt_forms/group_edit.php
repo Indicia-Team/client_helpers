@@ -608,7 +608,7 @@ $('#entry_form').submit(function() {
             if (!isset($page['caption']))
               $page['caption'] = $page['path'];
             $default[] = [
-              'fieldname' => "group+:pages:",
+              'fieldname' => "groupComplex:pages:",
               'default' => json_encode(array($page['path'], $page['caption'], $page['administrator'])),
             ];
           }
@@ -674,7 +674,7 @@ $('#entry_form').submit(function() {
     $r = [];
     foreach ($pages as $page) {
       $r[] = array(
-        'fieldname' => "group+:pages:$page[id]",
+        'fieldname' => "groupComplex:pages:$page[id]",
         'default' => json_encode(array($page['path'], $page['caption'], $page['administrator'], $page['access_level'])),
       );
     }
@@ -978,13 +978,13 @@ $('#entry_form').submit(function() {
     }
     // Scan the posted values for group pages. This search grabs the first
     // column value keys, or if this is disabled then the hidden deleted field.
-    $pageKeys = preg_grep('/^group\+:pages:\d*:\d+:(0|deleted)$/', array_keys($values));
+    $pageKeys = preg_grep('/^groupComplex:pages:\d*:\d+:(0|deleted)$/', array_keys($values));
     $pages = [];
     foreach ($pageKeys as $key) {
       // Skip empty rows, unless they were rows loaded for an existing
       // group_pages record. Also skip deletions of non-existing rows or
       // non-deletions of any row.
-      if ((!empty($values[$key]) || preg_match('/^group\+:pages:(\d+)/', $key))
+      if ((!empty($values[$key]) || preg_match('/^groupComplex:pages:(\d+)/', $key))
           && !preg_match('/::(\d+):deleted$/', $key)
           && !(preg_match('/:deleted$/', $key) && $values[$key]==='f')) {
         // Get the key without the column index, so we can access any column we want.
@@ -1008,7 +1008,7 @@ $('#entry_form').submit(function() {
           ];
         }
         // If existing group page, hook up to the id.
-        if (preg_match('/^group\+:pages:(\d+)/', $key, $matches)) {
+        if (preg_match('/^groupComplex:pages:(\d+)/', $key, $matches)) {
           $page['id'] = $matches[1];
         }
         $pages[] = $page;
