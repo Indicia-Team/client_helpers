@@ -765,9 +765,13 @@ JS;
    *   the position on the other taxon affected by this association.
    * * impact_termlist_id - if specified then a column is added for selecting
    *   the impact on the other taxon of this association.
+   * * fidelity - if true then the Fidelity column is shown.
    */
   protected static function get_control_taxonassociations($auth, $args, $tabAlias, $options) {
     helper_base::add_resource('autocomplete');
+    $options = array_merge([
+      'fidelity' => FALSE,
+    ], $options);
     self::checkOptionFormat('/^\d+$/', $options, [
       'taxon_list_id',
       'association_type_id',
@@ -792,15 +796,20 @@ JS;
     $dataOptions = helper_base::getOptionsForJs($options, [
       'taxon_list_id',
       'association_type_id',
+      'fidelity',
     ], TRUE);
     global $indicia_templates;
     helper_base::addLanguageStringsToJs('taxonassoc', [
       'btnAddNew' => 'Add a new association row',
+      'fidelityHigh' => 'High',
+      'fidelityLow' => 'Low',
+      'fidelityMedium' => 'Medium',
       'hdrAssocTaxon' => 'Associated taxon',
       'hdrAssocType' => 'Association type',
       'hdrAssocPart' => 'Part of associated organism',
       'hdrAssocPosition' => 'Position on associated organism',
       'hdrAssocImpact' => 'Impact on associated organism',
+      'hdrFidelity' => 'Fidelity',
       'hdrTaxon' => 'Taxon',
       'pleaseSelect' => 'Please select',
       'pleaseSelectType' => 'Please select a type',
@@ -955,6 +964,8 @@ HTML;
               ? NULL : $values["associated-taxon-positionId:$rowId"],
             'impact_id' => empty($values["associated-taxon-impactId:$rowId"])
               ? NULL : $values["associated-taxon-impactId:$rowId"],
+            'fidelity' => empty($values["associated-taxon-fidelity:$rowId"])
+              ? NULL : $values["associated-taxon-fidelity:$rowId"],
           ];
           if (!empty($values["associated-taxon-id:$rowId"])) {
             $fields['id'] = $values["associated-taxon-id:$rowId"];
@@ -1041,5 +1052,3 @@ HTML;
   }
 
 }
-
-
