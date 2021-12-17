@@ -306,12 +306,12 @@ class extension_misc_extensions {
    * * includeCurrentPage - set to false to disable addition of the current page title to the end
    *   of the breadcrumb.
    */
-  public static function breadcrumb($auth, $args, $tabalias, $options, $path, $breadcrumb) {
+  public static function breadcrumb($auth, $args, $tabalias, $options, $path) {
     if (!isset($options['path'])) {
       return 'Please set an array of entries in the @path option';
     }
     if (version_compare(hostsite_get_cms_version(), '8', '<')) {
-      $breadcrumb[] = l('Home', '<front>');
+      $breadcrumb = [l('Home', '<front>')];
     }
     else {
       $breadcrumb = new \Drupal\Core\Breadcrumb\Breadcrumb();
