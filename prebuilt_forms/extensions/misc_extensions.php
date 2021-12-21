@@ -850,4 +850,30 @@ JS;
     return "<div id=\"$options[id]\"></div>";
   }
 
+  /**
+   * Outputs a QR Code image.
+   *
+   * Default is to output the current page URL but this can be overwritten by
+   * setting @data to the content of the required QR Code.
+   *
+   * Requires https://www.drupal.org/project/endroid_qr_code or any URL that
+   * can generate a QR code image, specified in the @generatorUrl parameter.
+   *
+   * Control the size with the @width and @height options.
+   *
+   * @return string
+   *   Image HTML.
+   */
+  public static function qr_code($auth, $args, $tabalias, $options) {
+    $protocol = empty($_SERVER['HTTPS']) || $_SERVER['HTTPS'] === 'off' ? 'http' : 'https';
+    $options = array_merge([
+      'data' => "$protocol://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]",
+      'generatorUrl' => helper_base::getRootFolder(TRUE) . 'image-qr-generate-with-url?path={data}',
+      'width' => 150,
+      'height' => 150,
+    ], $options);
+    $url = str_replace('{data}', urlencode($options['data']), $options['generatorUrl']);
+    return "<img src=\"$url\" width=\"$options[width]\" height=\"$options[height]\" />";
+  }
+
 }
