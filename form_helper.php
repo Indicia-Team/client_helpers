@@ -646,25 +646,32 @@ JS;
         'required' => FALSE,
       )
     );
-    // now get the specific parameters from the form
+    // Now get the specific parameters from the form.
     if (!is_callable(array('iform_' . $form, 'get_parameters'))) {
       throw new Exception("Form $form does not implement the get_parameters method.");
     }
-    $formParams = self::mapControlOptions(call_user_func(array('iform_' . $form, 'get_parameters')));
+    $formParams = self::mapControlOptions(call_user_func(["iform_$form", 'get_parameters']));
     $params = array_merge($params, $formParams);
     // Add in a standard parameter for specifying a redirection.
-    $params[] = array(
+    $redirectInstruct = <<<TXT
+The url of the page that will be navigated to after a successful data entry. Leave blank to just display a success
+message on the same page so further records can be entered. if the site is internationalised, make sure that the page
+you want to go to has a url specified that is the same for all language versions. Also ensure your site uses a path
+prefix for the language negotiation (administer > site configuration > languages > configure). then, specify the url
+that you attached to the node so that the language prefix is not included. Any URL query parameters with a value of
+&#123;id&#125; will be replaced with the saved record's ID; any with a value that matches a the name of a parameter in
+the current URL's query string but wrapped in braces will be replaced with the matching value from the current page
+URL. For example, "details/location?location_id=&#123;id&#125;&zoom=&#123;map_zoom&#125;" set the location_id
+parameter to the saved record ID and will pass the map_zoom value from the current URL to the zoom parameter.
+TXT;
+    $params[] = [
       'fieldname' => 'redirect_on_success',
       'label' => 'Redirect to page after successful data entry',
-      'helpText' => 'The url of the page that will be navigated to after a successful data entry. ' .
-          'leave blank to just display a success message on the same page so further records can be entered. if the site is internationalised, '.
-          'make sure that the page you want to go to has a url specified that is the same for all language versions. also ensure your site uses '.
-          'a path prefix for the language negotiation (administer > site configuration > languages > configure). then, specify the url that you attached to the node '.
-          'so that the language prefix is not included.',
+      'helpText' => $redirectInstruct,
       'type' => 'text_input',
       'required' => FALSE,
-    );
-    $params[] = array(
+    ];
+    $params[] = [
       'fieldname' => 'message_after_save',
       'label' => 'Display notification after save',
       'helpText' => 'After saving an input form, should a message be added to the page stating that the record has been saved? This should be left '.
@@ -673,7 +680,7 @@ JS;
       'type' => 'checkbox',
       'required' => FALSE,
       'default' => TRUE,
-    );
+    ];
     $params[] = array(
       'fieldname' => 'additional_css',
       'label' => 'Additional CSS files to include',
