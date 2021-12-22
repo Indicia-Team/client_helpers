@@ -1784,14 +1784,15 @@ JS;
 
  /**
   * Function to output a report onto a map rather than a grid.
-  * Because there are many options for the map, this method does not generate the
-  * map itself, rather it sends the output of the report onto a map_panel output
-  * elsewhere on the page. Like the report_grid, this can output a parameters
-  * form or can be set to use the parameters form from another output report (e.g.
-  * another call to report_grid, allowing both a grid and map of the same data
-  * to be generated). The report definition must contain a single column which is
-  * configured as a mappable column or the report must specify a parameterised
-  * CQL query to draw the map using WMS.
+
+  * Because there are many options for the map, this method does not generate
+  * the map itself, rather it sends the output of the report onto a map_panel
+  * output elsewhere on the page. Like the report_grid, this can output a
+  * parameters form or can be set to use the parameters form from another
+  * output report (e.g. another call to report_grid, allowing both a grid and
+  * map of the same data to be generated). The report definition must contain a
+  * single column which is configured as a mappable column or the report must
+  * specify a parameterised CQL query to draw the map using WMS.
   *
   * @param array $options Options array with the following possibilities:<ul>
   * <li><b>id</b><br/>
