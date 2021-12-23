@@ -294,6 +294,7 @@ class data_entry_helper extends helper_base {
    */
   public static function complex_attr_grid($options) {
     self::add_resource('complexAttrGrid');
+    self::add_resource('font_awesome');
     global $indicia_templates;
     $options = array_merge([
       'defaultRows' => 3,
@@ -463,7 +464,7 @@ class data_entry_helper extends helper_base {
       }
       $r .= "<td><input type=\"hidden\" name=\"$fieldnamePrefix:$i:deleted\" value=\"f\" class=\"delete-flag\"/>";
       if (empty($options['rowCountControl'])) {
-        $r .= "<span class=\"ind-delete-icon\"/>";
+        $r .= "<span class=\"fas fa-trash-alt action-delete\"/>";
       }
       $r .= "</td></tr>";
     }
@@ -471,7 +472,7 @@ class data_entry_helper extends helper_base {
     if (empty($options['rowCountControl'])) {
       $r .= '<tfoot>';
       $r .= '<tr><td colspan="' . (count($options['columns']) + 1 + $extraCols) .
-        '"><button class="add-btn" type="button">' . lang::get("Add another") . '</button></td></tr>';
+        '"><button class="add-btn ' . $indicia_templates['buttonHighlightedClass'] . '" type="button"><i class="fas fa-plus"></i>' . lang::get("Add another") . '</button></td></tr>';
       $r .= '</tfoot>';
     }
     else {
@@ -496,6 +497,7 @@ $('#$escaped').change(function(e) {
       ],
       $indicia_templates['data-input-table']);
     $r .= "<input type=\"hidden\" name=\"complex-attr-grid-encoding-$attrTypeTag-$attrId\" value=\"$options[encoding]\" />\n";
+    self::$indiciaData['formControlClass'] = isset($indicia_templates['formControlClass']) ? $indicia_templates['formControlClass'] : '';
     return $r;
   }
 
