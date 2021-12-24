@@ -341,7 +341,7 @@ class iform_location_details extends iform_dynamic {
     ];
     $details_report = '';
     $details_report .= '<div class="location-details-fields ui-helper-clearfix">';
-    $title = lang::get('Record of {1}', self::$location['name']);
+    $title = self::$location['name'];
     hostsite_set_page_title($title);
     foreach ($availableFields as $field => $caption) {
       // Skip some fields if logged out.
@@ -430,6 +430,11 @@ class iform_location_details extends iform_dynamic {
   /**
    * Render Photos section of the page.
    *
+   * Options include:
+   * * @title - block title.
+   * * @itemsPerPage - count of images to load.
+   * * @imageSize, e.g. thumb or med(ium).
+   *
    * @return string
    *   The output report grid.
    */
@@ -498,9 +503,21 @@ HTML;
    *
    * Options include:
    * * @title
-   * * @addChildrenEditFormPath - adds a button for adding a child site. Should
-   *   point to an "Enter a location (customisable)" with the "Link the
-   *   location to a parent" option checked.
+   * * @addChildrenEditFormPaths - Allows addition of buttons for adding a
+   *   child site. A JSON object where the property names are button labels
+   *   and the values are paths, e.g.:
+   *   ```
+   *   @addChildrenEditFormPaths=<!--{
+   *     "Add a habitat": "built-environment-sites/habitats/edit",
+   *     "Add a feature": "built-environment-sites/features/edit"
+   *   }-->
+   *   ```
+   *   Paths should point to an "Enter a location (customisable)" with the
+   *   "Link the location to a parent" option checked.
+   * * @columns - report_grid @columns option setting, if overriding the
+   *   default.
+   * * @dataSource - report to use if overriding the default. Should accept a
+   *   `parent_location_id` parameter for filtering.
    *
    * @return string
    *   The output report grid.
@@ -509,7 +526,33 @@ HTML;
     iform_load_helpers(['report_helper']);
     $options = array_merge([
       'title' => 'Subsites',
+      'dataSource' => 'reports_for_prebuilt_forms/location_details/location_data',
     ], $options);
+    $mapOutput = report_helper::report_map([
+      'readAuth' => $auth['read'],
+      'dataSource' => $options['dataSource'],
+      'extraParams' => [
+        'location_id' => '',
+        'parent_location_id' => self::$location['location_id'],
+      ],
+      'zoomMapToOutput' => FALSE,
+    ]);
+    $columns = isset($options['columns']) ? $options['columns'] : [
+      [
+        'fieldname' => 'name',
+        'display' => 'Name',
+      ],
+      [
+        'fieldname' => 'centroid_sref',
+        'display' => 'Grid ref.',
+      ],
+    ];
+    // Apply column title i18n.
+    foreach ($options['columns'] as $col) {
+      if (isset($col['display'])) {
+        $col['display'] = lang::get($col['display']);
+      }
+    }
     $grid = report_helper::report_grid([
       'readAuth' => $auth['read'],
       'dataSource' => 'reports_for_prebuilt_forms/location_details/location_data',
@@ -517,35 +560,23 @@ HTML;
         'location_id' => '',
         'parent_location_id' => self::$location['location_id'],
       ],
-      'sendOutputToMap' => TRUE,
       'rowId' => 'location_id',
       'includeAllColumns' => FALSE,
-      'columns' => [
-        [
-          'fieldname' => 'name',
-          'display' => lang::get('Name'),
-        ],
-        [
-          'fieldname' => 'centroid_sref',
-          'display' => lang::get('Grid ref.'),
-        ],
-        [
-          'fieldname' => 'boundary_geom',
-          'mappable' => TRUE,
-          'visible' => FALSE,
-        ],
-      ],
+      'columns' => $columns,
     ]);
     $buttons = '';
-    if (!empty($options['addChildrenEditFormPath'])) {
+    if (!empty($options['addChildrenEditFormPaths'])) {
       global $indicia_templates;
-      $href = helper_base::getRootFolder(TRUE) . "$options[addChildrenEditFormPath]?parent_id=$_GET[location_id]";
-      $buttons = "<a class=\"$indicia_templates[anchorButtonClass]\" href=\"$href\" title=\"" .
-        lang::get('Add a subsite to this location') . '">' . lang::get('Add a subsite') . '</a>';
+      foreach ($options['addChildrenEditFormPaths'] as $label => $path) {
+        $href = helper_base::getRootFolder(TRUE) . "$path?parent_id=$_GET[location_id]";
+        $buttons .= "<a class=\"$indicia_templates[anchorButtonClass]\" href=\"$href\" title=\"" .
+          lang::get('Add a subsite to this location.') . '">' . lang::get($label) . '</a>';
+      }
     }
     return <<<HTML
 <div class="detail-panel" id="detail-panel-subsites">
   <h3>$options[title]</h3>
+  $mapOutput
   $grid
 </div>
 $buttons
