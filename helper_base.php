@@ -1972,6 +1972,7 @@ HTML;
    *   JavaScript.
    */
   public static function getIndiciaData() {
+    require_once 'client_helpers/prebuilt_forms/includes/language_utils.php';
     global $indicia_templates;
     self::$indiciaData['btnClasses'] = [
       'default' => $indicia_templates['buttonDefaultClass'],
