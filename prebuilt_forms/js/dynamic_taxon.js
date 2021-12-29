@@ -475,7 +475,7 @@ jQuery(document).ready(function docReady($) {
         $.get(indiciaData.ajaxUrl + '/dynamicattrs/' + indiciaData.nid + urlSep +
             'taxon_list_id=' + $('#taxa_taxon_list\\:taxon_list_id').val() +
             '&taxa_taxon_list_id=' + $('#taxa_taxon_list\\:parent_id').val() +
-            '&language=' + indiciaData.currentLanguage2 +
+            '&language=' + indiciaData.currentLanguage3 +
             '&options=' + JSON.stringify(indiciaData.dynamicAttrOptions), null,
           function getAttrsReportCallback(data) {
             $(div).html(data);

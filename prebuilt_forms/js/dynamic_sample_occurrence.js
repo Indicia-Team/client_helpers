@@ -64,7 +64,7 @@ jQuery(document).ready(function docReady($) {
             '&type=' + type +
             '&stage_termlists_term_ids=' + JSON.stringify(sexStageVals) +
             '&validate_against_taxa=' + (indiciaData.validateAgainstTaxa ? 't' : 'f') +
-            '&language=' + indiciaData.currentLanguage2 +
+            '&language=' + indiciaData.currentLanguage3 +
             '&options=' + JSON.stringify(indiciaData['dynamicAttrOptions' + type]), null,
           function getAttrsReportCallback(data) {
             // Reset any controls affected by earlier loading of attrs for a
