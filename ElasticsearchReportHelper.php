@@ -303,13 +303,10 @@ class ElasticsearchReportHelper {
       self::getMappings($nid);
       // Prepare the stuff we need to pass to the JavaScript.
       $mappings = self::$esMappings;
-      $rootFolder = helper_base::getRootFolder(TRUE);
       $esProxyAjaxUrl = hostsite_get_url('iform/esproxy');
       helper_base::$indiciaData['esProxyAjaxUrl'] = $esProxyAjaxUrl;
       helper_base::$indiciaData['esSources'] = [];
       helper_base::$indiciaData['esMappings'] = $mappings;
-      helper_base::$indiciaData['rootFolder'] = $rootFolder;
-      helper_base::$indiciaData['currentLanguage'] = hostsite_get_user_field('language');
       helper_base::$indiciaData['gridMappingFields'] = self::MAPPING_FIELDS;
       $config = hostsite_get_es_config($nid);
       helper_base::$indiciaData['esVersion'] = (int) $config['es']['version'];

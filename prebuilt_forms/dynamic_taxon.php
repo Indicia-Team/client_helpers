@@ -679,12 +679,7 @@ HTML;
    */
   protected static function get_control_taxondynamicattributes($auth, $args, $tabAlias, $options) {
     $ajaxUrl = hostsite_get_url('iform/ajax/dynamic_taxon');
-    $language = iform_lang_iso_639_2(hostsite_get_user_field('language'));
-    data_entry_helper::$javascript .= <<<JS
-indiciaData.ajaxUrl='$ajaxUrl';
-indiciaData.userLang = '$language';
-
-JS;
+    data_entry_helper::$indiciaData['ajaxUrl'] = hostsite_get_url('iform/ajax/dynamic_taxon');
     // Create a div to hold the controls, pre-populated only when loading
     // existing data.
     $r = '';

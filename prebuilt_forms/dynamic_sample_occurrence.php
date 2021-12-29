@@ -2207,13 +2207,8 @@ HTML;
     unset($options['types']);
     unset($options['validateAgainstTaxa']);
     $ajaxUrl = hostsite_get_url('iform/ajax/dynamic_sample_occurrence');
-    $language = iform_lang_iso_639_2(hostsite_get_user_field('language'));
-    data_entry_helper::$javascript .= <<<JS
-indiciaData.ajaxUrl="$ajaxUrl";
-indiciaData.validateAgainstTaxa = $validateAgainstTaxa;
-indiciaData.userLang = '$language';
-
-JS;
+    data_entry_helper::$indiciaData['ajaxUrl'] = $ajaxUrl;
+    data_entry_helper::$indiciaData['validateAgainstTaxa'] = $validateAgainstTaxa;
 
     // If loading existing data, we need to know the sex/stage attrs so we can
     // find the value to filter to when retrieving attrs.

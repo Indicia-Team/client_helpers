@@ -1979,6 +1979,11 @@ HTML;
     ];
     self::$indiciaData['inlineErrorClass'] = $indicia_templates['error_class'];
     self::$indiciaData['dateFormat'] = self::$date_format;
+    $rootFolder = helper_base::getRootFolder(TRUE);
+    self::$indiciaData['rootFolder'] = $rootFolder;
+    $language = hostsite_get_user_field('language');
+    self::$indiciaData['currentLanguage'] = $language;
+    self::$indiciaData['currentLanguage2'] = iform_lang_iso_639_2($language);
     // Add language strings used in the indicia.functions.js file.
     self::addLanguageStringsToJs('indiciaFns', [
       'hideInfo' => 'Hide info',

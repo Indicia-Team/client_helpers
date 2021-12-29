@@ -64,7 +64,7 @@ jQuery(document).ready(function docReady($) {
             '&type=' + type +
             '&stage_termlists_term_ids=' + JSON.stringify(sexStageVals) +
             '&validate_against_taxa=' + (indiciaData.validateAgainstTaxa ? 't' : 'f') +
-            '&language=' + indiciaData.userLang +
+            '&language=' + indiciaData.currentLanguage2 +
             '&options=' + JSON.stringify(indiciaData['dynamicAttrOptions' + type]), null,
           function getAttrsReportCallback(data) {
             // Reset any controls affected by earlier loading of attrs for a
@@ -88,12 +88,12 @@ jQuery(document).ready(function docReady($) {
 
   /**
    * Handler for changes in the taxon list selector.
-   * 
+   *
    * Updates the list of taxa suggested for recording in the species grid. The
    * list is filtered by all the taxon_meanings that match the option selected.
-   * To enable this functionality, check the Client Selects Taxon Filter 
+   * To enable this functionality, check the Client Selects Taxon Filter
    * checkbox on the edit page.
-   */ 
+   */
    function changeTaxonList() {
     var $this = $(this);
     var listChoice = $this.val();
@@ -159,13 +159,13 @@ jQuery(document).ready(function docReady($) {
       $this.removeClass('working');
     });
   }
- 
+
   /**
    * Tag all rows in species table with presence box unchecked.
-   * 
+   *
    * These may be removed when changing the taxon list selector if they are not
    * present in the newly selected list.
-   * 
+   *
    * gridId
    *   The html id attribute for the species grid.
    */
@@ -178,12 +178,12 @@ jQuery(document).ready(function docReady($) {
 
   /**
    * Make an Ajax request for taxon meanings.
-   * 
+   *
    * param
    *   The name of a report parameter.
    * value
    *   The value to pass to the report for the param.
-   * 
+   *
    * Returns a deferred object.
    */
   requestMeanings  = function (param, value){
@@ -206,13 +206,13 @@ jQuery(document).ready(function docReady($) {
 
   /**
    * Make an Ajax request for a list of species.
-   * 
+   *
    * meanings
    *   An array of meanings to limit the list to. If empty, no species are
    *   returned. If null, then all species in the list are returned.
-   * 
+   *
    * Returns a deferred object.
-   */  
+   */
   requestSpecies  = function (meanings = null){
     var data = {
       'taxon_list_id': indiciaData.taxonListId,
@@ -240,13 +240,13 @@ jQuery(document).ready(function docReady($) {
       'dataType': 'jsonp',
     });
   }
- 
+
   /**
    * Adds a list of taxa to the species input grid.
-   * 
+   *
    * If there is already a row for a species in the list that row is moved
    * so that the order of the supplied list is observed.
-   * 
+   *
    * taxonList
    *   An array of species where each species is an object with many fields.
    * gridId
@@ -265,7 +265,7 @@ jQuery(document).ready(function docReady($) {
         $(`#${gridId} tr.scClonableRow`).before($row);
       }
       else {
-        // Add a new row 
+        // Add a new row
         species.taxa_taxon_list_id = species.id;
         // Locate the autocomplete control used for adding species.
         $autocomplete = $(`#${gridId} .scClonableRow .scTaxonCell input`);
@@ -280,7 +280,7 @@ jQuery(document).ready(function docReady($) {
     // animations which need speeding up.
     if ($('html,body').queue('fx').length > 0) {
       $('html,body').queue('fx', [function() {
-        $autocomplete = $(`#${gridId} .scClonableRow .scTaxonCell input`); 
+        $autocomplete = $(`#${gridId} .scClonableRow .scTaxonCell input`);
         var newTop = $autocomplete.offset().top - $(window).height() + 180;
         $(this).animate({ scrollTop: newTop }, 500);
       }]);
