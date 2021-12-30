@@ -3323,6 +3323,7 @@ RIJS;
   *     * comment
   *     * media
   *     * attrN where N is an occurrence attribute id.
+  *     * sampleAttrN where N is a sample attribute id (if using sub-samples).
   *   * **enableDynamicAttrs** - Optional. Set to TRUE to enable replacement of
   *     attribute columns with any dynamic ones declared for the selected taxon
   *     in the row for the same system function.
