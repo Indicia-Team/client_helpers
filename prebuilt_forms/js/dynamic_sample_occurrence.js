@@ -67,6 +67,7 @@ jQuery(document).ready(function docReady($) {
             '&language=' + indiciaData.currentLanguage3 +
             '&options=' + JSON.stringify(indiciaData['dynamicAttrOptions' + type]), null,
           function getAttrsReportCallback(data) {
+            var oldVals = {};
             // Reset any controls affected by earlier loading of attrs for a
             // different taxon.
             $('.dynamically-replaced').show();
@@ -74,7 +75,18 @@ jQuery(document).ready(function docReady($) {
             $('.dynamically-moved').remove();
             // Ensure page level onload functions don't run again.
             indiciaData.onloadFns = [];
+            // Grab existing values so they can be reset.
+            $.each($(div).find(':input'), function() {
+              if ($(this).val()) {
+                oldVals[$(this).attr('name')] = $(this).val();
+              }
+            });
             $(div).html(data);
+            $.each($(div).find(':input'), function() {
+              if (typeof oldVals[$(this).attr('name')] !== 'undefined') {
+                $(this).val(oldVals[$(this).attr('name')]);
+              }
+            });
             repositionDynamicAttributes(div);
             $.each(indiciaFns.hookDynamicAttrsAfterLoad, function callHook() {
               this(div, type);
