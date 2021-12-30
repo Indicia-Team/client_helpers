@@ -409,7 +409,7 @@ class data_entry_helper extends helper_base {
     $rowCount = $options['defaultRows'] > count($options['default']) ? $options['defaultRows'] : count($options['default']);
     $extraCols = 0;
     $controlClass = 'complex-attr-grid-control';
-    $controlClass .= empty($indicia_templates['formControlClass']) ? '' : " $indicia_templates[formControlClass]";
+    $controlClass .= " $indicia_templates[formControlClass]";
     for ($i = 0; $i <= $rowCount - 1; $i++) {
       $class = ($i % 2 === 1) ? '' : ' class="odd"';
       $r .= "<tr$class>";
@@ -497,7 +497,6 @@ $('#$escaped').change(function(e) {
       ],
       $indicia_templates['data-input-table']);
     $r .= "<input type=\"hidden\" name=\"complex-attr-grid-encoding-$attrTypeTag-$attrId\" value=\"$options[encoding]\" />\n";
-    self::$indiciaData['formControlClass'] = isset($indicia_templates['formControlClass']) ? $indicia_templates['formControlClass'] : '';
     return $r;
   }
 
@@ -926,9 +925,7 @@ JS;
     $options['class'] .= ' date-text';
     $options['datePickerClass'] = 'precise-date-picker';
     global $indicia_templates;
-    if (isset($indicia_templates['formControlClass'])) {
-      $options['datePickerClass'] .= ' ' . $indicia_templates['formControlClass'];
-    }
+    $options['datePickerClass'] .= " $indicia_templates[formControlClass]";
     if ($options['allowVagueDates']) {
       $options['afterControl'] = self::apply_static_template('date_picker_mode_toggle', $options);
     }
@@ -1462,8 +1459,7 @@ JS;
     }
     $r .= self::hidden_text($hiddenOptions);
     $options['blankText'] = htmlspecialchars(lang::get($options['blankText']));
-    $selectClass = 'hierarchy-select' . (isset($indicia_templates['formControlClass']) ?
-      " $indicia_templates[formControlClass]" : '');
+    $selectClass = "hierarchy-select  $indicia_templates[formControlClass]";
     // Now output JavaScript that creates and populates child selects as each option is selected. There is also code for
     // reloading existing values.
     self::$javascript .= "
@@ -5243,7 +5239,7 @@ HTML;
     if ($options['occurrenceComment']) {
       $r .= <<<HTML
 <td class="ui-widget-content scCommentCell" headers="$options[id]-comment-0">
-  <input class="scComment" type="text" id="$fieldname:occurrence:comment"
+  <input class="scComment $indicia_templates[formControlClass]" type="text" id="$fieldname:occurrence:comment"
       name="$fieldname:occurrence:comment" value="" />
 </td>
 HTML;
