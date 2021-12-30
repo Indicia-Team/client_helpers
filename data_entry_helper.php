@@ -3489,7 +3489,7 @@ RIJS;
         'fieldprefix' => "sc:-idx-::occAttr",
         'extraParams' => $options['readAuth'],
         'survey_id' => array_key_exists('survey_id', $options) ? $options['survey_id'] : NULL,
-        'attributeTermlistLanguageFilter' => empty($options['attributeTermlistLanguageFilter']) ? '1' : $options['attributeTermlistLanguageFilter'],
+        'attributeTermlistLanguageFilter' => $options['attributeTermlistLanguageFilter'],
       ];
       if (isset($options['attributeIds'])) {
         // Make sure we load the grid ID attribute.
@@ -4966,6 +4966,7 @@ JS;
       'copyDataFromPreviousRow' => FALSE,
       'enableDynamicAttrs' => FALSE,
       'limitDynamicAttrsTaxonGroupIds' => FALSE,
+      'attributeTermlistLanguageFilter' => '0',
       'previousRowColumnsToInclude' => '',
       'editTaxaNames' => FALSE,
       'sticky' => TRUE,
@@ -5055,17 +5056,15 @@ JS;
         'controlWrapTemplate' => 'justControl',
         'extraParams' => $options['readAuth'],
       );
-      if (!empty($options['attributeTermlistLanguageFilter'])) {
-        if ($options['attributeTermlistLanguageFilter'] === '1') {
-          // Required for lists eg radio boxes: kept separate from options extra
-          // params as that is used to indicate filtering of species list by
-          // language
-          $ctrlOptions['language'] = iform_lang_iso_639_2(hostsite_get_user_field('language'));
-        }
-        elseif ($options['attributeTermlistLanguageFilter'] === 'clientI18n') {
-          $ctrlOptions['extraParams']['preferred'] = 't';
-          $ctrlOptions['translate'] = 't';
-        }
+      if ($options['attributeTermlistLanguageFilter'] === '1') {
+        // Required for lists eg radio boxes: kept separate from options extra
+        // params as that is used to indicate filtering of species list by
+        // language
+        $ctrlOptions['language'] = iform_lang_iso_639_2(hostsite_get_user_field('language'));
+      }
+      elseif ($options['attributeTermlistLanguageFilter'] === 'clientI18n') {
+        $ctrlOptions['extraParams']['preferred'] = 't';
+        $ctrlOptions['translate'] = 't';
       }
       // Some undocumented checklist options that are applied to all attributes
       if(isset($options['lookUpKey'])) $ctrlOptions['lookUpKey'] = $options['lookUpKey'];
@@ -5143,6 +5142,7 @@ JS;
       }
       self::$indiciaData["dynamicAttrInfo-$options[id]"] = $attrInfo;
       self::$indiciaData['dynamicAttrProxyUrl'] = hostsite_get_url('iform/dynamicattrsproxy');
+      self::$indiciaData['attributeTermlistLanguageFilter'] = $options['attributeTermlistLanguageFilter'];
     }
   }
 
