@@ -527,14 +527,19 @@ HTML;
     $options = array_merge([
       'title' => 'Subsites',
       'dataSource' => 'reports_for_prebuilt_forms/location_details/location_data',
+      'extraParams' => [],
     ], $options);
+    foreach ($options['extraParams'] as &$value) {
+      $value = apply_user_replacements($value);
+    }
+    $options['extraParams'] += [
+      'location_id' => '',
+      'parent_location_id' => self::$location['location_id'],
+    ];
     $mapOutput = report_helper::report_map([
       'readAuth' => $auth['read'],
       'dataSource' => $options['dataSource'],
-      'extraParams' => [
-        'location_id' => '',
-        'parent_location_id' => self::$location['location_id'],
-      ],
+      'extraParams' => $options['extraParams'],
       'zoomMapToOutput' => FALSE,
     ]);
     $columns = isset($options['columns']) ? $options['columns'] : [
@@ -555,11 +560,8 @@ HTML;
     }
     $grid = report_helper::report_grid([
       'readAuth' => $auth['read'],
-      'dataSource' => 'reports_for_prebuilt_forms/location_details/location_data',
-      'extraParams' => [
-        'location_id' => '',
-        'parent_location_id' => self::$location['location_id'],
-      ],
+      'dataSource' => $options['dataSource'],
+      'extraParams' => $options['extraParams'],
       'rowId' => 'location_id',
       'includeAllColumns' => FALSE,
       'columns' => $columns,
