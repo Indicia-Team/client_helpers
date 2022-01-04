@@ -312,6 +312,13 @@ class helper_base {
   public static $os_api_key = '';
 
   /**
+   * Breadcrumb info.
+   *
+   * @var array
+   */
+  public static $breadcrumb = NULL;
+
+  /**
    * Setting which allows the host site (e.g. Drupal) handle translation.
    *
    * For example, when TRUE, a call to lang::get() is delegated to Drupal's t()
