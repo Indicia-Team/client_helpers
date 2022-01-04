@@ -304,61 +304,17 @@ class extension_misc_extensions {
    * * path - an associative array of paths and captions. The paths can contain replacements
    *   wrapped in # characters which will be replaced by the $_GET parameter of the same name.
    * * includeCurrentPage - set to false to disable addition of the current page title to the end
-   *   of the breadcrumb.
+   *   of the breadcrumb. If using the Bootstrap theme disable the theme setting to add the
+   *   current page to the breadcrumb.
    */
   public static function breadcrumb($auth, $args, $tabalias, $options, $path) {
     if (!isset($options['path'])) {
       return 'Please set an array of entries in the @path option';
     }
-    if (version_compare(hostsite_get_cms_version(), '8', '<')) {
-      $breadcrumb = [l('Home', '<front>')];
-    }
-    else {
-      $breadcrumb = new \Drupal\Core\Breadcrumb\Breadcrumb();
-      $breadcrumb->addLink(\Drupal\Core\Link::createFromRoute(t('Home'), '<front>'));
-    }
-    foreach ($options['path'] as $path => $caption) {
-      $parts = explode('?', $path, 2);
-      $itemOptions = [];
-      if (count($parts) > 1) {
-        foreach ($_GET as $key => $value) {
-          // GET parameters can be used as replacements.
-          $parts[1] = str_replace("#$key#", $value, $parts[1]);
-        }
-        $query = [];
-        parse_str($parts[1], $query);
-        $itemOptions['query'] = $query;
-      }
-      $path = $parts[0];
-      // Handle links to # anchors.
-      $fragments = explode('#', $path, 2);
-      if (count($fragments) > 1) {
-        $path = $fragments[0];
-        $itemOptions['fragment'] = $fragments[1];
-      }
-      // Don't use Drupal l function as a it messes with query params.
-      $caption = lang::get($caption);
-      if (version_compare(hostsite_get_cms_version(), '8', '<')) {
-        $breadcrumb[] = l($caption, $path, $itemOptions);
-      }
-      else {
-        $breadcrumb->addLink(\Drupal\Core\Link::createFromRoute($caption, $path));
-      }
-    }
-    if (!isset($options['includeCurrentPage']) || $options['includeCurrentPage'] !== FALSE) {
-      if (version_compare(hostsite_get_cms_version(), '8', '<')) {
-        $breadcrumb[] = drupal_get_title();
-        drupal_set_breadcrumb($breadcrumb);
-      }
-      else {
-        $request = \Drupal::request();
-        // Assuming the Request is $request.
-        if ($request->attributes->has('_title')) {
-          $breadcrumb->addLink($request->attributes->get('_title'), '<none>');
-        }
-      }
-    }
-    return '';
+    $options = array_merge([
+      'includeCurrentPage' => TRUE,
+    ], $options);
+    hostsite_set_breadcrumb($options['path'], $options['includeCurrentPage']);
   }
 
   /*
