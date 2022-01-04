@@ -1275,7 +1275,7 @@ $('#entry_form').submit(function() {
           $parentPageTitle = str_replace('{group}', $data[0]['title'], $parentPageTitle);
         }
       }
-      $breadcrumb[$parentPageTitle] = $args['groups_page_path'];
+      $breadcrumb[$args['groups_page_path']] = $parentPageTitle;
       hostsite_set_breadcrumb($breadcrumb);
     }
   }

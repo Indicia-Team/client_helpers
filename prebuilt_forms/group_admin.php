@@ -219,7 +219,7 @@ class iform_group_admin {
     if (!empty($args['groups_page_path']) && function_exists('hostsite_set_breadcrumb') && function_exists('drupal_get_normal_path')) {
       $path = drupal_get_normal_path($args['groups_page_path']);
       $node = menu_get_object('node', 1, $path);
-      $breadcrumb[$node->title] = $args['groups_page_path'];
+      $breadcrumb[$args['groups_page_path']] = $node->title;
       hostsite_set_breadcrumb($breadcrumb);
     }
   }
