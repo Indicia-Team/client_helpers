@@ -279,7 +279,7 @@ class extension_extra_data_entry_controls {
    * * helpText - text to show under the control.
    * * label - label for the control.
    */
-  public function group_select($auth, $args, $tabalias, array $options) {
+  public static function group_select($auth, $args, $tabalias, array $options) {
     $options = array_merge([
       'label' => 'Select where to post the record',
       'helpText' => NULL,

@@ -32,6 +32,7 @@ global $indicia_templates;
 $indicia_templates = [
   'blank' => '',
   'prefix' => '',
+  'formControlClass' => 'form-control',
   'controlWrap' => "<div id=\"ctrl-wrap-{id}\" class=\"form-row ctrl-wrap{wrapClasses}\">{control}</div>\n",
   'controlWrapErrorClass' => '',
   // Template for control with associated buttons/icons to appear to the side.
@@ -309,6 +310,13 @@ class helper_base {
    * @var string
    */
   public static $os_api_key = '';
+
+  /**
+   * Breadcrumb info.
+   *
+   * @var array
+   */
+  public static $breadcrumb = NULL;
 
   /**
    * Setting which allows the host site (e.g. Drupal) handle translation.
@@ -846,8 +854,7 @@ class helper_base {
       if (substr($indicia_theme_path, -1) !== '/') {
         $indicia_theme_path .= '/';
       }
-      $protocol = empty($_SERVER['HTTPS']) || $_SERVER['HTTPS'] === 'off' ? 'http' : 'https';
-      self::$resource_list = array (
+      self::$resource_list = array(
         'indiciaFns' => [
           'deps' => ['jquery'],
           'javascript' => [self::$js_path . "indicia.functions.js"],
@@ -924,7 +931,7 @@ class helper_base {
         'treeview' => array('deps' => array('jquery'), 'stylesheets' => array(self::$css_path."jquery.treeview.css"), 'javascript' => array(self::$js_path."jquery.treeview.js")),
         'treeview_async' => array('deps' => array('treeview'), 'javascript' => array(self::$js_path."jquery.treeview.async.js", self::$js_path."jquery.treeview.edit.js")),
         'googlemaps' => [
-          'javascript' => ["$protocol://maps.google.com/maps/api/js?v=3" . (empty(self::$google_maps_api_key) ? '' : '&key=' . self::$google_maps_api_key)],
+          'javascript' => ["https://maps.google.com/maps/api/js?v=3" . (empty(self::$google_maps_api_key) ? '' : '&key=' . self::$google_maps_api_key)],
         ],
         'fancybox' => [
           'deps' => ['jquery'],
@@ -1973,13 +1980,20 @@ HTML;
    *   JavaScript.
    */
   public static function getIndiciaData() {
+    require_once 'prebuilt_forms/includes/language_utils.php';
     global $indicia_templates;
     self::$indiciaData['btnClasses'] = [
       'default' => $indicia_templates['buttonDefaultClass'],
       'highlighted' => $indicia_templates['buttonHighlightedClass'],
     ];
+    self::$indiciaData['formControlClass'] = $indicia_templates['formControlClass'];
     self::$indiciaData['inlineErrorClass'] = $indicia_templates['error_class'];
     self::$indiciaData['dateFormat'] = self::$date_format;
+    $rootFolder = helper_base::getRootFolder(TRUE);
+    self::$indiciaData['rootFolder'] = $rootFolder;
+    $language = hostsite_get_user_field('language');
+    self::$indiciaData['currentLanguage'] = $language;
+    self::$indiciaData['currentLanguage3'] = iform_lang_iso_639_2($language);
     // Add language strings used in the indicia.functions.js file.
     self::addLanguageStringsToJs('indiciaFns', [
       'hideInfo' => 'Hide info',
@@ -2296,7 +2310,7 @@ if (typeof validator!=='undefined') {
       }
     }
     // Allows a form control to have a class specific to the base theme.
-    if (isset($options['isFormControl']) && isset($indicia_templates['formControlClass'])) {
+    if (isset($options['isFormControl'])) {
       $options['class'] .= " $indicia_templates[formControlClass]";
     }
     // add validation metadata to the control if specified, as long as control has a fieldname

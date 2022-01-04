@@ -107,7 +107,7 @@ class iform_group_locations {
     iform_load_helpers(['report_helper', 'map_helper']);
     $conn = iform_get_connection_details($nid);
     $readAuth = report_helper::get_read_auth($conn['website_id'], $conn['password']);
-    report_helper::$indiciaData['ajaxUrlAddExisting'] .= iform_ajaxproxy_url($nid, 'groups_location');
+    report_helper::$indiciaData['ajaxUrlAddExisting'] = iform_ajaxproxy_url($nid, 'groups_location');
     group_authorise_form($args, $readAuth);
     $args = array_merge([
       'allow_edit' => TRUE,

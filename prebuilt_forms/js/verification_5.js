@@ -60,8 +60,8 @@ indiciaData.rowIdToReselect = false;
    * Event handler for changes to map layers. On visibility change, store a cookie to remember the setting.
    */
   function mapLayerChanged(event) {
-    if (event.property === 'visibility' && typeof $.cookie !== 'undefined') {
-      $.cookie('verification-' + event.layer.name, event.layer.visibility ? 'true' : 'false');
+    if (event.property === 'visibility') {
+      indiciaFns.cookie('verification-' + event.layer.name, event.layer.visibility ? 'true' : 'false');
     }
   }
 
@@ -1588,9 +1588,7 @@ indiciaData.rowIdToReselect = false;
         $('#actions-less').show();
         $('#more-status-buttons').html('[' + indiciaData.langMore + ']');
       }
-      if (typeof $.cookie !== 'undefined') {
-        $.cookie('verification-status-buttons', showMore ? 'more' : 'less');
-      }
+      indiciaFns.cookie('verification-status-buttons', showMore ? 'more' : 'less');
     }
 
     function logResponse() {

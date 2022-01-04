@@ -143,7 +143,7 @@ class iform_term {
    */
   protected static function set_breadcrumb($args) {
     if (!empty($args['redirect_on_success']) && function_exists('hostsite_set_breadcrumb')) {
-      $breadcrumb = array('Terms' => $args['redirect_on_success']);
+      $breadcrumb = [$args['redirect_on_success'] => 'Terms'];
       hostsite_set_breadcrumb($breadcrumb);
     }
   }
@@ -152,11 +152,12 @@ class iform_term {
     $reload = data_entry_helper::get_reload_link_parts();
     unset($reload['params']['termlists_terms_id']);
     $reloadPath = $reload['path'];
-    if(count($reload['params'])) {
+    if (count($reload['params'])) {
       // decode params prior to encoding to prevent double encoding.
-      foreach ($reload['params'] as $key => $param)
-        $reload['params'][$key] =urldecode($param);
-      $reloadPath .= '?'.http_build_query($reload['params']);
+      foreach ($reload['params'] as $key => $param) {
+        $reload['params'][$key] = urldecode($param);
+      }
+      $reloadPath .= '?' . http_build_query($reload['params']);
     }
     return $reloadPath;
   }

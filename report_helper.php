@@ -1784,14 +1784,15 @@ JS;
 
  /**
   * Function to output a report onto a map rather than a grid.
-  * Because there are many options for the map, this method does not generate the
-  * map itself, rather it sends the output of the report onto a map_panel output
-  * elsewhere on the page. Like the report_grid, this can output a parameters
-  * form or can be set to use the parameters form from another output report (e.g.
-  * another call to report_grid, allowing both a grid and map of the same data
-  * to be generated). The report definition must contain a single column which is
-  * configured as a mappable column or the report must specify a parameterised
-  * CQL query to draw the map using WMS.
+
+  * Because there are many options for the map, this method does not generate
+  * the map itself, rather it sends the output of the report onto a map_panel
+  * output elsewhere on the page. Like the report_grid, this can output a
+  * parameters form or can be set to use the parameters form from another
+  * output report (e.g. another call to report_grid, allowing both a grid and
+  * map of the same data to be generated). The report definition must contain a
+  * single column which is configured as a mappable column or the report must
+  * specify a parameterised CQL query to draw the map using WMS.
   *
   * @param array $options Options array with the following possibilities:<ul>
   * <li><b>id</b><br/>
@@ -2888,7 +2889,7 @@ if (typeof mapSettingsHooks!=='undefined') {
       if (!isset($cookieData))
         $cookieData = [];
       $cookieData[$options['rememberParamsReportGroup']]=$providedParams;
-      setcookie('providedParams', json_encode($cookieData));
+      hostsite_set_cookie('providedParams', json_encode($cookieData));
     }
     // Get the report group prefix required for each relevant parameter
     $paramKey = (isset($options['reportGroup']) ? $options['reportGroup'] : '').'-';
@@ -3312,8 +3313,10 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue, removeparam) {
       report_helper::$javascript .= "      var features = [];\n";
       report_helper::$javascript .= "$addFeaturesJs\n";
       report_helper::$javascript .= "      indiciaData.reportlayer.addFeatures(features);\n";
-      if ($zoomToExtent && !empty($addFeaturesJs))
+      if ($zoomToExtent && !empty($addFeaturesJs)) {
         self::$javascript .= "      div.map.zoomToExtent(indiciaData.reportlayer.getDataExtent());\n";
+        self::$javascript .= "      delete indiciaData.zoomToAfterFetchingGoogleApiScript;\n";
+      }
       if (!empty($featureDoubleOutlineColour)) {
         // push a clone of the array of features onto a layer which will draw an outline.
         report_helper::$javascript .= "

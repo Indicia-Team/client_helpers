@@ -1432,7 +1432,7 @@ HTML;
   $r .= '</div>'; // filter panes
   $r .= '<div class="toolbar">';
   if ($options['allowSave']) {
-    $r .= '<label for="filter:title">' . lang::get('Save filter as') . ':</label> <input id="filter:title" class="control-width-5"/>';
+    $r .= '<label for="filter:title">' . lang::get('Save filter as') . ":</label> <input id=\"filter:title\" class=\"$indicia_templates[formControlClass]\"/>";
     if ($options['admin']) {
       $r .= '<br/>';
       if (empty($options['adminCanSetSharingTo'])) {
