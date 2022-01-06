@@ -368,6 +368,7 @@ class data_entry_helper extends helper_base {
           foreach ($termlistData as $term) {
             $minified[] = [$term['id'], $term['term']];
           }
+          self::$javascript .= "indiciaData.tl$def[termlist_id]=" . json_encode($minified) . ";\n";
         }
         elseif (isset($def['lookupValues'])) {
           foreach ($def['lookupValues'] as $id => $term) {
@@ -380,7 +381,6 @@ class data_entry_helper extends helper_base {
           }
         }
         $lookupData["tl$idx"] = $minified;
-        self::$javascript .= "indiciaData.tl$def[termlist_id]=" . json_encode($minified) . ";\n";
       }
       // Checkbox groups output a second row of cells for each checkbox label.
       $rowspan = isset($def['control']) && $def['control'] === 'checkbox_group' ? 1 : 2;
