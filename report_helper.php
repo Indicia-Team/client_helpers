@@ -589,17 +589,22 @@ HTML;
             switch ($field['datatype']) {
               case 'text':
               case 'species':
-                $title=lang::get("Search for {1} text begins with .... Use * as a wildcard.", $caption);
+                $title = lang::get("Search for {1} text begins with .... Use * as a wildcard.", $caption);
                 break;
+
               case 'date':
-                $title=lang::get("Search on {1} - search for an exact date or use a vague date such as a year to select a range of dates.", $caption);
+                $title = lang::get("Search on {1} - search for an exact date or use a vague date such as a year to select a range of dates.", $caption);
                 break;
-              default: $title=lang::get("Search on {1} - either enter an exact number, use >, >=, <, or <= before the number to filter for ".
+
+              default:
+                $title = lang::get("Search on {1} - either enter an exact number, use >, >=, <, or <= before the number to filter for " .
                       "{1} more or less than your search value, or enter a range such as 1000-2000.", $caption);
             }
             $title = htmlspecialchars(lang::get('Type here to filter then press Tab or Return to apply the filter.').' '.$title);
-            //Filter, which when clicked, displays a popup with a series of checkboxes representing a distinct set of data from a column on the report.
-            //The user can then deselect these checkboxes to remove data from the report.
+            // Filter, which when clicked, displays a popup with a series of
+            // checkboxes representing a distinct set of data from a column on
+            // the report. The user can then deselect these checkboxes to
+            // remove data from the report.
             if (!empty($options['includePopupFilter'])&&$options['includePopupFilter']===true) {
               self::$javascript.="indiciaData.includePopupFilter=true;";
               $popupFilterIcon = $imgPath."desc.gif";
@@ -1643,7 +1648,7 @@ JS;
     global $indicia_templates;
     $reloadUrl = self::get_reload_link_parts();
     $r = '<form action="'.$reloadUrl['path'].'" method="get" class="linear-form" id="filterForm-'.$options['id'].'">';
-    $r .= '<label for="filters" class="auto">'.lang::get('Filter for').'</label> ';
+    $r .= '<label for="filters" class="auto">' . lang::get('Filter for') . '</label> ';
     $value = (isset($_GET['filters'])) ? ' value="'.$_GET['filters'].'"' : '';
     $r .= '<input type="text" name="filters" id="filters" class="filterInput"'.$value.'/> ';
     $r .= '<label for="columns" class="auto">'.lang::get('in').'</label> <select name="columns" class="filterSelect" id="columns">';
@@ -2598,7 +2603,7 @@ mapSettingsHooks.push(function(opts) { $setLocationJs
         $r .= '<form action="'.$_SERVER['REQUEST_URI'].'" method="post" id="'.$options['reportGroup'].'-params">'."\n<fieldset class=\"$cls\">";
         if (!$options['paramsInMapToolbar'])
           // don't use the fieldset legend in toolbar mode
-          $r .= '<legend>'.lang::get('Report Parameters').'</legend>';
+          $r .= '<legend>' . lang::get('Report parameters') . '</legend>';
       }
       $reloadUrl = self::get_reload_link_parts();
       // Output any other get parameters from our URL as hidden fields

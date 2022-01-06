@@ -327,12 +327,12 @@ class iform_dynamic_report_explorer extends iform_dynamic {
     $args['report_name'] = '';
     $reportOptions = array_merge(
       iform_report_get_report_options($args, $auth['read']),
-      array(
+      [
         'reportGroup' => 'dynamic',
         'paramsOnly' => TRUE,
         'sharing' => $sharing,
-        'paramsFormButtonCaption' => lang::get('Filter')
-      )
+        'paramsFormButtonCaption' => 'Filter',
+      ]
     );
     // Ensure supplied extraParams are merged, not overwritten.
     if (!empty($options['extraParams'])) {
@@ -588,6 +588,7 @@ class iform_dynamic_report_explorer extends iform_dynamic {
 
   /*
    * Report chart params control.
+   *
    * Currently take its parameters from $options in the Form Structure.
    */
   protected static function get_control_reportchartparams($auth, $args, $tabalias, $options) {
@@ -595,24 +596,24 @@ class iform_dynamic_report_explorer extends iform_dynamic {
       $r = '<h4>Please fill in the following options for the chart parameters control: yValues, dataSource, chartType</h4>';
       return $r;
     }
-    iform_load_helpers(array('report_helper'));
-    $sharing=empty($args['sharing']) ? 'reporting' : $args['sharing'];
-    $args['report_name']='';
+    iform_load_helpers(['report_helper']);
+    $sharing = empty($args['sharing']) ? 'reporting' : $args['sharing'];
+    $args['report_name'] = '';
     $options = array_merge(
       iform_report_get_report_options($args, $auth),
       $options,
-      array(
+      [
         'reportGroup' => 'dynamic',
-        //as we aren't returning the report set paramsOnly
-        'paramsOnly'=>TRUE,
-        'sharing'=>$sharing,
-        'paramsFormButtonCaption'=>lang::get('Filter'),
-        'yValues'=>explode(',', $options['yValues']),
-        'readAuth'=>$auth['read'],
-        'dataSource'=>$options['dataSource'],
-      )
+        // As we aren't returning the report set paramsOnly.
+        'paramsOnly' => TRUE,
+        'sharing' => $sharing,
+        'paramsFormButtonCaption' => 'Filter',
+        'yValues' => explode(',', $options['yValues']),
+        'readAuth' => $auth['read'],
+        'dataSource' => $options['dataSource'],
+      ]
     );
-    $r = '<br/>'.report_helper::report_chart($options);
+    $r = '<br/>' . report_helper::report_chart($options);
     return $r;
   }
 
