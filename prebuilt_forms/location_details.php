@@ -558,14 +558,18 @@ HTML;
         $col['display'] = lang::get($col['display']);
       }
     }
-    $grid = report_helper::report_grid([
+    $reportOptions = [
       'readAuth' => $auth['read'],
       'dataSource' => $options['dataSource'],
       'extraParams' => $options['extraParams'],
       'rowId' => 'location_id',
       'includeAllColumns' => FALSE,
       'columns' => $columns,
-    ]);
+    ];
+    if (isset($options['class'])) {
+      $reportOptions['class'] = $options['class'];
+    }
+    $grid = report_helper::report_grid($reportOptions);
     $buttons = '';
     if (!empty($options['addChildrenEditFormPaths'])) {
       global $indicia_templates;
