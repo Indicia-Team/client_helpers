@@ -13,18 +13,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package	Client
  * @author	Indicia Team
  * @license	http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link 	http://code.google.com/p/indicia/
+ * @link https://github.com/indicia-team/client_helpers/
  */
 
 global $custom_terms;
 
 /**
  * Language terms for the survey_reporting_form_2 form.
- *
- * @package	Client
  */
 $custom_terms = array(
 	'LANG_MustSelectParentFirst' => 'You must choose a square first, before creating a new location within it.',
@@ -64,7 +61,7 @@ $custom_terms = array(
 	'LANG_LocModTool_ParentLabel'=>'New site square',
 
 	'LANG_Data_Download' => 'These reports provide details of the data entered in the survey.',
-	
+
 	'LANG_TooFewPoints' => 'There are too few points in this polygon - there must be at least 3.',
 	'LANG_TooFewLinePoints' => 'There are too few points in this line - there must be at least 2.',
 	'LANG_CentreOutsideParent'=>'Warning: the centre of your new site is outside the square.',
@@ -120,9 +117,9 @@ $custom_terms = array(
 
 	'LANG_Location_Label' => 'Location',
 	'LANG_Location_Name' => 'Site Name',
-	'LANG_Georef_Label' => 'Search for Place on Map',
+	'LANG_Georef_Label' => 'Search for a place on the map',
 	// The search button may be changed by adding an entry for 'search'
-	
+
 	'LANG_Date' => 'Date',
 	'LANG_Save' => 'Save',
 	'LANG_Submit' => 'Save',
