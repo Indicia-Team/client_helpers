@@ -3062,6 +3062,10 @@ RIJS;
   *   * **attribute_cell** - HTML wrapper for cells containing attribute
   *   inputs.
   *
+  * NOTE, if you specify a value for the 'id' option it must be of the form
+  * species-grid-n where n is an integer. This is an expectation hard-coded in 
+  * to media/js.addRowToGrid.js at present.
+  *
   * @param array $options
   *   Options array with the following possibilities:
   *   * **listId** - Optional. The ID of the taxon_lists record which is to be

@@ -86,6 +86,12 @@
 
   function locationAdded(evt) {
     // Function to handle a location added event.
+
+    if (evt.feature.attributes.type == 'ghost') {
+      // Ignore the ghost feature being added.
+      return;
+    }
+
     var intersects = false
     var div = $('#map')[0];
 
