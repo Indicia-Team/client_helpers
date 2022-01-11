@@ -13,18 +13,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package	Client
  * @author	Indicia Team
  * @license	http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link 	http://code.google.com/p/indicia/
+ * @link https://github.com/indicia-team/client_helpers/
  */
 
 global $custom_terms;
 
 /**
  * Language terms for the survey_reporting_form_2 form.
- *
- * @package	Client
  */
 $custom_terms = array(
 	// 'Edit' is left unchanged
@@ -58,7 +55,7 @@ $custom_terms = array(
 	'LANG_Location_Name_Blank_Text' => 'Choose a location using its name',
 	'Site type2' => 'Site type',
 	'LANG_SRef_Label' => 'Coordinates',
-	'LANG_Georef_Label'=>'Search for place on map',
+	'LANG_Georef_Label'=>'Search for a place on the map',
 	'LANG_Georef_SelectPlace' => 'Select the correct one from the following places that were found matching your search. (Click on the list items to see them on the map.)',
 	'LANG_Georef_NothingFound' => 'No place found with that name. Try a nearby town name.',
 	'search' => 'Search',
