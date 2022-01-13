@@ -168,7 +168,9 @@ class iform_ukbms_assign_transects {
     $headers = array();
     $headers[] = 'MIME-Version: 1.0';
     $headers[] = 'Content-type: text/html; charset=UTF-8;';
-    if (!empty(\Drupal::state()->get('site_mail'))) $emailFrom=\Drupal::state()->get('site_mail');	
+    if (!empty(\Drupal::state()->get('site_mail'))) {
+		$emailFrom=\Drupal::state()->get('site_mail');	
+	}
     if (!empty($emailFrom)) {
       $headers[] = 'From: '. $emailFrom;
       $headers[] = 'Reply-To: '. $emailFrom;
