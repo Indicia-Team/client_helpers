@@ -161,13 +161,14 @@ jQuery(document).ready(function($) {
     var filename;
     var thumbFilename;
     var taxonLabel = getFormattedTaxonLabel(taxon, false);
+    var machineName = taxon.taxon.toLowerCase().replace(/[^a-z0-9]/g, '-');
     // Ensure trailing slash.
     if (path.substr(path.length - 1) !== '/') {
       path += '/';
     }
     // Get the original default image details.
-    origfilename = path + taxon.taxon.toLowerCase().replace(/[^a-z0-9]/g, '-') + '.jpg';
-    origThumbFilename = path + 'thumb-' + taxon.taxon.toLowerCase().replace(/[^a-z0-9]/g, '-') + '.jpg';
+    origfilename = path + machineName + '.jpg';
+    origThumbFilename = path + 'thumb-' + machineName + '.jpg';
     if (existingOccurrence && existingOccurrence.media_path) {
       filename = indiciaData.read.url + '/upload/' + existingOccurrence.media_path;
       thumbFilename = indiciaData.read.url + '/upload/thumb-' + existingOccurrence.media_path;
@@ -175,7 +176,7 @@ jQuery(document).ready(function($) {
       filename = origfilename;
       thumbFilename = origThumbFilename;
     }
-    return '<a class="photo-popup" data-fancybox="fancybox" href="' + filename + '" data-orig-href="' + origfilename + '" data-caption="' + taxonLabel + '">' +
+    return '<a class="photo-popup" data-fancybox="' + machineName + '" href="' + filename + '" data-orig-href="' + origfilename + '" data-caption="' + taxonLabel + '">' +
       '<img src="' + thumbFilename + '" data-orig-src="' + origThumbFilename + '" title="' + taxonLabel + '" alt="' + taxonLabel + '" class="img-rounded">' +
       '</a>';
   }
