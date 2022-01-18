@@ -349,7 +349,7 @@ class ElasticsearchReportHelper {
   /**
    * A control for flexibly outputting data formatted using a custom script.
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-customScript
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-customscript
    */
   public static function customScript(array $options) {
     self::checkOptions('customScript', $options, ['source', 'functionName'], []);
