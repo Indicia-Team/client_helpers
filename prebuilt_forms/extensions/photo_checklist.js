@@ -357,8 +357,8 @@ jQuery(document).ready(function($) {
       }
     });
     mapInitialisationHooks.push(function() {
-      // If only one location option, then select it.
-      if ($('#imp-location option:not([value=""])').length === 1) {
+      // If only one location option, then select it if inputting new sample.
+      if ($('#imp-location option:not([value=""])').length === 1 && !$('#sample\\:id').val()) {
         $('#imp-location').val($('#imp-location option:not([value=""])').val());
       }
       // Force initial entry to load list.
