@@ -223,8 +223,8 @@ jQuery(document).ready(function($) {
         .replace(/{{ section_idx }}/g, sectionIdx)
         .replace(/{{ item_idx }}/g, itemIdx)
         .replace(/{{ occ_id }}/g, existingOccurrence ? existingOccurrence.occurrence_id : '')
-        .replace(/{{ media_id }}/g, existingOccurrence ? existingOccurrence.media_id : '')
-        .replace(/{{ media_path }}/g, existingOccurrence ? existingOccurrence.media_path : '')
+        .replace(/{{ media_id }}/g, existingOccurrence && existingOccurrence.media_id ? existingOccurrence.media_id : '')
+        .replace(/{{ media_path }}/g, existingOccurrence && existingOccurrence.media_path ? existingOccurrence.media_path : '')
         .replace(/{{ ttl_id }}/g, taxon.taxa_taxon_list_id)
         .replace(/{{ count }}/g, existingOccurrence ? existingOccurrence.count : '')
       ).appendTo(sectionBody);
@@ -360,6 +360,10 @@ jQuery(document).ready(function($) {
       // If only one location option, then select it if inputting new sample.
       if ($('#imp-location option:not([value=""])').length === 1 && !$('#sample\\:id').val()) {
         $('#imp-location').val($('#imp-location option:not([value=""])').val());
+      } else if ($('#sample\\:id').val() && !indiciaData.photoChecklistSaveLinkToLocation) {
+        // If no link saved to location for privacy reasons, a slightly messy
+        // lookup on the sref is required.
+        $('#imp-location').val($('#imp-location option[data-centroid_sref="' + $('#imp-sref').val() + '"]').val());
       }
       // Force initial entry to load list.
       $('#imp-location').change();
