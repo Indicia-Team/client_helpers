@@ -288,6 +288,7 @@ jQuery(document).ready(function($) {
       section = $(config.sectionTemplate
         .replace(/{{ section_title }}/g, title)
         .replace(/{{ section_id }}/g, sectionId)
+        .replace(/{{ section_tooltip }}/g, config.sectionTooltip)
         ).appendTo(el);
       addSpeciesPanels(config, sectionIdx, section, sectionInfo);
     });
