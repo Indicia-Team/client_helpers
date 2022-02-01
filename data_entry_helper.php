@@ -1024,7 +1024,19 @@ JS;
     // particular media type, not just any old media associated with the
     // sample.
     if (!empty($options['subType'])) {
-      self::$upload_file_types[$options['subType']] = self::$upload_file_types['image'];
+      // Determine the top-level media type.
+      $tokens = explode(':', $options['subType']);
+      $media_type = strtolower($tokens[0]);
+      // Get a list of file types for that media type.
+      if (array_key_exists($media_type, self::$upload_file_types)) {
+        $file_types[$media_type] = self::$upload_file_types[$media_type];
+      }
+      else {
+        throw new Exception("No file types known for media type, $media_type.");
+      }
+    }
+    else {
+      $file_types = self::$upload_file_types;
     }
     // Allow options to be defaulted and overridden.
     $protocol = empty($_SERVER['HTTPS']) || $_SERVER['HTTPS'] === 'off' ? 'http' : 'https';
@@ -1049,7 +1061,7 @@ JS;
       'codeGenerated' => 'all',
       'mediaTypes' => !empty($options['subType']) ? [$options['subType']] : ['Image:Local'],
       'mediaLicenceId' => NULL,
-      'fileTypes' => (object) self::$upload_file_types,
+      'fileTypes' => (object) $file_types,
       'imgPath' => empty(self::$images_path) ? self::relative_client_helper_path() . "../media/images/" : self::$images_path,
       'caption' => lang::get('Files'),
       'addBtnCaption' => lang::get('Add {1}'),
