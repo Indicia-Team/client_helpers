@@ -1024,7 +1024,19 @@ JS;
     // particular media type, not just any old media associated with the
     // sample.
     if (!empty($options['subType'])) {
-      self::$upload_file_types[$options['subType']] = self::$upload_file_types['image'];
+      // Determine the top-level media type.
+      $tokens = explode(':', $options['subType']);
+      $media_type = strtolower($tokens[0]);
+      // Get a list of file types for that media type.
+      if (array_key_exists($media_type, self::$upload_file_types)) {
+        $file_types[$media_type] = self::$upload_file_types[$media_type];
+      }
+      else {
+        throw new Exception("No file types known for media type, $media_type.");
+      }
+    }
+    else {
+      $file_types = self::$upload_file_types;
     }
     // Allow options to be defaulted and overridden.
     $protocol = empty($_SERVER['HTTPS']) || $_SERVER['HTTPS'] === 'off' ? 'http' : 'https';
@@ -1049,7 +1061,7 @@ JS;
       'codeGenerated' => 'all',
       'mediaTypes' => !empty($options['subType']) ? [$options['subType']] : ['Image:Local'],
       'mediaLicenceId' => NULL,
-      'fileTypes' => (object) self::$upload_file_types,
+      'fileTypes' => (object) $file_types,
       'imgPath' => empty(self::$images_path) ? self::relative_client_helper_path() . "../media/images/" : self::$images_path,
       'caption' => lang::get('Files'),
       'addBtnCaption' => lang::get('Add {1}'),
@@ -1061,7 +1073,7 @@ JS;
       'msgUseAddFileBtn' => lang::get('Use the Add file button to select a file from your local disk. Files of type {1} are allowed.'),
       'msgUseAddLinkBtn' => lang::get('Use the Add link button to add a link to information stored elsewhere on the internet. You can enter links from {1}.')
     ];
-    $defaults['caption'] = (!isset($options['mediaTypes']) || $options['mediaTypes'] ===  array('Image:Local')) ? lang::get('Photos') : lang::get('Media files');
+    $defaults['caption'] = (!isset($options['mediaTypes']) || $options['mediaTypes'] === ['Image:Local']) ? lang::get('Photos') : lang::get('Media files');
     if (isset(self::$final_image_folder_thumbs)) {
       $defaults['finalImageFolderThumbs'] = self::getRootFolder() . self::client_helper_path() . self::$final_image_folder_thumbs;
     }
@@ -1088,7 +1100,7 @@ JS;
       // Convert runtimes list to plupload format.
       $options['runtimes'] = implode(',', $options['runtimes']);
 
-      $javascript = "\n$('#".str_replace(':','\\\\:',$containerId) . "').uploader({";
+      $javascript = "\n$('#" . str_replace(':', '\\\\:', $containerId) . "').uploader({";
       // Just pass the options array through.
       $idx = 0;
       foreach ($options as $option => $value) {
@@ -1101,15 +1113,20 @@ JS;
         }
         $javascript .= "\n  $option : $value";
         // Comma separated, except last entry.
-        if ($idx < count($options)-1) $javascript .= ',';
+        if ($idx < count($options) - 1) {
+          $javascript .= ',';
+        }
         $idx++;
       }
-      //If the subType is specified, then this option is supplied as text by the user. So go and look up the ID to use in code.
+      // If the subType is specified, then this option is supplied as text by
+      // the user. So go and look up the ID to use in code.
       if (!empty($options['subType'])) {
-        $typeTermData = self::get_population_data(array(
+        $typeTermData = self::get_population_data([
           'table' => 'termlists_term',
-          'extraParams'=>$options['readAuth']+array('term'=>$options['subType'], 'columns' => 'id')
-        ));
+          'extraParams' =>
+            $options['readAuth'] +
+            ['term' => $options['subType'], 'columns' => 'id']
+        ]);
         $mediaTypeIdLimiter = $typeTermData[0]['id'];
       }
       // Add in any reloaded items, when editing or after validation failure.
@@ -1132,35 +1149,38 @@ JS;
       }
       $javascript .= "\n});\n";
     }
-    if ($options['codeGenerated'] === 'js')
-      // we only want to return the JavaScript, so go no further.
+    if ($options['codeGenerated'] === 'js') {
+      // We only want to return the JavaScript, so go no further.
       return $javascript;
-    elseif ($options['codeGenerated']=='all') {
+    }
+    elseif ($options['codeGenerated'] == 'all') {
       if (isset($options['tabDiv'])) {
-        // The file box is displayed on a tab, so we must only generate it when the tab is displayed.
+        // The file box is displayed on a tab, so we must only generate it when
+        // the tab is displayed.
         $javascript =
           "var uploaderTabHandler = function(event, ui) { \n" .
           "  panel = typeof ui.newPanel==='undefined' ? ui.panel : ui.newPanel[0];\n" .
-          "  if ($(panel).attr('id')==='" . $options['tabDiv'] . "') {\n    ".
-          $javascript.
-          "    indiciaFns.unbindTabsActivate($($('#" . $options['tabDiv'] . "').parent()), uploaderTabHandler);\n".
-          "  }\n};\n".
+          "  if ($(panel).attr('id')==='" . $options['tabDiv'] . "') {\n    " .
+          $javascript .
+          "    indiciaFns.unbindTabsActivate($($('#" . $options['tabDiv'] . "').parent()), uploaderTabHandler);\n" .
+          "  }\n};\n" .
           "indiciaFns.bindTabsActivate($($('#" . $options['tabDiv'] . "').parent()), uploaderTabHandler);\n";
-        // Insert this script at the beginning, because it must be done before the tabs are initialised or the
-        // first tab cannot fire the event
+        // Insert this script at the beginning, because it must be done before
+        // the tabs are initialised or the first tab cannot fire the event.
         self::$javascript = $javascript . self::$javascript;
-      }	else {
+      }
+      else {
         self::$onload_javascript .= $javascript;
       }
     }
     // Output a placeholder div for the jQuery plugin. Also output a normal
     // file input for the noscripts version.
-    $r = '<div class="file-box" id="' . $containerId . '"></div><noscript>' . self::image_upload(array(
+    $r = '<div class="file-box" id="' . $containerId . '"></div><noscript>' . self::image_upload([
       'label' => $options['caption'],
       // Convert table into a pseudo field name for the images.
       'id' => $options['id'],
       'fieldname' => str_replace('_', ':', $options['table'])
-    )) . '</noscript>';
+    ]) . '</noscript>';
     $r .= self::add_link_popup($options);
     return $r;
   }
