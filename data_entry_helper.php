@@ -277,6 +277,9 @@ class data_entry_helper extends helper_base {
    *     * label - The column label. Will be automatically translated.
    *     * class - A class given to the column label.
    *     * datatype - The column's data type. Currently only text and lookup is supported.
+   *     * control - If datatype=lookup and control=checkbox_group then the
+   *       options are presented as checkboxes. If omitted then options are 
+   *       presented as a select.
    *     * termlist_id - If datatype=lookup, then provide the termlist_id of the list to load terms for as options in the
    *       control.
    *     * hierarchical - set to true if the termlist is hierarchical. In this case terms shown in the drop down will
