@@ -327,6 +327,8 @@ class data_entry_helper extends helper_base {
     else {
       return 'The complex attribute grid control must be used with a mult-value attribute.';
     }
+
+    // Start building table head.
     $r = '<thead><tr>';
     $lookupData = [];
     $thRow2 = '';
@@ -399,11 +401,15 @@ class data_entry_helper extends helper_base {
     $r .= '<th rowspan="2" class="complex-attr-grid-col-del"></th></tr>';
     // Add second header row then end thead.
     $r .= "<tr>$thRow2</tr></thead>";
+
+    // Start building table body.
     $r .= '<tbody>';
     $rowCount = $options['defaultRows'] > count($options['default']) ? $options['defaultRows'] : count($options['default']);
     $extraCols = 0;
     $controlClass = 'complex-attr-grid-control';
     $controlClass .= empty($indicia_templates['formControlClass']) ? '' : " $indicia_templates[formControlClass]";
+
+    // For each row in table body.
     for ($i = 0; $i <= $rowCount - 1; $i++) {
       $class = ($i % 2 === 1) ? '' : ' class="odd"';
       $r .= "<tr$class>";
@@ -415,19 +421,22 @@ class data_entry_helper extends helper_base {
       else {
         $defaults = [];
       }
+
+      // For each cell in row.
       foreach ($options['columns'] as $idx => $def) {
         if (isset($options['default'][$i])) {
           $fieldnamePrefix = str_replace('Attr:', 'AttrComplex:', $options['default'][$i]['fieldname']);
         }
         else {
-          $fieldnamePrefix = "$attrTypeTag"."Complex:".$attrId.":";
+          $fieldnamePrefix = "$attrTypeTag" . "Complex:" . $attrId . ":";
         }
         $fieldname = "$fieldnamePrefix:$i:$idx";
         $default = isset(self::$entity_to_load[$fieldname]) ? self::$entity_to_load[$fieldname] :
           (array_key_exists($idx, $defaults) ? $defaults[$idx] :
             (isset($def['default']) ? $def['default'] : ''));
         $r .= "<td>";
-        if ($def['datatype'] === 'lookup' && isset($def['control']) && $def['control']) {
+        if ($def['datatype'] === 'lookup' && isset($def['control']) && $def['control'] === 'checkbox_group') {
+          // Add lookup as checkboxes.
           $checkboxes = [];
           // Array field.
           $fieldname .= '[]';
@@ -439,6 +448,7 @@ class data_entry_helper extends helper_base {
           $extraCols .= count($checkboxes) - 1;
         }
         elseif ($def['datatype'] === 'lookup') {
+          // Add lookup as select.
           $r .= "<select name=\"$fieldname\" class=\"$controlClass\"><option value=''>&lt;" . lang::get('Please select') . "&gt;</option>";
           foreach ($lookupData["tl$idx"] as $term) {
             $selected = $default == "$term[0]" ? ' selected="selected"' : '';
@@ -447,11 +457,13 @@ class data_entry_helper extends helper_base {
           $r .= "</select>";
         }
         else {
+          // Add text input.
           $class = empty($def['regex']) ? $controlClass : "$controlClass {pattern:$def[regex]}";
           $default = htmlspecialchars($default);
           $r .= "<input type=\"text\" name=\"$fieldname\" value=\"$default\" class=\"$class\"/>";
         }
         if (!empty($def['unit'])) {
+          // Add unit after input.
           $r .= '<span class="unit">' . lang::get($def['unit']) . '</span>';
         }
         $r .= '</td>';
@@ -463,13 +475,16 @@ class data_entry_helper extends helper_base {
       $r .= "</td></tr>";
     }
     $r .= '</tbody>';
+
     if (empty($options['rowCountControl'])) {
+      // Add table footer with button to add another row.
       $r .= '<tfoot>';
       $r .= '<tr><td colspan="' . (count($options['columns']) + 1 + $extraCols) .
         '"><button class="add-btn" type="button">' . lang::get("Add another") . '</button></td></tr>';
       $r .= '</tfoot>';
     }
     else {
+      // Link number of rows to rowCountControl value.
       $escaped = str_replace(':', '\\\\:', $options['rowCountControl']);
       data_entry_helper::$javascript .=
         "$('#$escaped').val($rowCount);
@@ -477,6 +492,7 @@ $('#$escaped').change(function(e) {
   changeComplexGridRowCount('$escaped', '$attrTypeTag', '$attrId');
 });\n";
     }
+
     // Wrap in a table template.
     $r = str_replace(
       ['{class}', '{id}', '{content}'],
