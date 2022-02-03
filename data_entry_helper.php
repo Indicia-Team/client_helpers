@@ -383,7 +383,7 @@ class data_entry_helper extends helper_base {
       }
       // Checkbox groups output a second row of cells for each checkbox label.
       $rowspan = isset($def['control']) && $def['control'] === 'checkbox_group' ? 1 : 2;
-      $colspan = isset($def['control']) && $def['control'] === 'checkbox_group' ? count($termlistData) : 1;
+      $colspan = isset($def['control']) && $def['control'] === 'checkbox_group' ? count($minified) : 1;
       // Add default class if none provided.
       $class = isset($def['class']) ? $def['class'] : 'complex-attr-grid-col' . $idx;
       $r .= "<th rowspan=\"$rowspan\" colspan=\"$colspan\" class=\"$class\">" . lang::get($def['label']) . '</th>';
