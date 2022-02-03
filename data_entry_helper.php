@@ -283,6 +283,8 @@ class data_entry_helper extends helper_base {
    *       include all the ancestors, e.g. coastal->coastal lagoon, rather than just the child term.
    *     * minDepth - if hierarchical, set the min and max depth to limit the range of levels returned.
    *     * maxDepth - if hierarchical, set the min and max depth to limit the range of levels returned.
+   *     * lookupValues - Instead of a termlist_id you can supply the values for
+   *       a lookup column in an associative array of terms, keyed by a value.
    *     * unit - An optional unit label to display after the control (e.g. 'cm', 'kg').
    *     * regex - A regular expression which validates the controls input value.
    *     * default - default value for this control used for new rows
