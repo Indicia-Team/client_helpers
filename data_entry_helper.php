@@ -376,7 +376,7 @@ class data_entry_helper extends helper_base {
         }
         foreach ($minified as $tokens) {
           if (isset($def['control']) && $def['control'] === 'checkbox_group') {
-            $thRow2 .= "<th>$minified[1]</th>";
+            $thRow2 .= "<th>$tokens[1]</th>";
           }
         }
         $lookupData["tl$idx"] = $minified;
