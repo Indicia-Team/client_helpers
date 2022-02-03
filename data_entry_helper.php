@@ -390,18 +390,8 @@ class data_entry_helper extends helper_base {
       $class = isset($def['class']) ? $def['class'] : 'complex-attr-grid-col' . $idx;
       $r .= "<th rowspan=\"$rowspan\" colspan=\"$colspan\" class=\"$class\">" . lang::get($def['label']) . '</th>';
     }
-    self::$javascript .= "indiciaData.langPleaseSelect='" . lang::get('Please select') . "'\n";
-    self::$javascript .= "indiciaData.langCantRemoveEnoughRows='" .
-      lang::get('Please clear the values in some more rows before trying to reduce the number of rows further.') . "'\n";
     // Need to unset the variable used in &$def, otherwise it doesn't work in the next iterator.
     unset($def);
-    $jsData = [
-      'cols' => $options['columns'],
-      'rowCount' => $options['defaultRows'],
-      'rowCountControl' => $options['rowCountControl'],
-      'deleteRows' => $options['deleteRows'],
-    ];
-    self::$javascript .= "indiciaData['complexAttrGrid-$attrTypeTag-$attrId']=" . json_encode($jsData) . ";\n";
     // Add delete column and end tr.
     $r .= '<th rowspan="2" class="complex-attr-grid-col-del"></th></tr>';
     // Add second header row then end thead.
@@ -490,6 +480,20 @@ $('#$escaped').change(function(e) {
       [' class="complex-attr-grid"', " id=\"complex-attr-grid-$attrTypeTag-$attrId\"", $r],
       $indicia_templates['data-input-table']);
     $r .= "<input type=\"hidden\" name=\"complex-attr-grid-encoding-$attrTypeTag-$attrId\" value=\"$options[encoding]\" />\n";
+
+    // Store information to allow adding rows in JavaScript.
+    self::$javascript .= "indiciaData.langPleaseSelect='" . lang::get('Please select') . "'\n";
+    self::$javascript .= "indiciaData.langCantRemoveEnoughRows='" .
+      lang::get('Please clear the values in some more rows before trying to reduce the number of rows further.') . "'\n";
+    $jsData = [
+      'cols' => $options['columns'],
+      'rowCount' => $options['defaultRows'],
+      'rowCountControl' => $options['rowCountControl'],
+      'deleteRows' => $options['deleteRows'],
+      'controlClass' => $controlClass,
+    ];
+    self::$javascript .= "indiciaData['complexAttrGrid-$attrTypeTag-$attrId']=" . json_encode($jsData) . ";\n";
+
     return $r;
   }
 
