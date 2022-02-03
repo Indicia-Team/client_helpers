@@ -339,7 +339,7 @@ class data_entry_helper extends helper_base {
         $def['unit'] = lang::get($def['unit']);
       }
       if ($def['datatype'] === 'lookup') {
-        $minified = [];
+        $listData = [];
         // No matter if the lookup comes from the db, or from a local array,
         // we want it in the same minimal format.
         if (!empty($def['termlist_id'])) {
@@ -372,25 +372,27 @@ class data_entry_helper extends helper_base {
             ]);
           }
           foreach ($termlistData as $term) {
-            $minified[] = [$term['id'], $term['term']];
+            $listData[] = [$term['id'], $term['term']];
           }
-          self::$javascript .= "indiciaData.tl$def[termlist_id]=" . json_encode($minified) . ";\n";
+          self::$javascript .= "indiciaData.tl$def[termlist_id]=" . json_encode($listData) . ";\n";
         }
         elseif (isset($def['lookupValues'])) {
           foreach ($def['lookupValues'] as $id => $term) {
-            $minified[] = [$id, $term];
+            $listData[] = [$id, $term];
           }
         }
-        foreach ($minified as $tokens) {
-          if (isset($def['control']) && $def['control'] === 'checkbox_group') {
-            $thRow2 .= "<th>$tokens[1]</th>";
+
+        if (isset($def['control']) && $def['control'] === 'checkbox_group') {
+          // Add checkbox text to table header.
+          foreach ($listData as $listItem) {
+            $thRow2 .= "<th>$listItem[1]</th>";
           }
         }
-        $lookupData["tl$idx"] = $minified;
+        $lookupData["tl$idx"] = $listData;
       }
       // Checkbox groups output a second row of cells for each checkbox label.
       $rowspan = isset($def['control']) && $def['control'] === 'checkbox_group' ? 1 : 2;
-      $colspan = isset($def['control']) && $def['control'] === 'checkbox_group' ? count($minified) : 1;
+      $colspan = isset($def['control']) && $def['control'] === 'checkbox_group' ? count($listData) : 1;
       // Add default class if none provided.
       $class = isset($def['class']) ? $def['class'] : 'complex-attr-grid-col' . $idx;
       $r .= "<th rowspan=\"$rowspan\" colspan=\"$colspan\" class=\"$class\">" . lang::get($def['label']) . '</th>';
