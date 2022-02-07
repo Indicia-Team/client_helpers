@@ -416,7 +416,7 @@ class data_entry_helper extends helper_base {
     $rowCount = $options['defaultRows'] > count($options['default']) ? $options['defaultRows'] : count($options['default']);
     $extraCols = 0;
     $controlClass = 'complex-attr-grid-control';
-    $controlClass .= empty($indicia_templates['formControlClass']) ? '' : " $indicia_templates[formControlClass]";
+    $controlClass .= " $indicia_templates[formControlClass]";
 
     // For each row in table body.
     for ($i = 0; $i <= $rowCount - 1; $i++) {
@@ -526,7 +526,6 @@ $('#$escaped').change(function(e) {
       'rowCount' => $options['defaultRows'],
       'rowCountControl' => $options['rowCountControl'],
       'deleteRows' => $options['deleteRows'],
-      'controlClass' => $controlClass,
     ];
     self::$javascript .= "indiciaData['complexAttrGrid-$attrTypeTag-$attrId']=" . json_encode($jsData) . ";\n";
 
