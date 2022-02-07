@@ -286,6 +286,11 @@ class data_entry_helper extends helper_base {
    *       include all the ancestors, e.g. coastal->coastal lagoon, rather than just the child term.
    *     * minDepth - if hierarchical, set the min and max depth to limit the range of levels returned.
    *     * maxDepth - if hierarchical, set the min and max depth to limit the range of levels returned.
+   *     * orderby - if datatype=lookup and termlist_id is provided then allows
+   *       the order of terms to be controlled. If hierarchical, the default is
+   *       'path' (the concatenated terms) but you may prefer 'sort_order'. If
+   *       not hierarchical, the default is 'sort_order' but you may prefer 
+   *       'term'
    *     * lookupValues - Instead of a termlist_id you can supply the values for
    *       a lookup column in an associative array of terms, keyed by a value.
    *     * unit - An optional unit label to display after the control (e.g. 'cm', 'kg').
@@ -362,6 +367,7 @@ class data_entry_helper extends helper_base {
                 'termlist_id' => $def['termlist_id'],
                 'min_depth' => empty($def['minDepth']) ? 0 : $def['minDepth'],
                 'max_depth' => empty($def['maxDepth']) ? 0 : $def['maxDepth'],
+                'orderby' => isset($def['orderby']) ? $def['orderby'] : 'path',
               ],
               'readAuth' => [
                 'auth_token' => $options['extraParams']['auth_token'],
