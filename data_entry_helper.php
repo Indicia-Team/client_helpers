@@ -1860,7 +1860,9 @@ JS;
       'searchUpdatesUsingBoundary' => FALSE,
       'isFormControl' => TRUE
     ], $options);
-    $options['columns'] = $options['valueField'] . ',' . $options['captionField'];
+    $options = array_merge([
+      'columns' => $options['valueField'] . ',' . $options['captionField'],
+    ], $options);
     if ($options['searchUpdatesSref']) {
       self::$javascript .= "indiciaData.searchUpdatesSref=true;\n";
       self::$javascript .= "indiciaData.searchUpdatesUsingBoundary = " .
@@ -1953,6 +1955,9 @@ JS;
    *   * termImageSize - Optional. Set to an Indicia image size preset
    *     (normally  thumb, med or original) to include term images in the
    *     output.
+   *   * dataAttrFields - fields in the source table that should be included
+   *     as data-* attributes in the list of options. This allows JS to access
+   *     data values for the selected item that are not visible in the UI.
    *
    * @return string
    *   HTML to insert into the page for the listbox control.
@@ -2406,6 +2411,9 @@ JS;
    *     output.
    *   * attributes - Optional. Additional HTML attribute to attach, e.g.
    *     data-es_* attributes.
+   *   * dataAttrFields - fields in the source table that should be included
+   *     as data-* attributes in the list of options. This allows JS to access
+   *     data values for the selected item that are not visible in the UI.
    *
    * @return string
    *   HTML code for a select control.
@@ -2565,7 +2573,7 @@ JS;
     foreach ($options['systems'] as $system => $caption) {
       $selected = ($options['default'] == $system ? 'selected' : '');
       $opts .= str_replace(
-        ['{value}', '{caption}', '{selected}'],
+        ['{value}', '{caption}', '{selected}', '{attribute_list}'],
         [$system, $caption, $selected],
         $indicia_templates['select_item']
       );
@@ -3063,7 +3071,7 @@ RIJS;
   *   inputs.
   *
   * NOTE, if you specify a value for the 'id' option it must be of the form
-  * species-grid-n where n is an integer. This is an expectation hard-coded in 
+  * species-grid-n where n is an integer. This is an expectation hard-coded in
   * to media/js.addRowToGrid.js at present.
   *
   * @param array $options
@@ -6382,9 +6390,10 @@ JS;
       if (array_key_exists('blankText', $options)) {
         $options['blankText'] = lang::get($options['blankText']);
         $options['items'] = str_replace(
-            array('{value}', '{caption}', '{selected}'),
-            array('', htmlentities($options['blankText'], ENT_COMPAT, "UTF-8")), $indicia_templates[$options['itemTemplate']]
-          ).(isset($options['optionSeparator']) ? $options['optionSeparator'] : "\n");;
+            ['{value}', '{caption}', '{selected}', '{attribute_list}'],
+            ['', htmlentities($options['blankText'], ENT_COMPAT, "UTF-8")],
+            $indicia_templates[$options['itemTemplate']]
+          ) . (isset($options['optionSeparator']) ? $options['optionSeparator'] : "\n");
       }
       $options['items'] .= implode((isset($options['optionSeparator']) ? $options['optionSeparator'] : "\n"), $lookupItems);
     }
@@ -6422,7 +6431,7 @@ JS;
       foreach ($options['lookupValues'] as $key => $caption) {
         $selected = self::get_list_item_selected_attribute($key, $selectedItemAttribute, $options, $itemFieldname);
         $r[$key] = str_replace(
-          array('{sortHandle}', '{value}', '{caption}', '{'.$selectedItemAttribute.'}', '{title}'),
+          array('{sortHandle}', '{value}', '{caption}', '{'.$selectedItemAttribute.'}', '{title}', '{attribute_list}'),
           array($sortHandle, htmlspecialchars($key), htmlspecialchars($caption), $selected, (isset($hints[$caption]) ? ' title="'.$hints[$caption].'" ' : '')),
           $indicia_templates[$options['itemTemplate']]
         );
@@ -6471,9 +6480,16 @@ JS;
 </a>
 HTML;
             }
+            $attributes = '';
+            if (isset($options['dataAttrFields'])) {
+              foreach ($options['dataAttrFields'] as $field) {
+                $dataVal = $record[$field];
+                $attributes .= " data-$field=\"$dataVal\"";
+              }
+            }
             $item = str_replace(
-              array('{sortHandle}', '{value}', '{caption}', '{'.$selectedItemAttribute.'}', '{title}'),
-              array($sortHandle, $value, $caption, $selected, (isset($hints[$value]) ? ' title="'.$hints[$value].'" ' : '')),
+              array('{sortHandle}', '{value}', '{caption}', '{'.$selectedItemAttribute.'}', '{title}', '{attribute_list}'),
+              array($sortHandle, $value, $caption, $selected, (isset($hints[$value]) ? ' title="'.$hints[$value].'" ' : ''), $attributes),
               $indicia_templates[$options['itemTemplate']]
             );
             $r[$record[$options['valueField']]] = $item;
