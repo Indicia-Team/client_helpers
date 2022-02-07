@@ -277,12 +277,22 @@ class data_entry_helper extends helper_base {
    *     * label - The column label. Will be automatically translated.
    *     * class - A class given to the column label.
    *     * datatype - The column's data type. Currently only text and lookup is supported.
+   *     * control - If datatype=lookup and control=checkbox_group then the
+   *       options are presented as checkboxes. If omitted then options are 
+   *       presented as a select.
    *     * termlist_id - If datatype=lookup, then provide the termlist_id of the list to load terms for as options in the
    *       control.
    *     * hierarchical - set to true if the termlist is hierarchical. In this case terms shown in the drop down will
    *       include all the ancestors, e.g. coastal->coastal lagoon, rather than just the child term.
    *     * minDepth - if hierarchical, set the min and max depth to limit the range of levels returned.
    *     * maxDepth - if hierarchical, set the min and max depth to limit the range of levels returned.
+   *     * orderby - if datatype=lookup and termlist_id is provided then allows
+   *       the order of terms to be controlled. If hierarchical, the default is
+   *       'path' (the concatenated terms) but you may prefer 'sort_order'. If
+   *       not hierarchical, the default is 'sort_order' but you may prefer 
+   *       'term'
+   *     * lookupValues - Instead of a termlist_id you can supply the values for
+   *       a lookup column in an associative array of terms, keyed by a value.
    *     * unit - An optional unit label to display after the control (e.g. 'cm', 'kg').
    *     * regex - A regular expression which validates the controls input value.
    *     * default - default value for this control used for new rows
@@ -323,6 +333,8 @@ class data_entry_helper extends helper_base {
     else {
       return 'The complex attribute grid control must be used with a mult-value attribute.';
     }
+
+    // Start building table head.
     $r = '<thead><tr>';
     $lookupData = [];
     $thRow2 = '';
@@ -333,7 +345,7 @@ class data_entry_helper extends helper_base {
         $def['unit'] = lang::get($def['unit']);
       }
       if ($def['datatype'] === 'lookup') {
-        $minified = [];
+        $listData = [];
         // No matter if the lookup comes from the db, or from a local array,
         // we want it in the same minimal format.
         if (!empty($def['termlist_id'])) {
@@ -356,6 +368,7 @@ class data_entry_helper extends helper_base {
                 'termlist_id' => $def['termlist_id'],
                 'min_depth' => empty($def['minDepth']) ? 0 : $def['minDepth'],
                 'max_depth' => empty($def['maxDepth']) ? 0 : $def['maxDepth'],
+                'orderby' => isset($def['orderby']) ? $def['orderby'] : 'path',
               ],
               'readAuth' => [
                 'auth_token' => $options['extraParams']['auth_token'],
@@ -366,50 +379,46 @@ class data_entry_helper extends helper_base {
             ]);
           }
           foreach ($termlistData as $term) {
-            $minified[] = [$term['id'], $term['term']];
+            $listData[] = [$term['id'], $term['term']];
           }
-          self::$javascript .= "indiciaData.tl$def[termlist_id]=" . json_encode($minified) . ";\n";
+          self::$javascript .= "indiciaData.tl$def[termlist_id]=" . json_encode($listData) . ";\n";
         }
         elseif (isset($def['lookupValues'])) {
           foreach ($def['lookupValues'] as $id => $term) {
-            $minified[] = [$id, $term];
+            $listData[] = [$id, $term];
           }
         }
-        foreach ($minified as $tokens) {
-          if (isset($def['control']) && $def['control'] === 'checkbox_group') {
-            $thRow2 .= "<th>$minified[1]</th>";
+
+        if (isset($def['control']) && $def['control'] === 'checkbox_group') {
+          // Add checkbox text to table header.
+          foreach ($listData as $listItem) {
+            $thRow2 .= "<th>$listItem[1]</th>";
           }
         }
-        $lookupData["tl$idx"] = $minified;
+        $lookupData["tl$idx"] = $listData;
       }
       // Checkbox groups output a second row of cells for each checkbox label.
       $rowspan = isset($def['control']) && $def['control'] === 'checkbox_group' ? 1 : 2;
-      $colspan = isset($def['control']) && $def['control'] === 'checkbox_group' ? count($termlistData) : 1;
+      $colspan = isset($def['control']) && $def['control'] === 'checkbox_group' ? count($listData) : 1;
       // Add default class if none provided.
       $class = isset($def['class']) ? $def['class'] : 'complex-attr-grid-col' . $idx;
       $r .= "<th rowspan=\"$rowspan\" colspan=\"$colspan\" class=\"$class\">" . lang::get($def['label']) . '</th>';
     }
-    self::$javascript .= "indiciaData.langPleaseSelect='" . lang::get('Please select') . "'\n";
-    self::$javascript .= "indiciaData.langCantRemoveEnoughRows='" .
-      lang::get('Please clear the values in some more rows before trying to reduce the number of rows further.') . "'\n";
     // Need to unset the variable used in &$def, otherwise it doesn't work in the next iterator.
     unset($def);
-    $jsData = [
-      'cols' => $options['columns'],
-      'rowCount' => $options['defaultRows'],
-      'rowCountControl' => $options['rowCountControl'],
-      'deleteRows' => $options['deleteRows'],
-    ];
-    self::$javascript .= "indiciaData['complexAttrGrid-$attrTypeTag-$attrId']=" . json_encode($jsData) . ";\n";
     // Add delete column and end tr.
     $r .= '<th rowspan="2" class="complex-attr-grid-col-del"></th></tr>';
     // Add second header row then end thead.
     $r .= "<tr>$thRow2</tr></thead>";
+
+    // Start building table body.
     $r .= '<tbody>';
     $rowCount = $options['defaultRows'] > count($options['default']) ? $options['defaultRows'] : count($options['default']);
     $extraCols = 0;
     $controlClass = 'complex-attr-grid-control';
-    $controlClass .= " $indicia_templates[formControlClass]";
+    $controlClass .= empty($indicia_templates['formControlClass']) ? '' : " $indicia_templates[formControlClass]";
+
+    // For each row in table body.
     for ($i = 0; $i <= $rowCount - 1; $i++) {
       $class = ($i % 2 === 1) ? '' : ' class="odd"';
       $r .= "<tr$class>";
@@ -421,19 +430,22 @@ class data_entry_helper extends helper_base {
       else {
         $defaults = [];
       }
+
+      // For each cell in row.
       foreach ($options['columns'] as $idx => $def) {
         if (isset($options['default'][$i])) {
           $fieldnamePrefix = str_replace('Attr:', 'AttrComplex:', $options['default'][$i]['fieldname']);
         }
         else {
-          $fieldnamePrefix = "{$attrTypeTag}Complex:$attrId:";
+          $fieldnamePrefix = "$attrTypeTag" . "Complex:" . $attrId . ":";
         }
         $fieldname = "$fieldnamePrefix:$i:$idx";
         $default = isset(self::$entity_to_load[$fieldname]) ? self::$entity_to_load[$fieldname] :
           (array_key_exists($idx, $defaults) ? $defaults[$idx] :
             (isset($def['default']) ? $def['default'] : ''));
         $r .= "<td>";
-        if ($def['datatype'] === 'lookup' && isset($def['control']) && $def['control']) {
+        if ($def['datatype'] === 'lookup' && isset($def['control']) && $def['control'] === 'checkbox_group') {
+          // Add lookup as checkboxes.
           $checkboxes = [];
           // Array field.
           $fieldname .= '[]';
@@ -445,6 +457,7 @@ class data_entry_helper extends helper_base {
           $extraCols .= count($checkboxes) - 1;
         }
         elseif ($def['datatype'] === 'lookup') {
+          // Add lookup as select.
           $r .= "<select name=\"$fieldname\" class=\"$controlClass\"><option value=''>&lt;" . lang::get('Please select') . "&gt;</option>";
           foreach ($lookupData["tl$idx"] as $term) {
             $selected = $default == "$term[0]" ? ' selected="selected"' : '';
@@ -453,11 +466,13 @@ class data_entry_helper extends helper_base {
           $r .= "</select>";
         }
         else {
+          // Add text input.
           $class = empty($def['regex']) ? $controlClass : "$controlClass {pattern:$def[regex]}";
           $default = htmlspecialchars($default);
           $r .= "<input type=\"text\" name=\"$fieldname\" value=\"$default\" class=\"$class\"/>";
         }
         if (!empty($def['unit'])) {
+          // Add unit after input.
           $r .= '<span class="unit">' . lang::get($def['unit']) . '</span>';
         }
         $r .= '</td>';
@@ -469,13 +484,16 @@ class data_entry_helper extends helper_base {
       $r .= "</td></tr>";
     }
     $r .= '</tbody>';
+
     if (empty($options['rowCountControl'])) {
+      // Add table footer with button to add another row.
       $r .= '<tfoot>';
       $r .= '<tr><td colspan="' . (count($options['columns']) + 1 + $extraCols) .
         '"><button class="add-btn ' . $indicia_templates['buttonHighlightedClass'] . '" type="button"><i class="fas fa-plus"></i>' . lang::get("Add another") . '</button></td></tr>';
       $r .= '</tfoot>';
     }
     else {
+      // Link number of rows to rowCountControl value.
       $escaped = str_replace(':', '\\\\:', $options['rowCountControl']);
       data_entry_helper::$javascript .=
         "$('#$escaped').val($rowCount);
@@ -483,6 +501,7 @@ $('#$escaped').change(function(e) {
   changeComplexGridRowCount('$escaped', '$attrTypeTag', '$attrId');
 });\n";
     }
+
     // Wrap in a table template.
     $r = str_replace(
       [
@@ -497,6 +516,20 @@ $('#$escaped').change(function(e) {
       ],
       $indicia_templates['data-input-table']);
     $r .= "<input type=\"hidden\" name=\"complex-attr-grid-encoding-$attrTypeTag-$attrId\" value=\"$options[encoding]\" />\n";
+
+    // Store information to allow adding rows in JavaScript.
+    self::$javascript .= "indiciaData.langPleaseSelect='" . lang::get('Please select') . "'\n";
+    self::$javascript .= "indiciaData.langCantRemoveEnoughRows='" .
+      lang::get('Please clear the values in some more rows before trying to reduce the number of rows further.') . "'\n";
+    $jsData = [
+      'cols' => $options['columns'],
+      'rowCount' => $options['defaultRows'],
+      'rowCountControl' => $options['rowCountControl'],
+      'deleteRows' => $options['deleteRows'],
+      'controlClass' => $controlClass,
+    ];
+    self::$javascript .= "indiciaData['complexAttrGrid-$attrTypeTag-$attrId']=" . json_encode($jsData) . ";\n";
+
     return $r;
   }
 
