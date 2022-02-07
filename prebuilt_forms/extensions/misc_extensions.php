@@ -675,6 +675,25 @@ JS;
   }
 
   /**
+   * Takes an array of localisation strings and adds them to indiciaData.lang.
+   *
+   * For use by custom JS code. Options include:
+   * * @group - set to the named group to place the strings inside, which will
+   *   the name of a property added to indiciaData.lang.
+   * * @strings - a JSON object containing key/value pairs where the key is the
+   *   language string key and the value is the text in the default language.
+   */
+  public static function localised_text_js($auth, $args, $tabalias, $options) {
+    if (empty($options['group'])) {
+      return 'The misc_extensions.localised_text_js control needs a @group parameter';
+    }
+    if (empty($options['strings'])) {
+      return 'The misc_extensions.localised_text_js control needs a @strings parameter';
+    }
+    helper_base::addLanguageStringsToJs($options['group'], $options['strings']);
+  }
+
+  /**
    * Outputs a report_helper::freeform report control.
    *
    * Allows [misc_extensions.freeform_report] to be embedded in any dynamic content.
