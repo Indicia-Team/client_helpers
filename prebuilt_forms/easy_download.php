@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Indicia, the OPAL Online Recording Toolkit.
  *
@@ -156,7 +157,7 @@ class iform_easy_download {
         'captionField' => 'title',
         'sharing' => 'data_flow',
         'default' => 'library/occurrences/occurrences_download_2',
-        'siteSpecific' => TRUE.
+        'siteSpecific' => TRUE,
       ],
       [
         'name' => 'report_csv',
@@ -188,7 +189,7 @@ class iform_easy_download {
         'description' => 'Additional parameters to provide to the report when doing a TSV download. One per line, param=value format.',
         'type' => 'textarea',
         'required' => FALSE,
-        'default '=> "smpattrs=\noccattrs=\nsearchArea=\nidlist=\nquality=!R\n",
+        'default' => "smpattrs=\noccattrs=\nsearchArea=\nidlist=\nquality=!R\n",
       ],
       [
         'name' => 'report_kml',
@@ -241,13 +242,13 @@ class iform_easy_download {
       [
         'name' => 'limit',
         'caption' => 'Limit to number of records',
-        'description' => 'For performance reasons, unlimited downloads are not recommended. Set this to control the number of records '.
+        'description' => 'For performance reasons, unlimited downloads are not recommended. Set this to control the number of records' .
             'that can be downloaded at one time, or set to 0 for no limit.',
         'type' => 'text_input',
         'required' => FALSE,
         'default' => 20000,
-      )
-    );
+      ],
+    ];
   }
 
   /**
@@ -273,7 +274,7 @@ class iform_easy_download {
     $expert = hostsite_user_has_permission($args['permission']);
     $conn = iform_get_connection_details($nid);
     $readAuth = data_entry_helper::get_read_auth($conn['website_id'], $conn['password']);
-    // Find out which types of filters and formats are available to the user
+    // Find out which types of filters and formats are available to the user.
     $filters = self::get_filters($args, $readAuth);
     $formats = [];
     if ($args['csv_format'] === 'yes' || ($args['csv_format'] === 'expert' && $expert)) {
@@ -402,7 +403,9 @@ class iform_easy_download {
     }
     if (in_array('nbn', $formats)) {
       $r .= '<input class="inline-control" type="submit" name="format" value="' . lang::get('NBN Format') . '"/>';
-      $r .= '<p class="helpText">'.lang::get('Note that the NBN format download will only include verified data and excludes records where the date or spatial reference is not compatible with the NBN Gateway.').'</p>';
+      $r .= '<p class="helpText">' .
+        lang::get('Note that the NBN format download will only include verified data and excludes records where the date or spatial reference is not compatible with the NBN Gateway.') .
+        '</p>';
     }
     $r .= '</fieldset></form>';
     return $r;
@@ -410,9 +413,14 @@ class iform_easy_download {
 
   /**
    * Returns an array of the available types of filter (my records, expert records, all records).
-   * @param array $args Form arguments
-   * @param array $readAuth Read authorisation tokens
-   * @return array Associative array of filter type suitable for loading into a picker control.
+   *
+   * @param array $args
+   *   Form arguments.
+   * @param array $readAuth
+   *   Read authorisation tokens.
+   *
+   * @return array
+   *   Associative array of filter type suitable for loading into a picker control.
    */
   private static function get_filters($args, $readAuth) {
     $filters = [];
@@ -423,7 +431,7 @@ class iform_easy_download {
       if (preg_match('/^library\/occurrences\/filterable_/', $args["report_csv"])) {
         // Using the new standard params style of report. So, we can support
         // verification permissions via filters. First, apply legacy
-        // verification settings from their profile
+        // verification settings from their profile.
         $location_id = hostsite_get_user_field('location_expertise');
         $taxon_group_ids = hostsite_get_user_field('taxon_groups_expertise');
         $survey_ids = hostsite_get_user_field('surveys_expertise');

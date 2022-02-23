@@ -3320,7 +3320,7 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue, removeparam) {
       report_helper::$javascript .= "      indiciaData.reportlayer.addFeatures(features);\n";
       if ($zoomToExtent && !empty($addFeaturesJs)) {
         self::$javascript .= "      div.map.zoomToExtent(indiciaData.reportlayer.getDataExtent());\n";
-        self::$javascript .= "      delete indiciaData.zoomToAfterFetchingGoogleApiScript;\n";
+        self::$javascript .= "      delete indiciaData['zoomToAfterFetchingGoogleApiScript-' + div.map.id];\n";
       }
       if (!empty($featureDoubleOutlineColour)) {
         // push a clone of the array of features onto a layer which will draw an outline.

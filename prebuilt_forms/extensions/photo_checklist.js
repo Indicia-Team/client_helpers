@@ -161,13 +161,14 @@ jQuery(document).ready(function($) {
     var filename;
     var thumbFilename;
     var taxonLabel = getFormattedTaxonLabel(taxon, false);
+    var machineName = taxon.taxon.toLowerCase().replace(/[^a-z0-9]/g, '-');
     // Ensure trailing slash.
     if (path.substr(path.length - 1) !== '/') {
       path += '/';
     }
     // Get the original default image details.
-    origfilename = path + taxon.taxon.toLowerCase().replace(/[^a-z0-9]/g, '-') + '.jpg';
-    origThumbFilename = path + 'thumb-' + taxon.taxon.toLowerCase().replace(/[^a-z0-9]/g, '-') + '.jpg';
+    origfilename = path + machineName + '.jpg';
+    origThumbFilename = path + 'thumb-' + machineName + '.jpg';
     if (existingOccurrence && existingOccurrence.media_path) {
       filename = indiciaData.read.url + '/upload/' + existingOccurrence.media_path;
       thumbFilename = indiciaData.read.url + '/upload/thumb-' + existingOccurrence.media_path;
@@ -175,7 +176,7 @@ jQuery(document).ready(function($) {
       filename = origfilename;
       thumbFilename = origThumbFilename;
     }
-    return '<a class="photo-popup" data-fancybox="fancybox" href="' + filename + '" data-orig-href="' + origfilename + '" data-caption="' + taxonLabel + '">' +
+    return '<a class="photo-popup" data-fancybox="' + machineName + '" href="' + filename + '" data-orig-href="' + origfilename + '" data-caption="' + taxonLabel + '">' +
       '<img src="' + thumbFilename + '" data-orig-src="' + origThumbFilename + '" title="' + taxonLabel + '" alt="' + taxonLabel + '" class="img-rounded">' +
       '</a>';
   }
@@ -222,8 +223,8 @@ jQuery(document).ready(function($) {
         .replace(/{{ section_idx }}/g, sectionIdx)
         .replace(/{{ item_idx }}/g, itemIdx)
         .replace(/{{ occ_id }}/g, existingOccurrence ? existingOccurrence.occurrence_id : '')
-        .replace(/{{ media_id }}/g, existingOccurrence ? existingOccurrence.media_id : '')
-        .replace(/{{ media_path }}/g, existingOccurrence ? existingOccurrence.media_path : '')
+        .replace(/{{ media_id }}/g, existingOccurrence && existingOccurrence.media_id ? existingOccurrence.media_id : '')
+        .replace(/{{ media_path }}/g, existingOccurrence && existingOccurrence.media_path ? existingOccurrence.media_path : '')
         .replace(/{{ ttl_id }}/g, taxon.taxa_taxon_list_id)
         .replace(/{{ count }}/g, existingOccurrence ? existingOccurrence.count : '')
       ).appendTo(sectionBody);
@@ -287,6 +288,7 @@ jQuery(document).ready(function($) {
       section = $(config.sectionTemplate
         .replace(/{{ section_title }}/g, title)
         .replace(/{{ section_id }}/g, sectionId)
+        .replace(/{{ section_tooltip }}/g, config.sectionTooltip)
         ).appendTo(el);
       addSpeciesPanels(config, sectionIdx, section, sectionInfo);
     });
@@ -356,9 +358,13 @@ jQuery(document).ready(function($) {
       }
     });
     mapInitialisationHooks.push(function() {
-      // If only one location option, then select it.
-      if ($('#imp-location option:not([value=""])').length === 1) {
+      // If only one location option, then select it if inputting new sample.
+      if ($('#imp-location option:not([value=""])').length === 1 && !$('#sample\\:id').val()) {
         $('#imp-location').val($('#imp-location option:not([value=""])').val());
+      } else if ($('#sample\\:id').val() && !indiciaData.photoChecklistSaveLinkToLocation) {
+        // If no link saved to location for privacy reasons, a slightly messy
+        // lookup on the sref is required.
+        $('#imp-location').val($('#imp-location option[data-centroid_sref="' + $('#imp-sref').val() + '"]').val());
       }
       // Force initial entry to load list.
       $('#imp-location').change();

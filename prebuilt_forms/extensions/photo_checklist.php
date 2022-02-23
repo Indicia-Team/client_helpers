@@ -142,6 +142,7 @@ class extension_photo_checklist {
       'resizeHeight' => $options['resizeHeight'],
       'resizeWidth' => $options['resizeWidth'],
       'resizeQuality' => $options['resizeQuality'],
+      'sectionTooltip' => lang::get('Click to expand or collapse the species in this section.'),
     ];
     $r = str_replace(['{{ id }}'], [$options['id']], $options['containerTemplate']);
     // Enable custom submission handling.
@@ -177,6 +178,10 @@ class extension_photo_checklist {
    *   based on the value of.
    * * limitToCreatedByUser - if true, then only locations created by the user
    *   are listed.
+   * * saveLinkToLocation - defaults to true. If set to false, then the sample
+   *   location_id field is ommitted from submissions, so the only location
+   *   info saved is the spatial reference. Allows a user to keep a list of
+   *   personal site names that don't form part of a record.
    *
    * Other options for the data_entry_helper::location_select control can also
    * be used.
@@ -195,12 +200,22 @@ class extension_photo_checklist {
       'extraParams' => [],
       'label' => lang::get('Site'),
       'searchUpdatesSref' => TRUE,
+      'dataAttrFields' => ['centroid_sref'],
+      'columns' => 'id,name,centroid_sref',
+      'saveLinkToLocation' => TRUE,
     ], $options);
+    if (!$options['saveLinkToLocation']) {
+      // Unlink from the database.
+      $options['fieldname'] = 'foo';
+      // But relink to location selection functionality.
+      $options['id'] = 'imp-location';
+    }
     $options['extraParams'] += $auth['read'];
     if (!empty($options['limitToCreatedByUser'])) {
       $options['extraParams'] += ['created_by_id' => hostsite_get_user_field('indicia_user_id')];
     }
     data_entry_helper::$indiciaData['useLocAttrToPopulatePhotoChecklist'] = $options['locAttrId'];
+    data_entry_helper::$indiciaData['photoChecklistSaveLinkToLocation'] = $options['saveLinkToLocation'];
     $filepath = hostsite_get_public_file_path();
     data_entry_helper::$indiciaData['photoChecklistDataFile'] = data_entry_helper::getRootFolder() . "$filepath/indicia/photo-checklist/$options[dataFile]";
     return data_entry_helper::location_select($options);
@@ -288,7 +303,7 @@ class extension_photo_checklist {
 <div class="panel panel-default photo-checklist-section">
   <div class="panel-heading">
     <h4 class="panel-title">
-      <a data-toggle="collapse" href="#{{ section_id }}">{{ section_title }}</a>
+    <a data-toggle="collapse" title="{{ section_tooltip }}" href="#{{ section_id }}">{{ section_title }}</a>
     </h4>
   </div>
   <div id="{{ section_id }}" class="panel-collapse collapse">
