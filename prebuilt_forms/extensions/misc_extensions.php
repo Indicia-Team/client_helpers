@@ -807,7 +807,7 @@ JS;
   }
 
   /**
-   * Outputs a QR Code image.
+   * Outputs a QR Code image or download link.
    *
    * Default is to output the current page URL but this can be overwritten by
    * setting @data to the content of the required QR Code.
@@ -815,7 +815,17 @@ JS;
    * Requires https://www.drupal.org/project/endroid_qr_code or any URL that
    * can generate a QR code image, specified in the @generatorUrl parameter.
    *
-   * Control the size with the @width and @height options.
+   * Options include:
+   * * @data - the URL or other data to generate a code for. Defaults to the
+   *   current page URL.
+   * * @generatorUrl - a URL which will generate the image, with a {data}
+   *   placeholder that will be replaced by the value being generated. The
+   *   default setting will work with the Endroid QR Code module.
+   * * @height - for image mode, the height in pixels, defaults to 150.
+   * * @linkText - if mode is "link" then specifies the untranslated text for
+   *   the link. The default is "Download QR Code".
+   * * @mode - defaults to "image". Set to "link" to just generate a link.
+   * * @width - for image mode, the width in pixels, defaults to 150.
    *
    * @return string
    *   Image HTML.
@@ -827,9 +837,16 @@ JS;
       'generatorUrl' => helper_base::getRootFolder(TRUE) . 'image-qr-generate-with-url?path={data}',
       'width' => 150,
       'height' => 150,
+      'linkText' => 'Download QR Code',
+      'mode' => 'image',
     ], $options);
     $url = str_replace('{data}', urlencode($options['data']), $options['generatorUrl']);
-    return "<img src=\"$url\" width=\"$options[width]\" height=\"$options[height]\" />";
+    if ($options['mode'] === 'image') {
+      return "<img src=\"$url\" width=\"$options[width]\" height=\"$options[height]\" />";
+    }
+    else {
+      return "<a href=\"$url\" download>$options[linkText]</a>";
+    }
   }
 
 }
