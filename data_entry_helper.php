@@ -278,7 +278,7 @@ class data_entry_helper extends helper_base {
    *     * class - A class given to the column label.
    *     * datatype - The column's data type. Currently only text and lookup is supported.
    *     * control - If datatype=lookup and control=checkbox_group then the
-   *       options are presented as checkboxes. If omitted then options are 
+   *       options are presented as checkboxes. If omitted then options are
    *       presented as a select.
    *     * termlist_id - If datatype=lookup, then provide the termlist_id of the list to load terms for as options in the
    *       control.
@@ -289,7 +289,7 @@ class data_entry_helper extends helper_base {
    *     * orderby - if datatype=lookup and termlist_id is provided then allows
    *       the order of terms to be controlled. If hierarchical, the default is
    *       'path' (the concatenated terms) but you may prefer 'sort_order'. If
-   *       not hierarchical, the default is 'sort_order' but you may prefer 
+   *       not hierarchical, the default is 'sort_order' but you may prefer
    *       'term'
    *     * lookupValues - Instead of a termlist_id you can supply the values for
    *       a lookup column in an associative array of terms, keyed by a value.
@@ -1352,9 +1352,9 @@ JS;
       $options['closeButton'] = self::apply_replacements_to_template($indicia_templates['button'], [
         'href' => '#',
         'id' => 'imp-georef-close-btn',
-        'class' => '',
+        'class' => "class=\"$indicia_templates[buttonDefaultClass]\"",
         'caption' => lang::get('Close the search results'),
-        'title' => ''
+        'title' => '',
       ]);
     }
     return self::apply_template('georeference_lookup', $options);
