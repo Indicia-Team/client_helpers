@@ -21,8 +21,6 @@
  * @link https://github.com/indicia-team/warehouse/
  */
 
-use Masterminds\HTML5;
-
 /**
  * Link in other required php files.
  */
