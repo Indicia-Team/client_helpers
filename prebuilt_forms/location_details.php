@@ -124,7 +124,7 @@ class iform_location_details extends iform_dynamic {
             '<strong>[control name]</strong> indicates a predefined control is to be added to the form with the following predefined controls available: <br/>' .
                 '&nbsp;&nbsp;<strong>[locationdetails]</strong> - displays information relating to the occurrence and its sample. Set @fieldsToExcludeIfLoggedOut to an array of field names to skip for anonymous users.<br/>' .
                 '&nbsp;&nbsp;<strong>[buttons]</strong> - outputs a row of edit and explore buttons. Use the @buttons option to change the list of buttons to output ' .
-                'by setting this to an array, e.g. [edit] will output just the edit button, [explore] outputs just the explore button, [species details] outputs a species details button. ' .
+                'by setting this to an array, e.g. ["edit"] will output just the edit button, ["explore"] outputs just the explore button, ["edit","record"] outputs an edit and record button. ' .
                 'The edit button is automatically skipped if the user does not have rights to edit the record.<br/>' .
                 "&nbsp;&nbsp;<strong>[photos]</strong> - photos associated with the occurrence<br/>" .
                 "&nbsp;&nbsp;<strong>[map]</strong> - a map that links to the spatial reference and location<br/>" .
@@ -226,9 +226,14 @@ class iform_location_details extends iform_dynamic {
    *   The alias of the tab this appears on.
    * @param array $options
    *   Options configured for this control. Specify the following options:
-   *   * buttons - array containing 'edit' to include the edit button or
-   *   'explore' to include an explore link. Other, options may be added in
-   *   future. Defaults to all buttons.
+   *   * buttons - array containing 'edit' to include the edit button,
+   *   'explore' to include an explore link or 'record' to include a link to a
+   *   recording form for the site. Other, options may be added in future. The
+   *   'record' button requires an option @enterRecordsPath set to the path of
+   *   a form page for entering a list of records at this location. The form
+   *   should use the [location url param] control to allow it to use the
+   *   location_id parameter passed to the form.
+   *   Defaults to all buttons.
    *
    * @return string
    *   HTML for the buttons.
@@ -238,7 +243,7 @@ class iform_location_details extends iform_dynamic {
       'buttons' => [
         'edit',
       ],
-    ]);
+    ], $options);
     $r = '<div class="sample-details-buttons">';
     foreach ($options['buttons'] as $button) {
       if ($button === 'edit') {
@@ -246,6 +251,9 @@ class iform_location_details extends iform_dynamic {
       }
       elseif ($button === 'explore') {
         $r .= self::buttons_explore($auth, $args, $tabalias, $options);
+      }
+      elseif ($button === 'record') {
+        $r .= self::buttons_record($auth, $args, $tabalias, $options);
       }
       else {
         throw new exception("Unknown button $button");
@@ -265,7 +273,12 @@ class iform_location_details extends iform_dynamic {
    * @param string $tabalias
    *   The alias of the tab this appears on.
    * @param array $options
-   *   Options configured for this control.
+   *   Options configured for this control. Options available are:
+   *   * enterRecordsPath - path to the form page for entering a list of
+   *     records at this location. The form should use the [location url param]
+   *     control to allow it to use the location_id parameter passed to the
+   *     form. When this option is set, an "Enter a list of records" button is
+   *     included.
    *
    * @return string
    *   HTML for the button.
@@ -283,10 +296,8 @@ class iform_location_details extends iform_dynamic {
       $url = "$rootFolder$args[default_input_form]{$paramJoin}location_id=$location[location_id]";
       return "<a class=\"$indicia_templates[buttonDefaultClass]\" href=\"$url\">" . lang::get('Edit this location') . '</a>';
     }
-    else {
-      // No rights to edit, so button omitted.
-      return '';
-    }
+    // User does not have rights to edit the location.
+    return '';
   }
 
   /**
@@ -316,6 +327,38 @@ class iform_location_details extends iform_dynamic {
           '"Explore Parameter Name" has not been specified.');
     }
     return $r;
+  }
+
+  /**
+   * Retrieve the HTML for an enter list of records for location button.
+   *
+   * @param array $auth
+   *   Read authorisation array.
+   * @param array $args
+   *   Form options.
+   * @param string $tabalias
+   *   The alias of the tab this appears on.
+   * @param array $options
+   *   Options configured for this control. Options available are:
+   *   * enterRecordsPath - path to the form page for entering a list of
+   *     records at this location. The form should use the [location url param]
+   *     control to allow it to use the location_id parameter passed to the
+   *     form.
+   *
+   * @return string
+   *   HTML for the button.
+   */
+  protected static function buttons_record($auth, $args, $tabalias, $options) {
+    global $indicia_templates;
+    $location = self::$location;
+    $buttons = [];
+    if (!empty($options['enterRecordsPath'])) {
+      $buttons[] = "<a class=\"$indicia_templates[buttonDefaultClass]\" href=\"$options[enterRecordsPath]?location_id=$location[location_id]\">" . lang::get('Enter observations at this location') . '</a>';
+    }
+    else {
+      throw new exception('The page has been setup to use a record button, but the @enterRecordsPath option is missing.');
+    }
+    return implode('', $buttons);
   }
 
   protected static function get_control_locationdetails($auth, $args, $tabalias, $options) {
