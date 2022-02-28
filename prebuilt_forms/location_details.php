@@ -542,6 +542,41 @@ HTML;
   }
 
   /**
+   * A control for rendering a Drupal block.
+   *
+   * Options are:
+   * * @title - output a block title.
+   * * @module - machine name of the module providing the block.
+   * * @block - machine name of the block.
+   */
+  protected static function get_control_block($auth, $args, $tabalias, $options) {
+    if ($options['module'] === 'addtoany') {
+      report_helper::$javascript .= "$('.a2a_kit').attr('data-a2a-url', window.location.href);\n";
+      $title = str_replace("'", "\'", 'Check out ' . self::$location['name']);
+      report_helper::$javascript .= "$('.a2a_kit').attr('data-a2a-title', '$title');\n";
+    }
+    $r = '';
+    if (!empty($options['title'])) {
+      $r .= "<fieldset><legend>$options[title]</legend>";
+    }
+    if (function_exists('module_invoke')) {
+      $block = module_invoke($options['module'], $options['hook'], $options['args']);
+      $r .= render($block['content']);
+    }
+    else {
+      $block_manager = \Drupal::service('plugin.manager.block');
+      $plugin_block = $block_manager->createInstance($options['block'], empty($options['args']) ? [] : $options['args']);
+      $render = $plugin_block->build();
+      $renderer = \Drupal::service('renderer');
+      $r .= $renderer->render($render);
+    }
+    if (!empty($options['title'])) {
+      $r .= "</fieldset>";
+    }
+    return $r;
+  }
+
+  /**
    * Render Photos section of the page.
    *
    * Options include:

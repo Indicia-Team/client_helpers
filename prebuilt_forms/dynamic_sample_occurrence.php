@@ -2472,12 +2472,19 @@ JS;
    * * useExistingSpatialRefControls - default false. If true then rather than
    *   add hiddens for the spatial reference data, the values are added to
    *   $entity_to_load so they are loaded into existing controls on the form.
+<<<<<<< HEAD
    * * useExistingLocationControls - if there is a location control visible on
    *   the form, populate the value with the loaded location.
+=======
+   * * optional - set to true if the location_id parameter is not required.
+>>>>>>> develop
    */
   protected static function get_control_locationurlparam($auth, $args, $tabAlias, $options) {
     $location_id = isset(data_entry_helper::$entity_to_load['sample:location_id']) ? data_entry_helper::$entity_to_load['sample:location_id'] :
         (empty($_GET['location_id']) ? '' : $_GET['location_id']);
+    if (!empty($options['optional']) && empty($location_id)) {
+      return '';
+    }
     if (empty($location_id)) {
       return 'This form requires a URL parameter called location_id to specify which site to record against.';
     }
