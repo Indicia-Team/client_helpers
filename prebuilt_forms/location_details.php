@@ -124,7 +124,7 @@ class iform_location_details extends iform_dynamic {
             '<strong>[control name]</strong> indicates a predefined control is to be added to the form with the following predefined controls available: <br/>' .
                 '&nbsp;&nbsp;<strong>[locationdetails]</strong> - displays information relating to the occurrence and its sample. Set @fieldsToExcludeIfLoggedOut to an array of field names to skip for anonymous users.<br/>' .
                 '&nbsp;&nbsp;<strong>[buttons]</strong> - outputs a row of edit and explore buttons. Use the @buttons option to change the list of buttons to output ' .
-                'by setting this to an array, e.g. [edit] will output just the edit button, [explore] outputs just the explore button, [species details] outputs a species details button. ' .
+                'by setting this to an array, e.g. ["edit"] will output just the edit button, ["explore"] outputs just the explore button, ["edit","record"] outputs an edit and record button. ' .
                 'The edit button is automatically skipped if the user does not have rights to edit the record.<br/>' .
                 "&nbsp;&nbsp;<strong>[photos]</strong> - photos associated with the occurrence<br/>" .
                 "&nbsp;&nbsp;<strong>[map]</strong> - a map that links to the spatial reference and location<br/>" .
