@@ -463,17 +463,18 @@ class ElasticsearchReportHelper {
 
     $options = array_merge([
       'caption' => 'Download',
-      'title' => 'Run the download',
+      'title' => 'Download information',
     ], $options);
 
-    // If columnsTemplate options specifies an array, then create control options for
-    // a select control that will be used to indicate the selected columns template.
+    // If columnsTemplate options specifies an array, then create control
+    // options for a select control that will be used to indicate the selected
+    // columns template.
     if (!empty($options['columnsTemplate']) && is_array($options['columnsTemplate'])) {
       $availableColTypes = array(
         "easy-download" => lang::get("Standard download format"),
         "mapmate" => lang::get("Simple download format"),
       );
-      $optionArr = array();
+      $optionArr = [];
       foreach ($options['columnsTemplate'] as $colType) {
         $optionArr[$colType] = $availableColTypes[$colType];
       }
@@ -496,14 +497,15 @@ class ElasticsearchReportHelper {
         "$options[id]-button",
         lang::get($options['title']),
         "class=\"$indicia_templates[buttonHighlightedClass] do-download\"",
-        lang::get($options['caption']),
+        lang::get($options['caption']) . '<span class="fas fa-file-download"></span>',
       ],
       $indicia_templates['button']
     );
     if (isset($controlOptions)) {
-      $html = "<div class='idc-download-ctl-part'>".$button."</div>";
-      $html .= "<div class='idc-download-ctl-part'>".data_entry_helper::select($controlOptions)."</div>";
-    } else {
+      $html = "<div class=\"idc-download-ctl-part\">$button</div>";
+      $html .= '<div class="idc-download-ctl-part">' . data_entry_helper::select($controlOptions) . '</div>';
+    }
+    else {
       $html = $button;
     }
     $progress = <<<HTML
@@ -1391,6 +1393,21 @@ HTML;
     $optionalLinks = implode("\n  ", $optionalLinkArray);
     helper_base::add_resource('fancybox');
     helper_base::add_resource('validation');
+    $lang = [
+      'accepted' => lang::get('Accepted'),
+      'acceptedConsideredCorrect' => lang::get('Accepted :: considered correct'),
+      'acceptedCorrect' => lang::get('Accepted :: correct'),
+      'all' => lang::get('all'),
+      'applyDecisionTo' => lang::get('Apply decision to'),
+      'applyRedetermination' => lang::get('Apply redetermination'),
+      'notAccepted' => lang::get('Not accepted'),
+      'notAcceptedIncorrect' => lang::get('Not accepted :: incorrect'),
+      'notAcceptedUnableToVerify' => lang::get('Not accepted :: unable to verify'),
+      'plausible' => lang::get('Plausible'),
+      'selected' => lang::get('selected'),
+      'upload' => lang::get('Upload'),
+      'uploadVerificationDecisions' => lang::get('Upload a file of verification decisions'),
+    ];
     helper_base::addLanguageStringsToJs('verificationButtons', [
       'commentTabTitle' => 'Comment on the record',
       'elasticsearchUpdateError' => 'An error occurred whilst updating the reporting index. It may not reflect your changes temporarily but will be updated automatically later.',
@@ -1466,9 +1483,9 @@ HTML;
       'fieldname' => 'redet-comment',
       'wrapClasses' => ['not-full-width-lg'],
     ]);
-    $btnClass = $indicia_templates['buttonDefaultClass'];
+    $btnClass = $indicia_templates['buttonHighlightedClass'];
     $uploadButton = empty($options['includeUploadButton']) ? '' : <<<HTML
-      <button class="upload-decisions $btnClass" title="Upload a CSV file of verification decisions"><span class="fas fa-file-upload"></span></button>
+      <button class="upload-decisions $btnClass" title="$lang[uploadVerificationDecisions]"><span class="fas fa-file-upload"></span>$lang[upload]</button>
 HTML;
     $r = <<<HTML
 <div id="$options[id]" class="idc-verification-buttons" style="display: none;" data-idc-config="$dataOptions">
@@ -1476,18 +1493,18 @@ HTML;
     <div class="all-selected-buttons idc-verification-buttons-row">
       Actions:
       <span class="fas fa-toggle-on toggle fa-2x" title="Toggle additional status levels"></span>
-      <button class="verify l1 $btnClass" data-status="V" title="Accepted"><span class="far fa-check-circle status-V"></span></button>
-      <button class="verify l2 $btnClass" data-status="V1" title="Accepted :: correct"><span class="fas fa-check-double status-V1"></span></button>
-      <button class="verify l2 $btnClass" data-status="V2" title="Accepted :: considered correct"><span class="fas fa-check status-V2"></span></button>
-      <button class="verify $btnClass" data-status="C3" title="Plausible"><span class="fas fa-check-square status-C3"></span></button>
-      <button class="verify l1 $btnClass" data-status="R" title="Not accepted"><span class="far fa-times-circle status-R"></span></button>
-      <button class="verify l2 $btnClass" data-status="R4" title="Not accepted :: unable to verify"><span class="fas fa-times status-R4"></span></button>
-      <button class="verify l2 $btnClass" data-status="R5" title="Not accepted :: incorrect"><span class="fas fa-times status-R5"></span></button>
+      <button class="verify l1 $btnClass" data-status="V" title="$lang[accepted]"><span class="far fa-check-circle status-V"></span></button>
+      <button class="verify l2 $btnClass" data-status="V1" title="$lang[acceptedCorrect]"><span class="fas fa-check-double status-V1"></span></button>
+      <button class="verify l2 $btnClass" data-status="V2" title="$lang[acceptedConsideredCorrect]"><span class="fas fa-check status-V2"></span></button>
+      <button class="verify $btnClass" data-status="C3" title="$lang[plausible]"><span class="fas fa-check-square status-C3"></span></button>
+      <button class="verify l1 $btnClass" data-status="R" title="$lang[notAccepted]"><span class="far fa-times-circle status-R"></span></button>
+      <button class="verify l2 $btnClass" data-status="R4" title="$lang[notAcceptedUnableToVerify]"><span class="fas fa-times status-R4"></span></button>
+      <button class="verify l2 $btnClass" data-status="R5" title="$lang[notAcceptedIncorrect]"><span class="fas fa-times status-R5"></span></button>
       <div class="multi-only apply-to">
-        <span>Apply decision to:</span>
-        <button class="multi-mode-selected active $btnClass">selected</button>
+        <span>$lang[applyDecisionTo]:</span>
+        <button class="multi-mode-selected active $btnClass">$lang[selected]</button>
         |
-        <button class="multi-mode-table $btnClass">all</button>
+        <button class="multi-mode-table $btnClass">$lang[all]</button>
       </div>
       <span class="sep"></span>
       <button class="query $btnClass" data-query="Q" title="Raise a query"><span class="fas fa-question-circle query-Q"></span></button>
@@ -1505,8 +1522,8 @@ HTML;
     $altListCheckbox
     $redetNameBehaviourOption
     $commentInput
-    <button type="submit" class="btn btn-primary" id="apply-redet">Apply redetermination</button>
-    <button type="button" class="btn btn-danger" id="cancel-redet">Cancel</button>
+    <button type="submit" class="btn btn-primary" id="apply-redet">$lang[applyRedetermination]</button>
+    <button type="button" class="btn btn-danger" id="cancel-redet">$lang[cancel]</button>
   </form>
 </div>
 HTML;
@@ -1514,10 +1531,11 @@ HTML;
       $instruct = <<<TXT
 This form can be used to upload a spreadsheet of verification decisions. First, use the
 Download button to obtain a list of the records in your current verification grid. This has columns
-called *Decision status* and *Decision comment*. For rows you wish to verify, enter one of the
-status terms in the *Decision status* column and optionally fill in the *Decision comment*. Any
-comments without an associated status will be attached to the record without changing the status.
-When ready, save the spreadsheet and upload it using this tool. Valid status terms include:
+called <strong>Decision status</strong> and <strong>Decision comment</strong>. For rows you wish to
+verify, enter one of the status terms in the <strong>Decision status</strong> column and optionally
+fill in the <strong>Decision comment</strong>. Any comments without an associated status will be
+attached to the record without changing the status. When ready, save the spreadsheet and upload it
+using this tool. Valid status terms include:
 <ul>
   <li>Accepted</li>
   <li>Accepted as correct</li>
