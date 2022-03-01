@@ -1348,7 +1348,7 @@ HTML;
   public static function verificationButtons(array $options) {
     global $indicia_templates;
     if (!empty($options['includeUploadButton'])) {
-      $config = hostsite_get_es_config($nid);
+      $config = hostsite_get_es_config($options['nid']);
       helper_base::$indiciaData['esEndpoint'] = $config['es']['endpoint'];
       helper_base::$indiciaData['idPrefix'] = $config['es']['warehouse_prefix'];
     }
