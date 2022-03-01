@@ -29,6 +29,11 @@
  * @package	Core
  * @subpackage Helpers
  */
+
+// To enable this you must execute `composer install` in the 
+// client_helpers folder to add the mcrypt polyfill.
+require_once __DIR__ . '/vendor/autoload.php';
+
 class secure_msg {
 
   /**
