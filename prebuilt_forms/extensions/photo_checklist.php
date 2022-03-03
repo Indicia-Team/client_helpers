@@ -57,6 +57,10 @@ class extension_photo_checklist {
    * * speciesInfoLinkTemplate - a template for the species info link, which
    *   supports replacements {{ species-info-link }} {{ link-common-name }}.
    *   Use this option only when the link HTML needs to be overridde.
+   * * dontLinkSpecies - if any of the species should not be linked then
+   *   then provide their preffered names, e.g. if the resource that hosts
+   *   species pages does not cover all the species. Provide an array of
+   *   strings.
    * * speciesSections - An array of sections to include in the grid, keyed
    *   by the title. Sections can have their data loaded by an AJAX request to
    *   the warehouse. To enable this, each section must contain a child object
@@ -139,6 +143,7 @@ class extension_photo_checklist {
       'imagesPath' => $options['imagesPath'],
       'speciesInfoLink' => $options['speciesInfoLink'],
       'speciesInfoLinkTemplate' => $options['speciesInfoLinkTemplate'],
+      'dontLinkSpecies' => $options['dontLinkSpecies'],
       'resizeHeight' => $options['resizeHeight'],
       'resizeWidth' => $options['resizeWidth'],
       'resizeQuality' => $options['resizeQuality'],
@@ -333,6 +338,7 @@ class extension_photo_checklist {
   </div>
 </div>',
       'speciesInfoLinkTemplate' => '<a target="_blank" href="{{ species-info-link }}{{ link-common-name }}" title="' . lang::get('Find out more about this species') . '"><i class="fas fa-info-circle photo-info"></i></a>',
+      'dontLinkSpecies' => [],
     ], $options);
   }
 

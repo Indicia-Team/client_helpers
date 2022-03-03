@@ -193,10 +193,10 @@ jQuery(document).ready(function($) {
    *   HTML for the link.
    */
   function getSpeciesInfoLink(config, taxon) {
-    if (config.speciesInfoLink) {
+    if (config.speciesInfoLink && $.inArray(taxon.preferred_taxon, config.dontLinkSpecies) === -1) {
       return config.speciesInfoLinkTemplate
-        .replace(/{{ species-info-link }}/g, config['speciesInfoLink'])
-        .replace(/{{ link-common-name }}/g, taxon['default_common_name'].toLowerCase().replace(/[^a-z0-9]/, '-'));
+        .replace(/{{ species-info-link }}/g, config.speciesInfoLink)
+        .replace(/{{ link-common-name }}/g, taxon.default_common_name.toLowerCase().replace(/[^a-z0-9]/g, '-'));
     }
     return '';
   }
