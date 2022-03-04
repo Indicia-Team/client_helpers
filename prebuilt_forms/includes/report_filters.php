@@ -730,29 +730,27 @@ class filter_quality extends FilterBase {
       ]);
     }
     if (in_array('difficulty', $ctls)) {
-      if (!$options['elasticsearch']) {
-        $r .= data_entry_helper::select([
-          'label' => lang::get('Identification difficulty'),
-          'fieldname' => 'identification_difficulty_op',
+      $r .= data_entry_helper::select([
+        'label' => lang::get('Identification difficulty'),
+        'fieldname' => 'identification_difficulty_op',
+        'lookupValues' => [
+          '=' => lang::get('is'),
+          '>=' => lang::get('is at least'),
+          '<=' => lang::get('is at most'),
+        ],
+        'afterControl' => data_entry_helper::select([
+          'fieldname' => 'identification_difficulty',
           'lookupValues' => [
-            '=' => lang::get('is'),
-            '>=' => lang::get('is at least'),
-            '<=' => lang::get('is at most'),
+            '' => lang::get('Not filtered'),
+            1 => 1,
+            2 => 2,
+            3 => 3,
+            4 => 4,
+            5 => 5,
           ],
-          'afterControl' => data_entry_helper::select([
-            'fieldname' => 'identification_difficulty',
-            'lookupValues' => [
-              '' => lang::get('Not filtered'),
-              1 => 1,
-              2 => 2,
-              3 => 3,
-              4 => 4,
-              5 => 5,
-            ],
-            'controlWrapTemplate' => 'justControl',
-          ]),
-        ]);
-      }
+          'controlWrapTemplate' => 'justControl',
+        ]),
+      ]);
     }
     if (in_array('photo', $ctls)) {
       $r .= data_entry_helper::select([
