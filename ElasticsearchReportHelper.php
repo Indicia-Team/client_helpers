@@ -1400,6 +1400,7 @@ HTML;
       'all' => lang::get('all'),
       'applyDecisionTo' => lang::get('Apply decision to'),
       'applyRedetermination' => lang::get('Apply redetermination'),
+      'cancel' => lang::get('Cancel'),
       'notAccepted' => lang::get('Not accepted'),
       'notAcceptedIncorrect' => lang::get('Not accepted :: incorrect'),
       'notAcceptedUnableToVerify' => lang::get('Not accepted :: unable to verify'),

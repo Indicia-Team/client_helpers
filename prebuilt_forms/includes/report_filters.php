@@ -728,31 +728,47 @@ class filter_quality extends FilterBase {
           'F' => lang::get('Only include records that fail at least one automated check'),
         ],
       ]);
-    }
-    if (in_array('difficulty', $ctls)) {
-      if (!$options['elasticsearch']) {
+      if (!empty($options['autocheck_rules'])) {
+        $ruleOptions = ['' => lang::get('Not filtered')];
+        foreach ($options['autocheck_rules'] as $rule) {
+          $ruleOptions[$rule] = lang::get($rule);
+        };
         $r .= data_entry_helper::select([
-          'label' => lang::get('Identification difficulty'),
-          'fieldname' => 'identification_difficulty_op',
-          'lookupValues' => [
-            '=' => lang::get('is'),
-            '>=' => lang::get('is at least'),
-            '<=' => lang::get('is at most'),
-          ],
-          'afterControl' => data_entry_helper::select([
-            'fieldname' => 'identification_difficulty',
-            'lookupValues' => [
-              '' => lang::get('Not filtered'),
-              1 => 1,
-              2 => 2,
-              3 => 3,
-              4 => 4,
-              5 => 5,
-            ],
-            'controlWrapTemplate' => 'justControl',
-          ]),
+          'label' => lang::get('Select records by specific automated check flags'),
+          'fieldname' => 'autocheck_rule',
+          'lookupValues' => $ruleOptions,
         ]);
       }
+    }
+    if (in_array('difficulty', $ctls)) {
+      global $indicia_templates;
+      $s1 = data_entry_helper::select([
+        'label' => lang::get('Identification difficulty'),
+        'fieldname' => 'identification_difficulty_op',
+        'lookupValues' => [
+          '=' => lang::get('is'),
+          '>=' => lang::get('is at least'),
+          '<=' => lang::get('is at most'),
+        ],
+      ]);
+      $s2 = data_entry_helper::select([
+        'label' => lang::get('Level'),
+        'fieldname' => 'identification_difficulty',
+        'lookupValues' => [
+          '' => lang::get('Not filtered'),
+          1 => 1,
+          2 => 2,
+          3 => 3,
+          4 => 4,
+          5 => 5,
+        ],
+        'controlWrapTemplate' => 'justControl',
+      ]);
+      $r .= str_replace(
+        ['{attrs}', '{col-1}', '{col-2}'],
+        ['', $s1, $s2],
+        $indicia_templates['two-col-50']
+      );
     }
     if (in_array('photo', $ctls)) {
       $r .= data_entry_helper::select([
@@ -1052,6 +1068,12 @@ function report_filter_panel(array $readAuth, $options, $website_id, &$hiddenStu
     ],
     'entity' => 'occurrence',
     'elasticsearch' => FALSE,
+    'autocheck_rules' => [
+      'identification_difficulty',
+      'period',
+      'period_within_year',
+      'without_polygon',
+    ],
   ], $options);
   // Introduce some extra quick filters useful for verifiers.
   if ($options['sharing'] === 'verification') {
@@ -1655,5 +1677,9 @@ function report_filters_set_parser_language_strings() {
     'NoConfidentialRecords' => 'Exclude confidential records',
     'includeUnreleasedRecords' => 'Include unreleased records',
     'excludeUnreleasedRecords' => 'Exclude unreleased records',
+    'Rule_identification_difficulty' => 'Has an identification difficulty flag',
+    'Rule_period' => 'Has a time period flag',
+    'Rule_period_within_year' => 'Has a period within year flag',
+    'Rule_without_polygon' => 'Has a range flag',
   ]);
 }

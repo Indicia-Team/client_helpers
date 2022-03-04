@@ -263,7 +263,9 @@ class ElasticsearchProxyHelper {
       'readAuth' => $readAuth,
       // @todo Sharing should be dynamically set in a form parameter (use $nid param).
       'sharing' => 'verification',
-      'extraParams' => array('occurrence_id' => $_GET['occurrence_id']),
+      'extraParams' => [
+        'occurrence_id' => $_GET['occurrence_id'],
+      ],
     ];
     $reportData = report_helper::get_report_data($options);
     header('Content-type: application/json');
@@ -1178,7 +1180,9 @@ class ElasticsearchProxyHelper {
     self::applyUserFiltersOccId($definition, $bool);
     self::applyUserFiltersOccExternalKey($definition, $bool);
     self::applyUserFiltersQuality($definition, $bool);
+    self::applyUserFiltersIdentificationDifficulty($definition, $bool);
     self::applyUserFiltersAutoChecks($definition, $bool);
+    self::applyUserFiltersAutoCheckRule($definition, $bool);
     self::applyUserFiltersHasPhotos($readAuth, $definition, ['has_photos'], $bool);
     self::applyUserFiltersWebsiteList($definition, $bool);
     self::applyUserFiltersSurveyList($definition, $bool);
@@ -1740,6 +1744,33 @@ class ElasticsearchProxyHelper {
   }
 
   /**
+   * Converts an Indicia filter id difficulty filter to an ES query.
+   *
+   * @param array $definition
+   *   Definition loaded for the Indicia filter.
+   * @param array $bool
+   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   */
+  private static function applyUserFiltersIdentificationDifficulty(array $definition, array &$bool) {
+    $filter = self::getDefinitionFilter($definition, ['identification_difficulty']);
+    if (!empty($filter) && !empty($filter['op'])) {
+      if (in_array($filter['op'], ['>=', '<='])) {
+        $test = $filter['op'] === '>=' ? 'gte' : 'lte';
+        $bool['must'][] = [
+          'range' => [
+            'identification.auto_checks.identification_difficulty' => [
+              $test => $filter['value'],
+            ],
+          ],
+        ];
+      }
+      else {
+        $bool['must'][] = ['term' => ['identification.auto_checks.identification_difficulty' => $filter['value']]];
+      }
+    }
+  }
+
+  /**
    * Converts an Indicia filter definition auto checks filter to an ES query.
    *
    * @param array $definition
@@ -1752,6 +1783,32 @@ class ElasticsearchProxyHelper {
     if (!empty($filter) && in_array($filter['value'], ['P', 'F'])) {
       $bool['must'][] = ['match' => ['identification.auto_checks.result' => $filter['value'] === 'P']];
     }
+  }
+
+  /**
+   * Converts an Indicia filter definition auto checks filter to an ES query.
+   *
+   * @param array $definition
+   *   Definition loaded for the Indicia filter.
+   * @param array $bool
+   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   */
+  private static function applyUserFiltersAutoCheckRule(array $definition, array &$bool) {
+    $filter = self::getDefinitionFilter($definition, ['autocheck_rule']);
+    if (!empty($filter)) {
+      $value = str_replace('_', '', $filter['value']);
+      $bool['must'][] = [
+        'nested' => [
+          'path' => 'identification.auto_checks.output',
+          'query' => [
+            'bool' => [
+              'must' => ['term' => ['identification.auto_checks.output.rule_type' => $value]],
+            ],
+          ],
+        ],
+      ];
+    }
+
   }
 
   /**
