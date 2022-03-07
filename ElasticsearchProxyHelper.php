@@ -1781,7 +1781,16 @@ class ElasticsearchProxyHelper {
   private static function applyUserFiltersAutoChecks(array $definition, array &$bool) {
     $filter = self::getDefinitionFilter($definition, ['autochecks']);
     if (!empty($filter) && in_array($filter['value'], ['P', 'F'])) {
-      $bool['must'][] = ['match' => ['identification.auto_checks.result' => $filter['value'] === 'P']];
+      $bool['must'][] = [
+        'match' => [
+          'identification.auto_checks.result' => $filter['value'] === 'P',
+        ],
+      ];
+      if ($filter['value'] === 'P') {
+        $bool['must'][] = [
+          'query_string' => ['query' => '_exists_:identification.auto_checks.verification_rule_types_applied'],
+        ];
+      }
     }
   }
 
