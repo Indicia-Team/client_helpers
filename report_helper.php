@@ -2434,6 +2434,9 @@ mapSettingsHooks.push(function(opts) { $setLocationJs
     if (function_exists('hostsite_get_user_field') && hostsite_get_user_field('training')) {
       $options['extraParams']['training'] = 'true';
     }
+    if (function_exists('hostsite_get_user_field') && hostsite_get_user_field('indicia_user_id')) {
+      $options['extraParams']['auth_user_id'] = hostsite_get_user_field('indicia_user_id');
+    }
     $query = [];
     if ($options['mode']=='report') {
       $serviceCall = 'report/requestReport?report='.$options['dataSource'].'.xml&reportSource=local&'.
