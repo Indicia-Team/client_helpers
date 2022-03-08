@@ -19,7 +19,7 @@
  * @link http://code.google.com/p/indicia/
  */
 
-if (file_exists(dirname(__FILE__) . '/helper_config.php')) {
+ if (file_exists(dirname(__FILE__) . '/helper_config.php')) {
   require_once 'helper_config.php';
 }
 require_once 'lang.php';
@@ -1831,14 +1831,17 @@ HTML;
   }
 
   /**
-  * Retrieves a token and inserts it into a data entry form which authenticates that the
-  * form was submitted by this website.
-  *
-  * @param string $website_id Indicia ID for the website.
-  * @param string $password Indicia password for the website.
-  */
+   * Retrieves a token and inserts it into a data entry form which authenticates that the
+   * form was submitted by this website.
+   *
+   * @param string $website_id Indicia ID for the website.
+   * @param string $password Indicia password for the website.
+   */
   public static function get_auth($website_id, $password) {
     self::$website_id = $website_id;
+    $indiciaUserId = hostsite_get_user_field('indicia_user_id');
+    // Include user ID if logged in.
+    $authTokenUserId = $indiciaUserId ? ":$indiciaUserId" : '';
     $postargs = "website_id=$website_id";
     $response = self::http_post(self::$base_url . 'index.php/services/security/get_nonce', $postargs);
     if (isset($response['status'])) {
@@ -1851,10 +1854,12 @@ HTML;
       }
     }
     $nonce = $response['output'];
-    $result = '<input id="auth_token" name="auth_token" type="hidden" class="hidden" ' .
-        'value="'.sha1("$nonce:$password").'" />'."\r\n";
-    $result .= '<input id="nonce" name="nonce" type="hidden" class="hidden" ' .
-        'value="'.$nonce.'" />'."\r\n";
+    $authToken = sha1("$nonce:$password$authTokenUserId") . $authTokenUserId;
+    $result = <<<HTML
+<input id="auth_token" name="auth_token" type="hidden" class="hidden" value="$authToken" />
+<input id="nonce" name="nonce" type="hidden" class="hidden" value="$nonce" />
+
+HTML;
     return $result;
   }
 
@@ -1868,10 +1873,14 @@ HTML;
    * @throws Exception
    */
   public static function get_read_auth($website_id, $password) {
-    self::$website_id = $website_id; /* Store this for use with data caching */
+    // Store this for use with data caching.
+    self::$website_id = $website_id;
     // Keep a non-random cache for 10 minutes. It MUST be shorter than the normal cache lifetime so this expires more frequently.
-    $r = self::cache_get(array('readauth-wid'=>$website_id), 600, false);
-    if ($r===false) {
+    $cacheKey = [
+      'readauth-wid'=>$website_id,
+    ];
+    $r = self::cache_get($cacheKey, 600, false);
+    if ($r === FALSE) {
       if (empty(self::$base_url)) {
         throw new Exception(lang::get('Indicia configuration is incorrect. Warehouse URL is not configured.'));
       }
@@ -1889,29 +1898,37 @@ HTML;
       $nonce = $response['output'];
       if (substr($nonce, 0, 9) === '<!DOCTYPE')
         throw new Exception(lang::get('Could not authenticate against the warehouse. Is the server down?'));
-      $r = array(
-          'auth_token' => sha1("$nonce:$password"),
-          'nonce' => $nonce
-      );
-      self::cache_set(array('readauth-wid'=>$website_id), json_encode($r));
+      $indiciaUserId = hostsite_get_user_field('indicia_user_id');
+      $r = [
+        'nonce' => $nonce,
+      ];
+      self::cache_set($cacheKey, json_encode($r));
     }
     else
       $r = json_decode($r, TRUE);
+    $indiciaUserId = hostsite_get_user_field('indicia_user_id');
+    // Include user ID if logged in.
+    $authTokenUserId = $indiciaUserId ? ":$indiciaUserId" : '';
+    // Attach a user specific auth token.
+    $r['auth_token'] = sha1("$r[nonce]:$password$authTokenUserId") . $authTokenUserId;
     self::$js_read_tokens = $r;
     return $r;
   }
 
-/**
-  * Retrieves read and write nonce tokens from the warehouse.
-  * @param string $website_id Indicia ID for the website.
-  * @param string $password Indicia password for the website.
-  * @return array Returns an array containing:
-  * 'read' => the read authorisation array,
-  * 'write' => the write authorisation input controls to insert into your form.
-  * 'write_tokens' => the write authorisation array, if needed as separate tokens rather than just placing in form.
-  */
+  /**
+   * Retrieves read and write nonce tokens from the warehouse.
+   * @param string $website_id Indicia ID for the website.
+   * @param string $password Indicia password for the website.
+   * @return array Returns an array containing:
+   * 'read' => the read authorisation array,
+   * 'write' => the write authorisation input controls to insert into your form.
+   * 'write_tokens' => the write authorisation array, if needed as separate tokens rather than just placing in form.
+   */
   public static function get_read_write_auth($website_id, $password) {
     self::$website_id = $website_id; /* Store this for use with data caching */
+    $indiciaUserId = hostsite_get_user_field('indicia_user_id');
+    // Include user ID if logged in.
+    $authTokenUserId = $indiciaUserId ? ":$indiciaUserId" : '';
     $postargs = "website_id=$website_id";
     $response = self::http_post(self::$base_url.'index.php/services/security/get_read_write_nonces', $postargs);
     if (array_key_exists('status', $response)) {
@@ -1924,19 +1941,22 @@ HTML;
       }
     }
     $nonces = json_decode($response['output'], true);
-    $write = '<input id="auth_token" name="auth_token" type="hidden" class="hidden" ' .
-        'value="'.sha1($nonces['write'].':'.$password).'" />'."\r\n";
-    $write .= '<input id="nonce" name="nonce" type="hidden" class="hidden" ' .
-        'value="'.$nonces['write'].'" />'."\r\n";
+    $writeAuthToken = sha1("$nonces[write]:$password$authTokenUserId") . $authTokenUserId;
+    $readAuthToken = sha1("$nonces[read]:$password$authTokenUserId") . $authTokenUserId;
+    $write = <<<HTML
+<input id="auth_token" name="auth_token" type="hidden" class="hidden" value="$writeAuthToken" />
+<input id="nonce" name="nonce" type="hidden" class="hidden" value="$nonces[write]" />
+
+HTML;
     self::$js_read_tokens = array(
-      'auth_token' => sha1($nonces['read'].':'.$password),
+      'auth_token' => $readAuthToken,
       'nonce' => $nonces['read']
     );
     return array(
       'write' => $write,
       'read' => self::$js_read_tokens,
       'write_tokens' => array(
-        'auth_token' => sha1($nonces['write'].':'.$password),
+        'auth_token' => $writeAuthToken,
         'nonce' => $nonces['write']
       ),
     );
