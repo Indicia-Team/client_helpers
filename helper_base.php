@@ -32,6 +32,7 @@ global $indicia_templates;
 $indicia_templates = [
   'blank' => '',
   'prefix' => '',
+  'formControlClass' => 'form-control',
   'controlWrap' => "<div id=\"ctrl-wrap-{id}\" class=\"form-row ctrl-wrap{wrapClasses}\">{control}</div>\n",
   'controlWrapErrorClass' => '',
   // Template for control with associated buttons/icons to appear to the side.
@@ -98,10 +99,10 @@ $indicia_templates = [
         <span class="slider round"></span>
       </label>' . "\n",
   'select' => '<select {attribute_list} id="{id}" name="{fieldname}"{class} {disabled} {title}>{items}</select>',
-  'select_item' => '<option value="{value}" {selected} >{caption}</option>',
+  'select_item' => '<option value="{value}"{selected}{attribute_list}>{caption}</option>',
   'select_species' => '<option value="{value}" {selected} >{caption} - {common}</option>',
   'listbox' => '<select id="{id}" name="{fieldname}"{class} {disabled} size="{size}" multiple="{multiple}" {title}>{items}</select>',
-  'listbox_item' => '<option value="{value}"{selected} >{caption}</option>',
+  'listbox_item' => '<option value="{value}"{selected}{attribute_list}>{caption}</option>',
   'list_in_template' => '<ul{class} {title}>{items}</ul>',
   'check_or_radio_group' => '<ul {class} id="{id}">{items}</ul>',
   'check_or_radio_group_item' => '<li>{sortHandle}<input type="{type}" name="{fieldname}" id="{itemId}" value="{value}"{class}{checked}{title} {disabled}/><label for="{itemId}">{caption}</label></li>',
@@ -309,6 +310,13 @@ class helper_base {
    * @var string
    */
   public static $os_api_key = '';
+
+  /**
+   * Breadcrumb info.
+   *
+   * @var array
+   */
+  public static $breadcrumb = NULL;
 
   /**
    * Setting which allows the host site (e.g. Drupal) handle translation.
@@ -763,6 +771,7 @@ class helper_base {
    *   * defaultStylesheet
    *   * validation
    *   * plupload
+   *   * uploader
    *   * jqplot
    *   * jqplot_bar
    *   * jqplot_pie
@@ -955,6 +964,16 @@ class helper_base {
           'javascript' => [
             self::$js_path . 'jquery.uploader.js',
             self::$js_path . 'plupload/js/plupload.full.min.js',
+          ]
+        ],
+        'uploader' => [
+          'deps' => ['jquery'],
+          'stylesheets' => [
+            self::$js_path . 'uploader/dist/css/jquery.dm-uploader.min.css',
+          ],
+          'javascript' => [
+            self::$js_path . 'uploader.js',
+            self::$js_path . 'uploader/dist/js/jquery.dm-uploader.min.js',
           ]
         ],
         'jqplot' => [
@@ -1371,7 +1390,7 @@ class helper_base {
       $tools = array();
       // Skip parameters if we have been asked to ignore them
       if (!isset($options['paramsToExclude']) || !in_array($key, $options['paramsToExclude'])) {
-        $r .= self::get_params_form_control($key, $info, $options, $tools);
+        $r .= self::getParamsFormControl($key, $info, $options, $tools);
         // If that was a visible setting, then we have to tell the caller that there is something to show.
         if (!isset($options['extraParams']) || !array_key_exists($key, $options['extraParams']))
           $hasVisibleContent=true;
@@ -1490,7 +1509,7 @@ HTML;
    * parameter rather than as the return result of the function.
    * @return string The HTML for the form parameter.
    */
-  private static function get_params_form_control($key, $info, $options, &$tools) {
+  protected static function getParamsFormControl($key, $info, $options, &$tools) {
     $r = '';
 
     $fieldPrefix=(isset($options['fieldNamePrefix']) ? $options['fieldNamePrefix'].'-' : '');
@@ -1731,40 +1750,49 @@ HTML;
   }
 
   /**
-   * Takes a file that has been uploaded to the client website upload folder, and moves it to the warehouse upload folder using the
-   * data services.
+   * Uploads a file to the warehouse.
    *
-   * @param string $path Path to the file to upload, relative to the interim image path folder (normally the
-   * client_helpers/upload folder.
-   * @param boolean $persist_auth Allows the write nonce to be preserved after sending the file, useful when several files
-   * are being uploaded.
-   * @param array $readAuth Read authorisation tokens, if not supplied then the $_POST array should contain them.
-   * @param string $service Path to the service URL used. Default is data/handle_media, but could be import/upload_csv.
-   * @return string Error message, or true if successful.
+   * Takes a file that has been uploaded to the client website upload folder,
+   * and moves it to the warehouse upload folder using the data services.
+   *
+   * @param string $path
+   *   Path to the file to upload, relative to the interim  image path folder
+   *   (normally the client_helpers/upload folder.
+   * @param boolean $persist_auth
+   *   Allows the write nonce to be preserved after sending the file, useful
+   *   when several files are being uploaded.
+   * @param array $writeAuth
+   *   Write authorisation tokens, if not supplied then the $_POST array should
+   *   contain them.
+   * @param string $service Path to the service URL used. Default is
+   *   data/handle_media, but could be import/upload_csv.
+   *
+   * @return string
+   *   Error message, or true if successful.
    */
-  public static function send_file_to_warehouse($path, $persist_auth=false, $readAuth = NULL, $service='data/handle_media', $removeLocalCopy = TRUE) {
-    if ($readAuth == NULL) {
-      $readAuth = $_POST;
+  public static function send_file_to_warehouse($path, $persist_auth=false, $writeAuth = NULL, $service='data/handle_media', $removeLocalCopy = TRUE) {
+    if ($writeAuth == NULL) {
+      $writeAuth = $_POST;
     }
     $interimPath = self::getInterimImageFolder('fullpath');
     if (!file_exists($interimPath.$path)) {
-      return "The file $interimPath$path does not exist and cannot be uploaded to the Warehouse.";
+      return "The file $path does not exist and cannot be uploaded to the Warehouse.";
     }
     $serviceUrl = self ::$base_url . "index.php/services/$service";
     // This is used by the file box control which renames uploaded files using a guid system, so disable renaming on the server.
     $postargs = array('name_is_guid' => 'true');
     // attach authentication details
-    if (array_key_exists('auth_token', $readAuth)) {
-      $postargs['auth_token'] = $readAuth['auth_token'];
+    if (array_key_exists('auth_token', $writeAuth)) {
+      $postargs['auth_token'] = $writeAuth['auth_token'];
     }
-    if (array_key_exists('nonce', $readAuth)) {
-      $postargs['nonce'] = $readAuth['nonce'];
+    if (array_key_exists('nonce', $writeAuth)) {
+      $postargs['nonce'] = $writeAuth['nonce'];
     }
     if ($persist_auth) {
       $postargs['persist_auth'] = 'true';
     }
     $file_to_upload = ['media_upload' => '@' . realpath($interimPath.$path)];
-    $response = self::http_post($serviceUrl, $file_to_upload + $postargs);
+    $response = self::http_post($serviceUrl, $file_to_upload + $postargs, FALSE);
     $output = json_decode($response['output'], true);
     // Default is success.
     $r = TRUE;
@@ -1972,13 +2000,22 @@ HTML;
    *   JavaScript.
    */
   public static function getIndiciaData() {
+    require_once 'prebuilt_forms/includes/language_utils.php';
     global $indicia_templates;
     self::$indiciaData['btnClasses'] = [
       'default' => $indicia_templates['buttonDefaultClass'],
       'highlighted' => $indicia_templates['buttonHighlightedClass'],
     ];
+    self::$indiciaData['formControlClass'] = $indicia_templates['formControlClass'];
     self::$indiciaData['inlineErrorClass'] = $indicia_templates['error_class'];
     self::$indiciaData['dateFormat'] = self::$date_format;
+    $rootFolder = helper_base::getRootFolder(TRUE);
+    self::$indiciaData['rootFolder'] = $rootFolder;
+    if (function_exists('hostsite_get_user_field')) {
+      $language = hostsite_get_user_field('language');
+      self::$indiciaData['currentLanguage'] = $language;
+      self::$indiciaData['currentLanguage3'] = iform_lang_iso_639_2($language);
+    }
     // Add language strings used in the indicia.functions.js file.
     self::addLanguageStringsToJs('indiciaFns', [
       'hideInfo' => 'Hide info',
@@ -2295,7 +2332,7 @@ if (typeof validator!=='undefined') {
       }
     }
     // Allows a form control to have a class specific to the base theme.
-    if (isset($options['isFormControl']) && isset($indicia_templates['formControlClass'])) {
+    if (isset($options['isFormControl'])) {
       $options['class'] .= " $indicia_templates[formControlClass]";
     }
     // add validation metadata to the control if specified, as long as control has a fieldname

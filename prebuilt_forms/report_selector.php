@@ -315,7 +315,7 @@ class iform_report_selector {
       hostsite_set_page_title($reportDef['title']);
       $fn = "build_report_{$_GET['catname']}_{$_GET['report']}";
       $output = $_GET['output'];
-      hostsite_set_breadcrumb(array(hostsite_get_page_title($nid) => $_GET['q']));
+      hostsite_set_breadcrumb([$_GET['q'] => hostsite_get_page_title($nid)]);
       return call_user_func(array('iform_report_selector', $fn), $args, $readAuth, $output);
     }
   }

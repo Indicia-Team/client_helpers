@@ -2203,17 +2203,11 @@ HTML;
    */
   protected static function get_control_speciesdynamicattributes($auth, $args, $tabAlias, $options) {
     $types = isset($options['types']) ? $options['types'] : ['occurrence'];
-    $validateAgainstTaxa = empty($options['validateAgainstTaxa']) ? 'false' : 'true';
     unset($options['types']);
     unset($options['validateAgainstTaxa']);
     $ajaxUrl = hostsite_get_url('iform/ajax/dynamic_sample_occurrence');
-    $language = iform_lang_iso_639_2(hostsite_get_user_field('language'));
-    data_entry_helper::$javascript .= <<<JS
-indiciaData.ajaxUrl="$ajaxUrl";
-indiciaData.validateAgainstTaxa = $validateAgainstTaxa;
-indiciaData.userLang = '$language';
-
-JS;
+    data_entry_helper::$indiciaData['ajaxUrl'] = $ajaxUrl;
+    data_entry_helper::$indiciaData['validateAgainstTaxa'] = empty($options['validateAgainstTaxa']) ? FALSE : $options['validateAgainstTaxa'];
 
     // If loading existing data, we need to know the sex/stage attrs so we can
     // find the value to filter to when retrieving attrs.
@@ -2473,10 +2467,21 @@ JS;
    * sample. Uses the location's centroid and spatial ref system to fill in the
    * sample's geometry data. If loading an existing sample, then the location_id
    * in the URL is ignored.
+   *
+   * Options include:
+   * * useExistingSpatialRefControls - default false. If true then rather than
+   *   add hiddens for the spatial reference data, the values are added to
+   *   $entity_to_load so they are loaded into existing controls on the form.
+   * * useExistingLocationControls - if there is a location control visible on
+   *   the form, populate the value with the loaded location.
+   * * optional - set to true if the location_id parameter is not required.
    */
   protected static function get_control_locationurlparam($auth, $args, $tabAlias, $options) {
     $location_id = isset(data_entry_helper::$entity_to_load['sample:location_id']) ? data_entry_helper::$entity_to_load['sample:location_id'] :
         (empty($_GET['location_id']) ? '' : $_GET['location_id']);
+    if (!empty($options['optional']) && empty($location_id)) {
+      return '';
+    }
     if (empty($location_id)) {
       return 'This form requires a URL parameter called location_id to specify which site to record against.';
     }
@@ -2490,7 +2495,8 @@ JS;
         'centroid_sref' => '',
         'centroid_sref_system' => '',
       ];
-    } else {
+    }
+    else {
       $response = data_entry_helper::get_population_data([
         'table' => 'location',
         'extraParams' => $auth['read'] + [
@@ -2504,14 +2510,24 @@ JS;
       'fieldname' => 'sample:location_id',
       'default' => $location['id'],
     ]);
-    $r .= data_entry_helper::hidden_text([
-      'fieldname' => 'sample:entered_sref',
-      'default' => $location['centroid_sref'],
-    ]);
-    $r .= data_entry_helper::hidden_text([
-      'fieldname' => 'sample:entered_sref_system',
-      'default' => $location['centroid_sref_system'],
-    ]);
+    if (empty($options['useExistingSpatialRefControls'])) {
+      $r .= data_entry_helper::hidden_text([
+        'fieldname' => 'sample:entered_sref',
+        'default' => $location['centroid_sref'],
+      ]);
+      $r .= data_entry_helper::hidden_text([
+        'fieldname' => 'sample:entered_sref_system',
+        'default' => $location['centroid_sref_system'],
+      ]);
+    }
+    else {
+      data_entry_helper::$entity_to_load['sample:entered_sref'] = $location['centroid_sref'];
+      data_entry_helper::$entity_to_load['sample:entered_sref_system'] = $location['centroid_sref_system'];
+    }
+    if (!empty($options['useExistingLocationControls'])) {
+      data_entry_helper::$entity_to_load['sample:location_id'] = $location['id'];
+      data_entry_helper::$entity_to_load['imp-location:name'] = $location['name'];
+    }
     return $r;
   }
 

@@ -167,6 +167,13 @@ class iform_dynamic_location extends iform_dynamic {
           'required' => FALSE,
           'default' => 'indicia data admin',
         ],
+        [
+          'name' => 'linkToParent',
+          'caption' => 'Link the location to a parent',
+          'description' => 'Allow the location to be saved under a parent by providing a location_id parameter in the URL query parameters.',
+          'type' => 'checkbox',
+          'required' => FALSE,
+        ],
       ]
     );
     return $retVal;
@@ -261,7 +268,7 @@ class iform_dynamic_location extends iform_dynamic {
   }
 
   /**
-   * This function is used when an add site screen is in add mode and we just 
+   * This function is used when an add site screen is in add mode and we just
    * want to automatically zoom the map to a region/site we are adding a
    * location to. This boundary is purely visual and isn't submitted.
    */
@@ -340,6 +347,11 @@ mapInitialisationHooks.push(function(mapdiv) {
     // location against the group.
     if (!empty($_GET['group_id'])) {
       $r .= "<input type=\"hidden\" id=\"group_id\" name=\"group_id\" value=\"" . $_GET['group_id'] . "\" />\n";
+    }
+    // Allow the location to be saved against a parent.
+    if (!empty($args['linkToParent']) && !empty($_GET['parent_id'])) {
+      $r .= "<input type=\"hidden\" name=\"location:parent_id\" value=\"" . $_GET['parent_id'] . "\" />\n";
+      self::zoom_map_when_adding($auth['read'], 'location', $_GET['parent_id']);
     }
     if (!empty($args['location_type_id'])) {
       $r .= "<input type=\"hidden\" name=\"location:location_type_id\" value=\"$args[location_type_id]\" />";

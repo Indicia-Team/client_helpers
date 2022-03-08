@@ -127,8 +127,7 @@ class iform_dynamic {
         [
           'name' => 'attribute_termlist_language_filter',
           'caption' => 'Internationalise lookups mode',
-          'description' => 'In lookup custom attribute controls, how should term
-          translation be handled?',
+          'description' => 'In lookup custom attribute controls, how should term translation be handled?',
           'type' => 'select',
           'lookupValues' => [
             '0' => 'Show all terms in the termlist',

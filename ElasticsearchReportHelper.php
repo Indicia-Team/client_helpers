@@ -303,13 +303,10 @@ class ElasticsearchReportHelper {
       self::getMappings($nid);
       // Prepare the stuff we need to pass to the JavaScript.
       $mappings = self::$esMappings;
-      $rootFolder = helper_base::getRootFolder(TRUE);
       $esProxyAjaxUrl = hostsite_get_url('iform/esproxy');
       helper_base::$indiciaData['esProxyAjaxUrl'] = $esProxyAjaxUrl;
       helper_base::$indiciaData['esSources'] = [];
       helper_base::$indiciaData['esMappings'] = $mappings;
-      helper_base::$indiciaData['rootFolder'] = $rootFolder;
-      helper_base::$indiciaData['currentLanguage'] = hostsite_get_user_field('language');
       helper_base::$indiciaData['gridMappingFields'] = self::MAPPING_FIELDS;
       $config = hostsite_get_es_config($nid);
       helper_base::$indiciaData['esVersion'] = (int) $config['es']['version'];
@@ -352,7 +349,7 @@ class ElasticsearchReportHelper {
   /**
    * A control for flexibly outputting data formatted using a custom script.
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-customScript
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-customscript
    */
   public static function customScript(array $options) {
     self::checkOptions('customScript', $options, ['source', 'functionName'], []);
@@ -1353,7 +1350,7 @@ HTML;
   public static function verificationButtons(array $options) {
     global $indicia_templates;
     if (!empty($options['includeUploadButton'])) {
-      $config = hostsite_get_es_config($nid);
+      $config = hostsite_get_es_config($options['nid']);
       helper_base::$indiciaData['esEndpoint'] = $config['es']['endpoint'];
       helper_base::$indiciaData['idPrefix'] = $config['es']['warehouse_prefix'];
     }
@@ -1403,6 +1400,7 @@ HTML;
       'all' => lang::get('all'),
       'applyDecisionTo' => lang::get('Apply decision to'),
       'applyRedetermination' => lang::get('Apply redetermination'),
+      'cancel' => lang::get('Cancel'),
       'notAccepted' => lang::get('Not accepted'),
       'notAcceptedIncorrect' => lang::get('Not accepted :: incorrect'),
       'notAcceptedUnableToVerify' => lang::get('Not accepted :: unable to verify'),

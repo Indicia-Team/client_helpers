@@ -13,19 +13,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package	Client
  * @author	Indicia Team
  * @license	http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link 	http://code.google.com/p/indicia/
+ * @link https://github.com/indicia-team/client_helpers/
  */
 
 global $custom_terms;
 
 /**
  * Language terms for  dynamic_sample_occurrence form.
- *
- * @package	Client
  */
-$custom_terms = array(
-	'LANG_Georef_Label' => 'Search for Place'
-);
+$custom_terms = [
+	'LANG_Georef_Label' => 'Search for a place',
+];

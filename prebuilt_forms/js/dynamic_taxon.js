@@ -77,7 +77,7 @@ indiciaFns.hookDynamicAttrsAfterLoad = [];
   }
 
   function addSelect(name, terms, tr) {
-    var select = $('<select class="form-control" name="associated-taxon-' + name + 'Id:' + rowCount + '"></select>');
+    var select = $('<select class="form-control" name="associated-taxon-' + name + ':' + rowCount + '"></select>');
     $('<option value="">&lt;' + indiciaData.lang.taxonassoc.pleaseSelect + '&gt;</option>').appendTo(select);
     $.each(terms, function eachListItem() {
       $('<option value="' + this[0] + '">' + this[1] + '</option>').appendTo(select);
@@ -112,6 +112,9 @@ indiciaFns.hookDynamicAttrsAfterLoad = [];
             if (this.impact_id) {
               $('[name="associated-taxon-impactId:' + rowCount + '"]').val(this.impact_id);
             }
+            if (this.fidelity) {
+              $('[name="associated-taxon-fidelity:' + rowCount + '"]').val(this.fidelity);
+            }
 
           });
           // add a blank row for new records
@@ -142,17 +145,24 @@ indiciaFns.hookDynamicAttrsAfterLoad = [];
       + hiddens + '</td>')
       .appendTo(tr);
     if (typeof indiciaData.termlistData.association_type_termlist_id !== 'undefined') {
-      addSelect('type', indiciaData.termlistData.association_type_termlist_id, tr)
+      addSelect('typeId', indiciaData.termlistData.association_type_termlist_id, tr)
         .addClass('associated-taxon-typeId');
     }
     if (typeof indiciaData.termlistData.part_termlist_id !== 'undefined') {
-      addSelect('part', indiciaData.termlistData.part_termlist_id, tr);
+      addSelect('partId', indiciaData.termlistData.part_termlist_id, tr);
     }
     if (typeof indiciaData.termlistData.position_termlist_id !== 'undefined') {
-      addSelect('position', indiciaData.termlistData.position_termlist_id, tr);
+      addSelect('positionId', indiciaData.termlistData.position_termlist_id, tr);
     }
     if (typeof indiciaData.termlistData.impact_termlist_id !== 'undefined') {
-      addSelect('impact', indiciaData.termlistData.impact_termlist_id, tr);
+      addSelect('impactId', indiciaData.termlistData.impact_termlist_id, tr);
+    }
+    if (el.settings.fidelity) {
+      addSelect('fidelity', [
+        [ 1, indiciaData.lang.taxonassoc.fidelityHigh ],
+        [ 2, indiciaData.lang.taxonassoc.fidelityMedium ],
+        [ 3, indiciaData.lang.taxonassoc.fidelityLow ]
+      ], tr);
     }
     // Button to remove row.
     $('<td><span class="fas fa-trash-alt associated-taxon-remove"></span></td>').appendTo(tr);
@@ -212,6 +222,9 @@ indiciaFns.hookDynamicAttrsAfterLoad = [];
       }
       if (typeof indiciaData.termlistData.impact_termlist_id !== 'undefined') {
         $('<th>' + indiciaData.lang.taxonassoc.hdrAssocImpact + '</th>').appendTo(elems.thr);
+      }
+      if (el.settings.fidelity) {
+        $('<th>' + indiciaData.lang.taxonassoc.hdrFidelity + '</th>').appendTo(elems.thr);
       }
       // Delete icon column.
       $('<th></th>').appendTo(elems.thr);
@@ -462,7 +475,7 @@ jQuery(document).ready(function docReady($) {
         $.get(indiciaData.ajaxUrl + '/dynamicattrs/' + indiciaData.nid + urlSep +
             'taxon_list_id=' + $('#taxa_taxon_list\\:taxon_list_id').val() +
             '&taxa_taxon_list_id=' + $('#taxa_taxon_list\\:parent_id').val() +
-            '&language=' + indiciaData.userLang +
+            '&language=' + indiciaData.currentLanguage3 +
             '&options=' + JSON.stringify(indiciaData.dynamicAttrOptions), null,
           function getAttrsReportCallback(data) {
             $(div).html(data);

@@ -15,16 +15,14 @@
  *
  * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link http://code.google.com/p/indicia/
+ * @link https://github.com/indicia-team/client_helpers/
  */
 
 global $default_terms;
 /**
  * Provides a list of default localisable terms used by the lang class.
- *
- * @package Client
  */
-$default_terms = array(
+$default_terms = [
   'add' => 'Add',
   'add row' => 'Add Row',
   'back' => 'Back',
@@ -44,7 +42,7 @@ $default_terms = array(
   'prev step' => 'Previous Step',
   'save' => 'Save',
   'search' => 'Search',
-  'search for place on map' => 'Search for place on map',
+  'search for place on map' => 'Search for a place on the map',
   'spatial ref' => 'Spatial ref.',
   'species_checklist.species' => 'Species',
   'species_checklist.present' => 'Present',
@@ -100,7 +98,7 @@ $default_terms = array(
   'Click to Filter Occ_id' => 'Select records by record ID',
   'Click to Filter Quality' => 'Select records based on quality criteria such as verification status or presence of photos',
   'Click to Filter Source' => 'Select records based on source website, survey or input form',
-);
+];
 
 // Some bigger bits of text better handled with HEREDOC.
 $default_terms['import_settings_instructions'] = <<<TEXT

@@ -589,17 +589,22 @@ HTML;
             switch ($field['datatype']) {
               case 'text':
               case 'species':
-                $title=lang::get("Search for {1} text begins with .... Use * as a wildcard.", $caption);
+                $title = lang::get("Search for {1} text begins with .... Use * as a wildcard.", $caption);
                 break;
+
               case 'date':
-                $title=lang::get("Search on {1} - search for an exact date or use a vague date such as a year to select a range of dates.", $caption);
+                $title = lang::get("Search on {1} - search for an exact date or use a vague date such as a year to select a range of dates.", $caption);
                 break;
-              default: $title=lang::get("Search on {1} - either enter an exact number, use >, >=, <, or <= before the number to filter for ".
+
+              default:
+                $title = lang::get("Search on {1} - either enter an exact number, use >, >=, <, or <= before the number to filter for " .
                       "{1} more or less than your search value, or enter a range such as 1000-2000.", $caption);
             }
             $title = htmlspecialchars(lang::get('Type here to filter then press Tab or Return to apply the filter.').' '.$title);
-            //Filter, which when clicked, displays a popup with a series of checkboxes representing a distinct set of data from a column on the report.
-            //The user can then deselect these checkboxes to remove data from the report.
+            // Filter, which when clicked, displays a popup with a series of
+            // checkboxes representing a distinct set of data from a column on
+            // the report. The user can then deselect these checkboxes to
+            // remove data from the report.
             if (!empty($options['includePopupFilter'])&&$options['includePopupFilter']===true) {
               self::$javascript.="indiciaData.includePopupFilter=true;";
               $popupFilterIcon = $imgPath."desc.gif";
@@ -1643,7 +1648,7 @@ JS;
     global $indicia_templates;
     $reloadUrl = self::get_reload_link_parts();
     $r = '<form action="'.$reloadUrl['path'].'" method="get" class="linear-form" id="filterForm-'.$options['id'].'">';
-    $r .= '<label for="filters" class="auto">'.lang::get('Filter for').'</label> ';
+    $r .= '<label for="filters" class="auto">' . lang::get('Filter for') . '</label> ';
     $value = (isset($_GET['filters'])) ? ' value="'.$_GET['filters'].'"' : '';
     $r .= '<input type="text" name="filters" id="filters" class="filterInput"'.$value.'/> ';
     $r .= '<label for="columns" class="auto">'.lang::get('in').'</label> <select name="columns" class="filterSelect" id="columns">';
@@ -1784,14 +1789,15 @@ JS;
 
  /**
   * Function to output a report onto a map rather than a grid.
-  * Because there are many options for the map, this method does not generate the
-  * map itself, rather it sends the output of the report onto a map_panel output
-  * elsewhere on the page. Like the report_grid, this can output a parameters
-  * form or can be set to use the parameters form from another output report (e.g.
-  * another call to report_grid, allowing both a grid and map of the same data
-  * to be generated). The report definition must contain a single column which is
-  * configured as a mappable column or the report must specify a parameterised
-  * CQL query to draw the map using WMS.
+
+  * Because there are many options for the map, this method does not generate
+  * the map itself, rather it sends the output of the report onto a map_panel
+  * output elsewhere on the page. Like the report_grid, this can output a
+  * parameters form or can be set to use the parameters form from another
+  * output report (e.g. another call to report_grid, allowing both a grid and
+  * map of the same data to be generated). The report definition must contain a
+  * single column which is configured as a mappable column or the report must
+  * specify a parameterised CQL query to draw the map using WMS.
   *
   * @param array $options Options array with the following possibilities:<ul>
   * <li><b>id</b><br/>
@@ -2597,7 +2603,7 @@ mapSettingsHooks.push(function(opts) { $setLocationJs
         $r .= '<form action="'.$_SERVER['REQUEST_URI'].'" method="post" id="'.$options['reportGroup'].'-params">'."\n<fieldset class=\"$cls\">";
         if (!$options['paramsInMapToolbar'])
           // don't use the fieldset legend in toolbar mode
-          $r .= '<legend>'.lang::get('Report Parameters').'</legend>';
+          $r .= '<legend>' . lang::get('Report parameters') . '</legend>';
       }
       $reloadUrl = self::get_reload_link_parts();
       // Output any other get parameters from our URL as hidden fields
@@ -2888,7 +2894,7 @@ if (typeof mapSettingsHooks!=='undefined') {
       if (!isset($cookieData))
         $cookieData = [];
       $cookieData[$options['rememberParamsReportGroup']]=$providedParams;
-      setcookie('providedParams', json_encode($cookieData));
+      hostsite_set_cookie('providedParams', json_encode($cookieData));
     }
     // Get the report group prefix required for each relevant parameter
     $paramKey = (isset($options['reportGroup']) ? $options['reportGroup'] : '').'-';
@@ -3312,8 +3318,10 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue, removeparam) {
       report_helper::$javascript .= "      var features = [];\n";
       report_helper::$javascript .= "$addFeaturesJs\n";
       report_helper::$javascript .= "      indiciaData.reportlayer.addFeatures(features);\n";
-      if ($zoomToExtent && !empty($addFeaturesJs))
+      if ($zoomToExtent && !empty($addFeaturesJs)) {
         self::$javascript .= "      div.map.zoomToExtent(indiciaData.reportlayer.getDataExtent());\n";
+        self::$javascript .= "      delete indiciaData['zoomToAfterFetchingGoogleApiScript-' + div.map.id];\n";
+      }
       if (!empty($featureDoubleOutlineColour)) {
         // push a clone of the array of features onto a layer which will draw an outline.
         report_helper::$javascript .= "

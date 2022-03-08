@@ -57,7 +57,8 @@ class DynamicAttrsProxyHelper {
       $_GET['survey_id'],
       $_GET['taxa_taxon_list_ids'],
       NULL,
-      $_GET['language']
+      $_GET['language'],
+      isset($_GET['attributeTermlistLanguageFilter']) ? $_GET['attributeTermlistLanguageFilter'] : 0
     );
     // Convert to a response with control HTML.
     $attrData = [];
@@ -73,10 +74,25 @@ class DynamicAttrsProxyHelper {
         $attr['defaultUpper'] = $attr['default_upper_value'];
         // Fieldname will be replaced by client-side JS.
         $attr['fieldname'] = 'tempNameToEnableValidation';
+        $extraParams = [];
+        $translate = FALSE;
+        if (isset($_GET['attributeTermlistLanguageFilter'])) {
+          if ($_GET['attributeTermlistLanguageFilter'] === '1') {
+            $extraParams['language_iso'] = $_GET['language'];
+          }
+          elseif ($_GET['attributeTermlistLanguageFilter'] === 'clientI18n') {
+            $extraParams['preferred'] = 't';
+            $translate = TRUE;
+          }
+        }
         if ($attr['system_function']) {
           $attrData[] = [
             'attr' => $attr,
-            'control' => data_entry_helper::outputAttribute($attr, ['label' => '', 'extraParams' => $readAuth]),
+            'control' => data_entry_helper::outputAttribute($attr, [
+              'label' => '',
+              'extraParams' => $readAuth + $extraParams,
+              'translate' => $translate,
+            ]),
           ];
         }
       }

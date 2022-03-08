@@ -595,10 +595,6 @@ mapInitialisationHooks.push(function(mapdiv) {
     if ($sampleId == null){
       if(isset($_GET['date'])) data_entry_helper::$entity_to_load['C1:sample:date'] = $_GET['date'];
       $r .= data_entry_helper::date_picker(array('label' => lang::get('Date of first count'), 'fieldname' => 'C1:sample:date', 'validation' => array('required','date')));
-      data_entry_helper::$javascript .= "jQuery('#C1\\\\:sample\\\\:date').change(function(){
-  jQuery('#sample\\\\:date').val(jQuery(this).val() == '' ? '' : jQuery(this).datepicker('getDate').getFullYear());
-});
-if(jQuery('#C1\\\\:sample\\\\:date').val() != '') jQuery('#sample\\\\:date').val(jQuery('#C1\\\\:sample\\\\:date').datepicker('getDate').getFullYear());\n";
     }
     unset(data_entry_helper::$default_validation_rules['sample:date']);
     $help = lang::get('The Year field is read-only, and is calculated automatically from the date(s) of the Counts.');
