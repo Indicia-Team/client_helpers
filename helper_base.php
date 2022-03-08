@@ -1898,7 +1898,6 @@ HTML;
       $nonce = $response['output'];
       if (substr($nonce, 0, 9) === '<!DOCTYPE')
         throw new Exception(lang::get('Could not authenticate against the warehouse. Is the server down?'));
-      $indiciaUserId = hostsite_get_user_field('indicia_user_id');
       $r = [
         'nonce' => $nonce,
       ];
@@ -1906,11 +1905,16 @@ HTML;
     }
     else
       $r = json_decode($r, TRUE);
-    $indiciaUserId = hostsite_get_user_field('indicia_user_id');
-    // Include user ID if logged in.
-    $authTokenUserId = $indiciaUserId ? ":$indiciaUserId" : '';
-    // Attach a user specific auth token.
-    $r['auth_token'] = sha1("$r[nonce]:$password$authTokenUserId") . $authTokenUserId;
+    if (function_exists('hostsite_get_user_field')) {
+      $indiciaUserId = hostsite_get_user_field('indicia_user_id');
+      // Include user ID if logged in.
+      $authTokenUserId = $indiciaUserId ? ":$indiciaUserId" : '';
+      // Attach a user specific auth token.
+      $r['auth_token'] = sha1("$r[nonce]:$password$authTokenUserId") . $authTokenUserId;
+    }
+    else {
+      $r['auth_token'] = sha1("$r[nonce]:$password");
+    }
     self::$js_read_tokens = $r;
     return $r;
   }
