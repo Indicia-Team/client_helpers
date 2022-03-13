@@ -2482,22 +2482,22 @@ if (typeof validator!=='undefined') {
     self::add_resource('validation');
     // Allow i18n on validation messages
     if (lang::get('validation_required') != 'validation_required') {
-      data_entry_helper::$late_javascript .= "$.validator.messages.required = \"".lang::get('validation_required')."\";\n";
+      self::$late_javascript .= "$.validator.messages.required = \"".lang::get('validation_required')."\";\n";
     }
     if (lang::get('validation_max') != 'validation_max') {
-      data_entry_helper::$late_javascript .= "$.validator.messages.max = $.validator.format(\"".lang::get('validation_max')."\");\n";
+      self::$late_javascript .= "$.validator.messages.max = $.validator.format(\"".lang::get('validation_max')."\");\n";
     }
     if (lang::get('validation_min') != 'validation_min') {
-      data_entry_helper::$late_javascript .= "$.validator.messages.min = $.validator.format(\"".lang::get('validation_min')."\");\n";
+      self::$late_javascript .= "$.validator.messages.min = $.validator.format(\"".lang::get('validation_min')."\");\n";
     }
     if(lang::get('validation_number') != 'validation_number') {
-      data_entry_helper::$late_javascript .= "$.validator.messages.number = $.validator.format(\"".lang::get('validation_number')."\");\n";
+      self::$late_javascript .= "$.validator.messages.number = $.validator.format(\"".lang::get('validation_number')."\");\n";
     }
     if(lang::get('validation_digits') != 'validation_digits') {
-      data_entry_helper::$late_javascript .= "$.validator.messages.digits = $.validator.format(\"".lang::get('validation_digits')."\");\n";
+      self::$late_javascript .= "$.validator.messages.digits = $.validator.format(\"".lang::get('validation_digits')."\");\n";
     }
     if(lang::get('validation_integer') != 'validation_integer') {
-      data_entry_helper::$late_javascript .= "$.validator.messages.integer = $.validator.format(\"".lang::get('validation_integer')."\");\n";
+      self::$late_javascript .= "$.validator.messages.integer = $.validator.format(\"".lang::get('validation_integer')."\");\n";
     }
   }
 
@@ -2570,7 +2570,7 @@ if (typeof validator!=='undefined') {
   public static function get_termlist_terms($auth, $termlist, $filter = NULL) {
     if (!is_int($termlist)) {
       $termlistFilter=array('external_key' => $termlist);
-      $list = data_entry_helper::get_population_data(array(
+      $list = self::get_population_data(array(
         'table' => 'termlist',
         'extraParams' => $auth['read'] + $termlistFilter
       ));
@@ -2587,7 +2587,7 @@ if (typeof validator!=='undefined') {
     // apply a filter for the actual list of terms, if required.
     if ($filter)
       $extraParams['query'] = urlencode(json_encode(array('in'=>array('term', $filter))));
-    $terms = data_entry_helper::get_population_data(array(
+    $terms = self::get_population_data(array(
       'table' => 'termlists_term',
       'extraParams' => $extraParams
     ));
