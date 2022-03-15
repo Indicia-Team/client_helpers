@@ -28,6 +28,7 @@ class iform_importer_2 {
    * Disable form element wrapped around output.
    *
    * @return bool
+   *   Always false.
    */
   protected static function isDataEntryForm() {
     return FALSE;
@@ -63,13 +64,22 @@ class iform_importer_2 {
     // @todo Entity
     // @todo Nested samples
 
-    // Load helper for access to translations provided.
-    iform_load_helpers(['import_helper_2']);
+    // Load for access to translations provided as lang::get might not be
+    // available in AJAX call.
+    require_once 'lang/import_helper_2.php';
+    global $default_terms;
+    $presetSettingsDescription = <<<TXT
+Provide a list of predetermined settings which the user does not need to specify, one on each line in the form
+name=value. The preset settings available should be chosen from those available for input on the Import settings page
+of the import wizard, depending on the table you are inputting data for. It is also possible to specify preset settings
+for the field names available for selection on the mappings page. You can use the following replacement tokens in the
+values: {user_id}, {username}, {email} or {profile_*} (i.e. any field in the user profile data).
+TXT;
     return [
       [
         'name' => 'presetSettings',
         'caption' => 'Preset Settings',
-        'description' => lang::get('import2globalValuesFormIntro'),
+        'description' => $presetSettingsDescription,
         'type' => 'textarea',
         'required' => FALSE,
       ],
@@ -78,15 +88,15 @@ class iform_importer_2 {
         'caption' => 'File select form introduction',
         'category' => 'Instruction texts',
         'type' => 'textarea',
-        'default' => lang::get('import2fileSelectFormIntro'),
+        'default' => $default_terms['import2fileSelectFormIntro'],
         'required' => FALSE,
       ],
       [
-        'name' => 'settingsFormIntro',
-        'caption' => 'Settings form introduction',
+        'name' => 'globalValuesFormIntro',
+        'caption' => 'Global values form introduction',
         'category' => 'Instruction texts',
         'type' => 'textarea',
-        'default' => lang::get('import2settingsFormIntro'),
+        'default' => $default_terms['import2globalValuesFormIntro'],
         'required' => FALSE,
       ],
       [
@@ -94,7 +104,7 @@ class iform_importer_2 {
         'caption' => 'Mappings form introduction',
         'category' => 'Instruction texts',
         'type' => 'textarea',
-        'default' => lang::get('import2mappingsFormIntro'),
+        'default' => $default_terms['import2mappingsFormIntro'],
         'required' => FALSE,
       ],
       [
@@ -102,7 +112,7 @@ class iform_importer_2 {
         'caption' => 'Mappings form introduction',
         'category' => 'Instruction texts',
         'type' => 'textarea',
-        'default' => lang::get('import2lookupMatchingFormIntro'),
+        'default' => $default_terms['import2lookupMatchingFormIntro'],
         'required' => FALSE,
       ],
       [
@@ -110,7 +120,7 @@ class iform_importer_2 {
         'caption' => 'Validation form introduction',
         'category' => 'Instruction texts',
         'type' => 'textarea',
-        'default' => lang::get('import2validationFormIntro'),
+        'default' => $default_terms['import2validationFormIntro'],
         'required' => FALSE,
       ],
       [
@@ -118,7 +128,7 @@ class iform_importer_2 {
         'caption' => 'Summary page introduction',
         'category' => 'Instruction texts',
         'type' => 'textarea',
-        'default' => lang::get('import2summaryPageIntro'),
+        'default' => $default_terms['import2summaryPageIntro'],
         'required' => FALSE,
       ],
       [
@@ -126,7 +136,7 @@ class iform_importer_2 {
         'caption' => 'Process the import page introduction',
         'category' => 'Instruction texts',
         'type' => 'textarea',
-        'default' => lang::get('import2doImportPageIntro'),
+        'default' => $default_terms['import2doImportPageIntro'],
         'required' => FALSE,
       ],
     ];

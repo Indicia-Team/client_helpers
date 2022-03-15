@@ -726,8 +726,8 @@ HTML;
       'globalValuesFormIntro' => lang::get('import2globalValuesFormIntro'),
       'mappingsFormIntro' => lang::get('import2mappingsFormIntro'),
       'lookupMatchingFormIntro' => lang::get('lookupMatchingFormIntro'),
-      'summaryPageIntro' => lang::get('summaryPageIntro'),
       'validationFormIntro' => lang::get('import2validationFormIntro'),
+      'summaryPageIntro' => lang::get('summaryPageIntro'),
       'doImportFormIntro' => lang::get('import2doImportFormIntro'),
     ];
     $options = array_merge($defaults, $options);
