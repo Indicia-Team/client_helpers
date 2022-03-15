@@ -48,7 +48,7 @@ class import_helper_2 extends helper_base {
    * * lookupMatchingFormIntro
    * * validationFormIntro
    * * summaryPageIntro
-   * * doImportFormIntro
+   * * doImportPageIntro
    * * uploadFileUrl - path to a script that handles the initial upload of a
    *   file to the interim file location. The script can call
    *   import_helper_2::uploadFile for a complete implementation.
@@ -728,7 +728,7 @@ HTML;
       'lookupMatchingFormIntro' => lang::get('lookupMatchingFormIntro'),
       'validationFormIntro' => lang::get('import2validationFormIntro'),
       'summaryPageIntro' => lang::get('summaryPageIntro'),
-      'doImportFormIntro' => lang::get('import2doImportFormIntro'),
+      'doImportPageIntro' => lang::get('import2doImportPageIntro'),
     ];
     $options = array_merge($defaults, $options);
     $requiredOptions = [

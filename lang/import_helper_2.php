@@ -51,6 +51,6 @@ $default_terms['import2summaryPageIntro'] = <<<TXT
 Please check the following settings before proceeding with the import.
 TXT;
 
-$default_terms['import2doImportFormIntro'] = <<<TXT
+$default_terms['import2doImportPageIntro'] = <<<TXT
 Please wait while your data are imported.
 TXT;
