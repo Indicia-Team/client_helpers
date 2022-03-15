@@ -358,7 +358,7 @@ TXT;
   private static function getWriteAuthFromHeaders() {
     $headers = getallheaders();
     if (!empty($headers['Authorization'])) {
-      if (preg_match('/Bearer (?<auth_token>[a-z0-9]+)\|(?<nonce>[a-z0-9]+)/', $headers['Authorization'], $matches)) {
+      if (preg_match('/Bearer (?<auth_token>[a-z0-9]+(:\d+)?)\|(?<nonce>[a-z0-9]+)/', $headers['Authorization'], $matches)) {
         return [
           'auth_token' => $matches['auth_token'],
           'nonce' => $matches['nonce'],
