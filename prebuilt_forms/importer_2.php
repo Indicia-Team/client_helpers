@@ -66,7 +66,7 @@ class iform_importer_2 {
 
     // Load for access to translations provided as lang::get might not be
     // available in AJAX call.
-    require_once 'lang/import_helper_2.php';
+    require_once dirname(dirname(__FILE__)) . '/lang/import_helper_2.php';
     global $default_terms;
     $presetSettingsDescription = <<<TXT
 Provide a list of predetermined settings which the user does not need to specify, one on each line in the form
