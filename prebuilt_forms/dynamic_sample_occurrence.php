@@ -2677,7 +2677,7 @@ JS;
   protected static function get_control_recordernames(
     array $auth,
     array $args,
-    string $tabAlias,
+    array $tabAlias,
     array $options
   ) {
     // We don't need to touch the control in edit mode. Make the current user's
