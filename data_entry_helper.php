@@ -7362,6 +7362,7 @@ if (errors$uniq.length>0) {
     // taxa_taxon_list_id so it is easy to check if there is any other data
     // for the row.
     unset($record['id']);
+    unset($record['ttlId']);
     unset($record['present']); // stores ttl id
     $explicitlyAbsent = !empty($record['zero_abundance']) && $record['zero_abundance'] === 't';
     unset($record['absent']);
