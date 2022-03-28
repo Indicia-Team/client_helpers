@@ -1142,31 +1142,31 @@ function report_filter_panel(array $readAuth, $options, $website_id, &$hiddenStu
           break;
 
         case 'my-records':
-          if (hostsite_get_user_field('id')) {
+          if (hostsite_get_user_field('indicia_user_id')) {
             $title = lang::get('My records');
           }
           break;
 
         case 'my-queried-records':
-          if (hostsite_get_user_field('id')) {
+          if (hostsite_get_user_field('indicia_user_id')) {
             $title = lang::get('My queried records');
           }
           break;
 
         case 'my-queried-or-not-accepted-records':
-          if (hostsite_get_user_field('id')) {
+          if (hostsite_get_user_field('indicia_user_id')) {
             $title = lang::get('My not accepted or queried records');
           }
           break;
 
         case 'my-not-reviewed-records':
-          if (hostsite_get_user_field('id')) {
+          if (hostsite_get_user_field('indicia_user_id')) {
             $title = lang::get('My not reviewed records');
           }
           break;
 
         case 'my-accepted-records':
-          if (hostsite_get_user_field('id')) {
+          if (hostsite_get_user_field('indicia_user_id')) {
             $title = lang::get('My accepted records');
           }
           break;
