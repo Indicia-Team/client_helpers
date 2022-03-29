@@ -2562,9 +2562,13 @@ JS;
 
   /**
    * Get the sref by way of choosing a location.
+   *
+   * If $options['urlParam'] is used to specify a query string parameter, that
+   * parameter value can be used to pass in a default value of the location_id 
+   * to the location_select control.
    */
   protected static function get_control_locationmap($auth, $args, $tabAlias, $options) {
-    // Add a location select control.
+    // Add a location control.
     $options = array_merge([
       'searchUpdatesSref' => TRUE,
       'validation' => "required",
@@ -2584,9 +2588,38 @@ JS;
     unset($options['helpText']);
 
     // Add hidden sref controls.
+    // These will be updated to contain the sref of the selected location when
+    // it is changed because searchUpdatesSref is true. However,
+    // jQuery.indicialMapPanel explicitly prevents this on initial page load.
+    if (isset($options['default'])) {
+      // A default may be passed, directly or via a urlParam, containing a
+      // location_id for the location control. Convert this to default
+      // values for the hidden sref controls.
+      $location_id = $options['default'];
+      if (preg_match('/^[0-9]+$/', $location_id)) {
+        // Id is numeric.
+        if (!isset(data_entry_helper::$entity_to_load['sample:location_id'])) {
+          // No need for values if entity_to_load will override any defaults.
+          $response = data_entry_helper::get_population_data([
+            'table' => 'location',
+            'extraParams' => $auth['read'] + [
+              'id' => $location_id,
+              'view' => 'detail',
+            ],
+          ]);
+          if (count($response)) {
+            $location = $response[0];
+            $options['default'] = $location['centroid_sref'];
+            $options['defaultSys'] = $location['centroid_sref_system'];
+          }
+        }
+      }
+    }
     $r .= data_entry_helper::sref_hidden($options);
 
     // Add a map control.
+    // Because searchUpdatesSref, this will show the location selected in the
+    // location control, even on initial page load.
     $options = array_merge([
       'locationLayerName' => 'indicia:detail_locations',
       'locationLayerFilter' => "website_id=" . $args['website_id'],
