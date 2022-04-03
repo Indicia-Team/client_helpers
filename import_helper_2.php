@@ -317,7 +317,7 @@ class import_helper_2 extends helper_base {
       'clickToAdd' => lang::get('Click to add files'),
       'instructions' => lang::get($options['fileSelectFormIntro']),
       'next' => lang::get('Next step'),
-      'selectAFile' => lang::get('Select a CSV or Excel file or drag it over this area. The file can optionally be a zip archive.'),
+      'selectAFile' => lang::get('Select a CSV or Excel file or drag it over this area. The file can optionally be a zip archive. If importing an Excel file, only the first worksheet will be imported.'),
       'uploadFileToImport' => lang::get('Upload a file to import'),
     ];
     $r = <<<HTML
@@ -325,7 +325,7 @@ class import_helper_2 extends helper_base {
 <p>$lang[instructions]</p>
 <form id="file-upload-form" method="POST">
   <div class="dm-uploader row">
-    <div class="col-md-6">
+    <div class="col-md-9">
       <div role="button" class="btn btn-primary">
         <i class="fas fa-file-upload"></i>
         $lang[browseFiles]
@@ -333,7 +333,7 @@ class import_helper_2 extends helper_base {
       </div>
       <small class="status text-muted">$lang[selectAFile]</small>
     </div>
-    <div class="col-md-6" id="uploaded-files"></div>
+    <div class="col-md-3" id="uploaded-files"></div>
   </div>
   <progress id="file-progress" class="progress" value="0" max="100" style="display: none"></progress>
   <input type="submit" class="btn btn-primary" id="next-step" value="$lang[next]" disabled />
