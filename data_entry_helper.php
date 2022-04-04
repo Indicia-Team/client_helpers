@@ -6594,7 +6594,6 @@ HTML;
    * @param array Options array of the child linked list.
    */
   private static function initLinkedLists($options) {
-    global $indicia_templates;
     // Setup JavaScript to do the population when the parent control changes.
     $parentControlId = str_replace(':', '\\:', $options['parentControlId']);
     $escapedId = str_replace(':','\\:', $options['id']);
@@ -6647,6 +6646,10 @@ HTML;
       'instruct' => $instruct,
       'hideChildrenUntilLoaded' => $options['hideChildrenUntilLoaded'],
     ];
+    self::addLanguageStringsToJs('linkedLists', [
+      'databaseError' => 'Database error',
+      'databaseErrorMsg' => 'A database error occurred when updating the {1} input.',
+    ]);
   }
 
   /**
