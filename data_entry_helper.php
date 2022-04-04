@@ -6595,10 +6595,9 @@ HTML;
    */
   private static function initLinkedLists($options) {
     global $indicia_templates;
-    // setup JavaScript to do the population when the parent control changes
+    // Setup JavaScript to do the population when the parent control changes.
     $parentControlId = str_replace(':', '\\:', $options['parentControlId']);
     $escapedId = str_replace(':','\\:', $options['id']);
-    $fn = preg_replace("/[^A-Za-z0-9]/", "", $options['id']) . "_populate";
     if (!empty($options['report'])) {
       $url = parent::getProxiedBaseUrl() . "index.php/services/report/requestReport";
       $request = "$url?report=" . $options['report'] . ".xml&mode=json&reportSource=local&callback=?";
@@ -6611,7 +6610,18 @@ HTML;
       if (isset($options['filterIncludesNulls']) && $options['filterIncludesNulls']) {
         $inArray[] = NULL;
       }
-      $query = 'query=' .urlencode(json_encode(array('in' => array($options['filterField'], $inArray))));
+      // Add a query parameter to allow filter to the chosen value.
+      // Potentially need to merge into query parameter in the extraParams, or
+      // create a new query parameter.
+      if (isset($options['extraParams'])) {
+        $queryObj = isset($options['extraParams']['query']) ? json_decode($options['extraParams']['query'], TRUE) : [];
+        unset($options['extraParams']['query']);
+      }
+      if (!isset($queryObj['in'])) {
+        $queryObj['in'] = [];
+      }
+      $queryObj['in'][$options['filterField']] = $inArray;
+      $query = 'query=' .urlencode(json_encode($queryObj));
     }
     if (isset($options['parentControlLabel']))
       $instruct = lang::get('Please select a {1} first', $options['parentControlLabel']);
