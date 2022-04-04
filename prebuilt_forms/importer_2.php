@@ -19,6 +19,8 @@
  * @link http://code.google.com/p/indicia/
  */
 
+require_once 'includes/user.php';
+
 /**
  * 2nd generation import data tool.
  */
@@ -68,18 +70,23 @@ class iform_importer_2 {
     // available in AJAX call.
     require_once dirname(dirname(__FILE__)) . '/lang/import_helper_2.php';
     global $default_terms;
-    $presetSettingsDescription = <<<TXT
-Provide a list of predetermined settings which the user does not need to specify, one on each line in the form
-name=value. The preset settings available should be chosen from those available for input on the Import settings page
-of the import wizard, depending on the table you are inputting data for. It is also possible to specify preset settings
-for the field names available for selection on the mappings page. You can use the following replacement tokens in the
-values: {user_id}, {username}, {email} or {profile_*} (i.e. any field in the user profile data).
+    $fixedValuesDescription = <<<TXT
+Provide a list of fixed values which the user does not need to specify in the import, one on each line in the form
+key=value, where the key is a field name. The fixed values key field names should be chosen from those available for
+input on the Global values page of the import wizard, depending on the table you are inputting data for. If a single
+value is provided for a field key, then that field is removed from the Global values form and the value will be applied
+to all rows created by the import. If multiple values are provided as a semi-colon separated list, then the user will
+be able to choose the value to apply from a drop-down with a restricted range of options. <br/>
+It is also possible to specify single fixed values for the field names available for selection on the mappings
+form.<br/>
+You can use the following replacement tokens in the values: {user_id}, {username}, {email} or {profile_*} (i.e. any
+field in the user profile data).
 TXT;
     return [
       [
-        'name' => 'presetSettings',
-        'caption' => 'Preset Settings',
-        'description' => $presetSettingsDescription,
+        'name' => 'fixedValues',
+        'caption' => 'Fixed values',
+        'description' => $fixedValuesDescription,
         'type' => 'textarea',
         'required' => FALSE,
       ],
@@ -175,7 +182,9 @@ TXT;
       'readAuth' => $auth['read'],
       'writeAuth' => $auth['write_tokens'],
       'entity' => 'occurrence',
+      'fixedValues' => [],
     ], $args);
+    $options['fixedValues'] = get_options_array_with_user_data($options['fixedValues']);
     return import_helper_2::importer($options);
   }
 

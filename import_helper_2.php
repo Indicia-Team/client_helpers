@@ -68,6 +68,7 @@ class import_helper_2 extends helper_base {
    *   from the temp table into the database.
    * * readAuth - read authorisation tokens.
    * * writeAuth - write authorisation tokens.
+   * * fixedValues - array of fixed key/value pairs that apply to all rows.
    */
   public static function importer($options) {
     if (empty($options['entity'])) {
@@ -423,10 +424,47 @@ HTML;
     $r = '';
     $options['helpText'] = TRUE;
     $options['form'] = $formArray;
+    $options['param_lookup_extras'] = [];
     foreach ($formArray as $key => $info) {
+      if (!empty($options['fixedValues'][$key])) {
+        if (isset($info['lookup_values'])) {
+          $info['lookup_values'] = self::getRestrictedLookupValues($info['lookup_values'], explode(';', $options['fixedValues'][$key]));
+        }
+        elseif (isset($info['population_call'])) {
+          $tokens = explode(':', $info['population_call']);
+          // 3rd part of population call is the ID field ($tokens[2]).
+          $options['param_lookup_extras'][$key] = ['query' => json_encode(['in' => [$tokens[2] => explode(';', $options['fixedValues'][$key])]])];
+        }
+      }
       $r .= self::getParamsFormControl($key, $info, $options, $tools);
     }
     return $r;
+  }
+
+  /**
+   * Processes a lookup_values string to only include those for provided keys.
+   *
+   * @param string $lookupValues
+   *   A lookup values string, in format key:value,key:value.
+   * @param array $restrictToKeys
+   *   A list of keys to include in the returned lookup values string.
+   *
+   * @return string
+   *   Lookup values string which only includes entries whose keys are in the
+   *   $restrictToKeys array.
+   */
+  private static function getRestrictedLookupValues($lookupValues, array $restrictToKeys) {
+    $originalLookups = explode(',', $lookupValues);
+    $originalLookupsAssoc = [];
+    foreach ($originalLookups as $lookup) {
+      $lookup = explode(':', $lookup);
+      $originalLookupsAssoc[$lookup[0]] = $lookup[1];
+    }
+    $newLookupList = [];
+    foreach ($restrictToKeys as $key) {
+      $newLookupList[] = "$key:" . $originalLookupsAssoc[$key];
+    }
+    return implode(',', $newLookupList);
   }
 
   /**
@@ -729,6 +767,7 @@ HTML;
       'validationFormIntro' => lang::get('import2validationFormIntro'),
       'summaryPageIntro' => lang::get('summaryPageIntro'),
       'doImportPageIntro' => lang::get('import2doImportPageIntro'),
+      'fixedValues' => [],
     ];
     $options = array_merge($defaults, $options);
     $requiredOptions = [
