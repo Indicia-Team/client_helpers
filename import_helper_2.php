@@ -542,9 +542,6 @@ HTML;
         $optGroup = ucfirst($fieldParts[0]);
         $colsByGroup[$optGroup] = [];
       }
-      if (empty($caption)) {
-        $caption = ucfirst(str_replace('_', ' ', $fieldParts[1]));
-      }
       $colsByGroup[$optGroup][] = "<option value=\"$field\">$caption</option>";
     }
     $optGroupHtmlList = ["<option value=\"\">- $lang[notImported] -</option>"];
