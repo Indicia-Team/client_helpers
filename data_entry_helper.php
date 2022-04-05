@@ -5374,7 +5374,7 @@ HTML;
     $speciesListEntryCtrl = data_entry_helper::species_checklist($options);
     // Since we handle the system ourself, we need to include the system
     // handled js files.
-    self::includeSrefHandlerJs([$options['spatialSystem']]);
+    self::includeSrefHandlerJs([$options['spatialSystem'] => '']);
     $r = '';
     if (isset($options['sample_method_id'])) {
       $sampleAttrs = self::getMultiplePlacesSpeciesChecklistSubsampleAttrs($options);
