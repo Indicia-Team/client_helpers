@@ -2564,7 +2564,7 @@ JS;
    * Get the sref by way of choosing a location.
    *
    * If $options['urlParam'] is used to specify a query string parameter, that
-   * parameter value can be used to pass in a default value of the location_id 
+   * parameter value can be used to pass in a default value of the location_id
    * to the location_select control.
    */
   protected static function get_control_locationmap($auth, $args, $tabAlias, $options) {
@@ -2695,14 +2695,12 @@ JS;
    *   Read authorisation tokens.
    * @param array $args
    *   Form configuration.
-   * @param array $tabAlias
+   * @param string $tabAlias
    *   Not used.
    * @param array $options
    *   Additional options for the control with the following possibilities.
-   *   <li>
-   *   <b>defaultToCurrentUser</b><br/>
-   *   Set to true if the currently logged in user's name should be the default.
-   *   </li>
+   *   * defaultToCurrentUser - Set to true if the currently logged in user's
+   *     name should be the default.
    *
    * @return string
    *   HTML for the control.
