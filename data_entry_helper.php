@@ -3124,7 +3124,7 @@ RIJS;
   * @param array $options
   *   Options array with the following possibilities:
   *   * **listId** - Optional. The ID of the taxon_lists record which is to be
-  *     used to obtain the species or taxon list. This is equired unless
+  *     used to obtain the species or taxon list. This is required unless
   *     lookupListId is provided.
   *   * **occAttrs** - Optional integer array, where each entry corresponds to
   *     the id of the desired attribute in the occurrence_attributes table. If
