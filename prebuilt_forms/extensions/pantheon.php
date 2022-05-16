@@ -161,7 +161,7 @@ class extension_pantheon {
     }
     $r .= '<ul class="button-links">';
     if (!empty($options['back'])) {
-      $r .= '<li><a id="summary-link" class="button" href="' . hostsite_get_url('pantheon/summary') . '">Back to Summary</a></li>';
+      $r .= '<li><a id="summary-link" class="button" href="' . hostsite_get_url('summary') . '">Back to Summary</a></li>';
     }
     $r .= '<li><a id="species-link" class="button" href="' . hostsite_get_url('species-for-sample') . '">Species list</a></li>
 <li><a id="guilds-link" class="button" href="' . hostsite_get_url('ecological-guilds') . '">Feeding guilds</a></li>
