@@ -226,16 +226,6 @@ class iform_group_edit {
         'required' => FALSE,
       ],
       [
-        'name' => 'include_published_flag',
-        'caption' => 'Include published flag',
-        'description' => "Include the optional field for setting if this group's data are available to automated publishing tools? " .
-          'Only tick this box if processes are set-up which will pick up the data from published groups and automatically publish ' .
-          'them, such as those provided by the Indicia Auto Exports module.',
-        'type' => 'checkbox',
-        'default' => FALSE,
-        'required' => FALSE,
-      ],
-      [
         'name' => 'data_inclusion_mode',
         'caption' => 'Group data inclusion',
         'description' => 'How will the decision regarding how records are included in group data be made',
@@ -358,7 +348,6 @@ class iform_group_edit {
       'include_administrators' => FALSE,
       'include_members' => FALSE,
       'include_licence' => FALSE,
-      'include_published_flag' => FALSE,
       'filter_types' => '{"":"what,where,when","Advanced":"source,quality"}',
       'indexed_location_type_ids' => '',
       'other_location_type_ids' => '',
@@ -501,14 +490,6 @@ class iform_group_edit {
         $r .= '<p class="warning" style="display: none" id="release-warning">' .
             lang::get('You are about to release the records belonging to this group. Do not proceed unless you intend to do this!') . '</p>';
       }
-    }
-    if ($args['include_published_flag']) {
-      $r .= data_entry_helper::checkbox([
-        'label' => lang::get('Published'),
-        'fieldname' => 'group:published',
-        'helpText' => lang::get("Tick this box if the {1}'s data are published. This may allow the data to be included in automatically generated " .
-          "publications for example, depending on the tools configured for publishing data on this website.", self::$groupType),
-      ]);
     }
     $r .= self::memberControls($args, $auth);
     $r .= '</fieldset>';
@@ -1202,7 +1183,6 @@ $('#entry_form').submit(function() {
       'group:logo_path' => $group['logo_path'],
       'group:implicit_record_inclusion' => $group['implicit_record_inclusion'],
       'group:licence_id' => $group['licence_id'],
-      'group:published' => $group['published'],
       'filter:id' => $group['filter_id'],
     ];
     if ($args['include_report_filter']) {
