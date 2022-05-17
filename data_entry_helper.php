@@ -717,7 +717,7 @@ JS;
    * @return string
    *   HTML to insert into the page for the checkbox control.
    */
-  public static function checkbox($options) {
+  public static function checkbox(array $options) {
     $options = self::check_options($options);
     $default = isset($options['default']) ? $options['default'] : '';
     $value = self::check_default_value($options['fieldname'], $default);
@@ -725,7 +725,6 @@ JS;
     $options['template'] = array_key_exists('template', $options) ? $options['template'] : 'checkbox';
     return self::apply_template($options['template'], $options);
   }
-
 
   /**
    * Helper function to output a checkbox for controlling training mode.
@@ -751,7 +750,7 @@ JS;
    * @return string
    *   HTML to insert into the page for the checkbox control.
    */
-  public static function training($options) {
+  public static function training(array $options) {
     // The fieldname is fixed for the specific purpose of this control.
     $options['fieldname'] = 'training';
     // Apply default options which may be overriden by supplied values.
@@ -900,7 +899,7 @@ JS;
    * @return string
    *   HTML to insert into the page for the date picker control.
    */
-  public static function date_picker($options) {
+  public static function date_picker(array $options) {
     $options = self::check_options($options);
     self::add_resource('datepicker');
     $options = array_merge([
@@ -1062,7 +1061,7 @@ JS;
    * @todo if using a normal file input, after validation, the input needs to show that the file upload has worked.
    * @todo Cleanup uploaded files that never got submitted because of validation failure elsewhere.
    */
-  public static function file_box($options) {
+  public static function file_box(array $options) {
     global $indicia_templates;
     // If a subType option is supplied, it means we only want to load a
     // particular media type, not just any old media associated with the
@@ -1121,7 +1120,6 @@ JS;
     if (isset(self::$final_image_folder_thumbs)) {
       $defaults['finalImageFolderThumbs'] = self::getRootFolder() . self::client_helper_path() . self::$final_image_folder_thumbs;
     }
-    $browser = self::get_browser_info();
     if ($indicia_templates['file_box'] !== '') {
       $defaults['file_boxTemplate'] = $indicia_templates['file_box'];
     }
@@ -1284,9 +1282,9 @@ JS;
    *     query tool was clicked on the location on the map. Defaults to false.
    *
    * @link http://code.google.com/apis/ajaxsearch/terms.html Google AJAX Search
-   * API Terms of Use.
+   *   API Terms of Use.
    * @link http://code.google.com/p/indicia/wiki/GeoreferenceLookupDrivers
-   * Documentation for the driver architecture.
+   *   Documentation for the driver architecture.
    *
    * @return string
    *   HTML to insert into the page for the georeference lookup control.
@@ -1308,7 +1306,7 @@ JS;
       'autoCollapseResults' => FALSE,
       'isFormControl' => TRUE,
       'georefQueryMap' => FALSE,
-      ], $options);
+    ], $options);
     if ($options['driver'] === 'geoplanet') {
       return 'The GeoPlanet place search service is no longer supported';
     }
@@ -1446,8 +1444,9 @@ JS;
       }
       // We either populate the lookupValues for the top level control or store
       // in the childData for output into JavaScript.
-      if (empty($item['parent_id']))
+      if (empty($item['parent_id'])) {
         $lookupValues[$itemValue] = $itemCaption;
+      }
       else {
         // Not a top level item, so put in a data array we can store in JSON.
         // Use the mappings from preferred ID to ID in this language to ensure
@@ -1500,7 +1499,11 @@ JS;
     // jQuery safe version of the Id.
     $safeId = preg_replace('/[:]/', '\\\\\\:', $options['id']);
     // Output a hidden input that contains the value to post.
-    $hiddenOptions = ['id' => 'fld-' . $options['id'], 'fieldname' => $fieldname, 'default' => self::check_default_value($options['fieldname'])];
+    $hiddenOptions = [
+      'id' => 'fld-' . $options['id'],
+      'fieldname' => $fieldname,
+      'default' => self::check_default_value($options['fieldname']),
+    ];
     if (isset($options['default'])) {
       $hiddenOptions['default'] = $options['default'];
     }
@@ -1515,7 +1518,7 @@ JS;
     function pickHierarchySelectNode(select,fromOnChange) {
       select.nextAll().remove();
       if (typeof indiciaData.selectData$id [select.val()] !== 'undefined') {
-        var html='<select class=\"$selectClass\"><option>".$options['blankText']."</option>', obj;
+        var html='<select class=\"$selectClass\"><option>$options[blankText]</option>', obj;
         $.each(indiciaData.selectData$id [select.val()], function(idx, item) {
           //If option is set then if there is only a single child item, auto select it in the list
           //Don't do this if we are initially loading the page (fromOnChange is false) as we only want to do this when the user actually changes the value.
@@ -1524,7 +1527,7 @@ JS;
             html += '<option value=\"'+item.id+'\" selected>' + item.caption + '</option>';
             //Need to set the hidden value for submission, so correct value is actually saved to the database, not just shown visually on screen.
             //Make sure we escape the colon for jQuery selector also.
-            $('#'+'".$hiddenOptions['id']."'.replace(':','\\\\:')).val(item.id);
+            $('#$hiddenOptions[id]'.replace(':','\\\\:')).val(item.id);
           } else {
             html += '<option value=\"'+item.id+'\">' + item.caption + '</option>';
           }
@@ -1580,48 +1583,50 @@ JS;
   }
 
   /**
-   * Simple file upload control suitable for uploading images to attach to occurrences.
-   * Note that when using this control, it is essential that the form's HTML enctype attribute is
-   * set to enctype="multipart/form-data" so that the image file is included in the form data. For multiple
-   * image support and more advanced options, see the file_box control.
+   * Image upload control.
+   *
+   * Simple file upload control suitable for uploading images to attach to
+   * occurrences. Note that when using this control, it is essential that the
+   * form's HTML enctype attribute is set to enctype="multipart/form-data" so
+   * that the image file is included in the form data. For multiple image
+   * support and more advanced options, see the file_box control.
+   *
    * The output of this control can be configured using the following templates:
-   * <ul>
-   * <li><b>image_upload</b></br>
-   * HTML template for the file input control.
-   * </li></ul>
+   * * image_upload - HTML template for the file input control.
    *
-   * @param array $options Options array with the following possibilities:<ul>
-   * <li><b>fieldname</b><br/>
-   * Required. The name of the database field this control is bound to, e.g. occurrence:image.</li>
-   * <li><b>id</b><br/>
-   * Optional. The id to assign to the HTML control. If not assigned the fieldname is used.</li>
-   * <li><b>class</b><br/>
-   * Optional. CSS class names to add to the control.</li>
-   * <li><b>existingFilePreset</b><br/>
-   * Optional. Preset name of the file size to load from the warehouse when loading an
-   * existing file. For example thumb or med, default thumb.</li>
-   * </ul>
+   * @param array $options
+   *   Options array with the following possibilities:
+   *   * fieldname - Required. The name of the database field this control is
+   *     bound to, e.g. occurrence:image.
+   *   * id - Optional. The id to assign to the HTML control. If not assigned
+   *     the fieldname is used.
+   *   * class - Optional. CSS class names to add to the control.
+   *   * existingFilePreset -  Optional. Preset name of the file size to load
+   *     from the warehouse when loading an existing file. For example thumb or
+   *     med, default thumb.
    *
-   * @return string HTML to insert into the page for the file upload control.
+   * @return string
+   *   HTML to insert into the page for the file upload control.
    */
   public static function image_upload($options) {
     $options = self::check_options($options);
-    $pathField = str_replace(array(':image',':medium'),'_medium:path', $options['fieldname']);
+    $pathField = str_replace([':image', ':medium'], '_medium:path', $options['fieldname']);
     $alreadyUploadedFile = self::check_default_value($pathField);
-    $options = array_merge(array(
+    $options = array_merge([
       'pathFieldName' => $pathField,
       'pathFieldValue' => $alreadyUploadedFile,
-      'existingFilePreset' => 'thumb'
-    ), $options);
+      'existingFilePreset' => 'thumb',
+    ], $options);
     if (!empty($options['existingFilePreset']))
       $options['existingFilePreset'] .= '-';
     $r = self::apply_template('image_upload', $options);
     if ($alreadyUploadedFile) {
-      if (self::$form_mode==='ERRORS') {
+      if (self::$form_mode === 'ERRORS') {
         // The control is being reloaded after a validation failure. So we can display a thumbnail of the
         // already uploaded file, so the user knows not to re-upload.
         $folder = self::getInterimImageFolder();
-      } else {
+      }
+      else {
         // image should be already on the warehouse
         $folder = self::get_uploaded_image_folder();
         $alreadyUploadedFile = "$options[existingFilePreset]$alreadyUploadedFile";
@@ -1668,7 +1673,7 @@ JS;
       'class' => '',
       'default' => '',
     ], $options);
-    $options['class'] = trim($options['class'].' control-box jsonwidget');
+    $options['class'] = trim($options['class'] . ' control-box jsonwidget');
 
     self::add_resource('jsonwidget');
     $options['default'] = str_replace(["\\n", "\r", "\n", "'"], ['\\\n', '\r', '\n', "\'"], $options['default']);
@@ -2963,7 +2968,8 @@ function(item) {
 
   if (item.language_iso !== null && item.language_iso.toLowerCase() === 'lat') {
     r = '<em class="taxon-name">' + item.taxon + '</em>';
-  } else {
+  }
+  else {
     r = '<span class="taxon-name">' + item.taxon + '</span>';
   }
   if (speciesIncludeAuthorities) {
@@ -2980,7 +2986,8 @@ function(item) {
 
     if (item.preferred === 't' && item.default_common_name !== item.taxon && item.default_common_name) {
       r += '<br/>' + item.default_common_name;
-    } else if (item.preferred==='f' && nameTest && item.preferred_taxon) {
+    }
+    else if (item.preferred==='f' && nameTest && item.preferred_taxon) {
       synText = item.language_iso==='lat' ? 'syn. of' : '';
       r += '<br/>[';
       if (item.language_iso==='lat') {
@@ -3795,7 +3802,7 @@ HTML;
                 // to link each value to existing records, we need to store the value ID in the value data.
                 $valueId = preg_match('/(\d+)$/', $subfieldname, $matches);
                 $control = str_replace('value="' . self::$entity_to_load[$subfieldname] . '"',
-                  'value="' . self::$entity_to_load[$subfieldname] . ':'.$matches[1].'" selected="selected"', $control);
+                  'value="' . self::$entity_to_load[$subfieldname] . ':' . $matches[1] . '" selected="selected"', $control);
               }
               $ctrlId = str_replace('-idx-', "$options[id]-$txIdx", $attributes[$attrId]['fieldname']);
               // Remove [] from the end of the fieldname if present, as it is
@@ -4051,7 +4058,8 @@ if ($('#$options[id]').parents('.ui-tabs-panel').length) {
       }
       $r .= self::enableTaxonAdditionControls($options);
       return "<div class=\"species-checklist-wrap\">$r</div>";
-    } else {
+    }
+    else {
       return $taxalist['error'];
     }
   }
@@ -4335,8 +4343,9 @@ JS;
       // way than a double loop?
       foreach ($parents as $parent) {
         foreach ($taxalist as &$taxon) {
-          if ($taxon['parent_id'] === $parent['id'])
+          if ($taxon['parent_id'] === $parent['id']) {
             $taxon['parent'] = $parent;
+          }
         }
       }
     }
@@ -4353,12 +4362,12 @@ JS;
       $filterFields['parent_id'] = "null";
     }
     if (isset($options['extraParams'])) {
-      foreach ($options['extraParams'] as $key=>$value) {
-        if ($key!=='nonce' && $key!=='auth_token')
+      foreach ($options['extraParams'] as $key => $value) {
+        if ($key !== 'nonce' && $key !== 'auth_token')
           $filterFields[$key] = $value;
       }
     }
-    if (!empty($options['taxonFilterField']) && $options['taxonFilterField']!=='none' && !empty($options['taxonFilter'])) {
+    if (!empty($options['taxonFilterField']) && $options['taxonFilterField'] !== 'none' && !empty($options['taxonFilter'])) {
       if ($options['taxonFilterField'] === 'preferred_name') {
         $options['taxonFilterField'] = 'preferred_taxon';
       }
@@ -4385,7 +4394,8 @@ JS;
         case 'currentLanguage' :
           if (isset($options['language'])) {
             $filterFields['language'] = $options['language'];
-          } elseif (function_exists('hostsite_get_user_field')) {
+          }
+          elseif (function_exists('hostsite_get_user_field')) {
             // if in Drupal we can use the user's language
             require_once 'prebuilt_forms/includes/language_utils.php';
             $filterFields['language'] = iform_lang_iso_639_2(hostsite_get_user_field('language'));
@@ -4413,7 +4423,8 @@ JS;
     if ($options['userControlsTaxonFilter'] && !empty($options['lookupListId'])) {
       if ($options['taxonFilterField'] === 'none') {
         $defaultOptionLabel=lang::get('Input any species from the list available for this form');
-      } else {
+      }
+      else {
         $type = $options['taxonFilterField'] == 'taxon_group' ? 'species groups' : 'species';
         $defaultOptionLabel=lang::get("Input species from the form's default {1}.", lang::get($type));
       }
@@ -4521,20 +4532,20 @@ JS;
         foreach ($subSamples as $idx => $subSample) {
           $subSampleList[] = $subSample['id'];
           $subSampleIdxById[$subSample['id']] = $idx;
-          data_entry_helper::$entity_to_load['sc:'.$idx.':'.$subSample['id'].':sample:id'] = $subSample['id'];
-          data_entry_helper::$entity_to_load['sc:'.$idx.':'.$subSample['id'].':sample:geom'] = $subSample['wkt'];
-          data_entry_helper::$entity_to_load['sc:'.$idx.':'.$subSample['id'].':sample:wkt'] = $subSample['wkt'];
-          data_entry_helper::$entity_to_load['sc:'.$idx.':'.$subSample['id'].':sample:location_id'] = $subSample['location_id'];
-          data_entry_helper::$entity_to_load['sc:'.$idx.':'.$subSample['id'].':sample:entered_sref'] = $subSample['entered_sref'];
-          data_entry_helper::$entity_to_load['sc:'.$idx.':'.$subSample['id'].':sample:entered_sref_system'] = $subSample['entered_sref_system'];
+          data_entry_helper::$entity_to_load['sc:' . $idx . ':' . $subSample['id'] . ':sample:id'] = $subSample['id'];
+          data_entry_helper::$entity_to_load['sc:' . $idx . ':' . $subSample['id'] . ':sample:geom'] = $subSample['wkt'];
+          data_entry_helper::$entity_to_load['sc:' . $idx . ':' . $subSample['id'] . ':sample:wkt'] = $subSample['wkt'];
+          data_entry_helper::$entity_to_load['sc:' . $idx . ':' . $subSample['id'] . ':sample:location_id'] = $subSample['location_id'];
+          data_entry_helper::$entity_to_load['sc:' . $idx . ':' . $subSample['id'] . ':sample:entered_sref'] = $subSample['entered_sref'];
+          data_entry_helper::$entity_to_load['sc:' . $idx . ':' . $subSample['id'] . ':sample:entered_sref_system'] = $subSample['entered_sref_system'];
           if ($spatialRefPrecisionAttrId) {
-            data_entry_helper::$entity_to_load['sc:'.$idx.':'.$subSample['id'].':sample:sref_precision'] =
+            data_entry_helper::$entity_to_load['sc:' . $idx . ':' . $subSample['id'] . ':sample:sref_precision'] =
                 $subSample["attr_sample_$spatialRefPrecisionAttrId"];
           }
-          data_entry_helper::$entity_to_load['sc:'.$idx.':'.$subSample['id'].':sample:date_start'] = $subSample['date_start'];
-          data_entry_helper::$entity_to_load['sc:'.$idx.':'.$subSample['id'].':sample:date_end'] = $subSample['date_end'];
-          data_entry_helper::$entity_to_load['sc:'.$idx.':'.$subSample['id'].':sample:date_type'] = $subSample['date_type'];
-          data_entry_helper::$entity_to_load['sc:'.$idx.':'.$subSample['id'].':sample:sample_method_id'] = $subSample['sample_method_id'];
+          data_entry_helper::$entity_to_load['sc:' . $idx . ':' . $subSample['id'] . ':sample:date_start'] = $subSample['date_start'];
+          data_entry_helper::$entity_to_load['sc:' . $idx . ':' . $subSample['id'] . ':sample:date_end'] = $subSample['date_end'];
+          data_entry_helper::$entity_to_load['sc:' . $idx . ':' . $subSample['id'] . ':sample:date_type'] = $subSample['date_type'];
+          data_entry_helper::$entity_to_load['sc:' . $idx . ':' . $subSample['id'] . ':sample:sample_method_id'] = $subSample['sample_method_id'];
         }
         self::loadExistingSubsampleAttrValues($readAuth, $subSampleList, $subSampleAttrs, $subSampleIdxById);
         // Also load the occurrences for the parent sample.
@@ -4543,7 +4554,8 @@ JS;
         unset($extraParams['sample_method_id']);
         $extraParams['sample_id'] = $subSampleList;
         $sampleCount = count($subSampleList);
-      } else {
+      }
+      else {
         $extraParams += $readAuth + array('view' => 'detail','sample_id'=>$sampleId,'deleted' => 'f', 'orderby' => 'id', 'sortdir' => 'ASC' );
         $sampleCount = 1;
       }
@@ -4599,7 +4611,7 @@ JS;
           foreach ($attrValues as $attrValue) {
             // vague date controls need the processed vague date put back in, not the raw parts.
             $valueField = $attrValue['data_type'] === 'Vague Date' ? 'value' : 'raw_value';
-            $attrFieldName = 'sc:'.$occurrenceIds[$attrValue['occurrence_id']].':'.$attrValue['occurrence_id'].':occAttr:'.$attrValue['occurrence_attribute_id'].(isset($attrValue['id'])?':'.$attrValue['id']:'');
+            $attrFieldName = 'sc:' . $occurrenceIds[$attrValue['occurrence_id']] . ':'.$attrValue['occurrence_id'] . ':occAttr:'.$attrValue['occurrence_attribute_id'].(isset($attrValue['id'])?':'.$attrValue['id']:'');
             self::$entity_to_load[$attrFieldName] = $attrValue[$valueField];
             if ($attrValue['data_type'] === 'Lookup List') {
               // Also capture the stored term in case not available in the
@@ -4652,17 +4664,19 @@ JS;
    */
   private static function loadExistingSubsampleAttrValues(array $readAuth, array $subSampleList, array $subSampleAttrs, array $subSampleIdxById) {
     if (!empty($subSampleAttrs) && !empty($subSampleList)) {
-      $params = array(
+      $params = [
         'table' => 'sample_attribute_value',
         'extraParams' => $readAuth + [
-          'query' => json_encode(['in' => [
-            'sample_id' => $subSampleList,
-            'sample_attribute_id' => $subSampleAttrs,
-          ]]),
+          'query' => json_encode([
+            'in' => [
+              'sample_id' => $subSampleList,
+              'sample_attribute_id' => $subSampleAttrs,
+            ],
+          ]),
         ],
         'nocache' => TRUE,
         'sharing' => 'editing',
-      );
+      ];
       $subSampleAttrValues = data_entry_helper::get_population_data($params);
       foreach ($subSampleAttrValues as $attrValue) {
         if ($attrValue['raw_value'] !== NULL) {
@@ -4686,12 +4700,17 @@ JS;
 
   /**
    * Retrieve the grid header row for the species checklist grid control.
-   * @param array $options Control options array.
-   * @param array $occAttrs Array of custom attributes included in the grid.
-   * @param bool $onlyImages True if only image media types are available to upload
-   * @return string Html for the <thead> element.
+   *
+   * @param array $options
+   *   Control options array.
+   * @param array $occAttrs
+   *   Array of custom attributes included in the grid.
+   * @param bool $onlyImages
+   *   True if only image media types are available to upload
+   * @return string
+   *   Html for the <thead> element.
    */
-  public static function get_species_checklist_header($options, $occAttrs, $onlyImages) {
+  public static function get_species_checklist_header(array $options, $occAttrs, $onlyImages) {
     $r = '';
     $visibleColIdx = 0;
     if ($options['header']) {
@@ -4712,15 +4731,15 @@ JS;
         // Species column - no option to hide in repsonsive mode.
         $speciesColTitle = empty($options['speciesColTitle']) ? lang::get('species_checklist.species') : lang::get($options['speciesColTitle']);
         if ($options['userControlsTaxonFilter'] && !empty($options['lookupListId'])) {
-          global $indicia_templates;
           $imgPath = empty(self::$images_path) ? self::relative_client_helper_path() . "../media/images/" : self::$images_path;
-          $speciesColTitle .= '<button type="button" class="species-filter" class="default-button"><img src="'.
-            $imgPath.'/filter.png" alt="'.lang::get('Filter').'" style="vertical-align: middle" title="'.
-            lang::get('Filter the list of species you can search').'" width="16" height="16"/></button>';
+          $speciesColTitle .= '<button type="button" class="species-filter" class="default-button"><img src="' .
+            $imgPath . '/filter.png" alt="' . lang::get('Filter') . '" style="vertical-align: middle" title="' .
+            lang::get('Filter the list of species you can search') . '" width="16" height="16"/></button>';
         }
-        $r .= self::get_species_checklist_col_header($options['id']."-species-$i", $speciesColTitle, $visibleColIdx, $options['colWidths'], $colspan);
-        if ($options['subSpeciesColumn'])
-          $r .= self::get_species_checklist_col_header($options['id']."-subspecies-$i", lang::get('Subspecies'), $visibleColIdx, $options['colWidths']);
+        $r .= self::get_species_checklist_col_header($options['id'] . "-species-$i", $speciesColTitle, $visibleColIdx, $options['colWidths'], $colspan);
+        if ($options['subSpeciesColumn']) {
+          $r .= self::get_species_checklist_col_header($options['id'] . "-subspecies-$i", lang::get('Subspecies'), $visibleColIdx, $options['colWidths']);
+        }
 
         // Presence column - always hide unless rowInclusionCheck is 'checkbox'.
         // Ignored by responsive mode as it has to remain on principal row for
@@ -4732,40 +4751,40 @@ JS;
             $attrs .= ' data-hide="all" data-ignore="true" data-editable="true"';
           }
         }
-        $r .= self::get_species_checklist_col_header($options['id']."-present-$i", lang::get('species_checklist.present'),
+        $r .= self::get_species_checklist_col_header($options['id'] . "-present-$i", lang::get('species_checklist.present'),
           $visibleColIdx, $options['colWidths'], $attrs);
         if ($options['absenceCol']) {
-          $r .= self::get_species_checklist_col_header($options['id']."-absent-$i", lang::get('species_checklist.absent'),
+          $r .= self::get_species_checklist_col_header($options['id'] . "-absent-$i", lang::get('species_checklist.absent'),
             $visibleColIdx, $options['colWidths'], '');
         }
         if ($options['speciesControlToUseSubSamples']) {
           // Need a dummy header for this cell even though never visible to
           // keep things aligned after responsive changes.
-          $r .= self::get_species_checklist_col_header($options['id']."-sample-$i", '',
+          $r .= self::get_species_checklist_col_header($options['id'] . "-sample-$i", '',
             $visibleColIdx, $options['colWidths'], ' style="display:none" data-hide="all" data-ignore="true" data-editable="true"');
         }
 
         // All attributes - may be hidden in responsive mode, depending upon
         // the settings in the responsiveCols array.
-        foreach ($occAttrs as $idx=>$a) {
+        foreach ($occAttrs as $idx => $a) {
           $attrs = self::getSpeciesChecklistColResponsive($options, "attr$idx");
           $r .= self::get_species_checklist_col_header(
-            $options['id']."-attr$idx-$i", $a, $visibleColIdx, $options['colWidths'], $attrs);
+            "$options[id]-attr$idx-$i", $a, $visibleColIdx, $options['colWidths'], $attrs);
         }
         if ($options['datePerRow']) {
           $attrs = self::getSpeciesChecklistColResponsive($options, 'date');
           $r .= self::get_species_checklist_col_header(
-            $options['id']."-date-$i", lang::get('Date'), $visibleColIdx, $options['colWidths'], $attrs);
+            "$options[id]-date-$i", lang::get('Date'), $visibleColIdx, $options['colWidths'], $attrs);
         }
         if ($options['spatialRefPerRow']) {
           $attrs = self::getSpeciesChecklistColResponsive($options, 'spatialref');
           $r .= self::get_species_checklist_col_header(
-            $options['id']."-spatialref-$i", lang::get('Spatial ref'), $visibleColIdx, $options['colWidths'], $attrs);
+            "$options[id]-spatialref-$i", lang::get('Spatial ref'), $visibleColIdx, $options['colWidths'], $attrs);
         }
         if ($options['spatialRefPrecisionAttrId']) {
           $attrs = self::getSpeciesChecklistColResponsive($options, 'spatialrefprecision');
           $r .= self::get_species_checklist_col_header(
-            $options['id']."-spatialrefprecision-$i", lang::get('GPS precision (m)'), $visibleColIdx, $options['colWidths'],
+            "$options[id]-spatialrefprecision-$i", lang::get('GPS precision (m)'), $visibleColIdx, $options['colWidths'],
             $attrs
           );
         }
@@ -4773,7 +4792,7 @@ JS;
           if (isset($options['subSampleAttrInfo'][$subSampleAttrId])) {
             $attrs = self::getSpeciesChecklistColResponsive($options, "sampleAttr$subSampleAttrId");
             $r .= self::get_species_checklist_col_header(
-              $options['id']."-sampleAttr$subSampleAttrId-$i",
+              "$options[id]-sampleAttr$subSampleAttrId-$i",
               lang::get($options['subSampleAttrInfo'][$subSampleAttrId]['caption']),
               $visibleColIdx, $options['colWidths'], $attrs);
           }
@@ -4781,12 +4800,12 @@ JS;
         if ($options['occurrenceComment']) {
           $attrs = self::getSpeciesChecklistColResponsive($options, 'comment');
           $r .= self::get_species_checklist_col_header(
-            $options['id']."-comment-$i", lang::get('Comment'), $visibleColIdx, $options['colWidths'], $attrs);
+            "$options[id]-comment-$i", lang::get('Comment'), $visibleColIdx, $options['colWidths'], $attrs);
         }
         if ($options['occurrenceSensitivity']) {
           $attrs = self::getSpeciesChecklistColResponsive($options, 'sensitivity');
           $r .= self::get_species_checklist_col_header(
-            $options['id']."-sensitivity-$i", lang::get('Sensitivity'), $visibleColIdx, $options['colWidths'], $attrs);
+            "$options[id]-sensitivity-$i", lang::get('Sensitivity'), $visibleColIdx, $options['colWidths'], $attrs);
         }
 
         // Non-responsive behaviour is to show an Add Media button in a column
@@ -4794,12 +4813,12 @@ JS;
         // button. Column can be hidden in responsive mode.
         if (count($options['mediaTypes'])) {
           $attrs = self::getSpeciesChecklistColResponsive($options, 'media');
-          $r .= self::get_species_checklist_col_header($options['id']."-images-$i", lang::get($onlyImages ? 'Add photos' : 'Add media'), $visibleColIdx, $options['colWidths'], $attrs);
+          $r .= self::get_species_checklist_col_header("$options[id]-images-$i", lang::get($onlyImages ? 'Add photos' : 'Add media'), $visibleColIdx, $options['colWidths'], $attrs);
           // In responsive mode, add an additional column for files which is
           // always hidden so it appears in a row below.
           if ($options['responsive']) {
             $attrs = ' data-hide="all" data-editable="true"';
-            $r .= self::get_species_checklist_col_header($options['id']."-files-$i", lang::get($onlyImages ? 'Photos' : 'Media'), $visibleColIdx, $options['colWidths'], $attrs);
+            $r .= self::get_species_checklist_col_header("$options[id]-files-$i", lang::get($onlyImages ? 'Photos' : 'Media'), $visibleColIdx, $options['colWidths'], $attrs);
           }
         }
 
@@ -4815,16 +4834,28 @@ JS;
   }
 
   /**
-   * Returns a th element for the top of a species checklist grid column. Skips any columns which are display: none.
-   * @param string $id The HTML ID to use.
-   * @param string $caption The caption to insert.
-   * @param integer $colIdx The index of the current column. Incremented only if the header is output (so
-   * hidden columns are excluded).
-   * @param array $colWidths List of column percentage widths.
-   * @param string $attrs CSS attributes to attach.
+   * Species checklist control column header.
+   *
+   * Returns a th element for the top of a species checklist grid column. Skips
+   * any columns which are display: none.
+   *
+   * @param string $id
+   *   The HTML ID to use.
+   * @param string $caption
+   *   The caption to insert.
+   * @param int $colIdx
+   *   The index of the current column. Incremented only if the header is
+   *   output (so hidden columns are excluded).
+   * @param array
+   *   $colWidths List of column percentage widths.
+   * @param string $attrs
+   *   CSS attributes to attach.
+   *
+   * @return string
+   *   <th> element.
    */
   private static function get_species_checklist_col_header($id, $caption, &$colIdx, $colWidths, $attrs='') {
-    $width = count($colWidths)>$colIdx && $colWidths[$colIdx] ? ' style="width: '.$colWidths[$colIdx].'%;"' : '';
+    $width = count($colWidths)>$colIdx && $colWidths[$colIdx] ? ' style="width: '.$colWidths[$colIdx] . '%;"' : '';
     if (!strpos($attrs, 'display:none')) $colIdx++;
     return "<th id=\"$id\"$attrs$width>$caption</th>";
   }
@@ -4846,7 +4877,7 @@ JS;
     $attrs = '';
     if (isset($options['responsiveCols'][$column])) {
       $attrs = implode(',', array_keys(array_filter($options['responsiveCols'][$column])));
-      if($attrs != '') {
+      if ($attrs != '') {
         $attrs = " data-hide=\"$attrs\" data-editable=\"true\"";
       }
     }
@@ -4857,7 +4888,7 @@ JS;
    * Method to build the list of taxa to add to a species checklist grid.
    *
    * @param array $options
-   *   Options array for the control
+   *   Options array for the control.
    * @param array $taxonRows
    *   Array that is modified by this method to contain a list of the rows to
    *   load onto the grid. Each row contains a sub-array with ttlId entry plus
@@ -4878,33 +4909,39 @@ JS;
       }
       $options['extraParams'][$options['taxonFilterField']] = json_encode($options['taxonFilter']);
     }
-    // load the species names that should be initially included in the grid
+    // Load the species names that should be initially included in the grid.
     if (isset($options['listId']) && !empty($options['listId'])) {
-      // Apply the species list to the filter
-      $options['extraParams']['taxon_list_id']=$options['listId'];
+      // Apply the species list to the filter.
+      $options['extraParams']['taxon_list_id'] = $options['listId'];
       $taxalist = self::get_population_data($options);
-    } else {
+    }
+    else {
       $taxalist = [];
     }
-    if ($options['taxonFilterField'] == 'id') { // when using an id, sort by order provided.
+    if ($options['taxonFilterField'] == 'id') {
+      // When using an id, sort by order provided.
       foreach ($options['taxonFilter'] as $taxonFilter) {
         foreach ($taxalist as $taxon) {
-          // create a list of the rows we are going to add to the grid, with the preloaded species names linked to them
-          if($taxonFilter == $taxon['taxa_taxon_list_id'])
+          // Create a list of the rows we are going to add to the grid, with
+          // the preloaded species names linked to them.
+          if ($taxonFilter == $taxon['taxa_taxon_list_id']) {
             $taxonRows[] = array('ttlId'=>$taxon['taxa_taxon_list_id']);
+          }
         }
       }
-    } else {
+    }
+    else {
       foreach ($taxalist as $taxon) {
         // create a list of the rows we are going to add to the grid, with the preloaded species names linked to them
-        $taxonRows[] = array('ttlId'=>$taxon['taxa_taxon_list_id']);
+        $taxonRows[] = array('ttlId' => $taxon['taxa_taxon_list_id']);
       }
     }
-    // If there are any existing records to add to the list from the lookup list/add rows feature, get their details
+    // If there are any existing records to add to the list from the lookup
+    // list/add rows feature, get their details.
     if (self::$entity_to_load) {
-      // copy the options array so we can modify it
+      // Copy the options array so we can modify it.
       $extraTaxonOptions = array_merge([], $options);
-      // force load in order as input
+      // Force load in order as input.
       unset($extraTaxonOptions['extraParams']['orderby']);
       // We don't want to filter the taxa to be added to a specific list, because if they are in the sample,
       // then they must be included whatever.
@@ -4912,57 +4949,71 @@ JS;
       unset($extraTaxonOptions['extraParams']['preferred']);
       unset($extraTaxonOptions['extraParams']['language_iso']);
       unset($extraTaxonOptions['extraParams']['query']);
-      // create an array to hold the IDs, so that get_population_data can construct a single IN query, faster
-      // than multiple requests. We'll populate it in a moment
+      // Create an array to hold the IDs, so that get_population_data can
+      // construct a single IN query, faster than multiple requests. We'll
+      // populate it in a moment.
       $taxa_taxon_list_ids = [];
-      // look through the data being loaded for the ttlIds associated with existing occurrences
+      // Look through the data being loaded for the ttlIds associated with
+      // existing occurrences.
       foreach (self::$entity_to_load as $key => $value) {
         $parts = explode(':', $key);
         // Is this an occurrence?
         $loadIntoList = count($parts) > 2 && $parts[0] === 'sc' && $parts[1] !== '-idx-' && ($parts[3] === 'present' || $parts[3] === 'preloadUnticked');
         if ($loadIntoList && !empty($options['gridIdAttributeId'])) {
-          // filtering records by grid ID. Skip them if from a different input grid (multiple grids on one form scenario).
-          // The suffix containing attr_value_id will not be present if reloading due to error on submission
+          // Filtering records by grid ID. Skip them if from a different input
+          // grid (multiple grids on one form scenario). The suffix containing
+          // attr_value_id will not be present if reloading due to error on
+          // submission.
           $matches = preg_grep("/^sc:$parts[1]:$parts[2]:occAttr:$options[gridIdAttributeId](:[0-9]+)?$/", array_keys(self::$entity_to_load));
-          if (count($matches)>0) {
+          if (count($matches) > 0) {
             $match = array_pop($matches);
-            if (self::$entity_to_load[$match]!==$options['id']) {
+            if (self::$entity_to_load[$match] !== $options['id']) {
               continue;
             }
           }
         }
         if ($loadIntoList) {
           $ttlId = $value;
-          if ($options['speciesControlToUseSubSamples'])
-            $smpIdx = self::$entity_to_load['sc:'.$parts[1].':'.$parts[2].':occurrence:sampleIDX'];
-          else
+          if ($options['speciesControlToUseSubSamples']) {
+            $smpIdx = self::$entity_to_load['sc:' . $parts[1] . ':' . $parts[2] . ':occurrence:sampleIDX'];
+          }
+          else {
             $smpIdx = NULL;
-          // Find an existing row for this species that is not already linked to an occurrence
+          }
+          // Find an existing row for this species that is not already linked
+          // to an occurrence.
           $done = FALSE;
           foreach ($taxonRows as &$row) {
             if ($row['ttlId'] === $ttlId && !isset($row['occId'])) {
-              // the 2nd part of the loaded value's key row index we loaded from.
+              // The 2nd part of the loaded value's key row index we loaded from.
               $row['loadedTxIdx'] = $parts[1];
-              // the 3rd part of the loaded value's key is the occurrence ID.
+              // The 3rd part of the loaded value's key is the occurrence ID.
               $row['occId'] = $parts[2];
               $row['smpIdx'] = $smpIdx;
               $done = TRUE;
             }
           }
-          if (!$done)
-            // add a new row to the bottom of the grid
-            $taxonRows[] = array('ttlId'=>$ttlId, 'loadedTxIdx'=>$parts[1], 'occId'=>$parts[2], 'smpIdx'=>$smpIdx);
+          if (!$done) {
+            // Add a new row to the bottom of the grid.
+            $taxonRows[] = [
+              'ttlId'=>$ttlId,
+              'loadedTxIdx' => $parts[1],
+              'occId' => $parts[2],
+              'smpIdx' => $smpIdx,
+            ];
+          }
           // store the id of the taxon in the array, so we can load them all in one go later
-          $taxa_taxon_list_ids[]=$ttlId;
+          $taxa_taxon_list_ids[] = $ttlId;
         }
         // Ensure the load of taxa is batched if there are lots to load
-        if (count($taxa_taxon_list_ids)>=50 && !empty($options['lookupListId'])) {
+        if (count($taxa_taxon_list_ids) >= 50 && !empty($options['lookupListId'])) {
           $extraTaxonOptions['extraParams']['taxa_taxon_list_id'] = json_encode($taxa_taxon_list_ids);
           $taxalist = array_merge($taxalist, self::get_population_data($extraTaxonOptions));
           $taxa_taxon_list_ids = [];
         }
       }
-      // Load and append the remaining additional taxa to our list of taxa to use in the grid
+      // Load and append the remaining additional taxa to our list of taxa to
+      // use in the grid.
       if (count($taxa_taxon_list_ids) && !empty($options['lookupListId'])) {
         $extraTaxonOptions['extraParams']['taxa_taxon_list_id'] = json_encode($taxa_taxon_list_ids);
         $taxalist = array_merge($taxalist, self::get_population_data($extraTaxonOptions));
@@ -4982,21 +5033,25 @@ JS;
    *   control.
    */
   public static function get_species_checklist_options($options) {
-    // validate some options
-    if (empty($options['listId']) && empty($options['lookupListId']))
+    // Validate some options.
+    if (empty($options['listId']) && empty($options['lookupListId'])) {
       throw new Exception('Either the listId or lookupListId parameters must be provided for a species checklist.');
-    // CheckBoxCol support is for backwards compatibility
-    if (isset($options['checkboxCol']) && $options['checkboxCol']==FALSE) {
-      $rowInclusionCheck='hasData';
-    } else {
-      if (empty($options['listId']) && !empty($options['lookupListId']))
-        $rowInclusionCheck = 'alwaysRemovable';
-      else
-        $rowInclusionCheck = 'checkbox';
     }
-    // Apply default values
-    $options = array_merge(array(
-      'userControlsTaxonFilter'=>FALSE,
+    // CheckBoxCol support is for backwards compatibility.
+    if (isset($options['checkboxCol']) && $options['checkboxCol'] == FALSE) {
+      $rowInclusionCheck = 'hasData';
+    }
+    else {
+      if (empty($options['listId']) && !empty($options['lookupListId'])) {
+        $rowInclusionCheck = 'alwaysRemovable';
+      }
+      else {
+        $rowInclusionCheck = 'checkbox';
+      }
+    }
+    // Apply default values.
+    $options = array_merge([
+      'userControlsTaxonFilter' => FALSE,
       'header' => 'true',
       'columns'=>1,
       'rowInclusionCheck' => $rowInclusionCheck,
@@ -5031,23 +5086,23 @@ JS;
       'speciesGridPageLinkParameter' => '',
       'speciesGridPageLinkTooltip' => '',
       'table' => 'taxa_search',
-      // legacy - occurrenceImages means just local image support
-      'mediaTypes' => !empty($options['occurrenceImages']) && $options['occurrenceImages'] ?
-        array('Image:Local') : [],
+      // Legacy - occurrenceImages means just local image support.
+      'mediaTypes' => !empty($options['occurrenceImages']) && $options['occurrenceImages'] ? ['Image:Local'] : [],
       'mediaLicenceId' => NULL,
       'responsive' => FALSE,
       'allowAdditionalTaxa' => !empty($options['lookupListId']),
-    ), $options);
+    ], $options);
     // subSamplesPerRow can't be set without speciesControlToUseSubSamples
     $options['subSamplePerRow'] = $options['subSamplePerRow'] && $options['speciesControlToUseSubSamples'];
     // spatialRefPerRow and datePerRow require subSamplePerRow.
     $options['spatialRefPerRow'] = $options['spatialRefPerRow'] && $options['subSamplePerRow'];
     $options['datePerRow'] = $options['datePerRow'] && $options['subSamplePerRow'];
     // spatialRefPrecisionAttrId can't be set without spatialRefPerRow
-    $options['spatialRefPrecisionAttrId'] = $options['spatialRefPerRow'] ? $options['spatialRefPrecisionAttrId'] : null;
+    $options['spatialRefPrecisionAttrId'] = $options['spatialRefPerRow'] ? $options['spatialRefPrecisionAttrId'] : NULL;
     if (array_key_exists('readAuth', $options)) {
       $options['extraParams'] += $options['readAuth'];
-    } else {
+    }
+    else {
       $options['readAuth'] = array(
         'auth_token' => $options['extraParams']['auth_token'],
         'nonce' => $options['extraParams']['nonce']
@@ -5096,7 +5151,8 @@ JS;
         $occAttrCaptions[$occAttrId] = $attrOpts['label'];
         // but prevent it being added in grid
         unset($attrOpts['label']);
-      } else {
+      }
+      else {
         $occAttrCaptions[$occAttrId] = $attrDef['caption'];
       }
 
@@ -5313,8 +5369,8 @@ HTML;
       }
       $label = $onlyImages ? 'Add images' : 'Add media';
       $class = 'sc' . $onlyImages ? 'Image' : 'Media' . 'Link';
-      $r .= '<td class="ui-widget-content scAddMediaCell" headers="'.$options['id'].'-images-0">' .
-          '<a href="" class="add-media-link button '.$class.'" style="display: none" id="add-media:'.$options['id'].'--idx-:">'.
+      $r .= '<td class="ui-widget-content scAddMediaCell" headers="'.$options['id'] . '-images-0">' .
+          '<a href="" class="add-media-link button '.$class.'" style="display: none" id="add-media:'.$options['id'] . '--idx-:">'.
           lang::get($label).'</a><span class="species-checklist-select-species">'.lang::get('Select a species first').'</span></td>';
 
       // Extra columnn for photos in responsive mode.
@@ -5522,12 +5578,12 @@ HTML;
           $geomKey = "$a[0]:$a[1]:$sampleId:sample:geom";
           $idKey = "$a[0]:$a[1]:$sampleId:sample:id";
           $deletedKey = "$a[0]:$a[1]:$sampleId:sample:deleted";
-          $blocks .= '<div id="scm-'.$a[1].'-block" class="scm-block">'.
+          $blocks .= '<div id="scm-' . $a[1] . '-block" class="scm-block">'.
                     '<label>'.lang::get('Spatial ref').':</label> '.
                     '<input type="text" value="'.$value.'" readonly="readonly" name="'.$key.'">'.
-                    '<input type="hidden" value="'.data_entry_helper::$entity_to_load[$geomKey].'" name="'.$geomKey.'">'.
+                    '<input type="hidden" value="' . data_entry_helper::$entity_to_load[$geomKey] . '" name="' . $geomKey . '">'.
                     '<input type="hidden" value="'.(isset(data_entry_helper::$entity_to_load[$deletedKey]) ? data_entry_helper::$entity_to_load[$deletedKey] : 'f').'" name="'.$deletedKey.'">'.
-                    (isset(data_entry_helper::$entity_to_load[$idKey]) ? '<input type="hidden" value="'.data_entry_helper::$entity_to_load[$idKey].'" name="'.$idKey.'">' : '');
+                    (isset(data_entry_helper::$entity_to_load[$idKey]) ? '<input type="hidden" value="'.data_entry_helper::$entity_to_load[$idKey] . '" name="'.$idKey.'">' : '');
 
           if (!empty($options['sample_method_id'])) {
             $sampleAttrs = self::getMultiplePlacesSpeciesChecklistSubsampleAttrs($options, empty($sampleId) ? NULL : $sampleId);
@@ -5700,7 +5756,7 @@ HTML;
       'label'=>lang::get('Is the record sensitive?')
     ));
     // Put a hidden input out, so that when the select control is disabled we get an empty value posted to clear the sensitivity
-    $r .= '<input type="hidden" name="'.$options['fieldname'].'">';
+    $r .= '<input type="hidden" name="' . $options['fieldname'] . '">';
     $r .= '<div id="sensitivity-controls">';
     $lookupValues = array_intersect_key(array('100'=>lang::get('Blur to 100m'), '1000'=>lang::get('Blur to 1km'), '2000'=>lang::get('Blur to 2km'),
         '10000'=>lang::get('Blur to 10km'), '100000'=>lang::get('Blur to 100km')),
@@ -6106,7 +6162,7 @@ $('div#$escaped_divId').indiciaTreeBrowser({
     ), $options);
     $options['class'] .= ' buttons wizard-buttons';
     // Output the buttons
-    $r = '<div class="'.$options['class'].'">';
+    $r = '<div class="' . $options['class'] . '">';
     if (array_key_exists('divId', $options)) {
       if ($options['includeVerifyButton']) {
         $r .= self::apply_replacements_to_template($indicia_templates['button'], array(
@@ -6128,7 +6184,8 @@ $('div#$escaped_divId').indiciaTreeBrowser({
         $options['id'] = 'tab-next';
         $options['caption'] = lang::get($options['captionNext']).' &gt;';
         $r .= self::apply_template('button', $options);
-      } else {
+      }
+      else {
         if ($options['includeSubmitButton']) {
           $options['class'] = "$options[saveButtonClass] tab-submit";
           $options['id'] = 'tab-submit';
@@ -6162,38 +6219,6 @@ JS;
   /********************************/
   /* End of main controls section */
   /********************************/
-
-  /**
-   * Returns the browser name and version information
-   * @param $agent Agent string, optional. If not suplied, then the http user agent is used.
-   * @return array Browser information array. Contains name and version elements.
-   */
-  public static function get_browser_info($agent=NULL) {
-    $browsers = array("firefox", "msie", "opera", "chrome", "safari",
-      "mozilla", "seamonkey", "konqueror", "netscape",
-      "gecko", "navigator", "mosaic", "lynx", "amaya",
-      "omniweb", "avant", "camino", "flock", "aol");
-    if (!$agent)
-      $agent = $_SERVER['HTTP_USER_AGENT'];
-    $agent = strtolower($agent);
-
-    // Create a default response in case browser is not found.
-    $r = array(
-      'name' => '',
-      'version' => '',
-    );
-
-    foreach ($browsers as $browser)
-    {
-      if (preg_match("#($browser)[/ ]?([0-9.]*)#", $agent, $match))
-      {
-        $r['name'] = $match[1] ;
-        $r['version'] = $match[2] ;
-        break ;
-      }
-    }
-    return $r;
-  }
 
   /**
    * Removes any data entry values persisted into the $_SESSION by Indicia.
@@ -6380,7 +6405,8 @@ JS;
         $d = new DateTime(self::$entity_to_load['sample:date']);
         self::$entity_to_load['sample:date'] = $d->format(self::$date_format);
       }
-    } elseif ($entity === 'occurrence') {
+    }
+    elseif ($entity === 'occurrence') {
       // prepare data to work in autocompletes
       if (!empty(self::$entity_to_load['occurrence:taxon']) && empty(self::$entity_to_load['occurrence:taxa_taxon_list:taxon']))
         self::$entity_to_load['occurrence:taxa_taxon_list_id:taxon'] = self::$entity_to_load['occurrence:taxon'];
@@ -6427,7 +6453,8 @@ JS;
       // no options for now
       $options['items'] = '';
       self::initLinkedLists($options);
-    } else {
+    }
+    else {
       if (array_key_exists('parentControlId', $options)) {
         // still want linked lists, even though we will have some items initially populated
         self::initLinkedLists($options);
@@ -6479,7 +6506,7 @@ JS;
         $selected = self::get_list_item_selected_attribute($key, $selectedItemAttribute, $options, $itemFieldname);
         $r[$key] = str_replace(
           array('{sortHandle}', '{value}', '{caption}', '{'.$selectedItemAttribute.'}', '{title}', '{attribute_list}'),
-          array($sortHandle, htmlspecialchars($key), htmlspecialchars($caption), $selected, (isset($hints[$caption]) ? ' title="'.$hints[$caption].'" ' : '')),
+          array($sortHandle, htmlspecialchars($key), htmlspecialchars($caption), $selected, (isset($hints[$caption]) ? ' title="' . $hints[$caption] . '" ' : '')),
           $indicia_templates[$options['itemTemplate']]
         );
       }
@@ -6536,7 +6563,7 @@ HTML;
             }
             $item = str_replace(
               array('{sortHandle}', '{value}', '{caption}', '{'.$selectedItemAttribute.'}', '{title}', '{attribute_list}'),
-              array($sortHandle, $value, $caption, $selected, (isset($hints[$value]) ? ' title="'.$hints[$value].'" ' : ''), $attributes),
+              array($sortHandle, $value, $caption, $selected, (isset($hints[$value]) ? ' title="' . $hints[$value] . '" ' : ''), $attributes),
               $indicia_templates[$options['itemTemplate']]
             );
             $r[$record[$options['valueField']]] = $item;
@@ -6678,7 +6705,8 @@ HTML;
     if (array_key_exists('validation', $options)) {
       $itemClass = self::build_validation_class($options);
       unset($options['validation']);
-    } else {
+    }
+    else {
       $itemClass='';
     }
     $lookupItems = self::getListItemsFromOptions($options, 'checked');
@@ -6693,7 +6721,7 @@ HTML;
           'type' => $type,
           'value' => $value,
           'class' => $itemClass . (($idx == 0) ? ' first-item' : ''),
-          'itemId' => $options['id'].':'.$idx
+          'itemId' => $options['id'] . ':' . $idx
         )
       );
       $item['fieldname'] = $fieldName;
@@ -6866,7 +6894,8 @@ if (errors$uniq.length>0) {
       data_entry_helper::add_resource('wizardprogress');
       $progressBarOptions = array_merge(array('divId' => $divId), $options['progressBarOptions']);
       data_entry_helper::$javascript .= "wizardProgressIndicator(".json_encode($progressBarOptions) . ");\n";
-    } else {
+    }
+    else {
       data_entry_helper::add_resource('tabs');
     }
   }
@@ -6887,7 +6916,8 @@ if (errors$uniq.length>0) {
       //rel="address:..." enables use of jQuery.address module (http://www.asual.com/jquery/address/)
       if ($tabs == "") {
         $address = "";
-      } else {
+      }
+      else {
         $address = (substr($link, 0, 1) == '#') ? substr($link, 1) : $link;
       }
       $tabs .= "<li id=\"$tabId\"><a href=\"$link\" rel=\"address:/$address\"><span>$caption</span></a></li>";
@@ -6941,7 +6971,8 @@ if (errors$uniq.length>0) {
         foreach ($writeTokens as $token => $value) {
           $postargs .= '&'.$token.'='.($value === TRUE ? 'true' : ($value === false ? 'false' : $value));
         } // this will do auth_token, nonce, and persist_auth
-      } else {
+      }
+      else {
         if (array_key_exists('auth_token', $_POST))
           $postargs .= '&auth_token='.$_POST['auth_token'];
         if (array_key_exists('nonce', $_POST))
@@ -6984,7 +7015,8 @@ if (errors$uniq.length>0) {
               // Final location is the Warehouse
               // @todo Set PERSIST_AUTH false if last file
               $success = self::send_file_to_warehouse($item['path'], TRUE, $writeTokens);
-            } else {
+            }
+            else {
               $success = rename($interimImageFolder.$item['path'], $final_image_folder.$item['path']);
             }
             if ($success !== TRUE) {
@@ -7052,7 +7084,8 @@ if (errors$uniq.length>0) {
                                                 $zeroAttrs = TRUE, $zeroValues=array('0','none','absent','not seen')) {
     if (array_key_exists('website_id', $arr)) {
       $website_id = $arr['website_id'];
-    } else {
+    }
+    else {
       throw new Exception('Cannot find website id in POST array!');
     }
     $fieldDefaults = self::speciesChecklistGetFieldDefaults($arr);
@@ -7069,9 +7102,11 @@ if (errors$uniq.length>0) {
     $records = [];
     // $records will be an array containing an entry for every row in every grid on the page
     $allRowInclusionCheck = [];
-    // $allRowInclusionCheck will be an array containing an entry for every grid that specified a value of hasData
+    // $allRowInclusionCheck will be an array containing an entry for every
+    // grid that specified a value of hasData.
     $allHasDataIgnoreAttrs = [];
-    // $allHasDataIgnoreAttrs will be an array containing an entry for every grid that specified a value
+    // $allHasDataIgnoreAttrs will be an array containing an entry for every
+    // grid that specified a value.
     $subModels = [];
     foreach ($arr as $key => $value) {
       if (substr($key, 0, 3) == 'sc:') {
@@ -7092,10 +7127,13 @@ if (errors$uniq.length>0) {
             if (preg_match("/^\d+:\d+$/", $arrayItem)) {
               $tokens=explode(':', $arrayItem);
               $records[$a[1]][$a[3].":$tokens[1]:$idx"] = $tokens[0];
-            } else
+            }
+            else {
               $records[$a[1]][$a[3]."::$idx"] = $arrayItem;
+            }
           }
-        } else {
+        }
+        else {
           $records[$a[1]][$a[3]] = $value;
           // store any id so update existing record
           if ($a[2]) {
@@ -7267,7 +7305,7 @@ if (errors$uniq.length>0) {
     foreach ($arr as $key=>$value) {
       $gridExcluded=FALSE;
       foreach ($gridsToExclude as $gridToExclude) {
-        if (substr($key, 0, strlen($gridToExclude)+3)=='sc:'.$gridToExclude) {
+        if (substr($key, 0, strlen($gridToExclude)+3)== 'sc:' . $gridToExclude) {
           $gridExcluded=TRUE;
         }
       }
@@ -7278,7 +7316,8 @@ if (errors$uniq.length>0) {
         if($b[0] == "sample" || $b[0] == "smpAttr") {
           $sampleRecords[$a[1]][$a[3]] = $value;
           if($a[2]) $sampleRecords[$a[1]]['id'] = $a[2];
-        } else {
+        }
+        else {
           $occurrenceRecords[$a[1]][$a[3]] = $value;
           if($a[2]) $occurrenceRecords[$a[1]]['id'] = $a[2];
         }
@@ -7328,7 +7367,8 @@ if (errors$uniq.length>0) {
       // Add the subSample/soccurrences in as subModels without overwriting others such as a sample image
       if (array_key_exists('subModels', $subSample)) {
         $subSample['subModels'] = array_merge($subSample['subModels'], $occs);
-      } else {
+      }
+      else {
         $subSample['subModels'] = $occs;
       }
       $subModel = array('fkId' => 'parent_id', 'model' => $subSample);
@@ -7395,7 +7435,7 @@ if (errors$uniq.length>0) {
       $nonZeroCount=0;
       foreach ($record as $field=>$value) {
         // Is this a field used to trap zero abundance data, with a zero value
-        if ($value!=='' && preg_match("/occAttr:(?P<attrId>$ids)(:\d+)?$/", $field, $matches)) {
+        if ($value !== '' && preg_match("/occAttr:(?P<attrId>$ids)(:\d+)?$/", $field, $matches)) {
           $attr = $zeroAttrs[$matches['attrId']];
           if ($attr['data_type'] === 'L') {
             foreach ($attr['terms'] as $term) {
@@ -7931,7 +7971,8 @@ HTML;
     // Add the occurrences in as subModels without overwriting others such as a sample image
     if (array_key_exists('subModels', $sampleMod)) {
       $sampleMod['subModels'] = array_merge($sampleMod['subModels'], $occurrences);
-    } else {
+    }
+    else {
       $sampleMod['subModels'] = $occurrences;
     }
 
@@ -7971,7 +8012,8 @@ HTML;
     // Add the subSamples/occurrences in as subModels without overwriting others such as a sample image
     if (array_key_exists('subModels', $sampleMod)) {
       $sampleMod['subModels'] = array_merge($sampleMod['subModels'], $subModels);
-    } else {
+    }
+    else {
       $sampleMod['subModels'] = $subModels;
     }
 
@@ -8050,7 +8092,8 @@ HTML;
                 $r .= "<div class=\"ui-widget ui-corner-all ui-state-highlight page-notice\">" . lang::get('The data could not be saved.') . "</div>\n";
             }
           }
-        } else {
+        }
+        else {
           $r .= "<div class=\"ui-state-error ui-corner-all\">\n";
           $r .= "<p>" . lang::get('An error occurred when the data was submitted.') . "</p>\n";
           if (is_array($response['error'])) {
@@ -8058,7 +8101,8 @@ HTML;
             foreach ($response['error'] as $field=>$message)
               $r .=  "<li>$field: $message</li>\n";
             $r .=  "</ul>\n";
-          } else {
+          }
+          else {
             $r .= "<p class=\"error_message\">".$response['error']."</p>\n";
           }
           if (array_key_exists('file', $response) && array_key_exists('line', $response)) {
@@ -8076,7 +8120,8 @@ HTML;
       elseif (array_key_exists('warning',$response)) {
         if (function_exists('hostsite_show_message')) {
           hostsite_show_message(lang::get('A warning occurred when the data was submitted.').' '.$response['error'], 'error');
-        } else {
+        }
+        else {
           $r .= lang::get('A warning occurred when the data was submitted.');
           $r .= '<p class="error">'.$response['error']."</p>\n";
         }
@@ -8148,7 +8193,8 @@ TXT;
     $rememberedFields = self::getRememberedFields();
     if (self::$entity_to_load!=NULL && array_key_exists($id, self::$entity_to_load)) {
       return self::$entity_to_load[$id];
-    } else if ($rememberedFields !== NULL && in_array($id, $rememberedFields) && array_key_exists('indicia_remembered', $_COOKIE)) {
+    }
+    else if ($rememberedFields !== NULL && in_array($id, $rememberedFields) && array_key_exists('indicia_remembered', $_COOKIE)) {
       $arr = unserialize($_COOKIE['indicia_remembered']);
       if (isset($arr[$id]))
         return $arr[$id];
@@ -8177,19 +8223,22 @@ TXT;
     // Test PHP version.
     if (PHP_VERSION_ID<50600) {
       $r .= '<li class="ui-state-error">Warning: PHP version is '.phpversion().' which is unsupported.</li>';
-    } elseif ($fullInfo) {
+    }
+    elseif ($fullInfo) {
       $r .= '<li>Success: PHP version is '.phpversion().'.</li>';
     }
     if (!function_exists('finfo_open')) {
       $r .= '<li class="ui-state-error">Warning: The Fileinfo PHP library is not installed on the server. Although it is not mandatory, installing this module is recommended as it prevents '.
         'upload of malicious files masquerading as image files.</li>';
-    } elseif ($fullInfo) {
+    }
+    elseif ($fullInfo) {
       $r .= '<li>Success: PHP Fileinfo extension is installed.</li>';
     }
     // Test cUrl library installed
     if (!function_exists('curl_exec')) {
       $r .= '<li class="ui-state-error">Warning: The cUrl PHP library is not installed on the server and is required for communication with the Indicia Warehouse.</li>';
-    } else {
+    }
+    else {
       if ($fullInfo) {
         $curlVersionArray = curl_version();
         if (is_array($curlVersionArray)) {
@@ -8207,14 +8256,16 @@ TXT;
         if ($fullInfo) {
           $r .= '<li>Success: Indicia Warehouse URL responded to a POST request.</li>';
         }
-      } else {
+      }
+      else {
         // Some sort of cUrl problem occurred
         if ($curl_check['errno']) {
           $r .= '<li class="ui-state-error">Warning: The cUrl PHP library could not access the Indicia Warehouse. The error was reported as:';
-          $r .= $curl_check['output'].'<br/>';
+          $r .= $curl_check['output'] . '<br/>';
           $r .= 'Please ensure that this web server is not prevented from accessing the server identified by the ' .
             '$base_url setting by a firewall. The current setting is ' . parent::$base_url . '</li>';
-        } else {
+        }
+        else {
           $r .= '<li class="ui-widget ui-state-error">Warning: A request sent to the Indicia Warehouse URL did not respond as expected. ' .
             'Please ensure that the $base_url setting is correct. ' .
             'The current setting is ' . parent::$base_url . '<br></li>';
@@ -8245,17 +8296,21 @@ TXT;
       $cacheFolder = parent::$cache_folder ? parent::$cache_folder : self::relative_client_helper_path() . 'cache/';
       if (!is_dir($cacheFolder)) {
         $r .= '<li class="ui-state-error">The cache path setting points to a missing directory. This will result in slow form loading performance.</li>';
-      } elseif (!is_writeable($cacheFolder)) {
+      }
+      elseif (!is_writeable($cacheFolder)) {
         $r .= '<li class="ui-state-error">The cache path setting points to a read only directory (' . $cacheFolder . '). Please change it to writeable.</li>';
-      } else {
+      }
+      else {
         // need a proper test, as is_writeable can report true when the cache file can't be created.
         $handle = @fopen("$cacheFolder/test.txt", 'wb');
         if ($handle) {
           fclose($handle);
           if ($fullInfo)
             $r .= '<li>Success: Cache directory is present and writeable.</li>';
-        } else
+        }
+        else {
           $r .= '<li class="ui-state-error">Warning: The cache path setting points to a directory that I can\'t write a file into (' . $cacheFolder . '). Please change it to writeable.</li>';
+        }
 
       }
       $interimImageFolder = self::getInterimImageFolder();
@@ -8287,7 +8342,8 @@ TXT;
   private static function check_config($name, $isset, $empty, array &$missing_configs, array &$blank_configs) {
     if (!$isset) {
       array_push($missing_configs, $name);
-    } else if ($empty) {
+    }
+    else if ($empty) {
       array_push($blank_configs, $name);
     }
   }
@@ -8344,7 +8400,8 @@ TXT;
       $query = array('in'=>[]);
     if (isset($options['website_ids'])) {
       $query['in']['website_id']=$options['website_ids'];
-    } elseif ($options['attrtable'] !== 'person_attribute' && $options['attrtable'] !== 'taxa_taxon_list_attribute') {
+    }
+    elseif ($options['attrtable'] !== 'person_attribute' && $options['attrtable'] !== 'taxa_taxon_list_attribute') {
       $surveys = array(NULL);
       if (isset($options['survey_id'])) {
         $surveys[] = $options['survey_id'];
@@ -8411,15 +8468,16 @@ TXT;
       $valueResponse = self::get_population_data($existingValuesOptions);
       if (array_key_exists('error', $valueResponse))
         return $valueResponse;
-    } else {
+    }
+    else {
       $valueResponse = [];
     }
     foreach ($response as $item) {
       $itemId=$item['id'];
       unset($item['id']);
-      $item['fieldname']=$options['fieldprefix'].':'.$itemId.($item['multi_value'] == 't' ? '[]' : '');
-      $item['id']=$options['fieldprefix'].':'.$itemId;
-      $item['untranslatedCaption']=$item['caption'];
+      $item['fieldname'] = $options['fieldprefix'] . ':' . $itemId . ($item['multi_value'] == 't' ? '[]' : '');
+      $item['id'] = $options['fieldprefix'] . ':' . $itemId;
+      $item['untranslatedCaption'] = $item['caption'];
       $item['caption'] = self::getTranslatedAttrField('caption', $item);
       $item['description'] = self::getTranslatedAttrField('description', $item);
       self::attributePrepareDatabaseDefaultForControl($item);
@@ -8427,7 +8485,7 @@ TXT;
       $item['values'] = [];
       if(count($valueResponse) > 0) {
         foreach ($valueResponse as $value) {
-          $attrId = $value[$options['attrtable'].'_id'];
+          $attrId = $value[$options['attrtable'] . '_id'];
           if($attrId == $itemId && $value['id']) {
             if ($item['data_type'] === 'D' && isset($value['value']) && preg_match('/^(\d{4})/', $value['value'])) {
               // Date has 4 digit year first (ISO style) - convert date to expected output format
@@ -8438,23 +8496,25 @@ TXT;
               $value['value'] = $d->format(helper_base::$date_format);
               //If a date, then we default to the value after formatting
               $defaultValue = $value['value'];
-            } elseif ($item['data_type'] === 'V') {
+            }
+            elseif ($item['data_type'] === 'V') {
               $defaultValue = $value['value'];
-            } else {
+            }
+            else {
               //If not date we need to use the raw_value, items like drop-downs won't reload correctly without this
               $defaultValue = $value['raw_value'];
             }
             $defaultUpper = ($item['data_type'] === 'I' || $item['data_type'] === 'F') && $item['allow_ranges'] === 't'
               ? $value['upper_value'] : NULL;
             // for multilanguage look ups we get > 1 record for the same attribute.
-            $fieldname = $options['fieldprefix'].':'.$itemId.':'.$value['id'];
+            $fieldname = $options['fieldprefix'] . ':'.$itemId.':'.$value['id'];
             $found = FALSE;
             foreach ($item['values'] as $prev)
               if($prev['fieldname'] == $fieldname && $prev['default'] == $value['raw_value'])
                 $found = TRUE;
             if (!$found)
               $item['values'][] = array(
-                'fieldname' => $options['fieldprefix'].':'.$itemId.':'.$value['id'],
+                'fieldname' => $options['fieldprefix'] . ':'.$itemId.':'.$value['id'],
                 'default' => $defaultValue,
                 'defaultUpper' => $defaultUpper,
                 'caption'=>$value['value']
@@ -8588,7 +8648,7 @@ TXT;
       $checked = ($default == $value) ? ' checked="checked" ' : '';
       $items .= str_replace(
         array('{type}', '{fieldname}', '{value}', '{checked}', '{caption}', '{sep}', '{disabled}', '{itemId}', '{class}'),
-        array($ctrl, $options['fieldname'], $value, $checked, $caption, $options['sep'], $disabled, $options['fieldname'].':'.$value, ''),
+        array($ctrl, $options['fieldname'], $value, $checked, $caption, $options['sep'], $disabled, $options['fieldname'] . ':'.$value, ''),
         $indicia_templates['check_or_radio_group_item']
       );
     }
@@ -8642,10 +8702,11 @@ TXT;
         $item['caption']=$i;
         // Might need to match to existing attribute values in entity to load here
         if (!empty($origDefault) && isset($origDefault[$i-1]) && is_array($origDefault[$i-1])) {
-          $item['fieldname']=$origDefault[$i-1]['fieldname'].':';
-          $item['id']=$origDefault[$i-1]['fieldname'].':';
+          $item['fieldname']=$origDefault[$i-1]['fieldname'] . ':';
+          $item['id']=$origDefault[$i-1]['fieldname'] . ':';
           $item['default']=$origDefault[$i-1]['default'];
-        } elseif (preg_match('/^[a-z]+Attr:[\d]+$/', $origFieldName)) {
+        }
+        elseif (preg_match('/^[a-z]+Attr:[\d]+$/', $origFieldName)) {
           // make unique fieldname
           $item['fieldname']="$origFieldName::$i";
           $item['id']="$origFieldName::$i";
@@ -8718,7 +8779,8 @@ TXT;
             || $item['control_type']=='hidden_text' || $item['control_type']=='complex_attr_grid'
             || $item['control_type']=='autocomplete' || $item['control_type']=='species_autocomplete')) {
           $ctrl = $item['control_type'];
-        } else {
+        }
+        else {
           $ctrl = 'text_input';
         }
         $output = self::$ctrl($attrOptions);
@@ -8764,9 +8826,11 @@ TXT;
         $attrOptions['class'] = array_key_exists('class', $options) ? $options['class'] : 'control-box';
         if(array_key_exists('booleanCtrl', $options) && $options['booleanCtrl']=='radio') {
           $output = self::boolean_attribute('radio', $attrOptions);
-        } elseif(array_key_exists('booleanCtrl', $options) && $options['booleanCtrl']=='checkbox_group') {
+        }
+        elseif(array_key_exists('booleanCtrl', $options) && $options['booleanCtrl']=='checkbox_group') {
           $output = self::boolean_attribute('checkbox', $attrOptions);
-        } else {
+        }
+        else {
           $output = self::checkbox($attrOptions);
         }
         break;
@@ -8797,14 +8861,16 @@ TXT;
         // control for lookup list can be overriden in function call options
         if (array_key_exists('lookUpListCtrl', $attrOptions)) {
           $ctrl = $attrOptions['lookUpListCtrl'];
-        } else {
+        }
+        else {
           // or specified by the attribute in survey details
           if (isset($item['control_type']) &&
             ($item['control_type']=='autocomplete' || $item['control_type']=='checkbox_group'
               || $item['control_type']=='listbox' || $item['control_type']=='radio_group' || $item['control_type']=='select'
               || $item['control_type']=='hierarchical_select' || $item['control_type']=='sub_list')) {
             $ctrl = $item['control_type'];
-          } else {
+          }
+          else {
             $ctrl = 'select';
           }
         }
@@ -8864,7 +8930,7 @@ HTML;
         break;
       default:
         if ($item) {
-          $output = '<strong>UNKNOWN DATA TYPE "'.$item['data_type'].'" FOR ID:'.$item['id'].' CAPTION:'.$item['caption'].'</strong><br />';
+          $output = '<strong>UNKNOWN DATA TYPE "' . $item['data_type'] . '" FOR ID:' . $item['id'] . ' CAPTION:' . $item['caption'] . '</strong><br />';
         }
         else
           $output = '<strong>Requested attribute is not available</strong><br />';
@@ -8984,7 +9050,8 @@ HTML;
                 $pathField = str_replace(array(':medium',':image'),array('_medium:path','_image:path'), $key);
                 $_POST[$pathField] = $destination;
               }
-            } else {
+            }
+            else {
               // Not moving the file, as it should already be moved.
               $r[] = array(
                 // Id is set only when saving over an existing record. This will always be a new record
@@ -9059,7 +9126,7 @@ HTML;
    *   List of the fields to remember.
    */
   public static function getRememberedFields() {
-    if (self::$rememberedFields == null && function_exists('indicia_define_remembered_fields')) {
+    if (self::$rememberedFields == NULL && function_exists('indicia_define_remembered_fields')) {
       indicia_define_remembered_fields();
     }
     return self::$rememberedFields;
