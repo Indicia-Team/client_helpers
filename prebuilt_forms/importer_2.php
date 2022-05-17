@@ -19,6 +19,8 @@
  * @link http://code.google.com/p/indicia/
  */
 
+require_once 'includes/user.php';
+
 /**
  * 2nd generation import data tool.
  */
@@ -28,6 +30,7 @@ class iform_importer_2 {
    * Disable form element wrapped around output.
    *
    * @return bool
+   *   Always false.
    */
   protected static function isDataEntryForm() {
     return FALSE;
@@ -63,13 +66,27 @@ class iform_importer_2 {
     // @todo Entity
     // @todo Nested samples
 
-    // Load helper for access to translations provided.
-    iform_load_helpers(['import_helper_2']);
+    // Load for access to translations provided as lang::get might not be
+    // available in AJAX call.
+    require_once dirname(dirname(__FILE__)) . '/lang/import_helper_2.php';
+    global $default_terms;
+    $fixedValuesDescription = <<<TXT
+Provide a list of fixed values which the user does not need to specify in the import, one on each line in the form
+key=value, where the key is a field name. The fixed values key field names should be chosen from those available for
+input on the Global values page of the import wizard, depending on the table you are inputting data for. If a single
+value is provided for a field key, then that field is removed from the Global values form and the value will be applied
+to all rows created by the import. If multiple values are provided as a semi-colon separated list, then the user will
+be able to choose the value to apply from a drop-down with a restricted range of options. <br/>
+It is also possible to specify single fixed values for the field names available for selection on the mappings
+form.<br/>
+You can use the following replacement tokens in the values: {user_id}, {username}, {email} or {profile_*} (i.e. any
+field in the user profile data).
+TXT;
     return [
       [
-        'name' => 'presetSettings',
-        'caption' => 'Preset Settings',
-        'description' => lang::get('import2globalValuesFormIntro'),
+        'name' => 'fixedValues',
+        'caption' => 'Fixed values',
+        'description' => $fixedValuesDescription,
         'type' => 'textarea',
         'required' => FALSE,
       ],
@@ -78,15 +95,15 @@ class iform_importer_2 {
         'caption' => 'File select form introduction',
         'category' => 'Instruction texts',
         'type' => 'textarea',
-        'default' => lang::get('import2fileSelectFormIntro'),
+        'default' => $default_terms['import2fileSelectFormIntro'],
         'required' => FALSE,
       ],
       [
-        'name' => 'settingsFormIntro',
-        'caption' => 'Settings form introduction',
+        'name' => 'globalValuesFormIntro',
+        'caption' => 'Global values form introduction',
         'category' => 'Instruction texts',
         'type' => 'textarea',
-        'default' => lang::get('import2settingsFormIntro'),
+        'default' => $default_terms['import2globalValuesFormIntro'],
         'required' => FALSE,
       ],
       [
@@ -94,7 +111,7 @@ class iform_importer_2 {
         'caption' => 'Mappings form introduction',
         'category' => 'Instruction texts',
         'type' => 'textarea',
-        'default' => lang::get('import2mappingsFormIntro'),
+        'default' => $default_terms['import2mappingsFormIntro'],
         'required' => FALSE,
       ],
       [
@@ -102,7 +119,7 @@ class iform_importer_2 {
         'caption' => 'Mappings form introduction',
         'category' => 'Instruction texts',
         'type' => 'textarea',
-        'default' => lang::get('import2lookupMatchingFormIntro'),
+        'default' => $default_terms['import2lookupMatchingFormIntro'],
         'required' => FALSE,
       ],
       [
@@ -110,7 +127,7 @@ class iform_importer_2 {
         'caption' => 'Validation form introduction',
         'category' => 'Instruction texts',
         'type' => 'textarea',
-        'default' => lang::get('import2validationFormIntro'),
+        'default' => $default_terms['import2validationFormIntro'],
         'required' => FALSE,
       ],
       [
@@ -118,7 +135,7 @@ class iform_importer_2 {
         'caption' => 'Summary page introduction',
         'category' => 'Instruction texts',
         'type' => 'textarea',
-        'default' => lang::get('import2summaryPageIntro'),
+        'default' => $default_terms['import2summaryPageIntro'],
         'required' => FALSE,
       ],
       [
@@ -126,7 +143,7 @@ class iform_importer_2 {
         'caption' => 'Process the import page introduction',
         'category' => 'Instruction texts',
         'type' => 'textarea',
-        'default' => lang::get('import2doImportPageIntro'),
+        'default' => $default_terms['import2doImportPageIntro'],
         'required' => FALSE,
       ],
     ];
@@ -165,7 +182,9 @@ class iform_importer_2 {
       'readAuth' => $auth['read'],
       'writeAuth' => $auth['write_tokens'],
       'entity' => 'occurrence',
+      'fixedValues' => [],
     ], $args);
+    $options['fixedValues'] = get_options_array_with_user_data($options['fixedValues']);
     return import_helper_2::importer($options);
   }
 
@@ -348,7 +367,7 @@ class iform_importer_2 {
   private static function getWriteAuthFromHeaders() {
     $headers = getallheaders();
     if (!empty($headers['Authorization'])) {
-      if (preg_match('/Bearer (?<auth_token>[a-z0-9]+)\|(?<nonce>[a-z0-9]+)/', $headers['Authorization'], $matches)) {
+      if (preg_match('/Bearer (?<auth_token>[a-z0-9]+(:\d+)?)\|(?<nonce>[a-z0-9]+)/', $headers['Authorization'], $matches)) {
         return [
           'auth_token' => $matches['auth_token'],
           'nonce' => $matches['nonce'],

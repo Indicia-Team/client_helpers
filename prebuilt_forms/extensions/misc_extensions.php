@@ -48,13 +48,17 @@ class extension_misc_extensions {
    *     users. If 2, only show link for users who are not logged in.
    */
   public static function button_link($auth, $args, $tabalias, $options, $path) {
-    global $user;
-    // Check if we should only show button for logged in/or none logged in
-    // users.
-    if ((!empty($options['onlyShowWhenLoggedInStatus']) &&
-           (($options['onlyShowWhenLoggedInStatus'] == 1 && $user->uid != 0) ||
-           ($options['onlyShowWhenLoggedInStatus'] == 2 && $user->uid === 0) ||
-           ($options['onlyShowWhenLoggedInStatus'] == FALSE)))||
+    // Detection different depending on Drupal version
+    if (function_exists('user_is_logged_in')) {
+      $loggedIn = user_is_logged_in();
+    } else {
+      $loggedIn = \Drupal::currentUser()->isAuthenticated();
+    }
+    //Check if we should only show link for logged in/or none logged in users
+    if ((!empty($options['onlyShowWhenLoggedInStatus'])&&
+           (($options['onlyShowWhenLoggedInStatus'] == 1 && $loggedIn === true) ||
+           ($options['onlyShowWhenLoggedInStatus'] == 2 && $loggedIn === false) ||
+           ($options['onlyShowWhenLoggedInStatus'] == FALSE))) ||
         empty($options['onlyShowWhenLoggedInStatus'])) {
       // Only display a button if the administrator has specified both a label
       // and a link path for the button.
@@ -137,11 +141,16 @@ class extension_misc_extensions {
    *     path in real-time.
    */
   public static function text_link($auth, $args, $tabalias, $options, $path) {
-    global $user;
+    // Detection different depending on Drupal version
+    if (function_exists('user_is_logged_in')) {
+      $loggedIn = user_is_logged_in();
+    } else {
+      $loggedIn = \Drupal::currentUser()->isAuthenticated();
+    }
     //Check if we should only show link for logged in/or none logged in users
     if ((!empty($options['onlyShowWhenLoggedInStatus'])&&
-           (($options['onlyShowWhenLoggedInStatus'] == 1 && $user->uid != 0) ||
-           ($options['onlyShowWhenLoggedInStatus'] == 2 && $user->uid === 0) ||
+           (($options['onlyShowWhenLoggedInStatus'] == 1 && $loggedIn === true) ||
+           ($options['onlyShowWhenLoggedInStatus'] == 2 && $loggedIn === false) ||
            ($options['onlyShowWhenLoggedInStatus'] == FALSE))) ||
         empty($options['onlyShowWhenLoggedInStatus'])) {
       //Only display a link if the administrator has specified both a label and a link.

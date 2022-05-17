@@ -224,29 +224,31 @@ class iform_distribution_map_1 {
         }
       }
 
-      if ($args['external_key']==true) {
+      if ($args['external_key'] == TRUE) {
         if (empty($args['taxon_list_id'])) {
           return lang::get('This form is configured with the Distribution Layer - External Key '
                   . 'option ticked, but no species list has been configured to '
                   . 'lookup the external keys against.');
         }
 
-        // The taxon identifier is an external key, so we need to translate to a meaning ID.
-        $fetchOpts = array(
-        'table' => 'taxa_taxon_list',
-        'extraParams' => $readAuth + array(
+        // The taxon identifier is an external key, so we need to translate to
+        // a meaning ID.
+        $fetchOpts = [
+          'table' => 'taxa_taxon_list',
+          'extraParams' => $readAuth + [
             'view' => 'detail',
             'external_key' => $taxonIdentifier,
             'taxon_list_id' => $args['taxon_list_id'],
-            'preferred' => 't'
-          )
-        );
+            'preferred' => 't',
+          ],
+        ];
         $prefRecords = data_entry_helper::get_population_data($fetchOpts);
-        // We might have multiple records back, e.g. if there are several photos, but we should have a unique meaning id.
-        $meaningId=0;
-        foreach($prefRecords as $prefRecord) {
-          if ($meaningId!=0 && $meaningId!=$prefRecord['taxon_meaning_id']) {
-            // bomb out, as we  don't know which taxon to display
+        // We might have multiple records back, e.g. if there are several
+        // photos, but we should have a unique meaning id.
+        $meaningId = 0;
+        foreach ($prefRecords as $prefRecord) {
+          if ($meaningId != 0 && $meaningId != $prefRecord['taxon_meaning_id']) {
+            // Bomb out, as we  don't know which taxon to display.
             return lang::get("The taxon identifier cannot be used to identify a unique taxon.");
           }
           $meaningId = $prefRecord['taxon_meaning_id'];

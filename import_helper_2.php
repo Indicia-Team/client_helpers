@@ -48,7 +48,7 @@ class import_helper_2 extends helper_base {
    * * lookupMatchingFormIntro
    * * validationFormIntro
    * * summaryPageIntro
-   * * doImportFormIntro
+   * * doImportPageIntro
    * * uploadFileUrl - path to a script that handles the initial upload of a
    *   file to the interim file location. The script can call
    *   import_helper_2::uploadFile for a complete implementation.
@@ -68,6 +68,7 @@ class import_helper_2 extends helper_base {
    *   from the temp table into the database.
    * * readAuth - read authorisation tokens.
    * * writeAuth - write authorisation tokens.
+   * * fixedValues - array of fixed key/value pairs that apply to all rows.
    */
   public static function importer($options) {
     if (empty($options['entity'])) {
@@ -317,7 +318,7 @@ class import_helper_2 extends helper_base {
       'clickToAdd' => lang::get('Click to add files'),
       'instructions' => lang::get($options['fileSelectFormIntro']),
       'next' => lang::get('Next step'),
-      'selectAFile' => lang::get('Select a CSV or Excel file or drag it over this area. The file can optionally be a zip archive.'),
+      'selectAFile' => lang::get('Select a CSV or Excel file or drag it over this area. The file can optionally be a zip archive. If importing an Excel file, only the first worksheet will be imported.'),
       'uploadFileToImport' => lang::get('Upload a file to import'),
     ];
     $r = <<<HTML
@@ -325,7 +326,7 @@ class import_helper_2 extends helper_base {
 <p>$lang[instructions]</p>
 <form id="file-upload-form" method="POST">
   <div class="dm-uploader row">
-    <div class="col-md-6">
+    <div class="col-md-9">
       <div role="button" class="btn btn-primary">
         <i class="fas fa-file-upload"></i>
         $lang[browseFiles]
@@ -333,7 +334,7 @@ class import_helper_2 extends helper_base {
       </div>
       <small class="status text-muted">$lang[selectAFile]</small>
     </div>
-    <div class="col-md-6" id="uploaded-files"></div>
+    <div class="col-md-3" id="uploaded-files"></div>
   </div>
   <progress id="file-progress" class="progress" value="0" max="100" style="display: none"></progress>
   <input type="submit" class="btn btn-primary" id="next-step" value="$lang[next]" disabled />
@@ -423,10 +424,47 @@ HTML;
     $r = '';
     $options['helpText'] = TRUE;
     $options['form'] = $formArray;
+    $options['param_lookup_extras'] = [];
     foreach ($formArray as $key => $info) {
+      if (!empty($options['fixedValues'][$key])) {
+        if (isset($info['lookup_values'])) {
+          $info['lookup_values'] = self::getRestrictedLookupValues($info['lookup_values'], explode(';', $options['fixedValues'][$key]));
+        }
+        elseif (isset($info['population_call'])) {
+          $tokens = explode(':', $info['population_call']);
+          // 3rd part of population call is the ID field ($tokens[2]).
+          $options['param_lookup_extras'][$key] = ['query' => json_encode(['in' => [$tokens[2] => explode(';', $options['fixedValues'][$key])]])];
+        }
+      }
       $r .= self::getParamsFormControl($key, $info, $options, $tools);
     }
     return $r;
+  }
+
+  /**
+   * Processes a lookup_values string to only include those for provided keys.
+   *
+   * @param string $lookupValues
+   *   A lookup values string, in format key:value,key:value.
+   * @param array $restrictToKeys
+   *   A list of keys to include in the returned lookup values string.
+   *
+   * @return string
+   *   Lookup values string which only includes entries whose keys are in the
+   *   $restrictToKeys array.
+   */
+  private static function getRestrictedLookupValues($lookupValues, array $restrictToKeys) {
+    $originalLookups = explode(',', $lookupValues);
+    $originalLookupsAssoc = [];
+    foreach ($originalLookups as $lookup) {
+      $lookup = explode(':', $lookup);
+      $originalLookupsAssoc[$lookup[0]] = $lookup[1];
+    }
+    $newLookupList = [];
+    foreach ($restrictToKeys as $key) {
+      $newLookupList[] = "$key:" . $originalLookupsAssoc[$key];
+    }
+    return implode(',', $newLookupList);
   }
 
   /**
@@ -503,9 +541,6 @@ HTML;
       if ($optGroup !== ucfirst($fieldParts[0])) {
         $optGroup = ucfirst($fieldParts[0]);
         $colsByGroup[$optGroup] = [];
-      }
-      if (empty($caption)) {
-        $caption = ucfirst(str_replace('_', ' ', $fieldParts[1]));
       }
       $colsByGroup[$optGroup][] = "<option value=\"$field\">$caption</option>";
     }
@@ -726,9 +761,10 @@ HTML;
       'globalValuesFormIntro' => lang::get('import2globalValuesFormIntro'),
       'mappingsFormIntro' => lang::get('import2mappingsFormIntro'),
       'lookupMatchingFormIntro' => lang::get('lookupMatchingFormIntro'),
-      'summaryPageIntro' => lang::get('summaryPageIntro'),
       'validationFormIntro' => lang::get('import2validationFormIntro'),
-      'doImportFormIntro' => lang::get('import2doImportFormIntro'),
+      'summaryPageIntro' => lang::get('summaryPageIntro'),
+      'doImportPageIntro' => lang::get('import2doImportPageIntro'),
+      'fixedValues' => [],
     ];
     $options = array_merge($defaults, $options);
     $requiredOptions = [

@@ -130,7 +130,7 @@ class import_helper extends helper_base {
       'importPreventCommitBehaviour' => 'partial_import',
       // Default which to not use sample example key for verification.
       'importSampleLogic' => 'consecutive_rows',
-      'allowExcel' => FALSE,
+      'allowExcel' => TRUE,
     ], $options);
     // Currently the preventCommitsOnError on error option won't work with existing data updates.
     // Hopefully this will change in the future, the problem is the preserve_fields function does
