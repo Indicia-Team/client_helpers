@@ -43,7 +43,7 @@ jQuery(document).ready(function ($) {
           .replace(/[^a-zA-Z0-9]+/g, '-')
           .toLowerCase();
         $(this).after('<a class="lexicon-info skip-text" target="_blank" title="' + summary + '" ' +
-            'href="/pantheon/lexicon/' + termAlias + '">i</a>');
+            'href="/lexicon/' + termAlias + '">i</a>');
         $(this).addClass('processed');
       }
     });
@@ -52,6 +52,9 @@ jQuery(document).ready(function ($) {
       window.location = $(this).attr('href');
     });
   };
+
+  // So that it can be called from report grid callback.
+  window.applyLexicon = indiciaFns.applyLexicon;
 
   function recurseNodes(node, lookupListById) {
     var html = '';
@@ -117,7 +120,7 @@ jQuery(document).ready(function ($) {
       if ($(this).closest('tr').find('.col-count').text() < 15) {
         $(this).prepend(
           '<img title="Warning, this index was calculated from less than 15 species so may not be reliable." ' +
-          'alt="Warning icon" src="/pantheon/sites/www.brc.ac.uk.pantheon/modules/iform/media/images/warning.png"/>'
+          'alt="Warning icon" src="/sites/www.brc.ac.uk.pantheon/modules/iform/media/images/warning.png"/>'
         );
       }
       $(this).addClass('processed');
