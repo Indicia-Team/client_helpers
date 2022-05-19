@@ -193,25 +193,12 @@ TXT;
    */
   public static function ajax_upload_file($website_id, $password, $nid) {
     header('Content-type: application/json');
-    try {
-      if (!self::getWriteAuthFromHeaders()) {
-        return;
-      }
-      iform_load_helpers(['import_helper_2']);
-      echo json_encode([
-        'status' => 'ok',
-        'interimFile' => import_helper_2::uploadInterimFile(),
-      ]);
-    }
-    catch (Exception $e) {
-      // Something went wrong, send the error message as JSON.
-      http_response_code(400);
-
-      echo json_encode([
-        'status' => 'error',
-        'msg' => $e->getMessage(),
-      ]);
-    }
+    self::getWriteAuthFromHeaders();
+    iform_load_helpers(['import_helper_2']);
+    echo json_encode([
+      'status' => 'ok',
+      'interimFile' => import_helper_2::uploadInterimFile(),
+    ]);
   }
 
   /**
@@ -219,31 +206,18 @@ TXT;
    */
   public static function ajax_send_file_to_warehouse($website_id, $password, $nid) {
     header('Content-type: application/json');
-    try {
-      $writeAuth = self::getWriteAuthFromHeaders();
-      if (!$writeAuth) {
-        return;
-      }
-      iform_load_helpers(['import_helper_2']);
-      $r = import_helper_2::sendFileToWarehouse($_GET['interim-file'], $writeAuth);
-      if ($r === TRUE) {
-        echo json_encode([
-          'status' => 'ok',
-          // Warehouse lowercases the file name and replaces spaces.
-          'uploadedFile' => strtolower(str_replace(' ', '_', $_GET['interim-file'])),
-        ]);
-      }
-      else {
-        throw new Exception(var_export($r, TRUE));
-      }
-    }
-    catch (Exception $e) {
-      // Something went wrong, send the error message as JSON.
-      \Drupal::logger('iform')->error('Error in ajax_send_file_to_warehouse: ' . $e->getMessage());
+    $writeAuth = self::getWriteAuthFromHeaders();
+    iform_load_helpers(['import_helper_2']);
+    $r = import_helper_2::sendFileToWarehouse($_GET['interim-file'], $writeAuth);
+    if ($r === TRUE) {
       echo json_encode([
-        'status' => 'error',
-        'msg' => $e->getMessage(),
+        'status' => 'ok',
+        // Warehouse lowercases the file name and replaces spaces.
+        'uploadedFile' => strtolower(str_replace(' ', '_', $_GET['interim-file'])),
       ]);
+    }
+    else {
+      throw new Exception(var_export($r, TRUE));
     }
   }
 
@@ -252,22 +226,9 @@ TXT;
    */
   public static function ajax_extract_file_on_warehouse($website_id, $password, $nid) {
     header('Content-type: application/json');
-    try {
-      $writeAuth = self::getWriteAuthFromHeaders();
-      if (!$writeAuth) {
-        return;
-      }
-      iform_load_helpers(['import_helper_2']);
-      echo json_encode(import_helper_2::extractFileOnWarehouse($_GET['uploaded-file'], $writeAuth));
-    }
-    catch (Exception $e) {
-      // Something went wrong, send the error message as JSON.
-      \Drupal::logger('iform')->error('Error in ajax_extract_file_on_warehouse: ' . $e->getMessage());
-      echo json_encode([
-        'status' => 'error',
-        'msg' => $e->getMessage(),
-      ]);
-    }
+    $writeAuth = self::getWriteAuthFromHeaders();
+    iform_load_helpers(['import_helper_2']);
+    echo json_encode(import_helper_2::extractFileOnWarehouse($_GET['uploaded-file'], $writeAuth));
   }
 
   /**
@@ -275,87 +236,30 @@ TXT;
    */
   public static function ajax_load_chunk_to_temp_table($website_id, $password, $nid) {
     header('Content-type: application/json');
-    try {
-      $writeAuth = self::getWriteAuthFromHeaders();
-      if (!$writeAuth) {
-        http_response_code(401);
-        echo json_encode([
-          'status' => 'error',
-          'msg' => 'Unauthorized',
-        ]);
-      }
-      iform_load_helpers(['import_helper_2']);
-      echo json_encode(import_helper_2::loadChunkToTempTable($_GET['data-file'], $writeAuth));
-    }
-    catch (Exception $e) {
-      // Something went wrong, send the error message as JSON.
-      http_response_code(400);
-
-      echo json_encode([
-        'status' => 'error',
-        'msg' => $e->getMessage(),
-      ]);
-    }
+    $writeAuth = self::getWriteAuthFromHeaders();
+    iform_load_helpers(['import_helper_2']);
+    echo json_encode(import_helper_2::loadChunkToTempTable($_GET['data-file'], $writeAuth));
   }
 
   public static function ajax_process_lookup_matching($website_id, $password, $nid) {
     header('Content-type: application/json');
-    try {
-      $writeAuth = self::getWriteAuthFromHeaders();
-      if (!$writeAuth) {
-        return;
-      }
-      iform_load_helpers(['import_helper_2']);
-      echo json_encode(import_helper_2::processLookupMatching($_GET['data-file'], $_GET['index'], $writeAuth));
-    }
-    catch (Exception $e) {
-      // Something went wrong, send the error message as JSON.
-      http_response_code(400);
-      echo json_encode([
-        'status' => 'error',
-        'msg' => $e->getMessage(),
-      ]);
-    }
+    $writeAuth = self::getWriteAuthFromHeaders();
+    iform_load_helpers(['import_helper_2']);
+    echo json_encode(import_helper_2::processLookupMatching($_GET['data-file'], $_GET['index'], $writeAuth));
   }
 
   public static function ajax_save_lookup_matches_group($website_id, $password, $nid) {
     header('Content-type: application/json');
-    try {
-      $writeAuth = self::getWriteAuthFromHeaders();
-      if (!$writeAuth) {
-        return;
-      }
-      iform_load_helpers(['import_helper_2']);
-      echo json_encode(import_helper_2::saveLookupMatchesGroup($_GET['data-file'], $_POST, $writeAuth));
-    }
-    catch (Exception $e) {
-      // Something went wrong, send the error message as JSON.
-      http_response_code(400);
-      echo json_encode([
-        'status' => 'error',
-        'msg' => $e->getMessage(),
-      ]);
-    }
+    $writeAuth = self::getWriteAuthFromHeaders();
+    iform_load_helpers(['import_helper_2']);
+    echo json_encode(import_helper_2::saveLookupMatchesGroup($_GET['data-file'], $_POST, $writeAuth));
   }
 
   public static function ajax_import_chunk($website_id, $password, $nid) {
     header('Content-type: application/json');
-    try {
-      $writeAuth = self::getWriteAuthFromHeaders();
-      if (!$writeAuth) {
-        return;
-      }
-      iform_load_helpers(['import_helper_2']);
-      echo json_encode(import_helper_2::importChunk($_GET['data-file'], isset($_POST['description']) ? $_POST['description'] : NULL, $writeAuth));
-    }
-    catch (Exception $e) {
-      // Something went wrong, send the error message as JSON.
-      http_response_code(400);
-      echo json_encode([
-        'status' => 'error',
-        'msg' => $e->getMessage(),
-      ]);
-    }
+    $writeAuth = self::getWriteAuthFromHeaders();
+    iform_load_helpers(['import_helper_2']);
+    echo json_encode(import_helper_2::importChunk($_GET['data-file'], isset($_POST['description']) ? $_POST['description'] : NULL, $writeAuth));
   }
 
   /**
@@ -367,20 +271,14 @@ TXT;
   private static function getWriteAuthFromHeaders() {
     $headers = getallheaders();
     if (!empty($headers['Authorization'])) {
-      if (preg_match('/Bearer (?<auth_token>[a-z0-9]+(:\d+)?)\|(?<nonce>[a-z0-9]+)/', $headers['Authorization'], $matches)) {
+      if (preg_match('/IndiciaTokens (?<auth_token>[a-z0-9]+(:\d+)?)\|(?<nonce>[a-z0-9]+)/', $headers['Authorization'], $matches)) {
         return [
           'auth_token' => $matches['auth_token'],
           'nonce' => $matches['nonce'],
         ];
       }
     }
-
-    http_response_code(401);
-    echo json_encode([
-      'status' => 'error',
-      'msg' => 'Unauthorized',
-    ]);
-    return FALSE;
+    hostsite_access_denied();
   }
 
 }
