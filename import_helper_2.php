@@ -41,6 +41,11 @@ class import_helper_2 extends helper_base {
    * A file import component.
    *
    * Options include:
+   * * blockedFields - array of database field names that should not be listed
+   *   as available for mapping to. Defaults to a list of "advanced" fields
+   *   that are not considered suitable for non-expert imports. Field names may
+   *   be fully qualified ('sample.deleted') or just the field name alone, in
+   *   which case it applies to all tables.
    * * entity
    * * fileSelectFormIntro
    * * globalValuesFormIntro
@@ -486,7 +491,7 @@ HTML;
     $settings = self::savePostedFormValuesToConfig($options, 'global-values');
     $availableFields = self::getAvailableDbFields($options, $settings);
     $htmlList = [];
-    $dbFieldOptions = self::getAvailableDbFieldsAsOptions($availableFields);
+    $dbFieldOptions = self::getAvailableDbFieldsAsOptions($options, $availableFields);
     $request = parent::$base_url . "index.php/services/import_2/get_config";
     $request .= '?' . self::array_to_query_string($options['readAuth'] + ['data-file' => $_POST['data-file']]);
     $response = self::http_post($request, []);
@@ -529,17 +534,30 @@ HTML;
 
   /**
    * Convert the list of available db fields to <option> elements.
+   *
+   * @param array $options
+   *   Options array for the control.
+   * @param array $availableFields
+   *   List of field names and captions that are available for the imported
+   *   entity.
+   *
+   * @return string
+   *   HTML for the list of <optgroup>s containing <option>s.
    */
-  private function getAvailableDbFieldsAsOptions(array $availableFields) {
+  private static function getAvailableDbFieldsAsOptions(array $options, array $availableFields) {
     $lang = [
       'notImported' => lang::get('not imported'),
     ];
     $colsByGroup = [];
     $optGroup = '';
     foreach ($availableFields as $field => $caption) {
+      // Skip fields that are not suitable for non-expert imports.
+      if (self::fieldIsBlocked($options, $field)) {
+        continue;
+      }
       $fieldParts = explode(':', $field);
-      if ($optGroup !== ucfirst($fieldParts[0])) {
-        $optGroup = ucfirst($fieldParts[0]);
+      if ($optGroup !== lang::get("optionGroup-$fieldParts[0]")) {
+        $optGroup = lang::get("optionGroup-$fieldParts[0]");
         $colsByGroup[$optGroup] = [];
       }
       // Find variants of field names for auto matching.
@@ -567,6 +585,32 @@ HTML;
 HTML;
     }
     return implode('', $optGroupHtmlList);
+  }
+
+  /**
+   * Determine if a field should be excluded from the options to map to.
+   *
+   * @param array $options
+   *   Options array for the control, including a blockedFields option.
+   * @param string $field
+   *   Field name.
+   *
+   * @return bool
+   *   True if blocked.
+   */
+  private static function fieldIsBlocked(array $options, $field) {
+    // Is the entity/field name combination blocked?
+    if (in_array($field, $options['blockedFields'])) {
+      return TRUE;
+    }
+    // Also check if the field name is blocked with the entity unspecified.
+    $parts = explode(':', $field);
+    if (count($parts) > 1) {
+      if (in_array($parts[1], $options['blockedFields'])) {
+        return TRUE;
+      }
+    }
+    return FALSE;
   }
 
   private static function savePostedFormValuesToConfig(array $options, $configFieldName) {
@@ -778,6 +822,33 @@ HTML;
       'summaryPageIntro' => lang::get('summaryPageIntro'),
       'doImportPageIntro' => lang::get('import2doImportPageIntro'),
       'fixedValues' => [],
+      'blockedFields' => [
+        'occurrence:all_info_in_determinations',
+        'occurrence:fk_classification_event',
+        'occurrence:downloaded_flag',
+        'occurrence:downloaded_on',
+        'occurrence:last_verification_check_date',
+        'occurrence:machine_involvement',
+        'occurrence:metadata',
+        'occurrence:record_decision_source',
+        'sample:fk_parent',
+        'sample:fk_parent:external_key',
+        'id',
+        'deleted',
+        'fk_created_by',
+        'fk_determiner',
+        'fk_updated_by',
+        'fk_verified_by',
+        'created_on',
+        'updated_on',
+        'verified_on',
+        'verifier_only_data',
+        'survey_id',
+        'website_id',
+        'fk_survey',
+        'fk_website',
+        'training',
+      ],
     ];
     $options = array_merge($defaults, $options);
     $requiredOptions = [
