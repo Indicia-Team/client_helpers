@@ -591,6 +591,7 @@ HTML;
       'findingLookupFieldsThatNeedMatching' => 'Finding lookup fields that need matching.',
       'findLookupFieldsDone' => 'Finding lookup fields done.',
       'lookupFieldFound' => 'Lookup field found: {1}',
+      'lookupMatchingFormNothingToDo' => 'All data values that need to be mapped to an exact term in the database have been successfully automatically matched. Please click Next to continue.',
       'matchesToTaxon' => 'Matches to species or taxon name',
       'matchesToTerm' => 'Matches to term',
       'matchingPanelFor' => 'List of values to match for {1}',
@@ -608,11 +609,10 @@ HTML;
       'next' => lang::get('Next step'),
       'title' => lang::get('Value matching'),
     ];
-    $loaderGif = self::$images_path . 'ajax-loader2.gif';
     self::$indiciaData['processLookupMatchingForFile'] = $_POST['data-file'];
     return <<<HTML
 <h3>$lang[title]</h3>
-<p>$lang[instructions]</p>
+<p id="instructions">$lang[instructions]</p>
 <form method="POST" id="lookup-matching-form">
   <div id="matching-area">
   </div>
