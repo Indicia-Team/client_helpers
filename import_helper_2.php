@@ -41,6 +41,11 @@ class import_helper_2 extends helper_base {
    * A file import component.
    *
    * Options include:
+   * * blockedFields - array of database field names that should not be listed
+   *   as available for mapping to. Defaults to a list of "advanced" fields
+   *   that are not considered suitable for non-expert imports. Field names may
+   *   be fully qualified ('sample.deleted') or just the field name alone, in
+   *   which case it applies to all tables.
    * * entity
    * * fileSelectFormIntro
    * * globalValuesFormIntro
@@ -486,7 +491,7 @@ HTML;
     $settings = self::savePostedFormValuesToConfig($options, 'global-values');
     $availableFields = self::getAvailableDbFields($options, $settings);
     $htmlList = [];
-    $dbFieldOptions = self::getAvailableDbFieldsAsOptions($availableFields);
+    $dbFieldOptions = self::getAvailableDbFieldsAsOptions($options, $availableFields);
     $request = parent::$base_url . "index.php/services/import_2/get_config";
     $request .= '?' . self::array_to_query_string($options['readAuth'] + ['data-file' => $_POST['data-file']]);
     $response = self::http_post($request, []);
@@ -509,7 +514,7 @@ HTML;
 <h3>$lang[title]</h3>
 <p>$lang[instructions]</p>
 <form method="POST">
-  <table class="table">
+  <table class="table" id="mappings-table">
     <thead>
       <tr>
         <th>Column in import file</th>
@@ -529,20 +534,46 @@ HTML;
 
   /**
    * Convert the list of available db fields to <option> elements.
+   *
+   * @param array $options
+   *   Options array for the control.
+   * @param array $availableFields
+   *   List of field names and captions that are available for the imported
+   *   entity.
+   *
+   * @return string
+   *   HTML for the list of <optgroup>s containing <option>s.
    */
-  private function getAvailableDbFieldsAsOptions(array $availableFields) {
+  private static function getAvailableDbFieldsAsOptions(array $options, array $availableFields) {
     $lang = [
       'notImported' => lang::get('not imported'),
     ];
     $colsByGroup = [];
     $optGroup = '';
     foreach ($availableFields as $field => $caption) {
+      // Skip fields that are not suitable for non-expert imports.
+      if (self::fieldIsBlocked($options, $field)) {
+        continue;
+      }
       $fieldParts = explode(':', $field);
-      if ($optGroup !== ucfirst($fieldParts[0])) {
-        $optGroup = ucfirst($fieldParts[0]);
+      if ($optGroup !== lang::get("optionGroup-$fieldParts[0]")) {
+        $optGroup = lang::get("optionGroup-$fieldParts[0]");
         $colsByGroup[$optGroup] = [];
       }
-      $colsByGroup[$optGroup][] = "<option value=\"$field\">$caption</option>";
+      // Find variants of field names for auto matching.
+      switch ($field) {
+        case 'sample:entered_sref':
+          $alt = ' data-alt="gridref,gridreference,spatialref,spatialreference,mapref,mapreference"';
+          break;
+
+        case 'occurrence:fk_taxa_taxon_list':
+          $alt = ' data-alt="species,speciesname,taxon,taxonname"';
+          break;
+
+        default:
+          $alt = '';
+      }
+      $colsByGroup[$optGroup][] = "<option value=\"$field\"$alt>$caption</option>";
     }
     $optGroupHtmlList = ["<option value=\"\">- $lang[notImported] -</option>"];
     foreach ($colsByGroup as $optgroup => $optionsList) {
@@ -554,6 +585,32 @@ HTML;
 HTML;
     }
     return implode('', $optGroupHtmlList);
+  }
+
+  /**
+   * Determine if a field should be excluded from the options to map to.
+   *
+   * @param array $options
+   *   Options array for the control, including a blockedFields option.
+   * @param string $field
+   *   Field name.
+   *
+   * @return bool
+   *   True if blocked.
+   */
+  private static function fieldIsBlocked(array $options, $field) {
+    // Is the entity/field name combination blocked?
+    if (in_array($field, $options['blockedFields'])) {
+      return TRUE;
+    }
+    // Also check if the field name is blocked with the entity unspecified.
+    $parts = explode(':', $field);
+    if (count($parts) > 1) {
+      if (in_array($parts[1], $options['blockedFields'])) {
+        return TRUE;
+      }
+    }
+    return FALSE;
   }
 
   private static function savePostedFormValuesToConfig(array $options, $configFieldName) {
@@ -578,6 +635,7 @@ HTML;
       'findingLookupFieldsThatNeedMatching' => 'Finding lookup fields that need matching.',
       'findLookupFieldsDone' => 'Finding lookup fields done.',
       'lookupFieldFound' => 'Lookup field found: {1}',
+      'lookupMatchingFormNothingToDo' => 'All data values that need to be mapped to an exact term in the database have been successfully automatically matched. Please click Next to continue.',
       'matchesToTaxon' => 'Matches to species or taxon name',
       'matchesToTerm' => 'Matches to term',
       'matchingPanelFor' => 'List of values to match for {1}',
@@ -595,11 +653,10 @@ HTML;
       'next' => lang::get('Next step'),
       'title' => lang::get('Value matching'),
     ];
-    $loaderGif = self::$images_path . 'ajax-loader2.gif';
     self::$indiciaData['processLookupMatchingForFile'] = $_POST['data-file'];
     return <<<HTML
 <h3>$lang[title]</h3>
-<p>$lang[instructions]</p>
+<p id="instructions">$lang[instructions]</p>
 <form method="POST" id="lookup-matching-form">
   <div id="matching-area">
   </div>
@@ -734,6 +791,9 @@ HTML;
    * Outputs the page that shows import progress.
    */
   private static function doImportPage($options) {
+    self::addLanguageStringsToJs('import_helper_2', [
+      'completeMessage' => 'The import is complete',
+    ]);
     $lang = [
       'errorsInImportFile' => lang::get('{1} rows with problems have been found in the import file.'),
       'importProgress' => lang::get('Import progress'),
@@ -765,6 +825,33 @@ HTML;
       'summaryPageIntro' => lang::get('summaryPageIntro'),
       'doImportPageIntro' => lang::get('import2doImportPageIntro'),
       'fixedValues' => [],
+      'blockedFields' => [
+        'occurrence:all_info_in_determinations',
+        'occurrence:fk_classification_event',
+        'occurrence:downloaded_flag',
+        'occurrence:downloaded_on',
+        'occurrence:last_verification_check_date',
+        'occurrence:machine_involvement',
+        'occurrence:metadata',
+        'occurrence:record_decision_source',
+        'sample:fk_parent',
+        'sample:fk_parent:external_key',
+        'id',
+        'deleted',
+        'fk_created_by',
+        'fk_determiner',
+        'fk_updated_by',
+        'fk_verified_by',
+        'created_on',
+        'updated_on',
+        'verified_on',
+        'verifier_only_data',
+        'survey_id',
+        'website_id',
+        'fk_survey',
+        'fk_website',
+        'training',
+      ],
     ];
     $options = array_merge($defaults, $options);
     $requiredOptions = [

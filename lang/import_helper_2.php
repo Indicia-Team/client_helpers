@@ -54,3 +54,10 @@ TXT;
 $default_terms['import2doImportPageIntro'] = <<<TXT
 Please wait while your data are imported.
 TXT;
+
+$default_terms['optionGroup-occurrence'] = 'Occurrence';
+$default_terms['optionGroup-occurrence_medium'] = 'Occurrence photos and other media';
+$default_terms['optionGroup-occAttr'] = 'Occurrence attributes for selected survey';
+$default_terms['optionGroup-sample'] = 'Sample';
+$default_terms['optionGroup-sample_medium'] = 'Sample photos and other media';
+$default_terms['optionGroup-smpAttr'] = 'Sample attributes for selected survey';
