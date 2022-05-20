@@ -791,6 +791,9 @@ HTML;
    * Outputs the page that shows import progress.
    */
   private static function doImportPage($options) {
+    self::addLanguageStringsToJs('import_helper_2', [
+      'completeMessage' => 'The import is complete',
+    ]);
     $lang = [
       'errorsInImportFile' => lang::get('{1} rows with problems have been found in the import file.'),
       'importProgress' => lang::get('Import progress'),
