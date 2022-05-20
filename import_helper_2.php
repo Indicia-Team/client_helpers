@@ -509,7 +509,7 @@ HTML;
 <h3>$lang[title]</h3>
 <p>$lang[instructions]</p>
 <form method="POST">
-  <table class="table">
+  <table class="table" id="mappings-table">
     <thead>
       <tr>
         <th>Column in import file</th>
@@ -542,7 +542,20 @@ HTML;
         $optGroup = ucfirst($fieldParts[0]);
         $colsByGroup[$optGroup] = [];
       }
-      $colsByGroup[$optGroup][] = "<option value=\"$field\">$caption</option>";
+      // Find variants of field names for auto matching.
+      switch ($field) {
+        case 'sample:entered_sref':
+          $alt = ' data-alt="gridref,gridreference,spatialref,spatialreference,mapref,mapreference"';
+          break;
+
+        case 'occurrence:fk_taxa_taxon_list':
+          $alt = ' data-alt="species,speciesname,taxon,taxonname"';
+          break;
+
+        default:
+          $alt = '';
+      }
+      $colsByGroup[$optGroup][] = "<option value=\"$field\"$alt>$caption</option>";
     }
     $optGroupHtmlList = ["<option value=\"\">- $lang[notImported] -</option>"];
     foreach ($colsByGroup as $optgroup => $optionsList) {
