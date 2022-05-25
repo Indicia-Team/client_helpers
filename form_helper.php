@@ -69,7 +69,7 @@ class form_helper extends helper_base {
     }
     $forms = [];
     $groupForms = [];
-    $recommendedForms = []];
+    $recommendedForms = [];
     while (FALSE !== ($file = readdir($dir))) {
       $parts = explode('.', $file);
       if ($file != "." && $file != ".." && strtolower($parts[count($parts) - 1]) === 'php') {
