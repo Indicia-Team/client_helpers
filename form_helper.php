@@ -37,23 +37,27 @@ require_once 'helper_base.php';
 class form_helper extends helper_base {
 
   /**
-   * Outputs a pair of linked selects, for picking a prebuilt form from the library. The first select is for picking a form
-   * category and the second select is populated by AJAX for picking the actual form.
-   * @param array $readAuth Read authorisation tokens
-   * @param array $options Options array with the following possibilities:<ul>
-   * <li><b>form</b><br/>
-   * Optional. The name of the form to select as a default value.</li>
-   * <li><b>includeOutputDiv</b><br/>
-   * Set to true to generate a div after the controls which will receive the form parameter
-   * controls when a form is selected.</li>
-   * <li><b>allowConnectionOverride</b><br/>
-   * Defaults to false. In this state, the website ID and password controls are not displayed
-   * when both the values are already specified, though hidden inputs are put into the form.
-   * When set to true, the website ID and password input controls are always included in the form output.
-   * </li>
-   * </ul>
-   * @return string HTML for the form picker.
-   * @throws \Exception
+   * Outputs a pair of linked selects, for picking a prebuilt form.
+   *
+   * The first select is for picking a form category and the second select is
+   * populated by AJAX for picking the actual form.
+   *
+   * @param array $readAuth
+   *   Read authorisation tokens.
+   * @param array $options
+   *   Options array with the following possibilities:
+   *   * form - Optional. The name of the form to select as a default value.
+   *   * includeOutputDiv - Set to true to generate a div after the controls
+   *     which will receive the form parameter controls when a form is
+   *     selected.
+   *   * allowConnectionOverride - Defaults to false. In this state, the
+   *     website ID and password controls are not displayed when both the
+   *     values are already specified, though hidden inputs are put into the
+   *     form. When set to true, the website ID and password input controls are
+   *     always included in the form output.
+   *
+   * @return string
+   *   HTML for the form picker.
    */
   public static function prebuilt_form_picker($readAuth, $options) {
     require_once 'data_entry_helper.php';
@@ -63,9 +67,9 @@ class form_helper extends helper_base {
     if (!$dir = opendir($path . 'prebuilt_forms/')) {
       throw new Exception('Cannot open path to prebuilt form library.');
     }
-    $forms = array();
-    $groupForms = array();
-    $recommendedForms = array();
+    $forms = [];
+    $groupForms = [];
+    $recommendedForms = []];
     while (FALSE !== ($file = readdir($dir))) {
       $parts = explode('.', $file);
       if ($file != "." && $file != ".." && strtolower($parts[count($parts) - 1]) === 'php') {
@@ -87,8 +91,8 @@ class form_helper extends helper_base {
           continue;
         }
         ob_start();
-        if (is_callable(array('iform_' . $file_tokens[0], 'get_' . $file_tokens[0] . '_definition'))) {
-          $definition = call_user_func(array('iform_' . $file_tokens[0], 'get_' . $file_tokens[0] . '_definition'));
+        if (is_callable(['iform_' . $file_tokens[0], 'get_' . $file_tokens[0] . '_definition'])) {
+          $definition = call_user_func(['iform_' . $file_tokens[0], 'get_' . $file_tokens[0] . '_definition']);
           $definition['title'] = lang::get($definition['title']);
           $forms[$definition['category']][$file_tokens[0]] = $definition;
           if (isset($options['form']) && $file_tokens[0] === $options['form']) {
@@ -96,19 +100,19 @@ class form_helper extends helper_base {
           }
           if (!empty($definition['supportsGroups'])) {
             if (!isset($groupForms[$definition['category']])) {
-              $groupForms[$definition['category']] = array();
+              $groupForms[$definition['category']] = [];
             }
             $groupForms[$definition['category']][] = $file_tokens[0];
           }
           if (!empty($definition['recommended'])) {
             if (!isset($recommendedForms[$definition['category']])) {
-              $recommendedForms[$definition['category']] = array();
+              $recommendedForms[$definition['category']] = [];
             }
             $recommendedForms[$definition['category']][] = $file_tokens[0];
           }
         }
-        elseif (is_callable(array('iform_' . $file_tokens[0], 'get_title'))) {
-          $title = call_user_func(array('iform_' . $file_tokens[0], 'get_title'));
+        elseif (is_callable(['iform_' . $file_tokens[0], 'get_title'])) {
+          $title = call_user_func(['iform_' . $file_tokens[0], 'get_title']);
           $forms['Miscellaneous'][$file_tokens[0]] = array('title' => $title);
           if (isset($options['form']) && $file_tokens[0] === $options['form']) {
             $defaultCategory = 'Miscellaneous';
@@ -118,19 +122,19 @@ class form_helper extends helper_base {
       }
     }
     if (isset($defaultCategory)) {
-      $availableForms = array();
+      $availableForms = [];
       foreach ($forms[$defaultCategory] as $form => $def) {
         $availableForms[$form] = $def['title'];
       }
     }
     else {
       $defaultCategory = '';
-      $availableForms = array('' => '<Please select a category first>');
+      $availableForms = ['' => '<Please select a category first>'];
     }
     closedir($dir);
     // Makes an assoc array from the categories.
     $categories = array_merge(
-      array('' => '<Please select>'),
+      ['' => '<Please select>'],
       array_combine(array_keys($forms), array_keys($forms))
     );
     // Translate categories.
@@ -139,7 +143,7 @@ class form_helper extends helper_base {
     }
     asort($categories);
     if (count($groupForms) > 0) {
-      $r .= self::link_to_group_fields($readAuth, $options);
+      $r .= self::linkToGroupFields($readAuth, $options);
     }
     if (isset($options['allowConnectionOverride']) && !$options['allowConnectionOverride']
         && !empty($options['website_id']) && !empty($options['password'])) {
@@ -147,7 +151,7 @@ class form_helper extends helper_base {
       $r .= '<input type="hidden" id="password" name="password" value="' . $options['password'] . '"/>';
     }
     else {
-      $r .= data_entry_helper::text_input(array(
+      $r .= data_entry_helper::text_input([
         'label' => lang::get('Warehouse URL'),
         'fieldname' => 'base_url',
         'helpText' => lang::get('Enter the URL of the warehouse you are using if you want to override the site default. ' .
@@ -156,53 +160,55 @@ class form_helper extends helper_base {
             'user ID will differ between the 2 warehouses, therefore any data posted to this warehouse will be associated ' .
             'with the admin user account.'),
         'default' => isset($options['base_url']) ? $options['base_url'] : '',
-        'class' => 'control-width-5'
-      ));
-      $r .= data_entry_helper::text_input(array(
+        'class' => 'control-width-5',
+      ]);
+      $r .= data_entry_helper::text_input([
         'label' => lang::get('Website ID'),
         'fieldname' => 'website_id',
         'helpText' => lang::get('Enter the ID of the website record on the Warehouse you are using.'),
-        'default' => isset($options['website_id']) ? $options['website_id'] : ''
-      ));
-      $r .= data_entry_helper::text_input(array(
+        'default' => isset($options['website_id']) ? $options['website_id'] : '',
+      ]);
+      $r .= data_entry_helper::text_input([
         'label' => lang::get('Password'),
         'fieldname' => 'password',
         'helpText' => lang::get('Enter the password for the website record on the Warehouse you are using.'),
-        'default' => isset($options['password']) ? $options['password'] : ''
-      ));
+        'default' => isset($options['password']) ? $options['password'] : '',
+      ]);
     }
-    // Default - we are only going to show recommended page types in the category and page type drop downs.
+    // Default - we are only going to show recommended page types in the
+    // category and page type drop downs.
     $showRecommendedPageTypes = TRUE;
     if (isset($options['form'])) {
-      // If selecting an existing non-core form, then we need to override the default and show all categories and pages.
+      // If selecting an existing non-core form, then we need to override the
+      // default and show all categories and pages.
       $showRecommendedPageTypes = !empty($forms[$defaultCategory][$options['form']]['recommended']);
     }
-    $r .= data_entry_helper::checkbox(array(
+    $r .= data_entry_helper::checkbox([
       'label' => lang::get('Only show recommended page types'),
       'fieldname' => 'recommended',
       'helpText' => lang::get('Tick this box to limit the available page types to the recommended ones provided ' .
           'within the Indicia core. Unticking the box will allow you to select additional page types, such as ' .
           'those for specific survey methodologies or previous versions of the code.'),
       'default' => $showRecommendedPageTypes,
-      'labelClass' => 'auto'
-    ));
-    $r .= data_entry_helper::select(array(
+      'labelClass' => 'auto',
+    ]);
+    $r .= data_entry_helper::select([
       'id' => 'form-category-picker',
       'fieldname' => 'iform-cetegory',
       'label' => lang::get('Select page category'),
       'helpText' => lang::get('Select the category for the type of page you are building'),
       'lookupValues' => $categories,
-      'default' => $defaultCategory
-    ));
+      'default' => $defaultCategory,
+    ]);
 
-    $r .= data_entry_helper::select(array(
+    $r .= data_entry_helper::select([
       'id' => 'form-picker',
       'fieldname' => 'iform',
       'label' => lang::get('Page type'),
       'helpText' => lang::get('Select the page type you want to use.'),
       'lookupValues' => $availableForms,
-      'default' => isset($options['form']) ? $options['form'] : ''
-    ));
+      'default' => isset($options['form']) ? $options['form'] : '',
+    ]);
 
     // Div for the form instructions.
     $details = '';
@@ -222,31 +228,38 @@ class form_helper extends helper_base {
     if (isset($options['includeOutputDivs']) && $options['includeOutputDivs']) {
       $r .= '<div id="form-params"></div>';
     }
-    self::add_form_picker_js($forms, $groupForms, $recommendedForms, $showRecommendedPageTypes);
+    self::addFormPickerJs($forms, $groupForms, $recommendedForms, $showRecommendedPageTypes);
     return $r;
   }
 
   /**
-   * If there are any recording groups, then add controls to the config to allow the forms to be linked to the recording group
-   * functionality.
-   * @param $readAuth Read authorisation tokens
-   * @param $options Control options array. Set $options['available_for_groups'] to true to set the
-   * available for groups checkbox default and $options['limit_to_group_id'] to set the default
-   * group to limit this form to if any.
+   * Adds group configuration controls to the form.
+   *
+   * If there are any recording groups, then add controls to the config to
+   * allow the forms to be linked to the recording group functionality.
+   *
+   * @param array $readAuth
+   *   Read authorisation tokens
+   * @param array $options Control options array. Set
+   *   $options['available_for_groups'] to true to set the available for groups
+   *   checkbox default and $options['limit_to_group_id'] to set the default
+   *   group to limit this form to if any.
+   *
    * @return string
+   *   Additional HTML.
    */
-  private static function link_to_group_fields($readAuth, $options) {
+  private static function linkToGroupFields($readAuth, $options) {
     $r = '';
     if (hostsite_has_group_functionality()) {
-      $r .= data_entry_helper::checkbox(array(
+      $r .= data_entry_helper::checkbox([
         'label' => lang::get('This page is going to be used by recording groups'),
         'fieldname' => 'available_for_groups',
         'helpText' => lang::get('Tick this box if this page will be is made available for use by ' .
           'recording groups for their own record collection or reporting.'),
         'default' => isset($options['available_for_groups']) ? $options['available_for_groups'] : FALSE,
         'labelClass' => 'auto',
-      ));
-      $r .= data_entry_helper::select(array(
+      ]);
+      $r .= data_entry_helper::select([
         'label' => lang::get('Which recording group?'),
         'fieldname' => 'limit_to_group_id',
         'helpText' => lang::get('If this form is being built specifically for the use of a ' .
@@ -255,10 +268,10 @@ class form_helper extends helper_base {
         'table' => 'group',
         'valueField' => 'id',
         'captionField' => 'title',
-        'extraParams' => $readAuth + array('orderby' => 'title'),
+        'extraParams' => $readAuth + ['orderby' => 'title'],
         'default' => isset($options['limit_to_group_id']) ? $options['limit_to_group_id'] : FALSE,
-        'caching' => FALSE
-      ));
+        'caching' => FALSE,
+      ]);
     }
     return $r;
   }
@@ -270,7 +283,7 @@ class form_helper extends helper_base {
    *   List of prebuilt forms and their associated settings required by the
    *   picker.
    */
-  private static function add_form_picker_js($forms, $groupForms, $coreForms, $showRecommendedPageTypes) {
+  private static function addFormPickerJs($forms, $groupForms, $coreForms, $showRecommendedPageTypes) {
     $jsParams = [
       'baseUrl' => self::$base_url,
       'forms' => json_encode($forms),
@@ -472,7 +485,7 @@ JS;
     }
     self::$nocache = TRUE;
     $formparams = self::get_form_parameters($options['form']);
-    $fieldsets = array();
+    $fieldsets = [];
     $r = '';
     foreach ($formparams as $control) {
       // Skip hidden controls or non-site specific controls when displaying the reduced site specific
@@ -488,7 +501,7 @@ JS;
         'sep' => '<br/>',
         'class' => '',
         'blankText' => '<' . lang::get('please select') . '>',
-        'extraParams' => array(),
+        'extraParams' => [],
         'readAuth' => $options['readAuth'],
       ), $control);
       $type = self::mapType($control);
