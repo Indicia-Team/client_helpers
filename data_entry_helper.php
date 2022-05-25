@@ -5298,11 +5298,15 @@ JS;
    * secondary checklist which you can pick species from to add to the grid. As this happens,
    * a hidden table is used to store a clonable row which provides the template for new rows
    * to be added to the grid.
-   * @param array $options Options array passed to the species grid.
-   * @param array $occAttrControls List of the occurrence attribute controls, keyed by attribute ID.
-   * @param array $attributes List of attribute definitions loaded from the database.
+   *
+   * @param array $options
+   *   Options array passed to the species grid.
+   * @param array $occAttrControls
+   *   List of the occurrence attribute controls, keyed by attribute ID.
+   * @param array $attributes
+   *   List of attribute definitions loaded from the database.
    */
-  public static function get_species_checklist_clonable_row($options, $occAttrControls, $attributes) {
+  public static function get_species_checklist_clonable_row(array $options, array $occAttrControls, array $attributes) {
     global $indicia_templates;
     // We use the headers attribute of each td to link it to the id attribute of each th, for accessibility
     // and also to facilitate keyboard navigation. The last digit of the th id is the index of the column
@@ -5310,23 +5314,24 @@ JS;
     // Because the clonable row always goes in the first col, this can be always left to 0.
     $r = '<table style="display: none"><tbody><tr class="scClonableRow" id="' . $options['id'] . '-scClonableRow">';
     $colspan = !empty($options['lookupListId']) || $options['rowInclusionCheck'] === 'alwaysRemovable' ? ' colspan="2"' : '';
-    $r .= str_replace(array('{colspan}','{tableId}','{idx}','{editClass}'), array($colspan, $options['id'], 0, ''), $indicia_templates['taxon_label_cell']);
+    $r .= str_replace(['{colspan}', '{tableId}', '{idx}', '{editClass}'], [$colspan, $options['id'], 0, ''], $indicia_templates['taxon_label_cell']);
     $fieldname = "sc:$options[id]--idx-:";
     if ($options['subSpeciesColumn']) {
       $r .= '<td class="ui-widget-content scSubSpeciesCell"><select class="scSubSpecies" style="display: none" ' .
         "id=\"$fieldname:occurrence:subspecies\" name=\"$fieldname:occurrence:subspecies\" onchange=\"SetHtmlIdsOnSubspeciesChange(this.id);\">";
       $r .= '</select><span class="species-checklist-select-species">' . lang::get('Select a species first') . '</span></td>';
     }
-    $hidden = ($options['rowInclusionCheck']=='checkbox' ? '' : ' style="display:none"');
+    $hidden = ($options['rowInclusionCheck'] == 'checkbox' ? '' : ' style="display:none"');
     $r .= <<<HTML
 <td class="scPresenceCell" headers="$options[id]-present-0"$hidden>
 <input type="checkbox" class="scPresence" name="$fieldname:present" id="$fieldname:present" value="" />
 <input type="hidden" class="scTaxaTaxonListId" name="$fieldname:ttlId" value="" />
 <input type="hidden" class="scTaxonGroupId" value="" />
 HTML;
-    // If we have a grid ID attribute, output a hidden
-    if (!empty($options['gridIdAttributeId']))
+    // If we have a grid ID attribute, output a hidden.
+    if (!empty($options['gridIdAttributeId'])) {
       $r .= "<input type=\"hidden\" name=\"$fieldname:occAttr:$options[gridIdAttributeId]\" id=\"$fieldname:occAttr:$options[gridIdAttributeId]\" value=\"$options[id]\"/>";
+    }
     $r .= '</td>';
     if ($options['absenceCol']) {
       $r .= <<<HTML
@@ -5335,14 +5340,19 @@ HTML;
 </td>
 HTML;
     }
-    if ($options['speciesControlToUseSubSamples'])
-      $r .= '<td class="scSampleCell" style="display:none"><input type="hidden" class="scSample" name="'.
-        $fieldname.':occurrence:sampleIDX" id="'.$fieldname.':occurrence:sampleIDX" value="" /></td>';
+    if ($options['speciesControlToUseSubSamples']) {
+      $r .= '<td class="scSampleCell" style="display:none"><input type="hidden" class="scSample" name="' .
+        $fieldname . ':occurrence:sampleIDX" id="' . $fieldname . ':occurrence:sampleIDX" value="" /></td>';
+    }
     $idx = 0;
-    foreach ($occAttrControls as $attrId=>$oc) {
+    foreach ($occAttrControls as $attrId => $oc) {
       $class = self::speciesChecklistOccAttrClass($options, $idx, $attributes[$attrId]['caption']);
-      $r .= str_replace(array('{content}', '{class}', '{headers}'),
-        array(str_replace('{fieldname}', "$fieldname:occAttr:$attrId", $oc), $class.'Cell', $options['id']."-attr$attrId-0"),
+      $r .= str_replace(['{content}', '{class}', '{headers}'],
+        [
+          str_replace('{fieldname}', "$fieldname:occAttr:$attrId", $oc),
+          $class . 'Cell',
+          "$options[id]-attr$attrId-0",
+        ],
         $indicia_templates['attribute_cell']
       );
       $idx++;
@@ -5359,19 +5369,21 @@ HTML;
 </td>
 HTML;
     }
-    if (isset($options['occurrenceSensitivity']))
+    if (isset($options['occurrenceSensitivity'])) {
       $r .= self::speciesChecklistSensitivityCell($options, 0, '-idx-', '');
+    }
     if ($options['mediaTypes']) {
       $onlyImages = TRUE;
       foreach ($options['mediaTypes'] as $mediaType) {
-        if (!preg_match('/^Image:/', $mediaType))
+        if (!preg_match('/^Image:/', $mediaType)) {
           $onlyImages=FALSE;
+        }
       }
       $label = $onlyImages ? 'Add images' : 'Add media';
       $class = 'sc' . $onlyImages ? 'Image' : 'Media' . 'Link';
-      $r .= '<td class="ui-widget-content scAddMediaCell" headers="'.$options['id'] . '-images-0">' .
-          '<a href="" class="add-media-link button '.$class.'" style="display: none" id="add-media:'.$options['id'] . '--idx-:">'.
-          lang::get($label).'</a><span class="species-checklist-select-species">'.lang::get('Select a species first').'</span></td>';
+      $r .= '<td class="ui-widget-content scAddMediaCell" headers="' . $options['id'] . '-images-0">' .
+          '<a href="" class="add-media-link button ' . $class . '" style="display: none" id="add-media:' . $options['id'] . '--idx-:">' .
+          lang::get($label) . '</a><span class="species-checklist-select-species">'.lang::get('Select a species first') . '</span></td>';
 
       // Extra columnn for photos in responsive mode.
       if ($options['responsive']) {
@@ -6311,15 +6323,23 @@ JS;
   /**
    * Method which populates data_entry_helper::$entity_to_load with the values from an existing
    * record. Useful when reloading data to edit.
-   * @param array $readAuth Read authorisation tokens
-   * @param string $entity Name of the entity to load data from.
-   * @param integer $id ID of the database record to load
-   * @param string $view Name of the view to load attributes from, normally 'list' or 'detail'.
-   * @param boolean $sharing Defaults to false. If set to the name of a sharing task
-   * (reporting, peer_review, verification, data_flow, moderation or editing), then the record can be
-   * loaded from another client website if a sharing agreement is in place.
-   * @link https://indicia-docs.readthedocs.org/en/latest/administrating/warehouse/website-agreements.html
-   * @param boolean $loadImages If set to true, then image information is loaded as well.
+   *
+   * @param array $readAuth
+     * Read authorisation tokens
+   * @param string $entity
+   *   Name of the entity to load data from.
+   * @param integer $id
+   *   ID of the database record to load.
+   * @param string $view
+   *   Name of the view to load attributes from, normally 'list' or 'detail'.
+   * @param bool $sharing
+   *   Defaults to false. If set to the name of a sharing task (reporting,
+   *   peer_review, verification, data_flow, moderation or editing), then the
+   *   record can be loaded from another client website if a sharing agreement
+   *   is in place.
+   *   @link https://indicia-docs.readthedocs.org/en/latest/administrating/warehouse/website-agreements.html
+   * @param bool $loadImages
+   *   If set to true, then image information is loaded as well.
    */
   public static function load_existing_record($readAuth, $entity, $id, $view = 'detail', $sharing = FALSE, $loadImages = FALSE) {
     $records = self::get_population_data(array(
@@ -6379,8 +6399,6 @@ JS;
    *   @link https://indicia-docs.readthedocs.org/en/latest/administrating/warehouse/website-agreements.html
    * @param boolean $loadImages
    *   If set to true, then image information is loaded as well.
-   *
-   * @throws Exception
    */
   public static function load_existing_record_from($record, $readAuth, $entity, $id, $view = 'detail', $sharing = FALSE, $loadImages = FALSE) {
     if (isset($record['error'])) {
