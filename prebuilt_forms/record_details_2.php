@@ -375,6 +375,9 @@ Record ID',
     if (self::$record['release_status'] !== 'R') {
       $flags[] = lang::get(self::$record['release_status'] === 'P' ? 'pending release' : 'unreleased');
     }
+    if (self::$record['zero_abundance'] === 't') {
+      $flags[] = lang::get('zero abundance');
+    }
     if (!empty($flags)) {
       $details_report = '<div id="record-flags"><span>' . implode('</span><span>', $flags) . '</span></div>';
     }
@@ -383,11 +386,16 @@ Record ID',
     }
 
     $details_report .= '<div class="record-details-fields ui-helper-clearfix">';
-    $nameLabel = self::$record['taxon'];
-    if (self::$record['taxon'] !== self::$record['preferred_taxon']) {
+    $nameLabel = self::$record['taxon_as_entered'];
+    if (self::$record['taxon_as_entered'] !== self::$record['preferred_taxon']) {
       $nameLabel .= ' (' . self::$record['preferred_taxon'] . ')';
     }
-    $title = lang::get('Record of {1}', $nameLabel);
+    if (self::$record['zero_abundance'] === 't') {
+      $title = lang::get('Absence of {1}', $nameLabel);
+    }
+    else {
+      $title = lang::get('Record of {1}', $nameLabel);
+    }
     hostsite_set_page_title($title);
     foreach ($availableFields as $field => $caption) {
       // Skip some fields if logged out.
@@ -452,7 +460,8 @@ Record ID',
       ]);
     }
 
-    $r = '<h3>' . lang::get('Record Details') . '</h3><dl class="detail-panel dl-horizontal" id="detail-panel-recorddetails">';
+    $blockTitle = self::$record['zero_abundance'] === 't' ? lang::get('Absence record details') : lang::get('Record details');
+    $r = "<h3>$blockTitle</h3><dl class=\"detail-panel dl-horizontal\" id=\"detail-panel-recorddetails\">";
 
     $r .= $details_report;
     if (isset($attrs_report)) {
@@ -1020,8 +1029,7 @@ JS;
       $url = str_replace('{rootFolder}', $rootFolder, $url);
       $url .= (strpos($url, '?') === FALSE) ? '?' : '&';
       $url .= $args['explore_param_name'] . '=' . self::$record['taxon_meaning_id'];
-      $taxon = empty(self::$record['preferred_taxon']) ? self::$record['taxon'] : self::$record['preferred_taxon'];
-      $taxon = str_replace(' - zero abundance found', '', $taxon);
+      $taxon = empty(self::$record['preferred_taxon']) ? self::$record['taxon_as_entered'] : self::$record['preferred_taxon'];
       $r = "<a class=\"$indicia_templates[buttonDefaultClass]\" href=\"$url\">" . lang::get('Explore records of {1}', $taxon) . '</a>';
     }
     else {
@@ -1057,8 +1065,7 @@ JS;
       $url = str_replace('{rootFolder}', $rootFolder, $url);
       $url .= (strpos($url, '?') === FALSE) ? '?' : '&';
       $url .= 'taxon_meaning_id=' . self::$record['taxon_meaning_id'];
-      $taxon = empty(self::$record['preferred_taxon']) ? self::$record['taxon'] : self::$record['preferred_taxon'];
-      $taxon = str_replace(' - zero abundance found', '', $taxon);
+      $taxon = empty(self::$record['preferred_taxon']) ? self::$record['taxon_as_entered'] : self::$record['preferred_taxon'];
       return "<a class=\"$indicia_templates[buttonDefaultClass]\" href=\"$url\">" . lang::get('{1} details page', $taxon) . '</a>';
     }
     return '';
