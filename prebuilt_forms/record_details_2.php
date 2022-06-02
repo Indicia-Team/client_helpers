@@ -477,7 +477,7 @@ Record ID',
    * This is then used by the record_data_attributes_with_hiddens report to
    * return custom attributes which aren't in the hidden attributes list.
    *
-   * @param array
+   * @param array $theArray
    *   Attributes.
    *
    * @return string
@@ -543,13 +543,13 @@ Record ID',
     $options = array_merge([
       'title' => lang::get('Parent sample photos and media'),
     ], $options);
-    $occurrence = data_entry_helper::get_population_data(array(
+    $occurrence = data_entry_helper::get_population_data([
       'table' => 'occurrence',
       'extraParams' => $auth['read'] + [
         'id' => $_GET['occurrence_id'],
         'view' => 'detail',
       ],
-    ));
+    ]);
     $sample = data_entry_helper::get_population_data([
       'table' => 'sample',
       'extraParams' => $auth['read'] + [
@@ -567,8 +567,12 @@ Record ID',
 
   /**
    * Returns the class attribute HTML to apply to attribute list data in the details pane.
-   * @param string $field Field name
+   *
+   * @param string $field
+   *   Field name.
+   *
    * @return string
+   *   Class attribute HTML.
    */
   private static function getFieldClass($field) {
     if (self::$record[$field] === 'This record is sensitive') {
@@ -597,15 +601,15 @@ Record ID',
       'imageSize' => 'thumb',
       'class' => 'media-gallery',
     ], $options);
-    $extraParams = $auth['read'] + array(
+    $extraParams = $auth['read'] + [
       'sharing' => $args['sharing'],
       'limit' => $options['itemsPerPage'],
-    );
+    ];
     $extraParams[$settings['key']] = $settings['value'];
-    $media = data_entry_helper::get_population_data(array(
+    $media = data_entry_helper::get_population_data([
       'table' => $settings['table'],
       'extraParams' => $extraParams,
-    ));
+    ]);
     $r = <<<HTML
 <div class="detail-panel" id="detail-panel-photos">
   <h3>$options[title]</h3>
@@ -647,7 +651,7 @@ HTML;
    *   The output map panel.
    */
   protected static function get_control_map($auth, $args, $tabalias, $options) {
-    iform_load_helpers(array('map_helper'));
+    iform_load_helpers(['map_helper']);
     self::load_record($auth, $args);
     $options = array_merge(
       iform_map_get_map_options($args, $auth['read']),
@@ -672,9 +676,9 @@ JS;
     $olOptions = iform_map_get_ol_options($args);
 
     if (!isset($options['standardControls'])) {
-      $options['standardControls'] = array('layerSwitcher', 'panZoom');
+      $options['standardControls'] = ['layerSwitcher', 'panZoom'];
     }
-    return '<div class="detail-panel" id="detail-panel-map"><h3>' . lang::get('Map') .'</h3>' . map_helper::map_panel($options, $olOptions) . '</div>';
+    return '<div class="detail-panel" id="detail-panel-map"><h3>' . lang::get('Map') . '</h3>' . map_helper::map_panel($options, $olOptions) . '</div>';
   }
 
   /**
@@ -1074,9 +1078,9 @@ JS;
   /**
    * Sets default values for arguments.
    *
-   * When a form version is upgraded introducing new parameters, old forms will not get the defaults for the
-   * parameters unless the Edit and Save button is clicked. So, apply some defaults to keep those old forms
-   * working.
+   * When a form version is upgraded introducing new parameters, old forms will
+   * not get the defaults for the parameters unless the Edit and Save button is
+   * clicked. So, apply some defaults to keep those old forms working.
    *
    * @return array
    *   Updated form arguments.
@@ -1098,7 +1102,7 @@ FIELDS;
 |
 [photos]
 STRUCT;
-    $args = array_merge(array(
+    $args = array_merge([
       'interface' => 'one_page',
       'allow_confidential' => FALSE,
       'allow_sensitive_full_precision' => FALSE,
@@ -1106,7 +1110,7 @@ STRUCT;
       'hide_fields' => $defaultHiddenFields,
       'structure' => $defaultStructure,
       'sharing' => 'reporting',
-    ), $args);
+    ], $args);
     return $args;
   }
 
@@ -1125,11 +1129,11 @@ STRUCT;
       if (!empty($args['map_geom_precision'])) {
         $params['geom_precision'] = $args['map_geom_precision'];
       }
-      $records = report_helper::get_report_data(array(
+      $records = report_helper::get_report_data([
         'readAuth' => $auth['read'],
         'dataSource' => 'reports_for_prebuilt_forms/record_details_2/record_data',
         'extraParams' => $params,
-      ));
+      ]);
       if (!count($records)) {
         hostsite_show_message(lang::get('The record cannot be found.', 'warning'));
         throw new exception('');
