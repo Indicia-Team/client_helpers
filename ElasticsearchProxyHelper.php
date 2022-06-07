@@ -1876,7 +1876,7 @@ class ElasticsearchProxyHelper {
       $boolClause = !empty($filter['op']) && $filter['op'] === 'not in' ? 'must_not' : 'must';
       $bool[$boolClause][] = [
         'terms' => [
-          'metadata.input_form.keyword' => explode(',', str_replace("'", '', $filter['value'])),
+          'metadata.input_form' => explode(',', str_replace("'", '', $filter['value'])),
         ],
       ];
     }
