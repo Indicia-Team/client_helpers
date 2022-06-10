@@ -702,8 +702,11 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
         }
         // If @permission specified as an option, then check that the user has
         // access to this control.
-        if (!empty($options['permission']) && !hostsite_user_has_permission($options['permission'])) {
-          continue;
+        if (!empty($options['permission'])) {
+          // @hideIfHasPermission=true reverses the permissions check.
+          if (empty($options['hideIfHasPermission']) !== hostsite_user_has_permission($options['permission'])) {
+            continue;
+          }
         }
         $parts = explode('.', str_replace(['[', ']'], '', $component));
         $method = 'get_control_' . preg_replace('/[^a-zA-Z0-9]/', '', strtolower($component));
