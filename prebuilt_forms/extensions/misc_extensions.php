@@ -877,4 +877,30 @@ JS;
     }
   }
 
+  /**
+   * A control for redirection, optional depending on permissions.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-forms.html#misc-extensions-redirect
+   */
+  public static function redirect(array $auth, array $args, $tabalias, array $options) {
+    if (empty($options['path'])) {
+      return 'The [misc_extensions.path] extension requires a path value in the options.';
+    }
+    $options = array_merge([
+      'params' => [],
+      'fragment' => FALSE,
+    ], $options);
+    foreach ($options['params'] as $param => &$value) {
+      if (preg_match('/{{ (?<field>.+) }}/', $value, $matches)) {
+        if ($matches['field'] === 'indicia_user_id') {
+          $value = hostsite_get_field('indicia_user_id');
+        }
+        elseif (isset($_GET[$matches['field']])) {
+          $value = $_GET[$matches['field']];
+        }
+      }
+    }
+    hostsite_goto_page($options['path'], $options['params'], $options['fragment']);
+  }
+
 }
