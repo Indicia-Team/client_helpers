@@ -302,7 +302,10 @@ class iform_species_details extends iform_dynamic {
     }
 
     self::get_names($auth);
-    hostsite_set_page_title(lang::get('Summary details for {1}', self::$preferred));
+    //hostsite_set_page_title(lang::get('Summary details for {1}', self::$preferred));
+    $titleName = str_replace('<em>', '', self::$preferred);
+    $titleName = str_replace('</em>', '', $titleName);
+    hostsite_set_page_title(lang::get('Summary details for {1}', $titleName));
 
     return parent::get_form_html($args, $auth, $attributes);
   }
@@ -430,14 +433,16 @@ class iform_species_details extends iform_dynamic {
         'readAuth' => $auth['read'],
         'class' => 'species-details-fields',
         'dataSource' => 'library/taxa/taxon_attributes_with_hiddens',
-        'bands' => array(array('content'=>$indicia_templates['dataValue'])),
+        //'bands' => array(array('content'=>$indicia_templates['dataValue'])),
+        'bands' => array(array('content' => str_replace(['{class}'], '', $indicia_templates['dataValue']))),
         'extraParams' => array(
           'taxa_taxon_list_id' => self::$taxa_taxon_list_id,
           //the SQL needs to take a set of the hidden fields, so this needs to be converted from an array.
           'attrs' => strtolower(self::convert_array_to_set($fields)),
           'testagainst' => $args['testagainst'],
           'operator' => $args['operator'],
-          'sharing' => 'reporting'
+          'sharing' => 'reporting',
+          'language' => iform_lang_iso_639_2(hostsite_get_user_field('language')),
         )
       ));
     }
@@ -674,6 +679,8 @@ class iform_species_details extends iform_dynamic {
       ],
     ]);
     $r = '<div class="detail-panel" id="detail-panel-photos"><h3>' . lang::get('Photos and media') . '</h3>';
+    $r .= '<div class="' . $options['class'] . '"><ul>';
+
     if (count($media) === 0) {
       $r .= '<p>No photos or media files available</p>';
     }
@@ -682,7 +689,7 @@ class iform_species_details extends iform_dynamic {
         $r .= iform_report_get_gallery_item('occurrence', $medium, $options['imageSize']);
       }
     }
-    $r .= '</div>';
+    $r .= '</ul></div></div>';
     return $r;
   }
 
