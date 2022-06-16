@@ -70,6 +70,7 @@ class import_helper_2 extends helper_base {
    *   matching data value/matched termlist term ID pairs for a lookup custom
    *   attribute.
    * * importChunkUrl - path to a script that imports the next chunk of records
+   * * getErrorFileUrl - location of the end-point that fetches the errors data file.
    *   from the temp table into the database.
    * * readAuth - read authorisation tokens.
    * * writeAuth - write authorisation tokens.
@@ -96,6 +97,7 @@ class import_helper_2 extends helper_base {
     self::$indiciaData['processLookupMatchingUrl'] = $options['processLookupMatchingUrl'];
     self::$indiciaData['saveLookupMatchesGroupUrl'] = $options['saveLookupMatchesGroupUrl'];
     self::$indiciaData['importChunkUrl'] = $options['importChunkUrl'];
+    self::$indiciaData['getErrorFileUrl'] = $options['getErrorFileUrl'];
     self::$indiciaData['write'] = $options['writeAuth'];
     $nextImportStep = empty($_POST['next-import-step']) ? 'fileSelectForm' : $_POST['next-import-step'];
     switch ($nextImportStep) {
@@ -293,6 +295,12 @@ class import_helper_2 extends helper_base {
         'description' => $description,
       ]);
     }
+    if (isset($_POST['precheck'])) {
+      $data['precheck'] = 't';
+    }
+    elseif (isset($_POST['restart'])) {
+      $data['restart'] = 't';
+    }
     $response = self::http_post($serviceUrl, $data, FALSE);
     $output = json_decode($response['output'], TRUE);
     if (!$response['result']) {
@@ -365,6 +373,7 @@ HTML;
    */
   private static function globalValuesForm(array $options) {
     self::addLanguageStringsToJs('import_helper_2', [
+      'backgroundProcessingDone' => 'Background processing done',
       'extractingFile' => 'Extracting the data from the Zip file.',
       'fileExtracted' => 'Data extracted from Zip file.',
       'fileUploaded' => 'File uploaded to the server.',
@@ -407,9 +416,9 @@ HTML;
   $form
   <div class="panel panel-info background-processing">
     <div class="panel-heading">
-      $lang[backgroundProcessing]
+      <span>$lang[backgroundProcessing]</span>
       <progress id="file-progress" class="progress" value="0" max="100"></progress>
-      <a data-toggle="collapse" class="small" href="#background-extra">$lang[moreInfo]</a>
+      <br/><a data-toggle="collapse" class="small" href="#background-extra">$lang[moreInfo]</a>
     </div>
     <div id="background-extra" class="panel-body panel-collapse collapse"></div>
   </div>
@@ -631,6 +640,7 @@ HTML;
     // Save the results of the previous mappings form.
     self::savePostedFormValuesToConfig($options, 'mappings');
     self::addLanguageStringsToJs('import_helper_2', [
+      'backgroundProcessingDone' => 'Background processing done',
       'dataValue' => 'Data value',
       'findingLookupFieldsThatNeedMatching' => 'Finding lookup fields that need matching.',
       'findLookupFieldsDone' => 'Finding lookup fields done.',
@@ -662,7 +672,7 @@ HTML;
   </div>
   <div class="panel panel-info background-processing">
     <div class="panel-heading">
-      $lang[backgroundProcessing]
+      <span>$lang[backgroundProcessing]</span>
       <br/><a data-toggle="collapse" class="small" href="#background-extra">$lang[moreInfo]</a>
     </div>
     <div id="background-extra" class="panel-body panel-collapse collapse"></div>
@@ -792,23 +802,46 @@ HTML;
    */
   private static function doImportPage($options) {
     self::addLanguageStringsToJs('import_helper_2', [
-      'completeMessage' => 'The import is complete',
+      'completeMessage' => 'The import is complete.',
+      'downloadErrors' => 'Download the rows that had errors',
+      'errorInImportFile' => 'Errors were found in {1} row.',
+      'errorsInImportFile' => 'Errors were found in {1} rows.',
+      'importingData' => 'Importing data',
+      'importingDetails' => '{rowsProcessed} of {totalRows} imported, {errorsCount} errors found.',
+      'importingFoundErrors' => 'Errors were found during the import stage which means that data was imported but rows with errors were skipped. Please download the errors spreadsheet using the button below and correct the data then upload just the errors spreadsheet again.',
+      'precheckDetails' => '{rowsProcessed} of {totalRows} checked, {errorsCount} errors found.',
+      'precheckFoundErrors' => 'Because validation errors were found, no data has been imported. Please download the errors spreadsheet using the button below and correct the data in your original file accordingly, then upload it again.',
     ]);
     $lang = [
-      'errorsInImportFile' => lang::get('{1} rows with problems have been found in the import file.'),
-      'importProgress' => lang::get('Import progress'),
+      'checkingData' => lang::get('Checking data'),
+      'importingDone' => lang::get('Import complete'),
+      'importingTitle' => lang::get('Importing the data...'),
+      'precheckDone' => 'Checking complete',
+      'precheckTitle' => 'Checking the import data for validation errors...',
+      'precheckDone' => 'Checking complete',
     ];
-    $lang['errorsInImportFile'] = str_replace('{1}', '<span class="error-count">0</span>', $lang['errorsInImportFile']);
     self::$indiciaData['readyToImport'] = TRUE;
     self::$indiciaData['dataFile'] = $_POST['data-file'];
     // Put the import description somewhere so it can be saved.
     self::$indiciaData['importDescription'] = $_POST['description'];
     return <<<HTML
-<h3>$lang[importProgress]:</h3>
+<h3 id="current-task">$lang[checkingData]</h3>
 <progress id="file-progress" class="progress" value="0" max="100"></progress>
+<div class="panel panel-info">
+  <div class="panel-heading">
+    <h4>Import details</h4>
+  </div>
+  <div id="import-details" class="panel-body">
+    <p id="import-details-precheck-title" style="display: none">$lang[precheckTitle]</p>
+    <p id="import-details-precheck-details" style="display: none"></p>
+    <p id="import-details-precheck-done" style="display: none"><i class="fas fa-check"></i>$lang[precheckDone]</p>
+    <p id="import-details-importing-title" style="display: none">$lang[importingTitle]</p>
+    <p id="import-details-importing-details" style="display: none"></p>
+    <p id="import-details-importing-done" style="display: none"><i class="fas fa-check"></i>$lang[importingDone]</p>
+  </div>
+</div>
 <div class="alert alert-danger clearfix" id="error-info" style="display: none">
-  $lang[errorsInImportFile]
-  <i class="fa-solid fa-triangle-exclamation fa-2x pull-right"></i>
+  <i class="fas fa-exclamation-triangle fa-2x pull-right"></i>
 </div>
 HTML;
   }
@@ -861,6 +894,7 @@ HTML;
       'processLookupMatchingUrl',
       'saveLookupMatchesGroupUrl',
       'importChunkUrl',
+      'getErrorFileUrl',
     ];
     foreach ($requiredOptions as $requiredOption) {
       if (empty($options[$requiredOption])) {
