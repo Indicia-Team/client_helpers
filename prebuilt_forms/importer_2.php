@@ -179,10 +179,11 @@ TXT;
       'processLookupMatchingUrl' => hostsite_get_url('iform/ajax/importer_2') . "/process_lookup_matching/$nid",
       'saveLookupMatchesGroupUrl' => hostsite_get_url('iform/ajax/importer_2') . "/save_lookup_matches_group/$nid",
       'importChunkUrl' => hostsite_get_url('iform/ajax/importer_2') . "/import_chunk/$nid",
+      'getErrorFileUrl' => helper_base::$base_url . 'index.php/services/import_2/get_errors_file',
       'readAuth' => $auth['read'],
       'writeAuth' => $auth['write_tokens'],
       'entity' => 'occurrence',
-      'fixedValues' => [],
+      'fixedValues' => self::getDefaultFixedValues($auth),
     ], $args);
     $options['fixedValues'] = get_options_array_with_user_data($options['fixedValues']);
     return import_helper_2::importer($options);
@@ -260,6 +261,49 @@ TXT;
     $writeAuth = self::getWriteAuthFromHeaders();
     iform_load_helpers(['import_helper_2']);
     echo json_encode(import_helper_2::importChunk($_GET['data-file'], isset($_POST['description']) ? $_POST['description'] : NULL, $writeAuth));
+  }
+
+  /**
+   * Retrieve any default fixed values.
+   *
+   * Values that apply to all rows, e.g. group_id for group linked forms.
+   *
+   * @param array $auth
+   *   Authorisation tokens.
+   *
+   * @return array
+   *   Key/value pairs of fixed values.
+   */
+  private static function getDefaultFixedValues($auth) {
+    $fixedValues = [];
+    if (!empty($_GET['group_id'])) {
+      // Loading data into a recording group.
+      $group = data_entry_helper::get_population_data([
+        'table' => 'group',
+        'extraParams' => $auth['read'] + [
+          'id' => $_GET['group_id'],
+          'view' => 'detail',
+        ],
+      ]);
+      $group = $group[0];
+      if (!empty($model) && $model === 'groups_location') {
+        $presets['groups_location:group_id'] = $_GET['group_id'];
+      }
+      else {
+        $presets['sample:group_id'] = $_GET['group_id'];
+      }
+      hostsite_set_page_title(lang::get('Import data into the {1} group', $group['title']));
+      // If a single survey specified for this group, then force the data into
+      // the correct survey.
+      $filterdef = json_decode($group['filter_definition'], TRUE);
+      if (!empty($filterdef['survey_list_op']) && $filterdef['survey_list_op'] === 'in' && !empty($filterdef['survey_list'])) {
+        $surveys = explode(',', $filterdef['survey_list']);
+        if (count($surveys) === 1) {
+          $presets['survey_id'] = $surveys[0];
+        }
+      }
+    }
+    return $fixedValues;
   }
 
   /**
