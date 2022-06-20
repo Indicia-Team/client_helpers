@@ -839,7 +839,7 @@ class helper_base {
       if (!self::$js_path) {
         self::$js_path = $base . 'media/js/';
       }
-      elseif (substr(self::$js_path, -1)!="/") {
+      elseif (substr(self::$js_path, -1) != "/") {
         // Ensure a trailing slash.
         self::$js_path .= "/";
       }
@@ -863,7 +863,7 @@ class helper_base {
       if (substr($indicia_theme_path, -1) !== '/') {
         $indicia_theme_path .= '/';
       }
-      self::$resource_list = array(
+      self::$resource_list = [
         'indiciaFns' => [
           'deps' => ['jquery'],
           'javascript' => [self::$js_path . "indicia.functions.js"],
@@ -991,23 +991,80 @@ class helper_base {
             '[IE]' . self::$js_path . 'jqplot/excanvas.js'
           ],
         ],
-        'jqplot_bar' => array('javascript' => array(self::$js_path.'jqplot/plugins/jqplot.barRenderer.js')),
-        'jqplot_pie' => array('javascript' => array(self::$js_path.'jqplot/plugins/jqplot.pieRenderer.js')),
-        'jqplot_category_axis_renderer' => array('javascript' => array(self::$js_path.'jqplot/plugins/jqplot.categoryAxisRenderer.js')),
-        'jqplot_canvas_axis_label_renderer' => array('javascript' => array(self::$js_path.'jqplot/plugins/jqplot.canvasTextRenderer.js', self::$js_path.'jqplot/plugins/jqplot.canvasAxisLabelRenderer.js')),
-        'jqplot_trendline' => array('javascript'=>array(self::$js_path.'jqplot/plugins/jqplot.trendline.js')),
-        'reportgrid' => array('deps' => array('jquery_ui', 'jquery_cookie'),
-            'javascript' => array(self::$js_path.'jquery.reportgrid.js')),
-        'reportfilters' => array('deps' => array('reportgrid'), 'stylesheets' => array(self::$css_path."report-filters.css"), 'javascript' => array(self::$js_path.'reportFilters.js')),
-        'tabs' => array('deps' => array('jquery_ui'), 'javascript' => array(self::$js_path.'tabs.js')),
-        'wizardprogress' => array('deps' => array('tabs'), 'stylesheets' => array(self::$css_path."wizard_progress.css")),
-        'spatialReports' => array('javascript'=>array(self::$js_path.'spatialReports.js')),
-        'jsonwidget' => array('deps' => array('jquery'), 'javascript'=>array(self::$js_path."jsonwidget/jsonedit.js",
-            self::$js_path."jquery.jsonwidget.js"), 'stylesheets'=>array(self::$css_path."jsonwidget.css")),
-        'timeentry' => array('javascript'=>array(self::$js_path."jquery.timeentry.min.js")),
-        'verification' => array('javascript'=>array(self::$js_path."verification.js")),
-        'control_speciesmap_controls' => array('deps' =>array('jquery', 'openlayers', 'addrowtogrid', 'validation'), 'javascript' => array(self::$js_path."controls/speciesmap_controls.js")),
-        'complexAttrGrid' => array('javascript'=>array(self::$js_path."complexAttrGrid.js")),
+        'jqplot_bar' => [
+          'javascript' => [
+            self::$js_path . 'jqplot/plugins/jqplot.barRenderer.js',
+          ],
+        ],
+        'jqplot_pie' => [
+          'javascript' => [
+            self::$js_path . 'jqplot/plugins/jqplot.pieRenderer.js',
+          ],
+        ],
+        'jqplot_category_axis_renderer' => [
+          'javascript' => [self::$js_path . 'jqplot/plugins/jqplot.categoryAxisRenderer.js'],
+        ],
+        'jqplot_canvas_axis_label_renderer' => [
+          'javascript' => [
+            self::$js_path . 'jqplot/plugins/jqplot.canvasTextRenderer.js',
+            self::$js_path . 'jqplot/plugins/jqplot.canvasAxisLabelRenderer.js',
+          ],
+        ],
+        'jqplot_trendline' => [
+          'javascript' => [
+            self::$js_path . 'jqplot/plugins/jqplot.trendline.js',
+          ],
+        ],
+        'reportgrid' => [
+          'deps' => ['jquery_ui', 'jquery_cookie'],
+          'javascript' => [
+            self::$js_path . 'jquery.reportgrid.js',
+          ]
+        ],
+        'reportfilters' => [
+          'deps' => ['reportgrid'],
+          'stylesheets' => [self::$css_path . 'report-filters.css'],
+          'javascript' => [self::$js_path . 'reportFilters.js'],
+        ],
+        'tabs' => [
+          'deps' => ['jquery_ui'],
+          'javascript' => [self::$js_path . 'tabs.js'],
+        ],
+        'wizardprogress' => [
+          'deps' => ['tabs'],
+          'stylesheets' => [self::$css_path . 'wizard_progress.css']
+        ],
+        'spatialReports' => [
+          'javascript' => [self::$js_path . 'spatialReports.js'],
+        ],
+        'jsonwidget' => [
+          'deps' => ['jquery'],
+          'javascript' => [
+            self::$js_path . 'jsonwidget/jsonedit.js',
+            self::$js_path . 'jquery.jsonwidget.js',
+          ],
+          'stylesheets' => [self::$css_path . 'jsonwidget.css'],
+        ],
+        'timeentry' => [
+          'javascript' => [self::$js_path . 'jquery.timeentry.min.js'],
+        ],
+        'verification' => [
+          'javascript' => [self::$js_path . 'verification.js'],
+        ],
+        'control_speciesmap_controls' => [
+          'deps' => [
+            'jquery',
+            'openlayers',
+            'addrowtogrid',
+            'validation',
+          ],
+          'javascript' => [
+            self::$js_path . 'controls/speciesmap_controls.js',
+          ],
+        ],
+        'complexAttrGrid' => [
+          'javascript' => [self::$js_path . 'complexAttrGrid.js'],
+        ],
         'footable' => [
           'stylesheets' => [self::$js_path . 'footable/css/footable.core.min.css'],
           // Note, the minified version not used as it does not contain bugfixes.
@@ -1037,24 +1094,36 @@ class helper_base {
             self::$js_path . 'html2pdf/dist/html2pdf.bundle.min.js',
           ],
         ],
-        'review_input' => array('javascript' => array(self::$js_path . 'jquery.reviewInput.js')),
-        'sub_list' => array('javascript' => array(self::$js_path . 'sub_list.js')),
-        'georeference_default_geoportal_lu' => array(
-            'javascript' => array(self::$js_path.'drivers/georeference/geoportal_lu.js')),
-        'georeference_default_nominatim' => array(
-              'javascript' => array(self::$js_path.'drivers/georeference/nominatim.js')),
-        'georeference_default_google_places' => array(
-            'javascript' => array(self::$js_path.'drivers/georeference/google_places.js')),
-        'georeference_default_indicia_locations' => array(
-            'javascript' => array(self::$js_path.'drivers/georeference/indicia_locations.js')),
-        'sref_handlers_2169' => array(
-            'javascript' => array(self::$js_path.'drivers/sref/2169.js')),
-        'sref_handlers_4326' => array(
-            'javascript' => array(self::$js_path.'drivers/sref/4326.js')),
-        'sref_handlers_osgb' => array(
-            'javascript' => array(self::$js_path.'drivers/sref/osgb.js')),
-        'sref_handlers_osie' => array(
-            'javascript' => array(self::$js_path.'drivers/sref/osie.js')),
+        'review_input' => [
+          'javascript' => [self::$js_path . 'jquery.reviewInput.js'],
+        ],
+        'sub_list' => [
+          'javascript' => [self::$js_path . 'sub_list.js'],
+        ],
+        'georeference_default_geoportal_lu' => [
+          'javascript' => [self::$js_path . 'drivers/georeference/geoportal_lu.js'],
+        ],
+        'georeference_default_nominatim' => [
+          'javascript' => [self::$js_path . 'drivers/georeference/nominatim.js'],
+        ],
+        'georeference_default_google_places' => [
+          'javascript' => [self::$js_path . 'drivers/georeference/google_places.js'],
+        ],
+        'georeference_default_indicia_locations' => [
+          'javascript' => [self::$js_path . 'drivers/georeference/indicia_locations.js'],
+        ],
+        'sref_handlers_2169' => [
+          'javascript' => [self::$js_path . 'drivers/sref/2169.js'],
+        ],
+        'sref_handlers_4326' => [
+          'javascript' => [self::$js_path . 'drivers/sref/4326.js'],
+        ],
+        'sref_handlers_osgb' => [
+          'javascript' => [self::$js_path . 'drivers/sref/osgb.js'],
+        ],
+        'sref_handlers_osie' => [
+          'javascript' => [self::$js_path . 'drivers/sref/osie.js'],
+        ],
         'font_awesome' => [
           'stylesheets' => ['https://use.fontawesome.com/releases/v5.7.2/css/all.css']
         ],
@@ -1098,7 +1167,7 @@ class helper_base {
             'https://unpkg.com/@ungap/url-search-params',
           ],
         ],
-      );
+      ];
     }
     return self::$resource_list;
   }
@@ -1442,7 +1511,7 @@ HTML;
             'prefixTemplate' => 'blank', // revert to default
             'suffixTemplate' => 'blank', // revert to default
             'class' => 'control-width-1',
-            'default'=>isset($_POST['geom_buffer']) ? $_POST['geom_buffer'] : 0
+            'default' => isset($_POST['geom_buffer']) ? $_POST['geom_buffer'] : 0
           ));
           if ($options['inlineMapTools'])
             $r .= $bufferInput;
@@ -1453,7 +1522,7 @@ HTML;
           // keep a copy of the unbuffered polygons in this input, so that when the page reloads both versions
           // are available
           $r .= '<input type="hidden" name="orig-wkt" id="orig-wkt" '.
-              'value="'.(isset($_POST['orig-wkt']) ? $_POST['orig-wkt'] : '')."\" />\n";
+              'value="' . (isset($_POST['orig-wkt']) ? $_POST['orig-wkt'] : '')."\" />\n";
         }
         // Output some JavaScript to setup a toolbar for the map drawing tools. Also JS
         // to handle getting the polygons from the edit layer into the report parameter
@@ -1467,10 +1536,12 @@ HTML;
           OpenLayers.Feature.Vector.style['default']));
     div.map.editLayer.styleMap = styleMap;\n";
 
-        if (isset($info['allow_buffer']) && $info['allow_buffer']=='true')
+        if (isset($info['allow_buffer']) && $info['allow_buffer'] == 'true') {
           $origWkt = empty($_POST['orig-wkt']) ? '' : $_POST['orig-wkt'];
-        else
+        }
+        else {
           $origWkt = empty($_POST[$fieldname]) ? '' : $_POST[$fieldname];
+        }
 
         if (!empty($origWkt)) {
           $javascript .= "  var geom=OpenLayers.Geometry.fromWKT('$origWkt');\n";
@@ -1594,10 +1665,12 @@ HTML;
         'blankText' => '<please select>',
         'extraParams' => $options['readAuth'] + $extras
       ));
-      if ($popOpts[0]=='direct')
-        $ctrlOptions['table']=$popOpts[1];
-      else
-        $ctrlOptions['report']=$popOpts[1];
+      if ($popOpts[0] == 'direct') {
+        $ctrlOptions['table'] = $popOpts[1];
+      }
+      else {
+        $ctrlOptions['report'] = $popOpts[1];
+      }
       if (isset($info['linked_to']) && isset($info['linked_filter_field'])) {
         $ctrlOptions['filterIncludesNulls'] = (isset($info['filterIncludesNulls']) ? $info['filterIncludesNulls'] : FALSE); //exclude null entries from filter field by default
 
@@ -1605,44 +1678,50 @@ HTML;
           // if the control this is linked to is hidden because it has a preset value, just use that value as a filter on the
           // population call for this control
           $ctrlOptions = array_merge($ctrlOptions, array(
-            'extraParams' => array_merge($ctrlOptions['extraParams'], array('query'=>json_encode(
-                array('in'=>array($info['linked_filter_field']=>array($options['extraParams'][$info['linked_to']], NULL)))
+            'extraParams' => array_merge($ctrlOptions['extraParams'], array('query' => json_encode(
+                array('in' => array($info['linked_filter_field'] => array($options['extraParams'][$info['linked_to']], NULL)))
             )))
           ));
         } else {
           // otherwise link the 2 controls
-          $ctrlOptions = array_merge($ctrlOptions, array(
-            'parentControlId' => $fieldPrefix.$info['linked_to'],
+          $ctrlOptions = array_merge($ctrlOptions, [
+            'parentControlId' => $fieldPrefix . $info['linked_to'],
             'filterField' => $info['linked_filter_field'],
             'parentControlLabel' => $options['form'][$info['linked_to']]['display']
-          ));
+          ]);
         }
       }
       $r .= data_entry_helper::select($ctrlOptions);
-    } elseif ($info['datatype']=='lookup' && isset($info['lookup_values'])) {
-      // Convert the lookup values into an associative array
+    } elseif ($info['datatype'] == 'lookup' && isset($info['lookup_values'])) {
+      // Convert the lookup values into an associative array.
       $lookups = explode(',', $info['lookup_values']);
-      $lookupsAssoc = array();
-      foreach($lookups as $lookup) {
+      $lookupsAssoc = [];
+      foreach ($lookups as $lookup) {
         $lookup = explode(':', $lookup);
         $lookupsAssoc[$lookup[0]] = $lookup[1];
       }
-      $ctrlOptions = array_merge($ctrlOptions, array(
-        'blankText' => '<'.lang::get('please select').'>',
+      $ctrlOptions = array_merge($ctrlOptions, [
+        'blankText' => '<' . lang::get('please select') . '>',
         'lookupValues' => $lookupsAssoc
-      ));
+      ]);
       $r .= data_entry_helper::select($ctrlOptions);
-    } elseif ($info['datatype']=='date') {
+    }
+    elseif ($info['datatype'] == 'date') {
       $r .= data_entry_helper::date_picker($ctrlOptions);
-    } elseif ($info['datatype']=='geometry') {
-      $tools = array('Polygon','Line','Point');
-    } elseif ($info['datatype']=='polygon') {
-      $tools = array('Polygon');
-    } elseif ($info['datatype']=='line') {
-      $tools = array('Line');
-    } elseif ($info['datatype']=='point') {
-      $tools = array('Point');
-    } else {
+    }
+    elseif ($info['datatype'] == 'geometry') {
+      $tools = ['Polygon', 'Line', 'Point'];
+    }
+    elseif ($info['datatype'] == 'polygon') {
+      $tools = ['Polygon'];
+    }
+    elseif ($info['datatype'] == 'line') {
+      $tools = ['Line'];
+    }
+    elseif ($info['datatype'] == 'point') {
+      $tools = ['Point'];
+    }
+    else {
       if (method_exists('data_entry_helper', $info['datatype'])) {
         $ctrl = $info['datatype'];
         $r .= data_entry_helper::$ctrl($ctrlOptions);
@@ -2608,11 +2687,11 @@ if (typeof validator!=='undefined') {
     );
     // apply a filter for the actual list of terms, if required.
     if ($filter)
-      $extraParams['query'] = urlencode(json_encode(array('in'=>array('term', $filter))));
-    $terms = self::get_population_data(array(
+      $extraParams['query'] = urlencode(json_encode(['in' => ['term', $filter]]));
+    $terms = self::get_population_data([
       'table' => 'termlists_term',
-      'extraParams' => $extraParams
-    ));
+      'extraParams' => $extraParams,
+    ]);
     return $terms;
   }
 
@@ -2935,7 +3014,7 @@ if (typeof validator!=='undefined') {
       // make a copy of the extra params
       $params = array_merge($options['extraParams']);
       // process them to turn any array parameters into a query parameter for the service call
-      $filterToEncode = array('where'=>array(array()));
+      $filterToEncode = array('where' => [[]]);
       $otherParams = array();
       // For data services calls to entities (i.e. not taxa_search), array
       // parameters need to be modified into a query parameter.
@@ -3020,7 +3099,7 @@ if (typeof validator!=='undefined') {
    */
   protected static function getCachedServicesCall($request, $options) {
     $cacheLoaded = FALSE;
-    // allow use of the legacy nocache parameter.
+    // Allow use of the legacy nocache parameter.
     if (isset($options['nocache']) && $options['nocache'] === TRUE) {
       $options['caching'] = FALSE;
     }
@@ -3044,23 +3123,38 @@ if (typeof validator!=='undefined') {
           $cacheLoaded = TRUE;
       }
     }
-    if (!isset($response) || $response===FALSE) {
+    if (!isset($response) || $response === FALSE) {
       $postArgs = NULL;
-      $parsedURL=parse_url(self::$base_url . $request);
+      $parsedURL = parse_url(self::$base_url . $request);
       parse_str($parsedURL["query"], $postArgs);
       $url = explode('?', self::$base_url . $request);
-      $newURL = array($url[0]);
+      $newURL = [$url[0]];
 
-      $getArgs = array();
-      if(isset($postArgs['report'])) { // using the reports rather than direct. If this is case report params go into speial params postarg
-        // There is a place in the data services report handling that uses a $_GET on the
-        // report parameter, so separate that out from the postargs
+      $getArgs = [];
+      if (isset($postArgs['report'])) {
+        // Using the reports rather than direct? If this is case report params
+        // go into special params postarg.
+        // There is a place in the data services report handling that uses a
+        // $_GET on the report parameter, so separate that out from the
+        // postargs.
         $getArgs[] = 'report=' . $postArgs['report'];
         unset($postArgs['report']);
         // move other REQUESTED fields into POST.
-        $postArgs = array('params'=> $postArgs);
-        $fieldsToCopyUp = array('reportSource', 'mode', 'auth_token', 'nonce', 'persist_auth', 'filename', 'callback', 'xsl',
-              'wantRecords', 'wantColumns', 'wantCount', 'wantParameters', 'knownCount');
+        $postArgs = ['params' => $postArgs];
+        $fieldsToCopyUp = [
+          'reportSource',
+          'mode',
+          'auth_token',
+          'nonce',
+          'persist_auth',
+          'filename',
+          'callback',
+          'xsl',
+          'wantRecords',
+          'wantColumns',
+          'wantCount',
+          'wantParameters',
+          'knownCount',];
         foreach($fieldsToCopyUp as $field) {
           if(isset($postArgs['params'][$field])) {
             $postArgs[$field] = $postArgs['params'][$field];
@@ -3075,9 +3169,10 @@ if (typeof validator!=='undefined') {
         $postArgs['params'] = json_encode((object)$postArgs['params']);
       }
 
-      if(count($getArgs)>0) $newURL[] = implode('&', $getArgs);
+      if (count($getArgs) > 0) {
+        $newURL[] = implode('&', $getArgs);
+      }
       $newURL = implode('?', $newURL);
-
       $response = self::http_post($newURL, $postArgs);
     }
     $r = json_decode($response['output'], TRUE);
