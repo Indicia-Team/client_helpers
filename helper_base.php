@@ -3190,6 +3190,71 @@ if (typeof validator!=='undefined') {
   }
 
   /**
+   * A less-opinionated method for calling a service URL with caching.
+   *
+   * Doesn't do anything with the GET and POST data, just passes it through,
+   * which isn't the case for getCachedServicesCall.
+   *
+   * @param string $url
+   *   Service URL (without domain prefix).
+   * @param array $get
+   *   Query parameters to add to the URL - key/value pairs.
+   * @param array $post
+   *   Key value pairs to POST.
+   * @param array $options
+   *   Options, which can include caching settings -
+   *   * caching - set to TRUE to enable caching.
+   *   * cachePerUser - set to FALSE to make cache hit for all users.
+   *   * cacheTimeout - timeout in seconds.
+   *
+   * @return array
+   *   Service response data.
+   */
+  public function getCachedGenericCall($url, array $get, array $post, array $options) {
+    $cacheLoaded = FALSE;
+    $useCache = !self::$nocache && !isset($_GET['nocache']) && !empty($options['caching']) && $options['caching'];
+    if ($useCache) {
+      $excludedParams = [
+        'nonce',
+        'auth_token',
+      ];
+      if (isset($options['cachePerUser']) && !$options['cachePerUser']) {
+        $excludedParams[] = 'user_id';
+      }
+      $cacheOpts = array_intersect_key(array_merge($get, $post), array_combine($excludedParams, $excludedParams));
+      $cacheOpts['serviceCallPath'] = self::$base_url . $url;
+      $cacheFolder = self::$cache_folder ? self::$cache_folder : self::relative_client_helper_path() . 'cache/';
+      $cacheTimeOut = self::getCacheTimeOut($options);
+      $cacheFile = self::getCacheFileName($cacheFolder, $cacheOpts, $cacheTimeOut);
+      if ($options['caching'] !== 'store' && !isset($_GET['refreshcache'])) {
+        $response = self::getCachedResponse($cacheFile, $cacheTimeOut, $cacheOpts);
+        if ($response !== FALSE) {
+          $cacheLoaded = TRUE;
+        }
+      }
+    }
+    if (!isset($response) || $response === FALSE) {
+      $requestUrlParts = [self::$base_url . $url];
+      if (!empty($get)) {
+        $requestUrlParts[] = http_build_query($get);
+      }
+      $response = self::http_post(implode('?', $requestUrlParts), $post);
+    }
+    // Only cache valid responses and when not already cached;
+    if ($useCache && !empty($response['success']) && !$cacheLoaded) {
+      self::cacheResponse($cacheFile, $response, $cacheOpts);
+    }
+    $r = json_decode($response['output'], TRUE);
+    if (!is_array($r)) {
+      $response['request'] = self::$base_url . $url;
+      throw new Exception('Invalid response received from Indicia Warehouse. '. print_r($response, TRUE));
+    }
+    self::purgeCache();
+    self::purgeImages();
+    return $r;
+  }
+
+  /**
    * Fetch a validated timeout value from passed in options array.
    *
    * @param array $options
