@@ -146,6 +146,14 @@ TXT;
         'default' => $default_terms['import2doImportPageIntro'],
         'required' => FALSE,
       ],
+      [
+        'name' => 'requiredFieldsIntro',
+        'caption' => 'Required fields introduction',
+        'category' => 'Instruction texts',
+        'type' => 'textarea',
+        'default' => $default_terms['import2requiredFieldsIntro'],
+        'required' => FALSE,
+      ],
     ];
   }
 
@@ -176,6 +184,7 @@ TXT;
       'sendFileToWarehouseUrl' => hostsite_get_url('iform/ajax/importer_2') . "/send_file_to_warehouse/$nid",
       'extractFileOnWarehouseUrl' => hostsite_get_url('iform/ajax/importer_2') . "/extract_file_on_warehouse/$nid",
       'loadChunkToTempTableUrl' => hostsite_get_url('iform/ajax/importer_2') . "/load_chunk_to_temp_table/$nid",
+      'getRequiredFieldsUrl' => hostsite_get_url('iform/ajax/importer_2') . "/get_required_fields/$nid",
       'processLookupMatchingUrl' => hostsite_get_url('iform/ajax/importer_2') . "/process_lookup_matching/$nid",
       'saveLookupMatchesGroupUrl' => hostsite_get_url('iform/ajax/importer_2') . "/save_lookup_matches_group/$nid",
       'importChunkUrl' => hostsite_get_url('iform/ajax/importer_2') . "/import_chunk/$nid",
@@ -194,7 +203,6 @@ TXT;
    */
   public static function ajax_upload_file($website_id, $password, $nid) {
     header('Content-type: application/json');
-    self::getWriteAuthFromHeaders();
     iform_load_helpers(['import_helper_2']);
     echo json_encode([
       'status' => 'ok',
@@ -207,7 +215,7 @@ TXT;
    */
   public static function ajax_send_file_to_warehouse($website_id, $password, $nid) {
     header('Content-type: application/json');
-    $writeAuth = self::getWriteAuthFromHeaders();
+    $writeAuth = self::getAuthFromHeaders();
     iform_load_helpers(['import_helper_2']);
     $r = import_helper_2::sendFileToWarehouse($_GET['interim-file'], $writeAuth);
     if ($r === TRUE) {
@@ -227,7 +235,7 @@ TXT;
    */
   public static function ajax_extract_file_on_warehouse($website_id, $password, $nid) {
     header('Content-type: application/json');
-    $writeAuth = self::getWriteAuthFromHeaders();
+    $writeAuth = self::getAuthFromHeaders();
     iform_load_helpers(['import_helper_2']);
     echo json_encode(import_helper_2::extractFileOnWarehouse($_GET['uploaded-file'], $writeAuth));
   }
@@ -237,28 +245,35 @@ TXT;
    */
   public static function ajax_load_chunk_to_temp_table($website_id, $password, $nid) {
     header('Content-type: application/json');
-    $writeAuth = self::getWriteAuthFromHeaders();
+    $writeAuth = self::getAuthFromHeaders();
     iform_load_helpers(['import_helper_2']);
     echo json_encode(import_helper_2::loadChunkToTempTable($_GET['data-file'], $writeAuth));
   }
 
+  public static function ajax_get_required_fields($website_id, $password, $nid) {
+    header('Content-type: application/json');
+    $readAuth = self::getAuthFromHeaders();
+    iform_load_helpers(['import_helper_2']);
+    echo json_encode(import_helper_2::getRequiredFields($_GET['data-file'], $readAuth));
+  }
+
   public static function ajax_process_lookup_matching($website_id, $password, $nid) {
     header('Content-type: application/json');
-    $writeAuth = self::getWriteAuthFromHeaders();
+    $writeAuth = self::getAuthFromHeaders();
     iform_load_helpers(['import_helper_2']);
     echo json_encode(import_helper_2::processLookupMatching($_GET['data-file'], $_GET['index'], $writeAuth));
   }
 
   public static function ajax_save_lookup_matches_group($website_id, $password, $nid) {
     header('Content-type: application/json');
-    $writeAuth = self::getWriteAuthFromHeaders();
+    $writeAuth = self::getAuthFromHeaders();
     iform_load_helpers(['import_helper_2']);
     echo json_encode(import_helper_2::saveLookupMatchesGroup($_GET['data-file'], $_POST, $writeAuth));
   }
 
   public static function ajax_import_chunk($website_id, $password, $nid) {
     header('Content-type: application/json');
-    $writeAuth = self::getWriteAuthFromHeaders();
+    $writeAuth = self::getAuthFromHeaders();
     iform_load_helpers(['import_helper_2']);
     echo json_encode(import_helper_2::importChunk($_GET['data-file'], isset($_POST['description']) ? $_POST['description'] : NULL, $writeAuth));
   }
@@ -312,7 +327,7 @@ TXT;
    * @return array|bool
    *   Write tokens object, else false and echoes a suitable response.
    */
-  private static function getWriteAuthFromHeaders() {
+  private static function getAuthFromHeaders() {
     $headers = getallheaders();
     if (!empty($headers['Authorization'])) {
       if (preg_match('/IndiciaTokens (?<auth_token>[a-z0-9]+(:\d+)?)\|(?<nonce>[a-z0-9]+)/', $headers['Authorization'], $matches)) {
