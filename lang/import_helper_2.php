@@ -55,6 +55,11 @@ $default_terms['import2doImportPageIntro'] = <<<TXT
 Please wait while your data are imported.
 TXT;
 
+$default_terms['import2requiredFieldsIntro'] = <<<TXT
+The following database fields are required for the selected dataset. Please ensure they are all
+mapped to columns in your import file before proceeding.
+TXT;
+
 $default_terms['optionGroup-occurrence'] = 'Occurrence';
 $default_terms['optionGroup-occurrence_medium'] = 'Occurrence photos and other media';
 $default_terms['optionGroup-occAttr'] = 'Occurrence attributes for selected survey';

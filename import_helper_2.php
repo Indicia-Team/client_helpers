@@ -54,6 +54,7 @@ class import_helper_2 extends helper_base {
    * * validationFormIntro
    * * summaryPageIntro
    * * doImportPageIntro
+   * * requiredFieldsIntro
    * * uploadFileUrl - path to a script that handles the initial upload of a
    *   file to the interim file location. The script can call
    *   import_helper_2::uploadFile for a complete implementation.
@@ -63,6 +64,8 @@ class import_helper_2 extends helper_base {
    * * loadChunkToTempTableUrl - path to a script that triggers the load of the
    *   next chunk of records into a temp table on the warehouse. The script can
    *   call import_helper_2::loadChunkToTempTable for a complete implementation.
+   * * getRequiredFieldsUrl - path to a function that returns the list of
+   *   required fields for the dataset being imported into.
    * * processLookupMatchingUrl - path to a script that performs steps in the
    *   process of identifying lookup destination fields that need their values
    *   to be matched to obtain an ID.
@@ -94,12 +97,14 @@ class import_helper_2 extends helper_base {
     self::$indiciaData['sendFileToWarehouseUrl'] = $options['sendFileToWarehouseUrl'];
     self::$indiciaData['extractFileOnWarehouseUrl'] = $options['extractFileOnWarehouseUrl'];
     self::$indiciaData['loadChunkToTempTableUrl'] = $options['loadChunkToTempTableUrl'];
+    self::$indiciaData['getRequiredFieldsUrl'] = $options['getRequiredFieldsUrl'];
     self::$indiciaData['processLookupMatchingUrl'] = $options['processLookupMatchingUrl'];
     self::$indiciaData['saveLookupMatchesGroupUrl'] = $options['saveLookupMatchesGroupUrl'];
     self::$indiciaData['importChunkUrl'] = $options['importChunkUrl'];
     self::$indiciaData['getErrorFileUrl'] = $options['getErrorFileUrl'];
     self::$indiciaData['write'] = $options['writeAuth'];
     $nextImportStep = empty($_POST['next-import-step']) ? 'fileSelectForm' : $_POST['next-import-step'];
+    self::$indiciaData['step'] = $nextImportStep;
     switch ($nextImportStep) {
       case 'fileSelectForm':
         return self::fileSelectForm($options);
@@ -221,6 +226,28 @@ class import_helper_2 extends helper_base {
     $output = json_decode($response['output'], TRUE);
     if (!$response['result']) {
       \Drupal::logger('iform')->notice('Error in loadChunkToTempTable: ' . var_export($response, TRUE));
+      throw new exception(isset($output['msg']) ? $output['msg'] : $response['output']);
+    }
+    return $output;
+  }
+
+  /**
+   * Retrieves the required field list for the current import setup.
+   *
+   * @param string $fileName
+   *   Name of the file to process.
+   * @param array $readAuth
+   *   Write authorisation tokens.
+   */
+  public static function getRequiredFields($fileName, array $readAuth) {
+    $serviceUrl = self ::$base_url . 'index.php/services/import_2/get_required_fields/occurrence';
+    $data = $readAuth + [
+      'data-file' => $fileName,
+    ];
+    $response = self::http_post($serviceUrl, $data, FALSE);
+    $output = json_decode($response['output'], TRUE);
+    if (!$response['result']) {
+      \Drupal::logger('iform')->notice('Error in getRequiredFields: ' . var_export($response, TRUE));
       throw new exception(isset($output['msg']) ? $output['msg'] : $response['output']);
     }
     return $output;
@@ -439,15 +466,24 @@ HTML;
     $options['helpText'] = TRUE;
     $options['form'] = $formArray;
     $options['param_lookup_extras'] = [];
+
     foreach ($formArray as $key => $info) {
       if (!empty($options['fixedValues'][$key])) {
+        $optionList = explode(';', $options['fixedValues'][$key]);
         if (isset($info['lookup_values'])) {
-          $info['lookup_values'] = self::getRestrictedLookupValues($info['lookup_values'], explode(';', $options['fixedValues'][$key]));
+          $info['lookup_values'] = self::getRestrictedLookupValues($info['lookup_values'], $optionList);
         }
         elseif (isset($info['population_call'])) {
           $tokens = explode(':', $info['population_call']);
           // 3rd part of population call is the ID field ($tokens[2]).
-          $options['param_lookup_extras'][$key] = ['query' => json_encode(['in' => [$tokens[2] => explode(';', $options['fixedValues'][$key])]])];
+          $options['param_lookup_extras'][$key] = ['query' => json_encode(['in' => [$tokens[2] => $optionList]])];
+        }
+        if (count($optionList) === 1) {
+          $r .= data_entry_helper::hidden_text([
+            'fieldname' => $key,
+            'default' => $optionList[0],
+          ]);
+          continue;
         }
       }
       $r .= self::getParamsFormControl($key, $info, $options, $tools);
@@ -492,15 +528,17 @@ HTML;
    */
   private static function mappingsForm(array $options) {
     $lang = [
+      'columnInImportFile' => lang::get('Column in import file'),
+      'destinationDatabaseField' => lang::get('Destination database field'),
       'instructions' => lang::get($options['mappingsFormIntro']),
       'next' => lang::get('Next step'),
+      'requiredFields' => lang::get('Required fields'),
+      'requiredFieldsInstructions' => lang::get($options['requiredFieldsIntro']),
       'title' => lang::get('Map import columns to destination database fields'),
     ];
     // Save the results of the previous global values form.
-    $settings = self::savePostedFormValuesToConfig($options, 'global-values');
-    $availableFields = self::getAvailableDbFields($options, $settings);
-    $htmlList = [];
-    $dbFieldOptions = self::getAvailableDbFieldsAsOptions($options, $availableFields);
+    $globalValues = self::savePostedFormValuesToConfig($options, 'global-values');
+    // Load the config for this import.
     $request = parent::$base_url . "index.php/services/import_2/get_config";
     $request .= '?' . self::array_to_query_string($options['readAuth'] + ['data-file' => $_POST['data-file']]);
     $response = self::http_post($request, []);
@@ -508,9 +546,18 @@ HTML;
     if (!is_array($config)) {
       throw new Exception('Service call to get_config failed.');
     }
+    self::$indiciaData['globalValues'] = $globalValues;
+    $availableFields = self::getAvailableDbFields($options, $globalValues);
+    $requiredFields = self::getAvailableDbFields($options, $globalValues, TRUE);
+    // Only include required fields that are available for selection. Others
+    // get populated by some other means.
+    $requiredFields = array_intersect_key($requiredFields, $availableFields);
+    self::$indiciaData['requiredFields'] = $requiredFields;
 
+    $htmlList = [];
+    $dbFieldOptions = self::getAvailableDbFieldsAsOptions($options, $availableFields);
     foreach ($config['columns'] as $column) {
-      $select = "<select class=\"form-control\" name=\"$column\">$dbFieldOptions</select>";
+      $select = "<select class=\"form-control mapped-field\" name=\"$column\">$dbFieldOptions</select>";
       $htmlList[] = <<<HTML
 <tr>
   <td>$column</td>
@@ -523,18 +570,32 @@ HTML;
 <h3>$lang[title]</h3>
 <p>$lang[instructions]</p>
 <form method="POST">
-  <table class="table" id="mappings-table">
-    <thead>
-      <tr>
-        <th>Column in import file</th>
-        <th>Destination database field</th>
-      <tr>
-    </thead>
-    <tbody>
-      $tableRowsHtml
-    </tbody>
-  </table>
-  <input type="submit" class="btn btn-primary" id="next-step" value="$lang[next]" />
+  <div class="row">
+    <div class="col-md-8">
+      <table class="table" id="mappings-table">
+        <thead>
+          <tr>
+            <th>$lang[columnInImportFile]</th>
+            <th>$lang[destinationDatabaseField]</th>
+          <tr>
+        </thead>
+        <tbody>
+          $tableRowsHtml
+        </tbody>
+      </table>
+    </div>
+    <div class="col-md-4">
+      <div class="panel panel-info" id="required-fields" style="display: none">
+        <div class="panel-heading">$lang[requiredFields]</div>
+        <div class="panel-body">
+          <p>$lang[requiredFieldsInstructions]</p>
+          <ul>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+  <input type="submit" class="btn btn-primary" id="next-step" value="$lang[next]" disabled="disabled" />
   <input type="hidden" name="next-import-step" value="lookupMatchingForm" />
   <input type="hidden" name="data-file" id="data-file" value="{$_POST['data-file']}" />
 </form>
@@ -696,7 +757,7 @@ HTML;
       'dataValuesCopied' => lang::get('Values in this column are copied to this field'),
       'dataValuesIgnored' => lang::get('Values in this column are ignored'),
       'dataValuesMatched' => lang::get('Values in this column are matched to equivalent database values using the rules you supplied.'),
-      'globalValues' => lang::get('Fixed global values'),
+      'globalValues' => lang::get('Fixed values that apply to all rows'),
       'instructions' => lang::get($options['summaryPageIntro']),
       'importColumn' => lang::get('Import column'),
       'startImport' => lang::get('Start importing records'),
@@ -711,11 +772,12 @@ HTML;
       throw new Exception('Service call to get_config failed.');
     }
     $ext = pathinfo($config['fileName'], PATHINFO_EXTENSION);
+    $availableFields = self::getAvailableDbFields($options, $config['global-values']);
     $mappingRows = [];
     foreach ($config['columns'] as $column => $tempFieldname) {
       $tempFieldNameIfFk = $tempFieldname . '_id';
       if (isset($config['mappings'][$tempFieldname])) {
-        $mappedTo = $config['mappings'][$tempFieldname];
+        $mappedTo = $availableFields[$config['mappings'][$tempFieldname]] ?? $config['mappings'][$tempFieldname];
         $arrow = empty($mappedTo) ? "<i class=\"fas fa-stop\" title=\"$lang[dataValuesIgnored]\"></i>" : "<i class=\"fas fa-play\" title=\"$lang[dataValuesCopied]\"></i>";
         $mappingRows[] = "<tr><th scope=\"row\">$column</th><td>$arrow</td><td>$mappedTo</td></tr>";
       }
@@ -731,7 +793,7 @@ HTML;
           $lookupFieldName = "$lookupFieldNameParts[0]:fk_" . substr($lookupFieldNameParts[1], 0, strlen($lookupFieldNameParts[1]) - 3);
         }
         if (in_array($lookupFieldName, $config['lookupFields'])) {
-          $mappedTo = $config['mappings'][$tempFieldNameIfFk];
+          $mappedTo = $availableFields[$lookupFieldName] ?? $config['mappings'][$tempFieldNameIfFk];
           $arrow = "<i class=\"fas fa-random\" title=\"$lang[dataValuesMatched]\"></i><i class=\"fas fa-play\" title=\"$lang[dataValuesCopied]\"></i>";
           $mappingRows[] = "<tr><th scope=\"row\">$column</th><td>$arrow</td><td>$mappedTo</td></tr>";
         }
@@ -744,6 +806,7 @@ HTML;
     foreach ($config['global-values'] as $field => $value) {
       // Foreign key filters were used during matching, not actually for import.
       if (strpos($field, 'fkFilter') === FALSE) {
+        $field = $availableFields[$field] ?? $field;
         $globalRows[] = "<tr><th scope=\"row\">$value</th><td>$arrow</td><td>$field</td></tr>";
       }
     }
@@ -807,9 +870,9 @@ HTML;
       'errorInImportFile' => 'Errors were found in {1} row.',
       'errorsInImportFile' => 'Errors were found in {1} rows.',
       'importingData' => 'Importing data',
-      'importingDetails' => '{rowsProcessed} of {totalRows} imported, {errorsCount} errors found.',
+      'importingDetails' => '{rowsProcessed} of {totalRows} rows imported, {errorsCount} errors found.',
       'importingFoundErrors' => 'Errors were found during the import stage which means that data was imported but rows with errors were skipped. Please download the errors spreadsheet using the button below and correct the data then upload just the errors spreadsheet again.',
-      'precheckDetails' => '{rowsProcessed} of {totalRows} checked, {errorsCount} errors found.',
+      'precheckDetails' => '{rowsProcessed} of {totalRows} rows checked, {errorsCount} errors found.',
       'precheckFoundErrors' => 'Because validation errors were found, no data has been imported. Please download the errors spreadsheet using the button below and correct the data in your original file accordingly, then upload it again.',
     ]);
     $lang = [
@@ -857,6 +920,7 @@ HTML;
       'validationFormIntro' => lang::get('import2validationFormIntro'),
       'summaryPageIntro' => lang::get('summaryPageIntro'),
       'doImportPageIntro' => lang::get('import2doImportPageIntro'),
+      'requiredFieldsIntro' => lang::get('import2requiredFieldsIntro'),
       'fixedValues' => [],
       'blockedFields' => [
         'occurrence:all_info_in_determinations',
@@ -891,6 +955,7 @@ HTML;
       'uploadFileUrl',
       'sendFileToWarehouseUrl',
       'loadChunkToTempTableUrl',
+      'getRequiredFieldsUrl',
       'processLookupMatchingUrl',
       'saveLookupMatchesGroupUrl',
       'importChunkUrl',
@@ -903,34 +968,60 @@ HTML;
     }
   }
 
-  private static function getAvailableDbFields(array $options, array $settings) {
-    $request = parent::$base_url . "index.php/services/import_2/get_fields/$options[entity]";
-    $request .= '?' . self::array_to_query_string($options['readAuth']);
+  /**
+   * Retrieive a list of all fields available for the entity being imported.
+   *
+   * @param array $options
+   *   Options array for the control.
+   * @param array $globalValues
+   *   Values that apply to every import row, including website_id and
+   *   survey__id where available.
+   * @param bool $requiredOnly
+   *   Set to TRUE to only return required fields.
+   *
+   * @return array
+   *   Associated array with key/value pairs of field names and captions.
+   */
+  private static function getAvailableDbFields(array $options, array $globalValues, $requiredOnly = FALSE) {
+    $url = "index.php/services/import_2/get_fields/$options[entity]";
+    $get = array_merge($options['readAuth']);
     // Include survey and website information in the request if available, as
     // this limits the availability of custom attributes.
-    if (!empty($settings['website_id'])) {
-      $request .= '&website_id=' . trim($settings['website_id']);
+    if (!empty($globalValues['website_id'])) {
+      $get['website_id'] = trim($globalValues['website_id']);
     }
-    if (!empty($settings['survey_id'])) {
-      $request .= '&survey_id=' . trim($settings['survey_id']);
+    if (!empty($globalValues['survey_id'])) {
+      $get['survey_id'] = trim($globalValues['survey_id']);
     }
     if ($options['entity'] === 'sample'
-        && isset($settings['sample:sample_method_id'])
-        && trim($settings['sample:sample_method_id']) !== '') {
-      $request .= '&sample_method_id=' . trim($settings['sample:sample_method_id']);
+        && isset($globalValues['sample:sample_method_id'])
+        && trim($globalValues['sample:sample_method_id']) !== '') {
+      $get['sample_method_id'] = trim($globalValues['sample:sample_method_id']);
     }
     elseif ($options['entity'] === 'location'
-        && isset($settings['location:location_type_id'])
-        && trim($settings['location:location_type_id']) !== '') {
-      $request .= '&location_type_id=' . trim($settings['location:location_type_id']);
+        && isset($globalValues['location:location_type_id'])
+        && trim($globalValues['location:location_type_id']) !== '') {
+      $get['location_type_id'] = trim($globalValues['location:location_type_id']);
     }
     elseif ($options['entity'] === 'taxa_taxon_list'
-        && isset($settings['taxa_taxon_list:taxon_list_id'])
-        && trim($settings['taxa_taxon_list:taxon_list_id']) !== '') {
-      $request .= '&taxon_list_id=' . trim($settings['taxa_taxon_list:taxon_list_id']);
+        && isset($globalValues['taxa_taxon_list:taxon_list_id'])
+        && trim($globalValues['taxa_taxon_list:taxon_list_id']) !== '') {
+      $get['taxon_list_id'] = trim($globalValues['taxa_taxon_list:taxon_list_id']);
     }
-    $response = self::http_post($request, []);
-    return json_decode($response['output'], TRUE);
+    if ($requiredOnly) {
+      $get['required'] = 'true';
+    }
+    $r = self::getCachedGenericCall($url, $get, [], [
+      'caching' => TRUE,
+      'cachePerUser' => FALSE,
+    ]);
+    // Apply i18n.
+    if ($r) {
+      foreach ($r as $key => &$caption) {
+        $caption = lang::get($caption);
+      }
+    }
+    return $r;
   }
 
 }
