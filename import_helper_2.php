@@ -536,13 +536,15 @@ HTML;
       'requiredFieldsInstructions' => lang::get($options['requiredFieldsIntro']),
       'title' => lang::get('Map import columns to destination database fields'),
     ];
-    // Save the results of the previous global values form.
-    $globalValues = self::savePostedFormValuesToConfig($options, 'global-values');
     // Load the config for this import.
     $request = parent::$base_url . "index.php/services/import_2/get_config";
     $request .= '?' . self::array_to_query_string($options['readAuth'] + ['data-file' => $_POST['data-file']]);
     $response = self::http_post($request, []);
     $config = json_decode($response['output'], TRUE);
+    // Save the results of the previous global values form, which can be merged
+    // into the fixed values provided in the form options.
+    $globalValues = array_merge($options['fixedValues'], $_POST);
+    $globalValues = self::saveFormValuesToConfig($globalValues, $options, 'global-values');
     if (!is_array($config)) {
       throw new Exception('Service call to get_config failed.');
     }
@@ -683,8 +685,21 @@ HTML;
     return FALSE;
   }
 
-  private static function savePostedFormValuesToConfig(array $options, $configFieldName) {
-    $settings = array_merge([], $_POST);
+  /**
+   * Saves a posted form's values into the config object.
+   *
+   * @param array $values
+   *   Array of data to save (e.g. $_POST).
+   * @param array $options
+   *   Options including writeAuth.
+   * @param string $configFieldName
+   *   Name of the field in the config to save the data to.
+   *
+   * @return array
+   *   Saved values.
+   */
+  private static function saveFormValuesToConfig(array $values, array $options, $configFieldName) {
+    $settings = array_merge([], $values);
     unset($settings['data-file']);
     unset($settings['next-import-step']);
     $request = parent::$base_url . 'index.php/services/import_2/save_config';
@@ -699,7 +714,7 @@ HTML;
     helper_base::add_resource('autocomplete');
     helper_base::add_resource('validation');
     // Save the results of the previous mappings form.
-    self::savePostedFormValuesToConfig($options, 'mappings');
+    self::saveFormValuesToConfig($_POST, $options, 'mappings');
     self::addLanguageStringsToJs('import_helper_2', [
       'backgroundProcessingDone' => 'Background processing done',
       'dataValue' => 'Data value',
@@ -865,7 +880,7 @@ HTML;
    */
   private static function doImportPage($options) {
     self::addLanguageStringsToJs('import_helper_2', [
-      'completeMessage' => 'The import is complete.',
+      'completeMessage' => 'The import is complete',
       'downloadErrors' => 'Download the rows that had errors',
       'errorInImportFile' => 'Errors were found in {1} row.',
       'errorsInImportFile' => 'Errors were found in {1} rows.',
