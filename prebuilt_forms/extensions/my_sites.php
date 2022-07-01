@@ -38,100 +38,111 @@ class extension_my_sites {
     if (!function_exists('iform_ajaxproxy_url')) {
       return 'An AJAX Proxy module must be enabled for the My Sites Form to work.';
     }
-    $r = "<fieldset><legend>" . lang::get('Find additional sites to store in your sites list') . "</legend>";
-    if (empty($options['locationTypes']) || !preg_match('/^([0-9]+,( )?)*[0-9]+$/', $options['locationTypes'])) {
-      return 'The My sites form is not correctly configured. Please provide the location types to allow search by.';
-    }
-    $locationTypes = explode(',', str_replace(' ', '', $options['locationTypes']));
-    if (empty($options['locationTypeResults']) || !preg_match('/^([0-9]+,( )?)*[0-9]+$/', $options['locationTypeResults'])) {
-      return 'The My sites form is not correctly configured. Please provide the location types to allow results to be returned for.';
-    }
     if (empty($options['mySitesPsnAttrId']) || !preg_match('/^[0-9]+$/', $options['mySitesPsnAttrId'])) {
       return 'The My sites form is not correctly configured. Please provide the person attribute ID used to store My Sites.';
     }
-    $localityOpts = [
-      'fieldname' => 'locality_id',
-      'id' => 'locality_id',
-      'extraParams' => $auth['read'] + ['orderby' => 'name'],
-      'blankText' => '<' . lang::get('all') . '>',
-    ];
-    if (count($locationTypes) > 1) {
-      $r .= '<label>' . lang::get('Select site by type then locality:') . '</label> ';
-      $r .= data_entry_helper::select([
-        'fieldname' => 'location_type_id',
-        'table' => 'termlists_term',
-        'valueField' => 'id',
-        'captionField' => 'term',
+    $options = array_merge([
+      'includeSelectExistingSitesControls' => TRUE,
+    ], $options);
+    $r = '';
+    if ($options['includeSelectExistingSitesControls']) {
+      if (empty($options['locationTypes']) || !preg_match('/^([0-9]+,( )?)*[0-9]+$/', $options['locationTypes'])) {
+        return 'The My sites form is not correctly configured. Please provide the location types to allow search by.';
+      }
+      if (empty($options['locationTypeResults']) || !preg_match('/^([0-9]+,( )?)*[0-9]+$/', $options['locationTypeResults'])) {
+        return 'The My sites form is not correctly configured. Please provide the location types to allow results to be returned for.';
+      }
+      $locationTypes = explode(',', str_replace(' ', '', $options['locationTypes']));
+      $r = "<fieldset><legend>" . lang::get('Find additional sites to store in your sites list') . "</legend>";
+      $localityOpts = [
+        'fieldname' => 'locality_id',
+        'id' => 'locality_id',
+        'extraParams' => $auth['read'] + ['orderby' => 'name'],
+        'blankText' => '<' . lang::get('all') . '>',
+      ];
+      if (count($locationTypes) > 1) {
+        $r .= '<label>' . lang::get('Select site by type then locality:') . '</label> ';
+        $r .= data_entry_helper::select([
+          'fieldname' => 'location_type_id',
+          'table' => 'termlists_term',
+          'valueField' => 'id',
+          'captionField' => 'term',
+          'extraParams' => $auth['read'] + [
+            'orderby' => 'term',
+            'query' => urlencode(json_encode(['in' => ['id', $locationTypes]])),
+          ],
+          'blankText' => '<' . lang::get('please select') . '>',
+        ]);
+        // Link the locality select to the location type select.
+        $localityOpts = array_merge([
+          'parentControlId' => 'location_type_id',
+          'parentControlLabel' => lang::get('Site type to search'),
+          'filterField' => 'location_type_id',
+          'emptyFilterIsUnfiltered' => TRUE,
+        ], $localityOpts);
+      }
+      else {
+        $r .= '<label>' . lang::get('Select site by locality') . '</label> ';
+        // No need for a locality select, so just filter to the location type.
+        $localityOpts['extraParams']['location_type_id'] = $locationTypes[0];
+        $localityOpts['default'] = hostsite_get_user_field('location');
+      }
+      $r .= data_entry_helper::location_select($localityOpts);
+      $r .= data_entry_helper::location_select([
+        'id' => 'location-select',
+        'report' => 'library/locations/locations_for_my_sites',
+        'table' => '',
+        'valueField' => 'location_id',
+        'captionField' => 'q',
         'extraParams' => $auth['read'] + [
-          'orderby' => 'term',
-          'query' => urlencode(json_encode(['in' => ['id', $locationTypes]])),
+          'location_type_ids' => $options['locationTypeResults'],
+          'locattrs' => '',
+          'user_id' => hostsite_get_user_field('indicia_user_id'),
+          'person_site_attr_id' => $options['mySitesPsnAttrId'],
+          'hide_existing' => 1,
         ],
-        'blankText' => '<' . lang::get('please select') . '>',
+        'parentControlId' => 'locality_id',
+        'parentControlLabel' => lang::get('Locality to search'),
+        'filterField' => 'parent_id',
+        'filterIncludesNulls' => FALSE,
+        'blankText' => '<' . lang::get('please select') . '>'
       ]);
-      // Link the locality select to the location type select.
-      $localityOpts = array_merge([
-        'parentControlId' => 'location_type_id',
-        'parentControlLabel' => lang::get('Site type to search'),
-        'filterField' => 'location_type_id',
-        'emptyFilterIsUnfiltered' => TRUE,
-      ], $localityOpts);
+      $r .= '<button id="add-site-button" type="button">' . lang::get('Add to My Sites') . '</button><br/>';
+      $r .= data_entry_helper::location_autocomplete([
+        'id' => 'location-search',
+        'label' => lang::get('<strong>Or</strong> search for a site'),
+        'report' => 'library/locations/locations_for_my_sites',
+        'table' => '',
+        'valueField' => 'location_id',
+        'captionField' => 'q',
+        'extraParams' => $auth['read'] + [
+          'location_type_ids' => $options['locationTypeResults'],
+          'locattrs' => '',
+          'user_id' => hostsite_get_user_field('indicia_user_id'),
+          'person_site_attr_id' => $options['mySitesPsnAttrId'],
+          'hide_existing' => 1,
+          'parent_id' => '',
+        ]
+      ]);
+      $r .= '<button id="add-searched-site-button" type="button">' . lang::get('Add to My Sites') . '</button><br/>';
     }
-    else {
-      $r .= '<label>' . lang::get('Select site by locality') . '</label> ';
-      // No need for a locality select, so just filter to the location type.
-      $localityOpts['extraParams']['location_type_id'] = $locationTypes[0];
-      $localityOpts['default'] = hostsite_get_user_field('location');
-    }
-    $r .= data_entry_helper::location_select($localityOpts);
-    $r .= data_entry_helper::location_select([
-      'id' => 'location-select',
-      'report' => 'library/locations/locations_for_my_sites',
-      'table' => '',
-      'valueField' => 'location_id',
-      'captionField' => 'q',
-      'extraParams' => $auth['read'] + [
-        'location_type_ids' => $options['locationTypeResults'],
-        'locattrs' => '',
-        'user_id' => hostsite_get_user_field('indicia_user_id'),
-        'person_site_attr_id' => $options['mySitesPsnAttrId'],
-        'hide_existing' => 1,
-      ],
-      'parentControlId' => 'locality_id',
-      'parentControlLabel' => lang::get('Locality to search'),
-      'filterField' => 'parent_id',
-      'filterIncludesNulls' => FALSE,
-      'blankText' => '<' . lang::get('please select') . '>'
-    ]);
-    $r .= '<button id="add-site-button" type="button">' . lang::get('Add to My Sites') . '</button><br/>';
-    $r .= data_entry_helper::location_autocomplete([
-      'id' => 'location-search',
-      'label' => lang::get('<strong>Or</strong> search for a site'),
-      'report' => 'library/locations/locations_for_my_sites',
-      'table' => '',
-      'valueField' => 'location_id',
-      'captionField' => 'q',
-      'extraParams' => $auth['read'] + [
-        'location_type_ids' => $options['locationTypeResults'],
-        'locattrs' => '',
-        'user_id' => hostsite_get_user_field('indicia_user_id'),
-        'person_site_attr_id' => $options['mySitesPsnAttrId'],
-        'hide_existing' => 1,
-        'parent_id' => '',
-      ]
-    ]);
-    $r .= '<button id="add-searched-site-button" type="button">' . lang::get('Add to My Sites') . '</button><br/>';
     $postUrl = iform_ajaxproxy_url(NULL, 'person_attribute_value');
     $indiciaUserId = hostsite_get_user_field('indicia_user_id');
+    data_entry_helper::addLanguageStringsToJs('mySites', [
+      'confirmDelete' => 'Are you sure you want to remove this site from your list of sites?',
+      'no' => 'No',
+      'yes' => 'Yes',
+    ]);
     data_entry_helper::$javascript .= <<<JS
 
 function addSite(locationId) {
   if (!isNaN(locationId) && locationId !== '') {
     $.post('$postUrl',
       {
-        "website_id": $args[website_id],
-        "person_attribute_id": $options[mySitesPsnAttrId],
-        "user_id": $indiciaUserId,
-        "int_value": locationId
+        website_id: $args[website_id],
+        person_attribute_id: $options[mySitesPsnAttrId],
+        user_id: $indiciaUserId,
+        int_value: locationId
       },
       function (data) {
         if (typeof data.error === 'undefined') {
@@ -158,21 +169,30 @@ $('#location-select, #location-search, #locality_id').change(function() {
 });
 
 linked_site_delete = function(pav_id) {
-  $.post('$postUrl',
-    {
-      "website_id": $args[website_id],
-      "id": pav_id,
-      "deleted": "t"
-    },
-    function (data) {
-      if (typeof data.error === 'undefined') {
-        indiciaData.reports.dynamic.grid_report_grid_0.reload(true);
-      } else {
-        alert(data.error);
-      }
-    },
-    'json'
-  );
+  $.fancyDialog({
+    title: null,
+    message: indiciaData.lang.mySites.confirmDelete,
+    okButton: indiciaData.lang.mySites.yes,
+    cancelButton: indiciaData.lang.mySites.no,
+    callbackOk: function () {
+      $.post('$postUrl',
+        {
+          "website_id": $args[website_id],
+          "id": pav_id,
+          "deleted": "t"
+        },
+        function (data) {
+          if (typeof data.error === 'undefined') {
+            indiciaData.reports.dynamic.grid_report_grid_0.reload(true);
+          } else {
+            alert(data.error);
+          }
+        },
+        'json'
+      );
+    }
+  });
+
 }
 
 JS;
@@ -440,7 +460,7 @@ JS;
    *   possibilities:
    *   * userCaptionField - Override the default caption field. Optional.
    */
-  private static function  user_select_for_add_sites_to_any_user_control($readAuth, $website_id, $options) {
+  private static function user_select_for_add_sites_to_any_user_control($readAuth, $website_id, $options) {
     $r = '';
     $userCaptionField = 'fullname_surname_first';
     if (!empty($options['userCaptionField'])) {
