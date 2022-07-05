@@ -221,13 +221,16 @@ class extension_extra_data_entry_controls {
       }
     }
     unset($assoc['model']['subModels']);
-    // cCnvert this to a record of the associated species, or a deletion if the
+    // Convert this to a record of the associated species, or a deletion if the
     // user has blanked out an existing name.
     if (empty($values["occurrence:associated_taxa_taxon_list_id:$index"])) {
       $assoc['model']['fields']['deleted'] = array('value' => 't');
     }
     else {
       $assoc['model']['fields']['taxa_taxon_list_id'] = array('value' => $values["occurrence:associated_taxa_taxon_list_id:$index"]);
+    }
+    if (hostsite_get_user_field('training')) {
+      $assoc['model']['fields']['training'] = ['value' => 't'];
     }
     // Overwrite existing if resaving.
     if (!empty($values["occurrence_association:to_occurrence_id:$index"])) {
