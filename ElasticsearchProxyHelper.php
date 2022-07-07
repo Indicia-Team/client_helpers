@@ -442,6 +442,7 @@ class ElasticsearchProxyHelper {
         'user_id' => hostsite_get_user_field('indicia_user_id'),
         'es_endpoint' => $_POST['es_endpoint'],
         'id_prefix' => $_POST['id_prefix'],
+        'warehouse_name' => $_POST['warehouse_name'],
       ];
     }
     else {

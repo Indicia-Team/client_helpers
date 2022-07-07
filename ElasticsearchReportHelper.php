@@ -1349,12 +1349,17 @@ HTML;
    */
   public static function verificationButtons(array $options) {
     global $indicia_templates;
+    $requiredOptions = ['showSelectedRow'];
     if (!empty($options['includeUploadButton'])) {
       $config = hostsite_get_es_config($options['nid']);
       helper_base::$indiciaData['esEndpoint'] = $config['es']['endpoint'];
       helper_base::$indiciaData['idPrefix'] = $config['es']['warehouse_prefix'];
+      $requiredOptions[] = 'warehouseName';
     }
-    self::checkOptions('verificationButtons', $options, ['showSelectedRow'], []);
+    self::checkOptions('verificationButtons', $options, $requiredOptions, []);
+    if (!empty($options['includeUploadButton'])) {
+      helper_base::$indiciaData['warehouseName'] = $options['warehouseName'];
+    }
     $options = array_merge([
       'editPath' => helper_base::getRootFolder(TRUE) . $options['editPath'],
       'taxon_list_id' => hostsite_get_config_value('iform', 'master_checklist_id'),
