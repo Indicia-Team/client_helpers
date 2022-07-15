@@ -540,12 +540,11 @@ class ElasticsearchProxyHelper {
       throw new exception('Unsupported field for update. ' . var_export($_POST['doc'], TRUE));
     }
     $_ids = [];
-    $sensitive_Ids = [];
     // Convert Indicia IDs to the document _ids for ES. Also make a 2nd version
     // for full precision copies of sensitive records.
     foreach ($ids as $id) {
       $_ids[] = self::$config['es']['warehouse_prefix'] . $id;
-      $sensitive_Ids[] = self::$config['es']['warehouse_prefix'] . "$id!";
+      $_ids[] = self::$config['es']['warehouse_prefix'] . "$id!";
     }
     $doc = [
       'script' => [
@@ -554,27 +553,19 @@ class ElasticsearchProxyHelper {
       ],
       'query' => [
         'terms' => [
-          '_id' => $sensitive_Ids,
+          '_id' => $_ids,
         ],
       ],
     ];
-    // Update index immediately and overwrite update conflicts.
-    // Sensitive records first.
-    $r1 = self::curlPost($url, $doc, [
-      'refresh' => 'true',
+    // Update index and overwrite update conflicts.
+    $r = self::curlPost($url, $doc, [
       'conflicts' => 'proceed',
     ]);
-    $r1js = json_decode($r1);
-    // Now normal records/blurred records.
-    $doc['query']['terms']['_id'] = $_ids;
-    $r2 = self::curlPost($url, $doc, [
-      'refresh' => 'true',
-      'conflicts' => 'proceed',
-    ]);
-    $r2js = json_decode($r2);
+    $rObj = json_decode($r);
     // Since the verification alias can only see 1 copy of each record (e.g.
-    // full precision), combine the totals to report the total records changed.
-    return json_encode(['updated' => $r1js->updated + $r2js->updated]);
+    // full precision), the total in the response will correspond to the number
+    // of occurrences updated.
+    return json_encode(['updated' => $rObj->updated]);
   }
 
   /**
