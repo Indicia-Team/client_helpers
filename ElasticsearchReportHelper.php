@@ -1350,10 +1350,10 @@ HTML;
   public static function verificationButtons(array $options) {
     global $indicia_templates;
     $requiredOptions = ['showSelectedRow'];
+    $config = hostsite_get_es_config($options['nid']);
+    helper_base::$indiciaData['idPrefix'] = $config['es']['warehouse_prefix'];
     if (!empty($options['includeUploadButton'])) {
-      $config = hostsite_get_es_config($options['nid']);
       helper_base::$indiciaData['esEndpoint'] = $config['es']['endpoint'];
-      helper_base::$indiciaData['idPrefix'] = $config['es']['warehouse_prefix'];
       $requiredOptions[] = 'warehouseName';
     }
     self::checkOptions('verificationButtons', $options, $requiredOptions, []);
