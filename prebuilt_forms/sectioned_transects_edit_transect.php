@@ -300,7 +300,9 @@ class iform_sectioned_transects_edit_transect {
     );
     $settings = array(
       'locationTypes' => helper_base::get_termlist_terms($auth, 'indicia:location_types', $typeTerms),
-      'locationId' => isset($_GET['id']) ? $_GET['id'] : NULL,
+      // ID parameter is id immediately after first save of transect, but
+      // location_id when accessed elsewhere.
+      'locationId' => $_GET['id'] ?? $_GET['location_id'] ?? NULL,
       'canEditBody' => TRUE,
       'canEditSections' => TRUE, // this is specifically the number of sections: so can't delete or change the attribute value.
       // Allocations of Branch Manager are done by a person holding the managerPermission.
@@ -520,6 +522,11 @@ class iform_sectioned_transects_edit_transect {
     if ($settings['locationId']) {
       $r .= "<input type=\"hidden\" name=\"location:id\" id=\"location:id\" value=\"$settings[locationId]\" />\n";
     }
+    // Pass through the group_id if set in URL parameters, so we can save the
+    // location against the group.
+    if (!empty($_GET['group_id'])) {
+      $r .= "<input type=\"hidden\" id=\"group_id\" name=\"group_id\" value=\"" . $_GET['group_id'] . "\" />\n";
+    }
     $r .= data_entry_helper::text_input([
       'fieldname' => 'location:name',
       'label' => lang::get('Transect Name'),
@@ -528,7 +535,8 @@ class iform_sectioned_transects_edit_transect {
     ]);
     if (!$settings['canEditBody']) {
       $r .= '<p>' . lang::get('This site cannot be edited because there are walks recorded on it. Please contact the site administrator if you think there are details which need changing.') . '</p>';
-    } else if(count($settings['walks']) > 0) { // can edit it
+    }
+    elseif (count($settings['walks']) > 0) { // can edit it
       $r .= '<p>' . lang::get('This site has walks recorded on it. Please do not change the site details without considering the impact on the existing data.') . '</p>';
     }
     $list = explode(',', str_replace(' ', '', $args['spatial_systems']));
@@ -910,8 +918,8 @@ $('#delete-transect').click(deleteSurvey);
         'model' => 'location'
       )
     );
-    // on first save of a new transect, link it to the website.
-    if (empty($values['location:id']))
+    // On first save of a new transect, link it to the website.
+    if (empty($values['location:id'])) {
       $s['subModels'] = array(
         array(
           'fkId' => 'location_id',
@@ -923,6 +931,19 @@ $('#delete-transect').click(deleteSurvey);
           )
         )
       );
+      // Also, on first save we might be linking to a group.
+      if (!empty($values['group_id'])) {
+        $s['subModels'][] = [
+          'fkId' => 'location_id',
+          'model' => [
+            'id' => 'groups_location',
+            'fields' => [
+              'group_id' => $values['group_id'],
+            ],
+          ],
+        ];
+      }
+    }
     return $s;
   }
 
