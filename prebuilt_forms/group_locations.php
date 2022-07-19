@@ -74,6 +74,17 @@ class iform_group_locations {
         'required' => FALSE,
         'default' => TRUE,
       ],
+      [
+        'name' => 'location_type_id',
+        'caption' => 'Location type',
+        'type' => 'select',
+        'table' => 'termlists_term',
+        'captionField' => 'term',
+        'valueField' => 'id',
+        'extraParams' => ['termlist_external_key' => 'indicia:location_types'],
+        'required' => FALSE,
+        'helpText' => 'The location type to filter the list of locations to, if required.',
+      ],
     ], iform_map_get_map_parameters());
     return $r;
   }
@@ -103,7 +114,6 @@ class iform_group_locations {
     require_once 'includes/map.php';
     require_once 'includes/groups.php';
     global $indicia_templates;
-    global $base_url;
     iform_load_helpers(['report_helper', 'map_helper']);
     $conn = iform_get_connection_details($nid);
     $readAuth = report_helper::get_read_auth($conn['website_id'], $conn['password']);
@@ -114,12 +124,15 @@ class iform_group_locations {
     ], $args);
     $group = data_entry_helper::get_population_data([
       'table' => 'group',
-      'extraParams' => $readAuth + ['id' => $_GET['group_id'], 'view' => 'detail'],
+      'extraParams' => $readAuth + [
+        'id' => $_GET['group_id'],
+        'view' => 'detail',
+      ],
     ]);
     $group = $group[0];
     $title = hostsite_get_page_title($nid);
     hostsite_set_page_title("$group[title]: $title");
-    $actions = array();
+    $actions = [];
     if ($args['allow_edit']) {
       if (!empty($args['edit_location_path'])) {
         $actions[] = [
@@ -147,12 +160,15 @@ class iform_group_locations {
         ],
       ];
     }
-
+    $params = ['group_id' => $_GET['group_id']];
+    if (!empty($args['location_type_id'])) {
+      $params['location_type_id'] = $args['location_type_id'];
+    }
     $leftcol = report_helper::report_grid([
       'readAuth' => $readAuth,
       'dataSource' => 'library/locations/locations_for_groups',
-      'sendOutputToMap' => true,
-      'extraParams' => ['group_id' => $_GET['group_id']],
+      'sendOutputToMap' => TRUE,
+      'extraParams' => $params,
       'rowId' => 'location_id',
       'columns' => [
         [
