@@ -475,7 +475,7 @@ SCRIPT;
                   '<span class="label"></span><span class="data"></span> <span>(' . lang::get('hold +') . ')</span></div>';
         }
         else {
-          $r .= $div . '<h3>' . lang::get('Map ref at pointer') . '</h3>' .
+          $r .= $div . '<span>' . lang::get('Map ref at pointer') . '</span>' .
               '<div class="grid-ref-hint hint-normal"><span class="label"></span><span class="data"></span></div>';
         }
         $r .= '</div>';
