@@ -1931,6 +1931,29 @@ HTML;
     return $r;
   }
 
+
+  /**
+   * Retrieve the user ID suffix for the auth_token.
+   *
+   * Allows the warehouse to be certain of the authorised user ID.
+   *
+   * @return string
+   *   Colon then user ID to append to auth token, or empty string.
+   */
+  private static function getAuthTokenUserId() {
+    global $_iform_warehouse_override;
+    if ($_iform_warehouse_override) {
+      // If linking to a different warehouse, don't do user authentication as
+      // it causes an infinite loop.
+      return '';
+    }
+    else {
+      $indiciaUserId = hostsite_get_user_field('indicia_user_id');
+      // Include user ID if logged in.
+      return $indiciaUserId ? ":$indiciaUserId" : '';
+    }
+  }
+
   /**
    * Retrieves a token and inserts it into a data entry form which authenticates that the
    * form was submitted by this website.
@@ -1940,9 +1963,8 @@ HTML;
    */
   public static function get_auth($website_id, $password) {
     self::$website_id = $website_id;
-    $indiciaUserId = hostsite_get_user_field('indicia_user_id');
     // Include user ID if logged in.
-    $authTokenUserId = $indiciaUserId ? ":$indiciaUserId" : '';
+    $authTokenUserId = self::getAuthTokenUserId();
     $postargs = "website_id=$website_id";
     $response = self::http_post(self::$base_url . 'index.php/services/security/get_nonce', $postargs);
     if (isset($response['status'])) {
@@ -2007,9 +2029,8 @@ HTML;
     else
       $r = json_decode($r, TRUE);
     if (function_exists('hostsite_get_user_field')) {
-      $indiciaUserId = hostsite_get_user_field('indicia_user_id');
       // Include user ID if logged in.
-      $authTokenUserId = $indiciaUserId ? ":$indiciaUserId" : '';
+      $authTokenUserId = self::getAuthTokenUserId();
       // Attach a user specific auth token.
       $r['auth_token'] = sha1("$r[nonce]:$password$authTokenUserId") . $authTokenUserId;
     }
@@ -2031,9 +2052,8 @@ HTML;
    */
   public static function get_read_write_auth($website_id, $password) {
     self::$website_id = $website_id; /* Store this for use with data caching */
-    $indiciaUserId = hostsite_get_user_field('indicia_user_id');
     // Include user ID if logged in.
-    $authTokenUserId = $indiciaUserId ? ":$indiciaUserId" : '';
+    $authTokenUserId = self::getAuthTokenUserId();
     $postargs = "website_id=$website_id";
     $response = self::http_post(self::$base_url.'index.php/services/security/get_read_write_nonces', $postargs);
     if (array_key_exists('status', $response)) {
