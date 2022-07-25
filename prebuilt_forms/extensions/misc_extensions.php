@@ -32,77 +32,111 @@ class extension_misc_extensions {
 
   /**
    * General button link control can be placed on pages to link to another page.
+   *
+   * @param array $auth
+   *   Authorisation tokens.
+   * @param array $args
+   *   Form parameters.
+   * @param string $tabalias
+   *   The alias of the tab this appears on.
    * @param array $options
    *   Options array with the following possibilities:
    *   * buttonLabel - The label that appears on the button. Mandatory.
    *   * buttonLinkPath - The page the button is linking to. Mandatory.
-   *   * paramNameToPass - The name of a static parameter to pass to the
+   *   * paramNameToPass - The name of a param to pass to the
    *     receiving page. Optional but requires paramValueToPass when in use.
-   *   * paramValueToPass - The value of the static parameter to pass to the
-   *     receiving page. e.g. passing a static location_type_id. Optional but
-   *     requires paramNameToPass when in use.
-   *   * User can also provide a value in braces to replace with the Drupal
+   *     Can be provide as a list in square brackets if more than
+   *     one param is to be provided.
+   *     e.g. [location_id,user_id]
+   *     In this case multiple paramValueToPass must also be given in same way.
+   *   * paramValueToPass - The value of the parameter to pass to the
+   *     receiving page. e.g. passing a location_type_id.
+   *     Optional but requires paramNameToPass when in use.
+   *     Can be provide as a list in square brackets if more than
+   *     one param is to be provided.
+   *     - User can also provide a value in braces to replace with the Drupal
    *     field for current user e.g. {field_indicia_user_id}.
-   *   * User can also provide a value in square brackets to replace it with URL parameter value e.g. [user_id].
+   *     - User can also provide a value in brackets to replace it
+   *     with URL parameter value e.g. (user_id).
+   *     Can be provided as a list in square brackets if more than
+   *     one param is to be provided.
+   *     e.g. [1,(user_id)]
+   *     The above example supplies the value 1 to the first parameter,
+   *     and uses the user_id in the URL as the second parameter.
    *   * onlyShowWhenLoggedInStatus - If 1, then only show button for logged in
    *     users. If 2, only show link for users who are not logged in.
+   * @param string $path
+   *   Path.
    */
   public static function button_link($auth, $args, $tabalias, $options, $path) {
-    // Detection different depending on Drupal version
+    // Detection different depending on Drupal version.
     if (function_exists('user_is_logged_in')) {
       $loggedIn = user_is_logged_in();
-    } else {
+    }
+    else {
       $loggedIn = \Drupal::currentUser()->isAuthenticated();
     }
-    //Check if we should only show link for logged in/or none logged in users
+    // Check if we should only show for logged in/or none logged in users.
     if ((!empty($options['onlyShowWhenLoggedInStatus'])&&
-           (($options['onlyShowWhenLoggedInStatus'] == 1 && $loggedIn === true) ||
-           ($options['onlyShowWhenLoggedInStatus'] == 2 && $loggedIn === false) ||
+           (($options['onlyShowWhenLoggedInStatus'] == 1 && $loggedIn === TRUE) ||
+           ($options['onlyShowWhenLoggedInStatus'] == 2 && $loggedIn === FALSE) ||
            ($options['onlyShowWhenLoggedInStatus'] == FALSE))) ||
         empty($options['onlyShowWhenLoggedInStatus'])) {
       // Only display a button if the administrator has specified both a label
       // and a link path for the button.
       if (!empty($options['buttonLabel'])&&!empty($options['buttonLinkPath'])) {
         if (!empty($options['paramNameToPass']) && !empty($options['paramValueToPass'])) {
-          // If the param value to pass is in braces, then collect the Drupal
-          // field where the name is between the braces e.g.
-          // field_indicia_user_id.
-          if (substr($options['paramValueToPass'], 0, 1) === '{'&&substr($options['paramValueToPass'], -1) === '}') {
-            // Chop off the {}.
+          // If multiple parameters are supplied.
+          if (substr($options['paramNameToPass'], 0, 1) === '['&&substr($options['paramNameToPass'], -1) === ']' &&
+              substr($options['paramValueToPass'], 0, 1) === '['&&substr($options['paramValueToPass'], -1) === ']') {
+            // Chop the square brackets off the ends.
+            $options['paramNameToPass'] = substr($options['paramNameToPass'], 1, -1);
             $options['paramValueToPass'] = substr($options['paramValueToPass'], 1, -1);
-            // Hostsite_get_user_field doesn't want field or profile at the front.
-            $prefix = 'profile_';
-            if (substr($options['paramValueToPass'], 0, strlen($prefix)) == $prefix) {
-              $options['paramValueToPass'] = substr($options['paramValueToPass'], strlen($prefix));
-            }
-            $prefix = 'field_';
-            if (substr($options['paramValueToPass'], 0, strlen($prefix)) == $prefix) {
-              $options['paramValueToPass'] = substr($options['paramValueToPass'], strlen($prefix));
-            }
-            $paramValueFromUserField = hostsite_get_user_field($options['paramValueToPass']);
-            // If we have collected the user field from the profile, then
-            // overwrite the existing value.
-            if (!empty($paramValueFromUserField)) {
-              $options['paramValueToPass'] = $paramValueFromUserField;
+            // Explode the list of parameter names into an array.
+            $paramNamesArray = explode(',', $options['paramNameToPass']);
+            // Explode the list of parameter values into an array.
+            // Noting at this point this doesn't include any database field
+            // replacements, or the replacement for the value in the GET.
+            $paramValuesArrayWithoutReplacements = explode(',', $options['paramValueToPass']);
+          }
+          else {
+            // In the case we are just dealing with 1 parameter so our
+            // arrays are only 1 long, but will be treated in the same way.
+            $paramNamesArray = [];
+            $paramValuesArrayWithoutReplacements = [];
+            $paramNamesArray[] = $options['paramNameToPass'];
+            $paramValuesArrayWithoutReplacements[] = $options['paramValueToPass'];
+          }
+          $firstParamInArray = [];
+          $furtherParamsStringToPass = '';
+          foreach ($paramNamesArray as $idx => $theParamNameToPass) {
+            // Returns a single value array that includes the param name,
+            // and any replacements required for the
+            // value, such as for a database field or GET parameter.
+            $currentParamWithReplacements = self::process_link_param($theParamNameToPass, $paramValuesArrayWithoutReplacements[$idx]);
+            if ($currentParamWithReplacements !== NULL) {
+              // Store the first element in an array which can be used with
+              // hostsite_get_url (which knows how to build a correct URL).
+              if ($idx === 0) {
+                $firstParamInArray = $currentParamWithReplacements;
+              }
+              else {
+                // For the 2nd (or more) parameters build a string
+                // to add to the URL.
+                $furtherParamsStringToPass .= '&' . key($currentParamWithReplacements) . '=' . array_values($currentParamWithReplacements)[0];
+              }
             }
           }
-          if (substr($options['paramValueToPass'], 0, 1) === '['&&substr($options['paramValueToPass'], -1) === ']') {
-            $options['paramValueToPass'] = substr($options['paramValueToPass'], 1, -1);
-            // Try and get it from the URL
-            if (!empty($_GET[$options['paramValueToPass']])) {
-              $options['paramValueToPass'] = $_GET[$options['paramValueToPass']];
-            }
-          }
-          $paramToPass = array($options['paramNameToPass'] => $options['paramValueToPass']);
         }
         $button = '<div>';
         $button .= '  <FORM>';
         $button .= "    <INPUT TYPE=\"button\" VALUE=\"" . lang::get($options['buttonLabel']) . "\"";
         // Button can still be used without a parameter to pass.
-        if (!empty($paramToPass)) {
-          $button .= "ONCLICK=\"window.location.href='" . hostsite_get_url(lang::get($options['buttonLinkPath']), $paramToPass) . "'\">";
+        if (!empty($firstParamInArray)) {
+          $button .= "ONCLICK=\"window.location.href='" . hostsite_get_url(lang::get($options['buttonLinkPath']), $firstParamInArray) . $furtherParamsStringToPass . "'\">";
         }
         else {
+          // Situation where there are no params.
           $button .= "ONCLICK=\"window.location.href='" . hostsite_get_url(lang::get($options['buttonLinkPath'])) . "'\">";
         }
         $button .= '  </FORM>';
@@ -122,95 +156,194 @@ class extension_misc_extensions {
   /**
    * General text link control can be placed on pages to link to another page.
    *
+   * @param array $auth
+   *   Authorisation tokens.
+   * @param array $args
+   *   Form parameters.
+   * @param string $tabalias
+   *   The alias of the tab this appears on.
    * @param array $options
    *   Options array with the following possibilities:
    *   * label - The label that appears on the link. Mandatory.
    *   * linkPath< - The page to link to. Mandatory.
-   *   * paramNameToPass - The name of a static parameter to pass to the
+   *   * paramNameToPass - The name of a parameter to pass to the
    *     receiving page. Optional but requires paramValueToPass when in use.
-   *   * paramValueToPass - The value of the static parameter to pass to the
-   *     receiving page. e.g. passing a static location_type_id. Optional but
-   *     requires paramNameToPass when in use. User can also provide a value
-   *     in braces to replace with the Drupal field for current user e.g.
-   *     {field_indicia_user_id}.
-   *   * User can also provide a value in square brackets to replace it with URL parameter value e.g. [user_id].
+   *     Can be provide as a list in square brackets if more than
+   *     one param is to be provided.
+   *     e.g. [location_id,user_id]
+   *     In this case multiple paramValueToPass must also be given in same way.
+   *   * paramValueToPass - The value of the parameter to pass to the
+   *     receiving page. e.g. passing a location_type_id.
+   *     Optional but requires paramNameToPass when in use.
+   *     Can be provide as a list in square brackets if more than
+   *     one param is to be provided.
+   *     - User can also provide a value in braces to replace with the Drupal
+   *     field for current user e.g. {field_indicia_user_id}.
+   *     - User can also provide a value in brackets to replace it
+   *     with URL parameter value e.g. (user_id).
+   *     Can be provide as a list in square brackets if more than
+   *     one param is to be provided.
+   *     e.g. [1,(user_id)]
+   *     The above example supplies the value 1 to the first parameter,
+   *     and uses the user_id in the URL as the second parameter.
+   *   * User can also provided a value in square brackets
+   *     to replace it with URL parameter value e.g. [user_id].
    *   * onlyShowWhenLoggedInStatus - If 1, then only show link for logged in
    *     users. If 2, only show link for users who are not logged in.
    *   * anchorId - Optional id for anchor link. This might be useful, for
    *     example, if you want to reference the anchor with jQuery to set the
    *     path in real-time.
+   * @param string $path
+   *   Path.
    */
   public static function text_link($auth, $args, $tabalias, $options, $path) {
-    // Detection different depending on Drupal version
+    // Detection different depending on Drupal version.
     if (function_exists('user_is_logged_in')) {
       $loggedIn = user_is_logged_in();
-    } else {
+    }
+    else {
       $loggedIn = \Drupal::currentUser()->isAuthenticated();
     }
-    //Check if we should only show link for logged in/or none logged in users
+    // Check if we should only show for logged in/or none logged in users.
     if ((!empty($options['onlyShowWhenLoggedInStatus'])&&
-           (($options['onlyShowWhenLoggedInStatus'] == 1 && $loggedIn === true) ||
-           ($options['onlyShowWhenLoggedInStatus'] == 2 && $loggedIn === false) ||
+           (($options['onlyShowWhenLoggedInStatus'] == 1 && $loggedIn === TRUE) ||
+           ($options['onlyShowWhenLoggedInStatus'] == 2 && $loggedIn === FALSE) ||
            ($options['onlyShowWhenLoggedInStatus'] == FALSE))) ||
         empty($options['onlyShowWhenLoggedInStatus'])) {
       //Only display a link if the administrator has specified both a label and a link.
       if (!empty($options['label'])&&!empty($options['linkPath'])) {
         if (!empty($options['paramNameToPass']) && !empty($options['paramValueToPass'])) {
-          //If the param value to pass is in braces, then collect the Drupal field where the name is between the braces e.g. field_indicia_user_id
-          if (substr($options['paramValueToPass'], 0, 1) === '{'&&substr($options['paramValueToPass'], -1) === '}') {
-            //Chop of the {}
-            $options['paramValueToPass']=substr($options['paramValueToPass'], 1, -1);
-            //hostsite_get_user_field doesn't want field or profile at the front.
-            $prefix = 'profile_';
-            if (substr($options['paramValueToPass'], 0, strlen($prefix)) == $prefix) {
-              $options['paramValueToPass'] = substr($options['paramValueToPass'], strlen($prefix));
-            }
-            $prefix = 'field_';
-            if (substr($options['paramValueToPass'], 0, strlen($prefix)) == $prefix) {
-              $options['paramValueToPass'] = substr($options['paramValueToPass'], strlen($prefix));
-            }
-            $paramValueFromUserField=hostsite_get_user_field($options['paramValueToPass']);
-            //If we have collected the user field from the profile, then overwrite the existing value.
-            if (!empty($paramValueFromUserField))
-              $options['paramValueToPass']=$paramValueFromUserField;
-          }
-          if (substr($options['paramValueToPass'], 0, 1) === '['&&substr($options['paramValueToPass'], -1) === ']') {
+          // If multiple parameters are supplied.
+          if (substr($options['paramNameToPass'], 0, 1) === '['&&substr($options['paramNameToPass'], -1) === ']' &&
+              substr($options['paramValueToPass'], 0, 1) === '['&&substr($options['paramValueToPass'], -1) === ']') {
+            // Chop the square brackets off the ends.
+            $options['paramNameToPass'] = substr($options['paramNameToPass'], 1, -1);
             $options['paramValueToPass'] = substr($options['paramValueToPass'], 1, -1);
-            // Try and get it from the URL
-            if (!empty($_GET[$options['paramValueToPass']])) {
-              $options['paramValueToPass'] = $_GET[$options['paramValueToPass']];
+            // Explode the list of parameter names into an array.
+            $paramNamesArray = explode(',', $options['paramNameToPass']);
+            // Explode the list of parameter values into an array.
+            // Noting at this point this doesn't include any database field
+            // replacements, or the replacement for the value in the GET.
+            $paramValuesArrayWithoutReplacements = explode(',', $options['paramValueToPass']);
+          }
+          else {
+            // In the case we are just dealing with 1 parameter so our
+            // arrays are only 1 long, but will be treated in the same way.
+            $paramNamesArray = [];
+            $paramValuesArrayWithoutReplacements = [];
+            $paramNamesArray[] = $options['paramNameToPass'];
+            $paramValuesArrayWithoutReplacements[] = $options['paramValueToPass'];
+          }
+          $firstParamInArray = [];
+          $furtherParamsStringToPass = '';
+          foreach ($paramNamesArray as $idx => $theParamNameToPass) {
+            // Returns a single value array that includes the param name,
+            // and any replacements required for the
+            // value, such as for a database field or GET parameter.
+            $currentParamWithReplacements = self::process_link_param($theParamNameToPass, $paramValuesArrayWithoutReplacements[$idx]);
+            if ($currentParamWithReplacements !== NULL) {
+              // Store the first element in an array which can be used with
+              // hostsite_get_url (which knows how to build a correct URL).
+              if ($idx === 0) {
+                $firstParamInArray = $currentParamWithReplacements;
+              }
+              else {
+                // For the 2nd (or more) parameters build a string
+                // to add to the URL.
+                $furtherParamsStringToPass .= '&' . key($currentParamWithReplacements) . '=' . array_values($currentParamWithReplacements)[0];
+              }
             }
           }
-          $paramToPass=array($options['paramNameToPass']=>$options['paramValueToPass']);
         }
-        $button = '<div>';
+        $textLinkHtml = '<div>';
         // If an id option for the anchor is supplied then set the anchor id.
         // This might be useful, for example, if you want to reference the
         // anchor with jQuery to set the path in real-time.
-        if (!empty($options['anchorId']))
-          $button .= "  <a id=\"".$options['anchorId']."\" ";
-        else
-          $button .= "  <a  ";
-        // Button can still be used without a parameter to pass.
-        if (!empty($paramToPass)) {
-          $button .= "href=\"" . hostsite_get_url(lang::get($options['linkPath']), $paramToPass) . "\">";
+        if (!empty($options['anchorId'])) {
+          $textLinkHtml .= "  <a id=\"" . $options['anchorId'] . "\" ";
         }
         else {
-          $button .= "href=\"" . hostsite_get_url(lang::get($options['linkPath'])) . "\">";
+          $textLinkHtml .= "  <a  ";
         }
-        $button .= lang::get($options['label']);
-        $button .= '  </a>';
-        $button .= '</div><br>';
+        // Link can still be used without a parameter to pass.
+        if (!empty($firstParamInArray)) {
+          $textLinkHtml .= "href=\"" . hostsite_get_url(lang::get($options['linkPath']), $firstParamInArray) . $furtherParamsStringToPass . "\">";
+        }
+        else {
+          $textLinkHtml .= "href=\"" . hostsite_get_url(lang::get($options['linkPath'])) . "\">";
+        }
+        $textLinkHtml .= lang::get($options['label']);
+        $textLinkHtml .= '  </a>';
+        $textLinkHtml .= '</div><br>';
       }
       else {
         hostsite_show_message('A text link has been specified without a link path or label, please fill in the @linkPath and @label options');
-        $button = '';
+        $textLinkHtml = '';
       }
-      return $button;
+      return $textLinkHtml;
     }
     else {
       return '';
     }
+  }
+
+  /**
+   * Process a parameter to be used in a button/text link.
+   *
+   * Process a parameter to be used in a link,
+   * such as applying database field replacements or GET replacements.
+   *
+   * @param string $theParamNameToPass
+   *   Parameter name to process.
+   * @param string $theParamValueToPass
+   *   Parameter value to process.
+   *
+   * @return array
+   *   The processed parameter.
+   */
+  public static function process_link_param($theParamNameToPass, $theParamValueToPass) {
+    // If the param value to pass is in braces, then collect the Drupal
+    // field where the name is between the braces e.g. field_indicia_user_id.
+    if (substr($theParamValueToPass, 0, 1) === '{' && substr($theParamValueToPass, -1) === '}') {
+      // Chop off the {}.
+      $theParamValueToPass = substr($theParamValueToPass, 1, -1);
+      // Hostsite_get_user_field doesn't want field
+      // or profile at the front so remove.
+      $prefix = 'profile_';
+      if (substr($theParamValueToPass, 0, strlen($prefix)) == $prefix) {
+        $theParamValueToPass = substr($theParamValueToPass, strlen($prefix));
+      }
+      $prefix = 'field_';
+      if (substr($theParamValueToPass, 0, strlen($prefix)) == $prefix) {
+        $theParamValueToPass = substr($theParamValueToPass, strlen($prefix));
+      }
+      $paramValueFromUserField = hostsite_get_user_field($theParamValueToPass);
+      // If we have collected the user field from the profile, then
+      // overwrite the existing value.
+      if (!empty($paramValueFromUserField)) {
+        $theParamValueToPass = $paramValueFromUserField;
+      }
+    }
+    // If we are replacing the value with one in the URL,
+    // the replacement is in brackets.
+    if (substr($theParamValueToPass, 0, 1) === '('&&substr($theParamValueToPass, -1) === ')') {
+      // Remove the brackets.
+      $theParamValueToPass = substr($theParamValueToPass, 1, -1);
+      // Try and get it from the URL.
+      if (!empty($_GET[$theParamValueToPass])) {
+        $theParamValueToPass = $_GET[$theParamValueToPass];
+      }
+      else {
+        $theParamValueToPass = NULL;
+      }
+    }
+    if ($theParamValueToPass !== NULL) {
+      $paramArray = [$theParamNameToPass => $theParamValueToPass];
+    }
+    else {
+      $paramArray = NULL;
+    }
+    return $paramArray;
   }
 
   /**
