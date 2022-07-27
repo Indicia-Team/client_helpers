@@ -252,7 +252,10 @@ class extension_photo_checklist {
         if (!empty($values["occ:photo-checklist-occ:id:$uniqId"])) {
           $occurrence['id'] = $values["occ:photo-checklist-occ:id:$uniqId"];
           // Unset so we can track which are deleted.
-          unset($existingIdFields["occ:photo-checklist-occ:id:$uniqId"]);
+          $key = array_search("occ:photo-checklist-occ:id:$uniqId", $existingIdFields);
+          if ($key !== FALSE) {
+            unset($existingIdFields[$key]);
+          }
         }
         $mediaPathField = "occ:photo-checklist-media:path:$uniqId";
         $mediaIdField = "occ:photo-checklist-media:id:$uniqId";
@@ -265,7 +268,6 @@ class extension_photo_checklist {
             $occurrence["occurrence_medium:deleted:$uniqId"] = 't';
           }
         }
-        // @todo Media deletion if a previously saved one binned.
         $wrappedOccurrence = submission_builder::build_submission($occurrence, [
           'model' => 'occurrence',
         ]);
@@ -275,7 +277,23 @@ class extension_photo_checklist {
         ];
       }
     }
-    // @todo Check the existing records in case deleted.
+    // Remaining existing ID fields containing IDs are deletions.
+    foreach ($existingIdFields as $idField) {
+      if (!empty($values[$idField])) {
+        $occurrence = [
+          'id' => $values[$idField],
+          'website_id' => $values['website_id'],
+          'deleted' => 't',
+        ];
+        $wrappedOccurrence = submission_builder::build_submission($occurrence, [
+          'model' => 'occurrence',
+        ]);
+        $s_array[0]['subModels'][] = [
+          'fkId' => 'sample_id',
+          'model' => $wrappedOccurrence,
+        ];
+      }
+    }
   }
 
   /**
