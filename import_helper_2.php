@@ -402,6 +402,8 @@ HTML;
     self::addLanguageStringsToJs('import_helper_2', [
       'backgroundProcessingDone' => 'Background processing done',
       'extractingFile' => 'Extracting the data from the Zip file.',
+      'errorExtractingZip' => 'An error occurred on the server whilst extracting the Zip file',
+      'errorUploadingFile' => 'An error occurred on the server whilst uploading the file',
       'fileExtracted' => 'Data extracted from Zip file.',
       'fileUploaded' => 'File uploaded to the server.',
       'loadingRecords' => 'Loading records.',
