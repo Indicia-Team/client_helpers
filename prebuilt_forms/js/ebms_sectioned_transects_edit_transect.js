@@ -918,7 +918,10 @@ saveRoute = function(callback) {
 
     // autocalc the section length and store in the section POST data and indiciaData and the Section Form
     if (indiciaData.autocalcSectionLengthAttrId) {
-      var sectionLen = Math.round(indiciaData.currentFeature.geometry.clone().transform(indiciaData.mapdiv.map.projection, 'EPSG:3857').getLength());
+      var sectionLen = Math.round(
+        indiciaData.currentFeature.geometry.clone()
+        .getGeodesicLength(indiciaData.mapdiv.map.projection)
+      );
       postData[$('#locAttr\\:'+indiciaData.autocalcSectionLengthAttrId).attr('name')] = sectionLen;
       $('#locAttr\\:'+indiciaData.autocalcSectionLengthAttrId).val(sectionLen);
       newSectionDetails.sectionLen = sectionLen;
