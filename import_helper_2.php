@@ -184,7 +184,7 @@ class import_helper_2 extends helper_base {
    * @param array $writeAuth
    *   Write authorisation tokens.
    */
-  public static function sendFileToWarehouse($fileName, array $writeAuth) {;
+  public static function sendFileToWarehouse($fileName, array $writeAuth) {
     return self::send_file_to_warehouse($fileName, TRUE, $writeAuth, 'import_2/upload_file', TRUE);
   }
 
@@ -385,7 +385,7 @@ class import_helper_2 extends helper_base {
       'selectAFile' => lang::get('Select a CSV or Excel file or drag it over this area. The file can optionally be a zip archive. If importing an Excel file, only the first worksheet will be imported.'),
       'uploadFileToImport' => lang::get('Upload a file to import'),
     ];
-    $templates = self::fetchTemplates();
+    $templates = self::loadTemplates($options);
     $templatePickerHtml = '';
     if (count($templates)) {
       $templateOptions = [];
@@ -393,7 +393,7 @@ class import_helper_2 extends helper_base {
         $templateOptions[$template['id']] = $template['title'];
       }
       $templatePickerHtml = data_entry_helper::select([
-        'fieldname' => 'import_template',
+        'fieldname' => 'import_template_id',
         'label' => lang::get('Template'),
         'helpText' => lang::get('If you would like to import similar data to a previuos import, choose one of the templates you saved previously to re-use the settings'),
         'lookupValues' => $templateOptions,
@@ -457,8 +457,21 @@ HTML;
       'instructions' => lang::get($options['globalValuesFormIntro']),
       'moreInfo' => lang::get('More info...'),
       'next' => lang::get('Next step'),
+      'setting' => lang::get('Setting'),
+      'settingsFromTemplate' => lang::get('The following settings required for this page are being loaded from the selected template.'),
       'title' => lang::get('Import settings'),
+      'value' => lang::get('Value'),
     ];
+    $template = self::loadSelectedTemplate($options);
+    if ($template && !empty($template['global_values'])) {
+      // Merge the template global values into the configuration's fixed
+      // values.
+      $globalValuesFromTemplate = json_decode($template['global_values'], TRUE);
+      $options['fixedValues'] = array_merge(
+        $options['fixedValues'],
+        $globalValuesFromTemplate
+      );
+    }
     // Find the controls that we can accept global values for, depending on the
     // entity we are importing into.
     $response = self::cache_get(['entityImportSettings' => $options['entity']]);
@@ -481,6 +494,7 @@ HTML;
     return <<<HTML
 <h3>$lang[title]</h3>
 <p>$lang[instructions]</p>
+$loadedFromTemplateInfo
 <form id="settings-form" method="POST">
   $form
   <div class="panel panel-info background-processing">
@@ -508,6 +522,7 @@ HTML;
     $options['helpText'] = TRUE;
     $options['form'] = $formArray;
     $options['param_lookup_extras'] = [];
+    $visibleControlsFound = FALSE;
 
     foreach ($formArray as $key => $info) {
       if (!empty($options['fixedValues'][$key])) {
@@ -529,6 +544,12 @@ HTML;
         }
       }
       $r .= self::getParamsFormControl($key, $info, $options, $tools);
+      $visibleControlsFound = TRUE;
+    }
+    if (!$visibleControlsFound) {
+      // All controls had a fixed value provided in config or the loaded
+      // template, so show a message instead of the form.
+      $r .= '<p class="alert alert-info">' . lang::get('None of the import settings require your input, so click <strong>Next step</strong> when the background processing is complete.') . ' </p>';
     }
     return $r;
   }
@@ -861,6 +882,8 @@ HTML;
     $globalRows = [];
     $arrow = "<i class=\"fas fa-play\" title=\"$lang[dataValuesCopied]\"></i>";
     foreach ($config['global-values'] as $field => $value) {
+      // @todo Would be nice to replace value with readable label from the
+      // original lookup.
       // Foreign key filters were used during matching, not actually for import.
       if (strpos($field, 'fkFilter') === FALSE) {
         $field = $availableFields[$field] ?? $field;
@@ -958,7 +981,7 @@ HTML;
     self::$indiciaData['importTemplateTitle'] = $_POST['template_title'];
     if (!empty($_POST['template_title'])) {
       // Force a cache reload so the new template is instantly available.
-      self::fetchTemplates(TRUE);
+      self::loadTemplates($options, TRUE);
     }
     return <<<HTML
 <h3 id="current-task">$lang[checkingData]</h3>
@@ -1109,24 +1132,54 @@ HTML;
   /**
    * Retrieves previously saved import templates.
    *
+   * @param array $options
+   *   Import options array.
    * @param bool $forceReload
    *   Force the templates to reload without caching, so resetting cached data.
    *
    * @return array
    *   Array of template data.
    */
-  private static function fetchTemplates($forceReload = FALSE) {
-    $conn = iform_get_connection_details();
-    $readAuth = data_entry_helper::get_read_auth($conn['website_id'], $conn['password']);
+  private static function loadTemplates(array $options, $forceReload = FALSE) {
     // If the import template title is set then reset the cache.
     $caching = $forceReload ? 'store' : TRUE;
     return data_entry_helper::get_population_data([
       'table' => 'import_template',
-      'extraParams' => $readAuth + [
+      'extraParams' => $options['readAuth'] + [
+        'entity' => $options['entity'],
         'created_by_id' => hostsite_get_user_field('indicia_user_id'),
       ],
       'caching' => $caching,
     ]);
+  }
+
+  /**
+   * Retrieves previously saved import templates.
+   *
+   * @param array $options
+   *   Import options array.
+   *
+   * @return array
+   *   Array of template data.
+   */
+  private static function loadSelectedTemplate(array $options) {
+    if (!empty($_POST['import_template_id'])) {
+      $r = helper_base::get_population_data([
+        'table' => 'import_template',
+        'extraParams' => $options['readAuth'] + [
+          'entity' => $options['entity'],
+          'id' => $_POST['import_template_id'],
+        ],
+        'caching' => FALSE,
+      ]);
+      if (count($r) === 1) {
+        return $r[0];
+      }
+      else {
+        throw new Exception('Failed to load selected template');
+      }
+    }
+    return NULL;
   }
 
 }
