@@ -311,8 +311,15 @@ class import_helper_2 extends helper_base {
    *   Name of the file to process.
    * @param string $description
    *   Description if saving the import metadata for the first time.
+   * @param string $templateTitle
+   *   Title if saving the import configuration as a template for future use.
+   * @param bool $forceTemplateOverwrite
+   *   Set to true if the template title provided can be used to overwrite an
+   *   existing one of the same name for this user.
+   * @param array $writeAuth
+   *   Write authorisation tokens.
    */
-  public static function importChunk($fileName, $description, array $writeAuth) {
+  public static function importChunk($fileName, $description, $templateTitle, $forceTemplateOverwrite, array $writeAuth) {
     $serviceUrl = self ::$base_url . 'index.php/services/import_2/import_chunk';
     $data = $writeAuth + [
       'data-file' => $fileName,
@@ -320,6 +327,12 @@ class import_helper_2 extends helper_base {
     if ($description !== NULL) {
       $data['save-import-record'] = json_encode([
         'description' => $description,
+      ]);
+    }
+    if ($templateTitle !== NULL) {
+      $data['save-import-template'] = json_encode([
+        'title' => $templateTitle,
+        'forceTemplateOverwrite' => $forceTemplateOverwrite,
       ]);
     }
     if (isset($_POST['precheck'])) {
@@ -331,8 +344,18 @@ class import_helper_2 extends helper_base {
     $response = self::http_post($serviceUrl, $data, FALSE);
     $output = json_decode($response['output'], TRUE);
     if (!$response['result']) {
-      \Drupal::logger('iform')->notice('Error in importChunk: ' . var_export($response, TRUE));
-      throw new exception(isset($output['msg']) ? $output['msg'] : $response['output']);
+      if (isset($response['status']) && $response['status'] === 409 && $output['msg'] === 'An import template with that title already exists') {
+        // Duplicate conflict in import template title.
+        return [
+          'status' => 'conflict',
+          'msg' => $output['msg'],
+          'title' => $templateTitle,
+        ];
+      }
+      else {
+        \Drupal::logger('iform')->notice('Error in importChunk: ' . var_export($response, TRUE));
+        throw new exception(isset($output['msg']) ? $output['msg'] : $response['output']);
+      }
     }
     return $output;
   }
@@ -357,10 +380,26 @@ class import_helper_2 extends helper_base {
       'browseFiles' => lang::get('Browse files'),
       'clickToAdd' => lang::get('Click to add files'),
       'instructions' => lang::get($options['fileSelectFormIntro']),
+      'instructionsSelectTemplate' => lang::get('Choose one of the templates you saved previously if repeating a similar import.'),
       'next' => lang::get('Next step'),
       'selectAFile' => lang::get('Select a CSV or Excel file or drag it over this area. The file can optionally be a zip archive. If importing an Excel file, only the first worksheet will be imported.'),
       'uploadFileToImport' => lang::get('Upload a file to import'),
     ];
+    $templates = self::fetchTemplates();
+    $templatePickerHtml = '';
+    if (count($templates)) {
+      $templateOptions = [];
+      foreach ($templates as $template) {
+        $templateOptions[$template['id']] = $template['title'];
+      }
+      $templatePickerHtml = data_entry_helper::select([
+        'fieldname' => 'import_template',
+        'label' => lang::get('Template'),
+        'helpText' => lang::get('If you would like to import similar data to a previuos import, choose one of the templates you saved previously to re-use the settings'),
+        'lookupValues' => $templateOptions,
+        'blankText' => lang::get('-no template selected-'),
+      ]);
+    }
     $r = <<<HTML
 <h3>$lang[uploadFileToImport]</h3>
 <p>$lang[instructions]</p>
@@ -376,6 +415,7 @@ class import_helper_2 extends helper_base {
     </div>
     <div class="col-md-3" id="uploaded-files"></div>
   </div>
+  $templatePickerHtml
   <progress id="file-progress" class="progress" value="0" max="100" style="display: none"></progress>
   <input type="submit" class="btn btn-primary" id="next-step" value="$lang[next]" disabled />
   <input type="hidden" name="next-import-step" value="globalValuesForm" />
@@ -870,6 +910,11 @@ HTML;
     <textarea class="form-control" rows="5" name="description"></textarea>
     <p class="helpText">Please describe the data you are about to import.</p>
   </div>
+  <div class="form-group">
+    <label for="template_title">Save import template:</label>
+    <input type="text" class="form-control" name="template_title" />
+    <p class="helpText">If you would like to save the column mappings and fixed values so they can be re-used when importing other files in future, please provide a descriptive name for your settings here.</p>
+  </div>
   <input type="submit" class="btn btn-primary" id="next-step" value="$lang[startImport]" />
   <input type="hidden" name="next-import-step" value="doImportPage" />
   <input type="hidden" name="data-file" id="data-file" value="{$_POST['data-file']}" />
@@ -882,15 +927,20 @@ HTML;
    */
   private static function doImportPage($options) {
     self::addLanguageStringsToJs('import_helper_2', [
+      'cancel' => 'Cancel',
       'completeMessage' => 'The import is complete',
+      'confirmTemplateOverwrite' => 'There is already an import template with the same name. Would you like to overwrite it?',
       'downloadErrors' => 'Download the rows that had errors',
       'errorInImportFile' => 'Errors were found in {1} row.',
       'errorsInImportFile' => 'Errors were found in {1} rows.',
       'importingData' => 'Importing data',
       'importingDetails' => '{rowsProcessed} of {totalRows} rows imported, {errorsCount} errors found.',
       'importingFoundErrors' => 'Errors were found during the import stage which means that data was imported but rows with errors were skipped. Please download the errors spreadsheet using the button below and correct the data then upload just the errors spreadsheet again.',
+      'overwriteTemplate' => 'Overwrite the template',
       'precheckDetails' => '{rowsProcessed} of {totalRows} rows checked, {errorsCount} errors found.',
       'precheckFoundErrors' => 'Because validation errors were found, no data has been imported. Please download the errors spreadsheet using the button below and correct the data in your original file accordingly, then upload it again.',
+      'saveTemplate' => 'Save template',
+      'skipSavingTemplate' => 'Skip saving the template',
     ]);
     $lang = [
       'checkingData' => lang::get('Checking data'),
@@ -899,11 +949,17 @@ HTML;
       'precheckDone' => 'Checking complete',
       'precheckTitle' => 'Checking the import data for validation errors...',
       'precheckDone' => 'Checking complete',
+      'specifyUniqueTemplateName' => 'Please specify a unique name for the import template',
     ];
     self::$indiciaData['readyToImport'] = TRUE;
     self::$indiciaData['dataFile'] = $_POST['data-file'];
     // Put the import description somewhere so it can be saved.
     self::$indiciaData['importDescription'] = $_POST['description'];
+    self::$indiciaData['importTemplateTitle'] = $_POST['template_title'];
+    if (!empty($_POST['template_title'])) {
+      // Force a cache reload so the new template is instantly available.
+      self::fetchTemplates(TRUE);
+    }
     return <<<HTML
 <h3 id="current-task">$lang[checkingData]</h3>
 <progress id="file-progress" class="progress" value="0" max="100"></progress>
@@ -922,6 +978,15 @@ HTML;
 </div>
 <div class="alert alert-danger clearfix" id="error-info" style="display: none">
   <i class="fas fa-exclamation-triangle fa-2x pull-right"></i>
+</div>
+<div style="display: none">
+  <div id="template-title-form">
+    <p>$lang[specifyUniqueTemplateName]</p>
+    <div class="form-group">
+      <label for="description">Import template name:</label>
+      <input class="form-control" id="import-template-title" />
+    </div>
+  </div>
 </div>
 HTML;
   }
@@ -1039,6 +1104,29 @@ HTML;
       }
     }
     return $r;
+  }
+
+  /**
+   * Retrieves previously saved import templates.
+   *
+   * @param bool $forceReload
+   *   Force the templates to reload without caching, so resetting cached data.
+   *
+   * @return array
+   *   Array of template data.
+   */
+  private static function fetchTemplates($forceReload = FALSE) {
+    $conn = iform_get_connection_details();
+    $readAuth = data_entry_helper::get_read_auth($conn['website_id'], $conn['password']);
+    // If the import template title is set then reset the cache.
+    $caching = $forceReload ? 'store' : TRUE;
+    return data_entry_helper::get_population_data([
+      'table' => 'import_template',
+      'extraParams' => $readAuth + [
+        'created_by_id' => hostsite_get_user_field('indicia_user_id'),
+      ],
+      'caching' => $caching,
+    ]);
   }
 
 }

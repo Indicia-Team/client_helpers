@@ -275,7 +275,14 @@ TXT;
     header('Content-type: application/json');
     $writeAuth = self::getAuthFromHeaders();
     iform_load_helpers(['import_helper_2']);
-    echo json_encode(import_helper_2::importChunk($_GET['data-file'], isset($_POST['description']) ? $_POST['description'] : NULL, $writeAuth));
+    $response = import_helper_2::importChunk(
+      $_GET['data-file'],
+      isset($_POST['description']) ? $_POST['description'] : NULL,
+      isset($_POST['importTemplateTitle']) ? $_POST['importTemplateTitle'] : NULL,
+      isset($_POST['forceTemplateOverwrite']) && $_POST['forceTemplateOverwrite'] === 'true',
+      $writeAuth
+    );
+    echo json_encode($response);
   }
 
   /**
