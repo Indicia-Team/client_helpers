@@ -183,6 +183,7 @@ TXT;
       'uploadFileUrl' => hostsite_get_url('iform/ajax/importer_2') . "/upload_file/$nid",
       'sendFileToWarehouseUrl' => hostsite_get_url('iform/ajax/importer_2') . "/send_file_to_warehouse/$nid",
       'extractFileOnWarehouseUrl' => hostsite_get_url('iform/ajax/importer_2') . "/extract_file_on_warehouse/$nid",
+      'initServerConfigUrl' => hostsite_get_url('iform/ajax/importer_2') . "/init_server_config/$nid",
       'loadChunkToTempTableUrl' => hostsite_get_url('iform/ajax/importer_2') . "/load_chunk_to_temp_table/$nid",
       'getRequiredFieldsUrl' => hostsite_get_url('iform/ajax/importer_2') . "/get_required_fields/$nid",
       'processLookupMatchingUrl' => hostsite_get_url('iform/ajax/importer_2') . "/process_lookup_matching/$nid",
@@ -238,6 +239,20 @@ TXT;
     $writeAuth = self::getAuthFromHeaders();
     iform_load_helpers(['import_helper_2']);
     echo json_encode(import_helper_2::extractFileOnWarehouse($_GET['uploaded-file'], $writeAuth));
+  }
+
+  /**
+   * Ajax handler to initialise the JSON config file on the warehouse.
+   */
+  public static function ajax_init_server_config($website_id, $password, $nid) {
+    header('Content-type: application/json');
+    $writeAuth = self::getAuthFromHeaders();
+    iform_load_helpers(['import_helper_2']);
+    echo json_encode(import_helper_2::initServerConfig(
+      $_GET['data-file'],
+      isset($_GET['import_template_id']) ? $_GET['import_template_id'] : NULL,
+      $writeAuth
+    ));
   }
 
   /**
