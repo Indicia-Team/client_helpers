@@ -61,6 +61,8 @@ class import_helper_2 extends helper_base {
    * * sendFileToWarehouseUrl - path to a script that forwards the import file
    *   from the interim location to the warehouse.  The script can call
    *   import_helper_2::sendFileToWarehouse for a complete implementation.
+   * * initServerConfigUrl - path to a script that initialises the JSON config
+   *   file for the import on the warehouse.
    * * loadChunkToTempTableUrl - path to a script that triggers the load of the
    *   next chunk of records into a temp table on the warehouse. The script can
    *   call import_helper_2::loadChunkToTempTable for a complete implementation.
@@ -96,6 +98,7 @@ class import_helper_2 extends helper_base {
     self::$indiciaData['uploadFileUrl'] = $options['uploadFileUrl'];
     self::$indiciaData['sendFileToWarehouseUrl'] = $options['sendFileToWarehouseUrl'];
     self::$indiciaData['extractFileOnWarehouseUrl'] = $options['extractFileOnWarehouseUrl'];
+    self::$indiciaData['initServerConfigUrl'] = $options['initServerConfigUrl'];
     self::$indiciaData['loadChunkToTempTableUrl'] = $options['loadChunkToTempTableUrl'];
     self::$indiciaData['getRequiredFieldsUrl'] = $options['getRequiredFieldsUrl'];
     self::$indiciaData['processLookupMatchingUrl'] = $options['processLookupMatchingUrl'];
@@ -206,6 +209,34 @@ class import_helper_2 extends helper_base {
     $response = self::http_post($serviceUrl, $data, FALSE);
     $output = json_decode($response['output'], TRUE);
     if (!$response['result']) {
+      throw new exception(isset($output['msg']) ? $output['msg'] : $response['output']);
+    }
+    return $output;
+  }
+
+  /**
+   * Sets up the config JSON file on the server.
+   *
+   * @param string $fileName
+   *   Name of the file.
+   * @param int $importTemplateId
+   *   Template ID if one was selected.
+   * @param array $writeAuth
+   *   Write authorisation tokens.
+   *
+   * @return array
+   *   Output of the web service request.
+   */
+  public static function initServerConfig($fileName, $importTemplateId, array $writeAuth) {
+    $serviceUrl = self ::$base_url . 'index.php/services/import_2/init_server_config';
+    $data = $writeAuth + [
+      'data-file' => $fileName,
+      'import_template_id' => $importTemplateId,
+    ];
+    $response = self::http_post($serviceUrl, $data, FALSE);
+    $output = json_decode($response['output'], TRUE);
+    if (!$response['result']) {
+      \Drupal::logger('iform')->notice('Error in initServerConfig: ' . var_export($response, TRUE));
       throw new exception(isset($output['msg']) ? $output['msg'] : $response['output']);
     }
     return $output;
@@ -618,6 +649,9 @@ HTML;
     // get populated by some other means.
     $requiredFields = array_intersect_key($requiredFields, $availableFields);
     self::$indiciaData['requiredFields'] = $requiredFields;
+    if (!empty($config['mappings'])) {
+      self::$indiciaData['mappings'] = $config['mappings'];
+    }
 
     $htmlList = [];
     $dbFieldOptions = self::getAvailableDbFieldsAsOptions($options, $availableFields);
@@ -981,6 +1015,7 @@ HTML;
     self::$indiciaData['importTemplateTitle'] = $_POST['template_title'];
     if (!empty($_POST['template_title'])) {
       // Force a cache reload so the new template is instantly available.
+      // @todo Doesn't seem to work?
       self::loadTemplates($options, TRUE);
     }
     return <<<HTML
@@ -1059,6 +1094,7 @@ HTML;
     $requiredOptions = [
       'uploadFileUrl',
       'sendFileToWarehouseUrl',
+      'initServerConfigUrl',
       'loadChunkToTempTableUrl',
       'getRequiredFieldsUrl',
       'processLookupMatchingUrl',
@@ -1173,6 +1209,7 @@ HTML;
         'caching' => FALSE,
       ]);
       if (count($r) === 1) {
+        helper_base::$indiciaData['import_template_id'] = (int) $r[0]['id'];
         return $r[0];
       }
       else {
