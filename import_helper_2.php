@@ -355,14 +355,14 @@ class import_helper_2 extends helper_base {
     $data = $writeAuth + [
       'data-file' => $fileName,
     ];
-    if ($description !== NULL) {
+    if (!empty(trim($description))) {
       $data['save-import-record'] = json_encode([
-        'description' => $description,
+        'description' => trim($description),
       ]);
     }
-    if ($templateTitle !== NULL) {
+    if (!empty(trim($templateTitle))) {
       $data['save-import-template'] = json_encode([
-        'title' => $templateTitle,
+        'title' => trim($templateTitle),
         'forceTemplateOverwrite' => $forceTemplateOverwrite,
       ]);
     }
@@ -525,7 +525,6 @@ HTML;
     return <<<HTML
 <h3>$lang[title]</h3>
 <p>$lang[instructions]</p>
-$loadedFromTemplateInfo
 <form id="settings-form" method="POST">
   $form
   <div class="panel panel-info background-processing">
