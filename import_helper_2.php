@@ -734,6 +734,10 @@ HTML;
           $alt = ' data-alt="gridref,gridreference,spatialref,spatialreference,mapref,mapreference"';
           break;
 
+        case 'sample:location_name':
+          $alt = ' data-alt="sitename"';
+          break;
+
         case 'occurrence:fk_taxa_taxon_list':
           $alt = ' data-alt="species,speciesname,taxon,taxonname"';
           break;
@@ -1014,8 +1018,7 @@ HTML;
     self::$indiciaData['importTemplateTitle'] = $_POST['template_title'];
     if (!empty($_POST['template_title'])) {
       // Force a cache reload so the new template is instantly available.
-      // @todo Doesn't seem to work?
-      self::loadTemplates($options, TRUE);
+      self::clearTemplateCache($options);
     }
     return <<<HTML
 <h3 id="current-task">$lang[checkingData]</h3>
@@ -1169,22 +1172,33 @@ HTML;
    *
    * @param array $options
    *   Import options array.
-   * @param bool $forceReload
-   *   Force the templates to reload without caching, so resetting cached data.
    *
    * @return array
    *   Array of template data.
    */
-  private static function loadTemplates(array $options, $forceReload = FALSE) {
-    // If the import template title is set then reset the cache.
-    $caching = $forceReload ? 'store' : TRUE;
-    return data_entry_helper::get_population_data([
+  private static function loadTemplates(array $options) {
+    return helper_base::get_population_data([
       'table' => 'import_template',
       'extraParams' => $options['readAuth'] + [
         'entity' => $options['entity'],
         'created_by_id' => hostsite_get_user_field('indicia_user_id'),
       ],
-      'caching' => $caching,
+    ]);
+  }
+
+  /**
+   * If list of templates updated, clear cache for next time.
+   *
+   * @param array $options
+   *   Import options array.
+   */
+  private static function clearTemplateCache(array $options) {
+    helper_base::expireCacheEntry([
+      'table' => 'import_template',
+      'extraParams' => $options['readAuth'] + [
+        'entity' => $options['entity'],
+        'created_by_id' => hostsite_get_user_field('indicia_user_id'),
+      ],
     ]);
   }
 

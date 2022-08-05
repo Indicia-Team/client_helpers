@@ -3003,11 +3003,16 @@ if (typeof validator!=='undefined') {
    *       when paginating through the records.
    *     * view - use to specify which database view to load for an entity
    *       (e.g. list, detail, gv or cache). Defaults to list.
-   *   * **caching** - If true, then the response will be cached and the cached
-   *     copy used for future calls. Default true. If 'store' then although the
-   *     response is not fetched from a cache, the response will be stored in
-   *     the cache for possible later use. Replaces the legacy nocache
-   *     parameter.
+   *   * **caching** - Set to one of the following to control the caching
+   *     behaviour:
+   *       * true - default. The response will be cached and the cached copy
+   *         used for future calls. Default true.
+   *       * store - although the response is not fetched from a cache, the
+   *         response will be stored in the cache for possible later use.
+   *         Replaces the legacy nocache parameter.
+   *       * expire - expires the cache entry and does not return any data.
+   *         Use helper_base::expireCacheEntry() rather than setting this
+   *         option directly.
    *   * **cachePerUser** - if the data are not specific to the logged in user,
    *     then set to True so that a single cached response can be shared by
    *     multiple users.
@@ -3062,6 +3067,25 @@ if (typeof validator!=='undefined') {
     if (!isset($options['caching']))
       $options['caching'] = TRUE; // default
     return self::getCachedServicesCall($request, $options);
+  }
+
+  /**
+   * Expire the cache entry associated with a set of options.
+   *
+   * The options passed to this should be the same as the options used for a
+   * get_population_data call. Removes the associated cache entry ensuring the
+   * next call to get_population_data will be current. Use this function after
+   * changing data that is loaded via a cached call, where you need to see the
+   * update immediately.
+   *
+   * @param array $options
+   *   Options as for get_population_data.
+   */
+  public static function expireCacheEntry(array $options) {
+    $options['caching'] = 'expire';
+    // With caching set to expire, get_population_data doesn't actually do the
+    // service request.
+    self::get_population_data($options);
   }
 
   /**
@@ -3137,6 +3161,10 @@ if (typeof validator!=='undefined') {
       $cacheFolder = self::$cache_folder ? self::$cache_folder : self::relative_client_helper_path() . 'cache/';
       $cacheTimeOut = self::getCacheTimeOut($options);
       $cacheFile = self::getCacheFileName($cacheFolder, $cacheOpts, $cacheTimeOut);
+      if ($options['caching'] === 'expire') {
+        unlink($cacheFile);
+        return [];
+      }
       if ($options['caching'] !== 'store' && !isset($_GET['refreshcache'])) {
         $response = self::getCachedResponse($cacheFile, $cacheTimeOut, $cacheOpts);
         if ($response !== FALSE)
