@@ -3230,7 +3230,7 @@ if (typeof validator!=='undefined') {
    * @return array
    *   Service response data.
    */
-  public function getCachedGenericCall($url, array $get, array $post, array $options) {
+  public static function getCachedGenericCall($url, array $get, array $post, array $options) {
     $cacheLoaded = FALSE;
     $useCache = !self::$nocache && !isset($_GET['nocache']) && !empty($options['caching']) && $options['caching'];
     if ($useCache) {
