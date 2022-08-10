@@ -183,6 +183,7 @@ TXT;
       'uploadFileUrl' => hostsite_get_url('iform/ajax/importer_2') . "/upload_file/$nid",
       'sendFileToWarehouseUrl' => hostsite_get_url('iform/ajax/importer_2') . "/send_file_to_warehouse/$nid",
       'extractFileOnWarehouseUrl' => hostsite_get_url('iform/ajax/importer_2') . "/extract_file_on_warehouse/$nid",
+      'initServerConfigUrl' => hostsite_get_url('iform/ajax/importer_2') . "/init_server_config/$nid",
       'loadChunkToTempTableUrl' => hostsite_get_url('iform/ajax/importer_2') . "/load_chunk_to_temp_table/$nid",
       'getRequiredFieldsUrl' => hostsite_get_url('iform/ajax/importer_2') . "/get_required_fields/$nid",
       'processLookupMatchingUrl' => hostsite_get_url('iform/ajax/importer_2') . "/process_lookup_matching/$nid",
@@ -241,6 +242,20 @@ TXT;
   }
 
   /**
+   * Ajax handler to initialise the JSON config file on the warehouse.
+   */
+  public static function ajax_init_server_config($website_id, $password, $nid) {
+    header('Content-type: application/json');
+    $writeAuth = self::getAuthFromHeaders();
+    iform_load_helpers(['import_helper_2']);
+    echo json_encode(import_helper_2::initServerConfig(
+      $_GET['data-file'],
+      isset($_GET['import_template_id']) ? $_GET['import_template_id'] : NULL,
+      $writeAuth
+    ));
+  }
+
+  /**
    * Ajax handler to request that the warehouse loads a chunk of records.
    */
   public static function ajax_load_chunk_to_temp_table($website_id, $password, $nid) {
@@ -275,7 +290,14 @@ TXT;
     header('Content-type: application/json');
     $writeAuth = self::getAuthFromHeaders();
     iform_load_helpers(['import_helper_2']);
-    echo json_encode(import_helper_2::importChunk($_GET['data-file'], isset($_POST['description']) ? $_POST['description'] : NULL, $writeAuth));
+    $response = import_helper_2::importChunk(
+      $_GET['data-file'],
+      isset($_POST['description']) ? $_POST['description'] : NULL,
+      isset($_POST['importTemplateTitle']) ? $_POST['importTemplateTitle'] : NULL,
+      isset($_POST['forceTemplateOverwrite']) && $_POST['forceTemplateOverwrite'] === 'true',
+      $writeAuth
+    );
+    echo json_encode($response);
   }
 
   /**

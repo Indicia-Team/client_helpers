@@ -32,7 +32,9 @@ class iform_importer {
 
   /**
    * Return the form metadata.
-   * @return array The definition of the form.
+   *
+   * @return array
+   *   The definition of the form.
    */
   public static function get_importer_definition() {
     return array(
@@ -41,13 +43,15 @@ class iform_importer {
       'description' => 'A page containing a wizard for uploading CSV file data.',
       'helpLink' => 'https://readthedocs.org/projects/indicia-docs/en/latest/site-building/iform/prebuilt-forms/importer.html',
       'supportsGroups' => TRUE,
-      'recommended' => TRUE
+      'recommended' => TRUE,
     );
   }
 
   /**
    * Get the list of parameters for this form.
-   * @return array List of parameters that this form requires.
+   *
+   * @return array
+   *   List of parameters that this form requires.
    */
   public static function get_parameters() {
     return [
@@ -328,9 +332,9 @@ class iform_importer {
         'caption' => 'Importer Sample Logic (only applicable when using the Species Records import type)',
         'description' => '<em>Verify using sample external key. Rows with the same sample external key must be consistent</em> - '.
         'Allows verification of samples using the sample external key field to determine consistency between the import rows. Rows from same sample must still be placed on consecutive rows. '
-        . '<em>Do not use sample key verification</em> - Rows are placed into the same sample based on comparison of '
+          . '<em>Do not use sample key verification</em> - Rows are placed into the same sample based on comparison of '
           . 'sample related columns of consecutive rows without taking sample external key into account. '
-        . '<em>Allow user to choose</em> - Give the user the option to choose which behaviour they want with a checkbox.',
+          . '<em>Allow user to choose</em> - Give the user the option to choose which behaviour they want with a checkbox.',
         'type' => 'select',
         'options' => [
           'sample_ext_key' => 'Verify using sample external key. Rows with the same sample external key must be consistent',
@@ -364,17 +368,17 @@ class iform_importer {
     if (empty($args['importSampleLogic'])) {
       $args['importSampleLogic'] = 'consecutive_rows';
     }
-    iform_load_helpers(array('import_helper'));
-    // apply defaults
-    $args = array_merge(array(
+    iform_load_helpers(['import_helper']);
+    // Apply defaults.
+    $args = array_merge([
       'occurrenceAssociations' => FALSE,
       'fieldMap' => array(),
       'allowDataDeletions' => FALSE,
       'onlyAllowMappedFields' => TRUE,
-      'skipMappingIfPossible' => false,
-      'importMergeFields' => array(),
+      'skipMappingIfPossible' => FALSE,
+      'importMergeFields' => [],
       'synonymProcessing' => new stdClass(),
-    ), $args);
+    ], $args);
     $auth = import_helper::get_read_write_auth($args['website_id'], $args['password']);
     group_authorise_form($args, $auth['read']);
     if ($args['model'] === 'url') {
@@ -385,38 +389,45 @@ class iform_importer {
     else {
       $model = $args['model'] === 'other' ? $args['otherModel'] : $args['model'];
     }
-    if (empty($model))
+    if (empty($model)) {
       return "This form's import model is not properly configured.";
+    }
     if (isset($args['presetSettings'])) {
       $presets = get_options_array_with_user_data($args['presetSettings']);
       $presets = array_merge(array('website_id' => $args['website_id'], 'password' => $args['password']), $presets);
     }
     else {
-      $presets = array('website_id' => $args['website_id'], 'password' => $args['password']);
+      $presets = ['website_id' => $args['website_id'], 'password' => $args['password']];
     }
 
     if (!empty($_GET['group_id'])) {
-      // loading data into a recording group.
-      $group = data_entry_helper::get_population_data(array(
+      // Loading data into a recording group.
+      $group = data_entry_helper::get_population_data([
         'table' => 'group',
-        'extraParams'=>$auth['read'] + array('id' => $_GET['group_id'], 'view' => 'detail')
-      ));
+        'extraParams' => $auth['read'] + [
+          'id' => $_GET['group_id'],
+          'view' => 'detail',
+        ],
+      ]);
       $group = $group[0];
       if (!empty($model) && $model === 'groups_location') {
         $presets['groups_location:group_id'] = $_GET['group_id'];
-      } else {
+      }
+      else {
         $presets['sample:group_id'] = $_GET['group_id'];
       }
       hostsite_set_page_title(lang::get('Import data into the {1} group', $group['title']));
-      // if a single survey specified for this group, then force the data into the correct survey
+      // If a single survey specified for this group, then force the data into
+      // the correct survey.
       $filterdef = json_decode($group['filter_definition'], TRUE);
-      if (!empty($filterdef['survey_list_op']) && $filterdef['survey_list_op']==='in' && !empty($filterdef['survey_list'])) {
+      if (!empty($filterdef['survey_list_op']) && $filterdef['survey_list_op'] === 'in' && !empty($filterdef['survey_list'])) {
         $surveys = explode(',', $filterdef['survey_list']);
-        if (count($surveys)===1)
+        if (count($surveys) === 1) {
           $presets['survey_id'] = $surveys[0];
+        }
       }
     }
-    // If in training mode, set the flag on the imported records
+    // If in training mode, set the flag on the imported records.
     if (function_exists('hostsite_get_user_field') && hostsite_get_user_field('training')) {
       $presets['sample:training'] = 't';
       $presets['occurrence:training'] = 't';
@@ -430,7 +441,7 @@ class iform_importer {
         'presetSettings' => $presets,
         'allowDataDeletions' => $args['allowDataDeletions'],
         'occurrenceAssociations' => $args['occurrenceAssociations'],
-        'fieldMap' => empty($args['fieldMap']) ? array() : json_decode($args['fieldMap'], TRUE),
+        'fieldMap' => empty($args['fieldMap']) ? [] : json_decode($args['fieldMap'], TRUE),
         'onlyAllowMappedFields' => $args['onlyAllowMappedFields'],
         'skipMappingIfPossible' => $args['skipMappingIfPossible'],
         'existingRecordLookupMethod' => $existingRecordLookupMethod,
@@ -438,7 +449,7 @@ class iform_importer {
         'importSampleLogic' => $args['importSampleLogic'],
         'importMergeFields' => $args['importMergeFields'],
         'synonymProcessing' => $args['synonymProcessing'],
-        'switches' => array('activate_global_sample_method' => 't'),
+        'switches' => ['activate_global_sample_method' => 't'],
         'embed_reupload' => isset($args['embedReupload']) ? $args['embedReupload'] : EMBED_REUPLOAD_OFF,
       ];
       $r = import_helper::importer($options);
@@ -496,4 +507,5 @@ class iform_importer {
     ];
     return $arr[$method];
   }
+
 }

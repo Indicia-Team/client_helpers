@@ -86,7 +86,7 @@ $indicia_templates = [
         }",
   'image_upload' => '<input type="file" id="{id}" name="{fieldname}" accept="png|jpg|gif|jpeg|mp3|wav" {title}/>'."\n".
       '<input type="hidden" id="{pathFieldName}" name="{pathFieldName}" value="{pathFieldValue}"/>'."\n",
-  'text_input' => '<input {attribute_list} id="{id}" name="{fieldname}"{class} {disabled} {readonly} value="{default}" {title} {maxlength} />'."\n",
+  'text_input' => '<input {attribute_list} id="{id}" name="{fieldname}"{class} {disabled} {readonly} value="{default|escape}" {title} {maxlength} />'."\n",
   'hidden_text' => '<input type="hidden" id="{id}" name="{fieldname}" {disabled} value="{default}" />',
   'password_input' => '<input type="password" id="{id}" name="{fieldname}"{class} {disabled} value="{default}" {title} />'."\n",
   'textarea' => '<textarea id="{id}" name="{fieldname}"{class} {disabled} cols="{cols}" rows="{rows}" {title}>{default}</textarea>'."\n",
@@ -1931,6 +1931,29 @@ HTML;
     return $r;
   }
 
+
+  /**
+   * Retrieve the user ID suffix for the auth_token.
+   *
+   * Allows the warehouse to be certain of the authorised user ID.
+   *
+   * @return string
+   *   Colon then user ID to append to auth token, or empty string.
+   */
+  private static function getAuthTokenUserId() {
+    global $_iform_warehouse_override;
+    if ($_iform_warehouse_override) {
+      // If linking to a different warehouse, don't do user authentication as
+      // it causes an infinite loop.
+      return '';
+    }
+    else {
+      $indiciaUserId = hostsite_get_user_field('indicia_user_id');
+      // Include user ID if logged in.
+      return $indiciaUserId ? ":$indiciaUserId" : '';
+    }
+  }
+
   /**
    * Retrieves a token and inserts it into a data entry form which authenticates that the
    * form was submitted by this website.
@@ -1940,9 +1963,8 @@ HTML;
    */
   public static function get_auth($website_id, $password) {
     self::$website_id = $website_id;
-    $indiciaUserId = hostsite_get_user_field('indicia_user_id');
     // Include user ID if logged in.
-    $authTokenUserId = $indiciaUserId ? ":$indiciaUserId" : '';
+    $authTokenUserId = self::getAuthTokenUserId();
     $postargs = "website_id=$website_id";
     $response = self::http_post(self::$base_url . 'index.php/services/security/get_nonce', $postargs);
     if (isset($response['status'])) {
@@ -2007,9 +2029,8 @@ HTML;
     else
       $r = json_decode($r, TRUE);
     if (function_exists('hostsite_get_user_field')) {
-      $indiciaUserId = hostsite_get_user_field('indicia_user_id');
       // Include user ID if logged in.
-      $authTokenUserId = $indiciaUserId ? ":$indiciaUserId" : '';
+      $authTokenUserId = self::getAuthTokenUserId();
       // Attach a user specific auth token.
       $r['auth_token'] = sha1("$r[nonce]:$password$authTokenUserId") . $authTokenUserId;
     }
@@ -2031,9 +2052,8 @@ HTML;
    */
   public static function get_read_write_auth($website_id, $password) {
     self::$website_id = $website_id; /* Store this for use with data caching */
-    $indiciaUserId = hostsite_get_user_field('indicia_user_id');
     // Include user ID if logged in.
-    $authTokenUserId = $indiciaUserId ? ":$indiciaUserId" : '';
+    $authTokenUserId = self::getAuthTokenUserId();
     $postargs = "website_id=$website_id";
     $response = self::http_post(self::$base_url.'index.php/services/security/get_read_write_nonces', $postargs);
     if (array_key_exists('status', $response)) {
@@ -2983,11 +3003,16 @@ if (typeof validator!=='undefined') {
    *       when paginating through the records.
    *     * view - use to specify which database view to load for an entity
    *       (e.g. list, detail, gv or cache). Defaults to list.
-   *   * **caching** - If true, then the response will be cached and the cached
-   *     copy used for future calls. Default true. If 'store' then although the
-   *     response is not fetched from a cache, the response will be stored in
-   *     the cache for possible later use. Replaces the legacy nocache
-   *     parameter.
+   *   * **caching** - Set to one of the following to control the caching
+   *     behaviour:
+   *       * true - default. The response will be cached and the cached copy
+   *         used for future calls. Default true.
+   *       * store - although the response is not fetched from a cache, the
+   *         response will be stored in the cache for possible later use.
+   *         Replaces the legacy nocache parameter.
+   *       * expire - expires the cache entry and does not return any data.
+   *         Use helper_base::expireCacheEntry() rather than setting this
+   *         option directly.
    *   * **cachePerUser** - if the data are not specific to the logged in user,
    *     then set to True so that a single cached response can be shared by
    *     multiple users.
@@ -3042,6 +3067,25 @@ if (typeof validator!=='undefined') {
     if (!isset($options['caching']))
       $options['caching'] = TRUE; // default
     return self::getCachedServicesCall($request, $options);
+  }
+
+  /**
+   * Expire the cache entry associated with a set of options.
+   *
+   * The options passed to this should be the same as the options used for a
+   * get_population_data call. Removes the associated cache entry ensuring the
+   * next call to get_population_data will be current. Use this function after
+   * changing data that is loaded via a cached call, where you need to see the
+   * update immediately.
+   *
+   * @param array $options
+   *   Options as for get_population_data.
+   */
+  public static function expireCacheEntry(array $options) {
+    $options['caching'] = 'expire';
+    // With caching set to expire, get_population_data doesn't actually do the
+    // service request.
+    self::get_population_data($options);
   }
 
   /**
@@ -3117,6 +3161,10 @@ if (typeof validator!=='undefined') {
       $cacheFolder = self::$cache_folder ? self::$cache_folder : self::relative_client_helper_path() . 'cache/';
       $cacheTimeOut = self::getCacheTimeOut($options);
       $cacheFile = self::getCacheFileName($cacheFolder, $cacheOpts, $cacheTimeOut);
+      if ($options['caching'] === 'expire') {
+        unlink($cacheFile);
+        return [];
+      }
       if ($options['caching'] !== 'store' && !isset($_GET['refreshcache'])) {
         $response = self::getCachedResponse($cacheFile, $cacheTimeOut, $cacheOpts);
         if ($response !== FALSE)
@@ -3210,7 +3258,7 @@ if (typeof validator!=='undefined') {
    * @return array
    *   Service response data.
    */
-  public function getCachedGenericCall($url, array $get, array $post, array $options) {
+  public static function getCachedGenericCall($url, array $get, array $post, array $options) {
     $cacheLoaded = FALSE;
     $useCache = !self::$nocache && !isset($_GET['nocache']) && !empty($options['caching']) && $options['caching'];
     if ($useCache) {

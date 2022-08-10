@@ -308,9 +308,7 @@ TXT;
           'name' => 'copyFromProfile',
           'caption' => 'Copy field values from user profile',
           'description' => 'Copy any matching fields from the user\'s profile
-            into the fields with matching names in the sample data. This works
-            for fields defined in the Drupal Profile module (version 6) or
-            Fields module (version 7) which must be enabled to use this feature.
+            into the fields with matching names in the sample data.
             Applies whether fields are shown or not.',
           'type' => 'boolean',
           'default' => FALSE,

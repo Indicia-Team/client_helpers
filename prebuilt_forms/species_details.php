@@ -302,9 +302,7 @@ class iform_species_details extends iform_dynamic {
     }
 
     self::get_names($auth);
-    //hostsite_set_page_title(lang::get('Summary details for {1}', self::$preferred));
-    $titleName = str_replace('<em>', '', self::$preferred);
-    $titleName = str_replace('</em>', '', $titleName);
+    $titleName = str_replace(['<em>', '</em>'], '', self::$preferred);
     hostsite_set_page_title(lang::get('Summary details for {1}', $titleName));
 
     return parent::get_form_html($args, $auth, $attributes);
@@ -433,7 +431,6 @@ class iform_species_details extends iform_dynamic {
         'readAuth' => $auth['read'],
         'class' => 'species-details-fields',
         'dataSource' => 'library/taxa/taxon_attributes_with_hiddens',
-        //'bands' => array(array('content'=>$indicia_templates['dataValue'])),
         'bands' => array(array('content' => str_replace(['{class}'], '', $indicia_templates['dataValue']))),
         'extraParams' => array(
           'taxa_taxon_list_id' => self::$taxa_taxon_list_id,
