@@ -303,8 +303,48 @@ mapInitialisationHooks.push(function(mapdiv) {
   feature.attributes.type = 'zoomToBoundary';
   indiciaData.mapdiv.map.editLayer.addFeatures([feature]);
   mapdiv.map.zoomToExtent(feature.geometry.bounds);
+  // If we are zooming closer than the helpToPickPrecisionSwitchAt setting, then
+  var handler = indiciaData.srefHandlers[_getSystem().toLowerCase()];
+  info = handler.getPrecisionInfo(handler.valueToAccuracy('" . $loc['centroid_sref'] . "'));
+  if (mapdiv.settings.helpToPickPrecisionSwitchAt && info.metres <= mapdiv.settings.helpToPickPrecisionSwitchAt
+    && !mapdiv.map.baseLayer.dynamicLayerIndex) {
+    switchToSatelliteBaseLayerForZoom(mapdiv.map);
+  }
 });
-    ";
+
+/**
+ * Return the system, by loading from the system control. If not present, revert to the default.
+ */
+function _getSystem() {
+  var opts = $.fn.indiciaMapPanel.defaults;
+  var selector=$('#' + opts.srefSystemId);
+  if (selector.length===0) {
+    return opts.defaultSystem;
+  }
+  else {
+    return selector.val();
+  }
+}
+ 
+/**
+ * Switch to satellite layer if zoomed in far enough.
+ *
+ * Switch to satellite layer if the initial location we are zooming into
+ * is closer than the helpToPickPrecisionSwitchAt setting.
+ * 
+ * @param object map
+ *   Map object.
+ */
+function switchToSatelliteBaseLayerForZoom(map) {
+  $.each(map.layers, function eachLayer() {
+    if (this.isBaseLayer
+        && (this.name.indexOf('Satellite') !== -1 || this.name.indexOf('Hybrid') !== -1)
+        && map.baseLayer !== this) {
+      indiciaData.mapdiv.map.setBaseLayer(this);
+      return false;
+    }
+  });
+}";
   }
 
   protected static function getAttributes($args, $auth) {
