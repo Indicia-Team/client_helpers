@@ -268,9 +268,24 @@ class iform_dynamic_location extends iform_dynamic {
   }
 
   /**
-   * This function is used when an add site screen is in add mode and we just
+   * Zoom into location that is not saved in the final location geometry.
+   * 
+   * This function is used when a dynamic_location screen is in add mode, and we just
    * want to automatically zoom the map to a region/site we are adding a
    * location to. This boundary is purely visual and isn't submitted.
+   * 
+   * @param array $readAuth
+   *   Read authorisation array.
+   * @param string $entity
+   *   The table to collect the location data from (probably 'location').
+   * @param int $id
+   *   ID of the location to display.
+   * @param string $view
+   *   Type of view used to get the location data from
+   * 
+   * @todo Investigate if zoom_id does the same thing as location_boundary_id
+   * (perhaps zoom_id is not needed). Note at the time of writing, both Plant Portal
+   * and NPMS use custom forms that rely on this parameter.
    */
   public static function zoom_map_when_adding($readAuth, $entity, $id, $view = 'detail') {
     // Get the zoom_id from the url to allow us to zoom to a specific region in
