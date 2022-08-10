@@ -1617,8 +1617,9 @@ JS;
       'pathFieldValue' => $alreadyUploadedFile,
       'existingFilePreset' => 'thumb',
     ], $options);
-    if (!empty($options['existingFilePreset']))
+    if (!empty($options['existingFilePreset'])) {
       $options['existingFilePreset'] .= '-';
+    }
     $r = self::apply_template('image_upload', $options);
     if ($alreadyUploadedFile) {
       if (self::$form_mode === 'ERRORS') {
@@ -2173,33 +2174,33 @@ JS;
   }
 
   /**
-   * Helper function to output an HTML password input. For security reasons, this does not re-load existing values
-   * or display validation error messages and no default can be set.
+   * Helper function to output an HTML password input.
+   *
+   * For security reasons, this does not re-load existing values or display
+   * validation error messages and no default can be set.
+   *
    * The output of this control can be configured using the following templates:
-   * <ul>
-   * <li><b>password_input</b></br>
-   * Template which outputs the HTML for a password input control.
-   * </li>
-   * </ul>
+   * * password_input - Template which outputs the HTML for a password input
+   *   control.
    *
-   * @param array $options Options array with the following possibilities:<ul>
-   * <li><b>fieldname</b><br/>
-   * Required. The name by which the password will be passed to the authentication system.</li>
-   * <li><b>id</b><br/>
-   * Optional. The id to assign to the HTML control. If not assigned the fieldname is used.</li>
-   * <li><b>class</b><br/>
-   * Optional. CSS class names to add to the control.</li>
-   * </ul>
+   * @param array $options
+   *   Options array with the following possibilities:
+   *   * fieldname - Required. The name by which the password will be passed to
+   *     the authentication system.
+   *   * id - Optional. The id to assign to the HTML control. If not assigned
+   *     the fieldname is used.
+   *   * class - Optional. CSS class names to add to the control.
    *
-   * @return string HTML to insert into the page for the text input control.
+   * @return string
+   *   HTML to insert into the page for the text input control.
    */
   public static function password_input($options) {
     $options = self::check_options($options);
-    $options['lockable']=false;
-    $options = array_merge(array(
+    $options['lockable'] = FALSE;
+    $options = array_merge([
       'default' => '',
       'isFormControl' => TRUE
-    ), $options);
+    ], $options);
     return self::apply_template('password_input', $options);
   }
 
@@ -3429,7 +3430,7 @@ RIJS;
     }
     self::speciesChecklistSetupMapSubsampleFeatureSelection($options);
     if ($options['columns'] > 1 && count($options['mediaTypes']) > 1) {
-      throw new Exception('The species_checklist control does not support having more than one occurrence per row (columns option > 0) '.
+      throw new Exception('The species_checklist control does not support having more than one occurrence per row (columns option > 0) ' .
         'at the same time has having the mediaTypes option in use.');
     }
     self::add_resource('autocomplete');
@@ -3799,7 +3800,8 @@ HTML;
             $isArrayControl = preg_match('/name="{?[a-z\-_]*}?\[\]"/', $control);
             if ($isArrayControl) {
               foreach ($search as $subfieldname) {
-                // to link each value to existing records, we need to store the value ID in the value data.
+                // To link each value to existing records, we need to store the
+                // value ID in the value data.
                 $valueId = preg_match('/(\d+)$/', $subfieldname, $matches);
                 $control = str_replace('value="' . self::$entity_to_load[$subfieldname] . '"',
                   'value="' . self::$entity_to_load[$subfieldname] . ':' . $matches[1] . '" selected="selected"', $control);
@@ -3866,9 +3868,10 @@ HTML;
                 $oc = str_replace('</select>', "<option selected=\"selected\" value=\"$existing_value\">$term</option></select>", $oc);
               }
             }
-            else if (strpos($oc, 'type="checkbox"') !== FALSE) {
-              if ($existing_value == '1')
+            elseif (strpos($oc, 'type="checkbox"') !== FALSE) {
+              if ($existing_value == '1') {
                 $oc = str_replace('type="checkbox"', 'type="checkbox" checked="checked"', $oc);
+              }
             }
             else {
               // Dates (including single day vague dates) need formatting to the local date format.
@@ -3880,7 +3883,7 @@ HTML;
               elseif (is_array($existing_value)) {
                 $existing_value = implode('', $existing_value);
               }
-              $oc = str_replace('value=""', 'value="' . $existing_value.'"', $oc);
+              $oc = str_replace('value=""', 'value="' . $existing_value . '"', $oc);
             }
           }
           $errorField = "occAttr:$attrId" . ($valId ? ":$valId" : '');
@@ -3889,10 +3892,20 @@ HTML;
             $oc = str_replace("class='", "class='ui-state-error ", $oc);
             $oc .= $error;
           }
-          $headers = $options['id']."-attr$attrId-$colIdx";
+          $headers = "$options[id]-attr$attrId-$colIdx";
           $class = self::speciesChecklistOccAttrClass($options, $idx, $attributes[$attrId]['untranslatedCaption']);
           $class = $class . 'Cell';
-          $row .= str_replace(array('{label}', '{class}', '{content}', '{headers}'), array(lang::get($attributes[$attrId]['caption']), $class, $oc, $headers),
+          $row .= str_replace([
+              '{label}',
+              '{class}',
+              '{content}',
+              '{headers}',
+            ], [
+              lang::get($attributes[$attrId]['caption']),
+              $class,
+              $oc,
+              $headers,
+            ],
             $indicia_templates[$options['attrCellTemplate']]);
           $idx++;
         }
@@ -3909,7 +3922,7 @@ HTML;
         if ($options['mediaTypes']) {
           $existingImages = is_array(self::$entity_to_load) ? preg_grep("/^sc:$loadedTxIdx:$existingRecordId:occurrence_medium:id:[a-z0-9]*$/", array_keys(self::$entity_to_load)) : [];
           $row .= "\n<td class=\"ui-widget-content scAddMediaCell\">";
-          $style = (count($existingImages)>0) ? ' style="display: none"' : '';
+          $style = (count($existingImages) > 0) ? ' style="display: none"' : '';
           $fieldname = "add-media:$options[id]-$txIdx:$existingRecordId";
           $row .= "<a href=\"\"$style class=\"add-media-link button $mediaBtnClass\" id=\"$fieldname\">" .
             "$mediaBtnLabel</a>";
@@ -3918,18 +3931,18 @@ HTML;
           // Add a cell for photos in responsive mode.
           if ($options['responsive']) {
             if (count($existingImages) == 0) {
-              // The cell is empty
+              // The cell is empty.
               $ctrlId = "container-sc:{$options['id']}-$txIdx:$existingRecordId:occurrence_medium-" . mt_rand();
               $row .= '<td class="scMediaCell"><div class="scMedia" id="' . $ctrlId . '"></div></td>';
             }
             else {
-              // Create a cell containing the popula
-              $row .= '<td class="scMediaCell">' . data_entry_helper::file_box(array(
+              // Create a cell containing the existing images.
+              $row .= '<td class="scMediaCell">' . data_entry_helper::file_box([
                 'table' => "sc:$options[id]-$txIdx:$existingRecordId:occurrence_medium",
-                'loadExistingRecordKey'=>"sc:$loadedTxIdx:$existingRecordId:occurrence_medium",
+                'loadExistingRecordKey' => "sc:$loadedTxIdx:$existingRecordId:occurrence_medium",
                 'mediaTypes' => $options['mediaTypes'],
                 'readAuth' => $options['readAuth']
-              )) . '</td>';
+              ]) . '</td>';
             }
           }
         }
@@ -3974,7 +3987,7 @@ HTML;
         [' class="' . implode(' ', $classlist) . '"', " id=\"$options[id]\"", $grid],
         $indicia_templates['data-input-table']
       );
-      // in hasData mode, the wrap_species_checklist method must be notified of
+      // In hasData mode, the wrap_species_checklist method must be notified of
       // the different default way of checking if a row is to be made into an
       // occurrence. This may differ between grids when there are multiple
       // grids on a page.
@@ -4996,16 +5009,17 @@ JS;
           if (!$done) {
             // Add a new row to the bottom of the grid.
             $taxonRows[] = [
-              'ttlId'=>$ttlId,
+              'ttlId' => $ttlId,
               'loadedTxIdx' => $parts[1],
               'occId' => $parts[2],
               'smpIdx' => $smpIdx,
             ];
           }
-          // store the id of the taxon in the array, so we can load them all in one go later
+          // Store the id of the taxon in the array, so we can load them all in
+          // one go later.
           $taxa_taxon_list_ids[] = $ttlId;
         }
-        // Ensure the load of taxa is batched if there are lots to load
+        // Ensure the load of taxa is batched if there are lots to load.
         if (count($taxa_taxon_list_ids) >= 50 && !empty($options['lookupListId'])) {
           $extraTaxonOptions['extraParams']['taxa_taxon_list_id'] = json_encode($taxa_taxon_list_ids);
           $taxalist = array_merge($taxalist, self::get_population_data($extraTaxonOptions));
@@ -5032,7 +5046,7 @@ JS;
    *   Options array prepared with defaults and other values required by the
    *   control.
    */
-  public static function get_species_checklist_options($options) {
+  public static function get_species_checklist_options(array $options) {
     // Validate some options.
     if (empty($options['listId']) && empty($options['lookupListId'])) {
       throw new Exception('Either the listId or lookupListId parameters must be provided for a species checklist.');
@@ -5053,7 +5067,7 @@ JS;
     $options = array_merge([
       'userControlsTaxonFilter' => FALSE,
       'header' => 'true',
-      'columns'=>1,
+      'columns' => 1,
       'rowInclusionCheck' => $rowInclusionCheck,
       'absenceCol' => FALSE,
       'attrCellTemplate' => 'attribute_cell',
@@ -5065,7 +5079,7 @@ JS;
       'subSampleAttrs' => [],
       'spatialRefPerRowUseFullscreenMap' => FALSE,
       'spatialRefPrecisionAttrId' => NULL,
-      'id' => 'species-grid-' . rand(0,1000),
+      'id' => 'species-grid-' . rand(0, 1000),
       'colWidths' => [],
       'taxonFilterField' => 'none',
       'reloadExtraParams' => [],
@@ -5092,23 +5106,23 @@ JS;
       'responsive' => FALSE,
       'allowAdditionalTaxa' => !empty($options['lookupListId']),
     ], $options);
-    // subSamplesPerRow can't be set without speciesControlToUseSubSamples
+    // SubSamplesPerRow can't be set without speciesControlToUseSubSamples
     $options['subSamplePerRow'] = $options['subSamplePerRow'] && $options['speciesControlToUseSubSamples'];
-    // spatialRefPerRow and datePerRow require subSamplePerRow.
+    // SpatialRefPerRow and datePerRow require subSamplePerRow.
     $options['spatialRefPerRow'] = $options['spatialRefPerRow'] && $options['subSamplePerRow'];
     $options['datePerRow'] = $options['datePerRow'] && $options['subSamplePerRow'];
-    // spatialRefPrecisionAttrId can't be set without spatialRefPerRow
+    // SpatialRefPrecisionAttrId can't be set without spatialRefPerRow.
     $options['spatialRefPrecisionAttrId'] = $options['spatialRefPerRow'] ? $options['spatialRefPrecisionAttrId'] : NULL;
     if (array_key_exists('readAuth', $options)) {
       $options['extraParams'] += $options['readAuth'];
     }
     else {
-      $options['readAuth'] = array(
+      $options['readAuth'] = [
         'auth_token' => $options['extraParams']['auth_token'],
         'nonce' => $options['extraParams']['nonce']
-      );
+      ];
     }
-    // colWidths are disabled for responsive checklists
+    // Col widths are disabled for responsive checklists.
     if ($options['responsive']) {
       $options['colWidths'] = [];
     }
@@ -5117,76 +5131,94 @@ JS;
 
   /**
    * Internal function to prepare the list of occurrence attribute columns for a species_checklist control.
-   * @param array $options Options array as passed to the species checklist grid control.
-   * @param array $attributes Array of custom attributes as loaded from the database.
-   * @param array $occAttrControls Empty array which will be populated with the controls required for each
-   * custom attribute. This copy of the control applies for new data and is populated with defaults.
-   * @param array $occAttrControlsExisting Empty array which will be populated with the controls required for each
-   * custom attribute. This copy of the control applies for existing data and is not populated with defaults.
-   * @param array $occAttrCaptions Empty array which will be populated with the captions for each custom attribute.
+   *
+   * @param array $options
+   *   Options array as passed to the species checklist grid control.
+   * @param array $attributes
+   *   Array of custom attributes as loaded from the database.
+   * @param array $occAttrControls
+   *   Empty array which will be populated with the controls required for each
+   *   custom attribute. This copy of the control applies for new data and is
+   *   populated with defaults.
+   * @param array $occAttrControlsExisting
+   *   Empty array which will be populated with the controls required for each
+   *   custom attribute. This copy of the control applies for existing data and
+   *   is not populated with defaults.
+   * @param array $occAttrCaptions
+   *   Empty array which will be populated with the captions for each custom
+   *   attribute.
    */
   public static function species_checklist_prepare_attributes($options, $attributes, &$occAttrControls, &$occAttrControlsExisting, &$occAttrCaptions) {
-    $idx=0;
-    if (array_key_exists('occAttrs', $options))
+    $idx = 0;
+    if (array_key_exists('occAttrs', $options)) {
       $attrs = $options['occAttrs'];
-    else
+    }
+    else {
       // There is no specified list of occurrence attributes, so use all available for the survey
       $attrs = array_keys($attributes);
+    }
     foreach ($attrs as $occAttrId) {
-      // don't display the grid ID attribute
-      if (!empty($options['gridIdAttributeId']) && $occAttrId===$options['gridIdAttributeId'])
+      // Don't display the grid ID attribute.
+      if (!empty($options['gridIdAttributeId']) && $occAttrId === $options['gridIdAttributeId']) {
         continue;
-      // test that this occurrence attribute is linked to the survey
-      if (!isset($attributes[$occAttrId]))
+      }
+      // Test that this occurrence attribute is linked to the survey.
+      if (!isset($attributes[$occAttrId])) {
         throw new Exception("The occurrence attribute $occAttrId requested for the grid is not linked with the survey.");
+      }
       $attrDef = array_merge($attributes[$occAttrId]);
       $attrOpts = [];
       if (isset($options['occAttrOptions'][$occAttrId])) {
         $attrOpts = array_merge($options['occAttrOptions'][$occAttrId]);
       }
 
-      // Build array of attribute captions
+      // Build array of attribute captions.
       if (isset($attrOpts['label'])) {
-        // override caption from warehouse with label from client
+        // Override caption from warehouse with label from client.
         $occAttrCaptions[$occAttrId] = $attrOpts['label'];
-        // but prevent it being added in grid
+        // But, prevent it being added in grid.
         unset($attrOpts['label']);
       }
       else {
         $occAttrCaptions[$occAttrId] = $attrDef['caption'];
       }
 
-      // Build array of attribute controls
+      // Build array of attribute controls.
       $class = self::speciesChecklistOccAttrClass($options, $idx, $attrDef['untranslatedCaption']);
       $class .= (isset($attrDef['class']) ? ' ' . $attrDef['class'] : '');
       if (isset($attrOpts['class'])) {
-        $class .=  ' ' . $attrOpts['class'];
+        $class .= ' ' . $attrOpts['class'];
         unset($attrOpts['class']);
       }
-      $ctrlOptions = array(
+      $ctrlOptions = [
         'class' => $class,
         'controlWrapTemplate' => 'justControl',
         'extraParams' => $options['readAuth'],
-      );
+      ];
       if ($options['attributeTermlistLanguageFilter'] === '1') {
         // Required for lists eg radio boxes: kept separate from options extra
         // params as that is used to indicate filtering of species list by
-        // language
+        // language.
         $ctrlOptions['language'] = iform_lang_iso_639_2(hostsite_get_user_field('language'));
       }
       elseif ($options['attributeTermlistLanguageFilter'] === 'clientI18n') {
         $ctrlOptions['extraParams']['preferred'] = 't';
         $ctrlOptions['translate'] = 't';
       }
-      // Some undocumented checklist options that are applied to all attributes
-      if(isset($options['lookUpKey'])) $ctrlOptions['lookUpKey'] = $options['lookUpKey'];
-      if(isset($options['blankText'])) $ctrlOptions['blankText'] = $options['blankText'];
-      // Don't want captions in the grid
+      // Some undocumented checklist options that are applied to all
+      // attributes.
+      if (isset($options['lookUpKey'])) {
+        $ctrlOptions['lookUpKey'] = $options['lookUpKey'];
+      }
+      if (isset($options['blankText'])) {
+        $ctrlOptions['blankText'] = $options['blankText'];
+      }
+      // Don't want captions in the grid.
       unset($attrDef['caption']);
       $attrDef['fieldname'] = '{fieldname}';
       $attrDef['id'] = '{fieldname}';
       if (isset($attrOpts)) {
-        // Add in any remaining options for this control
+        // Add in any remaining options for this control.
         $ctrlOptions = array_merge_recursive($ctrlOptions, $attrOpts);
       }
       $occAttrControls[$occAttrId] = self::outputAttribute($attrDef, $ctrlOptions);
@@ -5199,16 +5231,21 @@ JS;
   }
 
   /**
-   * Returns the class to apply to a control for an occurrence attribute, identified by an index.
-   * @param array $options Options array which contains the occAttrClasses item, an array of classes
-   * configured for each attribute control.
-   * @param integer $idx Index of the custom attribute.
-   * @param string $caption Caption of the attribute used to construct a suitable CSS class.
+   * Returns the class to apply to a control for an occurrence attribute.
+   *
+   * @param array $options
+   *   Options array which contains the occAttrClasses item, an array of
+   *   classes configured for each attribute control.
+   * @param int $idx
+   *   Index of the custom attribute.
+   * @param string $caption
+   *   Caption of the attribute used to construct a suitable CSS class.
    */
   private static function speciesChecklistOccAttrClass($options, $idx, $caption) {
+    // Provides a default class based on the control caption.
     return (array_key_exists('occAttrClasses', $options) && $idx < count($options['occAttrClasses'])) ?
       $options['occAttrClasses'][$idx] :
-      'sc' . preg_replace('/[^a-zA-Z0-9]/', '', ucWords($caption)); // provide a default class based on the control caption
+      'sc' . preg_replace('/[^a-zA-Z0-9]/', '', ucWords($caption));
   }
 
   /**
@@ -5273,9 +5310,11 @@ JS;
         'attrtable' => 'sample_attribute',
         'key' => 'sample_id',
         'fieldprefix' => 'smpAttr',
-        'extraParams' => $options['readAuth'] + ['query' => json_encode([
-          'in' => ['id', $options['subSampleAttrs']],
-        ])],
+        'extraParams' => $options['readAuth'] + [
+          'query' => json_encode([
+            'in' => ['id', $options['subSampleAttrs']],
+          ]),
+        ],
         'survey_id' => $options['survey_id'],
       ];
       $attrInfoList = self::getAttributes($attrOptions, FALSE);
@@ -5376,14 +5415,14 @@ HTML;
       $onlyImages = TRUE;
       foreach ($options['mediaTypes'] as $mediaType) {
         if (!preg_match('/^Image:/', $mediaType)) {
-          $onlyImages=FALSE;
+          $onlyImages = FALSE;
         }
       }
       $label = $onlyImages ? 'Add images' : 'Add media';
       $class = 'sc' . $onlyImages ? 'Image' : 'Media' . 'Link';
       $r .= '<td class="ui-widget-content scAddMediaCell" headers="' . $options['id'] . '-images-0">' .
           '<a href="" class="add-media-link button ' . $class . '" style="display: none" id="add-media:' . $options['id'] . '--idx-:">' .
-          lang::get($label) . '</a><span class="species-checklist-select-species">'.lang::get('Select a species first') . '</span></td>';
+          lang::get($label) . '</a><span class="species-checklist-select-species">' . lang::get('Select a species first') . '</span></td>';
 
       // Extra columnn for photos in responsive mode.
       if ($options['responsive']) {
@@ -6602,7 +6641,7 @@ HTML;
    * @param array $options Control options array which contains the "default" entry.
    */
   private static function get_list_item_selected_attribute($value, $selectedItemAttribute, $options, &$itemFieldname) {
-    $itemFieldname=FALSE;
+    $itemFieldname = FALSE;
     if (isset($options['default'])) {
       $default = $options['default'];
       // default value can be passed as an array or a single value
@@ -6704,7 +6743,7 @@ HTML;
    * When selected, an additional textarea attribute can be shown to capture the "Other" information.
    */
   private static function check_or_radio_group($options, $type) {
-    $checkboxOtherIdx=FALSE;
+    $checkboxOtherIdx = FALSE;
     // Checkboxes are inherantly multivalue, whilst radio buttons are single value.
     $options = array_merge(
       array(
@@ -6751,7 +6790,7 @@ HTML;
     $options['items'] = $items;
     // We don't want to output for="" in the top label, as it is not directly associated to a button
     $options['labelTemplate'] = (isset($options['label']) && substr($options['label'], -1) == '?' ? 'toplabelNoColon' : 'toplabel');
-    if (isset($itemClass) && !empty($itemClass) && strpos($itemClass, 'required')!==FALSE) {
+    if (isset($itemClass) && !empty($itemClass) && strpos($itemClass, 'required') !== FALSE) {
       $options['suffixTemplate'] = 'requiredsuffix';
     }
     $r = self::apply_template($options['template'], $options);
@@ -7098,8 +7137,8 @@ if (errors$uniq.length>0) {
    *   zero abundance record if found for one of the zero_attrs. Values are
    *   lowercase. Defaults to ['0','none','absent','not seen'].
    */
-  public static function wrap_species_checklist($arr, $include_if_any_data=FALSE,
-                                                $zeroAttrs = TRUE, $zeroValues=array('0','none','absent','not seen')) {
+  public static function wrap_species_checklist($arr, $include_if_any_data = FALSE,
+                                                $zeroAttrs = TRUE, $zeroValues=array('0', 'none', 'absent', 'not seen')) {
     if (array_key_exists('website_id', $arr)) {
       $website_id = $arr['website_id'];
     }
@@ -7321,13 +7360,13 @@ if (errors$uniq.length>0) {
     $sampleRecords = [];
     $subModels = [];
     foreach ($arr as $key=>$value) {
-      $gridExcluded=FALSE;
+      $gridExcluded = FALSE;
       foreach ($gridsToExclude as $gridToExclude) {
         if (substr($key, 0, strlen($gridToExclude)+3)== 'sc:' . $gridToExclude) {
           $gridExcluded=TRUE;
         }
       }
-      if ($gridExcluded===FALSE && substr($key, 0, 3)=='sc:' && substr($key, 2, 7)!=':-idx-:' && substr($key, 2, 3)!=':n:') { //discard the hidden cloneable rows
+      if ($gridExcluded === FALSE && substr($key, 0, 3)=='sc:' && substr($key, 2, 7)!=':-idx-:' && substr($key, 2, 3)!=':n:') { //discard the hidden cloneable rows
         // Don't explode the last element for occurrence attributes
         $a = explode(':', $key, 4);
         $b = explode(':', $a[3], 2);
@@ -7979,7 +8018,7 @@ HTML;
    * @return array
    *   Sample submission array
    */
-  public static function build_sample_occurrences_list_submission($values, $include_if_any_data=FALSE,
+  public static function build_sample_occurrences_list_submission($values, $include_if_any_data = FALSE,
       $zeroAttrs = TRUE, array $zeroValues=['0','none','absent','not seen']) {
     // We're mainly submitting to the sample model
     $sampleMod = submission_builder::wrap_with_images($values, 'sample');
@@ -8019,7 +8058,7 @@ HTML;
    * @return array
    *   Sample submission array
    */
-  public static function build_sample_subsamples_occurrences_submission($values, $include_if_any_data=FALSE,
+  public static function build_sample_subsamples_occurrences_submission($values, $include_if_any_data = FALSE,
       $zeroAttrs = TRUE, $zeroValues=['0','none','absent','not seen'])
   {
     // We're mainly submitting to the sample model
@@ -8368,44 +8407,53 @@ TXT;
 
   /**
    * Helper function to fetch details of attributes associated with a survey.
-   * This can be used to auto-generated the forum structure for a survey for example.
    *
-   * @param array $options Options array with the following possibilities:<ul>
-   * <li><b>survey_id</b><br/>
-   * Optional. The survey that custom attributes are to be loaded for.</li>
-   * <li><b>website_ids</b><br/>
-   * Optional. Used instead of survey_id, allows retrieval of all possible custom attributes
-   * for a set of websites.</li>
-   * <li><b>sample_method_id</b><br/>
-   * Optional. Can be set to the id of a sample method when loading just the attributes that are restricted to
-   * that sample method or are unrestricted, otherwise only loads unrestricted attributes. Ignored unless
-   * loading sample attributes.</li>
-   * <li><b>location_type_id</b><br/>
-   * Optional. Can be set to the id of a location_type when loading just the attributes that are restricted to
-   * that type or are unrestricted, otherwise only loads unrestricted attributes. Ignored unless
-   * loading location attributes.</li>
-   * <li><b>attrtable</b><br/>
-   * Required. Singular name of the table containing the attributes, e.g. sample_attribute.</li>
-   * <li><b>valuetable</b><br/>
-   * Required. Singular name of the table containing the attribute values, e.g. sample_attribute_value.</li>
-   * <li><b>fieldprefix</b><br/>
-   * Required. Prefix to be given to the returned control names, e.g. locAttr:</li>
-   * <li><b>extraParams</b><br/>
-   * Required. Additional parameters used in the web service call, including the read authorisation.</li>
-   * <li><b>multiValue</b><br/>
-   * Defaults to false, in which case this assumes that each attribute only allows one value, and the response array is keyed
-   * by attribute ID. If set to true, multiple values are enabled and the response array is keyed by <attribute ID>:<attribute value ID>
-   * in the cases where there is any data for the attribute.
-   * </ul>
-   * @param optional boolean $indexedArray default true. Determines whether the return value is an array indexed by PK,
-   * or whether it is ordered as it comes from the database (ie block weighting). Needs to be set false if data is to be
-   * used by get_attribute_html.
-   * @param string $sharing Set to verification, peer_review, moderation, data_flow, reporting or editing to indicate
-   * the task being performed, if sharing data with other websites. Default is editing.
+   * This can be used to auto-generated the forum structure for a survey for
+   * example.
    *
-   * @return Associative array of attributes, keyed by the attribute ID (multiValue=false) or <attribute ID>:<attribute value ID> if multiValue=true.
+   * @param array $options
+   *   Options array with the following possibilities:
+   *   * survey_id - Optional. The survey that custom attributes are to be
+   *     loaded for.
+   *   * website_ids - Optional. Used instead of survey_id, allows retrieval of
+   *     all possible custom attributes for a set of websites.
+   *   * sample_method_id - Optional. Can be set to the id of a sample method
+   *     when loading just the attributes that are restricted to that sample
+   *     method or are unrestricted, otherwise only loads unrestricted
+   *     attributes. Ignored unless loading sample attributes.
+   *   * location_type_id - Optional. Can be set to the id of a location_type
+   *     when loading just the attributes that are restricted to that type or
+   *     are unrestricted, otherwise only loads unrestricted attributes.
+   *     Ignored unless loading location attributes.
+   *   * attrtable - Required. Singular name of the table containing the
+   *     attributes, e.g. sample_attribute.
+   *   * valuetable - Required. Singular name of the table containing the
+   *     attribute values, e.g. sample_attribute_value.
+   *   * fieldprefix - Required. Prefix to be given to the returned control
+   *     names, e.g. locAttr:
+   *   * extraParams - Required. Additional parameters used in the web service
+   *     call, including the read authorisation.
+   *   * multiValue - Defaults to false, in which case this assumes that each
+   *     attribute only allows one value, and the response array is keyed by
+   *     attribute ID. If set to true, multiple values are enabled and the
+   *     response array is keyed by <attribute ID>:<attribute value ID> in the
+   *     cases where there is any data for the attribute.
+   * @param bool $indexedArray
+   *   Default true. Determines whether the return value is an array indexed by
+   *   PK, or whether it is ordered as it comes from the database (ie block
+   *   weighting). Needs to be set false if data is to be used by
+   *   get_attribute_html.
+   * @param string $sharing
+   *   Set to verification, peer_review, moderation, data_flow, reporting or
+   *   editing to indicate the task being performed, if sharing data with other
+   *   websites. Default is editing.
+   *
+   * @return array
+   *   Associative array of attributes, keyed by the attribute ID
+   *   (multiValue=false) or <attribute ID>:<attribute value ID> if
+   *   multiValue=true.
    */
-  public static function getAttributes($options, $indexedArray = TRUE, $sharing='editing') {
+  public static function getAttributes($options, $indexedArray = TRUE, $sharing = 'editing') {
     $attrs = [];
     // there is a possiblility that the $options['extraParams'] already features a query entry.
     if(isset($options['extraParams']['query'])) {
@@ -8979,7 +9027,7 @@ HTML;
    *   If specified, limits media data extraction to media with this media type
    *   id.
    */
-  public static function extract_media_data($values, $modelName=NULL, $simpleFileInputs=FALSE, $moveSimpleFiles=FALSE, $mediaTypeIdToExtract=NULL) {
+  public static function extract_media_data($values, $modelName=NULL, $simpleFileInputs = FALSE, $moveSimpleFiles = FALSE, $mediaTypeIdToExtract = NULL) {
     $r = [];
     // legacy reasons, the model name might refer to _image model, rather than _medium.
     $modelName = preg_replace('/^([a-z_]*)_image/', '${1}_medium', $modelName);
@@ -8999,7 +9047,7 @@ HTML;
             $pathPos = strlen($key)-5;
           }
         }
-        if ($pathPos !==false && ($modelName === NULL || $modelName == substr($key, 0, strlen($modelName)) ||
+        if ($pathPos !== FALSE && ($modelName === NULL || $modelName == substr($key, 0, strlen($modelName)) ||
             $legacyModelName == substr($key, 0, strlen($legacyModelName)))) {
           $prefix = substr($key, 0, $pathPos);
           $thisMediaTypeId = isset($values[$prefix.':media_type_id'.$uniqueId]) ?
