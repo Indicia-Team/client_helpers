@@ -478,7 +478,10 @@ class ElasticsearchProxyHelper {
          $_POST['subject'],
          wordwrap($emailBody, 70),
          $headers);
-    echo $success ? 'OK' : 'Fail';
+    header('Content-type: application/json');
+    echo json_encode([
+      'status' => $success ? 'OK' : 'Fail',
+    ]);
   }
 
   /**
