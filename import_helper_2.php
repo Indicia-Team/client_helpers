@@ -735,6 +735,7 @@ HTML;
     ];
     $colsByGroup = [];
     $optGroup = '';
+    $shortGroupLabels = [];
     foreach ($availableFields as $field => $caption) {
       // Skip fields that are not suitable for non-expert imports.
       if (self::fieldIsBlocked($options, $field)) {
@@ -744,6 +745,7 @@ HTML;
       if ($optGroup !== lang::get("optionGroup-$fieldParts[0]")) {
         $optGroup = lang::get("optionGroup-$fieldParts[0]");
         $colsByGroup[$optGroup] = [];
+        $shortGroupLabels[$optGroup] = lang::get("optionGroup-$fieldParts[0]-shortLabel");
       }
       // Find variants of field names for auto matching.
       switch ($field) {
@@ -765,10 +767,11 @@ HTML;
       $colsByGroup[$optGroup][] = "<option value=\"$field\"$alt>$caption</option>";
     }
     $optGroupHtmlList = ["<option value=\"\">- $lang[notImported] -</option>"];
-    foreach ($colsByGroup as $optgroup => $optionsList) {
+    foreach ($colsByGroup as $thisColOptionGroup => $optionsList) {
       $options = implode('', $optionsList);
+      $shortLabel = $shortGroupLabels[$thisColOptionGroup];
       $optGroupHtmlList[] = <<<HTML
-<optgroup label="$optgroup">
+<optgroup label="$thisColOptionGroup" data-short-label="$shortLabel">
   $options
 </optgroup>
 HTML;
