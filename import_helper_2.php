@@ -305,7 +305,6 @@ class import_helper_2 extends helper_base {
     $output = json_decode($response['output'], TRUE);
     if (!$response['result']) {
       \Drupal::logger('iform')->notice('Error in processLookupMatching: ' . var_export($response, TRUE));
-      throw new exception(isset($output['msg']) ? $output['msg'] : $response['output']);
     }
     return $output;
   }
@@ -340,36 +339,50 @@ class import_helper_2 extends helper_base {
    *
    * @param string $fileName
    *   Name of the file to process.
-   * @param string $description
-   *   Description if saving the import metadata for the first time.
-   * @param string $templateTitle
-   *   Title if saving the import configuration as a template for future use.
-   * @param bool $forceTemplateOverwrite
-   *   Set to true if the template title provided can be used to overwrite an
-   *   existing one of the same name for this user.
+   * @param array $params
+   *   List of options passed to the import chunk AJAX proxy. Includes:
+   *   * description - Description if saving the import metadata for the first
+   *     time.
+   *   * importTemplateTitle - Title if saving the import configuration as a
+   *     template for future use.
+   *   * forceTemplateOverwrite - Set to true if the template title provided
+   *     can be used to overwrite an existing one of the same name for this
+   *     user.
+   *   * precheck - precheck, which retrieves validation errors without
+   *     importing.
+   *   * restart - forces the warehouse to start from the first row in the
+   *     import.
    * @param array $writeAuth
    *   Write authorisation tokens.
    */
-  public static function importChunk($fileName, $description, $templateTitle, $forceTemplateOverwrite, array $writeAuth) {
+  public static function importChunk($fileName, array $params, array $writeAuth) {
+    $params = array_merge([
+      'description' => NULL,
+      'importTemplateTitle' => NULL,
+      'forceTemplateOverwrite' => FALSE,
+      'precheck' => FALSE,
+      'restart' => FALSE,
+    ], $params);
+
     $serviceUrl = self ::$base_url . 'index.php/services/import_2/import_chunk';
     $data = $writeAuth + [
       'data-file' => $fileName,
     ];
-    if (!empty(trim($description))) {
+    if (!empty(trim($params['description']))) {
       $data['save-import-record'] = json_encode([
-        'description' => trim($description),
+        'description' => trim($params['description']),
       ]);
     }
-    if (!empty(trim($templateTitle))) {
+    if (!empty(trim($params['importTemplateTitle']))) {
       $data['save-import-template'] = json_encode([
-        'title' => trim($templateTitle),
-        'forceTemplateOverwrite' => $forceTemplateOverwrite,
+        'title' => trim($params['importTemplateTitle']),
+        'forceTemplateOverwrite' => $params['forceTemplateOverwrite'],
       ]);
     }
-    if (isset($_POST['precheck'])) {
+    if ($params['precheck']) {
       $data['precheck'] = 't';
     }
-    elseif (isset($_POST['restart'])) {
+    if ($params['restart']) {
       $data['restart'] = 't';
     }
     $response = self::http_post($serviceUrl, $data, FALSE);
@@ -380,7 +393,7 @@ class import_helper_2 extends helper_base {
         return [
           'status' => 'conflict',
           'msg' => $output['msg'],
-          'title' => $templateTitle,
+          'title' => trim($params['importTemplateTitle']),
         ];
       }
       else {
@@ -629,6 +642,9 @@ HTML;
       'requiredFieldsInstructions' => lang::get($options['requiredFieldsIntro']),
       'title' => lang::get('Map import columns to destination database fields'),
     ];
+    self::addLanguageStringsToJs('import_helper_2', [
+      'suggestions' => 'Suggestions',
+    ]);
     // Load the config for this import.
     $request = parent::$base_url . "index.php/services/import_2/get_config";
     $request .= '?' . self::array_to_query_string($options['readAuth'] + ['data-file' => $_POST['data-file']]);
@@ -648,17 +664,18 @@ HTML;
     // get populated by some other means.
     $requiredFields = array_intersect_key($requiredFields, $availableFields);
     self::$indiciaData['requiredFields'] = $requiredFields;
-    if (!empty($config['mappings'])) {
-      self::$indiciaData['mappings'] = $config['mappings'];
+    if (!empty($config['columns'])) {
+      // Save column info data for JS to use.
+      self::$indiciaData['columns'] = $config['columns'];
     }
 
     $htmlList = [];
     $dbFieldOptions = self::getAvailableDbFieldsAsOptions($options, $availableFields);
-    foreach ($config['columns'] as $column) {
-      $select = "<select class=\"form-control mapped-field\" name=\"$column\">$dbFieldOptions</select>";
+    foreach ($config['columns'] as $columnLabel => $info) {
+      $select = "<select class=\"form-control mapped-field\" name=\"$info[tempDbField]\">$dbFieldOptions</select>";
       $htmlList[] = <<<HTML
 <tr>
-  <td>$column</td>
+  <td>$columnLabel</td>
   <td>$select</td>
 </tr>
 HTML;
@@ -810,11 +827,38 @@ HTML;
     return $settings;
   }
 
-  private static function lookupMatchingForm($options) {
+  /**
+   * After posting the mappings form, save them.
+   *
+   * @param array $values
+   *   Posted mappings values.
+   * @param array $options
+   *   Import control options including the write auth tokens.
+   */
+  private static function saveMappings(array $values, array $options) {
+    $settings = array_merge([], $values);
+    unset($settings['data-file']);
+    unset($settings['next-import-step']);
+    $request = parent::$base_url . 'index.php/services/import_2/save_mappings';
+    self::http_post($request, $options['writeAuth'] + [
+      'data-file' => $_POST['data-file'],
+      'mappings' => json_encode($settings),
+    ]);
+  }
+
+  /**
+   * Import page for matching lookups.
+   *
+   * E.g. species, attributes with termlist lookups, or other foreign keys.
+   *
+   * @param array $options
+   *   Import control options array.
+   */
+  private static function lookupMatchingForm(array $options) {
     helper_base::add_resource('autocomplete');
     helper_base::add_resource('validation');
     // Save the results of the previous mappings form.
-    self::saveFormValuesToConfig($_POST, $options, 'mappings');
+    self::saveMappings($_POST, $options);
     self::addLanguageStringsToJs('import_helper_2', [
       'backgroundProcessingDone' => 'Background processing done',
       'dataValue' => 'Data value',
@@ -860,18 +904,87 @@ HTML;
 HTML;
   }
 
+  /**
+   * Returns a page for validation information.
+   *
+   * Not implemented yet so skips to the next page.
+   */
   private static function validationForm($options) {
     // @todo Validate the data before attempting the import.
     return self::summaryPage($options);
   }
 
-  private static function summaryPage($options) {
+  /**
+   * Returns the appropriate arrow icon for a mapped column.
+   *
+   * @param array $info
+   *   Column information.
+   *
+   * @return string
+   *   HTML for the arrow icon.
+   */
+  private static function getSummaryColumnArrow(array $info) {
     $lang = [
-      'columnMappings' => lang::get('Column mappings'),
-      'databaseField' => lang::get('Database field'),
       'dataValuesCopied' => lang::get('Values in this column are copied to this field'),
       'dataValuesIgnored' => lang::get('Values in this column are ignored'),
       'dataValuesMatched' => lang::get('Values in this column are matched to equivalent database values using the rules you supplied.'),
+    ];
+    if (empty($info['warehouseField'])) {
+      $arrow = "<i class=\"fas fa-stop\" title=\"$lang[dataValuesIgnored]\"></i>";
+    }
+    elseif (!empty($info['isFkField'])) {
+      $arrow = "<i class=\"fas fa-random\" title=\"$lang[dataValuesMatched]\"></i><i class=\"fas fa-play\" title=\"$lang[dataValuesCopied]\"></i>";
+    }
+    else {
+      $arrow = "<i class=\"fas fa-play\" title=\"$lang[dataValuesCopied]\"></i>";
+    }
+    return $arrow;
+  }
+
+  /**
+   * Convert warehouse field name to readable form.
+   *
+   * E.g. sample:comment is returned as Sample comment.
+   *
+   * @param string $warehouseField
+   *   Field name.
+   *
+   * @return string
+   *   Readable form of the field name.
+   */
+  private static function getReadableWarehouseField($warehouseField) {
+    $parts = explode(':', $warehouseField);
+    $asWords = implode(' ', $parts);
+    return str_replace('_', ' ', ucfirst($asWords));
+  }
+
+  /**
+   * Retrieve a readable label for a destination warehouse field.
+   *
+   * @param array $info
+   *   Column info data.
+   * @param array $availableFields
+   *   List of available fields for the import entity, with their display
+   *   labels.
+   */
+  private static function getWarehouseFieldLabel(array $info, array $availableFields) {
+    $label = $availableFields[$info['warehouseField']] ?? self::getReadableWarehouseField($info['warehouseField']);
+    return $label;
+  }
+
+  /**
+   * Build the summary page HTML output.
+   *
+   * @param array $options
+   *   Importer control options array.
+   *
+   * @return string
+   *   HTML for the page.
+   */
+  private static function summaryPage(array $options) {
+    $lang = [
+      'columnMappings' => lang::get('Column mappings'),
+      'databaseField' => lang::get('Database field'),
       'globalValues' => lang::get('Fixed values that apply to all rows'),
       'instructions' => lang::get($options['summaryPageIntro']),
       'importColumn' => lang::get('Import column'),
@@ -889,30 +1002,10 @@ HTML;
     $ext = pathinfo($config['fileName'], PATHINFO_EXTENSION);
     $availableFields = self::getAvailableDbFields($options, $config['global-values']);
     $mappingRows = [];
-    foreach ($config['columns'] as $column => $tempFieldname) {
-      $tempFieldNameIfFk = $tempFieldname . '_id';
-      if (isset($config['mappings'][$tempFieldname])) {
-        $mappedTo = $availableFields[$config['mappings'][$tempFieldname]] ?? $config['mappings'][$tempFieldname];
-        $arrow = empty($mappedTo) ? "<i class=\"fas fa-stop\" title=\"$lang[dataValuesIgnored]\"></i>" : "<i class=\"fas fa-play\" title=\"$lang[dataValuesCopied]\"></i>";
-        $mappingRows[] = "<tr><th scope=\"row\">$column</th><td>$arrow</td><td>$mappedTo</td></tr>";
-      }
-      elseif (isset($config['mappings'][$tempFieldNameIfFk])) {
-        // Might be an FK/lookup field, so check if it is. We need to
-        // reconstitute the fk_* version of the lookup field to check.
-        $lookupFieldNameParts = explode(':', $config['mappings'][$tempFieldNameIfFk]);
-        if (preg_match('/^[a-x]{3}Attr$/', $lookupFieldNameParts[0])) {
-          // Attr lookups don't have _id in field name.
-          $lookupFieldName = "$lookupFieldNameParts[0]:fk_" . $lookupFieldNameParts[1];
-        }
-        else {
-          $lookupFieldName = "$lookupFieldNameParts[0]:fk_" . substr($lookupFieldNameParts[1], 0, strlen($lookupFieldNameParts[1]) - 3);
-        }
-        if (in_array($lookupFieldName, $config['lookupFields'])) {
-          $mappedTo = $availableFields[$lookupFieldName] ?? $config['mappings'][$tempFieldNameIfFk];
-          $arrow = "<i class=\"fas fa-random\" title=\"$lang[dataValuesMatched]\"></i><i class=\"fas fa-play\" title=\"$lang[dataValuesCopied]\"></i>";
-          $mappingRows[] = "<tr><th scope=\"row\">$column</th><td>$arrow</td><td>$mappedTo</td></tr>";
-        }
-      }
+    foreach ($config['columns'] as $columnLabel => $info) {
+      $arrow = self::getSummaryColumnArrow($info);
+      $warehouseFieldLabel = self::getWarehouseFieldLabel($info, $availableFields);
+      $mappingRows[] = "<tr><th scope=\"row\">$columnLabel</th><td>$arrow</td><td>$warehouseFieldLabel</td></tr>";
       // @todo Correct mapping to stage attribute display
     }
     $mappings = implode('', $mappingRows);
@@ -1051,6 +1144,14 @@ HTML;
 HTML;
   }
 
+  /**
+   * Ensures the importer options defaults are filled in.
+   *
+   * Also checks that required options are present.
+   *
+   * @param array $options
+   *   Importer options array.
+   */
   private static function getImportHelperOptions(&$options) {
     // Apply default options.
     $defaults = [
