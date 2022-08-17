@@ -290,11 +290,14 @@ TXT;
     header('Content-type: application/json');
     $writeAuth = self::getAuthFromHeaders();
     iform_load_helpers(['import_helper_2']);
+    $params = array_merge($_POST);
+    // Convert string data to bool.
+    $params['restart'] = !empty($params['restart']) && $params['restart'] === 'true';
+    $params['precheck'] = !empty($params['precheck']) && $params['precheck'] === 'true';
+    $params['forceTemplateOverwrite'] = !empty($params['forceTemplateOverwrite']) && $params['forceTemplateOverwrite'] === 'true';
     $response = import_helper_2::importChunk(
       $_GET['data-file'],
-      isset($_POST['description']) ? $_POST['description'] : NULL,
-      isset($_POST['importTemplateTitle']) ? $_POST['importTemplateTitle'] : NULL,
-      isset($_POST['forceTemplateOverwrite']) && $_POST['forceTemplateOverwrite'] === 'true',
+      $params,
       $writeAuth
     );
     echo json_encode($response);

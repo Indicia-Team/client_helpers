@@ -66,3 +66,10 @@ $default_terms['optionGroup-occAttr'] = 'Occurrence attributes for selected surv
 $default_terms['optionGroup-sample'] = 'Sample';
 $default_terms['optionGroup-sample_medium'] = 'Sample photos and other media';
 $default_terms['optionGroup-smpAttr'] = 'Sample attributes for selected survey';
+
+$default_terms['optionGroup-occurrence-shortLabel'] = 'Occurrence';
+$default_terms['optionGroup-occurrence_medium-shortLabel'] = 'Occurrence media';
+$default_terms['optionGroup-occAttr-shortLabel'] = 'Occurrence attributes';
+$default_terms['optionGroup-sample-shortLabel'] = 'Sample';
+$default_terms['optionGroup-sample_medium-shortLabel'] = 'Sample media';
+$default_terms['optionGroup-smpAttr-shortLabel'] = 'Sample attributes';
