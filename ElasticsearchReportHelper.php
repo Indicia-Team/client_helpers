@@ -1406,10 +1406,12 @@ HTML;
       'applyDecisionTo' => lang::get('Apply decision to'),
       'applyRedetermination' => lang::get('Apply redetermination'),
       'cancel' => lang::get('Cancel'),
+      'contactExpert' => lang::get('Contact an expert'),
       'notAccepted' => lang::get('Not accepted'),
       'notAcceptedIncorrect' => lang::get('Not accepted :: incorrect'),
       'notAcceptedUnableToVerify' => lang::get('Not accepted :: unable to verify'),
       'plausible' => lang::get('Plausible'),
+      'raiseQuery' => lang::get('Raise a query with the recorder'),
       'selected' => lang::get('selected'),
       'upload' => lang::get('Upload'),
       'uploadVerificationDecisions' => lang::get('Upload a file of verification decisions'),
@@ -1420,6 +1422,11 @@ HTML;
       'commentReplyInstruct' => 'Click here to add a publicly visible comment to the record on iRecord.',
       'csvDisallowedMessage' => 'Uploading verification decisions is only allowed when there is a filter that defines the scope of the records you can verify.',
       'emailLoggedAsComment' => 'I emailed this record to the recorder for checking.',
+      'emailExpertBodyHeader' => 'The following record requires your assistance. Please could you reply to this email ' .
+        'with your opininion on whether the record is correct or not. You can reply to this message and it will be ' .
+        'forwarded direct to the verifier.',
+      'emailExpertInstruct' => 'Enter the email of an expert to request their assistance with this record.',
+      'emailExpertSubject' => 'Record of {{ taxon.taxon_name }} requires your assistance (ID:{{ id }})',
       'emailQueryBodyHeader' => 'The following record requires confirmation. Please could you reply to this email ' .
         'stating how confident you are that the record is correct and any other information you have which may help ' .
         'to confirm this. You can reply to this message and it will be forwarded direct to the verifier.',
@@ -1427,6 +1434,7 @@ HTML;
       'emailReplyInstruct' => "Click on your email's reply button to send an email direct to the verifier.",
       'emailSent' => 'The email was sent successfully.',
       'emailTabTitle' => 'Email record details',
+      'enterEmailAddress' => 'Enter the email address to send the record to',
       'nothingSelected' => 'There are no selected records. Either select some rows using the checkboxes in the leftmost column or set the "Apply decision to" mode to "all".',
       'queryEmailTabAnonWithEmail' => 'This record was posted by a recorder who was not logged in but provided their email address so email is the best method of contact.',
       'queryEmailTabAnonWithoutEmail' => 'As this record does not have an email address for the recorder, the query is best added as a comment to the record unless you know the recorder and have their email address and permission to use it. There is no guarantee that the recorder will check their notifications.',
@@ -1513,7 +1521,8 @@ HTML;
         <button class="multi-mode-table $btnClass">$lang[all]</button>
       </div>
       <span class="sep"></span>
-      <button class="query $btnClass" data-query="Q" title="Raise a query"><span class="fas fa-question-circle query-Q"></span></button>
+      <button class="query $btnClass" data-query="Q" title="$lang[raiseQuery]"><span class="fas fa-question-circle query-Q"></span></button>
+      <button class="email-expert $btnClass" title="$lang[contactExpert]"><span class="fas fa-chalkboard-teacher"></span></button>
       $uploadButton
     </div>
   </div>
