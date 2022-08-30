@@ -8082,17 +8082,19 @@ HTML;
    *
    * @param array $response
    *   Response data from the save operation.
-   * @param $bool $update
-   *   True if updating existing data, otherwise false. Alters the success
-   *   message.
+   * @param string $op
+   *   Data operation - C(reate), U(pdate) or D(elete).
    *
    * @return string
    *   Success message.
    */
-  private static function getSuccessMessage($response, $update) {
-    $what = 'data';
-    if ($update) {
-      return lang::get('The information has been updated.');
+  public static function getSuccessMessage($response, $op) {
+    $what = $response['outer_table'];
+    if ($op === 'D') {
+      return lang::get("The $what has been deleted.");
+    }
+    if ($op === 'U') {
+      return lang::get("The $what has been updated.");
     }
     if ($response['success'] === 'multiple records' && $response['outer_table'] === 'sample' && isset($response['struct']['children'])) {
       $count = 0;
@@ -8113,7 +8115,7 @@ HTML;
   }
 
   /**
-   * Output success or errors after a form post.
+   * Output errors after a form post.
    *
    * Takes a response from a call to forward_post_to() and outputs any errors
    * from it onto the screen.
@@ -8123,14 +8125,13 @@ HTML;
    * @param bool $inline Set to true if the errors are to be placed
    *   alongside the controls rather than at the top of the page. Default is
    *   true.
-   * @param $bool $update
+   * @param bool $update
    *   True if updating existing data, otherwise false. Alters the success
    *   message.
    *
    * @see forward_post_to()
    */
-  public static function dump_errors($response, $inline = TRUE, $update = TRUE)
-  {
+  public static function dump_errors($response, $inline = TRUE, $update = TRUE) {
     $r = "";
     if (is_array($response)) {
       // set form mode
@@ -8182,13 +8183,6 @@ HTML;
           $r .= lang::get('A warning occurred when the data was submitted.');
           $r .= '<p class="error">'.$response['error']."</p>\n";
         }
-      }
-      elseif (array_key_exists('success',$response)) {
-        $successMessage = self::getSuccessMessage($response, $update);
-        if (function_exists('hostsite_show_message'))
-          hostsite_show_message($successMessage);
-        else
-          $r .= "<div class=\"ui-widget ui-corner-all ui-state-highlight page-notice\">" . $successMessage . "</div>\n";
       }
     }
     else
