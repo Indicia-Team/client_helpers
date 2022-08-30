@@ -67,6 +67,7 @@ class iform_record_details_2 extends iform_dynamic {
       'title' => 'View details of a record 2',
       'category' => 'Utilities',
       'description' => 'A summary view of a record with commenting capability. Pass a parameter in the URL called occurrence_id to define which occurrence to show.',
+      'helpLink' => 'https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/record-details-2.html',
       'supportsGroups' => TRUE,
       'recommended' => TRUE,
     ];
@@ -327,6 +328,7 @@ Record ID',
     $options = array_merge([
       'dataSource' => 'reports_for_prebuilt_forms/record_details_2/record_data_attributes_with_hiddens',
       'fieldsToExcludeIfLoggedOut' => [],
+      'outputFormatting' => FALSE,
     ], $options);
     $fieldsToExcludeIfLoggedOut = array_map('strtolower', $options['fieldsToExcludeIfLoggedOut']);
     $loggedIn = hostsite_get_user_field('id') !== 0;
@@ -456,6 +458,7 @@ Record ID',
           'operator' => $args['operator'],
           'sharing' => $args['sharing'],
           'language' => iform_lang_iso_639_2(hostsite_get_user_field('language')),
+          'output_formatting' => $options['outputFormatting'] ? 't' : 'f',
         ],
       ]);
     }

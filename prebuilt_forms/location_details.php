@@ -64,6 +64,7 @@ class iform_location_details extends iform_dynamic {
       'title' => 'View details of a location',
       'category' => 'Utilities',
       'description' => 'A summary view of a location with commenting capability. Pass a parameter in the URL called location_id to define which occurrence to show.',
+      'helpLink' => 'https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/location-details.html',
       'supportsGroups' => TRUE,
       'recommended' => TRUE,
     ];
@@ -366,6 +367,7 @@ class iform_location_details extends iform_dynamic {
     $options = array_merge([
       'dataSource' => 'reports_for_prebuilt_forms/location_details/location_data_attributes_with_hiddens',
       'fieldsToExcludeIfLoggedOut' => [],
+      'outputFormatting' => FALSE,
     ], $options);
     $fieldsToExcludeIfLoggedOut = array_map('strtolower', $options['fieldsToExcludeIfLoggedOut']);
     $loggedIn = hostsite_get_user_field('id') !== 0;
@@ -426,6 +428,7 @@ class iform_location_details extends iform_dynamic {
         'operator' => $args['operator'],
         'sharing' => $args['sharing'],
         'language' => iform_lang_iso_639_2(hostsite_get_user_field('language')),
+        'output_formatting' => $options['outputFormatting'] ? 't' : 'f',
       ],
     ]);
 

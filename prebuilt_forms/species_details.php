@@ -381,6 +381,7 @@ class iform_species_details extends iform_dynamic {
     global $indicia_templates;
     $options = array_merge([
       'includeAttributes' => TRUE,
+      'outputFormatting' => FALSE,
     ], $options);
     $fields = helper_base::explode_lines($args['fields']);
     $fieldsLower = helper_base::explode_lines(strtolower($args['fields']));
@@ -422,11 +423,11 @@ class iform_species_details extends iform_dynamic {
           $hideTaxonomy = FALSE;
       }
     }
-    //Draw the names on the page
+    // Draw the names on the page.
     $details_report = self::draw_names($auth['read'], $hidePreferred, $hideCommon, $hideSynonym, $hideTaxonomy);
 
     if ($options['includeAttributes']) {
-      //draw any custom attributes for the species added by the user
+      // Draw any custom attributes for the species added by the user.
       $attrs_report = report_helper::freeform_report(array(
         'readAuth' => $auth['read'],
         'class' => 'species-details-fields',
@@ -434,12 +435,14 @@ class iform_species_details extends iform_dynamic {
         'bands' => array(array('content' => str_replace(['{class}'], '', $indicia_templates['dataValue']))),
         'extraParams' => array(
           'taxa_taxon_list_id' => self::$taxa_taxon_list_id,
-          //the SQL needs to take a set of the hidden fields, so this needs to be converted from an array.
+          // The SQL needs to take a set of the hidden fields, so this needs to
+          // be converted from an array.
           'attrs' => strtolower(self::convert_array_to_set($fields)),
           'testagainst' => $args['testagainst'],
           'operator' => $args['operator'],
           'sharing' => 'reporting',
           'language' => iform_lang_iso_639_2(hostsite_get_user_field('language')),
+          'output_formatting' => $options['outputFormatting'] ? 't' : 'f',
         )
       ));
     }
@@ -508,6 +511,8 @@ class iform_species_details extends iform_dynamic {
    *   heading name and then a slash and then the sub-category name e.g.  the following includes just the hoglets sub-category
    *   and the entire rabbits section @headingsToInclude=Hedgehogs/Hoglets,Rabbits
    *   @headingsToExclude - Same as @headingsToInclude but items are exluded instead (any items that appear in both headingsToInclude and headingsToExclude will be excluded).
+   *
+   * @deprecated in 8.5.0.
    *
    * @return string
    *   Html for the description.

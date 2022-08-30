@@ -67,6 +67,7 @@ class iform_sample_details extends iform_dynamic {
       'title' => 'View details of a sample',
       'category' => 'Utilities',
       'description' => 'A summary view of a sample. Pass a parameter in the URL called sample_id to define which occurrence to show.',
+      'helpLink' => 'https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/sample-details.html',
       'recommended' => TRUE,
     ];
   }
@@ -383,6 +384,7 @@ Sample ID',
     global $indicia_templates;
     $options = array_merge([
       'dataSource' => 'reports_for_prebuilt_forms/sample_details/sample_data_attributes_with_hiddens',
+      'outputFormatting' => FALSE,
     ], $options);
     $fields = helper_base::explode_lines($args['fields']);
     $fieldsLower = helper_base::explode_lines(strtolower($args['fields']));
@@ -458,6 +460,7 @@ Sample ID',
           'operator' => $args['operator'],
           'sharing' => $args['sharing'],
           'language' => iform_lang_iso_639_2(hostsite_get_user_field('language')),
+          'output_formatting' => $options['outputFormatting'] ? 't' : 'f',
         ],
       ]);
     }
