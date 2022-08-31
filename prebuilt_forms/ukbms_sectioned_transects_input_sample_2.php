@@ -2725,27 +2725,30 @@ class iform_ukbms_sectioned_transects_input_sample_2
 
           // Map Drupal codes to 3 digit codes held in warehouses
           $langMap = [
-            // "bg" > Bulgarian
+            'bg' => 'bul', // Bulgarian
+            'ca' => 'cat', //Catalan
             'cs' => 'ces', // Czech
-            // => "cym", // Welsh
+            // => 'cym', // Welsh
+            'da' => 'dan', //Danish
             'de' => 'deu', // German
             // 'el' => // Greek
-            'en' => 'eng',
+            'en' => 'eng', //English
             'es' => 'spa', // Spanish
-            // => 'fin', // Finnish
+            'fi' => 'fin', // Finnish
             // 'fr' => // French
-            // => 'gla' // Gaelic (Scots)
-            // => 'gle' // Irish
+            // => 'gla', // Gaelic (Scots)
+            // => 'gle', // Irish
             'hr' => 'hrv', // Croatian
             'hu' => 'hun', // Hungarian
+            'ja' => 'jpn', // Japanese
             // 'it' => // Italian
             // => 'lat', // Latin
-            // => 'lit', // Lithuanian
+            'lt' => 'lit', // Lithuanian
             'nl' => 'nld', // Dutch
             'pl' => 'pol', // Polish
             // 'pt-pt' => // Portuguese
-            // => 'rus' // Russian
-            // 'sl' => // Slovenian
+            // => 'rus', // Russian
+            'sl' => 'slv', // Slovenian
             'sv' => 'swe', // Swedish
             // 'tr' => // Turkish
           ];
