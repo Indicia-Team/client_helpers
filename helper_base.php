@@ -810,6 +810,10 @@ class helper_base {
    *   * font_awesome
    *   * leaflet
    *   * leaflet_google
+   *   * brc_atlas
+   *   * brc_charts
+   *   * bigr
+   *   * d3
    */
   public static function add_resource($resource) {
     // Ensure indiciaFns is always the first resource added.
@@ -1165,6 +1169,40 @@ class helper_base {
             self::$js_path . 'indicia.datacomponents/jquery.idc.filterSummary.js',
             self::$js_path . 'indicia.datacomponents/jquery.idc.permissionFilters.js',
             'https://unpkg.com/@ungap/url-search-params',
+          ],
+        ],
+        'brc_atlas' => [
+          'deps' => [
+            'd3',
+            'bigr',
+            'leaflet',
+          ],
+          'stylesheets' => [
+            'https://cdn.jsdelivr.net/gh/biologicalrecordscentre/brc-atlas@0.25.1/dist/brcatlas.umd.css',
+          ],
+          'javascript' => [
+            'https://cdn.jsdelivr.net/gh/biologicalrecordscentre/brc-atlas@0.25.1/dist/brcatlas.umd.min.js',
+          ],
+        ],
+        'brc_charts' => [
+          'deps' => [
+            'd3',
+          ],
+          'stylesheets' => [
+            'https://cdn.jsdelivr.net/gh/biologicalrecordscentre/brc-charts@0.15.0/dist/brccharts.umd.css',
+          ],
+          'javascript' => [
+            'https://cdn.jsdelivr.net/gh/biologicalrecordscentre/brc-charts@0.15.0/dist/brccharts.umd.min.js',
+          ],
+        ],
+        'd3' => [
+          'javascript' => [
+            'https://d3js.org/d3.v5.min.js',
+          ],
+        ],
+        'bigr' => [
+          'javascript' => [
+            'https://unpkg.com/brc-atlas-bigr@2.4.0/dist/bigr.min.umd.js',
           ],
         ],
       ];
