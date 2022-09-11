@@ -443,6 +443,94 @@ class iform_location_details extends iform_dynamic {
   }
 
   /**
+   * A control for outputting a block containing a single attribute's value.
+   *
+   * Provides more layout control than the list of attribute values and other
+   * details provided by the location details control.
+   *
+   * Options include:
+   * * format - control formatting of the value. Default is "text". Set to
+   *   "complex_attr_grid" to output tabular data created by a multi-value
+   *   attribute using the complex_attr_grid control type.
+   * * ifEmpty - Behaviour when no data present. Default is "hide", but can be
+   *   set to text which will be output in place of the value when there is no
+   *   data value.
+   * * location_attribute_id - required. ID of the attribute to output the
+   *   value for.
+   * * outputFormatting - default false. Set to true to enable auto-formatting
+   *   of HTML links and line-feeds.
+   * * title - default true, which shows the attribute's caption as a block
+   *   title. Set to a string to override the title, or false to hide it.
+   */
+  protected static function get_control_singleattribute($auth, $args, $tabalias, $options) {
+    if (empty($options['location_attribute_id'])) {
+      hostsite_show_message(lang::get('A location_attribute_id option is required for the single attribute control.', 'warning'));
+      return;
+    }
+    $options = array_merge([
+      'format' => 'text',
+      'ifEmpty' => 'hide',
+      'outputFormatting' => FALSE,
+      'title' => TRUE,
+    ], $options);
+    $attrData = report_helper::get_report_data([
+      'readAuth' => $auth['read'],
+      'dataSource' => 'reports_for_prebuilt_forms/location_details/location_attribute_value',
+      'extraParams' => [
+        'location_id' => $_GET['location_id'],
+        'location_attribute_id' => $options['location_attribute_id'],
+        'sharing' => $args['sharing'],
+        'language' => iform_lang_iso_639_2(hostsite_get_user_field('language')),
+        'output_formatting' => $options['outputFormatting'] && $options['format'] === 'text' ? 't' : 'f',
+      ],
+    ]);
+    if (count($attrData) === 0) {
+      hostsite_show_message("Attribute ID $options[location_attribute_id] not found", 'warning');
+      return '';
+    }
+    $r = '';
+    $valueInfo = $attrData[0];
+    if ($options['title'] === TRUE) {
+      $r .= "<h3>$valueInfo[caption]</h3>";
+    }
+    elseif (is_string($options['title'])) {
+      $r .= '<h3>' . lang::get($options['title']) . '</h3>';
+    }
+    if ($valueInfo['value'] === NULL || $valueInfo['value'] === '') {
+      $r .= '<p>' . lang::get($options['ifEmpty']) . '</p>';
+    }
+    else {
+      switch ($options['format']) {
+        case 'text':
+          $r .= "<p>$valueInfo[value]</p>";
+          break;
+
+        case 'complex_attr_grid':
+          $valueRows = explode('; ', $valueInfo['value']);
+          $decoded = json_decode($valueRows[0], TRUE);
+          $r .= '<table class="table"><thead>';
+          $r .= '<tr><th>' . implode('</th><th>', array_keys($decoded)) . '</th></tr>';
+          $r .= '</thead><tbody>';
+          foreach ($valueRows as $valueRow) {
+            $decoded = json_decode($valueRow, TRUE);
+            if ($options['outputFormatting']) {
+              foreach ($decoded as &$value) {
+                $value = str_replace("\n", '<br/>', $value);
+                $value = preg_replace('/(http[^\s]*)/', '<a href="$1">$1</a>', $value);
+              }
+            }
+            $r .= '<tr><td>' . implode('</td><td>', $decoded) . '</td></tr>';
+          }
+          $r .= '</tbody>';
+          $r .= '</table>';
+          break;
+      }
+    }
+
+    return $r;
+  }
+
+  /**
    * Render the Map section of the page.
    *
    * @return string
