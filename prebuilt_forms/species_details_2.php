@@ -44,11 +44,18 @@ require_once 'includes/report.php';
 class iform_species_details_2 extends iform_dynamic {
 
   /**
-   * Stores the preferred name of the taxon.
+   * Stores the preferred name of the taxon with markup and authority.
    *
    * @var preferred
    */
   private static $preferred;
+
+  /**
+   * Stores the preferred name of the taxon.
+   *
+   * @var preferredPlain
+   */
+  private static $preferredPlain;
 
   /**
    * Stores the default common name of the taxon.
@@ -453,16 +460,8 @@ class iform_species_details_2 extends iform_dynamic {
     }
 
     // Add any general ES taxon filters for taxon specified in URL.
-    $esFilter = '';
-    if (isset($_GET['taxon_meaning_id'])) {
-      $esFilter .= self::createEsFilterHtml('taxon.taxon_meaning_id', $_GET['taxon_meaning_id'], 'match_phrase', 'must');
-    }
-    elseif (isset($_GET['taxa_taxon_list_id'])) {
-      $esFilter .= self::createEsFilterHtml('taxon.taxa_taxon_list_id', $_GET['taxa_taxon_list_id'], 'match_phrase', 'must');
-    }
-    elseif (isset($_GET['external_key'])) {
-      $esFilter .= self::createEsFilterHtml('taxon.accepted_taxon_id', $_GET['external_key'], 'match_phrase', 'must');
-    }
+    $esFilter .= self::createEsFilterHtml('taxon.accepted_name', self::$preferredPlain, 'match_phrase', 'must');
+
     // Exclude rejected records in ES queries.
     $esFilter .= self::createEsFilterHtml('identification.verification_status', 'R', 'term', 'must_not');
 
@@ -500,6 +499,7 @@ class iform_species_details_2 extends iform_dynamic {
     foreach ($species_details as $speciesData) {
       if ($speciesData['preferred'] === 't') {
         self::$preferred = $speciesData['taxon'];
+        self::$preferredPlain = $speciesData['taxon_plain'];
         if (!isset(self::$taxonMeaningId)) {
           self::$taxonMeaningId = $speciesData['taxon_meaning_id'];
         }
