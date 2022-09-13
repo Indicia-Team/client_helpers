@@ -13,11 +13,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package	Client
- * @subpackage PrebuiltForms
- * @author	Indicia Team
- * @license	http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link 	http://code.google.com/p/indicia/
+ * @author Indicia Team
+ * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
+ * @link https://github.com/Indicia-Team/client_helpers
  */
 
 /**
@@ -45,16 +43,16 @@ class extension_cudi_information_sheet {
     //We then call a freeform report that then populates this template.
 
     $fields = array(
-        'Count Unit Name'=>'name',
-        'Alternative Name 1'=>'alternative_1',
-        'Alternative Name 2'=>'alternative_2',
-        'Abbreviation'=>'abbreviation',
-        'Site Name'=>'parent_location_name',
-        'Country'=>'country',
-        'Central Grid Ref/Coordinates'=>'centroid',
-        'Habitat'=>'habitat',
-        'Local Organiser Region'=>'local_organiser_region',
-        'Official Reason For Change'=>'official_reason_for_change',
+        'Count Unit Name' => 'name',
+        'Alternative Name 1' => 'alternative_1',
+        'Alternative Name 2' => 'alternative_2',
+        'Abbreviation' => 'abbreviation',
+        'Site Name' => 'parent_location_name',
+        'Country' => 'country',
+        'Central Grid Ref/Coordinates' => 'centroid',
+        'Habitat' => 'habitat',
+        'Local Organiser Region' => 'local_organiser_region',
+        'Official Reason For Change' => 'official_reason_for_change',
     );
     foreach ($fields as $caption=>$databaseValue) {
       $attrsTemplate.='<div class="field ui-helper-clearfix"><span>'.$caption.':</span><span>{'.$databaseValue.'}</span></div>';
@@ -71,8 +69,8 @@ class extension_cudi_information_sheet {
 
     return $attrs_report = report_helper::freeform_report(array(
         'readAuth' => $auth['read'],
-        'class'=>'information-sheet-details-fields',
-        'dataSource'=>'reports_for_prebuilt_forms/CUDI/cudi_information_sheet',
+        'class' => 'information-sheet-details-fields',
+        'dataSource' => 'reports_for_prebuilt_forms/CUDI/cudi_information_sheet',
         'bands'=>array(array('content'=>$attrsTemplate)),
         'extraParams'=>array(
           'id'=>$_GET['id'],
@@ -86,7 +84,7 @@ class extension_cudi_information_sheet {
           'official_reason_for_change_attr_id'=>$options['official_reason_for_change_attr_id'],
           'site_location_type_id'=>$options['site_location_type_id'],
           'loc_org_reg_attr_id'=>$options['loc_org_reg_attr_id'],
-          'sharing'=>'reporting'
+          'sharing' => 'reporting'
         )
       ));
     } else {
@@ -140,7 +138,7 @@ class extension_cudi_information_sheet {
     iform_load_helpers(['report_helper']);
     //Get the Count Units that are in the user's tasks list using the same report.
     $getNormalUserEditableCountUnitData  = report_helper::get_report_data(array(
-      'dataSource'=>'reports_for_prebuilt_forms/cudi/my_cudi_tasks',
+      'dataSource' => 'reports_for_prebuilt_forms/cudi/my_cudi_tasks',
       'readAuth'=>$auth['read'],
       'extraParams'=>array('clean_url' => $options['clean_url'],
                            'cudi_form_url' => $options['cudi_form_url'],
@@ -152,7 +150,7 @@ class extension_cudi_information_sheet {
                            'preferred_sites_attribute_id'=>$options['preferred_sites_attribute_id'],
                            'current_user_id'=>$user->profile_indicia_user_id)
     ));
-    $isNormalUserAccessibleCountUnitIds = array();
+    $isNormalUserAccessibleCountUnitIds = [];
     //Convert the Count Units in the user's task list into an array of ids only.
     foreach($getNormalUserEditableCountUnitData as $idx => $isNormalUserAccessibleDirtyItem) {
       $isNormalUserAccessibleCountUnitIds[$idx] = $isNormalUserAccessibleDirtyItem['id'];

@@ -22,6 +22,9 @@
  * @link https://github.com/indicia-team/client_helpers
  */
 
+/**
+ * A helper class for Elasticsearch reporting code.
+ */
 class ElasticsearchReportHelper {
 
   /**
@@ -660,7 +663,7 @@ JS;
    */
   public static function getGroupPageLinks(array $group, array $options, $member) {
     $pageData = data_entry_helper::get_population_data(array(
-      'table'=>'group_page',
+      'table' => 'group_page',
       'extraParams' => $options['readAuth'] + array(
           'group_id' => $group['id'],
           'query' => json_encode(array('in'=>array('administrator'=>array('', 'f')))),
@@ -685,24 +688,29 @@ JS;
   }
 
   /**
-   * A select box for choosing from a list of higher geography boundaries.
+   * A location select control.
+   *
+   * Can be configured for higher geography (indexed) or normal locations,
+   * which use a geom intersection query.
+   *
+   * @param array $options
+   *   Control options. The class option determines the control behaviour.
+   * @param bool $addGeomHiddenInput
+   *   Set to TRUE to include a hidden input for the geometry of the location.
+   *   Required for normal location searches.
    *
    * @return string
-   *   Control HTML
-   *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-higherGeopgraphySelect
+   *   Control HTML.
    */
-  public static function higherGeographySelect(array $options) {
+  private static function internalLocationSelect(array $options, $addGeomHiddenInput) {
     if (empty($options['locationTypeId']) ||
         (!is_array($options['locationTypeId']) && !preg_match('/^\d+$/', $options['locationTypeId']))) {
-      throw new Exception('An integer or integer array @locationTypeId parameter is required for the [higherGeographySelect] control');
+      throw new Exception('An integer or integer array @locationTypeId parameter is required for location select controls');
     }
     $typeIds = is_array($options['locationTypeId']) ? $options['locationTypeId'] : [$options['locationTypeId']];
     $r = '';
     $options = array_merge([
-      'class' => 'es-higher-geography-select',
       'blankText' => lang::get('<All locations shown>'),
-      'id' => 'higher-geography-select',
     ], $options);
     $options['extraParams'] = array_merge([
       'orderby' => 'name',
@@ -710,7 +718,7 @@ JS;
     $baseId = $options['id'];
     foreach ($typeIds as $idx => $typeId) {
       $options['extraParams']['location_type_id'] = $typeId;
-      if (count($typeIds) > 0) {
+      if (count($typeIds) > 1) {
         $options['id'] = "$baseId-$idx";
         $options['class'] .= ' linked-select';
       }
@@ -723,8 +731,45 @@ JS;
         }
       }
       $r .= data_entry_helper::location_select($options);
+      // If locations are unindexed we need a place to store the geometry for
+      // filtering.
+      if ($addGeomHiddenInput) {
+        $r .= "<input type=\"hidden\" id=\"$options[id]-geom\" class=\"es-filter-param $options[class]-geom\" data-es-bool-clause=\"must\">";
+      }
     }
     return $r;
+  }
+
+  /**
+   * A select box for choosing from a list of higher geography boundaries.
+   *
+   * @return string
+   *   Control HTML.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-higherGeopgraphySelect
+   */
+  public static function higherGeographySelect(array $options) {
+    $options = array_merge([
+      'id' => 'higher-geography-select',
+      'class' => 'es-higher-geography-select',
+    ], $options);
+    return self::internalLocationSelect($options, FALSE);
+  }
+
+  /**
+   * A select box for choosing from a list of unindexed location boundaries.
+   *
+   * @return string
+   *   Control HTML.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-locationSelect
+   */
+  public static function locationSelect(array $options) {
+    $options = array_merge([
+      'id' => 'location-select',
+      'class' => 'es-location-select',
+    ], $options);
+    return self::internalLocationSelect($options, TRUE);
   }
 
   /**

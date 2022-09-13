@@ -13,23 +13,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package	Client
- * @subpackage PrebuiltForms
- * @author	Indicia Team
- * @license	http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link 	http://code.google.com/p/indicia/
+ * @author Indicia Team
+ * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
+ * @link https://github.com/Indicia-Team/client_helpers
  */
 
-require_once('includes/map.php');
-require_once('includes/language_utils.php');
-require_once('includes/user.php');
+require_once 'includes/map.php';
+require_once 'includes/language_utils.php';
+require_once 'includes/user.php';
 
 /**
  * Prebuilt Indicia data entry form.
  * NB has Drupal specific code. Relies on presence of IForm Proxy.
- *
- * @package	Client
- * @subpackage PrebuiltForms
  */
 
 class iform_mnhnl_bird_transect_walks {
@@ -65,14 +60,14 @@ class iform_mnhnl_bird_transect_walks {
    */
   public static function get_mnhnl_bird_transect_walks_definition() {
     return array(
-      'title'=>'Bird Transect Walks',
+      'title' => 'Bird Transect Walks',
       'category' => 'MNHNL forms',
-      'description'=>'For input of bird records captured during repeated transect walks. Developed for the COBIMO project in Luxembourg.'
+      'description' => 'For input of bird records captured during repeated transect walks. Developed for the COBIMO project in Luxembourg.'
     );
   }
 
   public static function get_perms($nid, $args) {
-  	$perms = array();
+  	$perms = [];
   	if(isset($args['edit_permission']) && $args['edit_permission']!='') $perms[] = $args['edit_permission'];
   	return $perms;
   }
@@ -89,23 +84,23 @@ class iform_mnhnl_bird_transect_walks {
       iform_map_get_map_parameters(),
       array(
         array(
-          'name'=>'edit_permission',
-          'caption'=>'Permission required for editing other people\'s data',
-          'description'=>'Set to the name of a permission which is required in order to be able to edit other people\'s data.',
-          'type'=>'text_input',
-          'default'=>'indicia data admin'
+          'name' => 'edit_permission',
+          'caption' => 'Permission required for editing other people\'s data',
+          'description' => 'Set to the name of a permission which is required in order to be able to edit other people\'s data.',
+          'type' => 'text_input',
+          'default' => 'indicia data admin'
         ),
       array(
-        'name'=>'survey_id',
-        'caption'=>'Survey ID',
-        'description'=>'The Indicia ID of the survey that data will be posted into.',
-        'type'=>'int'
+        'name' => 'survey_id',
+        'caption' => 'Survey ID',
+        'description' => 'The Indicia ID of the survey that data will be posted into.',
+        'type' => 'int'
       ),
       		array(
-      				'name'=>'location_assignment_type',
-      				'caption'=>'Location Assignment Type',
-      				'description'=>'Choose the method by which locations are assigned to users. The Indicia User ID option requires easy_login.',
-      				'type'=>'select',
+      				'name' => 'location_assignment_type',
+      				'caption' => 'Location Assignment Type',
+      				'description' => 'Choose the method by which locations are assigned to users. The Indicia User ID option requires easy_login.',
+      				'type' => 'select',
       				'options' => array(
       						'indicia' => 'Indicia Warehouse User ID recorded in a location attribute',
       						'cms' => 'CMS User ID recorded in a location attribute'
@@ -115,63 +110,63 @@ class iform_mnhnl_bird_transect_walks {
       				'required' => false
       		),
       		array(
-      				'name'=>'location_assignment_attr_id',
-      				'caption'=>'Location Assignment Attribute',
-      				'description'=>'The Location attribute that stores the user ID (as defined in the type above). ' .
+      				'name' => 'location_assignment_attr_id',
+      				'caption' => 'Location Assignment Attribute',
+      				'description' => 'The Location attribute that stores the user ID (as defined in the type above). ' .
       				'Depending on the exact configuration, this may need to be a multi-value one.',
-      				'type'=>'select',
-      				'table'=>'location_attribute',
-      				'valueField'=>'id',
-      				'captionField'=>'caption',
+      				'type' => 'select',
+      				'table' => 'location_attribute',
+      				'valueField' => 'id',
+      				'captionField' => 'caption',
       				'group' => 'User Interface',
       				'required' => false
       		),
 
       array(
-        'name'=>'locationLayer',
-        'caption'=>'Location Layer Definition',
-        'description'=>'Comma separated list of option definitions for the location layer',
-        'type'=>'string',
-        'group'=>'Maps',
+        'name' => 'locationLayer',
+        'caption' => 'Location Layer Definition',
+        'description' => 'Comma separated list of option definitions for the location layer',
+        'type' => 'string',
+        'group' => 'Maps',
         'maxlength'=>200
       ),
       array(
-	    'name'=>'map_projection', /* GARY */
-	    'caption'=>'Map Projection (EPSG code)',
-	    'description'=>'EPSG code to use for the map. If using 900913 then the preset layers such as Google maps will work, but for any other '.
+	    'name' => 'map_projection', /* GARY */
+	    'caption' => 'Map Projection (EPSG code)',
+	    'description' => 'EPSG code to use for the map. If using 900913 then the preset layers such as Google maps will work, but for any other '.
 	        'projection make sure that your base layers support it.',
-	    'type'=>'string',
+	    'type' => 'string',
 	    'default' => '900913',
-	    'group'=>'Maps'
+	    'group' => 'Maps'
       ),
       array(
-        'name'=>'list_id',
-        'caption'=>'Species List ID',
-        'description'=>'The Indicia ID for the species list that species can be selected from.',
-        'type'=>'int'
+        'name' => 'list_id',
+        'caption' => 'Species List ID',
+        'description' => 'The Indicia ID for the species list that species can be selected from.',
+        'type' => 'int'
       ),
       array(
-        'name'=>'on_edit_survey_nav',
-        'caption'=>'Navigation when choosing a survey to edit',
-        'description'=>'Which Tab to display first when editing a survey (survey, occurrence, list)',
-        'group'=>'Navigation',
-        'type'=>'string',
+        'name' => 'on_edit_survey_nav',
+        'caption' => 'Navigation when choosing a survey to edit',
+        'description' => 'Which Tab to display first when editing a survey (survey, occurrence, list)',
+        'group' => 'Navigation',
+        'type' => 'string',
 	    'default' => 'survey',
       ),
       array(
-        'name'=>'on_save_survey_nav',
-        'caption'=>'Navigation when saving a survey',
-        'description'=>'Which Tab to display after saving a survey (survey, occurrence, list)',
-        'group'=>'Navigation',
-        'type'=>'string',
+        'name' => 'on_save_survey_nav',
+        'caption' => 'Navigation when saving a survey',
+        'description' => 'Which Tab to display after saving a survey (survey, occurrence, list)',
+        'group' => 'Navigation',
+        'type' => 'string',
 	    'default' => 'occurrence',
       ),
       array(
-        'name'=>'on_save_occurrence_nav',
-        'caption'=>'Navigation when saving an occurrence',
-        'description'=>'Which Tab to display after saving an occurrence (survey, occurrence, list)',
-        'group'=>'Navigation',
-        'type'=>'string',
+        'name' => 'on_save_occurrence_nav',
+        'caption' => 'Navigation when saving an occurrence',
+        'description' => 'Which Tab to display after saving an occurrence (survey, occurrence, list)',
+        'group' => 'Navigation',
+        'type' => 'string',
 	    'default' => 'occurrence',
       )
     ));
@@ -249,9 +244,9 @@ class iform_mnhnl_bird_transect_walks {
     if (!$logged_in){
       return lang::get('LANG_not_logged_in');
     }
-    $parentSample = array();
+    $parentSample = [];
     $parentLoadID = null;
-    $childSample = array();
+    $childSample = [];
     $childLoadID = null;
     $thisOccID=-1; // IDs have to be >0, so this is outside the valid range
 
@@ -363,7 +358,7 @@ class iform_mnhnl_bird_transect_walks {
     // define layers for all maps.
     // each argument is a comma separated list eg:
     // "Name:Lux Outline,URL:http://localhost/geoserver/wms,LAYERS:indicia:nation2,SRS:EPSG:2169,FORMAT:image/png,minScale:0,maxScale:1000000,units:m";
-    $optionsArray_Location = array();
+    $optionsArray_Location = [];
     $options = explode(',', $args['locationLayer']);
     foreach($options as $option){
       $parts = explode(':', $option);
@@ -391,7 +386,7 @@ class iform_mnhnl_bird_transect_walks {
         $tabs['#downloads'] = lang::get('LANG_Download');
       }
       if(count($tabs) > 1){
-        $r .= "<div id=\"controls\">".(data_entry_helper::enable_tabs(array('divId'=>'controls','active'=>'#surveyList')))."<div id=\"temp\"></div>";
+        $r .= "<div id=\"controls\">".(data_entry_helper::enable_tabs(array('divId' => 'controls','active' => '#surveyList')))."<div id=\"temp\"></div>";
         $r .= data_entry_helper::tab_header(array('tabs'=>$tabs));
       }
 
@@ -436,7 +431,7 @@ mapInitialisationHooks.push(function (div) {
         // Can only generate the feature id if we access a table directly, not through a view. Go direct to the locations table.
         // don't need to worry about parent_id in this case as we know exactly which features we want.
         // need to use btw_transects view for unrestricted so we can filter by parent_id=NULL.
-        $locFeatures = array();
+        $locFeatures = [];
         foreach($locations as $location)
           $locFeatures[] = "locations.".$location;
         data_entry_helper::$javascript .= "
@@ -635,7 +630,7 @@ mapInitialisationHooks.push(function (div) {
 });\n";
 
     $occReadOnly = false;
-    $childSample = array();
+    $childSample = [];
     if($childLoadID){ // load the occurrence and its associated sample (which holds the position)
       $url = $svcUrl.'/data/occurrence/'.$childLoadID;
       $url .= "?mode=json&view=detail&auth_token=".$readAuth['auth_token']."&nonce=".$readAuth["nonce"];
@@ -666,7 +661,7 @@ mapInitialisationHooks.push(function (div) {
       $childSample['taxon']=$childSample['occurrence:taxon'];
       $parentLoadID=$childSample['sample:parent_id'];
     }
-    $parentSample = array();
+    $parentSample = [];
     if($parentLoadID){ // load the container master sample
       $url = $svcUrl.'/data/sample/'.$parentLoadID;
       $url .= "?mode=json&view=detail&auth_token=".$readAuth['auth_token']."&nonce=".$readAuth["nonce"];
@@ -693,10 +688,10 @@ mapInitialisationHooks.push(function (div) {
     data_entry_helper::$entity_to_load=$parentSample;
     $attributes = data_entry_helper::getAttributes(array(
       'id' => data_entry_helper::$entity_to_load['sample:id']
-       ,'valuetable'=>'sample_attribute_value'
-       ,'attrtable'=>'sample_attribute'
-       ,'key'=>'sample_id'
-       ,'fieldprefix'=>'smpAttr'
+       ,'valuetable' => 'sample_attribute_value'
+       ,'attrtable' => 'sample_attribute'
+       ,'key' => 'sample_id'
+       ,'fieldprefix' => 'smpAttr'
        ,'extraParams'=>$readAuth
     ));
     $closedFieldName = $attributes[$sample_closure_id]['fieldname'];
@@ -731,7 +726,7 @@ mapInitialisationHooks.push(function (div) {
 
     // Set Up form tabs.
     $r .= data_entry_helper::enable_tabs(array(
-        'divId'=>'controls',
+        'divId' => 'controls',
       'active'=>$activeTab
     ));
     $r .= "<div id=\"temp\"></div>";
@@ -754,7 +749,7 @@ mapInitialisationHooks.push(function (div) {
         	$r .= "<div id=\"mergeSurveys\"><p><strong>".lang::get('LANG_Found_Mergable_Surveys')."</strong></p>";
         	foreach($entity as $survey){
         		if($survey['id'] != $parentSample['sample:id']){
-                  $r .= "<form action=\"".url("node/$nid", array())."\" method=\"get\"><input type=\"submit\" value=\"".lang::get('LANG_Merge_With_ID')." ".$survey['id']."\"><input type=\"hidden\" name=\"merge_sample_id1\" value=\"".$parentSample['sample:id']."\" /><input type=\"hidden\" name=\"merge_sample_id2\" value=\"".$survey['id']."\" /></form>";
+                  $r .= "<form action=\"".url("node/$nid", [])."\" method=\"get\"><input type=\"submit\" value=\"".lang::get('LANG_Merge_With_ID')." ".$survey['id']."\"><input type=\"hidden\" name=\"merge_sample_id1\" value=\"".$parentSample['sample:id']."\" /><input type=\"hidden\" name=\"merge_sample_id2\" value=\"".$survey['id']."\" /></form>";
         		}
         	}
         	$r .= "</div>";
@@ -783,7 +778,7 @@ mapInitialisationHooks.push(function (div) {
     $defAttrOptions['validation'] = array('required');
     if($locations == 'all'){
       $locOptions = array_merge(array('label'=>lang::get('LANG_Transect')), $defAttrOptions);
-      $locOptions['extraParams'] = array_merge(array('parent_id'=>'NULL', 'view'=>'detail', 'orderby'=>'name'), $locOptions['extraParams']);
+      $locOptions['extraParams'] = array_merge(array('parent_id' => 'NULL', 'view' => 'detail', 'orderby' => 'name'), $locOptions['extraParams']);
       $r .= data_entry_helper::location_select($locOptions);
     } else {
       // can't use location select due to location filtering.
@@ -840,7 +835,7 @@ jQuery('.attr-trailer').prev('br').remove();
       // Normal users can only set this to closed, and they do this using a button/hidden field.
       $r .= data_entry_helper::outputAttribute($attributes[$sample_closure_id], $defAttrOptions);
       // In addition admin users can delete a survey/sample.
-      $r .= data_entry_helper::checkbox(array('label'=>lang::get('Deleted'), 'fieldname'=>'sample:deleted', 'id'=>'main-sample-deleted'));
+      $r .= data_entry_helper::checkbox(array('label'=>lang::get('Deleted'), 'fieldname' => 'sample:deleted', 'id' => 'main-sample-deleted'));
     } else {
       // hidden closed
       $r .= "<input type=\"hidden\" id=\"main-sample-closed\" name=\"".$closedFieldName."\" value=\"".$closedFieldValue."\" />\n";
@@ -1147,10 +1142,10 @@ jQuery('#ro-occ-occ-warn').hide();
   data_entry_helper::$entity_to_load=$childSample;
   $attributes = data_entry_helper::getAttributes(array(
         'id' => data_entry_helper::$entity_to_load['occurrence:id']
-         ,'valuetable'=>'occurrence_attribute_value'
-         ,'attrtable'=>'occurrence_attribute'
-         ,'key'=>'occurrence_id'
-         ,'fieldprefix'=>'occAttr'
+         ,'valuetable' => 'occurrence_attribute_value'
+         ,'attrtable' => 'occurrence_attribute'
+         ,'key' => 'occurrence_id'
+         ,'fieldprefix' => 'occAttr'
          ,'extraParams'=>$readAuth
   ));
   $extraParams = $readAuth +
@@ -1163,10 +1158,10 @@ jQuery('#ro-occ-occ-warn').hide();
   }
   $species_ctrl_args=array(
           'label'=>lang::get('LANG_Species'),
-          'fieldname'=>'occurrence:taxa_taxon_list_id',
-          'table'=>'taxa_taxon_list',
-          'captionField'=>'taxon',
-          'valueField'=>'id',
+          'fieldname' => 'occurrence:taxa_taxon_list_id',
+          'table' => 'taxa_taxon_list',
+          'captionField' => 'taxon',
+          'valueField' => 'id',
           'columns'=>2,
           'extraParams'=>$extraParams,
           'disabled'=>$disabledText,
@@ -1186,18 +1181,18 @@ jQuery('#ro-occ-occ-warn').hide();
     <input type=\"hidden\" id=\"occurrence:record_status\" name=\"occurrence:record_status\" value=\"".($closedFieldValue == '0' ? 'I' : 'C' )."\" />
     <input type=\"hidden\" id=\"occurrence:downloaded_flag\" name=\"occurrence:downloaded_flag\" value=\"N\" />
     ".data_entry_helper::autocomplete($species_ctrl_args)."
-    ".($occurrence_confidence_id ? data_entry_helper::outputAttribute($attributes[$occurrence_confidence_id], array_merge($languageFilteredAttrOptions, array('noBlankText'=>''))) :  "<span style=\"display: none;\">Occurrence attribute '".self::ATTR_CONFIDENCE."' not assigned to this survey</span>")."
-    ".data_entry_helper::sref_and_system(array('label'=>lang::get('LANG_Spatial_ref'), 'systems'=>array('2169'=>'Luref (Gauss Luxembourg)')))."
+    ".($occurrence_confidence_id ? data_entry_helper::outputAttribute($attributes[$occurrence_confidence_id], array_merge($languageFilteredAttrOptions, array('noBlankText' => ''))) :  "<span style=\"display: none;\">Occurrence attribute '".self::ATTR_CONFIDENCE."' not assigned to this survey</span>")."
+    ".data_entry_helper::sref_and_system(array('label'=>lang::get('LANG_Spatial_ref'), 'systems'=>array('2169' => 'Luref (Gauss Luxembourg)')))."
     <p>".lang::get('LANG_Click_on_map')."</p>
     ".data_entry_helper::outputAttribute($attributes[$occurrence_count_id], array_merge($defAttrOptions, array('default'=>1)))."
     ".($occurrence_approximation_id ? data_entry_helper::outputAttribute($attributes[$occurrence_approximation_id], $defAttrOptions) :  "<span style=\"display: none;\">Occurrence attribute '".self::ATTR_APPROXIMATION."' not assigned to this survey</span>")."
     ".data_entry_helper::outputAttribute($attributes[$occurrence_territorial_id], array_merge($defAttrOptions, array('default'=>1, 'id' => 'occ-territorial')))."
     ".data_entry_helper::outputAttribute($attributes[$occurrence_atlas_code_id], $languageFilteredAttrOptions)."
     ".($occurrence_overflying_id ? data_entry_helper::outputAttribute($attributes[$occurrence_overflying_id], $defAttrOptions) :  "<span style=\"display: none;\">Occurrence attribute '".self::ATTR_OVERFLYING."' not assigned to this survey</span>")."
-    ".data_entry_helper::textarea(array('label'=>lang::get('LANG_Comment'), 'fieldname'=>'occurrence:comment', 'disabled'=>$disabledText));
+    ".data_entry_helper::textarea(array('label'=>lang::get('LANG_Comment'), 'fieldname' => 'occurrence:comment', 'disabled'=>$disabledText));
     if(!$surveyReadOnly && !$occReadOnly){
       if($mode == 3)
-        $r .= data_entry_helper::checkbox(array('label'=>lang::get('Delete'), 'fieldname'=>'sample:deleted', 'id'=>'occ-sample-deleted'));
+        $r .= data_entry_helper::checkbox(array('label'=>lang::get('Delete'), 'fieldname' => 'sample:deleted', 'id' => 'occ-sample-deleted'));
       $r .= "<input type=\"submit\" id=\"occ-submit\" class=\"ui-state-default ui-corner-all\" value=\"".lang::get('LANG_Save_Occurrence_Details')."\" />";
     }
     $r .= "  </form>\n";

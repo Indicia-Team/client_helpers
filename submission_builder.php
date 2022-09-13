@@ -42,11 +42,11 @@ class submission_builder {
    *     'model' => 'main model name',
    *     'fieldPrefix' => 'Optional prefix for HTML form fields in the main model. If not specified then the main model name is used.',
    *     'subModels' => ['child model name' => [
-   *         'fieldPrefix'=>'Optional prefix for HTML form fields in the sub model. If not specified then the sub model name is used.',
+   *         'fieldPrefix' => 'Optional prefix for HTML form fields in the sub model. If not specified then the sub model name is used.',
    *         'fk' => 'foreign key name'
    *     [[]],
    *     'superModels' => ['parent model name' => [
-   *         'fieldPrefix'=>'Optional prefix for HTML form fields in the sub model. If not specified then the sub model name is used.',
+   *         'fieldPrefix' => 'Optional prefix for HTML form fields in the sub model. If not specified then the sub model name is used.',
    *         'fk' => 'foreign key name'
    *     ]],
    *     'metaFields' => ['fieldname1', 'fieldname2', ...],

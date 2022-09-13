@@ -13,20 +13,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package Client
- * @subpackage PrebuiltForms
  * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers/
  */
 
-require_once('includes/report_filters.php');
+require_once 'includes/report_filters.php';
 
 /**
  * A form that allows a group admin to send email invitations to a group.
  *
- * @package Client
- * @subpackage PrebuiltForms
  * A page for send invites to a user group.
  */
 class iform_group_send_invites {
@@ -37,9 +33,9 @@ class iform_group_send_invites {
    */
   public static function get_group_send_invites_definition() {
     return array(
-      'title'=>'Send invites to a group',
+      'title' => 'Send invites to a group',
       'category' => 'Recording groups',
-      'description'=>'A form for emailing out invites to recording groups.',
+      'description' => 'A form for emailing out invites to recording groups.',
       'recommended' => true
     );
   }
@@ -51,10 +47,10 @@ class iform_group_send_invites {
    */
   public static function get_parameters() {
     return array(array(
-      'name'=>'accept_invite_path',
-      'caption'=>'Accept Invite Path',
-      'description'=>'Path to the Drupal page which invitation acceptances should be routed to.',
-      'type'=>'text_input'
+      'name' => 'accept_invite_path',
+      'caption' => 'Accept Invite Path',
+      'description' => 'Path to the Drupal page which invitation acceptances should be routed to.',
+      'type' => 'text_input'
     ));
   }
 
@@ -80,13 +76,13 @@ class iform_group_send_invites {
     $r .= data_entry_helper::textarea(array(
       'label' => lang::get('Send invites to'),
       'helpText' => 'Enter email addresses for the people you want to invite, one per line',
-      'fieldname'=>'invitee_emails',
+      'fieldname' => 'invitee_emails',
       'validation'=>array('required')
     ));
     $r .= data_entry_helper::textarea(array(
       'label' => lang::get('Invitation message'),
       'helpText' => 'What message would you like to send to your invitees?',
-      'fieldname'=>'invite_message',
+      'fieldname' => 'invite_message',
       'validation'=>array('required'),
       'default' => lang::get('Would you like to join the {1}?', $group['title'])
     ));
@@ -111,14 +107,14 @@ class iform_group_send_invites {
       throw new exception('Form must be called with an group_id parameter for the group.');
     // check the logged in user is admin of this group
     $response = data_entry_helper::get_population_data(array(
-      'table'=>'groups_user',
+      'table' => 'groups_user',
       'extraParams' => $auth['read'] + array('group_id' => $_GET['group_id'], 'user_id'=>hostsite_get_user_field('indicia_user_id')),
       'nocache'=>true
     ));
     if (count($response)===0 || $response[0]['administrator']==='f')
       throw new exception('Attempt to send invites for a group you are not administrator of.');
     $response = data_entry_helper::get_population_data(array(
-      'table'=>'group',
+      'table' => 'group',
       'extraParams' => $auth['read'] + array('id' => $_GET['group_id']),
       'nocache'=>true
     ));
@@ -154,7 +150,7 @@ class iform_group_send_invites {
     // first task is to populate the groups_invitations table
     $base = uniqid();
     $success = true;
-    $failedRecipients = array();
+    $failedRecipients = []
     foreach ($emails as $idx => $email) {
       if (!empty($email))
         $trimmedEmail=trim($email);
@@ -174,7 +170,7 @@ class iform_group_send_invites {
         $acceptUrl = $protocol . $_SERVER['HTTP_HOST'] . $rootFolder . $args['accept_invite_path'] . ($clean ? '?' : '&') . 'token=' . $base . $idx;
         $body = $_POST['invite_message'] . "<br/><br/>" .
             '<a href="' . $acceptUrl . '">' . lang::get('Accept this invitation') . '</a>';
-        $headers = array();
+        $headers = [];
         $headers[] = 'MIME-Version: 1.0';
         $headers[] = 'Content-type: text/html; charset=UTF-8;';
         $headers[] = 'From: '. hostsite_get_config_value('site', 'mail');
@@ -198,7 +194,7 @@ class iform_group_send_invites {
     else {
       hostsite_show_message(lang::get('The emails could not be sent due to a server configuration issue. Please contact the site admin. ' .
           'The list below gives the emails and the links you need to send to each invitee which they need to click on in order to join the group.'), 'warning');
-      $list=array();
+      $list=[];
       foreach($failedRecipients as $email => $link) {
         $list[] = lang::get("Send link {1} to {2}.", $link, $email);
       }

@@ -18,14 +18,10 @@
  * @link https://github.com/indicia-team/client_helpers/
  */
 
-require_once('includes/map.php');
-require_once('includes/language_utils.php');
+require_once 'includes/map.php';
+require_once 'includes/language_utils.php';
 /**
- *
- *
- * @package Client
- * @subpackage PrebuiltForms
- * @todo A simple distribution map.
+ * A simple distribution map.
  */
 class iform_distribution_map_3 {
 
@@ -35,9 +31,9 @@ class iform_distribution_map_3 {
    */
   public static function get_distribution_map_3_definition() {
     return array(
-      'title'=>'Distribution Map 3',
+      'title' => 'Distribution Map 3',
       'category' => 'Reporting',
-      'description'=>'Outputs a distribution map using Indicia data from GeoServer. '.
+      'description' => 'Outputs a distribution map using Indicia data from GeoServer. '.
         'Can output a map with up to three layers, each for a single species '
     );
   }
@@ -94,13 +90,13 @@ class iform_distribution_map_3 {
           'group' => 'Distribution Layer 1',
         ),
         array(
-          'fieldname'=>'taxon_list_id_1',
-          'label'=>'Species List',
-          'helpText'=>'The species list that species can be selected from.',
-          'type'=>'select',
-          'table'=>'taxon_list',
-          'valueField'=>'id',
-          'captionField'=>'title',
+          'fieldname' => 'taxon_list_id_1',
+          'label' => 'Species List',
+          'helpText' => 'The species list that species can be selected from.',
+          'type' => 'select',
+          'table' => 'taxon_list',
+          'valueField' => 'id',
+          'captionField' => 'title',
           'group' => 'Distribution Layer 1'
         ),
         array(
@@ -157,13 +153,13 @@ class iform_distribution_map_3 {
           'group' => 'Distribution Layer 2',
         ),
         array(
-          'fieldname'=>'taxon_list_id_2',
-          'label'=>'Species List',
-          'helpText'=>'The species list that species can be selected from.',
-          'type'=>'select',
-          'table'=>'taxon_list',
-          'valueField'=>'id',
-          'captionField'=>'title',
+          'fieldname' => 'taxon_list_id_2',
+          'label' => 'Species List',
+          'helpText' => 'The species list that species can be selected from.',
+          'type' => 'select',
+          'table' => 'taxon_list',
+          'valueField' => 'id',
+          'captionField' => 'title',
           'required' => false,
           'group' => 'Distribution Layer 2'
         ),
@@ -221,13 +217,13 @@ class iform_distribution_map_3 {
           'group' => 'Distribution Layer 3',
         ),
         array(
-          'fieldname'=>'taxon_list_id_3',
-          'label'=>'Species List',
-          'helpText'=>'The species list that species can be selected from.',
-          'type'=>'select',
-          'table'=>'taxon_list',
-          'valueField'=>'id',
-          'captionField'=>'title',
+          'fieldname' => 'taxon_list_id_3',
+          'label' => 'Species List',
+          'helpText' => 'The species list that species can be selected from.',
+          'type' => 'select',
+          'table' => 'taxon_list',
+          'valueField' => 'id',
+          'captionField' => 'title',
           'required' => false,
           'group' => 'Distribution Layer 3',
         ),

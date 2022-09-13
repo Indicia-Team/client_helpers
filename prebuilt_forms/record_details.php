@@ -13,22 +13,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package	Client
- * @subpackage PrebuiltForms
- * @author	Indicia Team
- * @license	http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link 	http://code.google.com/p/indicia/
+ * @author Indicia Team
+ * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
+ * @link https://github.com/Indicia-Team/client_helpers
  */
 
-require_once('includes/form_generation.php');
-require_once('includes/map.php');
+require_once 'includes/form_generation.php';
+require_once 'includes/map.php';
 
 /**
  * Prebuilt Indicia data entry form that presents taxon search box, date control, map picker,
  * survey selector and comment entry controls.
- *
- * @package	Client
- * @subpackage PrebuiltForms
  */
 class iform_record_details {
 
@@ -38,9 +33,9 @@ class iform_record_details {
    */
   public static function get_record_details_definition() {
     return array(
-      'title'=>'View details of a record',
+      'title' => 'View details of a record',
       'category' => 'Utilities',
-      'description'=>'A summary view of a record. Pass a parameter in the URL called occurrence_id to '.
+      'description' => 'A summary view of a record. Pass a parameter in the URL called occurrence_id to '.
           'define which occurrence to show.'
     );
   }
@@ -87,24 +82,24 @@ class iform_record_details {
       $r .= "<tr><td><strong>Date</strong></td><td>".data_entry_helper::$entity_to_load['sample:date']."</td></tr>\n";
     if (!in_array('Grid Reference', $hidden))
     $r .= "<tr><td><strong>Grid Reference</strong></td><td>".data_entry_helper::$entity_to_load['sample:entered_sref']."</td></tr>\n";
-    $siteLabels = array();
+    $siteLabels = [];
     if (!empty(data_entry_helper::$entity_to_load['sample:location'])) $siteLabels[] = data_entry_helper::$entity_to_load['sample:location'];
     if (!empty(data_entry_helper::$entity_to_load['sample:location_name'])) $siteLabels[] = data_entry_helper::$entity_to_load['sample:location_name'];
     if (!in_array('Site', $hidden) && !empty($siteLabels))
       $r .= "<tr><td><strong>Site</strong></td><td>".implode(' | ', $siteLabels)."</td></tr>\n";
     $smpAttrs = data_entry_helper::getAttributes(array(
         'id' => data_entry_helper::$entity_to_load['sample:id'],
-        'valuetable'=>'sample_attribute_value',
-        'attrtable'=>'sample_attribute',
-        'key'=>'sample_id',
+        'valuetable' => 'sample_attribute_value',
+        'attrtable' => 'sample_attribute',
+        'key' => 'sample_id',
         'extraParams'=>$auth,
         'survey_id'=>data_entry_helper::$entity_to_load['occurrence:survey_id']
     ));
     $occAttrs = data_entry_helper::getAttributes(array(
         'id' => $_GET['occurrence_id'],
-        'valuetable'=>'occurrence_attribute_value',
-        'attrtable'=>'occurrence_attribute',
-        'key'=>'occurrence_id',
+        'valuetable' => 'occurrence_attribute_value',
+        'attrtable' => 'occurrence_attribute',
+        'key' => 'occurrence_id',
         'extraParams'=>$auth,
         'survey_id'=>data_entry_helper::$entity_to_load['occurrence:survey_id']
     ));

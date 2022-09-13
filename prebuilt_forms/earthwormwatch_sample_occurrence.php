@@ -24,7 +24,7 @@
  * NB has Drupal specific code.
  */
 
-require_once('dynamic_sample_occurrence.php');
+require_once 'dynamic_sample_occurrence.php';
 
 class iform_earthwormwatch_sample_occurrence extends iform_dynamic_sample_occurrence {
   public static function get_parameters() {
@@ -32,43 +32,43 @@ class iform_earthwormwatch_sample_occurrence extends iform_dynamic_sample_occurr
       parent::get_parameters(),
       array(
         array(
-          'name'=>'pit_1_survey_attr',
-          'caption'=>'Survey attribute id for pit 1',
-          'description'=>'Attribute to hold the survey ID for pit 1.',
-          'type'=>'string',
-          'group'=>'Attribute IDs',
+          'name' => 'pit_1_survey_attr',
+          'caption' => 'Survey attribute id for pit 1',
+          'description' => 'Attribute to hold the survey ID for pit 1.',
+          'type' => 'string',
+          'group' => 'Attribute IDs',
           'required'=>true
         ),
         array(
-          'name'=>'postcode_attr_id',
-          'caption'=>'Post code attribute ID',
-          'description'=>'Attribute id for the attribute to hold the Post Code.',
-          'type'=>'string',
-          'group'=>'Attribute IDs',
+          'name' => 'postcode_attr_id',
+          'caption' => 'Post code attribute ID',
+          'description' => 'Attribute id for the attribute to hold the Post Code.',
+          'type' => 'string',
+          'group' => 'Attribute IDs',
           'required'=>true
         ),
         array(
-          'name'=>'auto_fill_attrs_for_survey_two',
-          'caption'=>'Attribute IDs to auto-fill for survey 2',
-          'description'=>'Comma separated list of attribute IDs to auto-fill for survey 2.',
-          'type'=>'string',
-          'group'=>'Attribute IDs',
+          'name' => 'auto_fill_attrs_for_survey_two',
+          'caption' => 'Attribute IDs to auto-fill for survey 2',
+          'description' => 'Comma separated list of attribute IDs to auto-fill for survey 2.',
+          'type' => 'string',
+          'group' => 'Attribute IDs',
           'required'=>true
         ),
         array(
-          'name'=>'locking_date',
-          'caption'=>'Locking Date',
-          'description'=>'The date to lock the form from. Samples "created on" earlier than this date are read-only (use format yyyy-mm-dd)',
-          'type'=>'string',
-          'group'=>'Locking Date',
+          'name' => 'locking_date',
+          'caption' => 'Locking Date',
+          'description' => 'The date to lock the form from. Samples "created on" earlier than this date are read-only (use format yyyy-mm-dd)',
+          'type' => 'string',
+          'group' => 'Locking Date',
           'required'=>false
         ),
         array(
-          'name'=>'ignore_grid_sample_dates_before',
-          'caption'=>'Ignore grid sample date before',
-          'description'=>'Exclude any samples before this date on the initial grid of data.',
-          'type'=>'string',
-          'group'=>'Other IForm Parameters',
+          'name' => 'ignore_grid_sample_dates_before',
+          'caption' => 'Ignore grid sample date before',
+          'description' => 'Exclude any samples before this date on the initial grid of data.',
+          'type' => 'string',
+          'group' => 'Other IForm Parameters',
           'required'=>false
         ),
       )
@@ -81,9 +81,9 @@ class iform_earthwormwatch_sample_occurrence extends iform_dynamic_sample_occurr
    */
   public static function get_earthwormwatch_sample_occurrence_definition() {
     return array(
-      'title'=>'Sample-occurrence entry form for Earthworm Watch.',
+      'title' => 'Sample-occurrence entry form for Earthworm Watch.',
       'category' => 'Forms for specific surveying methods',
-      'description'=>'Sample occurrences form for Earthworm Earthwatch project, allows two earthworm pit (samples) to be linked together.'
+      'description' => 'Sample occurrences form for Earthworm Earthwatch project, allows two earthworm pit (samples) to be linked together.'
     );
   }
 
@@ -162,16 +162,16 @@ class iform_earthwormwatch_sample_occurrence extends iform_dynamic_sample_occurr
   protected static function getReportActions() {
     return array(array('display' => 'Actions',
                        'actions' => array(array('caption' => lang::get('Edit Data For Pit 1'),
-                                                'url'=>'{currentUrl}',
+                                                'url' => '{currentUrl}',
                                                 'urlParams' => array('edit' => '', 'sample_id' => '{sample_id1}')
                                                ),
                                           array('caption' => lang::get('Input Data For Pit 2'),
-                                                'url'=>'{currentUrl}',
+                                                'url' => '{currentUrl}',
                                                 'urlParams' => array('new' => '', 'sample_id' => '{sample_id1}'),
                                                 'visibility_field' => 'done1'
                                                ),
                                           array('caption' => lang::get('Edit Data For Pit 2'),
-                                                'url'=>'{currentUrl}',
+                                                'url' => '{currentUrl}',
                                                 'urlParams' => array('edit' => '', 'sample_id' => '{sample_id2}'),
                                                 'visibility_field' => 'done2'
                                                ),
@@ -230,7 +230,7 @@ class iform_earthwormwatch_sample_occurrence extends iform_dynamic_sample_occurr
       $r .= '<input type="button" value="'.lang::get('LANG_Add_Sample_Single').'" onclick="window.location.href=\''.url('node/'.($nid), array('query' => array('new'))).'\'">';
       $r .= '<input type="button" value="'.lang::get('LANG_Add_Sample_Grid').'" onclick="window.location.href=\''.url('node/'.($nid), array('query' => array('new&gridmode'))).'\'">';
     } else {
-      $r .= '<input id="add-new-pit-button" type="button" value="'.lang::get('LANG_Add_Sample').'" onclick="window.location.href=\''.url('node/'.($nid), array('query' => array('new'=>''))).'\'">';
+      $r .= '<input id="add-new-pit-button" type="button" value="'.lang::get('LANG_Add_Sample').'" onclick="window.location.href=\''.url('node/'.($nid), array('query' => array('new' => ''))).'\'">';
     }
     $r .= '</form>';
     return $r;
@@ -279,7 +279,7 @@ class iform_earthwormwatch_sample_occurrence extends iform_dynamic_sample_occurr
    */
   public static function preload_species_checklist_occurrences($sampleId, $readAuth, $loadMedia, $extraParams,
        &$subSamples, $useSubSamples, $subSampleMethodID='') {
-    $occurrenceIds = array();
+    $occurrenceIds = []
     // don't load from the db if there are validation errors, since the $_POST will already contain all the
     // data we need.
     if (is_null(data_entry_helper::$validation_errors)) {
@@ -291,7 +291,7 @@ class iform_earthwormwatch_sample_occurrence extends iform_dynamic_sample_occurr
           unset(data_entry_helper::$entity_to_load[$key]);
         }
       }
-      $extraParams += $readAuth + array('view'=>'detail','sample_id'=>$sampleId,'deleted'=>'f', 'orderby'=>'id', 'sortdir'=>'ASC' );
+      $extraParams += $readAuth + array('view' => 'detail','sample_id'=>$sampleId,'deleted' => 'f', 'orderby' => 'id', 'sortdir' => 'ASC' );
       $sampleCount = 1;
 
       if($sampleCount>0) {
@@ -333,7 +333,7 @@ class iform_earthwormwatch_sample_occurrence extends iform_dynamic_sample_occurr
       //If data exists then load existing data into control
       if (!empty($_GET['sample_id'])) {
         $postCodeData = data_entry_helper::get_population_data(array(
-          'table'=>'sample_attribute_value',
+          'table' => 'sample_attribute_value',
           'extraParams'=> $auth['read'] + array('sample_id' => $_GET['sample_id'], 'sample_attribute_id' => $args['postcode_attr_id']),
           'nocache' => true
         ));
@@ -349,9 +349,9 @@ class iform_earthwormwatch_sample_occurrence extends iform_dynamic_sample_occurr
         }
       }
       $r = data_entry_helper::postcode_textbox(array(
-        'label'=>'Postcode',
+        'label' => 'Postcode',
         'fieldname'=>$fieldName,
-        'srefField'=>'sample:entered_sref',
+        'srefField' => 'sample:entered_sref',
         'hiddenFields'=>false,
       ));
     } else {
@@ -406,7 +406,7 @@ class iform_earthwormwatch_sample_occurrence extends iform_dynamic_sample_occurr
       data_entry_helper::$javascript .= "$('#sample\\\\:recorder_names').val('".addslashes($displayName)."');";
     }
     return data_entry_helper::textarea(array_merge(array(
-      'fieldname'=>'sample:recorder_names',
+      'fieldname' => 'sample:recorder_names',
       'label'=>lang::get('Recorder names')
     ), $options));
   }
@@ -489,7 +489,7 @@ class iform_earthwormwatch_sample_occurrence extends iform_dynamic_sample_occurr
     $readAuth = data_entry_helper::get_read_auth($args['website_id'], $args['password']);
     //Attempt to get a sample ID for Pit 1 attached to the edited pit (this will only work if pit 2 is the editing pit
     $pit1Data = data_entry_helper::get_population_data(array(
-      'table'=>'sample_attribute_value',
+      'table' => 'sample_attribute_value',
       'extraParams'=> $readAuth + array('sample_id' => $values['sample:id'], 'sample_attribute_id' => $args['pit_1_survey_attr']),
       'nocache' => true
     ));
@@ -501,7 +501,7 @@ class iform_earthwormwatch_sample_occurrence extends iform_dynamic_sample_occurr
       //This is done in a similar, but slightly differently because Pit 1 is attached to Pit 2 in a sample attribute value,
       //so we find Pit 1's sample_id in the sample_attribute_values and then find the sample id storing that.
       $pit2Data = data_entry_helper::get_population_data(array(
-        'table'=>'sample_attribute_value',
+        'table' => 'sample_attribute_value',
         'extraParams'=> $readAuth + array('value' => $values['sample:id'], 'sample_attribute_id' => $args['pit_1_survey_attr']),
         'nocache' => true
       ));
@@ -529,12 +529,12 @@ class iform_earthwormwatch_sample_occurrence extends iform_dynamic_sample_occurr
     //Get the existing sample_attribute_values for the other pit as we need to overwrite them, so need their IDs
     $readAuth = data_entry_helper::get_read_auth($args['website_id'], $args['password']);
     $otherPitExistingData = data_entry_helper::get_population_data(array(
-      'table'=>'sample_attribute_value',
+      'table' => 'sample_attribute_value',
       'extraParams'=> $readAuth + array('sample_id' => $idForOtherPit),
       'nocache' => true
     ));
     //Hold each existing Sample Attribute Value ID in an array with the Attribute ID as the key
-    $attrValIdsForAttrsToSync=array();
+    $attrValIdsForAttrsToSync=[];
     foreach($otherPitExistingData as $otherPitExistingDataItem) {
       //Split the existing for the other pit into two arrays, one is for attributes we are going to overwrite,
       //the other is ones that are going to stay the same (they need including in the submission, as some are mandatory so system doesn't like them missing)
@@ -545,7 +545,7 @@ class iform_earthwormwatch_sample_occurrence extends iform_dynamic_sample_occurr
     }
 
     //cycle through all the fields from the main pit submission as this will hold the new data values to place onto the other pit
-    $otherPitSubmission=array('id'=>'sample','fields'=>array());
+    $otherPitSubmission=array('id' => 'sample','fields'=>[]);
     foreach ($mainSubmission['fields'] as $mainSubmissionFieldName=>$arrayHoldingValueKey) {
       $explodedMainSubmissionFieldNameBits=explode(':',$mainSubmissionFieldName);
       //$explodedMainSubmissionFieldNameBits[1] is the attribute ID, so we are only interested in these attributes and things like survey ID

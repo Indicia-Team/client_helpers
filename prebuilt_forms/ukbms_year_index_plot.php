@@ -13,8 +13,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package Client
- * @subpackage PrebuiltForms
  * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers/
@@ -24,15 +22,12 @@
  * Future enhancements:
  * Allow url arguments to set default values to controls.
  */
-require_once('includes/form_generation.php');
-require_once('includes/report.php');
-require_once('includes/user.php');
+require_once 'includes/form_generation.php';
+require_once 'includes/report.php';
+require_once 'includes/user.php';
 
 /**
- * Prebuilt Indicia data form that lists the output of any report
- *
- * @package Client
- * @subpackage PrebuiltForms
+ * Prebuilt Indicia data form that lists the output of any report.
  */
 class iform_ukbms_year_index_plot {
 
@@ -42,9 +37,9 @@ class iform_ukbms_year_index_plot {
    */
   public static function get_ukbms_year_index_plot_definition() {
     return array(
-      'title'=>'UKBMS Year by Year Index Plot',
+      'title' => 'UKBMS Year by Year Index Plot',
       'category' => 'BMS Specific forms',
-      'description'=>'This shows the year by year counts, and is able to show this for individual species as well as all-species.',
+      'description' => 'This shows the year by year counts, and is able to show this for individual species as well as all-species.',
     );
   }
 
@@ -59,27 +54,27 @@ class iform_ukbms_year_index_plot {
     return
       array(
       	array(
-      		'name'=>'nidvsnode',
-      		'caption'=>'nid interface',
-      		'description'=>'In the arguments for the get_form function, the second can be either nid or the node, depending on the client_helpers version. Check this field if nid.',
-      		'type'=>'boolean',
+      		'name' => 'nidvsnode',
+      		'caption' => 'nid interface',
+      		'description' => 'In the arguments for the get_form function, the second can be either nid or the node, depending on the client_helpers version. Check this field if nid.',
+      		'type' => 'boolean',
       		'default' => false,
       		'required' => false,
         ),
 
       	array(
-          'name'=>'manager_permission',
-          'caption'=>'Drupal Permission for Manager mode',
-          'description'=>'Enter the Drupal permission name to be used to determine if this user is a manager (i.e. full access to full data set). This primarily determines the functionality of the Location filter.',
-          'type'=>'string',
+          'name' => 'manager_permission',
+          'caption' => 'Drupal Permission for Manager mode',
+          'description' => 'Enter the Drupal permission name to be used to determine if this user is a manager (i.e. full access to full data set). This primarily determines the functionality of the Location filter.',
+          'type' => 'string',
           'required' => false,
           'group' => 'Access Control'
         ),
         array(
-          'name'=>'branch_manager_permission',
-          'caption'=>'Drupal Permission for Branch Coordinator mode',
-          'description'=>'Enter the Drupal permission name to be used to determine if this user is a Branch Coordinator. This primarily determines the functionality of the Location filter.',
-          'type'=>'string',
+          'name' => 'branch_manager_permission',
+          'caption' => 'Drupal Permission for Branch Coordinator mode',
+          'description' => 'Enter the Drupal permission name to be used to determine if this user is a Branch Coordinator. This primarily determines the functionality of the Location filter.',
+          'type' => 'string',
           'required' => false,
           'group' => 'Access Control'
         ),
@@ -87,10 +82,10 @@ class iform_ukbms_year_index_plot {
       		'name' => 'cmsLocAttrId',
       		'caption' => 'CMS User ID Attribute',
       		'description' => 'A location multivalue attribute, used to allocate sites to a user.',
-      		'type'=>'select',
-      		'table'=>'location_attribute',
-      		'captionField'=>'caption',
-      		'valueField'=>'id',
+      		'type' => 'select',
+      		'table' => 'location_attribute',
+      		'captionField' => 'caption',
+      		'valueField' => 'id',
       		'siteSpecific'=>true,
       		'group' => 'Access Control'
       	),
@@ -98,10 +93,10 @@ class iform_ukbms_year_index_plot {
       		'name' => 'branchCmsLocAttrId',
       		'caption' => 'Branch Attribute',
       		'description' => 'A location attribute (potentially multivalue), used to allocate sites to a user at a branch level.',
-      		'type'=>'select',
-      		'table'=>'location_attribute',
-      		'captionField'=>'caption',
-      		'valueField'=>'id',
+      		'type' => 'select',
+      		'table' => 'location_attribute',
+      		'captionField' => 'caption',
+      		'valueField' => 'id',
       		'siteSpecific'=>true,
       		'required' => false,
       		'group' => 'Access Control'
@@ -110,7 +105,7 @@ class iform_ukbms_year_index_plot {
               'name' => 'branchAttributeValue',
               'caption' => 'Branch Attribute Value',
               'description' => 'The value to use for the branch attribute filtering, defaults to the CMS user Id',
-              'type'=>'string',
+              'type' => 'string',
               'siteSpecific'=>true,
               'required' => false,
               'group' => 'Access Control'
@@ -119,10 +114,10 @@ class iform_ukbms_year_index_plot {
       		'name' => 'sensitivityLocAttrId',
       		'caption' => 'Location attribute used to filter out sensitive sites',
       		'description' => 'A boolean location attribute, set to true if a site is sensitive.',
-      		'type'=>'select',
-      		'table'=>'location_attribute',
-      		'captionField'=>'caption',
-      		'valueField'=>'id',
+      		'type' => 'select',
+      		'table' => 'location_attribute',
+      		'captionField' => 'caption',
+      		'valueField' => 'id',
       		'siteSpecific'=>true,
       		'required' => false,
       		'group' => 'Access Control'
@@ -137,29 +132,29 @@ class iform_ukbms_year_index_plot {
       	),
 
           array(
-              'name'=>'taxon_column',
-              'caption'=>'Display Taxon field',
-              'description'=>'When selecting the taxon to display, choose which of the report columns to use.',
+              'name' => 'taxon_column',
+              'caption' => 'Display Taxon field',
+              'description' => 'When selecting the taxon to display, choose which of the report columns to use.',
               'type' => 'select',
-              'lookupValues' => array('taxon'=>'Common Name',
-                  'preferred_taxon'=>'Preferred Taxon (usually Latin)'),
+              'lookupValues' => array('taxon' => 'Common Name',
+                  'preferred_taxon' => 'Preferred Taxon (usually Latin)'),
               'required' => true,
               'default' => 'taxon',
-              'group'=>'Controls'
+              'group' => 'Controls'
           ),
 
       	array(
-      		'name'=>'index_report_name',
-      		'caption'=>'Index Data Report',
-      		'description'=>'Select the report to provide the data when getting the index data.',
-      		'type'=>'report_helper::report_picker',
-      		'group'=>'Report Settings'
+      		'name' => 'index_report_name',
+      		'caption' => 'Index Data Report',
+      		'description' => 'Select the report to provide the data when getting the index data.',
+      		'type' => 'report_helper::report_picker',
+      		'group' => 'Report Settings'
       	),
       	array(
-      		'name'=>'index_report_count_field',
-      		'caption'=>'Index Report Count Field',
-      		'description'=>'Name of the field in the index report which holds the count value.',
-      		'type'=>'string',
+      		'name' => 'index_report_count_field',
+      		'caption' => 'Index Report Count Field',
+      		'description' => 'Name of the field in the index report which holds the count value.',
+      		'type' => 'string',
       		'group' => 'Report Settings'
       	),
         array(
@@ -170,21 +165,21 @@ class iform_ukbms_year_index_plot {
       		'user ID from the CMS logged in user or {username} as a value replaces with the logged in username.',
       		'type' => 'textarea',
       		'required' => false,
-      		'group'=>'Report Settings'
+      		'group' => 'Report Settings'
       	),
 
       	array(
-      		'name'=>'count_report_name',
-      		'caption'=>'Count Data Report',
-      		'description'=>'Select the report to provide the data when getting the count data.',
-      		'type'=>'report_helper::report_picker',
-      		'group'=>'Report Settings'
+      		'name' => 'count_report_name',
+      		'caption' => 'Count Data Report',
+      		'description' => 'Select the report to provide the data when getting the count data.',
+      		'type' => 'report_helper::report_picker',
+      		'group' => 'Report Settings'
       	),
       	array(
-      		'name'=>'count_report_count_field',
-      		'caption'=>'Count Report Count Field',
-      		'description'=>'Name of the field in the count report which holds the count value.',
-      		'type'=>'string',
+      		'name' => 'count_report_count_field',
+      		'caption' => 'Count Report Count Field',
+      		'description' => 'Name of the field in the count report which holds the count value.',
+      		'type' => 'string',
       		'group' => 'Report Settings'
       	),
         array(
@@ -203,15 +198,15 @@ class iform_ukbms_year_index_plot {
       		'user ID from the CMS logged in user or {username} as a value replaces with the logged in username.',
       		'type' => 'textarea',
       		'required' => false,
-      		'group'=>'Report Settings'
+      		'group' => 'Report Settings'
       	),
       	array(
-      		'name'=>'taxonList',
-      		'caption'=>'Taxon List',
-      		'type'=>'select',
-      		'table'=>'taxon_list',
-      		'captionField'=>'title',
-      		'valueField'=>'id',
+      		'name' => 'taxonList',
+      		'caption' => 'Taxon List',
+      		'type' => 'select',
+      		'table' => 'taxon_list',
+      		'captionField' => 'title',
+      		'valueField' => 'id',
       		'siteSpecific'=>true,
       		'required' => false,
       		'group' => 'Report Settings'
@@ -219,7 +214,7 @@ class iform_ukbms_year_index_plot {
       		array(
       		'name' => 'report_group',
       		'caption' => 'Report group',
-      		'description' => 'When using several reports on a single page (e.g. <a href="http://code.google.com/p/indicia/wiki/DrupalDashboardReporting">dashboard reporting</a>) '.
+      		'description' => 'When using several reports on a single page (e.g. <a href="https://github.com/Indicia-Team/client_helperswiki/DrupalDashboardReporting">dashboard reporting</a>) '.
       		'you must ensure that all reports that share a set of input parameters have the same report group as the parameters report.',
       		'type' => 'text_input',
       		'default' => 'report',
@@ -231,17 +226,17 @@ class iform_ukbms_year_index_plot {
       						'The parameters are saved site wide, so if several reports share the same value and the same report group then the parameter '.
       						'settings will be shared across the reports even if they are on different pages of the site. This functionality '.
       						'requires cookies to be enabled on the browser.',
-      						'type'=>'text_input',
+      						'type' => 'text_input',
       						'required'=>false,
       						'default' => '',
-      						'group'=>'Report Settings'
+      						'group' => 'Report Settings'
       				),
 
       	array(
-      		'name'=>'locationTypesFilter',
-      		'caption'=>'Restrict locations to types',
-      		'description'=>'Comma separated list of the location types definitions to be included in the control, of form {Location Type Term}:{Survey ID}:{include Sref in location filter Y N}. If more than one, implies a location type selection control. Restricts the locations in the location filter to the selected location type, and restricts the data retrieved to the defined survey. The CMS User ID attribute must be defined for all location types selected or all location types.',
-      		'type'=>'string',
+      		'name' => 'locationTypesFilter',
+      		'caption' => 'Restrict locations to types',
+      		'description' => 'Comma separated list of the location types definitions to be included in the control, of form {Location Type Term}:{Survey ID}:{include Sref in location filter Y N}. If more than one, implies a location type selection control. Restricts the locations in the location filter to the selected location type, and restricts the data retrieved to the defined survey. The CMS User ID attribute must be defined for all location types selected or all location types.',
+      		'type' => 'string',
       		'group' => 'Controls'
       	),
 
@@ -251,7 +246,7 @@ class iform_ukbms_year_index_plot {
           'description' => 'Width of the output chart in pixels: if not set then it will automatically to fill the space.',
           'type' => 'text_input',
           'required' => false,
-          'group'=>'Chart Options'
+          'group' => 'Chart Options'
         ),
         array(
           'name' => 'height',
@@ -260,7 +255,7 @@ class iform_ukbms_year_index_plot {
           'type' => 'text_input',
           'required' => true,
           'default' => 500,
-          'group'=>'Chart Options'
+          'group' => 'Chart Options'
         ),
         array(
           'name' => 'renderer_options',
@@ -292,7 +287,7 @@ class iform_ukbms_year_index_plot {
   }
 }',
           'required' => false,
-          'group'=>'Chart Options'
+          'group' => 'Chart Options'
         ),
         array(
           'name' => 'axes_options',
@@ -303,8 +298,8 @@ class iform_ukbms_year_index_plot {
               'For example, <em>{"yaxis":{"min":0,"max":100}}</em>.',
           'type' => 'jsonwidget',
           'required' => false,
-          'group'=>'Chart Options',
-          'schema'=>'{
+          'group' => 'Chart Options',
+          'schema' => '{
   "type":"map",
   "title":"Axis options",
   "mapping":{
@@ -398,8 +393,8 @@ class iform_ukbms_year_index_plot {
       				'(north east) corner. Note some legend options are set by this form, so are not available in this list.',
       		'type' => 'jsonwidget',
             'required' => false,
-            'group'=>'Chart Options',
-      		'schema'=>'{
+            'group' => 'Chart Options',
+      		'schema' => '{
   "type":"map",
   "title":"Legend Options",
   "mapping":{
@@ -434,9 +429,9 @@ class iform_ukbms_year_index_plot {
   private static function _set_up_survey_mapping($args, $readAuth, &$options)
   {
     $types = explode(',',$args['locationTypesFilter']);
-    $types1=array();
-    $types2=array();
-    $options['surveyMapping']=array();
+    $types1=[];
+    $types2=[];
+    $options['surveyMapping']=[];
     foreach($types as $type){
       $parts = explode(':',$type);
       $types1[] = $parts[0];
@@ -479,14 +474,14 @@ class iform_ukbms_year_index_plot {
             'dataSource' => 'library/locations/locations_list_exclude_sensitive');
 	// could use locattrs to fetch sensitive
     $attrArgs = array(
-    		'valuetable'=>'location_attribute_value',
-    		'attrtable'=>'location_attribute',
-    		'key'=>'location_id',
-    		'fieldprefix'=>'locAttr',
+    		'valuetable' => 'location_attribute_value',
+    		'attrtable' => 'location_attribute',
+    		'key' => 'location_id',
+    		'fieldprefix' => 'locAttr',
     		'extraParams'=>$readAuth);
 
     // loop through all entries in the locationTypesFilter, and build an array of locations.
-    $locationTypeLookUpValues = array();
+    $locationTypeLookUpValues = [];
     $default = false;
     if (isset($_COOKIE['providedParams']) && !empty($args['remember_params_report_group'])) {
     	$cookieData = json_decode($_COOKIE['providedParams'], true);
@@ -513,13 +508,13 @@ class iform_ukbms_year_index_plot {
       	$locationListArgs['extraParams']['idlist'] = '';
   	    $locationList = report_helper::get_report_data($locationListArgs);
       } else {
-      	$locationIDList=array();
+      	$locationIDList=[];
       	// first get locations allocated to me
       	$attrListArgs=array(// 'nocache'=>true,
-      			'extraParams'=>array_merge(array('view'=>'list', 'website_id'=>$args['website_id'],
+      			'extraParams'=>array_merge(array('view' => 'list', 'website_id'=>$args['website_id'],
       					'location_attribute_id'=>$cmsAttr, 'raw_value'=>$userUID),
       					$readAuth),
-      			'table'=>'location_attribute_value');
+      			'table' => 'location_attribute_value');
       	$attrList = data_entry_helper::get_population_data($attrListArgs);
       	if (isset($attrList['error'])) return $attrList['error'];
       	if(count($attrList)>0) {
@@ -541,7 +536,7 @@ class iform_ukbms_year_index_plot {
                     ),
                     $readAuth
                     ),
-                'table'=>'location_attribute_value'
+                'table' => 'location_attribute_value'
             );
             $attrList = data_entry_helper::get_population_data($attrListArgs);
             if (isset($attrList['error'])) return $attrList['error'];
@@ -562,12 +557,12 @@ class iform_ukbms_year_index_plot {
 
         if($locationListArgs['extraParams']['idlist'] != '') {
   	    	$locationList = report_helper::get_report_data($locationListArgs);
-      	} else $locationList = array();
+      	} else $locationList = [];
       }
       if (isset($locationList['error'])) return $locationList['error'];
       // next get select of locations.
-      $sort = array();
-      $locs = array();
+      $sort = [];
+      $locs = [];
       foreach($locationList as $location) {
       	$sort[$location['id']]=$location['name']; // locations_list report returns location_id, not id
       	$locs[$location['id']]=$location;
@@ -647,7 +642,7 @@ class iform_ukbms_year_index_plot {
 
   private static function _get_sorted_termlist_terms($auth, $key, $filter){
     $terms = helper_base::get_termlist_terms($auth, $key, $filter);
-    $retVal = array();
+    $retVal = [];
     foreach($filter as $f) { // return in order provided in filter.
       foreach($terms as $term) {
         if($f == $term['term']) $retVal[] = $term;
@@ -733,10 +728,10 @@ class iform_ukbms_year_index_plot {
       'selectPrompt' => lang::get('Select at least one species in the toolbar above in order to display the graph here.'),
       'bodyWarning' => lang::get('Please fetch the data for a different site in order to display a graph.'),
       'class' => 'ui-widget ui-widget-content report-grid',
-      'extraParams' => array(),
+      'extraParams' => [],
       'countReportExtraParams' => '',
       'indexReportExtraParams' => '',
-      'seriesData' => array(),
+      'seriesData' => [],
       'id' => 'uyip-chart-'.$nid,
       'locationTypeSelectID' => 'uyip-location-type-select-'.$nid,
       'locationSelectIDPrefix' => 'uyip-location-select-'.$nid,
@@ -784,20 +779,20 @@ class iform_ukbms_year_index_plot {
 
     data_entry_helper::add_resource('jqplot_trendline');
 
-    $opts = array();
+    $opts = [];
     $rendererOptions = trim($args['renderer_options']);
     if (!empty($rendererOptions))
       $rendererOptions = json_decode($rendererOptions, true);
-    else $rendererOptions = array();
+    else $rendererOptions = [];
     $opts['seriesDefaults'] = array("renderer"=>$renderer, "rendererOptions" => $rendererOptions);
     $legendOptions = trim($args['legend_options']);
     if (!empty($legendOptions))
     	$opts['legend'] = json_decode($legendOptions, true);
     else
-    	$opts['legend'] = array("show"=>true, 'placement'=>'outsideGrid');
-    $opts['series'] = array();
+    	$opts['legend'] = array("show"=>true, 'placement' => 'outsideGrid');
+    $opts['series'] = [];
 //    $opts['title'] = array("text"=>"Title");
-    $optsToCopyThrough = array('legend'=>'legendOptions', 'series'=>'seriesOptions', 'seriesColors'=>'seriesColors');
+    $optsToCopyThrough = array('legend' => 'legendOptions', 'series' => 'seriesOptions', 'seriesColors' => 'seriesColors');
     foreach ($optsToCopyThrough as $key=>$settings) {
     	if (!empty($options[$settings]))
     		$opts[$key] = $options[$settings];
@@ -808,10 +803,10 @@ class iform_ukbms_year_index_plot {
     $axesOptions = trim($args['axes_options']);
     if (!empty($axesOptions))
       $axesOptions = json_decode($axesOptions, true);
-    else $axesOptions = array();
+    else $axesOptions = [];
     $axesOptions['xaxis']['renderer'] = '$.jqplot.CategoryAxisRenderer';
 
-    $axesOptions['xaxis']['ticks'] = array();
+    $axesOptions['xaxis']['ticks'] = [];
     $opts['axes'] = $axesOptions;
     $options['opts'] = $opts;
 

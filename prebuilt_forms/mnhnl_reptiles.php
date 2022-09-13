@@ -13,19 +13,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package	Client
- * @subpackage PrebuiltForms
- * @author	Indicia Team
- * @license	http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link 	http://code.google.com/p/indicia/
+ * @author Indicia Team
+ * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
+ * @link https://github.com/Indicia-Team/client_helpers
  */
 
 /**
  * Prebuilt Indicia data entry form.
  * NB has Drupal specific code.
- *
- * @package	Client
- * @subpackage PrebuiltForms
  *
  * TBD:
  * Clarify what the Observers field holds.
@@ -36,8 +31,8 @@
  * Drive WFS layer attributes off form parameters
  */
 
-require_once('mnhnl_dynamic_1.php');
-require_once('includes/mnhnl_common.php');
+require_once 'mnhnl_dynamic_1.php';
+require_once 'includes/mnhnl_common.php';
 
 class iform_mnhnl_reptiles extends iform_mnhnl_dynamic_1 {
   /**
@@ -48,7 +43,7 @@ class iform_mnhnl_reptiles extends iform_mnhnl_dynamic_1 {
     return array(
       'title'=>self::get_title(),
       'category' => 'MNHNL forms',
-      'description'=>'Luxembourg Reptile Biomonitoring form. Inherits from Dynamic 1.'
+      'description' => 'Luxembourg Reptile Biomonitoring form. Inherits from Dynamic 1.'
     );
   }
   /**
@@ -60,32 +55,32 @@ class iform_mnhnl_reptiles extends iform_mnhnl_dynamic_1 {
   }
 
   public static function get_parameters() {
-    $retVal = array();
+    $retVal = [];
     $parentVal = array_merge(
       parent::get_parameters(),
       iform_mnhnl_getParameters(),
       array(
         array(
-          'name'=>'attributeValidation',
-          'caption'=>'Attribute Validation Rules',
-          'description'=>'Client Validation rules to be enforced on attributes: allows more options than allowed by straight class led validation.',
-          'type'=>'textarea',
+          'name' => 'attributeValidation',
+          'caption' => 'Attribute Validation Rules',
+          'description' => 'Client Validation rules to be enforced on attributes: allows more options than allowed by straight class led validation.',
+          'type' => 'textarea',
           'required' => false,
           'group' => 'User Interface'
         ),
         array(
-          'name'=>'targetSpeciesAttr',
-          'caption'=>'Target Species Attribute',
-          'description'=>'Name of lookup type Sample Attribute used to hold the target species. This is used in the control and the reporting.',
-          'type'=>'text_input',
+          'name' => 'targetSpeciesAttr',
+          'caption' => 'Target Species Attribute',
+          'description' => 'Name of lookup type Sample Attribute used to hold the target species. This is used in the control and the reporting.',
+          'type' => 'text_input',
           'default' => 'ReptileTargetSpecies',
           'group' => 'User Interface'
         ),
         array(
-          'name'=>'targetSpeciesAttrList',
-          'caption'=>'Target Species Attribute List',
-          'description'=>'Comma separated list of sample attribute IDs used in the target species grid. This is used in the control and the reporting.',
-          'type'=>'text_input',
+          'name' => 'targetSpeciesAttrList',
+          'caption' => 'Target Species Attribute List',
+          'description' => 'Comma separated list of sample attribute IDs used in the target species grid. This is used in the control and the reporting.',
+          'type' => 'text_input',
           'group' => 'User Interface'
         ),
         array(
@@ -109,7 +104,7 @@ class iform_mnhnl_reptiles extends iform_mnhnl_dynamic_1 {
           'name' => 'sites_download_report',
           'caption' => 'Sites download report',
           'description' => 'Name of the sites download report.',
-          'type'=>'string',
+          'type' => 'string',
           'group' => 'Reporting',
           'required' => false
         ),
@@ -117,7 +112,7 @@ class iform_mnhnl_reptiles extends iform_mnhnl_dynamic_1 {
           'name' => 'conditions_download_report',
           'caption' => 'Conditions download report',
           'description' => 'Name of the conditions download report.',
-          'type'=>'string',
+          'type' => 'string',
           'group' => 'Reporting',
           'required' => false
         ),
@@ -125,7 +120,7 @@ class iform_mnhnl_reptiles extends iform_mnhnl_dynamic_1 {
           'name' => 'species_download_report',
           'caption' => 'Species download report',
           'description' => 'Name of the species download report.',
-          'type'=>'string',
+          'type' => 'string',
           'group' => 'Reporting',
           'default' => 'reports_for_prebuilt_forms/MNHNL/mnhnl_reptile_download_report'
         )
@@ -526,7 +521,7 @@ jQuery('[name$=occAttr\\:".$attrOrder[count($attrOrder)-1]."],[name*=occAttr\\:"
   });";
     }
     if (!empty($args['attributeValidation'])) {
-      $rules = array();
+      $rules = [];
       $argRules = explode(';', $args['attributeValidation']);
       foreach($argRules as $rule){
         $rules[] = explode(',', $rule);
@@ -586,7 +581,7 @@ jQuery('[name=".str_replace(':','\\:',$rule[0])."],[name^=".str_replace(':','\\:
    */
   protected static function get_control_locationcomment($auth, $args, $tabalias, $options) {
     return data_entry_helper::textarea(array_merge(array(
-      'fieldname'=>'location:comment',
+      'fieldname' => 'location:comment',
       'label'=>lang::get('Location Comment')
     ), $options));
   }
@@ -609,18 +604,18 @@ jQuery('[name=".str_replace(':','\\:',$rule[0])."],[name^=".str_replace(':','\\:
     // 2) a default set of attributes to be loaded: visit, Unsuitablity
     // 3) Overrides for specific target species: Common wall disabled second survey
     $termlist = $targetSpeciesAttr["termlist_id"];
-    $extraParams = $auth['read'] + array('termlist_id' => $termlist, 'view'=>'detail');
+    $extraParams = $auth['read'] + array('termlist_id' => $termlist, 'view' => 'detail');
     $targetSpecies = data_entry_helper::get_population_data(array('table' => 'termlists_term', 'extraParams' => $extraParams));
     $smpAttributes = data_entry_helper::getAttributes(array(
-       'attrtable'=>'sample_attribute'
-       ,'key'=>'sample_id'
-       ,'fieldprefix'=>'{MyPrefix}:smpAttr'
+       'attrtable' => 'sample_attribute'
+       ,'key' => 'sample_id'
+       ,'fieldprefix' => '{MyPrefix}:smpAttr'
        ,'extraParams'=>$auth['read']
        ,'survey_id'=>$args['survey_id']
     ), true);
     $retval = '<br /><table class="target-species-grid"><tr><th colspan=2>'.lang::get('Target Species').'</th>';
     $attrList = explode(',', $args['targetSpeciesAttrList']);
-    $attrIDs = array();
+    $attrIDs = [];
     foreach($attrList as $attr){
       $cell = "";
       // $retval .= '<th></th>'; // blank headings: will put captions in table itself.
@@ -644,21 +639,21 @@ jQuery('[name=".str_replace(':','\\:',$rule[0])."],[name^=".str_replace(':','\\:
     if(isset($options['useCaptionsInHeader']))
       foreach($smpAttributes as $id=>$sattr)
         unset($smpAttributes[$id]['caption']);
-    $subSamples = array();
-    $subSamplesAttrs = array();
+    $subSamples = [];
+    $subSamplesAttrs = [];
     if(isset(data_entry_helper::$entity_to_load['sample:id'])){
       $smpOptions = array(
-        'table'=>'sample',
+        'table' => 'sample',
         'nocache'=>true,
-        'extraParams'=> $auth['read']+ array('view'=>'detail', 'parent_id' => data_entry_helper::$entity_to_load['sample:id']));
+        'extraParams'=> $auth['read']+ array('view' => 'detail', 'parent_id' => data_entry_helper::$entity_to_load['sample:id']));
       $subSamples = data_entry_helper::get_population_data($smpOptions);
       foreach($subSamples as $sample) {
         $subSamplesAttrs[$sample['id']] = data_entry_helper::getAttributes(array(
-             'attrtable'=>'sample_attribute'
-            ,'valuetable'=>'sample_attribute_value'
+             'attrtable' => 'sample_attribute'
+            ,'valuetable' => 'sample_attribute_value'
             ,'id'=>$sample['id']
-            ,'key'=>'sample_id'
-            ,'fieldprefix'=>'{MyPrefix}:smpAttr'
+            ,'key' => 'sample_id'
+            ,'fieldprefix' => '{MyPrefix}:smpAttr'
             ,'extraParams'=>$auth['read']
             ,'survey_id'=>$args['survey_id']), true);
       }
@@ -668,10 +663,10 @@ jQuery('[name=".str_replace(':','\\:',$rule[0])."],[name^=".str_replace(':','\\:
       $smpID=false;
       $fieldname = '{MyPrefix}:presence:'.$targetSpeciesAttr["attributeId"];
       $present='';
-      $attrOpts = array('lookUpKey'=>'meaning_id',
+      $attrOpts = array('lookUpKey' => 'meaning_id',
                         'extraParams' => $auth['read'],
                         'language' => iform_lang_iso_639_2($args['language']),
-                        'disabled'=>'disabled');
+                        'disabled' => 'disabled');
       foreach($subSamples as $subSample){
         foreach($subSamplesAttrs[$subSample['id']] as $id=>$attr) {
           if(isset($options['useCaptionsInHeader']))
@@ -773,12 +768,12 @@ hook_species_checklist_pre_delete_row=function(e) {
     $options = data_entry_helper::check_arguments(func_get_args(), array('listId', 'occAttrs', 'readAuth', 'extraParams', 'lookupListId'));
     $options = data_entry_helper::get_species_checklist_options($options);
     data_entry_helper::add_resource('autocomplete');
-    $occAttrControls = array();
-    $occAttrs = array();
+    $occAttrControls = [];
+    $occAttrs = [];
     // Load any existing sample's occurrence data into $entity_to_load
-    $subSamples = array();
+    $subSamples = [];
     if (isset(data_entry_helper::$entity_to_load['sample:id']))
-      data_entry_helper::preload_species_checklist_occurrences(data_entry_helper::$entity_to_load['sample:id'], $options['readAuth'], false, array(), $subSamples, false);
+      data_entry_helper::preload_species_checklist_occurrences(data_entry_helper::$entity_to_load['sample:id'], $options['readAuth'], false, [], $subSamples, false);
     // load the full list of species for the grid, including the main checklist plus any additional species in the reloaded occurrences.
     $options['extraParams']['view'] = 'detail';
     $occList = self::get_species_checklist_occ_list($options);
@@ -786,9 +781,9 @@ hook_species_checklist_pre_delete_row=function(e) {
     if (! array_key_exists('error', $occList)) {
       $attributes = data_entry_helper::getAttributes(array(
           'id' => null
-           ,'valuetable'=>'occurrence_attribute_value'
-           ,'attrtable'=>'occurrence_attribute'
-           ,'key'=>'occurrence_id'
+           ,'valuetable' => 'occurrence_attribute_value'
+           ,'attrtable' => 'occurrence_attribute'
+           ,'key' => 'occurrence_id'
            ,'fieldprefix'=>"{fieldname}"
            ,'extraParams'=>$options['readAuth']
            ,'survey_id'=>array_key_exists('survey_id', $options) ? $options['survey_id'] : null
@@ -801,7 +796,7 @@ hook_species_checklist_pre_delete_row=function(e) {
       }
       $grid .= '<table class="ui-widget ui-widget-content mnhnl-species-grid '.$options['class'].'" id="'.$options['id'].'">';
       $grid .= self::get_species_checklist_header($options, $occAttrs);
-      $rows = array();
+      $rows = [];
       $rowIdx = 0;
       foreach ($occList as $occ) {
         $ttlid = $occ['taxon']['id'];
@@ -992,17 +987,17 @@ bindSpeciesAutocomplete(\"taxonLookupControl\",\"".data_entry_helper::$base_url.
     if (isset($options['listId']) && !empty($options['listId'])) {
       $taxalist = data_entry_helper::get_population_data($options);
     } else
-      $taxalist = array();
+      $taxalist = [];
     // copy the options array so we can modify it
-    $extraTaxonOptions = array_merge(array(), $options);
+    $extraTaxonOptions = array_merge([], $options);
     // We don't want to filter the taxa to be added, because if they are in the sample, then they must be included whatever.
     unset($extraTaxonOptions['extraParams']['taxon_list_id']);
     unset($extraTaxonOptions['extraParams']['preferred']);
     unset($extraTaxonOptions['extraParams']['language_iso']);
      // append the taxa to the list to load into the grid
     $fullTaxalist = data_entry_helper::get_population_data($extraTaxonOptions);
-    $taxaLoaded = array();
-    $occList = array();
+    $taxaLoaded = [];
+    $occList = [];
     $maxgensequence = 0;
     foreach(data_entry_helper::$entity_to_load as $key => $value) {
       $parts = explode(':', $key,4);
@@ -1068,7 +1063,7 @@ bindSpeciesAutocomplete(\"taxonLookupControl\",\"".data_entry_helper::$base_url.
       foreach($values as $key => $value){
         $parts = explode(':', $key, 5);
         if ($parts[0] == 'targ' && $parts[3] == 'presence'){
-          $smp = array('fkId' => 'parent_id', 'model' => array('id' => 'sample', 'fields' => array()));
+          $smp = array('fkId' => 'parent_id', 'model' => array('id' => 'sample', 'fields' => []));
           $smp['model']['fields']['survey_id'] = array('value' => $values['survey_id']);
           $smp['model']['fields']['website_id'] = array('value' => $values['website_id']);
           $smp['model']['fields']['date'] = array('value' => $values['sample:date']);
@@ -1133,8 +1128,8 @@ bindSpeciesAutocomplete(\"taxonLookupControl\",\"".data_entry_helper::$base_url.
     // sc:<taxa_taxon_list_id>:[<occurrence_id>]:occurrence:comment
     // sc:<taxa_taxon_list_id>:[<occurrence_id>]:present
     // not doing occurrence images at this point - TBD
-    $records = array();
-    $subModels = array();
+    $records = [];
+    $subModels = [];
     foreach ($arr as $key=>$value){
       if (substr($key, 0, 3)=='sc:'){
         // Don't explode the last element for occurrence attributes
@@ -1177,9 +1172,9 @@ bindSpeciesAutocomplete(\"taxonLookupControl\",\"".data_entry_helper::$base_url.
 
   protected static function getReportActions() {
     return array(array('display' => '', 'actions' =>
-            array(array('caption' => lang::get('Edit'), 'url'=>'{currentUrl}', 'urlParams'=>array('sample_id'=>'{sample_id}')))),
+            array(array('caption' => lang::get('Edit'), 'url' => '{currentUrl}', 'urlParams'=>array('sample_id' => '{sample_id}')))),
         array('display' => '', 'actions' =>
-            array(array('caption' => lang::get('Delete'), 'javascript'=>'deleteSurvey({sample_id})'))));
+            array(array('caption' => lang::get('Delete'), 'javascript' => 'deleteSurvey({sample_id})'))));
   }
 
   /**

@@ -16,7 +16,7 @@
  *
  * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link http://code.google.com/p/indicia/
+ * @link https://github.com/Indicia-Team/client_helpers
  */
 
  if (file_exists(dirname(__FILE__) . '/helper_config.php')) {
@@ -240,7 +240,6 @@ $('input#{escaped_input_id}').result(function(event, data) {
 /**
  * Base class for the report and data entry helpers. Provides several generally useful methods and also includes
  * resource management.
- * @package Client
  */
 class helper_base {
 
@@ -1672,7 +1671,7 @@ HTML;
     } elseif ($info['datatype']=='lookup' && isset($info['population_call'])) {
       // population call is colon separated, of the form direct|report:table|view|report:idField:captionField:params(key=value,key=value,...)
       $popOpts = explode(':', $info['population_call']);
-      $extras = array();
+      $extras = [];
       // If there are any extra parameters on the report lookup call, apply
       // them.
       if (count($popOpts) >= 5) {
@@ -1806,8 +1805,8 @@ HTML;
     // convert the query parameters into an array
     $gets = ($split!==FALSE && strlen($_SERVER['REQUEST_URI']) > $split+1) ?
         explode('&', substr($_SERVER['REQUEST_URI'], $split+1)) :
-        array();
-    $getsAssoc = array();
+        [];
+    $getsAssoc = [];
     foreach ($gets as $get) {
       $tokens = explode('=', $get);
       // ensure a key without value in the URL gets an empty value
@@ -1829,7 +1828,7 @@ HTML;
    * @return string The query string.
    */
   public static function array_to_query_string($array, $encodeValues=FALSE) {
-    $params = array();
+    $params = [];
     if(is_array($array)) {
       arsort($array);
       foreach ($array as $a => $b)
@@ -1859,8 +1858,8 @@ HTML;
   public static function mergeParamsIntoTemplate($params, $template, $useTemplateAsIs=FALSE, $allowHtml=FALSE, $allowEscapeQuotes=FALSE) {
     global $indicia_templates;
     // Build an array of all the possible tags we could replace in the template.
-    $replaceTags=array();
-    $replaceValues=array();
+    $replaceTags=[];
+    $replaceValues=[];
     foreach ($params as $param=>$value) {
       if (!is_array($value) && !is_object($value)) {
         array_push($replaceTags, '{'.$param.'}');
@@ -2154,7 +2153,7 @@ HTML;
   * @param boolean $closure Set to true to close the JS with a function to ensure $ will refer to jQuery.
   * @return string JavaScript to insert into the page for all the controls added to the page so far.
   *
-  * @link http://code.google.com/p/indicia/wiki/TutorialBuildingBasicPage#Build_a_data_entry_page
+  * @link https://github.com/Indicia-Team/client_helperswiki/TutorialBuildingBasicPage#Build_a_data_entry_page
   */
   public static function dump_javascript($closure=FALSE) {
     // Add the default stylesheet to the end of the list, so it has highest CSS priority
@@ -2487,7 +2486,7 @@ if (typeof validator!=='undefined') {
     }
     // Add a hint to the control if there is an error and this option is set, or a hint option
     if (($error && in_array('hint', $options['validation_mode'])) || isset($options['hint'])) {
-      $hint = ($error && in_array('hint', $options['validation_mode'])) ? array($error) : array();
+      $hint = ($error && in_array('hint', $options['validation_mode'])) ? array($error) : [];
       if(isset($options['hint'])) $hint[] = $options['hint'];
       $options['title'] = 'title="'.implode(' : ',$hint).'"';
     } else {
@@ -2684,7 +2683,7 @@ if (typeof validator!=='undefined') {
     if (count($pairs[1]) == count($pairs[2]) && count($pairs[1]) != 0) {
       return array_combine($pairs[1], $pairs[2]);
     } else {
-      return array();
+      return [];
     }
   }
 
@@ -2836,7 +2835,7 @@ if (typeof validator!=='undefined') {
    */
   protected static function build_validation_class($options) {
     global $custom_terms;
-    $rules = (array_key_exists('validation', $options) ? $options['validation'] : array());
+    $rules = (array_key_exists('validation', $options) ? $options['validation'] : []);
     if (!is_array($rules)) $rules = array($rules);
     if (array_key_exists($options['fieldname'], self::$default_validation_rules)) {
       $rules = array_merge($rules, self::$default_validation_rules[$options['fieldname']]);
@@ -2877,8 +2876,8 @@ if (typeof validator!=='undefined') {
    */
   protected static function apply_replacements_to_template($template, $options) {
     // Build an array of all the possible tags we could replace in the template.
-    $replaceTags=array();
-    $replaceValues=array();
+    $replaceTags=[];
+    $replaceValues=[];
     foreach (array_keys($options) as $option) {
       $value = is_array($options[$option]) || is_object($options[$option]) ? '' : $options[$option];
       array_push($replaceTags, '{'.$option.'}');
@@ -2898,7 +2897,7 @@ if (typeof validator!=='undefined') {
   * @todo Implement a more complete list of validation rules.
   */
   protected static function convertToJqueryValMetadata($rules, $options) {
-    $converted = array();
+    $converted = [];
     foreach ($rules as $rule) {
       // Detect the rules that can simply be passed through
       $rule = trim($rule);
@@ -3078,7 +3077,7 @@ if (typeof validator!=='undefined') {
       $params = array_merge($options['extraParams']);
       // process them to turn any array parameters into a query parameter for the service call
       $filterToEncode = array('where' => [[]]);
-      $otherParams = array();
+      $otherParams = [];
       // For data services calls to entities (i.e. not taxa_search), array
       // parameters need to be modified into a query parameter.
       if ($useQueryParam) {
@@ -3143,7 +3142,7 @@ if (typeof validator!=='undefined') {
    */
   public static function cache_get($cacheOpts, $cacheTimeout = 0, $random = TRUE) {
     if (!$cacheTimeout)
-      $cacheTimeout = self::getCacheTimeOut(array());
+      $cacheTimeout = self::getCacheTimeOut([]);
     $cacheFolder = self::$cache_folder ? self::$cache_folder : self::relative_client_helper_path() . 'cache/';
     $cacheFile = self::getCacheFileName($cacheFolder, $cacheOpts, $cacheTimeout);
     $r = self::getCachedResponse($cacheFile, $cacheTimeout, $cacheOpts, $random);
@@ -3159,7 +3158,7 @@ if (typeof validator!=='undefined') {
    */
   public static function cache_set($cacheOpts, $toCache, $cacheTimeout=0) {
     if (!$cacheTimeout)
-      $cacheTimeout = self::getCacheTimeOut(array());
+      $cacheTimeout = self::getCacheTimeOut([]);
     $cacheFolder = self::$cache_folder ? self::$cache_folder : self::relative_client_helper_path() . 'cache/';
     $cacheFile = self::getCacheFileName($cacheFolder, $cacheOpts, $cacheTimeout);
     self::cacheResponse($cacheFile, array('output' => $toCache), $cacheOpts);
@@ -3421,7 +3420,7 @@ if (typeof validator!=='undefined') {
       $randomSurvival = $random && (rand(1, self::$cache_chance_refresh_file) !== 1);
     }
     if ($wantToCache && $haveFile && ($fresh || $randomSurvival)) {
-      $response = array();
+      $response = [];
       $handle = fopen($file, 'rb');
       if (!$handle) {
         return FALSE;
@@ -3502,7 +3501,7 @@ if (typeof validator!=='undefined') {
     // Don't do this every time.
     if (rand(1, self::$cache_chance_purge) === 1) {
       // First, get an array of files sorted by date
-      $files = array();
+      $files = [];
       $dir =  opendir($folder);
       // Skip certain file names
       $exclude = array('.', '..', '.htaccess', 'web.config', '.gitignore');
@@ -3603,7 +3602,7 @@ if (typeof validator!=='undefined') {
  */
 if(!function_exists('get_called_class')) {
   function get_called_class() {
-    $matches=array();
+    $matches=[];
     $bt = debug_backtrace();
     $l = 0;
     do {

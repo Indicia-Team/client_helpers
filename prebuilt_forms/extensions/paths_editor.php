@@ -15,7 +15,7 @@
  *
  * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link http://code.google.com/p/indicia/
+ * @link https://github.com/Indicia-Team/client_helpers
  */
 
 /**
@@ -74,7 +74,7 @@ class extension_paths_editor {
       ),
       'caching' => FALSE
     ));
-    $childGeoms = array();
+    $childGeoms = [];
     $r = '';
     foreach ($samples as $sample) {
       if ($sample['id'] === $parent_id) {

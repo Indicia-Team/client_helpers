@@ -14,11 +14,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package Client
- * @subpackage PrebuiltForms
  * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link http://code.google.com/p/indicia/
+ * @link https://github.com/Indicia-Team/client_helpers
  */
 
 require_once 'includes/report.php';
@@ -26,9 +24,6 @@ require_once 'includes/map.php';
 
 /**
  * A list of species, with simple distribution mapping capability.
- *
- * @package Client
- * @subpackage PrebuiltForms
  */
 class iform_quick_species_maps {
   /**
@@ -147,7 +142,7 @@ class iform_quick_species_maps {
     iform_report_apply_explore_user_own_preferences($reportOptions);
     $reportOptions = array_merge(array(
       'rowId' => 'external_key',
-      'columns' => array(),
+      'columns' => [],
       'callback' => 'grid_load',
       'rememberParamsReportGroup' => 'explore',
       'paramsFormButtonCaption' => lang::get('Filter'),
@@ -183,7 +178,7 @@ class iform_quick_species_maps {
     $r .= '<div id="layerbox">';
     $r .= '<input id="checkShowInstructions" type="checkbox" checked>' . lang::get('Show instructions');
     $r .= '<input id="checkShowLegend" type="checkbox" checked>' . lang::get('Show legend');
-    $r .= '<p id="instruct">' . lang::get('Click on the + buttons in the grid to add species layers to the map. You can add up to {1} layers at a time. ', $max_layers); 
+    $r .= '<p id="instruct">' . lang::get('Click on the + buttons in the grid to add species layers to the map. You can add up to {1} layers at a time. ', $max_layers);
     $r .= 'Use the - buttons to permanently remove layers, or untick the box in the legend to temporarily hide them.</p>';
     $mapOptions = iform_map_get_map_options($args, $readAuth);
     $mapOptions['clickForSpatialRef'] = FALSE;

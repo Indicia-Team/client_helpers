@@ -13,18 +13,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package	Client
- * @author	Indicia Team
- * @license	http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link 	http://code.google.com/p/indicia/
+ * @author Indicia Team
+ * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
+ * @link https://github.com/Indicia-Team/client_helpers
  */
 
 global $custom_terms;
 
 /**
  * Language terms for the mnhnl_bird_transect_walks form.
- *
- * @package	Client
  */
 $custom_terms = array(
   'Instructions for clicking on map' => 'Please click on the map to set the location of the sighting. '.
@@ -35,5 +32,5 @@ $custom_terms = array(
   'Instructions for any other info' => 'Also use this box to tell us about any unidentified or rare species seen.',
   'happy for contact' => 'In some cases we may wish to contact you to confirm your sighting. Please tick this box if you are happy for this to happen',
   'Abundance count' => 'Number seen'
-  
+
 );

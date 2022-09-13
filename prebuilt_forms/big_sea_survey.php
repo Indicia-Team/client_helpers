@@ -18,7 +18,7 @@
  * @link https://github.com/indicia-team/client_helpers/
  */
 
-require_once('dynamic_sample_occurrence.php');
+require_once 'dynamic_sample_occurrence.php';
 
 // TO DO
 // ZERO RECORDS
@@ -28,9 +28,6 @@ require_once('dynamic_sample_occurrence.php');
 
 /**
  * An input form to support the Big Sea Survey methodology.
- *
- * @package Client
- * @subpackage PrebuiltForms
  */
 class iform_big_sea_survey extends iform_dynamic_sample_occurrence {
 
@@ -47,7 +44,7 @@ class iform_big_sea_survey extends iform_dynamic_sample_occurrence {
    */
   public static function get_big_sea_survey_definition() {
     return array(
-      'title'=>'Big Sea Survey',
+      'title' => 'Big Sea Survey',
       'category' => 'Forms for specific surveying methods',
       'description' => 'A dynamic form which allows a front page to define the number of transects to record across '.
           'a set of zones and multiple copies of the second page allow data to be input per transect.'
@@ -63,68 +60,68 @@ class iform_big_sea_survey extends iform_dynamic_sample_occurrence {
       parent::get_parameters(),
       array(
         array(
-          'name'=>'transect_count_attr_ids',
-          'caption'=>'Transect count attribute IDs',
-          'description'=>'Comma separated list of sample attribute IDs. Specify each attribute that can contain a count of transects surveyed '.
+          'name' => 'transect_count_attr_ids',
+          'caption' => 'Transect count attribute IDs',
+          'description' => 'Comma separated list of sample attribute IDs. Specify each attribute that can contain a count of transects surveyed '.
               '(e.g. low shore, middle shore, high shore). For each attribute, n transects will be available for data input.',
-          'type'=>'textfield',
+          'type' => 'textfield',
           'required' => true,
           'group' => 'Big Sea setup'
         ), array(
-          'name'=>'transect_captions',
-          'caption'=>'Transect captions',
-          'description'=>'Comma separated list of captions to use for each of the above attributes, in the same order.',
-          'type'=>'textfield',
+          'name' => 'transect_captions',
+          'caption' => 'Transect captions',
+          'description' => 'Comma separated list of captions to use for each of the above attributes, in the same order.',
+          'type' => 'textfield',
           'required' => true,
           'group' => 'Big Sea setup'
         ),
         array(
-          'name'=>'child_sample_zone_attr_id',
-          'caption'=>'Child sample zone attribute ID',
-          'description'=>'A text attribute used to store the zone in the child sample.',
-          'type'=>'select',
-          'table'=>'sample_attribute',
-          'valueField'=>'id',
-          'captionField'=>'caption',
-          'group'=>'Big Sea setup'
+          'name' => 'child_sample_zone_attr_id',
+          'caption' => 'Child sample zone attribute ID',
+          'description' => 'A text attribute used to store the zone in the child sample.',
+          'type' => 'select',
+          'table' => 'sample_attribute',
+          'valueField' => 'id',
+          'captionField' => 'caption',
+          'group' => 'Big Sea setup'
         ), array(
-          'name'=>'child_sample_transect_attr_id',
-          'caption'=>'Child sample transect attribute ID',
-          'description'=>'An integer attribute used to store the transect in the child sample.',
-          'type'=>'select',
-          'table'=>'sample_attribute',
-          'valueField'=>'id',
-          'captionField'=>'caption',
-          'group'=>'Big Sea setup'
+          'name' => 'child_sample_transect_attr_id',
+          'caption' => 'Child sample transect attribute ID',
+          'description' => 'An integer attribute used to store the transect in the child sample.',
+          'type' => 'select',
+          'table' => 'sample_attribute',
+          'valueField' => 'id',
+          'captionField' => 'caption',
+          'group' => 'Big Sea setup'
         ), array(
-          'name'=>'search_species_transect_attr_id',
-          'caption'=>'Parent sample search species attribute ID',
-          'description'=>'An integer multivalut attribute used to store the search species list in the parent attribute.',
-          'type'=>'select',
-          'table'=>'sample_attribute',
-          'valueField'=>'id',
-          'captionField'=>'caption',
-          'group'=>'Big Sea setup'
+          'name' => 'search_species_transect_attr_id',
+          'caption' => 'Parent sample search species attribute ID',
+          'description' => 'An integer multivalut attribute used to store the search species list in the parent attribute.',
+          'type' => 'select',
+          'table' => 'sample_attribute',
+          'valueField' => 'id',
+          'captionField' => 'caption',
+          'group' => 'Big Sea setup'
         ),
         array(
-          'name'=>'front_page_path',
-          'caption'=>'Front page path',
-          'description'=>'Path to the front page input form.',
-          'type'=>'textfield',
+          'name' => 'front_page_path',
+          'caption' => 'Front page path',
+          'description' => 'Path to the front page input form.',
+          'type' => 'textfield',
           'required' => true,
-          'group'=>'Big Sea setup'
+          'group' => 'Big Sea setup'
         ),
         array(
           'name' => 'parent_sample_method_id',
           'caption' => 'Parent Sample Method',
           'type' => 'select',
-          'table'=>'termlists_term',
-          'captionField'=>'term',
-          'valueField'=>'id',
-          'extraParams' => array('termlist_external_key'=>'indicia:sample_methods'),
+          'table' => 'termlists_term',
+          'captionField' => 'term',
+          'valueField' => 'id',
+          'extraParams' => array('termlist_external_key' => 'indicia:sample_methods'),
           'required' => false,
           'helpText' => 'The sample method that will be used for created visit samples.',
-          'group'=>'Big Sea setup'
+          'group' => 'Big Sea setup'
         )
       )
     );
@@ -152,11 +149,11 @@ class iform_big_sea_survey extends iform_dynamic_sample_occurrence {
     $parentargs = array_merge($args);
     $parentargs['sample_method_id']=$args['parent_sample_method_id'];
     $attrs = self::getAttributesForSample($parentargs, $auth, $_GET['id']);
-    self::$parentSampleAttrs = array();
+    self::$parentSampleAttrs = [];
     // convert to keyed array
     foreach ($attrs as $attr)
       self::$parentSampleAttrs[$attr['id']]=$attr;
-    self::$thisSampleAttrs = array();
+    self::$thisSampleAttrs = [];
     $attrs = self::getAttributes($args, $auth);
     // convert to keyed array
     foreach ($attrs as $attr)
@@ -211,7 +208,7 @@ class iform_big_sea_survey extends iform_dynamic_sample_occurrence {
 
     if (!empty($values['next-zone']) && !empty($values['next-transect']))
       return $args['redirect_on_success'] . '?' . data_entry_helper::array_to_query_string(array(
-        'table'=>'sample',
+        'table' => 'sample',
         'id'=>$values['sample:parent_id'],
         'zone'=>$values['next-zone'],
         'transect'=>$values['next-transect']
@@ -229,7 +226,7 @@ class iform_big_sea_survey extends iform_dynamic_sample_occurrence {
     $r .= '<input type="hidden" id="imp-sref-system" name="sample:entered_sref_system" value="'.data_entry_helper::$entity_to_load["sample:entered_sref_system"].'"/>';
     $r .= '<input type="hidden" id="imp-geom" name="sample:geom" value="'.data_entry_helper::$entity_to_load["sample:wkt"].'"/>';
     $r .= '<div class="ui-helper-clearfix">';
-    $ids = array();
+    $ids = [];
     $wantNext = false;
     // loop through the list of attributes which hold a transect count (one per shore zone)
     foreach (self::$transectCountAttrs as $idx => $id) {
@@ -257,7 +254,7 @@ class iform_big_sea_survey extends iform_dynamic_sample_occurrence {
           $r .= "<span class=\"button select-transect ui-state-highlight\" id=\"sel-$attr[id]-$i\">$i</span>";
         else {
           $link=hostsite_get_url($args['redirect_on_success'], array(
-            'table'=>'sample',
+            'table' => 'sample',
             'id'=>$_GET['id'],
             'zone'=>$id,
             'transect'=>$i
@@ -288,7 +285,7 @@ class iform_big_sea_survey extends iform_dynamic_sample_occurrence {
    */
   protected static function get_control_searchspecies($auth, $args, $tabAlias, $options) {
     // build a list of the search species IDs
-    $ttlIds=array();
+    $ttlIds=[];
     foreach (self::$parentSampleAttrs['smpAttr:'.$args['search_species_transect_attr_id']]['default'] as $value) {
       $ttlIds[] = $value['default'];
     }
@@ -308,13 +305,13 @@ class iform_big_sea_survey extends iform_dynamic_sample_occurrence {
    */
   protected static function get_control_latlongs($auth, $args, $tabAlias, $options) {
     $r = data_entry_helper::text_input(array(
-      'label'=>'Transect start',
-      'fieldname'=>'gpsstart',
+      'label' => 'Transect start',
+      'fieldname' => 'gpsstart',
       'helpText' => lang::get('Transect start, GPS coordinate (decimal WGS84 latitude and longitude). Click once on the map to set.')
     ));
     $r .= data_entry_helper::text_input(array(
-      'label'=>'Transect end',
-      'fieldname'=>'gpsend',
+      'label' => 'Transect end',
+      'fieldname' => 'gpsend',
       'helpText' => lang::get('Transect end, GPS coordinate (decimal WGS84 latitude and longitude). Click again on the map to set.')
     ));
     return $r;

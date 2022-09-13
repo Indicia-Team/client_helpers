@@ -13,11 +13,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package    Client
- * @subpackage PrebuiltForms
- * @author    Indicia Team
- * @license    http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link     http://code.google.com/p/indicia/
+ * @author Indicia Team
+ * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
+ * ' => ''
  */
 
 /**
@@ -25,37 +23,35 @@
  * NB has Drupal specific code. Relies on presence of IForm Proxy.
  * NB relies on the individuals and associations optional module being enabled in the warehouse.
  *
- * @package    Client
- * @subpackage PrebuiltForms
- * @link http://code.google.com/p/indicia/wiki/PrebuiltFormWWTColourMarkedRecords
+ * @link https://github.com/Indicia-Team/client_helperswiki/PrebuiltFormWWTColourMarkedRecords
  */
 
-require_once('includes/map.php');
-require_once('includes/language_utils.php');
-require_once('includes/form_generation.php');
+require_once 'includes/map.php';
+require_once 'includes/language_utils.php';
+require_once 'includes/form_generation.php';
 
 class iform_wwt_colour_marked_report {
 
   // A list of the subject observation ids we are loading if editing existing data
-  protected static $subjectObservationIds = array();
+  protected static $subjectObservationIds = [];
 
-  protected static $auth = array();
+  protected static $auth = [];
 
   protected static $mode;
 
   protected static $node;
 
-  protected static $submission = array();
+  protected static $submission = [];
   /**
    * Return the form metadata.
    * @return string The definition of the form.
    */
   public static function get_wwt_colour_marked_report_definition() {
     return array(
-      'title'=>'WWT Colour-marked Wildfowl - dynamically generated data entry form',
+      'title' => 'WWT Colour-marked Wildfowl - dynamically generated data entry form',
       'category' => 'General Purpose Data Entry Forms',
-      'helpLink'=>'http://code.google.com/p/indicia/wiki/PrebuiltFormWWTColourMarkedRecords',
-      'description'=>'A data entry form reporting observations of colour-marked individuals.'
+      'helpLink' => 'https://github.com/Indicia-Team/client_helperswiki/PrebuiltFormWWTColourMarkedRecords',
+      'description' => 'A data entry form reporting observations of colour-marked individuals.'
     );
   }
 
@@ -81,11 +77,11 @@ class iform_wwt_colour_marked_report {
       iform_map_get_georef_parameters(),
       array(
         array(
-          'name'=>'interface',
-          'caption'=>'Interface Style Option',
-          'description'=>'Choose the style of user interface, either dividing the form up onto separate tabs, '.
+          'name' => 'interface',
+          'caption' => 'Interface Style Option',
+          'description' => 'Choose the style of user interface, either dividing the form up onto separate tabs, '.
               'wizard pages or having all controls on a single page.',
-          'type'=>'select',
+          'type' => 'select',
           'options' => array(
             'tabs' => 'Tabs',
             'wizard' => 'Wizard',
@@ -95,36 +91,36 @@ class iform_wwt_colour_marked_report {
           'group' => 'User Interface'
         ),
         array(
-          'name'=>'tabProgress',
-          'caption'=>'Show Progress through Wizard/Tabs',
-          'description'=>'For Wizard or Tabs interfaces, check this option to show a progress summary above the controls.',
-          'type'=>'boolean',
+          'name' => 'tabProgress',
+          'caption' => 'Show Progress through Wizard/Tabs',
+          'description' => 'For Wizard or Tabs interfaces, check this option to show a progress summary above the controls.',
+          'type' => 'boolean',
           'default' => true,
           'required' => false,
           'group' => 'User Interface'
         ),
         array(
-          'name'=>'clientSideValidation',
-          'caption'=>'Client Side Validation',
-          'description'=>'Enable client side validation of controls using JavaScript.',
-          'type'=>'boolean',
+          'name' => 'clientSideValidation',
+          'caption' => 'Client Side Validation',
+          'description' => 'Enable client side validation of controls using JavaScript.',
+          'type' => 'boolean',
           'default' => true,
           'required' => false,
           'group' => 'User Interface'
         ),/*
         array(
-          'name'=>'subjectAccordion',
-          'caption'=>'Use Accordion for Individuals',
-          'description'=>'Put multiple individual subjects in an accordion control to save space.',
-          'type'=>'boolean',
+          'name' => 'subjectAccordion',
+          'caption' => 'Use Accordion for Individuals',
+          'description' => 'Put multiple individual subjects in an accordion control to save space.',
+          'type' => 'boolean',
           'default' => false,
           'required' => false,
           'group' => 'User Interface'
         ),*/
         array(
-          'name'=>'structure',
-          'caption'=>'Form Structure',
-          'description'=>'Define the structure of the form. Each component goes on a new line and is nested inside the previous component where appropriate. The following types of '.
+          'name' => 'structure',
+          'caption' => 'Form Structure',
+          'description' => 'Define the structure of the form. Each component goes on a new line and is nested inside the previous component where appropriate. The following types of '.
             "component can be specified. <br/>".
             "<strong>=tab/page name=</strong> is used to specify the name of a tab or wizard page. (Alpha-numeric characters only)<br/>".
             "<strong>=*=</strong> indicates a placeholder for putting any custom attribute tabs not defined in this form structure. <br/>".
@@ -148,7 +144,7 @@ class iform_wwt_colour_marked_report {
         "used, you can change any of the control options for an individual custom attribute control by putting @control|option=value on the subsequent line(s). ".
         "For example, if a control is for smpAttr:4 then you can update it's label by specifying @smpAttr:4|label=New Label on the line after the [*].<br/>".
             "<strong>?help text?</strong> is used to define help text to add to the tab, e.g. ?Enter the name of the site.?",
-          'type'=>'textarea',
+          'type' => 'textarea',
           'default' => "=Who When and Where=\r\n".
               "?Recorder details for this information.?\r\n".
               "[recorder details]\r\n".
@@ -178,21 +174,21 @@ class iform_wwt_colour_marked_report {
           'group' => 'User Interface'
         ),
         array(
-          'name'=>'attribute_termlist_language_filter',
-          'caption'=>'Attribute Termlist Language filter',
-          'description'=>'Enable filtering of termlists for attributes using the iso language.',
-          'type'=>'boolean',
+          'name' => 'attribute_termlist_language_filter',
+          'caption' => 'Attribute Termlist Language filter',
+          'description' => 'Enable filtering of termlists for attributes using the iso language.',
+          'type' => 'boolean',
           'default' => false,
           'required' => false,
           'group' => 'User Interface'
         ),
         array(
-          'name'=>'no_grid',
-          'caption'=>'Skip initial grid of data',
-          'description'=>'If checked, then when initially loading the form the data entry form is immediately displayed, as opposed to '.
+          'name' => 'no_grid',
+          'caption' => 'Skip initial grid of data',
+          'description' => 'If checked, then when initially loading the form the data entry form is immediately displayed, as opposed to '.
               'the default of displaying a grid of the user\'s data which they can add to. By ticking this box, it is possible to use this form '.
               'for data entry by anonymous users though they cannot then list the data they have entered.',
-          'type'=>'boolean',
+          'type' => 'boolean',
           'default' => false,
           'required' => false,
           'group' => 'User Interface'
@@ -203,54 +199,54 @@ class iform_wwt_colour_marked_report {
           'description' => 'Name of the report to use to populate the grid for selecting existing data from. The report must return a sample_id '.
               'field and subject_observation_id field for linking to the data entry form. As a starting point, try reports_for_prebuilt_forms/simple_subject_observation_identifier_list_1 '.
               'for a list of subject observations.',
-          'type'=>'string',
+          'type' => 'string',
           'group' => 'User Interface',
           'default' => 'reports_for_prebuilt_forms/simple_subject_observation_identifier_list_1'
         ),
         array(
-          'name'=>'grid_num_rows',
-          'caption'=>'Number of rows displayed in grid',
-          'description'=>'Number of rows display on each page of the grid.',
-          'type'=>'int',
+          'name' => 'grid_num_rows',
+          'caption' => 'Number of rows displayed in grid',
+          'description' => 'Number of rows display on each page of the grid.',
+          'type' => 'int',
           'default' => 10,
           'group' => 'User Interface'
         ),
 
         array(
-          'name'=>'save_button_below_all_pages',
-          'caption'=>'Save button below all pages?',
-          'description'=>'Should the save button be present below all the pages (checked), or should it be only on the last page (unchecked)? '.
+          'name' => 'save_button_below_all_pages',
+          'caption' => 'Save button below all pages?',
+          'description' => 'Should the save button be present below all the pages (checked), or should it be only on the last page (unchecked)? '.
               'Only applies to the Tabs interface style.',
-          'type'=>'boolean',
+          'type' => 'boolean',
           'default' => false,
           'required' => false,
           'group' => 'User Interface'
         ),
         array(
-          'fieldname'=>'list_id',
-          'label'=>'Species List ',
-          'helpText'=>'The species list that species can be selected from. This list is pre-populated '.
+          'fieldname' => 'list_id',
+          'label' => 'Species List ',
+          'helpText' => 'The species list that species can be selected from. This list is pre-populated '.
               'into the grid when doing grid based data entry, or provides the list which a species '.
               'can be picked from when doing single subject observation data entry.',
-          'type'=>'select',
-          'table'=>'taxon_list',
-          'valueField'=>'id',
-          'captionField'=>'title',
+          'type' => 'select',
+          'table' => 'taxon_list',
+          'valueField' => 'id',
+          'captionField' => 'title',
           'required'=>false,
-          'group'=>'Species',
+          'group' => 'Species',
           'siteSpecific'=>true
         ),
         array(
-          'name'=>'species_ctrl',
-          'caption'=>'Single Species Selection Control Type',
-          'description'=>'The type of control that will be available to select a single species.',
-          'type'=>'select',
+          'name' => 'species_ctrl',
+          'caption' => 'Single Species Selection Control Type',
+          'description' => 'The type of control that will be available to select a single species.',
+          'type' => 'select',
           'options' => array(
             'autocomplete' => 'Autocomplete',
             'select' => 'Select',
           ),
           'default' => 'select',
-          'group'=>'Species'
+          'group' => 'Species'
         ),
         array(
           'name' => 'species_include_both_names',
@@ -271,23 +267,23 @@ class iform_wwt_colour_marked_report {
           'group' => 'Species'
         ),
         array(
-          'name'=>'taxon_filter_field',
-          'caption'=>'Field used to filter taxa',
-          'description'=>'If you want to allow recording for just part of the selected list(s), then select which field you will '.
+          'name' => 'taxon_filter_field',
+          'caption' => 'Field used to filter taxa',
+          'description' => 'If you want to allow recording for just part of the selected list(s), then select which field you will '.
               'use to specify the filter by.',
-          'type'=>'select',
+          'type' => 'select',
           'options' => array(
             'preferred_name' => 'Preferred name of the taxa',
             'taxon_meaning_id' => 'Taxon Meaning ID',
             'taxon_group' => 'Taxon group title'
           ),
           'required'=>false,
-          'group'=>'Species'
+          'group' => 'Species'
         ),
         array(
-          'name'=>'taxon_filter',
-          'caption'=>'Taxon filter items',
-          'description'=>'When filtering the list of available taxa, taxa will not be available for recording unless they match one of the '.
+          'name' => 'taxon_filter',
+          'caption' => 'Taxon filter items',
+          'description' => 'When filtering the list of available taxa, taxa will not be available for recording unless they match one of the '.
               'values you input in this box. Enter one value per line. E.g. enter a list of taxon group titles if you are filtering by taxon group. '.
               'If you provide a single taxon preferred name or taxon meaning ID in this box, then the form is set up for recording just this single '.
               'species. Therefore there will be no species picker control, and the form will always operate in the single record, non-grid mode. '.
@@ -296,13 +292,13 @@ class iform_wwt_colour_marked_report {
               'to a different tab and remove the =species= tab, especially if there are no other occurrence attributes on the form.',
           'type' => 'textarea',
           'required'=>false,
-          'group'=>'Species'
+          'group' => 'Species'
         ),
         array(
-          'name'=>'species_names_filter',
-          'caption'=>'Species Names Filter',
-          'description'=>'Select the filter to apply to the species names which are available to choose from.',
-          'type'=>'select',
+          'name' => 'species_names_filter',
+          'caption' => 'Species Names Filter',
+          'description' => 'Select the filter to apply to the species names which are available to choose from.',
+          'type' => 'select',
           'options' => array(
             'all' => 'All names are available',
             'language' => 'Only allow selection of species using common names in the user\'s language',
@@ -310,34 +306,34 @@ class iform_wwt_colour_marked_report {
             'excludeSynonyms' => 'Allow common names or preferred latin names'
           ),
           'default' => 'all',
-          'group'=>'Species'
+          'group' => 'Species'
         ),
         array(
-          'name'=>'spatial_systems',
-          'caption'=>'Allowed Spatial Ref Systems',
-          'description'=>'List of allowable spatial reference systems, comma separated. Use the spatial ref system code (e.g. OSGB or the EPSG code number such as 4326). '.
+          'name' => 'spatial_systems',
+          'caption' => 'Allowed Spatial Ref Systems',
+          'description' => 'List of allowable spatial reference systems, comma separated. Use the spatial ref system code (e.g. OSGB or the EPSG code number such as 4326). '.
               'Set to "default" to use the settings defined in the IForm Settings page.',
-          'type'=>'string',
-          'group'=>'Other Map Settings'
+          'type' => 'string',
+          'group' => 'Other Map Settings'
         ),
         array(
-          'name'=>'survey_id',
-          'caption'=>'Survey',
-          'description'=>'The survey that data will be posted into.',
-          'type'=>'select',
-          'table'=>'survey',
-          'captionField'=>'title',
-          'valueField'=>'id',
+          'name' => 'survey_id',
+          'caption' => 'Survey',
+          'description' => 'The survey that data will be posted into.',
+          'type' => 'select',
+          'table' => 'survey',
+          'captionField' => 'title',
+          'valueField' => 'id',
           'siteSpecific'=>true
         ),
         array(
           'name' => 'sample_method_id',
           'caption' => 'Sample Method',
           'type' => 'select',
-          'table'=>'termlists_term',
-          'captionField'=>'term',
-          'valueField'=>'id',
-          'extraParams' => array('termlist_external_key'=>'indicia:sample_methods'),
+          'table' => 'termlists_term',
+          'captionField' => 'term',
+          'valueField' => 'id',
+          'extraParams' => array('termlist_external_key' => 'indicia:sample_methods'),
           'required' => false,
           'helpText' => 'The sample method that will be used for created samples.'
         ),
@@ -345,359 +341,359 @@ class iform_wwt_colour_marked_report {
           'name' => 'subject_type_id',
           'caption' => 'Subject Type',
           'type' => 'select',
-          'table'=>'termlists_term',
-          'captionField'=>'term',
-          'valueField'=>'id',
-          'extraParams' => array('termlist_external_key'=>'indicia:assoc:subject_type'),
+          'table' => 'termlists_term',
+          'captionField' => 'term',
+          'valueField' => 'id',
+          'extraParams' => array('termlist_external_key' => 'indicia:assoc:subject_type'),
           'required' => true,
           'helpText' => 'The subject type that will be used for created subject observations for each colour-marked individual.'
         ),
         array(
-          'name'=>'defaults',
-          'caption'=>'Default Values',
-          'description'=>'Supply default values for each field as required. On each line, enter fieldname=value. For custom attributes, '.
+          'name' => 'defaults',
+          'caption' => 'Default Values',
+          'description' => 'Supply default values for each field as required. On each line, enter fieldname=value. For custom attributes, '.
               'the fieldname is the untranslated caption. For other fields, it is the model and fieldname, e.g. occurrence.record_status. '.
               'For date fields, use today to dynamically default to today\'s date. NOTE, currently only supports occurrence:record_status and '.
               'sample:date but will be extended in future.',
-          'type'=>'textarea',
-          'default'=>'occurrence:record_status=C'
+          'type' => 'textarea',
+          'default' => 'occurrence:record_status=C'
         ),
         array(
-          'name'=>'neck_collar_type',
-          'caption'=>'Neck Collar Type',
-          'description'=>'The type of identifier which indicates a neck collar.',
-          'type'=>'select',
-          'table'=>'termlists_term',
-          'captionField'=>'term',
-          'valueField'=>'id',
-          'extraParams' => array('termlist_external_key'=>'indicia:assoc:identifier_type'),
+          'name' => 'neck_collar_type',
+          'caption' => 'Neck Collar Type',
+          'description' => 'The type of identifier which indicates a neck collar.',
+          'type' => 'select',
+          'table' => 'termlists_term',
+          'captionField' => 'term',
+          'valueField' => 'id',
+          'extraParams' => array('termlist_external_key' => 'indicia:assoc:identifier_type'),
           'required' => true,
           'helpText' => 'The helptext. Todo: change this once you see where it shows on screen!!',
           'group' => 'Identifiers',
         ),
         array(
-          'name'=>'neck_collar_position',
-          'caption'=>'Neck Collar Position',
-          'description'=>'The body position to record for a neck collar.',
-          'type'=>'select',
-          'table'=>'termlists_term',
-          'captionField'=>'term',
-          'valueField'=>'id',
-          'extraParams' => array('termlist_external_key'=>'indicia:assoc:identifier_position','orderby'=>'sort_order'),
+          'name' => 'neck_collar_position',
+          'caption' => 'Neck Collar Position',
+          'description' => 'The body position to record for a neck collar.',
+          'type' => 'select',
+          'table' => 'termlists_term',
+          'captionField' => 'term',
+          'valueField' => 'id',
+          'extraParams' => array('termlist_external_key' => 'indicia:assoc:identifier_position','orderby' => 'sort_order'),
           'required' => true,
           'helpText' => 'The helptext. Todo: change this once you see where it shows on screen!!',
           'group' => 'Identifiers',
         ),
         array(
-          'name'=>'neck_collar_max_length',
-          'caption'=>'Neck collar maximum length',
-          'description'=>'Maximum length for a neck-collar identifier sequence.',
-          'type'=>'string',
+          'name' => 'neck_collar_max_length',
+          'caption' => 'Neck collar maximum length',
+          'description' => 'Maximum length for a neck-collar identifier sequence.',
+          'type' => 'string',
           'required' => false,
-          'group'=>'Identifiers'
+          'group' => 'Identifiers'
         ),
         array(
-          'name'=>'neck_collar_regex',
-          'caption'=>'Neck collar validation pattern',
-          'description'=>'The validation pattern (as a regular expression) for a neck-collar identifier sequence. '.
+          'name' => 'neck_collar_regex',
+          'caption' => 'Neck collar validation pattern',
+          'description' => 'The validation pattern (as a regular expression) for a neck-collar identifier sequence. '.
               'Eg. ^([A-Z]{2}[0-9]{2}|[A-Z]{3}[0-9])$ would only permit sequences of either 2 uppercase letters followed by 2 digits, '.
               'or 3 uppercase letters followed by 1 digit.',
-          'type'=>'string',
+          'type' => 'string',
           'required' => false,
-          'group'=>'Identifiers'
+          'group' => 'Identifiers'
         ),
         array(
-          'name'=>'enscribed_colour_ring_type',
-          'caption'=>'Enscribed Colour Ring Type',
-          'description'=>'The type of identifier which indicates an enscribed colour ring (\'darvic\').',
-          'type'=>'select',
-          'table'=>'termlists_term',
-          'captionField'=>'term',
-          'valueField'=>'id',
-          'extraParams' => array('termlist_external_key'=>'indicia:assoc:identifier_type'),
+          'name' => 'enscribed_colour_ring_type',
+          'caption' => 'Enscribed Colour Ring Type',
+          'description' => 'The type of identifier which indicates an enscribed colour ring (\'darvic\').',
+          'type' => 'select',
+          'table' => 'termlists_term',
+          'captionField' => 'term',
+          'valueField' => 'id',
+          'extraParams' => array('termlist_external_key' => 'indicia:assoc:identifier_type'),
           'required' => true,
           'helpText' => 'The helptext. Todo: change this one you see where it shows on screen!!',
           'group' => 'Identifiers',
         ),
         array(
-          'name'=>'right_enscribed_colour_ring_position',
-          'caption'=>'Right Leg Enscribed Colour Ring Position',
-          'description'=>'The body position to record for an enscribed colour ring (\'darvic\') on the right leg.',
-          'type'=>'select',
-          'table'=>'termlists_term',
-          'captionField'=>'term',
-          'valueField'=>'id',
-          'extraParams' => array('termlist_external_key'=>'indicia:assoc:identifier_position','orderby'=>'sort_order'),
-          'required' => true,
-          'helpText' => 'The helptext. Todo: change this once you see where it shows on screen!!',
-          'group' => 'Identifiers',
-        ),
-        array(
-          'name'=>'left_enscribed_colour_ring_position',
-          'caption'=>'Left Leg Enscribed Colour Ring Position',
-          'description'=>'The body position to record for an enscribed colour ring (\'darvic\') on the left leg.',
-          'type'=>'select',
-          'table'=>'termlists_term',
-          'captionField'=>'term',
-          'valueField'=>'id',
-          'extraParams' => array('termlist_external_key'=>'indicia:assoc:identifier_position','orderby'=>'sort_order'),
+          'name' => 'right_enscribed_colour_ring_position',
+          'caption' => 'Right Leg Enscribed Colour Ring Position',
+          'description' => 'The body position to record for an enscribed colour ring (\'darvic\') on the right leg.',
+          'type' => 'select',
+          'table' => 'termlists_term',
+          'captionField' => 'term',
+          'valueField' => 'id',
+          'extraParams' => array('termlist_external_key' => 'indicia:assoc:identifier_position','orderby' => 'sort_order'),
           'required' => true,
           'helpText' => 'The helptext. Todo: change this once you see where it shows on screen!!',
           'group' => 'Identifiers',
         ),
         array(
-          'name'=>'enscribed_colour_ring_max_length',
-          'caption'=>'Colour ring maximum length',
-          'description'=>'Maximum length for an enscribed colour ring identifier sequence.',
-          'type'=>'string',
-          'required' => false,
-          'group'=>'Identifiers'
+          'name' => 'left_enscribed_colour_ring_position',
+          'caption' => 'Left Leg Enscribed Colour Ring Position',
+          'description' => 'The body position to record for an enscribed colour ring (\'darvic\') on the left leg.',
+          'type' => 'select',
+          'table' => 'termlists_term',
+          'captionField' => 'term',
+          'valueField' => 'id',
+          'extraParams' => array('termlist_external_key' => 'indicia:assoc:identifier_position','orderby' => 'sort_order'),
+          'required' => true,
+          'helpText' => 'The helptext. Todo: change this once you see where it shows on screen!!',
+          'group' => 'Identifiers',
         ),
         array(
-          'name'=>'enscribed_colour_ring_regex',
-          'caption'=>'Colour ring validation pattern',
-          'description'=>'The validation pattern (as a regular expression) for an enscribed colour ring identifier sequence. '.
+          'name' => 'enscribed_colour_ring_max_length',
+          'caption' => 'Colour ring maximum length',
+          'description' => 'Maximum length for an enscribed colour ring identifier sequence.',
+          'type' => 'string',
+          'required' => false,
+          'group' => 'Identifiers'
+        ),
+        array(
+          'name' => 'enscribed_colour_ring_regex',
+          'caption' => 'Colour ring validation pattern',
+          'description' => 'The validation pattern (as a regular expression) for an enscribed colour ring identifier sequence. '.
               'Eg. ^([A-Z]{2}[0-9]{2}|[A-Z]{3}[0-9])$ would only permit sequences of either 2 uppercase letters followed by 2 digits, '.
               'or 3 uppercase letters followed by 1 digit.',
-          'type'=>'string',
+          'type' => 'string',
           'required' => false,
-          'group'=>'Identifiers'
+          'group' => 'Identifiers'
         ),
         array(
-          'name'=>'metal_ring_type',
-          'caption'=>'Metal Ring Type',
-          'description'=>'The type of identifier which indicates a metal ring.',
-          'type'=>'select',
-          'table'=>'termlists_term',
-          'captionField'=>'term',
-          'valueField'=>'id',
-          'extraParams' => array('termlist_external_key'=>'indicia:assoc:identifier_type'),
+          'name' => 'metal_ring_type',
+          'caption' => 'Metal Ring Type',
+          'description' => 'The type of identifier which indicates a metal ring.',
+          'type' => 'select',
+          'table' => 'termlists_term',
+          'captionField' => 'term',
+          'valueField' => 'id',
+          'extraParams' => array('termlist_external_key' => 'indicia:assoc:identifier_type'),
           'required' => true,
           'helpText' => 'The helptext. Todo: change this one you see where it shows on screen!!',
           'group' => 'Identifiers',
         ),
         array(
-          'name'=>'metal_ring_max_length',
-          'caption'=>'Metal ring maximum length',
-          'description'=>'Maximum length for a metal identifier sequence.',
-          'type'=>'string',
+          'name' => 'metal_ring_max_length',
+          'caption' => 'Metal ring maximum length',
+          'description' => 'Maximum length for a metal identifier sequence.',
+          'type' => 'string',
           'required' => false,
-          'group'=>'Identifiers'
+          'group' => 'Identifiers'
         ),
         array(
-          'name'=>'metal_ring_regex',
-          'caption'=>'Metal ring validation pattern',
-          'description'=>'The validation pattern (as a regular expression) for a metal ring identifier sequence. '.
+          'name' => 'metal_ring_regex',
+          'caption' => 'Metal ring validation pattern',
+          'description' => 'The validation pattern (as a regular expression) for a metal ring identifier sequence. '.
               'Eg. ^([A-Z]{2}[0-9]{2}|[A-Z]{3}[0-9])$ would only permit sequences of either 2 uppercase letters followed by 2 digits, '.
               'or 3 uppercase letters followed by 1 digit.',
-          'type'=>'string',
+          'type' => 'string',
           'required' => false,
-          'group'=>'Identifiers'
+          'group' => 'Identifiers'
         ),
         array(
-          'name'=>'base_colours',
-          'caption'=>'Base Colours',
-          'description'=>'The colours we want to let users record for the background of the coloured identifiers. Tick all that apply.',
-          'type'=>'checkbox_group',
-          'table'=>'termlists_term',
-          'captionField'=>'term',
-          'valueField'=>'id',
-          'extraParams' => array('termlist_external_key'=>'indicia:assoc:ring_colour'),
-          'required' => false,
-          'helpText' => 'The helptext. Todo: change this one you see where it shows on screen!!',
-          'group' => 'Identifiers',
-        ),
-        array(
-          'name'=>'text_colours',
-          'caption'=>'Text Colours',
-          'description'=>'The colours we want to let users record for the text enscribed on the coloured identifiers. Tick all that apply.',
-          'type'=>'checkbox_group',
-          'table'=>'termlists_term',
-          'captionField'=>'term',
-          'valueField'=>'id',
-          'extraParams' => array('termlist_external_key'=>'indicia:assoc:ring_colour'),
+          'name' => 'base_colours',
+          'caption' => 'Base Colours',
+          'description' => 'The colours we want to let users record for the background of the coloured identifiers. Tick all that apply.',
+          'type' => 'checkbox_group',
+          'table' => 'termlists_term',
+          'captionField' => 'term',
+          'valueField' => 'id',
+          'extraParams' => array('termlist_external_key' => 'indicia:assoc:ring_colour'),
           'required' => false,
           'helpText' => 'The helptext. Todo: change this one you see where it shows on screen!!',
           'group' => 'Identifiers',
         ),
         array(
-          'name'=>'position',
-          'caption'=>'Identifier Position',
-          'description'=>'The positions on the organism we want to let users record for the identifiers. Tick all that apply.',
-          'type'=>'checkbox_group',
-          'table'=>'termlists_term',
-          'captionField'=>'term',
-          'valueField'=>'id',
-          'extraParams' => array('termlist_external_key'=>'indicia:assoc:identifier_position','orderby'=>'sort_order'),
+          'name' => 'text_colours',
+          'caption' => 'Text Colours',
+          'description' => 'The colours we want to let users record for the text enscribed on the coloured identifiers. Tick all that apply.',
+          'type' => 'checkbox_group',
+          'table' => 'termlists_term',
+          'captionField' => 'term',
+          'valueField' => 'id',
+          'extraParams' => array('termlist_external_key' => 'indicia:assoc:ring_colour'),
           'required' => false,
           'helpText' => 'The helptext. Todo: change this one you see where it shows on screen!!',
           'group' => 'Identifiers',
         ),
         array(
-          'name'=>'default_leg_vertical',
-          'caption'=>'Default Position on Leg',
-          'description'=>'If you are not specifying if a leg mark is above or below the \'knee\' in the above choices, '.
+          'name' => 'position',
+          'caption' => 'Identifier Position',
+          'description' => 'The positions on the organism we want to let users record for the identifiers. Tick all that apply.',
+          'type' => 'checkbox_group',
+          'table' => 'termlists_term',
+          'captionField' => 'term',
+          'valueField' => 'id',
+          'extraParams' => array('termlist_external_key' => 'indicia:assoc:identifier_position','orderby' => 'sort_order'),
+          'required' => false,
+          'helpText' => 'The helptext. Todo: change this one you see where it shows on screen!!',
+          'group' => 'Identifiers',
+        ),
+        array(
+          'name' => 'default_leg_vertical',
+          'caption' => 'Default Position on Leg',
+          'description' => 'If you are not specifying if a leg mark is above or below the \'knee\' in the above choices, '.
              'you can optionally specify a default position here.',
-          'type'=>'select',
+          'type' => 'select',
           'options' => array(
             '?' => 'No Default',
             'A' => 'Above the \'Knee\'',
             'B' => 'Below the \'Knee\'',
           ),
           'required'=>false,
-          'group'=>'Identifiers'
+          'group' => 'Identifiers'
         ),
         array(
-          'name'=>'neck_collar_conditions',
-          'caption'=>'Neck Collar Conditions',
-          'description'=>'The identifier conditions we want to be reportable by recorders when observing a neck collar. Tick all that apply.',
-          'type'=>'checkbox_group',
-          'table'=>'termlists_term',
-          'captionField'=>'term',
-          'valueField'=>'id',
-          'extraParams' => array('termlist_external_key'=>'indicia:assoc:identifier_condition','orderby'=>'sort_order'),
+          'name' => 'neck_collar_conditions',
+          'caption' => 'Neck Collar Conditions',
+          'description' => 'The identifier conditions we want to be reportable by recorders when observing a neck collar. Tick all that apply.',
+          'type' => 'checkbox_group',
+          'table' => 'termlists_term',
+          'captionField' => 'term',
+          'valueField' => 'id',
+          'extraParams' => array('termlist_external_key' => 'indicia:assoc:identifier_condition','orderby' => 'sort_order'),
           'required' => false,
           'helpText' => 'The helptext. Todo: change this one you see where it shows on screen!!',
           'group' => 'Identifiers',
         ),
         array(
-          'name'=>'coloured_ring_conditions',
-          'caption'=>'Coloured Ring Conditions',
-          'description'=>'The identifier conditions we want to be reportable by recorders when observing a coloured ring Tick all that apply.',
-          'type'=>'checkbox_group',
-          'table'=>'termlists_term',
-          'captionField'=>'term',
-          'valueField'=>'id',
-          'extraParams' => array('termlist_external_key'=>'indicia:assoc:identifier_condition','orderby'=>'sort_order'),
+          'name' => 'coloured_ring_conditions',
+          'caption' => 'Coloured Ring Conditions',
+          'description' => 'The identifier conditions we want to be reportable by recorders when observing a coloured ring Tick all that apply.',
+          'type' => 'checkbox_group',
+          'table' => 'termlists_term',
+          'captionField' => 'term',
+          'valueField' => 'id',
+          'extraParams' => array('termlist_external_key' => 'indicia:assoc:identifier_condition','orderby' => 'sort_order'),
           'required' => false,
           'helpText' => 'The helptext. Todo: change this one you see where it shows on screen!!',
           'group' => 'Identifiers',
         ),
         array(
-          'name'=>'metal_ring_conditions',
-          'caption'=>'Metal Ring Conditions',
-          'description'=>'The identifier conditions we want to be reportable by recorders when observing a metal ring Tick all that apply.',
-          'type'=>'checkbox_group',
-          'table'=>'termlists_term',
-          'captionField'=>'term',
-          'valueField'=>'id',
-          'extraParams' => array('termlist_external_key'=>'indicia:assoc:identifier_condition','orderby'=>'sort_order'),
+          'name' => 'metal_ring_conditions',
+          'caption' => 'Metal Ring Conditions',
+          'description' => 'The identifier conditions we want to be reportable by recorders when observing a metal ring Tick all that apply.',
+          'type' => 'checkbox_group',
+          'table' => 'termlists_term',
+          'captionField' => 'term',
+          'valueField' => 'id',
+          'extraParams' => array('termlist_external_key' => 'indicia:assoc:identifier_condition','orderby' => 'sort_order'),
           'required' => false,
           'helpText' => 'The helptext. Todo: change this one you see where it shows on screen!!',
           'group' => 'Identifiers',
         ),
         array(
-          'name'=>'other_devices',
-          'caption'=>'Other Devices',
-          'description'=>'What other devices (such as transmitters/trackers/loggers do you want to record? Tick all that apply.',
-          'type'=>'checkbox_group',
-          'table'=>'termlists_term',
-          'captionField'=>'term',
-          'valueField'=>'id',
-          'extraParams' => array('termlist_external_key'=>'indicia:assoc:attachment_type'),
+          'name' => 'other_devices',
+          'caption' => 'Other Devices',
+          'description' => 'What other devices (such as transmitters/trackers/loggers do you want to record? Tick all that apply.',
+          'type' => 'checkbox_group',
+          'table' => 'termlists_term',
+          'captionField' => 'term',
+          'valueField' => 'id',
+          'extraParams' => array('termlist_external_key' => 'indicia:assoc:attachment_type'),
           'required' => false,
           'helpText' => 'The helptext. Todo: change this one you see where it shows on screen!!',
           'group' => 'Subject observation',
         ),
         array(
-          'name'=>'observation_comment',
-          'caption'=>'Allow Comment For Colour-marked Individual',
-          'description'=>'Tick this to allow a comment to be input for each reported colour-marked individual. '.
+          'name' => 'observation_comment',
+          'caption' => 'Allow Comment For Colour-marked Individual',
+          'description' => 'Tick this to allow a comment to be input for each reported colour-marked individual. '.
             'This comment is stored on the subject observation record',
-          'type'=>'boolean',
+          'type' => 'boolean',
           'required' => false,
           'default' => false,
           'group' => 'Subject observation'
         ),
         array(
-          'name'=>'request_gender_values',
-          'caption'=>'Request Gender Values',
-          'description'=>'What (if any) gender options do you want to present for the colour-marked individual? '.
+          'name' => 'request_gender_values',
+          'caption' => 'Request Gender Values',
+          'description' => 'What (if any) gender options do you want to present for the colour-marked individual? '.
             'Leave un-ticked to hide all gender options.',
-          'type'=>'checkbox_group',
-          'table'=>'termlists_term',
-          'captionField'=>'term',
-          'valueField'=>'id',
-          'extraParams' => array('termlist_external_key'=>'indicia:assoc:gender','orderby'=>'sort_order'),
+          'type' => 'checkbox_group',
+          'table' => 'termlists_term',
+          'captionField' => 'term',
+          'valueField' => 'id',
+          'extraParams' => array('termlist_external_key' => 'indicia:assoc:gender','orderby' => 'sort_order'),
           'required' => false,
           'helpText' => 'The helptext. Todo: change this one you see where it shows on screen!!',
           'group' => 'Subject observation',
         ),
         array(
-          'name'=>'default_gender',
-          'caption'=>'Default Gender',
-          'description'=>'What (if any) gender should be the default for the colour-marked individual?',
-          'type'=>'select',
-          'table'=>'termlists_term',
-          'captionField'=>'term',
-          'valueField'=>'id',
-          'blankText'=>'No default',
-          'extraParams' => array('termlist_external_key'=>'indicia:assoc:gender','orderby'=>'sort_order'),
+          'name' => 'default_gender',
+          'caption' => 'Default Gender',
+          'description' => 'What (if any) gender should be the default for the colour-marked individual?',
+          'type' => 'select',
+          'table' => 'termlists_term',
+          'captionField' => 'term',
+          'valueField' => 'id',
+          'blankText' => 'No default',
+          'extraParams' => array('termlist_external_key' => 'indicia:assoc:gender','orderby' => 'sort_order'),
           'required' => false,
           'helpText' => 'The helptext. Todo: change this one you see where it shows on screen!!',
           'group' => 'Subject observation',
         ),
         array(
-          'name'=>'request_stage_values',
-          'caption'=>'Request Age Values',
-          'description'=>'What (if any) age/stage options do you want to present for the colour-marked individual? '.
+          'name' => 'request_stage_values',
+          'caption' => 'Request Age Values',
+          'description' => 'What (if any) age/stage options do you want to present for the colour-marked individual? '.
             'Leave un-ticked to hide all age options.',
-          'type'=>'checkbox_group',
-          'table'=>'termlists_term',
-          'captionField'=>'term',
-          'valueField'=>'id',
-          'extraParams' => array('termlist_external_key'=>'indicia:assoc:stage','orderby'=>'sort_order'),
+          'type' => 'checkbox_group',
+          'table' => 'termlists_term',
+          'captionField' => 'term',
+          'valueField' => 'id',
+          'extraParams' => array('termlist_external_key' => 'indicia:assoc:stage','orderby' => 'sort_order'),
           'required' => false,
           'helpText' => 'The helptext. Todo: change this one you see where it shows on screen!!',
           'group' => 'Subject observation',
         ),
         array(
-          'name'=>'default_stage',
-          'caption'=>'Default Age',
-          'description'=>'What (if any) age/stage should be the default for the colour-marked individual?',
-          'type'=>'select',
-          'table'=>'termlists_term',
-          'captionField'=>'term',
-          'valueField'=>'id',
-          'blankText'=>'No default',
-          'extraParams' => array('termlist_external_key'=>'indicia:assoc:stage','orderby'=>'sort_order'),
+          'name' => 'default_stage',
+          'caption' => 'Default Age',
+          'description' => 'What (if any) age/stage should be the default for the colour-marked individual?',
+          'type' => 'select',
+          'table' => 'termlists_term',
+          'captionField' => 'term',
+          'valueField' => 'id',
+          'blankText' => 'No default',
+          'extraParams' => array('termlist_external_key' => 'indicia:assoc:stage','orderby' => 'sort_order'),
           'required' => false,
           'helpText' => 'The helptext. Todo: change this one you see where it shows on screen!!',
           'group' => 'Subject observation',
         ),
         array(
-          'name'=>'request_life_status_values',
-          'caption'=>'Request Subject Status Values',
-          'description'=>'What (if any) life status options do you want to present for the colour-marked individual? '.
+          'name' => 'request_life_status_values',
+          'caption' => 'Request Subject Status Values',
+          'description' => 'What (if any) life status options do you want to present for the colour-marked individual? '.
             'Leave un-ticked to hide all life status options.',
-          'type'=>'checkbox_group',
-          'table'=>'termlists_term',
-          'captionField'=>'term',
-          'valueField'=>'id',
-          'extraParams' => array('termlist_external_key'=>'indicia:assoc:life_status','orderby'=>'sort_order'),
+          'type' => 'checkbox_group',
+          'table' => 'termlists_term',
+          'captionField' => 'term',
+          'valueField' => 'id',
+          'extraParams' => array('termlist_external_key' => 'indicia:assoc:life_status','orderby' => 'sort_order'),
           'required' => false,
           'helpText' => 'The helptext. Todo: change this one you see where it shows on screen!!',
           'group' => 'Subject observation',
         ),
         array(
-          'name'=>'default_life_status',
-          'caption'=>'Default Subject Status',
-          'description'=>'What (if any) subject status should be the default for the colour-marked individual?',
-          'type'=>'select',
-          'table'=>'termlists_term',
-          'captionField'=>'term',
-          'valueField'=>'id',
-          'blankText'=>'No default',
-          'extraParams' => array('termlist_external_key'=>'indicia:assoc:life_status','orderby'=>'sort_order'),
+          'name' => 'default_life_status',
+          'caption' => 'Default Subject Status',
+          'description' => 'What (if any) subject status should be the default for the colour-marked individual?',
+          'type' => 'select',
+          'table' => 'termlists_term',
+          'captionField' => 'term',
+          'valueField' => 'id',
+          'blankText' => 'No default',
+          'extraParams' => array('termlist_external_key' => 'indicia:assoc:life_status','orderby' => 'sort_order'),
           'required' => false,
           'helpText' => 'The helptext. Todo: change this one you see where it shows on screen!!',
           'group' => 'Subject observation',
         ),
         array(
-          'name'=>'debug_info',
-          'caption'=>'Provide debug information',
-          'description'=>'Tick this to provide debug info on the form, DO NOT USE IN PRODUCTION!!!!',
-          'type'=>'boolean',
+          'name' => 'debug_info',
+          'caption' => 'Provide debug information',
+          'description' => 'Tick this to provide debug info on the form, DO NOT USE IN PRODUCTION!!!!',
+          'type' => 'boolean',
           'required' => false,
           'default' => false,
           'group' => 'Debug'
@@ -786,7 +782,7 @@ class iform_wwt_colour_marked_report {
     }
     if ($mode!=MODE_EXISTING && array_key_exists('newSample', $_GET)) {
       $mode = MODE_NEW_SAMPLE;
-      data_entry_helper::$entity_to_load = array();
+      data_entry_helper::$entity_to_load = [];
     } // else default to mode MODE_GRID or MODE_NEW_SAMPLE depending on no_grid parameter
     self::$mode = $mode;
     // default mode  MODE_GRID : display grid of the samples to add a new one
@@ -808,10 +804,10 @@ class iform_wwt_colour_marked_report {
         $r .= call_user_func(array(get_called_class(), 'getHeaderHTML'), true, $args);
       }
       $attributes = data_entry_helper::getAttributes(array(
-        'valuetable'=>'sample_attribute_value'
-       ,'attrtable'=>'sample_attribute'
-       ,'key'=>'sample_id'
-       ,'fieldprefix'=>'smpAttr'
+        'valuetable' => 'sample_attribute_value'
+       ,'attrtable' => 'sample_attribute'
+       ,'key' => 'sample_id'
+       ,'fieldprefix' => 'smpAttr'
        ,'extraParams'=>$auth['read']
        ,'survey_id'=>$args['survey_id']
       ), false);
@@ -828,7 +824,7 @@ class iform_wwt_colour_marked_report {
         }
       }
       if(count($tabs) > 1) {
-        $r .= "<div id=\"controls\">".(data_entry_helper::enable_tabs(array('divId'=>'controls','active'=>'#sampleList')))."<div id=\"temp\"></div>";
+        $r .= "<div id=\"controls\">".(data_entry_helper::enable_tabs(array('divId' => 'controls','active' => '#sampleList')))."<div id=\"temp\"></div>";
         $r .= data_entry_helper::tab_header(array('tabs'=>$tabs));
       }
       $r .= "<div id=\"sampleList\">".call_user_func(array(get_called_class(), 'getSampleListGrid'), $args, $nid, $auth, $attributes)."</div>";
@@ -889,10 +885,10 @@ class iform_wwt_colour_marked_report {
     // get the sample attributes
     $attrOpts = array(
         'id' => data_entry_helper::$entity_to_load['sample:id']
-       ,'valuetable'=>'sample_attribute_value'
-       ,'attrtable'=>'sample_attribute'
-       ,'key'=>'sample_id'
-       ,'fieldprefix'=>'smpAttr'
+       ,'valuetable' => 'sample_attribute_value'
+       ,'attrtable' => 'sample_attribute'
+       ,'key' => 'sample_id'
+       ,'fieldprefix' => 'smpAttr'
        ,'extraParams'=>$auth['read']
        ,'survey_id'=>$args['survey_id']
     );
@@ -1012,7 +1008,7 @@ class iform_wwt_colour_marked_report {
     // remove added comment controls unless editing an existing sample
     if ($mode!==MODE_EXISTING || helper_base::$form_mode==='ERRORS') {
       $controls = helper_base::explode_lines($args['structure']);
-      $new_controls = array();
+      $new_controls = [];
       foreach ($controls as $control) {
         if ($control!=='[show added sample comments]' && $control!=='[add sample comment]') {
           $new_controls[] = $control;
@@ -1026,7 +1022,7 @@ class iform_wwt_colour_marked_report {
     $tabHtml = self::get_tab_html($tabs, $auth, $args, $attributes, $hiddens);
     // Output the dynamic tab headers
     if ($args['interface']!='one_page') {
-      $headerOptions = array('tabs'=>array());
+      $headerOptions = array('tabs'=>[]);
       foreach ($tabHtml as $tab=>$tabContent) {
         $alias = preg_replace('/[^a-zA-Z0-9]/', '', strtolower($tab));
         $tabtitle = lang::get("LANG_Tab_$alias");
@@ -1038,7 +1034,7 @@ class iform_wwt_colour_marked_report {
       }
       $r .= data_entry_helper::tab_header($headerOptions);
       data_entry_helper::enable_tabs(array(
-          'divId'=>'controls',
+          'divId' => 'controls',
           'style'=>$args['interface'],
           'progressBar' => isset($args['tabProgress']) && $args['tabProgress']==true
       ));
@@ -1058,7 +1054,7 @@ class iform_wwt_colour_marked_report {
       // Add any buttons required at the bottom of the tab
       if ($args['interface']=='wizard') {
         $r .= data_entry_helper::wizard_buttons(array(
-          'divId'=>'controls',
+          'divId' => 'controls',
           'page'=>$pageIdx===0 ? 'first' : (($pageIdx==count($tabHtml)-1) ? 'last' : 'middle')
         ));
       } elseif ($pageIdx==count($tabHtml)-1 && !($args['interface']=='tabs' && $args['save_button_below_all_pages']))
@@ -1084,7 +1080,7 @@ class iform_wwt_colour_marked_report {
     $defAttrOptions = array('extraParams'=>$auth['read']);
     if(isset($args['attribute_termlist_language_filter']) && $args['attribute_termlist_language_filter'])
         $defAttrOptions['language'] = iform_lang_iso_639_2($args['language']);
-    $tabHtml = array();
+    $tabHtml = [];
     foreach ($tabs as $tab=>$tabContent) {
       // keep track on if the tab actually has real content, so we can avoid floating instructions if all the controls
       // were removed by user profile integration for example.
@@ -1106,7 +1102,7 @@ class iform_wwt_colour_marked_report {
           // Component surrounded by [] so represents a control or control block
           $method = 'get_control_'.preg_replace('/[^a-zA-Z0-9]/', '', strtolower($component));
           // Anything following the component that starts with @ is an option to pass to the control
-          $options = array();
+          $options = [];
           while ($i < count($tabContent)-1 && substr($tabContent[$i+1],0,1)=='@' || trim($tabContent[$i])==='') {
             $i++;
             // ignore empty lines
@@ -1124,11 +1120,11 @@ class iform_wwt_colour_marked_report {
             // this outputs any custom attributes that remain for this tab. The custom attributes can be configured in the
             // settings text using something like @smpAttr:4|label=My label. The next bit of code parses these out into an
             // array used when building the html.
-            $blockOptions = array();
+            $blockOptions = [];
             foreach ($options as $option => $value) {
               // split the id of the option into the control name and option name.
               $optionId = explode('|', $option);
-              if (!isset($blockOptions[$optionId[0]])) $blockOptions[$optionId[0]]=array();
+              if (!isset($blockOptions[$optionId[0]])) $blockOptions[$optionId[0]]=[];
               $blockOptions[$optionId[0]][$optionId[1]] = $value;
             }
             $defAttrOptions = array_merge($defAttrOptions, $options);
@@ -1153,11 +1149,11 @@ class iform_wwt_colour_marked_report {
    */
   protected static function get_all_tabs($structure, $attrTabs) {
     $structureArr = helper_base::explode_lines($structure);
-    $structureTabs = array();
+    $structureTabs = [];
     foreach ($structureArr as $component) {
       if (preg_match('/^=[A-Za-z0-9 \-\*\?]+=$/', trim($component), $matches)===1) {
         $currentTab = substr($matches[0], 1, -1);
-        $structureTabs[$currentTab] = array();
+        $structureTabs[$currentTab] = [];
       } else {
         if (!isset($currentTab))
           throw new Exception('The form structure parameter must start with a tab title, e.g. =Species=');
@@ -1173,7 +1169,7 @@ class iform_wwt_colour_marked_report {
     }
     // Now we have a list of form structure tabs, with the position of the $attrTabs marked by *. So join it all together.
     // Maybe there is a better way to do this?
-    $allTabs = array();
+    $allTabs = [];
     foreach($structureTabs as $tab => $tabContent) {
       if ($tab=='*')
         $allTabs += $attrTabs;
@@ -1211,7 +1207,7 @@ class iform_wwt_colour_marked_report {
    * @return array of data values matching the form control names.
    */
   private static function reload_form_data($loadedSampleId, $args, $auth) {
-    $form_data = array();
+    $form_data = [];
     if (!$loadedSampleId) { // required
       return $form_data;
     }
@@ -1222,16 +1218,16 @@ class iform_wwt_colour_marked_report {
 
     // if we have a subject_observation, then we just load that,
     // otherwise we need all the subjects_observations in the sample
-    $filter = array();
+    $filter = [];
     if (count(self::$subjectObservationIds)===1) {
       $filter = array('id'=>self::$subjectObservationIds[0]);
-      self::$subjectObservationIds = array();
+      self::$subjectObservationIds = [];
     }
 
     // load the subject_observation(s) for this sample
     $options = array(
       'table' => 'subject_observation',
-      'extraParams' => $auth['read'] + array('sample_id'=>$loadedSampleId, 'view'=>'detail') + $filter,
+      'extraParams' => $auth['read'] + array('sample_id'=>$loadedSampleId, 'view' => 'detail') + $filter,
       'nocache' => true,
     );
     $subjectObservations = data_entry_helper::get_population_data($options);
@@ -1275,11 +1271,11 @@ class iform_wwt_colour_marked_report {
     $filter = array('query'=>json_encode($query),);
     $options = array(
       'table' => 'occurrences_subject_observation',
-      'extraParams' => $auth['read'] + array('view'=>'detail') + $filter,
+      'extraParams' => $auth['read'] + array('view' => 'detail') + $filter,
       'nocache' => true,
     );
     $osos = data_entry_helper::get_population_data($options);
-    $occurrenceIds = array();
+    $occurrenceIds = [];
     foreach ($osos as $oso) {
       $occurrenceIds[] = $oso['occurrence_id'];
     }
@@ -1287,7 +1283,7 @@ class iform_wwt_colour_marked_report {
     $filter = array('query'=>json_encode($query),);
     $options = array(
       'table' => 'occurrence',
-      'extraParams' => $auth['read'] + array('view'=>'detail') + $filter,
+      'extraParams' => $auth['read'] + array('view' => 'detail') + $filter,
       'nocache' => true,
     );
     $occurrences = data_entry_helper::get_population_data($options);
@@ -1295,7 +1291,7 @@ class iform_wwt_colour_marked_report {
     $filter = array('query'=>json_encode($query),);
     $options = array(
       'table' => 'occurrence_image',
-      'extraParams' => $auth['read'] + array('view'=>'list') + $filter,
+      'extraParams' => $auth['read'] + array('view' => 'list') + $filter,
       'nocache' => true,
     );
     $occurrence_images = data_entry_helper::get_population_data($options);
@@ -1343,13 +1339,13 @@ class iform_wwt_colour_marked_report {
     $filter = array('query'=>json_encode($query),);
     $options = array(
       'table' => 'identifiers_subject_observation',
-      'extraParams' => $auth['read'] + array('view'=>'detail') + $filter,
+      'extraParams' => $auth['read'] + array('view' => 'detail') + $filter,
       'nocache' => true,
     );
     $isos = data_entry_helper::get_population_data($options);
 
     // load the identifiers_subject_observation_attributes(s) for this sample
-    $isoIds = array();
+    $isoIds = [];
     foreach ($isos as $iso) {
       $isoIds[] = $iso['id'];
     }
@@ -1363,7 +1359,7 @@ class iform_wwt_colour_marked_report {
     $isoAttrs = data_entry_helper::get_population_data($options);
 
     // load the identifier(s) for this sample
-    $identifierIds = array();
+    $identifierIds = [];
     foreach ($isos as $iso) {
       $identifierIds[] = $iso['identifier_id'];
     }
@@ -1371,7 +1367,7 @@ class iform_wwt_colour_marked_report {
     $filter = array('query'=>json_encode($query),);
     $options = array(
       'table' => 'identifier',
-      'extraParams' => $auth['read'] + array('view'=>'detail') + $filter,
+      'extraParams' => $auth['read'] + array('view' => 'detail') + $filter,
       'nocache' => true,
     );
     $identifiers = data_entry_helper::get_population_data($options);
@@ -1460,7 +1456,7 @@ class iform_wwt_colour_marked_report {
         if (empty($args['list_id']))
           throw new exception(lang::get('Please configure the Initial Species List parameter to define which list the species to record is selected from.'));
         $filter = array(
-          'preferred'=>'t',
+          'preferred' => 't',
           'taxon_list_id'=>$args['list_id']
         );
         if ($args['taxon_filter_field']=='preferred_name')
@@ -1522,12 +1518,12 @@ class iform_wwt_colour_marked_report {
         // filter the taxa available to record
         $query = array('in'=>array($args['taxon_filter_field'], helper_base::explode_lines($args['taxon_filter'])));
       else
-        $query = array();
+        $query = [];
       // Apply the species names filter to the single species picker control
       if (isset($args['species_names_filter'])) {
         switch($args['species_names_filter']) {
           case 'preferred' :
-            $extraParams += array('preferred'=>'t');
+            $extraParams += array('preferred' => 't');
             break;
           case 'currentLanguage' :
             if (isset($options['language']))
@@ -1543,13 +1539,13 @@ class iform_wwt_colour_marked_report {
       $species_ctrl_opts=array_merge(array(
           'label'=>lang::get('occurrence:taxa_taxon_list_id'),
           'fieldname'=>$fieldPrefix.'occurrence:taxa_taxon_list_id',
-          'table'=>'taxa_taxon_list',
-          'captionField'=>'taxon',
-          'valueField'=>'id',
+          'table' => 'taxa_taxon_list',
+          'captionField' => 'taxon',
+          'valueField' => 'id',
           'columns'=>2,
-          'parentField'=>'parent_id',
+          'parentField' => 'parent_id',
           'extraParams'=>$extraParams,
-          'blankText'=>'Please select',
+          'blankText' => 'Please select',
           'view' => 'cache'
       ), $options);
       global $indicia_templates;
@@ -1657,7 +1653,7 @@ class iform_wwt_colour_marked_report {
    */
   private static function get_control_samplecomment($auth, $args, $tabalias, $options) {
     return data_entry_helper::textarea(array_merge(array(
-      'fieldname'=>'sample:comment',
+      'fieldname' => 'sample:comment',
       'label'=>lang::get('Overall Comment')
     ), $options));
   }
@@ -1670,7 +1666,7 @@ class iform_wwt_colour_marked_report {
     return data_entry_helper::textarea(array_merge(array(
       'fieldname'=>$fieldPrefix.'subject_observation:comment',
       'label'=>lang::get('Any information you might like to add'),
-      'class'=>'control-width-5',
+      'class' => 'control-width-5',
     ), $options));
   }
 
@@ -1704,9 +1700,9 @@ class iform_wwt_colour_marked_report {
    */
   private static function get_control_addsamplecomment($auth, $args, $tabalias, $options) {
     return data_entry_helper::textarea(array_merge(array(
-      'fieldname'=>'sample_comment:comment',
+      'fieldname' => 'sample_comment:comment',
       'label'=>lang::get('Add a comment about this report'),
-      'class'=>'control-width-6',
+      'class' => 'control-width-6',
     ), $options));
   }
 
@@ -1717,10 +1713,10 @@ class iform_wwt_colour_marked_report {
     if (!(call_user_func(array(get_called_class(), 'getGridMode'), $args))) {
       // Add any dynamically generated controls
       $attrArgs = array(
-         'valuetable'=>'occurrence_attribute_value',
-         'attrtable'=>'occurrence_attribute',
-         'key'=>'occurrence_id',
-         'fieldprefix'=>'occAttr',
+         'valuetable' => 'occurrence_attribute_value',
+         'attrtable' => 'occurrence_attribute',
+         'key' => 'occurrence_id',
+         'fieldprefix' => 'occAttr',
          'extraParams'=>$auth['read'],
          'survey_id'=>$args['survey_id']
       );
@@ -1733,17 +1729,17 @@ class iform_wwt_colour_marked_report {
       $r = get_attribute_html($attributes, $args, $defAttrOptions);
       if ($args['occurrence_comment'])
         $r .= data_entry_helper::textarea(array(
-          'fieldname'=>'occurrence:comment',
+          'fieldname' => 'occurrence:comment',
           'label'=>lang::get('Record Comment')
         ));
       if ($args['subject_observation_confidential'])
-        $r .= data_entry_helper::select(array('fieldname'=>'sc:-idx-::occurrence:sensitivity_precision',
-            'lookupValues' => array('Reduce precision to' => array('100'=>'100m', '1000'=>'1km', '2000'=>'2km', '10000'=>'10km', '100000'=>'100km')),
+        $r .= data_entry_helper::select(array('fieldname' => 'sc:-idx-::occurrence:sensitivity_precision',
+            'lookupValues' => array('Reduce precision to' => array('100' => '100m', '1000' => '1km', '2000' => '2km', '10000' => '10km', '100000' => '100km')),
             'blankText' => lang::get('Not sensitive')
         ));
       if ($args['observation_images']){
         $opts = array(
-          'table'=>'occurrence_image',
+          'table' => 'occurrence_image',
           'label'=>lang::get('Upload your photos'),
         );
         if ($args['interface']!=='one_page')
@@ -1773,7 +1769,7 @@ class iform_wwt_colour_marked_report {
       data_entry_helper::add_resource('jquery_ui_'.$args['language']); // this will autoload the jquery_ui resource. The date_picker does not have access to the args.
     return data_entry_helper::date_picker(array_merge(array(
       'label'=>lang::get('LANG_Date'),
-      'fieldname'=>'sample:date',
+      'fieldname' => 'sample:date',
       'default' => isset($args['defaults']['sample:date']) ? $args['defaults']['sample:date'] : ''
     ), $options));
   }
@@ -1783,7 +1779,7 @@ class iform_wwt_colour_marked_report {
    */
   private static function get_control_spatialreference($auth, $args, $tabalias, $options) {
     // Build the array of spatial reference systems into a format Indicia can use.
-    $systems=array();
+    $systems=[];
     $list = explode(',', str_replace(' ', '', $args['spatial_systems']));
     foreach($list as $system) {
       $systems[$system] = lang::get($system);
@@ -1821,7 +1817,7 @@ class iform_wwt_colour_marked_report {
    */
   protected static function get_control_recordernames($auth, $args, $tabalias, $options) {
     return data_entry_helper::textarea(array_merge(array(
-      'fieldname'=>'sample:recorder_names',
+      'fieldname' => 'sample:recorder_names',
       'label'=>lang::get('Recorder names')
     ), $options));
   }
@@ -1854,10 +1850,10 @@ class iform_wwt_colour_marked_report {
     // get the sample attributes
     $attrOpts = array(
         'id' => data_entry_helper::$entity_to_load['sample:id']
-       ,'valuetable'=>'sample_attribute_value'
-       ,'attrtable'=>'sample_attribute'
-       ,'key'=>'sample_id'
-       ,'fieldprefix'=>'smpAttr'
+       ,'valuetable' => 'sample_attribute_value'
+       ,'attrtable' => 'sample_attribute'
+       ,'key' => 'sample_id'
+       ,'fieldprefix' => 'smpAttr'
        ,'extraParams'=>$auth['read']
        ,'survey_id'=>$args['survey_id']
     );
@@ -1888,11 +1884,11 @@ class iform_wwt_colour_marked_report {
       if (isset($options['lockable'])) {
         unset($options['lockable']);
       }
-      $defAttrOptions += array('readonly'=>'readonly="readonly"');
+      $defAttrOptions += array('readonly' => 'readonly="readonly"');
       $attrHtml .= '<div class="readonlyFieldset">';
     }
     $defAttrOptions += $options;
-    $blockOptions = array();
+    $blockOptions = [];
     $attrHtml .= get_attribute_html($attributes, $args, $defAttrOptions, 'Enter data by proxy', $blockOptions);
     if (!hostsite_user_has_permission('IForm n'.self::$nid.' enter data by proxy')) {
       $attrHtml .= '</div>';
@@ -1928,7 +1924,7 @@ class iform_wwt_colour_marked_report {
                     $userList[$account->uid] = $account;
                 }
               }
-		}		
+		}
     }
   }
 
@@ -2039,7 +2035,7 @@ class iform_wwt_colour_marked_report {
     }
 
     // throw an exception if any of the required custom attributes is missing
-    $errorMessages = array();
+    $errorMessages = [];
     foreach (array('baseColourId', 'textColourId', 'sequenceId', 'positionId',
       'attachmentId', 'genderId', 'stageId', 'lifeStatusId', 'conditionsId', ) as $attrId) {
       if ($options[$attrId]===-1) {
@@ -2154,7 +2150,7 @@ class iform_wwt_colour_marked_report {
       && count($args['request_gender_values']) > 0) {
       // filter the genders available
       $query = array('in'=>array('id', $args['request_gender_values']));
-      $filter = array('query'=>json_encode($query),'orderby'=>'sort_order',);
+      $filter = array('query'=>json_encode($query),'orderby' => 'sort_order',);
       $extraParams = array_merge($filter, $auth['read']);
       $options['lockable'] = $options['identifiers_lockable'];
       $fieldname = $options['fieldprefix'].'sjoAttr:'.$options['genderId'];
@@ -2172,9 +2168,9 @@ class iform_wwt_colour_marked_report {
         'label' => lang::get('Sex of the bird'),
         'fieldname' => $fieldname,
         'id' => $idname,
-        'table'=>'termlists_term',
-        'captionField'=>'term',
-        'valueField'=>'id',
+        'table' => 'termlists_term',
+        'captionField' => 'term',
+        'valueField' => 'id',
         'default' => $args['default_gender'],
         'extraParams' => $extraParams,
       ), $options));
@@ -2186,7 +2182,7 @@ class iform_wwt_colour_marked_report {
       && count($args['request_stage_values']) > 0) {
       // filter the stages available
       $query = array('in'=>array('id', $args['request_stage_values']));
-      $filter = array('query'=>json_encode($query),'orderby'=>'sort_order',);
+      $filter = array('query'=>json_encode($query),'orderby' => 'sort_order',);
       $extraParams = array_merge($filter, $auth['read']);
       $options['lockable'] = $options['identifiers_lockable'];
       $fieldname = $options['fieldprefix'].'sjoAttr:'.$options['stageId'];
@@ -2204,9 +2200,9 @@ class iform_wwt_colour_marked_report {
         'label' => lang::get('Age of the bird'),
         'fieldname' => $fieldname,
         'id' => $idname,
-        'table'=>'termlists_term',
-        'captionField'=>'term',
-        'valueField'=>'id',
+        'table' => 'termlists_term',
+        'captionField' => 'term',
+        'valueField' => 'id',
         'default' => $args['default_stage'],
         'extraParams' => $extraParams,
       ), $options));
@@ -2218,7 +2214,7 @@ class iform_wwt_colour_marked_report {
       && count($args['request_life_status_values']) > 0) {
       // filter the life status's available
       $query = array('in'=>array('id', $args['request_life_status_values']));
-      $filter = array('query'=>json_encode($query),'orderby'=>'sort_order',);
+      $filter = array('query'=>json_encode($query),'orderby' => 'sort_order',);
       $extraParams = array_merge($filter, $auth['read']);
       $options['lockable'] = $options['identifiers_lockable'];
       $fieldname = $options['fieldprefix'].'sjoAttr:'.$options['lifeStatusId'];
@@ -2236,9 +2232,9 @@ class iform_wwt_colour_marked_report {
         'label' => lang::get('This bird was'),
         'fieldname' => $fieldname,
         'id' => $idname,
-        'table'=>'termlists_term',
-        'captionField'=>'term',
-        'valueField'=>'id',
+        'table' => 'termlists_term',
+        'captionField' => 'term',
+        'valueField' => 'id',
         'default' => $args['default_life_status'],
         'extraParams' => $extraParams,
       ), $options));
@@ -2371,10 +2367,10 @@ class iform_wwt_colour_marked_report {
       $options['fieldprefix'] = 'idn:'.$taxIdx.':';
       // filter the devices available
       $query = array('in'=>array('id', $args['other_devices']));
-      $filter = array('query'=>json_encode($query),'orderby'=>'sort_order',);
+      $filter = array('query'=>json_encode($query),'orderby' => 'sort_order',);
       $extraParams = array_merge($filter, $auth['read']);
       $fieldname = $options['fieldprefix'].'sjoAttr:'.$options['attachmentId'];
-      $default = array();
+      $default = [];
       // if this attribute exists on DB, we need to write a hidden with id appended to fieldname and set defaults for checkboxes
       if (is_array(data_entry_helper::$entity_to_load)) {
         $stored_keys = preg_grep('/^'.$fieldname.':[0-9]+$/', array_keys(data_entry_helper::$entity_to_load));
@@ -2387,9 +2383,9 @@ class iform_wwt_colour_marked_report {
       $r .= data_entry_helper::checkbox_group(array_merge(array(
         'label' => lang::get('What other devices did you see on the bird'),
         'fieldname' => $fieldname,
-        'table'=>'termlists_term',
-        'captionField'=>'term',
-        'valueField'=>'id',
+        'table' => 'termlists_term',
+        'captionField' => 'term',
+        'valueField' => 'id',
         'default'=>$default,
         'extraParams' => $extraParams,
       ), $options));
@@ -2409,7 +2405,7 @@ class iform_wwt_colour_marked_report {
 
     // occurrence images
     $opts = array(
-      'table'=>'idn:'.$taxIdx.':'.'occurrence_image',
+      'table' => 'idn:'.$taxIdx.':'.'occurrence_image',
       'label'=>lang::get('Upload your photos'),
     );
     if ($args['interface']!=='one_page')
@@ -2481,7 +2477,7 @@ class iform_wwt_colour_marked_report {
       // 'label' => lang::get('Is this identifier being recorded?'),
       'label' => '',
       'fieldname' => $fieldPrefix.'identifier:checkbox',
-      'class'=>'identifier_checkbox identifierRequired noDuplicateIdentifiers',
+      'class' => 'identifier_checkbox identifierRequired noDuplicateIdentifiers',
     ), $options));
 
     // loop through the requested attributes and output an appropriate control
@@ -2590,7 +2586,7 @@ class iform_wwt_colour_marked_report {
           $extraParams = array_merge($filter, $auth['read']);
           if ($attribute['attrType']==='iso' && $options['conditionsId']==$attribute['typeId']) {
             $fieldname = $fieldPrefix.$attribute['attrType'].'Attr:'.$attrType['id'];
-            $default = array();
+            $default = [];
             // if this attribute exists on DB, we need to write a hidden with id appended to fieldname and set defaults for checkboxes
             if (is_array(data_entry_helper::$entity_to_load)) {
               $stored_keys = preg_grep('/^'.$fieldname.':[0-9]+$/', array_keys(data_entry_helper::$entity_to_load));
@@ -2603,9 +2599,9 @@ class iform_wwt_colour_marked_report {
             $r .= data_entry_helper::checkbox_group(array_merge(array(
               'label' => lang::get($attrType['caption']),
               'fieldname' => $fieldname,
-              'table'=>'termlists_term',
-              'captionField'=>'term',
-              'valueField'=>'id',
+              'table' => 'termlists_term',
+              'captionField' => 'term',
+              'valueField' => 'id',
               'default'=>$default,
               'extraParams' => $extraParams,
             ), $options));
@@ -2613,9 +2609,9 @@ class iform_wwt_colour_marked_report {
             $r .= data_entry_helper::select(array_merge(array(
               'label' => lang::get($attrType['caption']),
               'fieldname' => $fieldPrefix.$attribute['attrType'].'Attr:'.$attrType['id'],
-              'table'=>'termlists_term',
-              'captionField'=>'term',
-              'valueField'=>'id',
+              'table' => 'termlists_term',
+              'captionField' => 'term',
+              'valueField' => 'id',
               'blankText' => '<Please select>',
               'extraParams' => $extraParams,
             ), $options));
@@ -2687,7 +2683,7 @@ class iform_wwt_colour_marked_report {
       unset($values[$ol_key]);
     }
     // build a sample submission
-    $submission = submission_builder::build_submission($values, array('model'=>'sample',));
+    $submission = submission_builder::build_submission($values, array('model' => 'sample',));
     // add observation/occurrence and identifier data to sample in submission
     $submission = self::add_observation_submissions($submission, $values, $args);
     // add new sample comment
@@ -2708,7 +2704,7 @@ class iform_wwt_colour_marked_report {
   private static function add_sample_comment_submissions($sample, $values) {
     if (array_key_exists('sample_comment:comment', $values) && $values['sample_comment:comment']!=='') {
       // add new sample comment
-      $sample_comment = submission_builder::build_submission($values, array('model'=>'sample_comment',));
+      $sample_comment = submission_builder::build_submission($values, array('model' => 'sample_comment',));
       // add to the main sample submission
       $sample['subModels'][] = array('fkId' => 'sample_id', 'model' => $sample_comment);
     }
@@ -2725,14 +2721,14 @@ class iform_wwt_colour_marked_report {
   private static function add_observation_submissions($sample, $values, $args) {
     // get identifier ids for any stored identifiers which match the submitted identifier codes
     $ident_code_keys = preg_grep('/^idn:[0-9]+:[^:]+:identifier:coded_value$/', array_keys($values));
-    $codes = array();
+    $codes = [];
     foreach ($ident_code_keys as $ident_code_key) {
       $code = $values[$ident_code_key];
       if ($code !== '') {
         $codes[] = $code;
       }
     }
-    $matches = array();
+    $matches = [];
     if (count($codes)>0) {
       $query = array('in'=>array('coded_value', $codes));
       $filter = array('query'=>json_encode($query),);
@@ -2756,7 +2752,7 @@ class iform_wwt_colour_marked_report {
         $so_key_parts = explode(':', $so_key, 3);
         $values[$so_key_parts[2]] = $values[$so_key];
       }
-      $so = submission_builder::build_submission($values, array('model'=>'subject_observation',));
+      $so = submission_builder::build_submission($values, array('model' => 'subject_observation',));
       // create submodel for join to occurrence and add it
       $oso = self::build_occurrence_observation_submission($values);
       $so['subModels'][] = array('fkId' => 'subject_observation_id', 'model' => $oso,);
@@ -2799,7 +2795,7 @@ class iform_wwt_colour_marked_report {
       ), $values);
 
     // build submission
-    $submission = submission_builder::build_submission($values, array('model'=>'occurrences_subject_observation',));
+    $submission = submission_builder::build_submission($values, array('model' => 'occurrences_subject_observation',));
 
     // add super model for occurrence
     // provide defaults if these keys not present
@@ -2808,7 +2804,7 @@ class iform_wwt_colour_marked_report {
       ), $values);
 
     // build submission
-    $occ =  submission_builder::build_submission($values, array('model'=>'occurrence',));
+    $occ =  submission_builder::build_submission($values, array('model' => 'occurrence',));
     $submission['superModels'] = array(
       array('fkId' => 'occurrence_id', 'model' => $occ,),
     );
@@ -2855,7 +2851,7 @@ class iform_wwt_colour_marked_report {
       // unlink the old identifier
       $values['identifiers_subject_observation:deleted'] = 't';
       $iso = submission_builder::build_submission(
-        $values, array('model'=>'identifiers_subject_observation',));
+        $values, array('model' => 'identifiers_subject_observation',));
       $so['subModels'][] = array('fkId' => 'subject_observation_id', 'model' => $iso,);
     }
 
@@ -2874,7 +2870,7 @@ class iform_wwt_colour_marked_report {
       unset($values['identifiers_subject_observation:updated_by_id']);
       unset($values['identifiers_subject_observation:deleted']);
       $iso = submission_builder::build_submission(
-        $values, array('model'=>'identifiers_subject_observation',));
+        $values, array('model' => 'identifiers_subject_observation',));
       $so['subModels'][] = array('fkId' => 'subject_observation_id', 'model' => $iso,);
     }
 
@@ -2893,7 +2889,7 @@ class iform_wwt_colour_marked_report {
       unset($values['identifiers_subject_observation:updated_by_id']);
       unset($values['identifiers_subject_observation:deleted']);
       $iso = submission_builder::build_submission(
-        $values, array('model'=>'identifiers_subject_observation',));
+        $values, array('model' => 'identifiers_subject_observation',));
       // now add the identifier
       unset($values['identifier:id']);
       unset($values['identifier:issue_authority_id']);
@@ -2912,7 +2908,7 @@ class iform_wwt_colour_marked_report {
       unset($values['identifier:updated_on']);
       unset($values['identifier:updated_by_id']);
       unset($values['identifier:deleted']);
-      $i =  submission_builder::build_submission($values, array('model'=>'identifier',));
+      $i =  submission_builder::build_submission($values, array('model' => 'identifier',));
       $iso['superModels'] = array(
         array('fkId' => 'identifier_id', 'model' => $i,),
       );
@@ -2923,7 +2919,7 @@ class iform_wwt_colour_marked_report {
     if ($old_id>0 && $old_id===$new_id && $isoAttrUpdated) {
       // update link to trigger update to isoAttr
       $iso = submission_builder::build_submission(
-        $values, array('model'=>'identifiers_subject_observation',));
+        $values, array('model' => 'identifiers_subject_observation',));
       $so['subModels'][] = array('fkId' => 'subject_observation_id', 'model' => $iso,);
     }
 
@@ -2937,14 +2933,14 @@ class iform_wwt_colour_marked_report {
    * @return array List of css files to include for this form.
    */
   public static function get_css() {
-    return array();
+    return [];
   }
 
   /**
    * Convert the unstructured textarea of default values into a structured array.
    */
   protected static function parse_defaults(&$args) {
-    $result=array();
+    $result=[];
     if (isset($args['defaults']))
       $result = helper_base::explode_lines_key_value_pairs($args['defaults']);
     $args['defaults']=$result;
@@ -3041,7 +3037,7 @@ class iform_wwt_colour_marked_report {
 
   protected function getReportActions() {
     return array(array('display' => 'Actions', 'actions' =>
-        array(array('caption' => lang::get('Edit'), 'url'=>'{currentUrl}', 'urlParams'=>array('sample_id'=>'{sample_id}','subject_observation_id'=>'{subject_observation_id}')))));
+        array(array('caption' => lang::get('Edit'), 'url' => '{currentUrl}', 'urlParams'=>array('sample_id' => '{sample_id}','subject_observation_id' => '{subject_observation_id}')))));
   }
 }
 

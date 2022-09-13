@@ -13,15 +13,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package Client
- * @subpackage PrebuiltForms
  * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers/
  */
 
-require_once('includes/map.php');
-require_once('includes/report.php');
+require_once 'includes/map.php';
+require_once 'includes/report.php';
 
 // TODO DEV
 // picture of species in corner.
@@ -32,9 +30,6 @@ require_once('includes/report.php');
 
 /**
  * Prebuilt Indicia data form that lists the output of any report on a map.
- *
- * @package Client
- * @subpackage PrebuiltForms
  */
 class iform_tree_map_2 {
 
@@ -44,9 +39,9 @@ class iform_tree_map_2 {
    */
   public static function get_tree_map_2_definition() {
     return array(
-      'title'=>'Overview 2',
+      'title' => 'Overview 2',
       'category' => 'Custom Forms',
-      'description'=>'Outputs data from a report onto a map. To work, the report must include a column containing spatial data.'
+      'description' => 'Outputs data from a report onto a map. To work, the report must include a column containing spatial data.'
     );
   }
 
@@ -59,35 +54,35 @@ class iform_tree_map_2 {
       iform_map_get_map_parameters(),
       iform_report_get_minimal_report_parameters(),
       array(array(
-            'name'=>'first_year',
-            'caption'=>'First Year of Data',
-            'description'=>'Used to determine first year displayed in the year control. Final Year will be current year.',
-            'type'=>'int',
-      		'group'=>'Controls'
+            'name' => 'first_year',
+            'caption' => 'First Year of Data',
+            'description' => 'Used to determine first year displayed in the year control. Final Year will be current year.',
+            'type' => 'int',
+      		'group' => 'Controls'
           ),
           array(
-            'name'=>'twinMaps',
-            'caption'=>'Twin Maps',
-            'description'=>'Display a second map, for data comparison.',
-            'type'=>'boolean',
+            'name' => 'twinMaps',
+            'caption' => 'Twin Maps',
+            'description' => 'Display a second map, for data comparison.',
+            'type' => 'boolean',
             'required'=>false,
             'default'=>false,
-            'group'=>'Controls'
+            'group' => 'Controls'
           ),
           array(
-            'name'=>'advancedUI',
-            'caption'=>'Advanced UI',
-            'description'=>'Advanced User Interface: use a slider for date and dot size controls, and a graphical button. Relies on jQuery_ui.',
-            'type'=>'boolean',
+            'name' => 'advancedUI',
+            'caption' => 'Advanced UI',
+            'description' => 'Advanced User Interface: use a slider for date and dot size controls, and a graphical button. Relies on jQuery_ui.',
+            'type' => 'boolean',
             'required'=>false,
             'default'=>false,
-            'group'=>'Controls'
+            'group' => 'Controls'
           ),
           array(
-            'name'=>'dotSize',
-            'caption'=>'Dot Size',
-            'description'=>'Initial size in pixels of observation dots on map. Can be overriden by a control.',
-            'type'=>'select',
+            'name' => 'dotSize',
+            'caption' => 'Dot Size',
+            'description' => 'Initial size in pixels of observation dots on map. Can be overriden by a control.',
+            'type' => 'select',
             'options' => array(
               '2' => '2',
               '3' => '3',
@@ -98,31 +93,31 @@ class iform_tree_map_2 {
             'group' => 'Controls'
           ),
           array(
-            'name'=>'numberOfDates',
-            'caption'=>'Number of Dates',
-            'description'=>'The maximum number of dates displayed on the X-axis. Used to prevent crowding. The minimum spacing is one date displayed per week. Date range is determined by the data.',
-            'type'=>'int',
+            'name' => 'numberOfDates',
+            'caption' => 'Number of Dates',
+            'description' => 'The maximum number of dates displayed on the X-axis. Used to prevent crowding. The minimum spacing is one date displayed per week. Date range is determined by the data.',
+            'type' => 'int',
             'default'=>11,
-            'group'=>'Controls'
+            'group' => 'Controls'
           ),
 		  array(
-      		'name'=>'frameRate',
-      		'caption'=>'Animation Frame Rate',
-      		'description'=>'Number of frames displayed per second.',
-      		'type'=>'int',
+      		'name' => 'frameRate',
+      		'caption' => 'Animation Frame Rate',
+      		'description' => 'Number of frames displayed per second.',
+      		'type' => 'int',
             'default'=>4,
-      		'group'=>'Controls'
+      		'group' => 'Controls'
       	  ),
       	  array(
-      		'name'=>'triggerEvents',
-      		'caption'=>'Event Definition',
-      		'description'=>'JSON encode event definition: an array, one per event type, each with a "name" element, a "type" (either...), an "attr", and a "values"',
-      		'type'=>'textarea',
-      		'group'=>'Events'
+      		'name' => 'triggerEvents',
+      		'caption' => 'Event Definition',
+      		'description' => 'JSON encode event definition: an array, one per event type, each with a "name" element, a "type" (either...), an "attr", and a "values"',
+      		'type' => 'textarea',
+      		'group' => 'Events'
       	  )
       )
     );
-    $retVal = array();
+    $retVal = [];
     foreach($paramArray as $param){
     	if(!in_array($param['name'],
     			array('map_width', 'remember_pos', 'location_boundary_id', 'items_per_page', 'param_ignores', 'param_defaults'/*, 'message_after_save', 'redirect_on_success' */)))
@@ -153,7 +148,7 @@ class iform_tree_map_2 {
     $args['param_defaults'] = '';
     $options = iform_report_get_report_options($args, $readAuth);
 
-    $currentParamValues = array();
+    $currentParamValues = [];
     if (isset($options['extraParams'])) {
     	foreach ($options['extraParams'] as $key=>$value) {
     		// trim data to ensure blank lines are not handled.
@@ -170,18 +165,18 @@ class iform_tree_map_2 {
     // Report record should have location_id, sample_date, species ttl_id, attributes, geometry. created_by_id is optional
     // Event definition: Name|attribute_id|attribute_values
     // Loop through event definitions
-/*    $events = array(array('type'=>'arrayVal', 'name'=>'Budburst', 'attr'=>'289', 'values'=>array(3904,3961,3905,3906,3962,3907)),
-                    array('type'=>'arrayVal', 'name'=>'Leaf', 'attr'=>'289', 'values'=>array(3906,3962,3907)),
-                    array('type'=>'arrayVal', 'name'=>'Flowering', 'attr'=>'291', 'values'=>array(3912,3913,3914,3916,3917,3918)),
-                    array('type'=>'presence', 'name'=>'Presence')); */
+/*    $events = array(array('type' => 'arrayVal', 'name' => 'Budburst', 'attr' => '289', 'values'=>array(3904,3961,3905,3906,3962,3907)),
+                    array('type' => 'arrayVal', 'name' => 'Leaf', 'attr' => '289', 'values'=>array(3906,3962,3907)),
+                    array('type' => 'arrayVal', 'name' => 'Flowering', 'attr' => '291', 'values'=>array(3912,3913,3914,3916,3917,3918)),
+                    array('type' => 'presence', 'name' => 'Presence')); */
     $events = str_replace("\r\n", "\n", $args['triggerEvents']);
     $events = str_replace("\r", "\n", $events);
     $events = explode("\n", trim($events));
 	foreach($events as $idx => $event) $events[$idx] = explode(':',$event);
-	$triggerEvents = array();
+	$triggerEvents = [];
 
-    $SpeciesEventSelections = array();
-    $Species = array();
+    $SpeciesEventSelections = [];
+    $Species = [];
     $r .= '<div id="errorMsg"></div>'.
     	  '<table class="ui-widget ui-widget-content ui-corner-all controls-table" id="controls-table">'.
           '<thead class="ui-widget-header">'.

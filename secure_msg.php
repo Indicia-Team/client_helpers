@@ -13,11 +13,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package	Core
- * @subpackage Controllers
- * @author	Indicia Team
+ * @author Indicia Team
  * @license	http://www.gnu.org/licenses/gpl.html GPL
- * @link 	http://code.google.com/p/indicia/
+ * @link https://github.com/Indicia-Team/client_helpers
  */
 
 /**
@@ -25,9 +23,6 @@
  * Allows data to be encrypted and checked for tampering.
  * Note, there is a copy of this file in client_helpers which
  * must be kept identical to this one.
- *
- * @package	Core
- * @subpackage Helpers
  */
 class secure_msg {
 
@@ -74,7 +69,7 @@ class secure_msg {
       // no secrets to unpack
       return $input;
     }
-     
+
     $secrets = self::unseal($input[self::SEALED], $website_password);
     if (array_key_exists(self::ERROR_MSG, $secrets)) {
       return $secrets;
@@ -85,7 +80,7 @@ class secure_msg {
   }
 
 /**
-  * Unpacks and decrypts a secret response, namely one which begins with __sealed= 
+  * Unpacks and decrypts a secret response, namely one which begins with __sealed=
   * and returns plain text response as a string.
   * 1) base64 decodes sealed string
   * 2) decrypts
@@ -93,7 +88,7 @@ class secure_msg {
   * 4) checks hash matches the data
   *
   * @param array $input an array of the request params.
-  * @return array $unsealed the supplied array with the secrets restored to plain text items. 
+  * @return array $unsealed the supplied array with the secrets restored to plain text items.
   */
   public static function unseal_response($input, $website_password)
   {
@@ -101,10 +96,10 @@ class secure_msg {
   		// no secrets to unpack
   		return $input;
   	}
-  	
+
     return self::unseal(substr($input, strlen(self::SEALED)), $website_password);
   }
-  
+
   /**
    * Unpacks and decrypts the coded data
    * and returns plain text params as an associative array.
@@ -150,7 +145,7 @@ class secure_msg {
     $crypt = mcrypt_generic($td, $plain);
     mcrypt_generic_deinit($td);
     mcrypt_module_close($td);
-     
+
     return $crypt;
   }
 
@@ -176,7 +171,7 @@ class secure_msg {
 
     // trim padding \0, may be cipher dependent
     $plain = rtrim($plain,chr(0));
-     
+
     return $plain;
   }
 }

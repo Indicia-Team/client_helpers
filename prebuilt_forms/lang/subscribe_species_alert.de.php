@@ -14,20 +14,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package	Client
- * @author	Indicia Team
- * @license	http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link 	http://code.google.com/p/indicia/
+ * @author Indicia Team
+ * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
+ * @link https://github.com/Indicia-Team/client_helpers
  */
- 
+
 global $custum_terms;
 
 /**
  * Provides a list of default localisable terms used by the lang class.
- *
- * @package	Client
  */
-$custom_terms = array( 
+$custom_terms = array(
   'You cannot modify a species alert subscription created by someone else' => 'Sie können nur Abonnements zu Artmeldungen ändern, die Sie selbst erstellt haben.',
   'Your details' => 'Angaben zum Anwender',
   'First name' => 'Vorname',
@@ -51,5 +48,5 @@ $custom_terms = array(
   "Subscribe" => "Abonnement erstellen",
   'Your subscription has been saved.' => 'Ihr Abonnement wurde erstellt',
   'There was a problem saving your subscription.' => 'Ihr Abonnement konnte leider nicht erstellt werden'
-  
+
 );

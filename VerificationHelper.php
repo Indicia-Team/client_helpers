@@ -298,7 +298,7 @@ class VerificationHelper {
    *   Status label text.
    */
   public static function getStatusLabel($status, $substatus, $query) {
-    $labels = array();
+    $labels = [];
     self::translateStatusTerms();
     // Grab the term for the status. We don't need to bother with not reviewed status if
     // substatus is plausible.
@@ -368,7 +368,7 @@ class VerificationHelper {
         'columns' => 'key,key_value',
       ),
     ));
-    $workflowTaxonMeaningIDsLogAllComms = array();
+    $workflowTaxonMeaningIDsLogAllComms = [];
     $externalKeys = [];
     foreach ($wfMetadata as $wfMeta) {
       switch ($wfMeta['key']) {
@@ -413,7 +413,7 @@ class VerificationHelper {
     $r = '';
     if (!empty($status)) {
       $hint = self::getStatusLabel($status, $substatus, NULL);
-      $images = array();
+      $images = [];
       if ($status === 'V') {
         $images[] = 'ok-16px';
       }

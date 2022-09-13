@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Indicia, the OPAL Online Recording Toolkit.
  *
@@ -13,18 +14,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package	Client
- * @author	Indicia Team
- * @license	http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link 	http://code.google.com/p/indicia/
+ * @author Indicia Team
+ * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
+ * @link https://github.com/Indicia-Team/client_helpers
  */
 
 global $custom_terms;
 
 /**
  * Language terms for the group_leave form.
- *
- * @package	Client
  */
 
 $custom_terms = array(
@@ -32,5 +30,5 @@ $custom_terms = array(
   'Cancel' => 'Annuléieren',
   'Confirm' => 'Bestätegen',
   'Confirmation' => 'Confirmatioun',
-  'You are no longer participating in {1}!' => 'Dir bedeelegt Iech net méi un {1}!'
+  'You are no longer participating in {1}!' => 'Dir bedeelegt Iech net méi un {1}!',
 );

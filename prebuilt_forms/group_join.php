@@ -13,8 +13,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package Client
- * @subpackage PrebuiltForms
  * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers/
@@ -24,9 +22,6 @@
  * A page allowing a user to join a group. Takes a group_id parameter. If the group is public, then joining is immediate, else the
  * user is added to the pending queue. Example use would be to link to this page using the actions column of a report listing
  * available recording groups.
- *
- * @package Client
- * @subpackage PrebuiltForms
  */
 class iform_group_join {
 
@@ -36,9 +31,9 @@ class iform_group_join {
    */
   public static function get_group_join_definition() {
     return array(
-      'title'=>'Join a group',
+      'title' => 'Join a group',
       'category' => 'Recording groups',
-      'description'=>'A page for joining or requesting membership of a group.',
+      'description' => 'A page for joining or requesting membership of a group.',
       'recommended' => true
     );
   }
@@ -49,15 +44,15 @@ class iform_group_join {
    */
   public static function get_parameters() {
     return array(array(
-      'name'=>'groups_page_path',
-      'caption'=>'Path to main groups page',
-      'description'=>'Path to the Drupal page which my groups are listed on.',
-      'type'=>'text_input'
+      'name' => 'groups_page_path',
+      'caption' => 'Path to main groups page',
+      'description' => 'Path to the Drupal page which my groups are listed on.',
+      'type' => 'text_input'
     ), array(
-      'name'=>'group_home_path',
-      'caption'=>'Path to the group home page',
-      'description'=>'Path to the Drupal page which hosts group home pages.',
-      'type'=>'text_input',
+      'name' => 'group_home_path',
+      'caption' => 'Path to the group home page',
+      'description' => 'Path to the Drupal page which hosts group home pages.',
+      'type' => 'text_input',
       'required'=>false
     ));
   }
@@ -78,7 +73,7 @@ class iform_group_join {
       return self::abort('This form must be called with a group_id in the URL parameters.', $args);
     $auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
     $group = data_entry_helper::get_population_data(array(
-      'table'=>'group',
+      'table' => 'group',
       'extraParams' => $auth['read']+array('id'=>$_GET['group_id']),
       'nocache'=>true
     ));
@@ -88,7 +83,7 @@ class iform_group_join {
     $group = $group[0];
     // Check for an existing group user record
     $existing = data_entry_helper::get_population_data(array(
-      'table'=>'groups_user',
+      'table' => 'groups_user',
       'extraParams' => $auth['read']+array('group_id'=>$_GET['group_id'], 'user_id'=>$user_id),
       'nocache'=>true
     ));

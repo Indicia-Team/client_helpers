@@ -14,11 +14,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package Client
- * @subpackage PrebuiltForms
  * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link http://code.google.com/p/indicia/
+ * @link https://github.com/Indicia-Team/client_helpers
  */
 
 /**
@@ -269,11 +267,11 @@ class iform_dynamic_location extends iform_dynamic {
 
   /**
    * Zoom into location that is not saved in the final location geometry.
-   * 
+   *
    * This function is used when a dynamic_location screen is in add mode, and we just
    * want to automatically zoom the map to a region/site we are adding a
    * location to. This boundary is purely visual and isn't submitted.
-   * 
+   *
    * @param array $readAuth
    *   Read authorisation array.
    * @param string $entity
@@ -282,7 +280,7 @@ class iform_dynamic_location extends iform_dynamic {
    *   ID of the location to display.
    * @param string $view
    *   Type of view used to get the location data from
-   * 
+   *
    * @todo Investigate if zoom_id does the same thing as location_boundary_id
    * (perhaps zoom_id is not needed). Note at the time of writing, both Plant Portal
    * and NPMS use custom forms that rely on this parameter.
@@ -340,13 +338,13 @@ function _getSystem() {
     return selector.val();
   }
 }
- 
+
 /**
  * Switch to satellite layer if zoomed in far enough.
  *
  * Switch to satellite layer if the initial location we are zooming into
  * is closer than the helpToPickPrecisionSwitchAt setting.
- * 
+ *
  * @param object map
  *   Map object.
  */

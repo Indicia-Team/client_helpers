@@ -1,6 +1,6 @@
 <?php
 
-require_once('dynamic_sample_occurrence.php');
+require_once 'dynamic_sample_occurrence.php';
 
 global $indicia_templates;
 
@@ -24,9 +24,9 @@ class iform_icpveg_ozone extends iform_dynamic_sample_occurrence {
 
   public static function get_icpveg_ozone_definition() {
     return array(
-      'title'=>'ICP Vegetaion Ozone Injury Survey',
+      'title' => 'ICP Vegetaion Ozone Injury Survey',
       'category' => 'Specific Surveys',
-      'description'=>'A sample-occurrence form for ICP Vegetation.'
+      'description' => 'A sample-occurrence form for ICP Vegetation.'
     );
   }
 
@@ -47,7 +47,7 @@ class iform_icpveg_ozone extends iform_dynamic_sample_occurrence {
     }
 
     return data_entry_helper::select(array(
-      'fieldname'=>'occurrence:sensitivity_precision',
+      'fieldname' => 'occurrence:sensitivity_precision',
       'label'=>lang::get('ICPVeg Sensitivity'),
       'lookupValues' => array('50000'=>lang::get('ICPVeg Sensitivity 50km')),
       'blankText' => lang::get('ICPVeg Sensitivity blankText'),

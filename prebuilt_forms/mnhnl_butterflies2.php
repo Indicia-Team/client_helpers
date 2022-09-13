@@ -13,26 +13,21 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package	Client
- * @subpackage PrebuiltForms
- * @author	Indicia Team
- * @license	http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link 	http://code.google.com/p/indicia/
+ * @author Indicia Team
+ * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
+ * @link https://github.com/Indicia-Team/client_helpers
  */
 
 /**
  * Prebuilt Indicia data entry form.
  * NB has Drupal specific code.
  *
- * @package	Client
- * @subpackage PrebuiltForms
- *
  * Should be set up in "wizard" buttons mode
  * TBD: extend conditions grid to allow specification of column widths.
  */
 
-require_once('mnhnl_dynamic_1.php');
-require_once('includes/mnhnl_common.php');
+require_once 'mnhnl_dynamic_1.php';
+require_once 'includes/mnhnl_common.php';
 
 class iform_mnhnl_butterflies2 extends iform_mnhnl_dynamic_1 {
   protected static $svcUrl;
@@ -45,7 +40,7 @@ class iform_mnhnl_butterflies2 extends iform_mnhnl_dynamic_1 {
     return array(
       'title'=>self::get_title(),
       'category' => 'MNHNL forms',
-      'description'=>'Luxembourg Butterfly Biomonitoring (site based) form. Inherits from Dynamic 1.'
+      'description' => 'Luxembourg Butterfly Biomonitoring (site based) form. Inherits from Dynamic 1.'
     );
   }
   /**
@@ -57,7 +52,7 @@ class iform_mnhnl_butterflies2 extends iform_mnhnl_dynamic_1 {
   }
 
   public static function get_parameters() {
-    $retVal=array();
+    $retVal=[];
     $parentVal = array_merge(
       parent::get_parameters(),
       iform_mnhnl_getParameters(),
@@ -71,18 +66,18 @@ class iform_mnhnl_butterflies2 extends iform_mnhnl_dynamic_1 {
           'group' => 'Reporting'
         ),
         array(
-          'name'=>'max_species_ids',
-          'caption'=>'max number of species to be returned by a search',
-          'description'=>'The maximum number of species to be returned by the drop downs at any one time.',
+          'name' => 'max_species_ids',
+          'caption' => 'max number of species to be returned by a search',
+          'description' => 'The maximum number of species to be returned by the drop downs at any one time.',
           'default'=>100,
-          'type'=>'int',
+          'type' => 'int',
           'group' => 'Species'
         ),
         array(
-          'name'=>'attributeValidation',
-          'caption'=>'Attribute Validation Rules',
-          'description'=>'Client Validation rules to be enforced on attributes: allows more options than allowed by straight class led validation.',
-          'type'=>'textarea',
+          'name' => 'attributeValidation',
+          'caption' => 'Attribute Validation Rules',
+          'description' => 'Client Validation rules to be enforced on attributes: allows more options than allowed by straight class led validation.',
+          'type' => 'textarea',
           'required' => false,
           'group' => 'User Interface'
         )
@@ -432,7 +427,7 @@ jQuery("#fieldset-'.$options['boltTo'].'").find("legend").after("'.$retVal.'");'
       $session = curl_init($url);
       curl_setopt($session, CURLOPT_RETURNTRANSFER, true);
       $locationEntities = json_decode(curl_exec($session), true);
-      self::$locationsInGrid=array();
+      self::$locationsInGrid=[];
       // merge the locations and existing subsamples lists
       if (isset($locationEntities))
         foreach($locationEntities as $entity){
@@ -466,7 +461,7 @@ jQuery("#fieldset-'.$options['boltTo'].'").find("legend").after("'.$retVal.'");'
 <td class=\"ui-state-default remove-sgnewrow\" >X</td><td class=\"sggrid-namecell\"></td>";
     // ordering is the order they are initially created.
     // need to get a sorted list of occurrence IDs; then generate a list of ttls in order set by occurrences.
-    $fullOccList = array();
+    $fullOccList = [];
     if (isset($subsamples))
       foreach($subsamples as $key => $entity){
         // have to disabled averything in the cloneable grid due to validation issues.
@@ -478,8 +473,8 @@ jQuery("#fieldset-'.$options['boltTo'].'").find("legend").after("'.$retVal.'");'
           $session = curl_init($url);
           curl_setopt($session, CURLOPT_RETURNTRANSFER, true);
           $occs = json_decode(curl_exec($session), true);
-          $occList = array();
-          $subsampleOccs = array();
+          $occList = [];
+          $subsampleOccs = [];
           foreach($occs as $an_occ) {
             $occList[] = $an_occ['id'];
             $fullOccList[intval($an_occ['id'])] = $an_occ['taxa_taxon_list_id'];
@@ -490,13 +485,13 @@ jQuery("#fieldset-'.$options['boltTo'].'").find("legend").after("'.$retVal.'");'
           $session = curl_init($url);
           curl_setopt($session, CURLOPT_RETURNTRANSFER, true);
           $occAttributes = json_decode(curl_exec($session), true);
-          $subsampleOccAttrs = array();
+          $subsampleOccAttrs = [];
           foreach($occAttributes as $an_occAttr) {
             if($an_occAttr['occurrence_attribute_id'] == $countAttr)
               $subsampleOccAttrs[$an_occAttr['occurrence_id']]=$an_occAttr;
           }
           $subsamples[$key]['occattrs'] = $subsampleOccAttrs;
-        } else $subsamples[$key]['occurrences'] = array();
+        } else $subsamples[$key]['occurrences'] = [];
       }
     $ret .= '</table>';
     /* We will make the assumption that only one of these will be put onto a form.
@@ -512,13 +507,13 @@ jQuery("#fieldset-'.$options['boltTo'].'").find("legend").after("'.$retVal.'");'
       $extraParams['taxon_list_id'] = array($args['list_id'], $args['extra_list_id']);
     $species_list_args=array_merge(array(
           'label'=>lang::get('speciesgrid:taxa_taxon_list_id'),
-          'fieldname'=>'speciesgrid_taxa_taxon_list_id',
-          'id'=>'speciesgrid_taxa_taxon_list_id',
-          'table'=>'taxa_taxon_list',
-          'captionField'=>'taxon',
-          'valueField'=>'id',
+          'fieldname' => 'speciesgrid_taxa_taxon_list_id',
+          'id' => 'speciesgrid_taxa_taxon_list_id',
+          'table' => 'taxa_taxon_list',
+          'captionField' => 'taxon',
+          'valueField' => 'id',
           'columns'=>2,
-          'parentField'=>'parent_id',
+          'parentField' => 'parent_id',
           'extraParams'=>$extraParams,
           'numValues'=>$args['max_species_ids']
     ), $options);
@@ -534,7 +529,7 @@ jQuery("#fieldset-'.$options['boltTo'].'").find("legend").after("'.$retVal.'");'
     $ret .= '</tr></thead><tbody>';
     $taxonRow=0;
     ksort($fullOccList);
-    $taxonList=array();
+    $taxonList=[];
     foreach($fullOccList as $occ=>$ttlid){
       if(!in_array($ttlid, $taxonList)) $taxonList[] = $ttlid; // we want the unique entries but keeping order of initial appearance in array
     }
@@ -578,17 +573,17 @@ jQuery('#mnhnl-species-grid').find('tr:eq(".($taxonRow-1).")').data('taxonRow', 
       foreach($subsamples as $key => $entity){
       // pretend that the no observations are actually part of the conditions grid.
         $attrArgs = array(
-         'valuetable'=>'sample_attribute_value',
-         'attrtable'=>'sample_attribute',
-         'key'=>'sample_id',
-         'fieldprefix'=>'smpAttr',
+         'valuetable' => 'sample_attribute_value',
+         'attrtable' => 'sample_attribute',
+         'key' => 'sample_id',
+         'fieldprefix' => 'smpAttr',
          'extraParams'=>$auth['read'],
          'survey_id'=>$args['survey_id']
         );
         $defAttrOptions = array_merge(
               array('cellClass' => 'smp-'.($key+1),
                 'class' => 'narrow',
-                'extraParams' => array_merge($auth['read'], array('view'=>'detail')),
+                'extraParams' => array_merge($auth['read'], array('view' => 'detail')),
                 'language' => 'eng'), //force english
               $options);
         if(isset($entity['sample_id'])) $attrArgs['id'] = $entity['sample_id'];
@@ -616,8 +611,8 @@ resetSpeciesGridHeader = function(){
   // easiest way to get a scrollable table body
   $('#mnhnl-species-grid').find('th,td').each(function(){ $(this).css('width', ''); });
   jQuery('#mnhnl-species-grid > thead').show();
-  var headerWidths = new Array(); // treat separately as may have different CSS
-  var columnWidths = new Array();
+  var headerWidths = new []; // treat separately as may have different CSS
+  var columnWidths = new [];
   $('#mnhnl-species-grid > thead').find('th').each(function (index) {
     headerWidths[index] = $(this).width();
   });
@@ -715,16 +710,16 @@ indiciaFns.bindTabsActivate(jQuery(jQuery('#species').parent()), function(e, ui)
   	$extraParams = $auth['read'] + array('view' => 'detail', 'reset_timeout' => 'true');
     // A single species entry control of some kind
     $attrArgs = array(
-       'valuetable'=>'sample_attribute_value',
-       'attrtable'=>'sample_attribute',
-       'key'=>'sample_id',
-       'fieldprefix'=>'smpAttr',
+       'valuetable' => 'sample_attribute_value',
+       'attrtable' => 'sample_attribute',
+       'key' => 'sample_id',
+       'fieldprefix' => 'smpAttr',
        'extraParams'=>$auth['read'],
        'survey_id'=>$args['survey_id']
       );
     $defAttrOptions = array_merge(
               array('class' => 'cgAttr',
-                'extraParams' => array_merge($auth['read'], array('view'=>'detail')),
+                'extraParams' => array_merge($auth['read'], array('view' => 'detail')),
                 'language' => 'eng'), //force english
               $options);
     $tabName = (isset($options['tabNameFilter']) ? $options['tabNameFilter'] : null);
@@ -739,7 +734,7 @@ jQuery('#cgCloneableTable').find('td').attr('disabled','disabled').find('input,s
     $sampleAttributes = data_entry_helper::getAttributes($attrArgs, false);
     $numRows = (isset($options['NumRows']) ? $options['NumRows'] : 2);
     $numAttrCols = (isset($options['NumAttrCols']) ? $options['NumAttrCols'] : 3);
-    $attrHtml = array();
+    $attrHtml = [];
     for($i=0; $i< $numRows; $i++){
       $attrHtml[$i] = self::get_sample_attribute_html($sampleAttributes, $args, $defAttrOptions, $tabName, 'Row'.($i+1), $i!=0);
     }
@@ -792,7 +787,7 @@ jQuery('#conditions-grid > tbody').find('tr:eq(".($numRows*($cgRowNum-1)+$i).")'
           }
           $attrArgs['fieldprefix']=$fieldprefix.'smpAttr';
           $sampleAttributes = data_entry_helper::getAttributes($attrArgs, false);
-          $attrHtml = array();
+          $attrHtml = [];
           for($i=0; $i< $numRows; $i++){
             $attrHtml[$i] = self::get_sample_attribute_html($sampleAttributes, $args, $defAttrOptions, $tabName, 'Row'.($i+1), $i!=0);
           }
@@ -1124,8 +1119,8 @@ hook_new_site_added = function(feature) {
     } // else just load the string
     $sampleMod = submission_builder::wrap_with_images($values, 'sample');
     if(isset($values['sample:deleted'])) return($sampleMod);
-    $subsamples = array();
-    $locations = array();
+    $subsamples = [];
+    $locations = [];
     foreach($values as $key => $value){
       $parts = explode(':', $key, 4);
       //     $cloneprefix='CG:--rownum--:--sampleid--:smpAttr:--attr_id--[:--attr_value_id--]
@@ -1158,8 +1153,8 @@ hook_new_site_added = function(feature) {
     }
     // locations and subsamples arrays are indexed by cgrownum.
     // next create an array of subsample models with their occurrences attached.
-    $subsamples2 = array();
-    $newsgrowContents = array(); // array indexed on sgrownum of subarrays of samples which have new occurrences
+    $subsamples2 = [];
+    $newsgrowContents = []; // array indexed on sgrownum of subarrays of samples which have new occurrences
     ksort($subsamples); // by cgrownum
     foreach($subsamples as $sampleIndex => $subsampleFields) {
       if(isset($subsampleFields['date']) && $subsampleFields['date']['value']!=""){
@@ -1172,7 +1167,7 @@ hook_new_site_added = function(feature) {
           $locations[$sampleIndex]['centroid_sref_system']=array('value' => $values['location:centroid_sref_system']);
           $subsample['model']['superModels'] = array(array('fkId' => 'location_id','model' => array('id' => 'location','fields' => $locations[$sampleIndex], 'subModels'=>array($locweb))));
         }
-        $occs=array();
+        $occs=[];
         foreach($values as $key => $value){
           $parts = explode(':', $key, 7);
           // SG:--sgrownum--:--cgrownum--:--sampleid--:--ttlid--:--occid--:occAttr:--attr_id--[:--attr_value_id--]
@@ -1194,7 +1189,7 @@ hook_new_site_added = function(feature) {
               $occ['model']['fields']['id']=array('value' => $parts[5]);
             } else {
               if(!isset($newsgrowContents[intval($parts[1])]))
-                $newsgrowContents[intval($parts[1])]=array();
+                $newsgrowContents[intval($parts[1])]=[];
               $newsgrowContents[intval($parts[1])][]=$sampleIndex;
             }
             $occs[] = $occ;
@@ -1215,8 +1210,8 @@ hook_new_site_added = function(feature) {
     // finally create an unindexed array of subsamples, in the order of sgrownum....
     // don't care about order of already saved occurrences, only new ones: in fact old ones may mess things up!
     // The order in which we need to save the occurrences is how they are displayed in the form. This allows us to recreate the form later on.
-    $subsamples3 = array(); // don't want this indexed
-    $subsampleslist = array(); // but need a list of those included so far!
+    $subsamples3 = []; // don't want this indexed
+    $subsampleslist = []; // but need a list of those included so far!
     // new sgrowContents just has a list of cgrownums for that sgrow
     ksort($newsgrowContents);
     foreach($newsgrowContents as $sgrownum => $list){ // this is done in sgrownum order.
@@ -1240,8 +1235,8 @@ hook_new_site_added = function(feature) {
 
   protected static function getReportActions() {
     return array(array('display' => '', 'actions' =>
-            array(array('caption' => lang::get('Edit'), 'url'=>'{currentUrl}', 'urlParams'=>array('sample_id'=>'{sample_id}')))),
+            array(array('caption' => lang::get('Edit'), 'url' => '{currentUrl}', 'urlParams'=>array('sample_id' => '{sample_id}')))),
         array('display' => '', 'actions' =>
-            array(array('caption' => lang::get('Delete'), 'javascript'=>'deleteSurvey({sample_id})'))));
+            array(array('caption' => lang::get('Delete'), 'javascript' => 'deleteSurvey({sample_id})'))));
   }
 }

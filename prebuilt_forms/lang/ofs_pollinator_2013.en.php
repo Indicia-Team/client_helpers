@@ -13,18 +13,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package	Client
- * @author	Indicia Team
- * @license	http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link 	http://code.google.com/p/indicia/
+ * @author Indicia Team
+ * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
+ * @link https://github.com/Indicia-Team/client_helpers
  */
 
 include_once 'dynamic.en.php';
 
 /**
  * Additional language terms or overrides for dynamic_sample_occurrence form.
- *
- * @package	Client
  */
 $custom_terms = array_merge($custom_terms, array(
 		'Overall Comment' => 'Did you make any additional observations?',

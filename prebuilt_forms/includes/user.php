@@ -30,25 +30,25 @@
 function iform_user_get_user_parameters() {
   return array(
     array (
-        'name'=>'uid_attr_id',
-        'caption'=>'User ID Attribute ID',
-        'description'=>'Indicia ID for the sample attribute that stores the CMS User ID.',
-        'type'=>'smpAttr',
-        'group'=>'Sample Attributes'
+        'name' => 'uid_attr_id',
+        'caption' => 'User ID Attribute ID',
+        'description' => 'Indicia ID for the sample attribute that stores the CMS User ID.',
+        'type' => 'smpAttr',
+        'group' => 'Sample Attributes'
     ),
     array(
-        'name'=>'username_attr_id',
-        'caption'=>'Username Attribute ID',
-        'description'=>'Indicia ID for the sample attribute that stores the user\'s username.',
-        'type'=>'smpAttr',
-        'group'=>'Sample Attributes'
+        'name' => 'username_attr_id',
+        'caption' => 'Username Attribute ID',
+        'description' => 'Indicia ID for the sample attribute that stores the user\'s username.',
+        'type' => 'smpAttr',
+        'group' => 'Sample Attributes'
     ),
     array(
-        'name'=>'email_attr_id',
-        'caption'=>'Email Attribute ID',
-        'description'=>'Indicia ID for the sample attribute that stores the user\'s email.',
-        'type'=>'smpAttr',
-        'group'=>'Sample Attributes'
+        'name' => 'email_attr_id',
+        'caption' => 'Email Attribute ID',
+        'description' => 'Indicia ID for the sample attribute that stores the user\'s email.',
+        'type' => 'smpAttr',
+        'group' => 'Sample Attributes'
     )
   );
 }
@@ -79,7 +79,7 @@ function iform_user_get_hidden_inputs($args) {
  * @return array Associative array.
  */
 function get_options_array_with_user_data($listData) {
-  $r = array();
+  $r = [];
   if ($listData != ''){
     $params = helper_base::explode_lines($listData);
     foreach ($params as $param) {
@@ -190,7 +190,7 @@ function apply_user_replacements($original) {
  * builds the attribute html.
  */
 function get_attr_options_array_with_user_data($listData) {
-  $r = array();
+  $r = [];
   $data=get_options_array_with_user_data($listData);
   foreach ($data as $key=>$value) {
     $tokens = explode('|', $key);

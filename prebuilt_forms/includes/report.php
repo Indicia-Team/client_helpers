@@ -128,7 +128,7 @@ function iform_report_get_report_parameters() {
         'name' => 'report_group',
         'caption' => 'Report group',
         'description' => 'When using several reports on a single page (e.g. ' .
-            '<a href="http://code.google.com/p/indicia/wiki/DrupalDashboardReporting">dashboard reporting</a>) ' .
+            '<a href="https://github.com/Indicia-Team/client_helperswiki/DrupalDashboardReporting">dashboard reporting</a>) ' .
             'you must ensure that all reports that share a set of input parameters have the same report group as ' .
             'the parameters report.',
         'type' => 'text_input',
@@ -213,8 +213,8 @@ function iform_report_get_report_options($args, $readAuth) {
   $presets = get_options_array_with_user_data($args['param_presets']);
   $defaults = get_options_array_with_user_data($args['param_defaults']);
   $ignores = (isset($args['param_ignores']) && trim($args['param_ignores']) != '') ?
-    helper_base::explode_lines($args['param_ignores']) : array();
-  $param_lookup_extras = array();
+    helper_base::explode_lines($args['param_ignores']) : [];
+  $param_lookup_extras = [];
   if (isset($args['param_lookup_extras'])) {
     $paramlx = helper_base::explode_lines($args['param_lookup_extras']);
     foreach ($paramlx as $param) {
@@ -223,7 +223,7 @@ function iform_report_get_report_options($args, $readAuth) {
         if (count($tokens) === 2) {
           $tokens2 = explode('=', $tokens[1], 2);
           if (count($tokens2) === 2) {
-            if (!isset($param_lookup_extras[$tokens[0]])) $param_lookup_extras[$tokens[0]] = array();
+            if (!isset($param_lookup_extras[$tokens[0]])) $param_lookup_extras[$tokens[0]] = [];
             $param_lookup_extras[$tokens[0]][$tokens2[0]] = explode(',', $tokens2[1]);
           }
           else {
@@ -237,11 +237,11 @@ function iform_report_get_report_options($args, $readAuth) {
     }
   }
   else {
-    $param_lookup_extras = array();
+    $param_lookup_extras = [];
   }
 
   // Default columns behaviour is to just include anything returned by the report.
-  $columns = array();
+  $columns = [];
   // This can be overridden.
   if (isset($args['columns_config']) && !empty($args['columns_config'])) {
     $columns = json_decode($args['columns_config'], TRUE);

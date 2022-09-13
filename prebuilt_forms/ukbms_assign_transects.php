@@ -32,9 +32,9 @@ class iform_ukbms_assign_transects {
    */
   public static function get_ukbms_assign_transects_definition() {
     return array(
-      'title'=>'UKBMS Location assigner',
+      'title' => 'UKBMS Location assigner',
       'category' => 'BMS Specific forms',
-      'description'=>'Form for requesting exsting sites be assigned to a user.'
+      'description' => 'Form for requesting exsting sites be assigned to a user.'
     );
   }
 
@@ -57,68 +57,68 @@ class iform_ukbms_assign_transects {
           'default' => 30,
         ),
         array(
-          'name'=>'main_type_term_1',
-          'caption'=>'Location type term 1',
-          'description'=>'Select the term used for the first main site location type.',
+          'name' => 'main_type_term_1',
+          'caption' => 'Location type term 1',
+          'description' => 'Select the term used for the first main site location type.',
           'type' => 'select',
-          'table'=>'termlists_term',
-          'captionField'=>'term',
-          'valueField'=>'term',
-          'extraParams' => array('termlist_external_key'=>'indicia:location_types'),
+          'table' => 'termlists_term',
+          'captionField' => 'term',
+          'valueField' => 'term',
+          'extraParams' => array('termlist_external_key' => 'indicia:location_types'),
           'required' => true,
-          'group'=>'Location Types',
+          'group' => 'Location Types',
         ),
         array(
-          'name'=>'main_type_term_2',
-          'caption'=>'Location type term 2',
-          'description'=>'Select the term used for the second main site location type.',
+          'name' => 'main_type_term_2',
+          'caption' => 'Location type term 2',
+          'description' => 'Select the term used for the second main site location type.',
           'type' => 'select',
-          'table'=>'termlists_term',
-          'captionField'=>'term',
-          'valueField'=>'term',
-          'extraParams' => array('termlist_external_key'=>'indicia:location_types'),
+          'table' => 'termlists_term',
+          'captionField' => 'term',
+          'valueField' => 'term',
+          'extraParams' => array('termlist_external_key' => 'indicia:location_types'),
           'required' => false,
-          'group'=>'Location Types',
+          'group' => 'Location Types',
         ),
         array(
-          'name'=>'main_type_term_3',
-          'caption'=>'Location type term 3',
-          'description'=>'Select the term used for the third main site location type.',
+          'name' => 'main_type_term_3',
+          'caption' => 'Location type term 3',
+          'description' => 'Select the term used for the third main site location type.',
           'type' => 'select',
-          'table'=>'termlists_term',
-          'captionField'=>'term',
-          'valueField'=>'term',
-          'extraParams' => array('termlist_external_key'=>'indicia:location_types'),
+          'table' => 'termlists_term',
+          'captionField' => 'term',
+          'valueField' => 'term',
+          'extraParams' => array('termlist_external_key' => 'indicia:location_types'),
           'required' => false,
-          'group'=>'Location Types',
+          'group' => 'Location Types',
         ),
         array(
-          'name'=>'cms_attr_id',
-          'caption'=>'CMS Attribute',
-          'description'=>'Indicia multi-value location attribute that records the CMS user assigned to a location.',
-          'type'=>'select',
-          'table'=>'location_attribute',
-          'valueField'=>'id',
-          'captionField'=>'caption',
+          'name' => 'cms_attr_id',
+          'caption' => 'CMS Attribute',
+          'description' => 'Indicia multi-value location attribute that records the CMS user assigned to a location.',
+          'type' => 'select',
+          'table' => 'location_attribute',
+          'valueField' => 'id',
+          'captionField' => 'caption',
           'required' => true,
-          'group'=>'Location Attributes',
+          'group' => 'Location Attributes',
         ),
         array(
-          'name'=>'holiday_attr_id',
-          'caption'=>'Holiday square Attribute',
-          'description'=>'Indicia boolean location attribute that records whether a location is a holiday square.',
-          'type'=>'select',
-          'table'=>'location_attribute',
-          'valueField'=>'id',
-          'captionField'=>'caption',
+          'name' => 'holiday_attr_id',
+          'caption' => 'Holiday square Attribute',
+          'description' => 'Indicia boolean location attribute that records whether a location is a holiday square.',
+          'type' => 'select',
+          'table' => 'location_attribute',
+          'valueField' => 'id',
+          'captionField' => 'caption',
           'required' => true,
-          'group'=>'Location Attributes',
+          'group' => 'Location Attributes',
         ),
         array(
-          'name'=>'email',
-          'caption'=>'Email to send messages to',
-          'description'=>'Email to send messages to.',
-          'type'=>'string',
+          'name' => 'email',
+          'caption' => 'Email to send messages to',
+          'description' => 'Email to send messages to.',
+          'type' => 'string',
           'required' => true,
         )
       ));
@@ -154,7 +154,7 @@ class iform_ukbms_assign_transects {
     $auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
     $auth['write_tokens']['persist_auth'] = true;
 
-    $typeTerms = array();
+    $typeTerms = [];
     if(!empty($args['main_type_term_1'])) $typeTerms[] = $args['main_type_term_1'];
     if(!empty($args['main_type_term_2'])) $typeTerms[] = $args['main_type_term_2'];
     if(!empty($args['main_type_term_3'])) $typeTerms[] = $args['main_type_term_3'];
@@ -164,12 +164,12 @@ class iform_ukbms_assign_transects {
       $lookUpValues[$termDetails['id']] = $termDetails['term'];
     }
 
-    $preLoad=array();
-    $headers = array();
+    $preLoad=[];
+    $headers = [];
     $headers[] = 'MIME-Version: 1.0';
     $headers[] = 'Content-type: text/html; charset=UTF-8;';
     if (!empty(\Drupal::state()->get('site_mail'))) {
-		$emailFrom=\Drupal::state()->get('site_mail');	
+		$emailFrom=\Drupal::state()->get('site_mail');
 	}
     if (!empty($emailFrom)) {
       $headers[] = 'From: '. $emailFrom;
@@ -227,12 +227,12 @@ class iform_ukbms_assign_transects {
             case 'unassign_holiday':
               $location_attr_list_args=array(
               'nocache'=>true,
-              'extraParams'=>array_merge(array('view'=>'list',
+              'extraParams'=>array_merge(array('view' => 'list',
               'website_id'=>$args['website_id'],
               'location_id' => $matches[2],
               'location_attribute_id' => $args['cms_attr_id'],
               'value' => $matches[3]), $auth['read']),
-              'table'=>'location_attribute_value');
+              'table' => 'location_attribute_value');
               $locAttrList = data_entry_helper::get_population_data($location_attr_list_args);
               foreach($locAttrList as $locAttr) {
                 $Model = submission_builder::wrap(array(

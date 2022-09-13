@@ -13,24 +13,19 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package	Client
- * @subpackage PrebuiltForms
- * @author	Indicia Team
- * @license	http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link 	http://code.google.com/p/indicia/
+ * @author Indicia Team
+ * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
+ * @link https://github.com/Indicia-Team/client_helpers
  */
 
 /**
  * Prebuilt Indicia data entry form.
  * NB has Drupal specific code. Relies on presence of IForm Proxy.
- *
- * @package	Client
- * @subpackage PrebuiltForms
  */
 
-require_once('includes/map.php');
-require_once('includes/language_utils.php');
-require_once('includes/user.php');
+require_once 'includes/map.php';
+require_once 'includes/language_utils.php';
+require_once 'includes/user.php';
 
 class iform_pollenators {
 
@@ -56,358 +51,358 @@ class iform_pollenators {
      iform_map_get_georef_parameters(),
      array(
 //        array(
-//          'name'=>'spatial_systems',
-//          'caption'=>'Allowed Spatial Ref Systems',
-//          'description'=>'List of allowable spatial reference systems, comma separated. Use the spatial ref system code (e.g. OSGB or the EPSG code number such as 4326).',
-//          'type'=>'string',
-//          'group'=>'Map'
+//          'name' => 'spatial_systems',
+//          'caption' => 'Allowed Spatial Ref Systems',
+//          'description' => 'List of allowable spatial reference systems, comma separated. Use the spatial ref system code (e.g. OSGB or the EPSG code number such as 4326).',
+//          'type' => 'string',
+//          'group' => 'Map'
 //        ),
       array(
-      	'name'=>'survey_id',
-        'caption'=>'Survey ID',
-        'description'=>'The Indicia ID of the survey that data will be posted into.',
-        'type'=>'int'
+      	'name' => 'survey_id',
+        'caption' => 'Survey ID',
+        'description' => 'The Indicia ID of the survey that data will be posted into.',
+        'type' => 'int'
       ),
       array(
-      	'name'=>'percent_insects',
-        'caption'=>'Insect Identification Percentage',
-        'description'=>'The percentage of insects that must be identified before the collection may be completed.',
-        'type'=>'int'
+      	'name' => 'percent_insects',
+        'caption' => 'Insect Identification Percentage',
+        'description' => 'The percentage of insects that must be identified before the collection may be completed.',
+        'type' => 'int'
       ),
       array(
-      	'name'=>'gallery_node',
-        'caption'=>'Gallery Node',
-        'description'=>'The DRUPAL node number for the Gallery/Filter node.',
-        'type'=>'int'
+      	'name' => 'gallery_node',
+        'caption' => 'Gallery Node',
+        'description' => 'The DRUPAL node number for the Gallery/Filter node.',
+        'type' => 'int'
       ),
       array(
-          'name'=>'protocol_attr_id',
-          'caption'=>'Protocol Attribute ID',
-          'description'=>'Indicia ID for the sample attribute that stores the Protocol.',
-          'type'=>'int',
-          'group'=>'Collection Attributes'
+          'name' => 'protocol_attr_id',
+          'caption' => 'Protocol Attribute ID',
+          'description' => 'Indicia ID for the sample attribute that stores the Protocol.',
+          'type' => 'int',
+          'group' => 'Collection Attributes'
       ),
       array(
-          'name'=>'complete_attr_id',
-          'caption'=>'Completeness Attribute ID',
-          'description'=>'Indicia ID for the sample attribute that stores whether the collection is complete.',
-          'type'=>'int',
-          'group'=>'Collection Attributes'
+          'name' => 'complete_attr_id',
+          'caption' => 'Completeness Attribute ID',
+          'description' => 'Indicia ID for the sample attribute that stores whether the collection is complete.',
+          'type' => 'int',
+          'group' => 'Collection Attributes'
       ),
         array(
-          'name'=>'uid_attr_id',
-          'caption'=>'User ID Attribute ID',
-          'description'=>'Indicia ID for the sample attribute that stores the CMS User ID.',
-          'type'=>'smpAttr',
-          'group'=>'Collection Attributes'
+          'name' => 'uid_attr_id',
+          'caption' => 'User ID Attribute ID',
+          'description' => 'Indicia ID for the sample attribute that stores the CMS User ID.',
+          'type' => 'smpAttr',
+          'group' => 'Collection Attributes'
         ),
         array(
-          'name'=>'username_attr_id',
-          'caption'=>'Username Attribute ID',
-          'description'=>'Indicia ID for the sample attribute that stores the user\'s username.',
-          'type'=>'smpAttr',
-          'group'=>'Collection Attributes'
+          'name' => 'username_attr_id',
+          'caption' => 'Username Attribute ID',
+          'description' => 'Indicia ID for the sample attribute that stores the user\'s username.',
+          'type' => 'smpAttr',
+          'group' => 'Collection Attributes'
         ),
         array(
-          'name'=>'email_attr_id',
-          'caption'=>'Email Attribute ID',
-          'description'=>'Indicia ID for the sample attribute that stores the user\'s email.',
-          'type'=>'smpAttr',
-          'group'=>'Collection Attributes'
+          'name' => 'email_attr_id',
+          'caption' => 'Email Attribute ID',
+          'description' => 'Indicia ID for the sample attribute that stores the user\'s email.',
+          'type' => 'smpAttr',
+          'group' => 'Collection Attributes'
         ),
 
       array(
-          'name'=>'flower_list_id',
-          'caption'=>'Flower Species List ID',
-          'description'=>'The Indicia ID for the species list that flowers can be selected from.',
-          'type'=>'int',
-          'group'=>'Floral Station Attributes'
+          'name' => 'flower_list_id',
+          'caption' => 'Flower Species List ID',
+          'description' => 'The Indicia ID for the species list that flowers can be selected from.',
+          'type' => 'int',
+          'group' => 'Floral Station Attributes'
           ),
       array(
-          'name'=>'location_picture_camera_attr_id',
-          'caption'=>'Location Picture Camera Attribute ID',
-          'description'=>'Indicia ID for the location attribute that stores the Camera EXIF data for the location picture.',
-          'type'=>'int',
-          'group'=>'Floral Station Attributes'
+          'name' => 'location_picture_camera_attr_id',
+          'caption' => 'Location Picture Camera Attribute ID',
+          'description' => 'Indicia ID for the location attribute that stores the Camera EXIF data for the location picture.',
+          'type' => 'int',
+          'group' => 'Floral Station Attributes'
             ),
       array(
-          'name'=>'location_picture_datetime_attr_id',
-          'caption'=>'Location Picture Datetime Attribute ID',
-          'description'=>'Indicia ID for the location attribute that stores the DateTime EXIF data for the location picture.',
-          'type'=>'int',
-          'group'=>'Floral Station Attributes'
+          'name' => 'location_picture_datetime_attr_id',
+          'caption' => 'Location Picture Datetime Attribute ID',
+          'description' => 'Indicia ID for the location attribute that stores the DateTime EXIF data for the location picture.',
+          'type' => 'int',
+          'group' => 'Floral Station Attributes'
       ),
       array(
-          'name'=>'occurrence_picture_camera_attr_id',
-          'caption'=>'Flower and Insect Picture Camera Attribute ID',
-          'description'=>'Indicia ID for the occurrence attribute that stores the Camera EXIF data for the flower and insect pictures.',
-          'type'=>'int',
-          'group'=>'Floral Station Attributes'
+          'name' => 'occurrence_picture_camera_attr_id',
+          'caption' => 'Flower and Insect Picture Camera Attribute ID',
+          'description' => 'Indicia ID for the occurrence attribute that stores the Camera EXIF data for the flower and insect pictures.',
+          'type' => 'int',
+          'group' => 'Floral Station Attributes'
             ),
       array(
-          'name'=>'occurrence_picture_datetime_attr_id',
-          'caption'=>'Flower and Insect Picture Datetime Attribute ID',
-          'description'=>'Indicia ID for the occurrence attribute that stores the DateTime EXIF data for the flower and insect pictures.',
-          'type'=>'int',
-          'group'=>'Floral Station Attributes'
+          'name' => 'occurrence_picture_datetime_attr_id',
+          'caption' => 'Flower and Insect Picture Datetime Attribute ID',
+          'description' => 'Indicia ID for the occurrence attribute that stores the DateTime EXIF data for the flower and insect pictures.',
+          'type' => 'int',
+          'group' => 'Floral Station Attributes'
             ),
       array(
-          'name'=>'flower_type_attr_id',
-          'caption'=>'Flower Type Attribute ID',
-          'description'=>'Indicia ID for the occurrence attribute that stores how the flower got there.',
-          'type'=>'int',
-          'group'=>'Floral Station Attributes'
+          'name' => 'flower_type_attr_id',
+          'caption' => 'Flower Type Attribute ID',
+          'description' => 'Indicia ID for the occurrence attribute that stores how the flower got there.',
+          'type' => 'int',
+          'group' => 'Floral Station Attributes'
             ),
       array(
-          'name'=>'habitat_attr_id',
-          'caption'=>'habitat Attribute ID',
-          'description'=>'Indicia ID for the location attribute that describes the habitat.',
-          'type'=>'int',
-          'group'=>'Floral Station Attributes'
+          'name' => 'habitat_attr_id',
+          'caption' => 'habitat Attribute ID',
+          'description' => 'Indicia ID for the location attribute that describes the habitat.',
+          'type' => 'int',
+          'group' => 'Floral Station Attributes'
             ),
       array(
-          'name'=>'distance_attr_id',
-          'caption'=>'Distance Attribute ID',
-          'description'=>'Indicia ID for the location attribute that stores how far the nearest hive is.',
-          'type'=>'int',
-          'group'=>'Floral Station Attributes'
+          'name' => 'distance_attr_id',
+          'caption' => 'Distance Attribute ID',
+          'description' => 'Indicia ID for the location attribute that stores how far the nearest hive is.',
+          'type' => 'int',
+          'group' => 'Floral Station Attributes'
       ),
       array(
-          'name'=>'within50m_attr_id',
-          'caption'=>'within50m Attribute ID',
-          'description'=>'Indicia ID for the location attribute that describes whether the location is within 50m of a grand culture.',
-          'type'=>'int',
-          'group'=>'Floral Station Attributes'
+          'name' => 'within50m_attr_id',
+          'caption' => 'within50m Attribute ID',
+          'description' => 'Indicia ID for the location attribute that describes whether the location is within 50m of a grand culture.',
+          'type' => 'int',
+          'group' => 'Floral Station Attributes'
       ),
 
       array(
-          'name'=>'start_time_attr_id',
-          'caption'=>'Start Time Attribute ID',
-          'description'=>'Indicia ID for the sample attribute that stores the start time.',
-          'type'=>'int',
-          'group'=>'Session Attributes'
+          'name' => 'start_time_attr_id',
+          'caption' => 'Start Time Attribute ID',
+          'description' => 'Indicia ID for the sample attribute that stores the start time.',
+          'type' => 'int',
+          'group' => 'Session Attributes'
             ),
       array(
-          'name'=>'end_time_attr_id',
-          'caption'=>'End Time Attribute ID',
-          'description'=>'Indicia ID for the sample attribute that stores the end time.',
-          'type'=>'int',
-          'group'=>'Session Attributes'
+          'name' => 'end_time_attr_id',
+          'caption' => 'End Time Attribute ID',
+          'description' => 'Indicia ID for the sample attribute that stores the end time.',
+          'type' => 'int',
+          'group' => 'Session Attributes'
             ),
       array(
-          'name'=>'sky_state_attr_id',
-          'caption'=>'Sky State Attribute ID',
-          'description'=>'Indicia ID for the sample attribute that stores the state of the sky.',
-          'type'=>'int',
-          'group'=>'Session Attributes'
+          'name' => 'sky_state_attr_id',
+          'caption' => 'Sky State Attribute ID',
+          'description' => 'Indicia ID for the sample attribute that stores the state of the sky.',
+          'type' => 'int',
+          'group' => 'Session Attributes'
             ),
       array(
-          'name'=>'temperature_attr_id',
-          'caption'=>'Temperature Attribute ID',
-          'description'=>'Indicia ID for the sample attribute that stores the temperature.',
-          'type'=>'int',
-          'group'=>'Session Attributes'
+          'name' => 'temperature_attr_id',
+          'caption' => 'Temperature Attribute ID',
+          'description' => 'Indicia ID for the sample attribute that stores the temperature.',
+          'type' => 'int',
+          'group' => 'Session Attributes'
             ),
       array(
-          'name'=>'wind_attr_id',
-          'caption'=>'Wind Attribute ID',
-          'description'=>'Indicia ID for the sample attribute that stores the Wind.',
-          'type'=>'int',
-          'group'=>'Session Attributes'
+          'name' => 'wind_attr_id',
+          'caption' => 'Wind Attribute ID',
+          'description' => 'Indicia ID for the sample attribute that stores the Wind.',
+          'type' => 'int',
+          'group' => 'Session Attributes'
             ),
       array(
-          'name'=>'shade_attr_id',
-          'caption'=>'Shade Attribute ID',
-          'description'=>'Indicia ID for the sample attribute that stores the shade.',
-          'type'=>'int',
-          'group'=>'Session Attributes'
+          'name' => 'shade_attr_id',
+          'caption' => 'Shade Attribute ID',
+          'description' => 'Indicia ID for the sample attribute that stores the shade.',
+          'type' => 'int',
+          'group' => 'Session Attributes'
           ),
 
       array(
-          'name'=>'insect_list_id',
-          'caption'=>'Insect Species List ID',
-          'description'=>'The Indicia ID for the species list that insects can be selected from.',
-          'type'=>'int',
-          'group'=>'Insect Attributes'
+          'name' => 'insect_list_id',
+          'caption' => 'Insect Species List ID',
+          'description' => 'The Indicia ID for the species list that insects can be selected from.',
+          'type' => 'int',
+          'group' => 'Insect Attributes'
           ),
       array(
-          'name'=>'number_attr_id',
-          'caption'=>'Insect Number Attribute ID',
-          'description'=>'The Indicia ID for the occurrence attribute that stores the number of insects.',
-          'type'=>'int',
-          'group'=>'Insect Attributes'
+          'name' => 'number_attr_id',
+          'caption' => 'Insect Number Attribute ID',
+          'description' => 'The Indicia ID for the occurrence attribute that stores the number of insects.',
+          'type' => 'int',
+          'group' => 'Insect Attributes'
       	),
       array(
-          'name'=>'foraging_attr_id',
-          'caption'=>'Foraging Attribute ID',
-          'description'=>'The Indicia ID for the occurrence attribute that stores the foraging flag.',
-          'type'=>'int',
-          'group'=>'Insect Attributes'
+          'name' => 'foraging_attr_id',
+          'caption' => 'Foraging Attribute ID',
+          'description' => 'The Indicia ID for the occurrence attribute that stores the foraging flag.',
+          'type' => 'int',
+          'group' => 'Insect Attributes'
       ),
 
       array(
-          'name'=>'help_module',
-          'caption'=>'Help DRUPAL Module',
-          'description'=>'The DRUPAL module which contains the context sensitive help functionality.',
-          'type'=>'string',
-          'group'=>'Help',
+          'name' => 'help_module',
+          'caption' => 'Help DRUPAL Module',
+          'description' => 'The DRUPAL module which contains the context sensitive help functionality.',
+          'type' => 'string',
+          'group' => 'Help',
       	  'required'=>false
       ),
       array(
-          'name'=>'help_inclusion_function',
-          'caption'=>'Help Module inclusion function',
-          'description'=>'The DRUPAL PHP function which is used to include the relevant Javascript into the page.',
-          'type'=>'string',
-          'group'=>'Help',
+          'name' => 'help_inclusion_function',
+          'caption' => 'Help Module inclusion function',
+          'description' => 'The DRUPAL PHP function which is used to include the relevant Javascript into the page.',
+          'type' => 'string',
+          'group' => 'Help',
       	  'required'=>false
       ),
       array(
-          'name'=>'help_function',
-          'caption'=>'Help Module invocation function',
-          'description'=>'The Javascript function which is called when the help buttons are clicked.',
-          'type'=>'string',
-          'group'=>'Help',
+          'name' => 'help_function',
+          'caption' => 'Help Module invocation function',
+          'description' => 'The Javascript function which is called when the help buttons are clicked.',
+          'type' => 'string',
+          'group' => 'Help',
       	  'required'=>false
       ),
       array(
-          'name'=>'help_collection_arg',
-          'caption'=>'Collection Help argument',
-          'description'=>'The argument(s) passed to the Help Module invocation function when the help button in "Create a collection" is clicked.',
-          'type'=>'string',
-          'group'=>'Help',
+          'name' => 'help_collection_arg',
+          'caption' => 'Collection Help argument',
+          'description' => 'The argument(s) passed to the Help Module invocation function when the help button in "Create a collection" is clicked.',
+          'type' => 'string',
+          'group' => 'Help',
       	  'required'=>false
       ),
       array(
-          'name'=>'help_flower_arg',
-          'caption'=>'Flower Identification Help argument',
-          'description'=>'The argument(s) passed to the Help Module invocation function when the help button in "Flower Identification" is clicked.',
-          'type'=>'string',
-          'group'=>'Help',
+          'name' => 'help_flower_arg',
+          'caption' => 'Flower Identification Help argument',
+          'description' => 'The argument(s) passed to the Help Module invocation function when the help button in "Flower Identification" is clicked.',
+          'type' => 'string',
+          'group' => 'Help',
       	  'required'=>false
       ),
       array(
-          'name'=>'help_environment_arg',
-          'caption'=>'Environment Identification Help argument',
-          'description'=>'The argument(s) passed to the Help Module invocation function when the help button in "Environment" is clicked.',
-          'type'=>'string',
-          'group'=>'Help',
+          'name' => 'help_environment_arg',
+          'caption' => 'Environment Identification Help argument',
+          'description' => 'The argument(s) passed to the Help Module invocation function when the help button in "Environment" is clicked.',
+          'type' => 'string',
+          'group' => 'Help',
       	  'required'=>false
       ),
       array(
-          'name'=>'help_location_arg',
-          'caption'=>'Location Help argument',
-          'description'=>'The argument(s) passed to the Help Module invocation function when the help button in "Location" is clicked.',
-          'type'=>'string',
-          'group'=>'Help',
+          'name' => 'help_location_arg',
+          'caption' => 'Location Help argument',
+          'description' => 'The argument(s) passed to the Help Module invocation function when the help button in "Location" is clicked.',
+          'type' => 'string',
+          'group' => 'Help',
       	  'required'=>false
       ),
       array(
-          'name'=>'help_session_arg',
-          'caption'=>'Session Help argument',
-          'description'=>'The argument(s) passed to the Help Module invocation function when the help button in "Session" is clicked.',
-          'type'=>'string',
-          'group'=>'Help',
+          'name' => 'help_session_arg',
+          'caption' => 'Session Help argument',
+          'description' => 'The argument(s) passed to the Help Module invocation function when the help button in "Session" is clicked.',
+          'type' => 'string',
+          'group' => 'Help',
       	  'required'=>false
       ),
       array(
-          'name'=>'help_insect_arg',
-          'caption'=>'Insect Identification Help argument',
-          'description'=>'The argument(s) passed to the Help Module invocation function when the help button in "Insect Identification" is clicked.',
-          'type'=>'string',
-          'group'=>'Help',
+          'name' => 'help_insect_arg',
+          'caption' => 'Insect Identification Help argument',
+          'description' => 'The argument(s) passed to the Help Module invocation function when the help button in "Insect Identification" is clicked.',
+          'type' => 'string',
+          'group' => 'Help',
       	  'required'=>false
       ),
 
       array(
-          'name'=>'ID_tool_insect_url',
-          'caption'=>'Insect ID Tool URL',
-          'description'=>'The URL to call which triggers the Insect Identification Tool functionality.',
-          'type'=>'string',
-          'group'=>'ID Tool'
+          'name' => 'ID_tool_insect_url',
+          'caption' => 'Insect ID Tool URL',
+          'description' => 'The URL to call which triggers the Insect Identification Tool functionality.',
+          'type' => 'string',
+          'group' => 'ID Tool'
       ),
       array(
-          'name'=>'ID_tool_session_param',
-          'caption'=>'ID Tool session parameter',
-          'description'=>'The URL extension to be used in the request to the ID tool to pass the SPIPOLL session ID.',
-          'type'=>'string',
-          'group'=>'ID Tool',
-          'default'=>'#spipollsessionid='
+          'name' => 'ID_tool_session_param',
+          'caption' => 'ID Tool session parameter',
+          'description' => 'The URL extension to be used in the request to the ID tool to pass the SPIPOLL session ID.',
+          'type' => 'string',
+          'group' => 'ID Tool',
+          'default' => '#spipollsessionid='
       ),
       array(
-          'name'=>'ID_tool_insect_poll_dir',
-          'caption'=>'Insect ID Tool Module poll directory',
-          'description'=>'The directory which to poll for the results of the Insect ID Tool',
-          'type'=>'string',
-          'group'=>'ID Tool'
+          'name' => 'ID_tool_insect_poll_dir',
+          'caption' => 'Insect ID Tool Module poll directory',
+          'description' => 'The directory which to poll for the results of the Insect ID Tool',
+          'type' => 'string',
+          'group' => 'ID Tool'
       ),
       array(
-          'name'=>'ID_tool_poll_interval',
-          'caption'=>'Time in ms between polls of results directory',
-          'description'=>'Time in ms between polls of results directory',
-          'type'=>'int',
-          'group'=>'ID Tool',
+          'name' => 'ID_tool_poll_interval',
+          'caption' => 'Time in ms between polls of results directory',
+          'description' => 'Time in ms between polls of results directory',
+          'type' => 'int',
+          'group' => 'ID Tool',
           'default'=>1500,
       ),
       array(
-          'name'=>'ID_tool_poll_timeout',
-          'caption'=>'Time in ms before the ID Tool is aborted.',
-          'description'=>'Time in ms before the ID Tool is aborted.',
-          'type'=>'int',
-          'group'=>'ID Tool',
+          'name' => 'ID_tool_poll_timeout',
+          'caption' => 'Time in ms before the ID Tool is aborted.',
+          'description' => 'Time in ms before the ID Tool is aborted.',
+          'type' => 'int',
+          'group' => 'ID Tool',
           'default'=>1800000,
       ),
 
       array(
-          'name'=>'INSEE_url',
-          'caption'=>'URL for INSEE Search WFS service',
-          'description'=>'The URL used for the WFS feature lookup when search for INSEE numbers.',
-          'type'=>'string',
-          'group'=>'INSEE Search'
+          'name' => 'INSEE_url',
+          'caption' => 'URL for INSEE Search WFS service',
+          'description' => 'The URL used for the WFS feature lookup when search for INSEE numbers.',
+          'type' => 'string',
+          'group' => 'INSEE Search'
       ),
       array(
-          'name'=>'INSEE_prefix',
-          'caption'=>'Feature type prefix for INSEE Search',
-          'description'=>'The Feature type prefix used for the WFS feature lookup when search for INSEE numbers.',
-          'type'=>'string',
-          'group'=>'INSEE Search'
+          'name' => 'INSEE_prefix',
+          'caption' => 'Feature type prefix for INSEE Search',
+          'description' => 'The Feature type prefix used for the WFS feature lookup when search for INSEE numbers.',
+          'type' => 'string',
+          'group' => 'INSEE Search'
       ),
       array(
-          'name'=>'INSEE_type',
-          'caption'=>'Feature type for INSEE Search',
-          'description'=>'The Feature type used for the WFS feature lookup when search for INSEE numbers.',
-          'type'=>'string',
-          'group'=>'INSEE Search'
+          'name' => 'INSEE_type',
+          'caption' => 'Feature type for INSEE Search',
+          'description' => 'The Feature type used for the WFS feature lookup when search for INSEE numbers.',
+          'type' => 'string',
+          'group' => 'INSEE Search'
       ),
       array(
-          'name'=>'INSEE_ns',
-          'caption'=>'Name space for INSEE Search',
-          'description'=>'The Name space used for the WFS feature lookup when search for INSEE numbers.',
-          'type'=>'string',
-          'group'=>'INSEE Search'
+          'name' => 'INSEE_ns',
+          'caption' => 'Name space for INSEE Search',
+          'description' => 'The Name space used for the WFS feature lookup when search for INSEE numbers.',
+          'type' => 'string',
+          'group' => 'INSEE Search'
       ),
       array(
-          'name'=>'Flower_Image_Ratio',
-          'caption'=>'Flower image aspect ratio.',
-          'description'=>'Expected Ratio of width to height for flower images - 4/3 is horizontal, 3/4 is vertical.',
-          'type'=>'string',
-          'group'=>'Images',
-          'default'=>'4/3'
+          'name' => 'Flower_Image_Ratio',
+          'caption' => 'Flower image aspect ratio.',
+          'description' => 'Expected Ratio of width to height for flower images - 4/3 is horizontal, 3/4 is vertical.',
+          'type' => 'string',
+          'group' => 'Images',
+          'default' => '4/3'
       ),
       array(
-          'name'=>'Environment_Image_Ratio',
-          'caption'=>'Environment image aspect ratio.',
-          'description'=>'Expected Ratio of width to height for environment images - 4/3 is horizontal, 3/4 is vertical.',
-          'type'=>'string',
-          'group'=>'Images',
-          'default'=>'4/3'
+          'name' => 'Environment_Image_Ratio',
+          'caption' => 'Environment image aspect ratio.',
+          'description' => 'Expected Ratio of width to height for environment images - 4/3 is horizontal, 3/4 is vertical.',
+          'type' => 'string',
+          'group' => 'Images',
+          'default' => '4/3'
       ),
       array(
-          'name'=>'Insect_Image_Ratio',
-          'caption'=>'Insect image aspect ratio.',
-          'description'=>'Expected Ratio of width to height for insect images - 4/3 is horizontal, 3/4 is vertical.',
-          'type'=>'string',
-          'group'=>'Images',
-          'default'=>'1/1'
+          'name' => 'Insect_Image_Ratio',
+          'caption' => 'Insect image aspect ratio.',
+          'description' => 'Expected Ratio of width to height for insect images - 4/3 is horizontal, 3/4 is vertical.',
+          'type' => 'string',
+          'group' => 'Images',
+          'default' => '1/1'
       )
 
 
@@ -425,7 +420,7 @@ class iform_pollenators {
     return array(
       'title'=>self::get_title(),
       'category' => 'SPIPOLL forms',
-      'description'=>'Pollenators: Data Entry.'
+      'description' => 'Pollenators: Data Entry.'
     );
   }
 
@@ -496,40 +491,40 @@ jQuery('#".$id."').click(function(){
 	// The only things that will be editable after the collection is saved will be the identifiaction of the flower/insects.
 	// no id - just getting the attributes, rest will be filled in using AJAX
 	$sample_attributes = data_entry_helper::getAttributes(array(
-        'valuetable'=>'sample_attribute_value'
-       ,'attrtable'=>'sample_attribute'
-       ,'key'=>'sample_id'
-       ,'fieldprefix'=>'smpAttr'
+        'valuetable' => 'sample_attribute_value'
+       ,'attrtable' => 'sample_attribute'
+       ,'key' => 'sample_id'
+       ,'fieldprefix' => 'smpAttr'
        ,'extraParams'=>$readAuth
        ,'survey_id'=>$args['survey_id']
     ));
     $occurrence_attributes = data_entry_helper::getAttributes(array(
-        'valuetable'=>'occurrence_attribute_value'
-       ,'attrtable'=>'occurrence_attribute'
-       ,'key'=>'occurrence_id'
-       ,'fieldprefix'=>'occAttr'
+        'valuetable' => 'occurrence_attribute_value'
+       ,'attrtable' => 'occurrence_attribute'
+       ,'key' => 'occurrence_id'
+       ,'fieldprefix' => 'occAttr'
        ,'extraParams'=>$readAuth
        ,'survey_id'=>$args['survey_id']
     ));
     $location_attributes = data_entry_helper::getAttributes(array(
-        'valuetable'=>'location_attribute_value'
-       ,'attrtable'=>'location_attribute'
-       ,'key'=>'location_id'
-       ,'fieldprefix'=>'locAttr'
+        'valuetable' => 'location_attribute_value'
+       ,'attrtable' => 'location_attribute'
+       ,'key' => 'location_id'
+       ,'fieldprefix' => 'locAttr'
        ,'extraParams'=>$readAuth
        ,'survey_id'=>$args['survey_id']
     ));
     $taxon_attributes = data_entry_helper::getAttributes(array(
-        'valuetable'=>'taxa_taxon_list_attribute_value'
-       ,'attrtable'=>'taxa_taxon_list_attribute'
-       ,'key'=>'taxa_taxon_list_id'
-       ,'fieldprefix'=>'taxAttr'
+        'valuetable' => 'taxa_taxon_list_attribute_value'
+       ,'attrtable' => 'taxa_taxon_list_attribute'
+       ,'key' => 'taxa_taxon_list_id'
+       ,'fieldprefix' => 'taxAttr'
        ,'extraParams'=>$readAuth
     ), false);
 
     if(count($taxon_attributes)!=1 || $taxon_attributes[0][caption]!="XPER ID")
     	return "<p>Internal error: Expected 1 taxon attribute (XPER ID), got ".count($taxon_attributes)."</p>Dump:<br/>".print_r($taxon_attributes,true);
-    $defNRAttrOptions = array('extraParams'=>$readAuth+array('orderby'=>'id'),
+    $defNRAttrOptions = array('extraParams'=>$readAuth+array('orderby' => 'id'),
     				'lookUpListCtrl' => 'radio_group',
     				'lookUpKey' => 'meaning_id',
     				'language' => iform_lang_iso_639_2($args['language']),
@@ -555,8 +550,8 @@ document.write("<div class=\"poll-loading-hide\" style=\"display:none;\">");
 /* ]]> */</script>
 ';
     data_entry_helper::$javascript .= "var flowerTaxa = [";
-	$extraParams = $readAuth + array('taxon_list_id' => $args['flower_list_id'], 'view'=>'list');
-    $species_data_def=array('table'=>'taxa_taxon_list','extraParams'=>$extraParams);
+	$extraParams = $readAuth + array('taxon_list_id' => $args['flower_list_id'], 'view' => 'list');
+    $species_data_def=array('table' => 'taxa_taxon_list','extraParams'=>$extraParams);
 	$taxa = data_entry_helper::get_population_data($species_data_def);
 	$first = true;
 	// Flowers do not have XPER ID. Flowers list still required to do multiple selection list conversion.
@@ -565,8 +560,8 @@ document.write("<div class=\"poll-loading-hide\" style=\"display:none;\">");
 		$first=false;
 	}
     data_entry_helper::$javascript .= "];\nvar insectTaxa = [";
-	$extraParams = $readAuth + array('taxon_list_id' => $args['insect_list_id'], 'view'=>'list');
-    $taxa_attribute_values_data_def=array('table'=>'taxa_taxon_list_attribute_value','extraParams'=>$extraParams);
+	$extraParams = $readAuth + array('taxon_list_id' => $args['insect_list_id'], 'view' => 'list');
+    $taxa_attribute_values_data_def=array('table' => 'taxa_taxon_list_attribute_value','extraParams'=>$extraParams);
 	$taxa_attribute_values = data_entry_helper::get_population_data($taxa_attribute_values_data_def);
     // full list : no allow_data_entry filter.
     $extraParams['taxon_list_id'] = $args['insect_list_id'];
@@ -1090,17 +1085,17 @@ $('#cc-1-reinit-button').click(function() {
     if( lang::get('msgGeorefNothingFound') != 'msgGeorefNothingFound')
     	$options['msgGeorefNothingFound'] = lang::get('msgGeorefNothingFound');
 
-    $extraParams = $readAuth + array('taxon_list_id' => $args['flower_list_id'], 'view'=>'detail','orderby'=>'taxonomic_sort_order', 'allow_data_entry'=>'t');
+    $extraParams = $readAuth + array('taxon_list_id' => $args['flower_list_id'], 'view' => 'detail','orderby' => 'taxonomic_sort_order', 'allow_data_entry' => 't');
     $species_ctrl_args=array(
-    		'fieldname'=>'flowerSelect',
-    		'table'=>'taxa_taxon_list',
-    		'captionField'=>'taxon',
+    		'fieldname' => 'flowerSelect',
+    		'table' => 'taxa_taxon_list',
+    		'captionField' => 'taxon',
     		'listCaptionSpecialChars'=>true,
-    		'valueField'=>'id',
+    		'valueField' => 'id',
     		'columns'=>2,
     		'blankText'=>lang::get('LANG_Choose_Taxon'),
     		'extraParams'=>$extraParams,
-    		'suffixTemplate'=>'nosuffix'
+    		'suffixTemplate' => 'nosuffix'
     );
 
     $r .= '
@@ -1200,17 +1195,17 @@ $('#cc-1-reinit-button').click(function() {
             onblur="if(this.value==\'\'){this.value=\''.lang::get('LANG_INSEE').'\'; this.style.color=\'#555\'}" /><input type="button" id="search-insee-button" class="ui-corner-all ui-widget-content ui-state-default search-button" value="'.lang::get('search').'" />
  	    <label >'.lang::get('LANG_Or').'</label>
     	'.data_entry_helper::sref_textbox(array(
-		        'srefField'=>'place:entered_sref',
-        		'systemfield'=>'place:entered_sref_system',
-        		'id'=>'place-sref',
-        		'fieldname'=>'place:name',
+		        'srefField' => 'place:entered_sref',
+        		'systemfield' => 'place:entered_sref_system',
+        		'id' => 'place-sref',
+        		'fieldname' => 'place:name',
         		'splitLatLong'=>true,
 		        'labelLat' => lang::get('Latitude'),
     			'fieldnameLat' => 'place:lat',
         		'labelLong' => lang::get('Longitude'),
     			'fieldnameLong' => 'place:long',
-    			'idLat'=>'imp-sref-lat',
-        		'idLong'=>'imp-sref-long')).'
+    			'idLat' => 'imp-sref-lat',
+        		'idLong' => 'imp-sref-long')).'
  	  </div>
  	  <div class="poll-map-container">';
     $tempScript = data_entry_helper::$onload_javascript;
@@ -1966,7 +1961,7 @@ addSession = function(){
 	jQuery('".str_replace("\n", "", data_entry_helper::outputAttribute($sample_attributes[$args['sky_state_attr_id']], $defNRAttrOptions))."').appendTo(newForm);
 	jQuery('".str_replace("\n", "", data_entry_helper::outputAttribute($sample_attributes[$args['temperature_attr_id']], $defNRAttrOptions))."').appendTo(newForm);
 	jQuery('".str_replace("\n", "", data_entry_helper::outputAttribute($sample_attributes[$args['wind_attr_id']], $defNRAttrOptions))."').appendTo(newForm);
-	jQuery('".str_replace("\n", "", data_entry_helper::outputAttribute($sample_attributes[$args['shade_attr_id']], array_merge($defNRAttrOptions, array('default'=>'-1'))))."').appendTo(newForm);
+	jQuery('".str_replace("\n", "", data_entry_helper::outputAttribute($sample_attributes[$args['shade_attr_id']], array_merge($defNRAttrOptions, array('default' => '-1'))))."').appendTo(newForm);
 	newDeleteButton.click(function() {
 		var container = $(this).parent().parent();
 		jQuery('#cc-3-delete-session').find('[name=sample\\:id]').val(container.find('[name=sample\\:id]').val());
@@ -2084,14 +2079,14 @@ jQuery('.mod-button').click(function() {
 
 ";
 
-    $extraParams = $readAuth + array('taxon_list_id' => $args['insect_list_id'], 'view'=>'detail','orderby'=>'taxonomic_sort_order', 'allow_data_entry'=>'t');
+    $extraParams = $readAuth + array('taxon_list_id' => $args['insect_list_id'], 'view' => 'detail','orderby' => 'taxonomic_sort_order', 'allow_data_entry' => 't');
 	$species_ctrl_args=array(
     	    'label'=>lang::get('LANG_Insect_Species'),
-        	'fieldname'=>'insect:taxa_taxon_list_id',
-	        'table'=>'taxa_taxon_list',
-    	    'captionField'=>'taxon',
+        	'fieldname' => 'insect:taxa_taxon_list_id',
+	        'table' => 'taxa_taxon_list',
+    	    'captionField' => 'taxon',
         	'listCaptionSpecialChars'=>true,
-    	    'valueField'=>'id',
+    	    'valueField' => 'id',
 	        'columns'=>2,
     		'blankText'=>lang::get('LANG_Choose_Taxon'),
     	    'extraParams'=>$extraParams
@@ -2163,7 +2158,7 @@ jQuery('.mod-button').click(function() {
 	    '
  	.data_entry_helper::textarea(array(
 	        'label'=>lang::get('LANG_Comment'),
-    	    'fieldname'=>'occurrence:comment'
+    	    'fieldname' => 'occurrence:comment'
 	    ))
 	.str_replace("\n", "", data_entry_helper::outputAttribute($occurrence_attributes[$args['number_attr_id']],$defNRAttrOptions))
  	.str_replace("\n", "", data_entry_helper::outputAttribute($occurrence_attributes[$args['foraging_attr_id']],$checkOptions)).'

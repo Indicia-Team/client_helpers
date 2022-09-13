@@ -13,19 +13,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package	Client
- * @subpackage PrebuiltForms
- * @author	Indicia Team
- * @license	http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link 	http://code.google.com/p/indicia/
+ * @author Indicia Team
+ * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
+ * @link https://github.com/Indicia-Team/client_helpers
  */
- 
+
 /**
  * Extension class that supplies new controls to support reporting dashboards.
  */
 class extension_dashboard_reports {
 
-  /** 
+  /**
    * A report showing a chart of verification progress per week.
    */
   public static function verification_by_week_chart($auth, $args, $tabalias, $options, $path) {
@@ -41,19 +39,19 @@ class extension_dashboard_reports {
         'height'=> 500,
         'chartType' => 'bar',
         'yValues'=>array('verified','queried','rejected'),
-        'xLabels'=>'week',
+        'xLabels' => 'week',
         'stackSeries'=>true,
         'rendererOptions' => array('barMargin'=>5),
         'legendOptions' => array('show'=>true),
-        'seriesOptions' => array(array('label'=>'Verified','color'=>'#00CC00'),array('label'=>'Queried','color'=>'#FF9900'),array('label'=>'Rejected','color'=>'#CC0000')),
-        'axesOptions' => array('yaxis'=>array('min' => 0,'tickOptions'=>array('formatString'=>'%d')),'xaxis'=>array('label'=>'Weeks ago'))
+        'seriesOptions' => array(array('label' => 'Verified','color' => '#00CC00'),array('label' => 'Queried','color' => '#FF9900'),array('label' => 'Rejected','color' => '#CC0000')),
+        'axesOptions' => array('yaxis'=>array('min' => 0,'tickOptions'=>array('formatString' => '%d')),'xaxis'=>array('label' => 'Weeks ago'))
       ),
       $options
     );
     return report_helper::report_chart($reportOptions);
   }
-  
-  /** 
+
+  /**
    * A report showing a chart of incoming records per week.
    */
   public static function records_by_week_chart($auth, $args, $tabalias, $options, $path) {
@@ -69,10 +67,10 @@ class extension_dashboard_reports {
         'height'=> 500,
         'chartType' => 'line',
         'yValues'=>array('processed', 'total'),
-        'xLabels'=>'week',
+        'xLabels' => 'week',
         'legendOptions' => array('show'=>true),
-        'seriesOptions' => array(array('label'=>'Processed by verifiers','color'=>'#00FF00'),array('label'=>'All records','color'=>'#FF9900')),
-        'axesOptions' => array('yaxis'=>array('min' => 0,'tickOptions'=>array('formatString'=>'%d')),'xaxis'=>array('label'=>'Weeks ago'))
+        'seriesOptions' => array(array('label' => 'Processed by verifiers','color' => '#00FF00'),array('label' => 'All records','color' => '#FF9900')),
+        'axesOptions' => array('yaxis'=>array('min' => 0,'tickOptions'=>array('formatString' => '%d')),'xaxis'=>array('label' => 'Weeks ago'))
       ),
       $options
     );

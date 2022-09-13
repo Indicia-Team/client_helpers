@@ -13,8 +13,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package Client
- * @subpackage PrebuiltForms
  * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers/
@@ -23,9 +21,6 @@
 /**
  * A page allowing a user to leave a group. Takes a group_id parameter. Example use would be to
  * link to this page using the actions column of a report listing a user's recording groups.
- *
- * @package Client
- * @subpackage PrebuiltForms
  */
 class iform_group_leave {
 
@@ -35,9 +30,9 @@ class iform_group_leave {
    */
   public static function get_group_leave_definition() {
     return array(
-      'title'=>'Leave a group',
+      'title' => 'Leave a group',
       'category' => 'Recording groups',
-      'description'=>'A page for leaving the membership of a group.',
+      'description' => 'A page for leaving the membership of a group.',
       'recommended' => true
     );
   }
@@ -48,10 +43,10 @@ class iform_group_leave {
    */
   public static function get_parameters() {
     return array(array(
-      'name'=>'groups_page_path',
-      'caption'=>'Path to main groups page',
-      'description'=>'Path to the Drupal page which my groups are listed on.',
-      'type'=>'text_input'
+      'name' => 'groups_page_path',
+      'caption' => 'Path to main groups page',
+      'description' => 'Path to the Drupal page which my groups are listed on.',
+      'type' => 'text_input'
     ));
   }
 
@@ -72,7 +67,7 @@ class iform_group_leave {
     $r = '';
     $auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
     $group = data_entry_helper::get_population_data(array(
-      'table'=>'group',
+      'table' => 'group',
       'extraParams' => $auth['read']+array('id'=>$_GET['group_id']),
       'nocache'=>true
     ));
@@ -82,7 +77,7 @@ class iform_group_leave {
     $group = $group[0];
     // Check for an existing group user record
     $existing = data_entry_helper::get_population_data(array(
-      'table'=>'groups_user',
+      'table' => 'groups_user',
       'extraParams' => $auth['read']+array('group_id'=>$_GET['group_id'], 'user_id'=>$user_id),
       'nocache'=>true
     ));

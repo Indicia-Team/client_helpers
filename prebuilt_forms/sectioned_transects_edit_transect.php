@@ -14,8 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package Client
- * @subpackage PrebuiltForms
  * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers/
@@ -25,10 +23,6 @@ require_once 'includes/map.php';
 require_once 'includes/form_generation.php';
 
 /**
- *
- *
- * @package Client
- * @subpackage PrebuiltForms
  * Form for adding or editing the site details on a transect which contains a number of sections.
  */
 class iform_sectioned_transects_edit_transect {
@@ -348,7 +342,7 @@ class iform_sectioned_transects_edit_transect {
     }
 
     data_entry_helper::$javascript .= "indiciaData.sections = {};\n";
-    $settings['sections']=array();
+    $settings['sections']=[];
     $settings['numSectionsAttr'] = "";
     $settings['maxSectionCount'] = $args['maxSectionCount'];
     $settings['autocalcSectionLengthAttrId'] = empty($args['autocalc_section_length_attr_id']) ? 0 : $args['autocalc_section_length_attr_id'];
@@ -426,7 +420,7 @@ class iform_sectioned_transects_edit_transect {
           data_entry_helper::$javascript .= "$('#".str_replace(':','\\\\:',$attr['id'])."').attr('min',1).attr('max',".$args['maxSectionCount'].");\n";
         }
       }
-      $settings['walks'] = array();
+      $settings['walks'] = [];
     }
     if ($settings['numSectionsAttr'] === '') {
       for ($i=1; $i<=$settings['maxSectionCount']; $i++) {
@@ -457,7 +451,7 @@ class iform_sectioned_transects_edit_transect {
     $r .= '</div>'; // controls
     data_entry_helper::enable_validation('input-form');
     if (function_exists('drupal_set_breadcrumb')) {
-      $breadcrumb = array();
+      $breadcrumb = [];
       $breadcrumb[] = l(lang::get('Home'), '<front>');
       $breadcrumb[] = l(lang::get('Sites'), $args['sites_list_path']);
       if ($settings['locationId'])
@@ -636,7 +630,7 @@ class iform_sectioned_transects_edit_transect {
       foreach ($settings['walks'] as $walk) {
         $walkIDs[] = $walk['id'];
       }
-      $sectionIDs = array();
+      $sectionIDs = [];
       foreach($settings['sections'] as $code => $section)
         $sectionIDs[] = $section['id'];
       data_entry_helper::$javascript .= "
@@ -724,7 +718,7 @@ $('#delete-transect').click(deleteSurvey);
     // for the SRef, we want to be able to edit the sref, but just display the system. Do not want the Geometry.
     $r .= '<label for="imp-sref">Section Grid Ref.:</label><input type="text" value="" class="required" name="location:centroid_sref" id="section-location-sref"><span class="deh-required">*</span>';
     // for the system we need to translate the system: easiest way is to have a disabled select plus a hidden field.
-    $systems = array();
+    $systems = [];
     $list = explode(',', str_replace(' ', '', $args['spatial_systems']));
     foreach($list as $system) {
       $systems[$system] = lang::get("sref:$system");
@@ -741,7 +735,7 @@ $('#delete-transect').click(deleteSurvey);
     // force a blank centroid, so that the Warehouse will recalculate it from the boundary
     //$r .= "<input type=\"hidden\" name=\"location:centroid_geom\" value=\"\" />\n";
 
-    $blockOptions = array();
+    $blockOptions = [];
     if (isset($args['custom_attribute_options']) && $args['custom_attribute_options']) {
       $blockOptionList = explode("\n", $args['custom_attribute_options']);
       foreach($blockOptionList as $opt) {
@@ -769,12 +763,12 @@ $('#delete-transect').click(deleteSurvey);
    * Build a row of buttons for selecting the route.
    */
   protected static function section_selector($settings, $id) {
-    $sectionArr = array();
+    $sectionArr = [];
     foreach ($settings['sections'] as $code=>$section)
       $sectionArr[$code] = $code;
     $selector = '<label for="'.$id.'">'.lang::get('Select section').':</label><ol id="'.$id.'" class="section-select">';
     foreach ($sectionArr as $key=>$value) {
-      $classes = array();
+      $classes = [];
       if ($key=='S1')
         $classes[] = 'selected';
       if (!isset($settings['sections'][$key]))
@@ -866,7 +860,7 @@ $('#delete-transect').click(deleteSurvey);
 
     // next reduce the list to branch users
     if($settings['canAllocBranch']){ // only check the users permissions if can change value - for performance reasons.
-      $new_users = array();
+      $new_users = [];
       foreach ($users as $uid=>$name){
         if (hostsite_user_has_permission($args['branch_assignment_permission'], $uid))
           $new_users[$uid]=$name;

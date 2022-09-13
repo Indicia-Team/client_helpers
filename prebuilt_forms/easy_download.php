@@ -514,30 +514,31 @@ class iform_easy_download {
    * Builds the filter to send in the extraParams of a report services request for the download data.
    *
    * @param array $args
-   *   Form configuration
+   *   Form configuration.
    * @param array $readAuth
-   *   Read authorisation tokens
+   *   Read authorisation tokens.
    * @param $format
-   *   File format being requested, e.g. csv
+   *   File format being requested, e.g. csv.
    * @param $useStandardParams
    *   True if the download report supports the standard parameters for
    *   occurrence reporting.
    *
    * @return array
-   *   List of filter key value pairs
+   *   List of filter key value pairs.
    */
   private static function build_filter($args, $readAuth, $format, $useStandardParams) {
-    require_once('includes/user.php');
+    require_once 'includes/user.php';
     $filterToApply = $_POST['user-filter'];
     $availableFilters = self::get_filters($args, $readAuth);
     if (!array_key_exists($filterToApply, $availableFilters))
       throw new exception('Selected filter type not authorised');
-    if ($filterToApply==='expert') {
-      require_once('includes/user.php');
+    if ($filterToAppl y=== 'expert') {
+      require_once 'includes/user.php';
       $location_expertise = hostsite_get_user_field('location_expertise');
       $taxon_groups_expertise = hostsite_get_user_field('taxon_groups_expertise', [], TRUE);
       $surveys_expertise = hostsite_get_user_field('surveys_expertise', [], TRUE);
-    } else {
+    }
+    else {
       // Default is no filter by survey, locality, taxon group
       $location_expertise = '';
       $taxon_groups_expertise = [];

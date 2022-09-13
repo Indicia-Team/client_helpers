@@ -13,22 +13,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package Client
- * @subpackage PrebuiltForms
  * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers/
  */
 
-require_once('includes/report.php');
+require_once 'includes/report.php';
 
 /**
  * A prebuilt form which wraps the freeform_report control, allowing report output to be displayed as a flexible
  * freeform banded output.
- *
- * @package Client
- * @subpackage PrebuiltForms
- * @todo Rename the form class to iform_...
  */
 class iform_freeform_report {
 
@@ -39,10 +33,10 @@ class iform_freeform_report {
    */
   public static function get_freeform_report_definition() {
     return array(
-      'title'=>'Freeform report',
+      'title' => 'Freeform report',
       'category' => 'Reporting',
-      //'helpLink'=>'<optional help URL>',
-      'description'=>'Report which allows output to be displayed as a flexible freeform banded output.'
+      //'helpLink' => '<optional help URL>',
+      'description' => 'Report which allows output to be displayed as a flexible freeform banded output.'
     );
   }
 
@@ -56,32 +50,32 @@ class iform_freeform_report {
       iform_report_get_report_parameters(),
       array(
         array(
-          'name'=>'header',
-          'caption'=>'Header',
-          'description'=>'HTML to insert into the header of the report output.',
-          'type'=>'textarea',
+          'name' => 'header',
+          'caption' => 'Header',
+          'description' => 'HTML to insert into the header of the report output.',
+          'type' => 'textarea',
           'required'=>false,
-          'group'=>'Output templates'
+          'group' => 'Output templates'
         ),
         array(
-          'name'=>'footer',
-          'caption'=>'Footer',
-          'description'=>'HTML to insert into the footer of the report output.',
-          'type'=>'textarea',
+          'name' => 'footer',
+          'caption' => 'Footer',
+          'description' => 'HTML to insert into the footer of the report output.',
+          'type' => 'textarea',
           'required'=>false,
-          'group'=>'Output templates'
+          'group' => 'Output templates'
         ),
         array(
-          'name'=>'bands',
-          'caption'=>'Report Bands',
-          'description'=>'A list of bands which are output once per report row in the order provided. '.
+          'name' => 'bands',
+          'caption' => 'Report Bands',
+          'description' => 'A list of bands which are output once per report row in the order provided. '.
               'Bands may also be configured to output as a header band, only when the value of a certain field changes between rows. '.
               'For example if a report is sorted by site name, then a band can be emmitted only when the site name value changes and can display '.
               'the new site name as a header.',
-          'group'=>'Output templates',
+          'group' => 'Output templates',
           'required'=>false,
-          'type'=>'jsonwidget',
-          'schema'=>'{
+          'type' => 'jsonwidget',
+          'schema' => '{
   "type":"seq",
   "title":"Bands",
   "sequence":

@@ -13,11 +13,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package	Client
- * @subpackage PrebuiltForms
- * @author	Indicia Team
- * @license	http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link 	http://code.google.com/p/indicia/
+ * @author Indicia Team
+ * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
+ * @link https://github.com/Indicia-Team/client_helpers
  */
 
 /**
@@ -133,7 +131,7 @@ class extension_notifications_centre {
     //$sourceType is a user provided option for the grid to preload rather than the user selecting from the filter drop-down.
     //When the source types are provided like this, the filter drop-down is not displayed.
     //There can be more than one sourcetype, this is supplied as a comma seperated list and needs putting into an array
-    $sourceType=empty($options['sourceType']) ? array() : explode(',',$options['sourceType']);
+    $sourceType=empty($options['sourceType']) ? [] : explode(',',$options['sourceType']);
     if (!empty($sourceType))
       report_helper::$javascript .= "indiciaData.preloaded_source_types = '".$options['sourceType']."';\n";
     //reload path to current page
@@ -166,7 +164,7 @@ class extension_notifications_centre {
     $auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
     //Using 'submission_list' and 'entries' allows us to specify several top-level submissions to the system
     //i.e. we need to be able to submit several notifications.
-    $submission['submission_list']['entries'] = array();
+    $submission['submission_list']['entries'] = [];
     $submission['id'] = 'notification';
     $extraParams = array(
       'user_id' => $user_id,
@@ -257,7 +255,7 @@ class extension_notifications_centre {
       }
     };\n
     ";
-    $urlParams=array('occurrence_id'=>'{occurrence_id}');
+    $urlParams=array('occurrence_id' => '{occurrence_id}');
     if (!empty($options['recordLinkingParamOverride'])) {
       $urlParams=array($options['recordLinkingParamOverride'] => '{'.$options['recordLinkingParamOverride'].'}');
     }
@@ -287,12 +285,12 @@ class extension_notifications_centre {
       ],
     ];
     if (!empty($options['manage_members_page_path']))
-      $availableActions[] = array('caption'=>lang::get('Manage members'), 'class'=>'manage-members',
-        'visibility_field'=>'manage_members_flag', 'img'=>$imgPath.'nuvola/invite-22px.png',
-        'url'=>'{rootFolder}' . $options['manage_members_page_path'] . '{linked_id}');
+      $availableActions[] = array('caption'=>lang::get('Manage members'), 'class' => 'manage-members',
+        'visibility_field' => 'manage_members_flag', 'img'=>$imgPath.'nuvola/invite-22px.png',
+        'url' => '{rootFolder}' . $options['manage_members_page_path'] . '{linked_id}');
     //Only allow replying for 'user' messages.
     if (isset($options['allowReply']) && $options['allowReply'] === TRUE)
-      $availableActions = array_merge($availableActions, array(array('caption'=>lang::get('Reply to this message'), 'img'=>$imgPath.'nuvola/mail_reply-22px.png', 'visibility_field'=>'reply_flag',
+      $availableActions = array_merge($availableActions, array(array('caption'=>lang::get('Reply to this message'), 'img'=>$imgPath.'nuvola/mail_reply-22px.png', 'visibility_field' => 'reply_flag',
           'javascript'=>"indiciaData.reply_to_message(".'{notification_id}'.",".'{occurrence_id}'.");")));
     $extraParams = [
       'user_id' => $user_id,

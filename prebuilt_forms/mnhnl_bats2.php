@@ -13,19 +13,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package	Client
- * @subpackage PrebuiltForms
- * @author	Indicia Team
- * @license	http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link 	http://code.google.com/p/indicia/
+ * @author Indicia Team
+ * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
+ * @link https://github.com/Indicia-Team/client_helpers
  */
 
 /**
  * Prebuilt Indicia data entry form.
  * NB has Drupal specific code. Relies on presence of IForm Proxy.
- *
- * @package	Client
- * @subpackage PrebuiltForms
  */
 
 /* Development Stream: TBD
@@ -40,7 +35,7 @@
  * Need to manually set the term list sort order on non-default language tems.
  * Need to set the control of Visit to a select, and for the cavity entrance to a checkbox group.
  */
-require_once('mnhnl_bats.php');
+require_once 'mnhnl_bats.php';
 class iform_mnhnl_bats2 extends iform_mnhnl_bats {
 
   /**
@@ -51,7 +46,7 @@ class iform_mnhnl_bats2 extends iform_mnhnl_bats {
     return array(
       'title'=>self::get_title(),
       'category' => 'MNHNL forms',
-      'description'=>'MNHNL Summer Bats form. Inherits from Winter Bats (and hence Dynamic 1).'
+      'description' => 'MNHNL Summer Bats form. Inherits from Winter Bats (and hence Dynamic 1).'
     );
   }
 
@@ -64,7 +59,7 @@ class iform_mnhnl_bats2 extends iform_mnhnl_bats {
   }
 
   public static function get_parameters() {
-    $retVal=array();
+    $retVal=[]
     $parentVal = array_merge(
       parent::get_parameters(),
       array(
@@ -272,7 +267,7 @@ jQuery('span').filter('.control-box').each(function(idex, elem){
   }
 });\n";
     if (!empty($args['attributeValidation'])) {
-      $rules = array();
+      $rules = []
       $argRules = explode(';', $args['attributeValidation']);
       foreach($argRules as $rule){
         $rules[] = explode(',', $rule);
@@ -394,7 +389,7 @@ jQuery('.scCheckTaxon:checkbox').live('change', function(value, element){
     if (count($list)==0) return "get_control_surveymethodgrid : Termlist ".$options['surveyMethodTermList']." not available on the Warehouse";
     if (count($list)>1) return "get_control_surveymethodgrid : Multiple termlists identified by ".$options['surveyMethodTermList']." found on the Warehouse";
     $termlist = $list[0]['id'];
-    $extraParams = $auth['read'] + array('termlist_id' => $termlist, 'view'=>'detail');
+    $extraParams = $auth['read'] + array('termlist_id' => $termlist, 'view' => 'detail');
     $surveyMethods = data_entry_helper::get_population_data(array('table' => 'termlists_term', 'extraParams' => $extraParams));
     data_entry_helper::$javascript .= "// JS for survey method grid control.
 jQuery('.method-presence').change(function(){
@@ -445,9 +440,9 @@ jQuery('.survey-method-grid').find('[name$=\\:".$removeDetails[0]."\\:smpAttr\\:
       }
     }
     $smpAttributes = data_entry_helper::getAttributes(array(
-       'attrtable'=>'sample_attribute'
-       ,'key'=>'sample_id'
-       ,'fieldprefix'=>'{MyPrefix}:smpAttr'
+       'attrtable' => 'sample_attribute'
+       ,'key' => 'sample_id'
+       ,'fieldprefix' => '{MyPrefix}:smpAttr'
        ,'extraParams'=>$auth['read']
        ,'survey_id'=>$args['survey_id']
     ), true);
@@ -457,21 +452,21 @@ jQuery('.survey-method-grid').find('[name$=\\:".$removeDetails[0]."\\:smpAttr\\:
       $retval .= '<th>'.t($heading).(!$idx?'<span class="deh-required">*</span>':'').'</th>'; //because the text is a configuration item we use the drupal translation rather than hardcoded iform translations.
     }
     $retval .= '</tr></thead><tbody>';
-    $subSamples = array();
-    $subSamplesAttrs = array();
+    $subSamples = [];
+    $subSamplesAttrs = [];
     if(isset(data_entry_helper::$entity_to_load['sample:id'])){
       $smpOptions = array(
-        'table'=>'sample',
+        'table' => 'sample',
         'nocache'=>true,
-        'extraParams'=> $auth['read']+ array('view'=>'detail', 'parent_id' => data_entry_helper::$entity_to_load['sample:id']));
+        'extraParams'=> $auth['read']+ array('view' => 'detail', 'parent_id' => data_entry_helper::$entity_to_load['sample:id']));
       $subSamples = data_entry_helper::get_population_data($smpOptions);
       foreach($subSamples as $sample) {
         $subSamplesAttrs[$sample['id']] = data_entry_helper::getAttributes(array(
-             'attrtable'=>'sample_attribute'
-            ,'valuetable'=>'sample_attribute_value'
+             'attrtable' => 'sample_attribute'
+            ,'valuetable' => 'sample_attribute_value'
             ,'id'=>$sample['id']
-            ,'key'=>'sample_id'
-            ,'fieldprefix'=>'{MyPrefix}:smpAttr'
+            ,'key' => 'sample_id'
+            ,'fieldprefix' => '{MyPrefix}:smpAttr'
             ,'extraParams'=>$auth['read']
             ,'survey_id'=>$args['survey_id']), true);
         $subSamplesAttrs[$sample['id']][$visitAttr]['validation_rules']='required';
@@ -482,10 +477,10 @@ jQuery('.survey-method-grid').find('[name$=\\:".$removeDetails[0]."\\:smpAttr\\:
       $smpID=false;
       $fieldname = '{MyPrefix}:presence:'.$surveyMethodIdAttr;
       $present='';
-      $attrOpts = array('lookUpKey'=>'meaning_id',
+      $attrOpts = array('lookUpKey' => 'meaning_id',
                         'extraParams' => $auth['read'],
                         'language' => iform_lang_iso_639_2($args['language']),
-                        'disabled'=>'disabled');
+                        'disabled' => 'disabled');
       foreach($subSamples as $subSample){
         foreach($subSamplesAttrs[$subSample['id']] as $attr) {
           if($attr['attributeId'] == $surveyMethodIdAttr && $attr['default'] == $method['meaning_id']) {
@@ -542,7 +537,7 @@ sketchAttr.after('<br/>');
     if (count($list)==0) return "get_control_species : Termlist ".$options['surveyMethodTermList']." not available on the Warehouse";
     if (count($list)>1) return "get_control_species : Multiple termlists identified by ".$options['surveyMethodTermList']." found on the Warehouse";
     $termlist = $list[0]['id'];
-    $extraParams = $auth['read'] + array('termlist_id' => $termlist, 'view'=>'detail');
+    $extraParams = $auth['read'] + array('termlist_id' => $termlist, 'view' => 'detail');
     $surveyMethods = data_entry_helper::get_population_data(array('table' => 'termlists_term', 'extraParams' => $extraParams));
     data_entry_helper::$javascript .= "
 hook_species_checklist_pre_delete_row=function(e) {
@@ -573,7 +568,7 @@ hook_species_checklist_pre_delete_row=function(e) {
     ), $options);
     if ($args['extra_list_id']) $species_ctrl_opts['lookupListId']=$args['extra_list_id'];
     if (isset($args['col_widths']) && $args['col_widths']) $species_ctrl_opts['colWidths']=explode(',', $args['col_widths']);
-    call_user_func(array(get_called_class(), 'build_grid_taxon_label_function'), $args, array());
+    call_user_func(array(get_called_class(), 'build_grid_taxon_label_function'), $args, []
     // Start by outputting a hidden value that tells us we are using a grid when the data is posted,
     // then output the grid control
     return self::mnhnl_bats2_species_checklist($args, $species_ctrl_opts);
@@ -585,24 +580,24 @@ hook_species_checklist_pre_delete_row=function(e) {
 //    $options = data_entry_helper::check_arguments($options, array('listId', 'occAttrs', 'readAuth', 'extraParams', 'lookupListId'));
     $options = data_entry_helper::get_species_checklist_options($options);
     data_entry_helper::add_resource('autocomplete');
-    $occAttrControls = array();
-    $occAttrs = array();
+    $occAttrControls = [];
+    $occAttrs = [];
     $retVal='';
     // Load any existing sample's occurrence data into $entity_to_load: first have to load the survey method subsamples.
     if (isset(data_entry_helper::$entity_to_load['sample:id'])){
-      $subSamplesAttrs = array();
+      $subSamplesAttrs = [];
       $smpOptions = array(
-        'table'=>'sample',
+        'table' => 'sample',
         'nocache'=>true,
-        'extraParams'=> $options['readAuth']+ array('view'=>'detail', 'parent_id' => data_entry_helper::$entity_to_load['sample:id']));
+        'extraParams'=> $options['readAuth']+ array('view' => 'detail', 'parent_id' => data_entry_helper::$entity_to_load['sample:id']));
       $subSamples = data_entry_helper::get_population_data($smpOptions);
       foreach($subSamples as $sample) {
         $subSamplesAttrs[$sample['id']] = data_entry_helper::getAttributes(array(
-             'attrtable'=>'sample_attribute'
-            ,'valuetable'=>'sample_attribute_value'
+             'attrtable' => 'sample_attribute'
+            ,'valuetable' => 'sample_attribute_value'
             ,'id'=>$sample['id']
-            ,'key'=>'sample_id'
-            ,'fieldprefix'=>'{MyPrefix}:smpAttr'
+            ,'key' => 'sample_id'
+            ,'fieldprefix' => '{MyPrefix}:smpAttr'
             ,'extraParams'=>$options['readAuth']
             ,'survey_id'=>$args['survey_id']), true);
         $subSamplesAttrs[$sample['id']][$visitAttr]['validation_rules']='required';
@@ -627,9 +622,9 @@ hook_species_checklist_pre_delete_row=function(e) {
     if (! array_key_exists('error', $occList)) {
       $attributes = data_entry_helper::getAttributes(array(
           'id' => null
-           ,'valuetable'=>'occurrence_attribute_value'
-           ,'attrtable'=>'occurrence_attribute'
-           ,'key'=>'occurrence_id'
+           ,'valuetable' => 'occurrence_attribute_value'
+           ,'attrtable' => 'occurrence_attribute'
+           ,'key' => 'occurrence_id'
            ,'fieldprefix'=>"{fieldname}"
            ,'extraParams'=>$options['readAuth']
            ,'survey_id'=>array_key_exists('survey_id', $options) ? $options['survey_id'] : null
@@ -643,21 +638,21 @@ hook_species_checklist_pre_delete_row=function(e) {
       }
       $retVal .= '<table class="ui-widget ui-widget-content mnhnl-species-grid '.$options['class'].'" id="'.$options['id'].'">';
       $retVal .= self::get_species_checklist_header($options, $attributes).'<tbody>';
-      $attrsPerRow=array();
+      $attrsPerRow=[];
       foreach ($attributes as $attrId=>$attr) {
         $row=substr ( $attr['inner_structure_block'], 3);
         if(!isset($attrsPerRow[$row])) {
-          $attrsPerRow[$row]=array();
+          $attrsPerRow[$row]=[];
         }
         $attrsPerRow[$row][] = $attr["attributeId"];
       }
-      $rows = array();
+      $rows = [];
       $rowIdx = 0;
       // each row grouping is driven by the ttlid, not the occurrence, as there is a different occurrence for each survey method.
       // that said we want it to be in general occurrence order so it matches the order in which the occurrences are created
       // i.e. in order of first occurrence in ttl group
-      $ttlidList=array();
-      $ttlList=array();
+      $ttlidList=[];
+      $ttlList=[];
       foreach ($occList as $occ) {
         $ttlid = $occ['taxon']['id'];
         if(!in_array($ttlid,$ttlidList)){
@@ -795,13 +790,13 @@ bindSpeciesAutocomplete(\"taxonLookupControl\",\"".data_entry_helper::$base_url.
   }
 
   public static function preload_species_checklist_occurrences($sampleId, $method, $readAuth) {
-    $occurrenceIds = array();
+    $occurrenceIds = [];
     // don't load from the db if there are validation errors, since the $_POST will already contain all the
     // data we need.
     if (is_null(data_entry_helper::$validation_errors)) {
       $occurrences = data_entry_helper::get_population_data(array(
         'table' => 'occurrence',
-        'extraParams' => $readAuth + array('view'=>'detail','sample_id'=>$sampleId,'deleted'=>'f'),
+        'extraParams' => $readAuth + array('view' => 'detail','sample_id'=>$sampleId,'deleted' => 'f'),
         'nocache' => true
       ));
       foreach($occurrences as $occurrence){
@@ -837,11 +832,11 @@ bindSpeciesAutocomplete(\"taxonLookupControl\",\"".data_entry_helper::$base_url.
     global $indicia_templates;
     // assume always removeable and presence is hidden.
     // first row has X to remove row, plus species
-    $rows=array();
+    $rows=[]
     foreach ($attributes as $attrId=>$attr) {
     	$row=substr ( $attr['inner_structure_block'], 3);
     	if(!isset($rows[$row])) {
-    		$rows[$row]=array();
+    		$rows[$row]=[];
     	}
     	$rows[$row][] = $attr["attributeId"];
     }
@@ -904,9 +899,9 @@ bindSpeciesAutocomplete(\"taxonLookupControl\",\"".data_entry_helper::$base_url.
   public static function get_species_checklist_occ_list($options) {
     // at this point the data_entry_helper::$entity_to_load has been preloaded with the occurrence data.
     // copy the options array so we can modify it
-    $extraTaxonOptions = array_merge(array(), $options);
+    $extraTaxonOptions = array_merge([], $options);
     // We don't want to filter the taxa to be added, because if they are in the sample, then they must be included whatever.
-    $ids = array();
+    $ids = [];
     unset($extraTaxonOptions['extraParams']['taxon_list_id']);
     unset($extraTaxonOptions['extraParams']['preferred']);
     unset($extraTaxonOptions['extraParams']['language_iso']);
@@ -921,7 +916,7 @@ bindSpeciesAutocomplete(\"taxonLookupControl\",\"".data_entry_helper::$base_url.
     $extraTaxonOptions['extraParams']['id'] = $ids;
     // append the taxa to the list to load into the grid
     $fullTaxalist = data_entry_helper::get_population_data($extraTaxonOptions);
-    $occList = array();
+    $occList = [];
     foreach(data_entry_helper::$entity_to_load as $key => $value) {
       // 'sc:<method>:<taxa_taxon_list_id>:<occID>:occAttr:<attrID>[:<attrValID>]'
       $parts = explode(':', $key,5);
@@ -972,13 +967,13 @@ bindSpeciesAutocomplete(\"taxonLookupControl\",\"".data_entry_helper::$base_url.
     } // else just load the string
     if (isset($values['location:name'])) $values['sample:location_name'] = $values['location:name'];
     $sampleMod = submission_builder::wrap_with_images($values, 'sample');
-    $subModels=array();
+    $subModels=[];
     if(!isset($values['sample:deleted'])) {
       // loop through all survey methods subsamples
       foreach($values as $key => $value){
         $parts = explode(':', $key, 5);
         if ($parts[0] == 'method' && $parts[3] == 'presence'){
-          $smp = array('fkId' => 'parent_id', 'model' => array('id' => 'sample', 'fields' => array()));
+          $smp = array('fkId' => 'parent_id', 'model' => array('id' => 'sample', 'fields' => []));
           $smp['model']['fields']['survey_id'] = array('value' => $values['survey_id']);
           $smp['model']['fields']['website_id'] = array('value' => $values['website_id']);
           $smp['model']['fields']['date'] = array('value' => $values['sample:date']);
@@ -1035,8 +1030,8 @@ bindSpeciesAutocomplete(\"taxonLookupControl\",\"".data_entry_helper::$base_url.
     // sc:<method-meaning-id>:<taxa_taxon_list_id>:[<occurrence_id>|<sequence(negative)>]:occAttr:<occurrence_attribute_id>[:<occurrence_attribute_value_id>]
     // sc:<method-meaning-id>:<taxa_taxon_list_id>:[<occurrence_id>|<sequence(negative)>]:present
     // not doing occurrence images at this point - TBD
-    $records = array();
-    $subModels = array();
+    $records = [];
+    $subModels = [];
     foreach ($arr as $key=>$value){
       if (substr($key, 0, 3)=='sc:'){
         // Don't explode the last element for occurrence attributes

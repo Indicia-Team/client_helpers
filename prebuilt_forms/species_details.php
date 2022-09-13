@@ -16,7 +16,7 @@
  *
  * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link http://code.google.com/p/indicia/
+ * @link https://github.com/Indicia-Team/client_helpers
  */
 
 require_once 'includes/dynamic.php';
@@ -257,8 +257,6 @@ class iform_species_details extends iform_dynamic {
    * Override the getHidden function.
    * getForm in dynamic.php will now call this and return an empty array when creating a list of hidden input
    * controls for form submission as this functionality is not being used for the Species Details page.
-   * @package    Client
-   * @subpackage PrebuiltForms
    */
   protected static function getHidden() {
     return NULL;
@@ -269,8 +267,6 @@ class iform_species_details extends iform_dynamic {
    * Override the getMode function.
    * getForm in dynamic.php will now call this and return an empty array when creating a mode list
    * as this functionality is not being used for the Species Details page.
-   * @package    Client
-   * @subpackage PrebuiltForms
    */
   protected static function getMode() {
     return [];
@@ -281,8 +277,6 @@ class iform_species_details extends iform_dynamic {
   * Override the getAttributes function.
   * getForm in dynamic.php will now call this and return an empty array when creating an attributes list
   * as this functionality is not being used for the Species Details page.
-  * @package    Client
-  * @subpackage PrebuiltForms
   */
  protected static function getAttributes() {
    return [];
@@ -292,9 +286,6 @@ class iform_species_details extends iform_dynamic {
    * Override the get_form_html function.
    * getForm in dynamic.php will now call this.
    * Vary the display of the page based on the interface type
-   *
-   * @package    Client
-   * @subpackage PrebuiltForms
    */
   protected static function get_form_html($args, $auth, $attributes) {
     if (empty($_GET['taxa_taxon_list_id']) && empty($_GET['taxon_meaning_id'])) {
@@ -854,10 +845,9 @@ class iform_species_details extends iform_dynamic {
 
   /**
    * Draw Map section of the page.
-   * @return string The output map panel.
    *
-   * @package    Client
-   * @subpackage PrebuiltForms
+   * @return string
+   *   The output map panel.
    */
   protected static function get_control_map($auth, $args, $tabalias, $options) {
     // Draw a distribution map by calling Indicia report when Geoserver isn't
@@ -930,10 +920,9 @@ class iform_species_details extends iform_dynamic {
 
   /**
    * Draw a distribution map by calling Indicia report when Geoserver isn't available
-   * @return string The output map panel.
    *
-   * @package    Client
-   * @subpackage PrebuiltForms
+   * @return string
+   *   The output map panel.
    */
   protected static function mapWithoutGeoserver($auth, $args, $tabalias, $options) {
     iform_load_helpers(array('map_helper', 'report_helper'));
@@ -1010,10 +999,9 @@ class iform_species_details extends iform_dynamic {
 
   /**
    * Draw the explore button on the page.
-   * @return string The output HTML string.
    *
-   * @package    Client
-   * @subpackage PrebuiltForms
+   * @return string
+   *   The output HTML string.
    */
   protected static function get_control_explore($auth, $args) {
     if (!empty($args['explore_url']) && !empty($args['explore_param_name'])) {
@@ -1121,10 +1109,9 @@ class iform_species_details extends iform_dynamic {
    * Used to convert an array of attributes to a string formatted like a set,
    * this is then used by the species_data_attributes_with_hiddens report to return
    * custom attributes which aren't in the hidden attributes list.
-   * @return string The set of hidden custom attributes.
    *
-   * @package    Client
-   * @subpackage PrebuiltForms
+   * @return string
+   *   The set of hidden custom attributes.
    */
   protected static function convert_array_to_set($theArray) {
     return "'".implode("','", str_replace("'", "''", $theArray))."'";

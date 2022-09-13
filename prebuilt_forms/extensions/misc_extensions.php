@@ -18,7 +18,7 @@
  *
  * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link http://code.google.com/p/indicia/
+ * @link https://github.com/Indicia-Team/client_helpers
  */
 
 /**
@@ -885,7 +885,7 @@ JS;
     if (!isset($options['record']) || !is_array($options['record'])) {
       return 'The occurrence_flag_icons extension requires a record array in the options.';
     }
-    $flags = array();
+    $flags = [];
     if (!empty($options['record']['sensitive']) && $options['record']['sensitive'] !== 'f') {
       $flags[] = lang::get('sensitive');
     }

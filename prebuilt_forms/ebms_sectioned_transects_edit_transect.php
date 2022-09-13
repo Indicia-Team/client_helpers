@@ -18,8 +18,8 @@
  * @link https://github.com/indicia-team/client_helpers/
  */
 
-require_once('sectioned_transects_edit_transect.php');
-require_once('includes/user.php');
+require_once 'sectioned_transects_edit_transect.php';
+require_once 'includes/user.php';
 
 /*
  * Although the concept of branches is replaced by countries in this form, as it uses inherited code, you may
@@ -160,8 +160,6 @@ require_once('includes/user.php');
  * When the Save button is pressed: AJAX form submit: update names of all attributes.
  */
 /**
- * @package Client
- * @subpackage PrebuiltForms
  * Form for adding or editing the site details on a transect which contains a number of sections.
  */
 class iform_ebms_sectioned_transects_edit_transect extends iform_sectioned_transects_edit_transect {
@@ -174,9 +172,9 @@ class iform_ebms_sectioned_transects_edit_transect extends iform_sectioned_trans
    */
   public static function get_ebms_sectioned_transects_edit_transect_definition() {
     return array(
-      'title'=>'EBMS Location editor',
+      'title' => 'EBMS Location editor',
       'category' => 'BMS Specific forms',
-      'description'=>'Form for adding or editing the site details on a transect style location which has a number of sub-sections, but which can have various location types.'
+      'description' => 'Form for adding or editing the site details on a transect style location which has a number of sub-sections, but which can have various location types.'
     );
   }
 
@@ -194,7 +192,7 @@ class iform_ebms_sectioned_transects_edit_transect extends iform_sectioned_trans
       				'description' => 'Country specific configuration',
       				'type' => 'jsonwidget',
       				'required' => false,
-      				'group'=>'Transects Editor Settings',
+      				'group' => 'Transects Editor Settings',
       				'schema' => '{
   "type":"seq",
   "title":"Country Configuration List",
@@ -259,100 +257,100 @@ class iform_ebms_sectioned_transects_edit_transect extends iform_sectioned_trans
 }'
       		),
         array(
-          'name'=>'country_location_type_id',
-          'caption'=>'Country Location Type Id',
-          'description'=>'The location type id of the Country location type.',
+          'name' => 'country_location_type_id',
+          'caption' => 'Country Location Type Id',
+          'description' => 'The location type id of the Country location type.',
           'type' => 'select',
-          'table'=>'termlists_term',
-          'captionField'=>'term',
-          'valueField'=>'id',
-          'extraParams' => array('view'=>'list', 'termlist_external_key'=>'indicia:location_types'),
+          'table' => 'termlists_term',
+          'captionField' => 'term',
+          'valueField' => 'id',
+          'extraParams' => array('view' => 'list', 'termlist_external_key' => 'indicia:location_types'),
           'required' => true,
-          'group'=>'Transects Editor Settings'
+          'group' => 'Transects Editor Settings'
         ),
         array(
-          'name'=>'countries',
-          'caption'=>'Valid Countries',
-          'description'=>'A bar (&#124;) separated list of countries to be included as options in the country control. Leave black for all. These can be either names or Indicia location IDs.',
-          'type'=>'string',
+          'name' => 'countries',
+          'caption' => 'Valid Countries',
+          'description' => 'A bar (&#124;) separated list of countries to be included as options in the country control. Leave black for all. These can be either names or Indicia location IDs.',
+          'type' => 'string',
           'required' => false,
-          'group'=>'Transects Editor Settings'
+          'group' => 'Transects Editor Settings'
         ),
         array(
-      		'name'=>'country_attr',
-      		'caption'=>'Country Location attribute',
-      		'description'=>'Location attribute that stores the Country. Single value integer.',
-      		'type'=>'select',
-      		'table'=>'location_attribute',
-      		'valueField'=>'caption',
-      		'captionField'=>'caption',
-      		'group'=>'Transects Editor Settings',
+      		'name' => 'country_attr',
+      		'caption' => 'Country Location attribute',
+      		'description' => 'Location attribute that stores the Country. Single value integer.',
+      		'type' => 'select',
+      		'table' => 'location_attribute',
+      		'valueField' => 'caption',
+      		'captionField' => 'caption',
+      		'group' => 'Transects Editor Settings',
       		'required'=>true
       	),
         array(
-          'name'=>'country_layer_lookup',
-          'caption'=>'WFS Layer specification for Country Lookup',
-          'description'=>'Comma separated: proxiedurl,featurePrefix,featureType,featureNS,srsName. Leave blank for no lookup.',
+          'name' => 'country_layer_lookup',
+          'caption' => 'WFS Layer specification for Country Lookup',
+          'description' => 'Comma separated: proxiedurl,featurePrefix,featureType,featureNS,srsName. Leave blank for no lookup.',
           // http://biomonitor.mnhn.lu/?q=proxy&url=http://biomonitor.mnhn.lu:8080/geoserver/wfs,indicia,locations,http://dbtest.dyndns.info/indicia/,EPSG:2169
-          'type'=>'textarea',
+          'type' => 'textarea',
           'required' => false,
-          'group'=>'Transects Editor Settings',
+          'group' => 'Transects Editor Settings',
         ),
 
         array(
-          'name'=>'autogenerateCode',
-          'caption'=>'Autogenerate Code',
-          'description'=>'Autogenerate Location Codes.',
+          'name' => 'autogenerateCode',
+          'caption' => 'Autogenerate Code',
+          'description' => 'Autogenerate Location Codes.',
           'type' => 'boolean',
           'required' => false,
-          'group'=>'Transects Editor Settings'
+          'group' => 'Transects Editor Settings'
         ),
       	array(
       		'name' => 'autogeneratePrefix',
       		'caption' => 'Autogenerate Prefix',
       		'description' => 'The prefix for the autogenerated code.',
-      		'type'=>'string',
+      		'type' => 'string',
       		'group' => 'Transects Editor Settings',
           	'required' => false,
       		'default' => 'EBMS:'
       	),
         array(
-          'name'=>'display_location_type',
-          'caption'=>'Display location type',
-          'description'=>'Where there is no location_type_id control displayed, check this to display the location type term.',
+          'name' => 'display_location_type',
+          'caption' => 'Display location type',
+          'description' => 'Where there is no location_type_id control displayed, check this to display the location type term.',
           'type' => 'boolean',
           'required' => false,
-          'group'=>'Transects Editor Settings'
+          'group' => 'Transects Editor Settings'
         ),
       	array(
-      		'name'=>'autocalc_transect_length_attr_id',
-      		'caption'=>'Location attribute to autocalc transect length',
-      		'description'=>'Location attribute that stores the total transect length: summed from the lengths of the individual sections.',
-      		'type'=>'select',
-      		'table'=>'location_attribute',
-      		'valueField'=>'id',
-      		'captionField'=>'caption',
-      		'group'=>'Transects Editor Settings',
+      		'name' => 'autocalc_transect_length_attr_id',
+      		'caption' => 'Location attribute to autocalc transect length',
+      		'description' => 'Location attribute that stores the total transect length: summed from the lengths of the individual sections.',
+      		'type' => 'select',
+      		'table' => 'location_attribute',
+      		'valueField' => 'id',
+      		'captionField' => 'caption',
+      		'group' => 'Transects Editor Settings',
       		'required'=>false
       	),
       	array(
-      		'name'=>'cms_attr',
-      		'caption'=>'CMS User Location attribute',
-      		'description'=>'Location attribute that stores the CMS User ID. Multivalue integer attribute used to assign people to locations.',
-      		'type'=>'select',
-      		'table'=>'location_attribute',
-      		'valueField'=>'caption',
-      		'captionField'=>'caption',
-      		'group'=>'Transects Editor Settings',
+      		'name' => 'cms_attr',
+      		'caption' => 'CMS User Location attribute',
+      		'description' => 'Location attribute that stores the CMS User ID. Multivalue integer attribute used to assign people to locations.',
+      		'type' => 'select',
+      		'table' => 'location_attribute',
+      		'valueField' => 'caption',
+      		'captionField' => 'caption',
+      		'group' => 'Transects Editor Settings',
       		'required'=>true
       	),
         array(
-          'name'=>'custom_attribute_options',
-          'caption'=>'Options for custom attributes',
-          'description'=>'A list of additional options to pass through to custom attributes, one per line. Each option should be specified as '.
+          'name' => 'custom_attribute_options',
+          'caption' => 'Options for custom attributes',
+          'description' => 'A list of additional options to pass through to custom attributes, one per line. Each option should be specified as '.
               'the attribute name followed by | then the option name, followed by = then the value. For example, smpAttr:1|class=control-width-5.',
-          'type'=>'textarea',
-      	  'group'=>'Transects Editor Settings'
+          'type' => 'textarea',
+      	  'group' => 'Transects Editor Settings'
         )
 
     ));
@@ -414,9 +412,9 @@ class iform_ebms_sectioned_transects_edit_transect extends iform_sectioned_trans
           $location = data_entry_helper::get_population_data(array(
               'table' => 'location',
               'extraParams' => $auth['read'] +
-                    array('view'=>'detail',
+                    array('view' => 'detail',
                           'name'=>$country_configuration['country_names'][$j]['country'],
-                          'deleted'=>'f',
+                          'deleted' => 'f',
                           'location_type_id'=>$args['country_location_type_id'],
                     )
           ));
@@ -458,20 +456,20 @@ class iform_ebms_sectioned_transects_edit_transect extends iform_sectioned_trans
     // WARNING!!!! we are making the assumption that the attributes are defined to be the same for all the location_types.
     $settings['attributes'] = data_entry_helper::getAttributes(array(
         'id' => $settings['locationId'],
-        'valuetable'=>'location_attribute_value',
-        'attrtable'=>'location_attribute',
-        'key'=>'location_id',
-        'fieldprefix'=>'locAttr',
+        'valuetable' => 'location_attribute_value',
+        'attrtable' => 'location_attribute',
+        'key' => 'location_id',
+        'fieldprefix' => 'locAttr',
         'extraParams'=>$auth['read'],
         'survey_id'=>$args['survey_id'],
         'location_type_id' => $settings['mainLocationType'][0]['id'],
         'multiValue' => true
     ));
     $settings['section_attributes'] = data_entry_helper::getAttributes(array(
-        'valuetable'=>'location_attribute_value',
-        'attrtable'=>'location_attribute',
-        'key'=>'location_id',
-        'fieldprefix'=>'locAttr',
+        'valuetable' => 'location_attribute_value',
+        'attrtable' => 'location_attribute',
+        'key' => 'location_id',
+        'fieldprefix' => 'locAttr',
         'extraParams'=>$auth['read'],
         'survey_id'=>$args['survey_id'],
         'location_type_id' => $settings['sectionLocationType'][0]['id'],
@@ -499,7 +497,7 @@ class iform_ebms_sectioned_transects_edit_transect extends iform_sectioned_trans
     self::$countryAttrId = $settings['countryAttr']['attributeId'];
 
     data_entry_helper::$javascript .= "indiciaData.sections = {};\n";
-    $settings['sections']=array();
+    $settings['sections']=[];
     $settings['numSectionsAttr'] = "";
     $settings['autocalcSectionLengthAttrId'] = empty($args['autocalc_section_length_attr_id']) ? 0 : $args['autocalc_section_length_attr_id'];
     if ($settings['autocalcSectionLengthAttrId'] > 0)
@@ -512,7 +510,7 @@ class iform_ebms_sectioned_transects_edit_transect extends iform_sectioned_trans
       data_entry_helper::load_existing_record($auth['read'], 'location', $settings['locationId']);
       $settings['walks'] = data_entry_helper::get_population_data(array(
         'table' => 'sample',
-        'extraParams' => $auth['read'] + array('view'=>'detail','location_id'=>$settings['locationId'],'deleted'=>'f'),
+        'extraParams' => $auth['read'] + array('view' => 'detail','location_id'=>$settings['locationId'],'deleted' => 'f'),
         'nocache' => true
       ));
       // Work out permissions for this user: note that canAllocCountry setting effectively shows if a manager.
@@ -559,7 +557,7 @@ class iform_ebms_sectioned_transects_edit_transect extends iform_sectioned_trans
       }
       $sections = data_entry_helper::get_population_data(array(
         'table' => 'location',
-        'extraParams' => $auth['read'] + array('view'=>'detail','parent_id'=>$settings['locationId'],'deleted'=>'f','orderby'=>'id'),
+        'extraParams' => $auth['read'] + array('view' => 'detail','parent_id'=>$settings['locationId'],'deleted' => 'f','orderby' => 'id'),
         'nocache' => true
       ));
       foreach($sections as $section) {
@@ -572,10 +570,10 @@ class iform_ebms_sectioned_transects_edit_transect extends iform_sectioned_trans
         if (isset($args['autocalc_transect_length_attr_id']) &&
         		$args['autocalc_transect_length_attr_id'] != '') {
     		$section_attributes = data_entry_helper::getAttributes(array(
-		        'valuetable'=>'location_attribute_value',
-		        'attrtable'=>'location_attribute',
-		        'key'=>'location_id',
-		        'fieldprefix'=>'locAttr',
+		        'valuetable' => 'location_attribute_value',
+		        'attrtable' => 'location_attribute',
+		        'key' => 'location_id',
+		        'fieldprefix' => 'locAttr',
 		        'extraParams'=>$auth['read'] + array('id' => $args['autocalc_section_length_attr_id']),
 		        'survey_id'=>$args['survey_id'],
 		        'location_type_id' => $settings['sectionLocationType'][0]['id'],
@@ -597,7 +595,7 @@ class iform_ebms_sectioned_transects_edit_transect extends iform_sectioned_trans
           data_entry_helper::$javascript .= "$('#".str_replace(':','\\\\:',$attr['id'])."').attr('readonly','readonly').css('color','graytext').css('background-color','#d0d0d0');\n";
         }
       }
-      $settings['walks'] = array();
+      $settings['walks'] = [];
     }
     $r = '<div id="controls">';
     $headerOptions = array('tabs'=>array('#site-details'=>lang::get('{1} Details', ($settings['locationId'] ? data_entry_helper::$entity_to_load['location:name'] : lang::get('Site')))));
@@ -608,8 +606,8 @@ class iform_ebms_sectioned_transects_edit_transect extends iform_sectioned_trans
     }
     $r .= data_entry_helper::tab_header($headerOptions);
     data_entry_helper::enable_tabs(array(
-          'divId'=>'controls',
-          'style'=>'Tabs',
+          'divId' => 'controls',
+          'style' => 'Tabs',
           'progressBar' => isset($args['tabProgress']) && $args['tabProgress']==true
           ,'active' => (isset($_GET['route-tab']) || ($_SERVER['REQUEST_METHOD'] === 'POST' && $settings['locationId']) ? 'your-route' : 'site-details')
     ));
@@ -622,7 +620,7 @@ class iform_ebms_sectioned_transects_edit_transect extends iform_sectioned_trans
     $r .= '</div>'; // controls
     data_entry_helper::enable_validation('input-form');
     if (function_exists('drupal_set_breadcrumb')) {
-      $breadcrumb = array();
+      $breadcrumb = []
       $breadcrumb[] = l(lang::get('Home'), '<front>');
       $breadcrumb[] = l(lang::get('Sites'), $args['sites_list_path']);
       if ($settings['locationId'])
@@ -667,7 +665,7 @@ class iform_ebms_sectioned_transects_edit_transect extends iform_sectioned_trans
 
   private static function get_site_tab($auth, $args, &$settings) {
 
-  	$blockOptions = array();
+  	$blockOptions = [];
   	if (isset($args['custom_attribute_options']) && $args['custom_attribute_options']) {
   		$blockOptionList = explode("\n", $args['custom_attribute_options']);
   		foreach($blockOptionList as $opt) {
@@ -694,13 +692,13 @@ class iform_ebms_sectioned_transects_edit_transect extends iform_sectioned_trans
     // as a drop down from the location list, location_type_id=Country.
     $r .= '<fieldset><legend>'.$settings['countryAttr']['caption'].'</legend>';
     if($canEditFields) {
-      $extraParams = $auth['read'] + array('view'=>'detail', 'deleted'=>'f', 'location_type_id'=>$args['country_location_type_id'],'orderby'=>'name');
+      $extraParams = $auth['read'] + array('view' => 'detail', 'deleted' => 'f', 'location_type_id'=>$args['country_location_type_id'],'orderby' => 'name');
       $locations = data_entry_helper::get_population_data(array(
               'table' => 'location',
               'extraParams' => $extraParams,
-              'columns'=>'id,name'
+              'columns' => 'id,name'
           ));
-    	$values = array();
+    	$values = [];
       if(isset($args['countries']) && $args['countries']!='') {
         $countries = explode('|', $args['countries']);
         foreach($locations as $location)
@@ -728,16 +726,16 @@ class iform_ebms_sectioned_transects_edit_transect extends iform_sectioned_trans
                 'default'=>$settings['countryAttr']['default']
               )).
       data_entry_helper::select(array(
-                'fieldname'=>'dummy-country',
+                'fieldname' => 'dummy-country',
                 'label'=>$settings['countryAttr']['caption'], // already translated
-                'table'=>'location',
-                'valueField'=>'id',
-                'captionField'=>'name',
-                'blankText'=>'', // shouldn't really be used
-                'extraParams'=>$auth['read']+array('view'=>'list',
+                'table' => 'location',
+                'valueField' => 'id',
+                'captionField' => 'name',
+                'blankText' => '', // shouldn't really be used
+                'extraParams'=>$auth['read']+array('view' => 'list',
                   'location_type_id'=>$args['country_location_type_id']),
                 'default'=>$settings['countryAttr']['default'],
-                'disabled'=>'disabled="disabled"' // so doesn't need the valid countries restriction
+                'disabled' => 'disabled="disabled"' // so doesn't need the valid countries restriction
               ));
     }
     $r .= '</fieldset>';
@@ -746,7 +744,7 @@ class iform_ebms_sectioned_transects_edit_transect extends iform_sectioned_trans
 
     // Unless there is only one type of location, when the location type is hidden, the location types will be driven by the
     // Country.
-    $typeTerms = array();
+    $typeTerms = [];
     $country_configurations = json_decode($args['country_configuration'],true);
     foreach($country_configurations as $country_configuration) {
       foreach($country_configuration['location_types'] as $location_type)
@@ -896,10 +894,10 @@ class iform_ebms_sectioned_transects_edit_transect extends iform_sectioned_trans
     // This must go after the map panel, so it has created its toolbar
     // data_entry_helper::$onload_javascript .= "$('#current-section').change(selectSection);\n";
     if($settings['canEditBody'] && $settings['locationId']) {
-      $walkIDs = array();
+      $walkIDs = [];
       foreach($settings['walks'] as $walk)
         $walkIDs[] = $walk['id'];
-      $sectionIDs = array();
+      $sectionIDs = [];
       foreach($settings['sections'] as $code=>$section)
         $sectionIDs[] = $section['id'];
 /**
@@ -936,7 +934,7 @@ $('#delete-transect').click(deleteSurvey);
       // for the SRef, we want to be able to edit the sref, but just display the system. Do not want the Geometry.
       $r .= '<label for="imp-sref">Section Grid Ref.:</label><input type="text" value="" class="required" name="location:centroid_sref" id="section-location-sref"><span class="deh-required">*</span>';
       // for the system we need to translate the system: easiest way is to have a disabled select plus a hidden field.
-      $systems = array();
+      $systems = [];
       $list = explode(',', str_replace(' ', '', $args['spatial_systems']));
       foreach($list as $system) {
           $systems[$system] = lang::get($system);
@@ -953,7 +951,7 @@ $('#delete-transect').click(deleteSurvey);
           // force a blank centroid, so that the Warehouse will recalculate it from the boundary
           //$r .= "<input type=\"hidden\" name=\"location:centroid_geom\" value=\"\" />\n";
 
-          $blockOptions = array();
+          $blockOptions = [];
           if (isset($args['custom_attribute_options']) && $args['custom_attribute_options']) {
               $blockOptionList = explode("\n", $args['custom_attribute_options']);
               foreach($blockOptionList as $opt) {
@@ -1054,7 +1052,7 @@ $('#delete-transect').click(deleteSurvey);
       // At the moment everyone is using EBMS_Transects...
       $locations = data_entry_helper::get_population_data(array(
           'table' => 'location',
-          'extraParams' => $readAuth + array('view'=>'detail', 'columns'=>'code', 'location_type_id' => $values['location:location_type_id']),
+          'extraParams' => $readAuth + array('view' => 'detail', 'columns' => 'code', 'location_type_id' => $values['location:location_type_id']),
           'caching' => FALSE,
       ));
       $newCode = array($code[0], $code[1], 1);
@@ -1079,10 +1077,10 @@ $('#delete-transect').click(deleteSurvey);
     $num_sections = 0;
     $transectLocationType = helper_base::get_termlist_terms(array('read'=>$read), 'indicia:location_types', array('Transect'));
     $transectAttributes = data_entry_helper::getAttributes(array(
-        'valuetable'=>'location_attribute_value',
-        'attrtable'=>'location_attribute',
-        'key'=>'location_id',
-        'fieldprefix'=>'locAttr',
+        'valuetable' => 'location_attribute_value',
+        'attrtable' => 'location_attribute',
+        'key' => 'location_id',
+        'fieldprefix' => 'locAttr',
         'extraParams'=>$read,
         'survey_id'=>$args['survey_id'],
         'location_type_id'=>$transectLocationType[0]['id'],
@@ -1105,7 +1103,7 @@ $('#delete-transect').click(deleteSurvey);
         if (!empty($values['location:id'])) {
             $sections = data_entry_helper::get_population_data(array(
                 'table' => 'location',
-                'extraParams' => $read + array('view'=>'detail','parent_id'=>$values['location:id'],'deleted'=>'f'),
+                'extraParams' => $read + array('view' => 'detail','parent_id'=>$values['location:id'],'deleted' => 'f'),
                 'nocache' => true // may have recently added or removed a section
             ));
             $sectionList = array_filter($sectionList, function($i) use ($sections) {
@@ -1117,7 +1115,7 @@ $('#delete-transect').click(deleteSurvey);
             });
         }
         // Loop through all currently in the array, and create a section submodel array.
-        $newSubSections = array();
+        $newSubSections = [];
         $sectionLocationType = helper_base::get_termlist_terms(array('read'=>$read), 'indicia:location_types', array('Transect Section'));
         foreach($sectionList as $section){
             $newSubSections[] = array('fkId' => 'parent_id',
@@ -1126,11 +1124,11 @@ $('#delete-transect').click(deleteSurvey);
                         'code' => array('value' => $section),
                         'location_type_id' => array('value' => $sectionLocationType[0]['id'])),
                     'joinsTo' => array('website' => array($values['website_id']))),
-                'copyFields' => array('centroid_sref'=>'centroid_sref','centroid_sref_system'=>'centroid_sref_system'));
+                'copyFields' => array('centroid_sref' => 'centroid_sref','centroid_sref_system' => 'centroid_sref_system'));
         }
         // Bolt into the main model array.
         if(count($newSubSections)>0) {
-            $submission['subModels'] = array_merge(!empty($submission['subModels']) ? $submission['subModels'] : array(),
+            $submission['subModels'] = array_merge(!empty($submission['subModels']) ? $submission['subModels'] : [],
                 $newSubSections);
         }
     } else throw(1);
@@ -1171,7 +1169,7 @@ $('#delete-transect').click(deleteSurvey);
       $transect = data_entry_helper::get_population_data(array(
           'table' => 'location',
           'cachetimeout' => 0, // can't cache
-          'extraParams' => $auth['read'] + array('view'=>'detail', 'id'=>$parent),
+          'extraParams' => $auth['read'] + array('view' => 'detail', 'id'=>$parent),
       ));
       if(!count($transect)) {
           header('Content-type: application/json');
@@ -1179,10 +1177,10 @@ $('#delete-transect').click(deleteSurvey);
       }
 
       $transectAttributes = data_entry_helper::getAttributes(array(
-          'valuetable'=>'location_attribute_value'
-          ,'attrtable'=>'location_attribute'
-          ,'key'=>'location_id'
-          ,'fieldprefix'=>'locAttr'
+          'valuetable' => 'location_attribute_value'
+          ,'attrtable' => 'location_attribute'
+          ,'key' => 'location_id'
+          ,'fieldprefix' => 'locAttr'
           ,'id'=>$parent
           ,'location_type_id'=>$parentLocationTypeId
           ,'extraParams'=>$auth['read']
@@ -1192,7 +1190,7 @@ $('#delete-transect').click(deleteSurvey);
       $sections = data_entry_helper::get_population_data(array(
           'table' => 'location',
           'cachetimeout' => 0, // can't cache
-          'extraParams' => $auth['read'] + array('view'=>'detail', 'parent_id'=>$parent),
+          'extraParams' => $auth['read'] + array('view' => 'detail', 'parent_id'=>$parent),
       ));
 
 
@@ -1281,7 +1279,7 @@ $('#delete-transect').click(deleteSurvey);
       $transect = data_entry_helper::get_population_data(array(
           'table' => 'location',
           'cachetimeout' => 0, // can't cache
-          'extraParams' => $auth['read'] + array('view'=>'detail', 'columns'=>'id,name', 'id'=>$parent),
+          'extraParams' => $auth['read'] + array('view' => 'detail', 'columns' => 'id,name', 'id'=>$parent),
       ));
       if(!count($transect)) {
           header('Content-type: application/json');
@@ -1289,10 +1287,10 @@ $('#delete-transect').click(deleteSurvey);
       }
 
       $transectAttributes = data_entry_helper::getAttributes(array(
-          'valuetable'=>'location_attribute_value'
-          ,'attrtable'=>'location_attribute'
-          ,'key'=>'location_id'
-          ,'fieldprefix'=>'locAttr'
+          'valuetable' => 'location_attribute_value'
+          ,'attrtable' => 'location_attribute'
+          ,'key' => 'location_id'
+          ,'fieldprefix' => 'locAttr'
           ,'id'=>$parent
           ,'location_type_id'=>$parentLocationTypeId
           ,'extraParams'=>$auth['read']
@@ -1302,7 +1300,7 @@ $('#delete-transect').click(deleteSurvey);
       $sections = data_entry_helper::get_population_data(array(
           'table' => 'location',
           'cachetimeout' => 0, // can't cache
-          'extraParams' => $auth['read'] + array('view'=>'detail', 'columns'=>'id,code,name', 'parent_id'=>$parent),
+          'extraParams' => $auth['read'] + array('view' => 'detail', 'columns' => 'id,code,name', 'parent_id'=>$parent),
       ));
       $sectionIdList = [];
 
@@ -1316,7 +1314,7 @@ $('#delete-transect').click(deleteSurvey);
               $samples = data_entry_helper::get_population_data(array(
                   'table' => 'sample',
                   'cachetimeout' => 0, // can't cache
-                  'extraParams' => $auth['read'] + array('view'=>'detail', 'columns'=>'id', 'location_id'=>$section['id']),
+                  'extraParams' => $auth['read'] + array('view' => 'detail', 'columns' => 'id', 'location_id'=>$section['id']),
               ));
               foreach($samples as $sample) {
                   $samplePostData = ['sample:id' => $sample['id'],
@@ -1423,10 +1421,10 @@ $('#delete-transect').click(deleteSurvey);
       }
 
       $transectAttributes = data_entry_helper::getAttributes(array(
-          'valuetable'=>'location_attribute_value'
-          ,'attrtable'=>'location_attribute'
-          ,'key'=>'location_id'
-          ,'fieldprefix'=>'locAttr'
+          'valuetable' => 'location_attribute_value'
+          ,'attrtable' => 'location_attribute'
+          ,'key' => 'location_id'
+          ,'fieldprefix' => 'locAttr'
           ,'id'=>$parent
           ,'location_type_id'=>$parentLocationTypeId
           ,'extraParams'=>$auth['read']
@@ -1436,7 +1434,7 @@ $('#delete-transect').click(deleteSurvey);
       $sections = data_entry_helper::get_population_data(array(
           'table' => 'location',
           'cachetimeout' => 0, // can't cache
-          'extraParams' => $auth['read'] + array('view'=>'detail', 'columns'=>'id,code,name', 'parent_id'=>$parent),
+          'extraParams' => $auth['read'] + array('view' => 'detail', 'columns' => 'id,code,name', 'parent_id'=>$parent),
       ));
       $sectionIdList = [];
 
@@ -1514,7 +1512,7 @@ $('#delete-transect').click(deleteSurvey);
       $transect = data_entry_helper::get_population_data(array(
           'table' => 'location',
           'cachetimeout' => 0, // can't cache
-          'extraParams' => $auth['read'] + array('view'=>'detail', 'columns'=>'id,name', 'id'=>$parent),
+          'extraParams' => $auth['read'] + array('view' => 'detail', 'columns' => 'id,name', 'id'=>$parent),
       ));
       if(!count($transect)) {
           header('Content-type: application/json');
@@ -1525,7 +1523,7 @@ $('#delete-transect').click(deleteSurvey);
       $sections = data_entry_helper::get_population_data(array(
           'table' => 'location',
           'cachetimeout' => 0, // can't cache
-          'extraParams' => $auth['read'] + array('view'=>'detail', 'columns'=>'id,code,name', 'parent_id'=>$parent),
+          'extraParams' => $auth['read'] + array('view' => 'detail', 'columns' => 'id,code,name', 'parent_id'=>$parent),
       ));
       $sectionIdList = [];
 
@@ -1535,7 +1533,7 @@ $('#delete-transect').click(deleteSurvey);
           $samples = data_entry_helper::get_population_data(array(
                   'table' => 'sample',
                   'cachetimeout' => 0, // can't cache
-                  'extraParams' => $auth['read'] + array('view'=>'detail', 'columns'=>'id', 'location_id'=>$section['id']),
+                  'extraParams' => $auth['read'] + array('view' => 'detail', 'columns' => 'id', 'location_id'=>$section['id']),
           ));
           foreach($samples as $sample) {
               $samplePostData = ['sample:id' => $sample['id'],
@@ -1554,7 +1552,7 @@ $('#delete-transect').click(deleteSurvey);
       $samples = data_entry_helper::get_population_data(array(
           'table' => 'sample',
           'cachetimeout' => 0, // can't cache
-          'extraParams' => $auth['read'] + array('view'=>'detail', 'columns'=>'id', 'location_id'=>$parent),
+          'extraParams' => $auth['read'] + array('view' => 'detail', 'columns' => 'id', 'location_id'=>$parent),
       ));
       foreach($samples as $sample) {
           $samplePostData = ['sample:id' => $sample['id'],

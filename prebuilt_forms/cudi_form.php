@@ -13,21 +13,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author    Indicia Team
- * @license    http://www.gnu.org/licenses/gpl.html GPL 3.0
+ * @author Indicia Team
+ * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers/
  */
 
 /**
  * Prebuilt Indicia data entry form.
  * NB has Drupal specific code.
- *
- * @package    Client
- * @subpackage PrebuiltForms
  */
 
-require_once('includes/dynamic.php');
-require_once('includes/report.php');
+require_once 'includes/dynamic.php';
+require_once 'includes/report.php';
 global $fieldsToHoldInCountUnitBoundary;
 $fieldsToHoldInCountUnitBoundary = array('boundary_geom','geom','comment');
 class iform_cudi_form extends iform_dynamic {
@@ -37,10 +34,10 @@ class iform_cudi_form extends iform_dynamic {
    */
   public static function get_cudi_form_definition() {
     return array(
-      'title'=>'Cudi Form',
+      'title' => 'Cudi Form',
       'category' => 'CUDI forms',
-//      'helpLink'=>'',
-      'description'=>'TODO. '
+//      'helpLink' => '',
+      'description' => 'TODO. '
     );
   }
 
@@ -53,9 +50,9 @@ class iform_cudi_form extends iform_dynamic {
       parent::get_parameters(),
       array(
         array(
-          'name'=>'structure',
-          'caption'=>'Form Structure',
-          'description'=>'Define the structure of the form. Each component goes on a new line and is nested inside the previous component where appropriate. The following types of '.
+          'name' => 'structure',
+          'caption' => 'Form Structure',
+          'description' => 'Define the structure of the form. Each component goes on a new line and is nested inside the previous component where appropriate. The following types of '.
             "component can be specified. <br/>".
             "<strong>=tab/page name=</strong> is used to specify the name of a tab or wizard page. (Alpha-numeric characters only)<br/>".
             "<strong>=*=</strong> indicates a placeholder for putting any custom attribute tabs not defined in this form structure. <br/>".
@@ -80,7 +77,7 @@ class iform_cudi_form extends iform_dynamic {
             "<strong>[locAttr:<i>n</i>]</strong> is used to insert a particular custom attribute identified by its ID number<br/>".
             "<strong>?help text?</strong> is used to define help text to add to the tab, e.g. ?Enter the name of the site.? <br/>".
             "<strong>all else</strong> is copied to the output html so you can add structure for styling.",
-          'type'=>'textarea',
+          'type' => 'textarea',
           'default' =>
               "=Place=\r\n".
               "?Please provide the spatial reference of the location. You can enter the reference directly, or search for a place then click on the map to set it.?\r\n".
@@ -103,124 +100,124 @@ class iform_cudi_form extends iform_dynamic {
           'caption' => 'Grid Report',
           'description' => 'Name of the report to use to populate the grid for selecting existing data from. The report must return a location_id '.
               'field for linking to the data entry form. As a starting point, try reports_for_prebuilt_forms/simple_location_list.',
-          'type'=>'string',
+          'type' => 'string',
           'group' => 'User Interface',
           'default' => 'reports_for_prebuilt_forms/simple_location_list'
         ),
         array(
-          'name'=>'list_all_locations',
-          'caption'=>'List all locations',
-          'description'=>'Should the user be given the option to list all locations in the grid rather than just their own? '.
+          'name' => 'list_all_locations',
+          'caption' => 'List all locations',
+          'description' => 'Should the user be given the option to list all locations in the grid rather than just their own? '.
               'To use this, the selected report must have an ownData parameter and return an editable field. ' .
               'See reports_for_prebuilt_forms/simple_location_list_2 for an example.',
-          'type'=>'boolean',
+          'type' => 'boolean',
           'required' => false,
           'default'=>false,
-          'group'=>'User Interface'
+          'group' => 'User Interface'
         ),
         array(
-          'name'=>'location_images',
-          'caption'=>'Location Images',
-          'description'=>'Should locations allow images to be uploaded?',
-          'type'=>'boolean',
+          'name' => 'location_images',
+          'caption' => 'Location Images',
+          'description' => 'Should locations allow images to be uploaded?',
+          'type' => 'boolean',
           'required' => false,
           'default'=>false,
-          'group'=>'User Interface'
+          'group' => 'User Interface'
         ),
         array(
-          'name'=>'defaults',
-          'caption'=>'Default Values',
-          'description'=>'Supply the ID of the Preferred Boundary Location Attribute in the database.',
-          'type'=>'textarea',
+          'name' => 'defaults',
+          'caption' => 'Default Values',
+          'description' => 'Supply the ID of the Preferred Boundary Location Attribute in the database.',
+          'type' => 'textarea',
           'required' => false,
         ),
         array(
-          'name'=>'preferred_boundary_attribute_id',
-          'caption'=>'Preferred Boundary Attribute Id',
-          'description'=>'The location type id of the preferred boundary attribute type.',
-          'type'=>'string',
+          'name' => 'preferred_boundary_attribute_id',
+          'caption' => 'Preferred Boundary Attribute Id',
+          'description' => 'The location type id of the preferred boundary attribute type.',
+          'type' => 'string',
           'required' => true,
-          'group'=>'Configurable Ids'
+          'group' => 'Configurable Ids'
         ),
         array(
-          'name'=>'count_unit_location_type_id',
-          'caption'=>'Count Unit Location Type Id',
-          'description'=>'The location type id of the Count Unit location type.',
-          'type'=>'string',
+          'name' => 'count_unit_location_type_id',
+          'caption' => 'Count Unit Location Type Id',
+          'description' => 'The location type id of the Count Unit location type.',
+          'type' => 'string',
           'required' => true,
-          'group'=>'Configurable Ids'
+          'group' => 'Configurable Ids'
         ),
         array(
-          'name'=>'count_unit_boundary_location_type_id',
-          'caption'=>'Count Unit Boundary Location Type Id',
-          'description'=>'The location type id of the Count Unit Boundary location type.',
-          'type'=>'string',
+          'name' => 'count_unit_boundary_location_type_id',
+          'caption' => 'Count Unit Boundary Location Type Id',
+          'description' => 'The location type id of the Count Unit Boundary location type.',
+          'type' => 'string',
           'required' => true,
-          'group'=>'Configurable Ids'
+          'group' => 'Configurable Ids'
         ),
         array(
-          'name'=>'attribute_ids_to_store_on_count_unit_boundary',
-          'caption'=>'Location Attributes to be stored in the Count Unit Boundary',
-          'description'=>'Comma seperated list of Location Attribute Ids that are to be stored as part of the Count Unit Boundary.',
-          'type'=>'string',
+          'name' => 'attribute_ids_to_store_on_count_unit_boundary',
+          'caption' => 'Location Attributes to be stored in the Count Unit Boundary',
+          'description' => 'Comma seperated list of Location Attribute Ids that are to be stored as part of the Count Unit Boundary.',
+          'type' => 'string',
           'required' => true,
-          'group'=>'Configurable Ids'
+          'group' => 'Configurable Ids'
         ),
         array(
-          'name'=>'verified_attribute_id',
-          'caption'=>'Verification Attribute Id',
-          'description'=>'Id of the "Verified" location attribute.',
-          'type'=>'string',
+          'name' => 'verified_attribute_id',
+          'caption' => 'Verification Attribute Id',
+          'description' => 'Id of the "Verified" location attribute.',
+          'type' => 'string',
           'required' => true,
-          'group'=>'Configurable Ids'
+          'group' => 'Configurable Ids'
         ),
         array(
-          'name'=>'annotation_location_type_id',
-          'caption'=>'Annotation Location Type Id',
-          'description'=>'Id of the annotation location type.',
-          'type'=>'string',
+          'name' => 'annotation_location_type_id',
+          'caption' => 'Annotation Location Type Id',
+          'description' => 'Id of the annotation location type.',
+          'type' => 'string',
           'required' => true,
-          'group'=>'Configurable Ids'
+          'group' => 'Configurable Ids'
         ),
         array(
-          'name'=>'boundary_start_date_id',
-          'caption'=>'Boundary Start Date Id',
-          'description'=>'Id of the start date attribute for a count unit boundary.',
-          'type'=>'string',
+          'name' => 'boundary_start_date_id',
+          'caption' => 'Boundary Start Date Id',
+          'description' => 'Id of the start date attribute for a count unit boundary.',
+          'type' => 'string',
           'required' => true,
-          'group'=>'Configurable Ids'
+          'group' => 'Configurable Ids'
         ),
         array(
-          'name'=>'boundary_end_date_id',
-          'caption'=>'Boundary End Date Id',
-          'description'=>'Id of the end date attribute for a count unit boundary.',
-          'type'=>'string',
+          'name' => 'boundary_end_date_id',
+          'caption' => 'Boundary End Date Id',
+          'description' => 'Id of the end date attribute for a count unit boundary.',
+          'type' => 'string',
           'required' => true,
-          'group'=>'Configurable Ids'
+          'group' => 'Configurable Ids'
         ),
         array(
-          'name'=>'official_reason_for_change_attribute_id',
-          'caption'=>'Official Reason For Change Id',
-          'description'=>'Id of the Official Reason For Change location attribute.',
-          'type'=>'string',
+          'name' => 'official_reason_for_change_attribute_id',
+          'caption' => 'Official Reason For Change Id',
+          'description' => 'Id of the Official Reason For Change location attribute.',
+          'type' => 'string',
           'required' => true,
-          'group'=>'Configurable Ids'
+          'group' => 'Configurable Ids'
         ),
         array(
-          'name'=>'surveys_attribute_id',
-          'caption'=>'Surveys Attribute Id',
-          'description'=>'Id of the Surveys location attribute.',
-          'type'=>'string',
+          'name' => 'surveys_attribute_id',
+          'caption' => 'Surveys Attribute Id',
+          'description' => 'Id of the Surveys location attribute.',
+          'type' => 'string',
           'required' => true,
-          'group'=>'Configurable Ids'
+          'group' => 'Configurable Ids'
         ),
         array(
-          'name'=>'administrator_mode',
-          'caption'=>'Administrator Mode?',
-          'description'=>'Place page into administrator mode. This enables extra functionality and better privileges for performing certain tasks.',
-          'type'=>'boolean',
+          'name' => 'administrator_mode',
+          'caption' => 'Administrator Mode?',
+          'description' => 'Place page into administrator mode. This enables extra functionality and better privileges for performing certain tasks.',
+          'type' => 'boolean',
           'required' => false,
-          'group'=>'Administrator Mode'
+          'group' => 'Administrator Mode'
         ),
       )
     );
@@ -246,7 +243,7 @@ class iform_cudi_form extends iform_dynamic {
     } else if (array_key_exists('new', $_GET)){
       // request to create new record (e.g. by clicking on button in grid view)
       $mode = self::MODE_NEW;
-      data_entry_helper::$entity_to_load = array();
+      data_entry_helper::$entity_to_load = []
     }
     return $mode;
   }
@@ -267,7 +264,7 @@ class iform_cudi_form extends iform_dynamic {
 
   // Get an existing location.
   protected static function getEntity($args, $auth) {
-    data_entry_helper::$entity_to_load = array();
+    data_entry_helper::$entity_to_load = [];
     //If a zoom_id is supplied, it means we are moving into add mode but for a specific region
     //So we want an empty page but the map should be zoomed in to the location boundary.
     //This boundary acts as a ghost, so it isn't actually submitted, it is purely visual.
@@ -294,7 +291,7 @@ class iform_cudi_form extends iform_dynamic {
   protected static function getIdForCountUnitPreferredBoundaryIfApplicable($args, $auth) {
     iform_load_helpers(['report_helper']);
     $preferredBoundaryValueReportData = report_helper::get_report_data(array(
-      'dataSource'=>'reports_for_prebuilt_forms/cudi/get_preferred_boundary_id',
+      'dataSource' => 'reports_for_prebuilt_forms/cudi/get_preferred_boundary_id',
       'readAuth'=>$auth['read'],
       'extraParams'=>array('count_unit_id' => $_GET['location_id'], 'preferred_boundary_location_attribute_id' => $args['preferred_boundary_attribute_id'],
                            'count_unit_boundary_location_type_id'=>$args['count_unit_boundary_location_type_id'])
@@ -444,10 +441,10 @@ mapInitialisationHooks.push(function(mapdiv) {
     $auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
     $attrOpts = array(
       'id' =>$parentId
-      ,'valuetable'=>'location_attribute_value'
-      ,'attrtable'=>'location_attribute'
-      ,'key'=>'location_id'
-      ,'fieldprefix'=>'locAttr'
+      ,'valuetable' => 'location_attribute_value'
+      ,'attrtable' => 'location_attribute'
+      ,'key' => 'location_id'
+      ,'fieldprefix' => 'locAttr'
       ,'extraParams'=>$auth['read']
       ,'survey_id'=>$args['survey_id']
       ,'location_type_id'=>$args['count_unit_location_type_id']
@@ -457,10 +454,10 @@ mapInitialisationHooks.push(function(mapdiv) {
     $auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
     $attrOpts = array(
       'id' =>$boundaryId
-      ,'valuetable'=>'location_attribute_value'
-      ,'attrtable'=>'location_attribute'
-      ,'key'=>'location_id'
-      ,'fieldprefix'=>'locAttr'
+      ,'valuetable' => 'location_attribute_value'
+      ,'attrtable' => 'location_attribute'
+      ,'key' => 'location_id'
+      ,'fieldprefix' => 'locAttr'
       ,'extraParams'=>$auth['read']
       ,'survey_id'=>$args['survey_id']
       ,'location_type_id'=>$args['count_unit_boundary_location_type_id']
@@ -468,9 +465,9 @@ mapInitialisationHooks.push(function(mapdiv) {
     $boundaryAttributes = data_entry_helper::getAttributes($attrOpts, false);
     //Merge the parent and child boundary attributes if needed so we have both sets of attributes.
     if (empty($mainAttributes))
-      $mainAttributes=array();
+      $mainAttributes=[];
     if (empty($boundaryAttributes))
-      $boundaryAttributes=array();
+      $boundaryAttributes=[];
     $attributes = array_merge($mainAttributes,$boundaryAttributes);
     //Need to format any dates from the database manually.
     foreach ($attributes as $attributeNum=>&$attributeData) {
@@ -593,7 +590,7 @@ mapInitialisationHooks.push(function(mapdiv) {
     $r .= '</select><br>';
     $r .= data_entry_helper::date_picker(array_merge(array(
       'label'=>lang::get('LANG_Location_Surveys_Date'),
-      'fieldname'=>'survey:date',
+      'fieldname' => 'survey:date',
     ), $options));
 
     $r .= '</br>';
@@ -788,9 +785,9 @@ mapInitialisationHooks.push(function(mapdiv) {
         'sharing' => $sharing
       ));
       $reportOptions = array(
-        'dataSource'=>'library/users/get_people_details_for_website_or_user',
+        'dataSource' => 'library/users/get_people_details_for_website_or_user',
         'readAuth'=>$auth['read'],
-        'mode'=>'report',
+        'mode' => 'report',
         'extraParams' => array('user_id'=>$locationCreatedByData[0]['created_by_id'])
       );
       iform_load_helpers(['report_helper']);
@@ -848,7 +845,7 @@ mapInitialisationHooks.push(function(mapdiv) {
                           'boundary_start_date_attribute_id'=>$args['boundary_start_date_id'],
                           'boundary_end_date_attribute_id'=>$args['boundary_end_date_id']);
       $optionsForBoundaryVersionsReport = array(
-      'dataSource'=>'reports_for_prebuilt_forms/CUDI/get_count_unit_boundaries_for_user_role',
+      'dataSource' => 'reports_for_prebuilt_forms/CUDI/get_count_unit_boundaries_for_user_role',
       'readAuth'=>$auth['read'],
       'extraParams' =>$extraParams
     );
@@ -869,7 +866,7 @@ mapInitialisationHooks.push(function(mapdiv) {
     $extraParams=array('count_unit_id'=>$locationId,
                        'count_unit_boundary_location_type_id'=>$args['count_unit_boundary_location_type_id']);
     $optionsForAnnotationsReport = array(
-      'dataSource'=>'reports_for_prebuilt_forms/CUDI/get_count_unit_annotations',
+      'dataSource' => 'reports_for_prebuilt_forms/CUDI/get_count_unit_annotations',
       'readAuth'=>$auth['read'],
       'extraParams' =>$extraParams
     );
@@ -1094,7 +1091,7 @@ mapInitialisationHooks.push(function(mapdiv) {
     }
     elseif (count($terms) > 1) {
       // convert the $terms to an array of id => term
-      $lookup = array();
+      $lookup = [];
       foreach ($terms as $term) {
         $lookup[$term['id']] = $term['term'];
       }
@@ -1110,7 +1107,7 @@ mapInitialisationHooks.push(function(mapdiv) {
   protected static function get_control_locationcomment($auth, $args, $tabalias, $options) {
     if (!empty($_GET['location_id'])) {
       return data_entry_helper::textarea(array_merge(array(
-        'fieldname'=>'location:comment',
+        'fieldname' => 'location:comment',
         'label'=>lang::get('LANG_Comment')
       ), $options));
     }
@@ -1126,7 +1123,7 @@ mapInitialisationHooks.push(function(mapdiv) {
    */
   protected static function get_control_locationphoto($auth, $args, $tabalias, $options) {
     return data_entry_helper::file_box(array_merge(array(
-      'table'=>'location_image',
+      'table' => 'location_image',
       'readAuth' => $auth['read'],
       'caption'=>lang::get('File upload')
     ), $options));
@@ -1204,7 +1201,7 @@ mapInitialisationHooks.push(function(mapdiv) {
    * The Surveys control uses a multiple selection of Surveys along with their dates, so these need preparing for submission sperately.
    */
   protected static function prepare_multi_survey_field(&$values, $args) {
-    $existingIdsHolder = array();
+    $existingIdsHolder = []
     //We need to find any Survey/Date selections which are already saved in the database.
     foreach ($values as $fieldName => $theAttributeId) {
       if (0 === strpos($fieldName, 'selected-survey-existing-')) {
@@ -1217,7 +1214,7 @@ mapInitialisationHooks.push(function(mapdiv) {
       }
     }
 
-    $jsonResultsHolder = array();
+    $jsonResultsHolder = [];
     foreach ($values as $fieldName => $theValue) {
       if (0 === strpos($fieldName, 'selected-survey-id-')) {
         $fieldNameParts = explode('-',$fieldName);
@@ -1458,7 +1455,7 @@ mapInitialisationHooks.push(function(mapdiv) {
     return array(array( 'display' => 'Actions',
                         'actions' =>  array(array('caption' => lang::get('Edit'),
                                                   'url' => '{currentUrl}',
-                                                  'urlParams' => array('location_id'=>'{id}'),
+                                                  'urlParams' => array('location_id' => '{id}'),
                                                   'visibility_field' => 'editable'))
     ));
   }

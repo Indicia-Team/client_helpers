@@ -13,8 +13,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package Client
- * @subpackage PrebuiltForms
  * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers/
@@ -22,9 +20,6 @@
 
 /**
  * A term editor.
- *
- * @package Client
- * @subpackage PrebuiltForms
  */
 class iform_term {
 
@@ -34,9 +29,9 @@ class iform_term {
    */
   public static function get_term_definition() {
     return array(
-      'title'=>'Term editor',
+      'title' => 'Term editor',
       'category' => 'General Purpose Data Entry Forms',
-      'description'=>'A simple page for editing terms in a warehouse termlist.'
+      'description' => 'A simple page for editing terms in a warehouse termlist.'
     );
   }
 
@@ -47,27 +42,27 @@ class iform_term {
   public static function get_parameters() {
     return array(
       array(
-          'name'=>'termlist_id',
-          'caption'=>'Term List',
-          'description'=>'The term list being edited.',
-          'type'=>'select',
-          'table'=>'termlist',
-          'captionField'=>'title',
-          'valueField'=>'id',
+          'name' => 'termlist_id',
+          'caption' => 'Term List',
+          'description' => 'The term list being edited.',
+          'type' => 'select',
+          'table' => 'termlist',
+          'captionField' => 'title',
+          'valueField' => 'id',
           'siteSpecific'=>true,
-          'group'=>'Terms',
+          'group' => 'Terms',
           'required'=>true
       ),
       array(
-          'name'=>'language_id',
-          'caption'=>'Language',
-          'description'=>'The language that terms are created in.',
-          'type'=>'select',
-          'table'=>'language',
-          'captionField'=>'language',
-          'valueField'=>'id',
+          'name' => 'language_id',
+          'caption' => 'Language',
+          'description' => 'The language that terms are created in.',
+          'type' => 'select',
+          'table' => 'language',
+          'captionField' => 'language',
+          'valueField' => 'id',
           'siteSpecific'=>true,
-          'group'=>'Terms',
+          'group' => 'Terms',
           'required'=>true
       )
     );
@@ -87,7 +82,7 @@ class iform_term {
     $auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
     $r = "<form method=\"post\" id=\"entry_form\" action=\"$reloadPath\">\n";
     $r .= $auth['write'];
-    data_entry_helper::$entity_to_load = array();
+    data_entry_helper::$entity_to_load = [];
     if (!empty($_GET['termlists_term_id'])) {
       data_entry_helper::load_existing_record($auth['read'], 'termlists_term', $_GET['termlists_term_id']);
       // map fields to their appropriate supermodels
@@ -171,7 +166,7 @@ class iform_term {
   public static function get_submission($values, $args) {
     iform_load_helpers(array('submission_builder'));
     return submission_builder::build_submission($values, array(
-      'model'=>'termlists_term',
+      'model' => 'termlists_term',
       'superModels'=>array(
         'meaning'=>array('fk' => 'meaning_id'),
         'term'=>array('fk' => 'term_id')

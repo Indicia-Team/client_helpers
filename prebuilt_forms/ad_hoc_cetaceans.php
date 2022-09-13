@@ -18,13 +18,12 @@
  * @link https://github.com/indicia-team/client_helpers/
  */
 
-require_once('includes/map.php');
-require_once('includes/user.php');
+require_once 'includes/map.php';
+require_once 'includes/user.php';
 
 /**
  * A form for entering ad-hoc observations of cetaceans.
  *
- * @package Client
  * @subpackage PrebuiltForms
  * @todo Provide form description in this comment block.
  * @todo Rename the form class to iform_...
@@ -37,9 +36,9 @@ class iform_ad_hoc_cetaceans {
    */
   public static function get_ad_hoc_cetaceans_definition() {
     return array(
-      'title'=>'Ad-hoc cetacean records',
+      'title' => 'Ad-hoc cetacean records',
       'category' => 'Forms for specific surveying methods',
-      'description'=>'A form designed for input of ad-hoc records of cetaceans or other marine wildlife. '.
+      'description' => 'A form designed for input of ad-hoc records of cetaceans or other marine wildlife. '.
           'Records can be entered via a map if the sighting was from the shore, or via GPS coordinates for sightings at sea.'
     );
   }
@@ -55,11 +54,11 @@ class iform_ad_hoc_cetaceans {
       iform_user_get_user_parameters(),
       array(
         array(
-          'name'=>'interface',
-          'caption'=>'Interface Style Option',
-          'description'=>'Choose the style of user interface, either dividing the form up onto separate tabs, '.
+          'name' => 'interface',
+          'caption' => 'Interface Style Option',
+          'description' => 'Choose the style of user interface, either dividing the form up onto separate tabs, '.
               'wizard pages or having all controls on a single page.',
-          'type'=>'select',
+          'type' => 'select',
           'options' => array(
             'tabs' => 'Tabs',
             'wizard' => 'Wizard',
@@ -68,88 +67,88 @@ class iform_ad_hoc_cetaceans {
           'group' => 'User Interface'
         ),
         array(
-          'name'=>'survey_id',
-          'caption'=>'Survey',
-          'description'=>'The survey that data will be posted into.',
-          'type'=>'select',
-          'table'=>'survey',
-          'captionField'=>'title',
-          'valueField'=>'id'
+          'name' => 'survey_id',
+          'caption' => 'Survey',
+          'description' => 'The survey that data will be posted into.',
+          'type' => 'select',
+          'table' => 'survey',
+          'captionField' => 'title',
+          'valueField' => 'id'
         ),
         array(
-          'fieldname'=>'species_list_id',
-          'label'=>'Species List',
-          'helpText'=>'The species list that species can be selected from.',
-          'type'=>'select',
-          'table'=>'taxon_list',
-          'valueField'=>'id',
-          'captionField'=>'title'
+          'fieldname' => 'species_list_id',
+          'label' => 'Species List',
+          'helpText' => 'The species list that species can be selected from.',
+          'type' => 'select',
+          'table' => 'taxon_list',
+          'valueField' => 'id',
+          'captionField' => 'title'
         ),
 	      array(
-          'name'=>'platform_attr_id',
-          'caption'=>'Sighting Platform (Boat or Shore) Attribute',
-          'description'=>'Indicia ID for the sample attribute that records the sighting platform.',
-          'type'=>'select',
-          'table'=>'sample_attribute',
-          'valueField'=>'id',
-          'captionField'=>'caption',
-          'group'=>'Sample Attributes'
+          'name' => 'platform_attr_id',
+          'caption' => 'Sighting Platform (Boat or Shore) Attribute',
+          'description' => 'Indicia ID for the sample attribute that records the sighting platform.',
+          'type' => 'select',
+          'table' => 'sample_attribute',
+          'valueField' => 'id',
+          'captionField' => 'caption',
+          'group' => 'Sample Attributes'
 	      ),
 	      array(
-          'name'=>'platform_termlist_id',
-          'caption'=>'Sighting Platform (Boat or Shore) Termlist ID',
-          'description'=>'Indicia ID for the termlist that contains possible values for the sighting platform.',
-          'type'=>'int',
-          'group'=>'Sample Attributes'
+          'name' => 'platform_termlist_id',
+          'caption' => 'Sighting Platform (Boat or Shore) Termlist ID',
+          'description' => 'Indicia ID for the termlist that contains possible values for the sighting platform.',
+          'type' => 'int',
+          'group' => 'Sample Attributes'
 	      ),
 	      array(
-          'name'=>'platform_mapped_term_id',
-          'caption'=>'Shore Term ID',
-          'description'=>'ID of the Shore term. This is the option that the user is allowed to click on the map for.',
-          'type'=>'int',
-          'group'=>'Sample Attributes'
+          'name' => 'platform_mapped_term_id',
+          'caption' => 'Shore Term ID',
+          'description' => 'ID of the Shore term. This is the option that the user is allowed to click on the map for.',
+          'type' => 'int',
+          'group' => 'Sample Attributes'
         ),
 	      array(
-          'name'=>'abundance_attr_id',
-          'caption'=>'Abundance Attribute ID',
-          'description'=>'Indicia ID for the occurrence attribute that records the approximate abundance.',
-          'type'=>'occAttr',
-          'group'=>'Occurrence Attributes'
+          'name' => 'abundance_attr_id',
+          'caption' => 'Abundance Attribute ID',
+          'description' => 'Indicia ID for the occurrence attribute that records the approximate abundance.',
+          'type' => 'occAttr',
+          'group' => 'Occurrence Attributes'
 	      ),
 	      array(
-          'name'=>'first_name_attr_id',
-          'caption'=>'First Name Attribute ID',
-          'description'=>'Indicia ID for the sample attribute that stores the user\'s first name.',
-          'type'=>'smpAttr',
-          'group'=>'Sample Attributes'
+          'name' => 'first_name_attr_id',
+          'caption' => 'First Name Attribute ID',
+          'description' => 'Indicia ID for the sample attribute that stores the user\'s first name.',
+          'type' => 'smpAttr',
+          'group' => 'Sample Attributes'
         ),
         array(
-          'name'=>'surname_attr_id',
-          'caption'=>'Surname Attribute ID',
-          'description'=>'Indicia ID for the sample attribute that stores the user\'s surname.',
-          'type'=>'smpAttr',
-          'group'=>'Sample Attributes'
+          'name' => 'surname_attr_id',
+          'caption' => 'Surname Attribute ID',
+          'description' => 'Indicia ID for the sample attribute that stores the user\'s surname.',
+          'type' => 'smpAttr',
+          'group' => 'Sample Attributes'
         ),
         array(
-          'name'=>'phone_attr_id',
-          'caption'=>'Phone Attribute ID',
-          'description'=>'Indicia ID for the sample attribute that stores the user\'s phone.',
-          'type'=>'smpAttr',
-          'group'=>'Sample Attributes'
+          'name' => 'phone_attr_id',
+          'caption' => 'Phone Attribute ID',
+          'description' => 'Indicia ID for the sample attribute that stores the user\'s phone.',
+          'type' => 'smpAttr',
+          'group' => 'Sample Attributes'
         ),
         array(
-          'name'=>'sample_time_attr_id',
-          'caption'=>'Sighting Time Custom Attribute ID',
-          'description'=>'The Indicia ID for the Sample Custom Attribute for the Sighting Time.',
-          'group'=>'Sample Attributes',
-          'type'=>'int'
+          'name' => 'sample_time_attr_id',
+          'caption' => 'Sighting Time Custom Attribute ID',
+          'description' => 'The Indicia ID for the Sample Custom Attribute for the Sighting Time.',
+          'group' => 'Sample Attributes',
+          'type' => 'int'
         ),
         array(
-          'name'=>'contact_attr_id',
-          'caption'=>'Contactable Attribute ID',
-          'description'=>'Indicia ID for the sample attribute that if the user has opted in for being contacted regarding this record.',
-          'type'=>'smpAttr',
-          'group'=>'Sample Attributes'
+          'name' => 'contact_attr_id',
+          'caption' => 'Contactable Attribute ID',
+          'description' => 'Indicia ID for the sample attribute that if the user has opted in for being contacted regarding this record.',
+          'type' => 'smpAttr',
+          'group' => 'Sample Attributes'
         ),
 	    )
     );
@@ -183,7 +182,7 @@ class iform_ad_hoc_cetaceans {
       $r .= '  <li><a href="#other"><span>'.lang::get('other information')."</span></a></li>\n";
       $r .= "</ul>\n";
       data_entry_helper::enable_tabs(array(
-          'divId'=>'controls',
+          'divId' => 'controls',
           'style'=>$args['interface']
       ));
     }
@@ -193,31 +192,31 @@ class iform_ad_hoc_cetaceans {
         $r .= '<legend>'.lang::get('about you').'</legend>';
       $r .= data_entry_helper::text_input(array(
         'label'=>lang::get('first name'),
-        'fieldname'=>'smpAttr:'.$args['first_name_attr_id'],
-        'class'=>'control-width-4',
+        'fieldname' => 'smpAttr:'.$args['first_name_attr_id'],
+        'class' => 'control-width-4',
         'validation'=>array('required')
       ));
       $r .= data_entry_helper::text_input(array(
         'label'=>lang::get('surname'),
-        'fieldname'=>'smpAttr:'.$args['surname_attr_id'],
-        'class'=>'control-width-4',
+        'fieldname' => 'smpAttr:'.$args['surname_attr_id'],
+        'class' => 'control-width-4',
         'validation'=>array('required')
       ));
       $r .= data_entry_helper::text_input(array(
         'label'=>lang::get('phone number'),
-        'fieldname'=>'smpAttr:'.$args['phone_attr_id'],
-        'class'=>'control-width-4'
+        'fieldname' => 'smpAttr:'.$args['phone_attr_id'],
+        'class' => 'control-width-4'
       ));
       $r .= data_entry_helper::text_input(array(
         'label'=>lang::get('email'),
-        'fieldname'=>'smpAttr:'.$args['email_attr_id'],
-        'class'=>'control-width-4 optional',
+        'fieldname' => 'smpAttr:'.$args['email_attr_id'],
+        'class' => 'control-width-4 optional',
         'validation' => array('email')
       ));
       if ($args['interface']=='wizard') {
         $r .= data_entry_helper::wizard_buttons(array(
-          'divId'=>'controls',
-          'page'=>'first'
+          'divId' => 'controls',
+          'page' => 'first'
         ));
       }
       $r .= "</fieldset>\n";
@@ -231,9 +230,9 @@ class iform_ad_hoc_cetaceans {
         'label'=>lang::get('Species'),
         'listId'=>$args['species_list_id'],
         'columns'=>1,
-        'rowInclusionCheck'=>'hasData',
+        'rowInclusionCheck' => 'hasData',
         'occAttrs'=> array($args['abundance_attr_id']),
-        'extraParams'=>$readAuth + array('view'=>'detail','orderby'=>'taxonomic_sort_order'),
+        'extraParams'=>$readAuth + array('view' => 'detail','orderby' => 'taxonomic_sort_order'),
         'survey_id'=>$args['survey_id'],
         'header' => false,
         'view' => 'detail',
@@ -256,7 +255,7 @@ class iform_ad_hoc_cetaceans {
     $r .= data_entry_helper::species_checklist($species_list_args);
     if ($args['interface']=='wizard') {
       $r .= data_entry_helper::wizard_buttons(array(
-        'divId'=>'controls',
+        'divId' => 'controls',
         'page' => ($user->uid==0) ? 'middle' : 'first'
       ));
     }
@@ -267,10 +266,10 @@ class iform_ad_hoc_cetaceans {
         $r .= '<legend>'.lang::get('where was it').'</legend>';
     $r .= data_entry_helper::radio_group(array(
       'label' => 'Where were you when you made the sighting?',
-      'fieldname'=>'smpAttr:'.$args['platform_attr_id'],
-      'table'=>'termlists_term',
-      'captionField'=>'term',
-      'valueField'=>'id',
+      'fieldname' => 'smpAttr:'.$args['platform_attr_id'],
+      'table' => 'termlists_term',
+      'captionField' => 'term',
+      'valueField' => 'id',
       'extraParams' => $readAuth + array('termlist_id' => $args['platform_termlist_id']),
       'sep' => '<br />',
       'labelClass' => 'auto',
@@ -331,7 +330,7 @@ class iform_ad_hoc_cetaceans {
     $r .= '</div></div>';
     if ($args['interface']=='wizard') {
       $r .= data_entry_helper::wizard_buttons(array(
-        'divId'=>'controls'
+        'divId' => 'controls'
       ));
     }
     $r .= '</fieldset>';
@@ -347,12 +346,12 @@ class iform_ad_hoc_cetaceans {
         $r .= '<legend>'.lang::get('other information').'</legend>';
     $r .= data_entry_helper::date_picker(array(
         'label'=>lang::get('Sighting Date'),
-        'fieldname'=>'sample:date'
+        'fieldname' => 'sample:date'
     ));
     $indicia_templates['timeFormat'] = '<label>hh:mm</label><br/>';
     $r .= data_entry_helper::text_input(array(
         'label'=>lang::get('Sighting Time'),
-        'fieldname'=>'smpAttr:'.$args['sample_time_attr_id'],
+        'fieldname' => 'smpAttr:'.$args['sample_time_attr_id'],
         'class' => 'control-width-1',
         'suffixTemplate' => 'timeFormat'
     ));
@@ -372,14 +371,14 @@ class iform_ad_hoc_cetaceans {
     ));
     $r .= '<div class="footer">'.data_entry_helper::checkbox(array(
         'label'=>lang::get('happy for contact'),
-        'labelClass'=>'auto',
-        'fieldname'=>'smpAttr:'.$args['contact_attr_id']
+        'labelClass' => 'auto',
+        'fieldname' => 'smpAttr:'.$args['contact_attr_id']
     )).'</div>';
 
     if ($args['interface']=='wizard') {
       $r .= data_entry_helper::wizard_buttons(array(
-        'divId'=>'controls',
-        'page'=>'last'
+        'divId' => 'controls',
+        'page' => 'last'
       ));
     } else {
       $r .= "<input type=\"submit\" class=\"ui-state-default ui-corner-all\" value=\"Save\" />\n";

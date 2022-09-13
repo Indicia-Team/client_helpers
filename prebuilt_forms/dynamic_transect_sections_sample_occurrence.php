@@ -24,9 +24,6 @@ require_once 'dynamic_sample_occurrence.php';
 /**
  * A input form with a grid for entering records with a section ID attribute that links the record
  * to a given section in a transect.
- *
- * @package Client
- * @subpackage PrebuiltForms
  */
 class iform_dynamic_transect_sections_sample_occurrence extends iform_dynamic_sample_occurrence {
 
@@ -36,7 +33,7 @@ class iform_dynamic_transect_sections_sample_occurrence extends iform_dynamic_sa
    */
   public static function get_dynamic_transect_sections_sample_occurrence_definition() {
     return array(
-      'title'=>'Dynamic transect sections sample occurrence',
+      'title' => 'Dynamic transect sections sample occurrence',
       'category' => 'General Purpose Data Entry Forms',
       'description' => 'A variant of the dynamic sample occurrence form which allows records to be attributes to sections of a transect using a section ID attribute in the grid. ' .
          'This form does not currently support occurrence media or different methods of detecting if a record is present in the grid.'
@@ -52,14 +49,14 @@ class iform_dynamic_transect_sections_sample_occurrence extends iform_dynamic_sa
       parent::get_parameters(),
       array(
         array(
-            'fieldname'=>'section_id_attribute',
-            'label'=>'Section ID attribute',
-            'helpText'=>'Choose the custom occurrence attribute which is used to store the section ID.',
+            'fieldname' => 'section_id_attribute',
+            'label' => 'Section ID attribute',
+            'helpText' => 'Choose the custom occurrence attribute which is used to store the section ID.',
             'type' => 'select',
-            'table'=>'occurrence_attribute',
-            'captionField'=>'caption',
-            'valueField'=>'id',
-            'group'=>'Species'
+            'table' => 'occurrence_attribute',
+            'captionField' => 'caption',
+            'valueField' => 'id',
+            'group' => 'Species'
         )
       )
     );
@@ -75,16 +72,16 @@ class iform_dynamic_transect_sections_sample_occurrence extends iform_dynamic_sa
     $r = '<input type="hidden" name="subsites" id="subsites" value="" />';
     // plus hiddens to store the main sample's sref info
     $r .= data_entry_helper::hidden_text(array(
-      'fieldname'=>'sample:entered_sref',
-      'id'=>'imp-sref'
+      'fieldname' => 'sample:entered_sref',
+      'id' => 'imp-sref'
     ));
     $r .= data_entry_helper::hidden_text(array(
-      'fieldname'=>'sample:entered_sref_system',
-      'id'=>'imp-sref-system'
+      'fieldname' => 'sample:entered_sref_system',
+      'id' => 'imp-sref-system'
     ));
     $r .= data_entry_helper::hidden_text(array(
-      'fieldname'=>'sample:geom',
-      'id'=>'imp-geom'
+      'fieldname' => 'sample:geom',
+      'id' => 'imp-geom'
     ));
     // plus the sample method ids
     $sampleMethods = helper_base::get_termlist_terms($auth, 'indicia:sample_methods', array('Transect', 'Transect Section'));
@@ -95,7 +92,7 @@ class iform_dynamic_transect_sections_sample_occurrence extends iform_dynamic_sa
     $options['speciesControlToUseSubSamples']=true;
     $r .= parent::get_control_species($auth, $args, $tabAlias, $options);
     // build an array of existing sub sample IDs, keyed by subsite location Id.
-    $subSampleIds = array();
+    $subSampleIds = []
     if (isset(data_entry_helper::$entity_to_load)) {
       foreach (data_entry_helper::$entity_to_load as $key => $value) {
         if (preg_match('/^sc:(\d+):(\d+):sample:id$/', $key, $matches)) {
@@ -186,9 +183,9 @@ class iform_dynamic_transect_sections_sample_occurrence extends iform_dynamic_sa
     // sc:<rowIndex>:[<occurrence_id>]:occAttr:<occurrence_attribute_id>[:<occurrence_attribute_value_id>]
     // sc:<rowIndex>:[<occurrence_id>]:occurrence:comment
     // sc:<rowIndex>:[<occurrence_id>]:occurrence_medium:fieldname:uniqueImageId
-    $occurrenceRecords = array();
-    $sampleRecords = array();
-    $subModels = array();
+    $occurrenceRecords = [];
+    $sampleRecords = [];
+    $subModels = [];
     foreach ($arr as $key=>$value){
       if (substr($key, 0, 3)=='sc:' && substr($key, 2, 7)!=':-idx-:' && substr($key, 2, 3)!=':n:'){ //discard the hidden cloneable rows
         // Don't explode the last element for occurrence attributes
@@ -197,7 +194,7 @@ class iform_dynamic_transect_sections_sample_occurrence extends iform_dynamic_sa
         if ($value && count($b)>=2) {
           if($b[0] == "occAttr" && $b[1] == $section_id_attribute){
             if (!isset($sampleRecords['smp'.$value])) {
-              $sampleRecords['smp'.$value] = array();
+              $sampleRecords['smp'.$value] = [];
             }
             $occurrenceRecords[$a[1]]['sectionIdVal']=$value;
           }
@@ -232,7 +229,7 @@ class iform_dynamic_transect_sections_sample_occurrence extends iform_dynamic_sa
       }
     }
     // convert subsites to a keyed array, for easier lookup
-    $keyedSS = array();
+    $keyedSS = [];
     foreach ($subsites as $ss) {
       $keyedSS["ss$ss[id]"] = $ss;
     }
@@ -269,8 +266,8 @@ class iform_dynamic_transect_sections_sample_occurrence extends iform_dynamic_sa
         $subSample['subModels'] = $occs;
       }
       $subModel = array('fkId' => 'parent_id', 'model' => $subSample);
-      $copyFields = array();
-      if(!isset($sampleRecord['date'])) $copyFields = array('date_start'=>'date_start','date_end'=>'date_end','date_type'=>'date_type');
+      $copyFields = [];
+      if(!isset($sampleRecord['date'])) $copyFields = array('date_start' => 'date_start','date_end' => 'date_end','date_type' => 'date_type');
       if(!isset($sampleRecord['survey_id'])) $copyFields['survey_id'] = 'survey_id';
       if(count($copyFields)>0) $subModel['copyFields'] = $copyFields; // from parent->to child
       $subModels[] = $subModel;

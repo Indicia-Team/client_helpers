@@ -13,19 +13,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package	Client
- * @subpackage PrebuiltForms
- * @author	Indicia Team
- * @license	http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link 	http://code.google.com/p/indicia/
+ * @author Indicia Team
+ * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
+ * @link https://github.com/Indicia-Team/client_helpers
  */
 
 /**
  * Prebuilt Indicia data entry form.
  * NB has Drupal specific code. Relies on presence of IForm Proxy.
- *
- * @package	Client
- * @subpackage PrebuiltForms
  */
 
 /*
@@ -34,8 +29,8 @@
  * Need to manually set the term list sort order on non-default language tems.
  * Need to set the control of Visit to a select, and for the cavity entrance to a checkbox group.
  */
-require_once('mnhnl_dynamic_1.php');
-require_once('includes/mnhnl_common.php');
+require_once 'mnhnl_dynamic_1.php';
+require_once 'includes/mnhnl_common.php';
 
 class iform_mnhnl_bats extends iform_mnhnl_dynamic_1 {
 
@@ -47,7 +42,7 @@ class iform_mnhnl_bats extends iform_mnhnl_dynamic_1 {
     return array(
       'title'=>self::get_title(),
       'category' => 'MNHNL forms',
-      'description'=>'MNHNL Winter Bats form. Inherits from Dynamic 1.'
+      'description' => 'MNHNL Winter Bats form. Inherits from Dynamic 1.'
     );
   }
 
@@ -60,7 +55,7 @@ class iform_mnhnl_bats extends iform_mnhnl_dynamic_1 {
   }
 
   public static function get_parameters() {
-    $retVal=array();
+    $retVal=[]
     $parentVal = array_merge(
       parent::get_parameters(),
       iform_mnhnl_getParameters(),
@@ -117,20 +112,20 @@ class iform_mnhnl_bats extends iform_mnhnl_dynamic_1 {
           'group' => 'User Interface'
         ),
         array(
-          'name'=>'attributeValidation',
-          'caption'=>'Attribute Validation Rules',
-          'description'=>'Client Validation rules to be enforced on attributes: allows more options than allowed by straight class led validation.',
-          'type'=>'textarea',
+          'name' => 'attributeValidation',
+          'caption' => 'Attribute Validation Rules',
+          'description' => 'Client Validation rules to be enforced on attributes: allows more options than allowed by straight class led validation.',
+          'type' => 'textarea',
           'required' => false,
           'group' => 'User Interface'
         ),
         array(
-          'name'=>'max_species_ids',
-          'caption'=>'max number of species to be returned by a search',
-          'description'=>'The maximum number of species to be returned by the drop downs at any one time.',
+          'name' => 'max_species_ids',
+          'caption' => 'max number of species to be returned by a search',
+          'description' => 'The maximum number of species to be returned by the drop downs at any one time.',
           'default'=>25,
-          'type'=>'int',
-          'group'=>'Species'
+          'type' => 'int',
+          'group' => 'Species'
         )
 
       )
@@ -431,7 +426,7 @@ jQuery('.mnhnl-species-grid > thead').find('th').not(':hidden').filter(':eq(".$i
 jQuery('[name=smpAttr\\:".$removeBreakID."],[name^=smpAttr\\:".$removeBreakID."\\:]').css('margin-right', '20px').nextAll('br').eq(0).remove();";
     }
     if (!empty($args['attributeValidation']) && self::$mode != self::MODE_EXISTING_RO) {
-      $rules = array();
+      $rules = [];
       $argRules = explode(';', $args['attributeValidation']);
       foreach($argRules as $rule){
         $rules[] = explode(',', $rule);
@@ -523,10 +518,10 @@ setupButtons($('#controls'), 1);
 setupButtons($('#controls'), 2);
 setupButtons($('#controls'), 0);";
     $smpAttributes = data_entry_helper::getAttributes(array(
-        'valuetable'=>'sample_attribute_value'
-       ,'attrtable'=>'sample_attribute'
-       ,'key'=>'sample_id'
-       ,'fieldprefix'=>'smpAttr'
+        'valuetable' => 'sample_attribute_value'
+       ,'attrtable' => 'sample_attribute'
+       ,'key' => 'sample_id'
+       ,'fieldprefix' => 'smpAttr'
        ,'extraParams'=>$auth['read']
        ,'survey_id'=>$args['survey_id']
       ));
@@ -554,7 +549,7 @@ jQuery('#smpAttr\\\\:$attrId').next().after(\"<span class='extra-text'>".lang::g
   protected static function get_control_locationcomment($auth, $args, $tabalias, $options) {
     if(self::$mode === self::MODE_EXISTING_RO) $options['disabled']='disabled="disabled"';
     return data_entry_helper::textarea(array_merge(array(
-      'fieldname'=>'location:comment',
+      'fieldname' => 'location:comment',
       'label'=>lang::get('Location Comment')
     ), $options));
   }
@@ -783,7 +778,7 @@ hook_species_checklist_pre_delete_row=function(e) {
     ), $options);
     if ($args['extra_list_id']) $species_ctrl_opts['lookupListId']=$args['extra_list_id'];
     if (isset($args['col_widths']) && $args['col_widths']) $species_ctrl_opts['colWidths']=explode(',', $args['col_widths']);
-    call_user_func(array(get_called_class(), 'build_grid_taxon_label_function'), $args, array());
+    call_user_func(array(get_called_class(), 'build_grid_taxon_label_function'), $args, []);
     // Start by outputting a hidden value that tells us we are using a grid when the data is posted,
     // then output the grid control
     return '<input type="hidden" value="true" name="gridmode" />'.
@@ -799,12 +794,12 @@ hook_species_checklist_pre_delete_row=function(e) {
     if(self::$mode !== self::MODE_EXISTING_RO) {
       data_entry_helper::add_resource('autocomplete');
     }
-    $occAttrControls = array();
-    $occAttrs = array();
+    $occAttrControls = [];
+    $occAttrs = [];
     // Load any existing sample's occurrence data into $entity_to_load
-    $subSamples = array();
+    $subSamples = [];
     if (isset(data_entry_helper::$entity_to_load['sample:id']))
-      data_entry_helper::preload_species_checklist_occurrences(data_entry_helper::$entity_to_load['sample:id'], $options['readAuth'], false, array(), $subSamples, false);
+      data_entry_helper::preload_species_checklist_occurrences(data_entry_helper::$entity_to_load['sample:id'], $options['readAuth'], false, [], $subSamples, false);
     // load the full list of species for the grid, including the main checklist plus any additional species in the reloaded occurrences.
     // Following a recent change, fieldnames are now of the format
     //    sc:<idx>:<occID>:present    This now holds the ttlid.
@@ -816,9 +811,9 @@ hook_species_checklist_pre_delete_row=function(e) {
     if (! array_key_exists('error', $occList)) {
       $attributes = data_entry_helper::getAttributes(array(
           'id' => null
-           ,'valuetable'=>'occurrence_attribute_value'
-           ,'attrtable'=>'occurrence_attribute'
-           ,'key'=>'occurrence_id'
+           ,'valuetable' => 'occurrence_attribute_value'
+           ,'attrtable' => 'occurrence_attribute'
+           ,'key' => 'occurrence_id'
            ,'fieldprefix'=>"{fieldname}"
            ,'extraParams'=>$options['readAuth']
            ,'survey_id'=>array_key_exists('survey_id', $options) ? $options['survey_id'] : null
@@ -834,7 +829,7 @@ hook_species_checklist_pre_delete_row=function(e) {
         data_entry_helper::$javascript .= "indiciaData['speciesGridCounter'] = ".count($occList).";\n";
       $grid .= '<table class="ui-widget ui-widget-content mnhnl-species-grid '.$options['class'].'" id="'.$options['id'].'">';
       // No header for this one.
-      $rows = array();
+      $rows = [];
       $rowIdx = 0;
       foreach ($occList as $occ) {
         $firstCell = data_entry_helper::mergeParamsIntoTemplate($occ['taxon'], 'taxon_label', false, true);
@@ -1034,9 +1029,9 @@ bindSpeciesAutocomplete(\"taxonLookupControl\",\"".data_entry_helper::$base_url.
     // at this point the data_entry_helper::$entity_to_load has been preloaded with the occurrence data.
     // make assumption that no species are automatically added to List.
     // copy the options array so we can modify it
-    $extraTaxonOptions = array_merge(array(), $options);
+    $extraTaxonOptions = array_merge([], $options);
     // We don't want to filter the taxa to be added, because if they are in the sample, then they must be included whatever.
-    $ids = array();
+    $ids = [];
     unset($extraTaxonOptions['extraParams']['taxon_list_id']);
     unset($extraTaxonOptions['extraParams']['preferred']);
     unset($extraTaxonOptions['extraParams']['language_iso']);
@@ -1051,8 +1046,8 @@ bindSpeciesAutocomplete(\"taxonLookupControl\",\"".data_entry_helper::$base_url.
     $extraTaxonOptions['extraParams']['id'] = $ids;
     // append the taxa to the list to load into the grid
     $fullTaxalist = data_entry_helper::get_population_data($extraTaxonOptions);
-    $taxaLoaded = array();
-    $occList = array();
+    $taxaLoaded = [];
+    $occList = [];
     foreach(data_entry_helper::$entity_to_load as $key => $value) {
       $parts = explode(':', $key,4);
       if (count($parts) == 4 && $parts[0] == 'sc' && $parts[3]=='present') {
@@ -1132,9 +1127,9 @@ bindSpeciesAutocomplete(\"taxonLookupControl\",\"".data_entry_helper::$base_url.
   protected static function getReportActions() {
     return
       array(array('display' => lang::get('Actions'),
-                  'actions' => array(array('caption' => lang::get('Edit'), 'url'=>'{currentUrl}', 'urlParams'=>array('sample_id'=>'{sample_id}')))),
+                  'actions' => array(array('caption' => lang::get('Edit'), 'url' => '{currentUrl}', 'urlParams'=>array('sample_id' => '{sample_id}')))),
             array('display' => '', 'actions' =>
-                  array(array('caption' => lang::get('Delete'), 'javascript'=>'deleteSurvey({sample_id})'))));
+                  array(array('caption' => lang::get('Delete'), 'javascript' => 'deleteSurvey({sample_id})'))));
   }
 
 }

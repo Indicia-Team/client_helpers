@@ -19,18 +19,15 @@
  * @link https://github.com/indicia-team/client_helpers/
  */
 
-require_once('dynamic_sample_occurrence.php');
+require_once 'dynamic_sample_occurrence.php';
 
 /**
  * A input form with a grid for entering species counts against a grid of weeks, species names.
- *
- * @package Client
- * @subpackage PrebuiltForms
  */
 class iform_dynamic_weekly_counts extends iform_dynamic_sample_occurrence {
 
-  private static $existingSamples=array();
-  private static $sampleIdsByDate=array();
+  private static $existingSamples=[];
+  private static $sampleIdsByDate=[];
 
   /**
    * Return the form metadata.
@@ -38,7 +35,7 @@ class iform_dynamic_weekly_counts extends iform_dynamic_sample_occurrence {
    */
   public static function get_dynamic_weekly_counts_definition() {
     return array(
-      'title'=>'Weekly counts',
+      'title' => 'Weekly counts',
       'category' => 'General Purpose Data Entry Forms',
       'description' => 'A dynamic form which supports a grid of species counts per week.'
     );
@@ -53,19 +50,19 @@ class iform_dynamic_weekly_counts extends iform_dynamic_sample_occurrence {
       parent::get_parameters(),
       array(
         array(
-            'fieldname'=>'season_start',
-            'label'=>'Season Start',
-            'helpText'=>'Date which always falls in the first week of the recording season, in ddmm format.',
-            'type'=>'text_input',
-            'default'=>'2803',
-            'group'=>'Weekly Counts'
+            'fieldname' => 'season_start',
+            'label' => 'Season Start',
+            'helpText' => 'Date which always falls in the first week of the recording season, in ddmm format.',
+            'type' => 'text_input',
+            'default' => '2803',
+            'group' => 'Weekly Counts'
         ),
         array(
-            'fieldname'=>'weekday',
-            'label'=>'Start week on ',
-            'helpText'=>'Day of week that the recording week starts on.',
-            'type'=>'select',
-            'default'=>'Monday',
+            'fieldname' => 'weekday',
+            'label' => 'Start week on ',
+            'helpText' => 'Day of week that the recording week starts on.',
+            'type' => 'select',
+            'default' => 'Monday',
             'options' => array(
               'Sunday'=>lang::get('Sunday'),
               'Monday'=>lang::get('Monday'),
@@ -75,26 +72,26 @@ class iform_dynamic_weekly_counts extends iform_dynamic_sample_occurrence {
               'Friday'=>lang::get('Friday'),
               'Saturday'=>lang::get('Saturday')
             ),
-            'group'=>'Weekly Counts'
+            'group' => 'Weekly Counts'
         ),
         array(
-            'fieldname'=>'weeks',
-            'label'=>'Weeks',
-            'helpText'=>'Number of weeks in the recording season.',
-            'type'=>'text_input',
-            'default'=>'26',
-            'group'=>'Weekly Counts'
+            'fieldname' => 'weeks',
+            'label' => 'Weeks',
+            'helpText' => 'Number of weeks in the recording season.',
+            'type' => 'text_input',
+            'default' => '26',
+            'group' => 'Weekly Counts'
         ),
         array(
-            'fieldname'=>'headings',
-            'label'=>'Grid heading row formats',
-            'helpText'=>'Formats for each grid heading row. Specify a comma separated list of format specifiers, one per heading row required. ' .
+            'fieldname' => 'headings',
+            'label' => 'Grid heading row formats',
+            'helpText' => 'Formats for each grid heading row. Specify a comma separated list of format specifiers, one per heading row required. ' .
                 'A format specifier can contain "week" to output the week number, "start" followed by a PHP date format character to output the date or part of the '.
                 'date at the start of the week, or "end" followed by a date format character to output the date or part of the date at the end of the week. Values are '.
                 'automatically only output when there is a change from the previous column.',
-            'type'=>'text_input',
-            'default'=>'week,startY,startM,startd-endd',
-            'group'=>'Weekly Counts'
+            'type' => 'text_input',
+            'default' => 'week,startY,startM,startd-endd',
+            'group' => 'Weekly Counts'
         ),
       )
     );
@@ -160,8 +157,8 @@ class iform_dynamic_weekly_counts extends iform_dynamic_sample_occurrence {
     if (!empty($_GET['sample_id'])) {
       // load existing subsample data
       self::$existingSamples=data_entry_helper::get_population_data(array(
-        'table'=>'sample',
-        'extraParams'=>$auth['read'] + array('parent_id'=>$_GET['sample_id'], 'view'=>'detail'),
+        'table' => 'sample',
+        'extraParams'=>$auth['read'] + array('parent_id'=>$_GET['sample_id'], 'view' => 'detail'),
         'nocache'=>true
       ));
       // We want a list of sample IDs, keyed by date for lookup later.
@@ -220,19 +217,19 @@ class iform_dynamic_weekly_counts extends iform_dynamic_sample_occurrence {
 
   private static function sampleAttrRows($args, $auth) {
     $sampleAttrs = self::getAttributes($args, $auth);
-    $controls=array();
-    $controlsExisting=array();
-    $captions=array();
+    $controls=[];
+    $controlsExisting=[];
+    $captions=[];
     data_entry_helper::species_checklist_prepare_attributes($args, $sampleAttrs, $controls, $controlsExisting, $captions);
     if (!empty($_GET['sample_id'])) {
       // loading existing, so let's retrieve all the subsample data
-      $ids = array();
+      $ids = [];
       foreach (self::$existingSamples as $sample) {
         $ids[] = $sample['id'];
       }
       $sampleData=data_entry_helper::get_population_data(array(
-        'table'=>'sample_attribute_value',
-        'extraParams'=>$auth['read'] + array('sample_id'=>$ids, 'view'=>'list'),
+        'table' => 'sample_attribute_value',
+        'extraParams'=>$auth['read'] + array('sample_id'=>$ids, 'view' => 'list'),
         'nocache'=>true
       ));
     }
@@ -282,24 +279,24 @@ class iform_dynamic_weekly_counts extends iform_dynamic_sample_occurrence {
    * @return string HTML for the list of tr elements to insert.
    */
   private static function speciesRows($args, $auth, &$tableData) {
-    $tableData=array();
+    $tableData=[];
     if (!empty($_GET['sample_id'])) {
       $existingValues=data_entry_helper::get_population_data(array(
-        'report'=>'library/occurrence_attribute_values/occurrence_attribute_values_list',
+        'report' => 'library/occurrence_attribute_values/occurrence_attribute_values_list',
         'extraParams'=>$auth['read'] + array('parent_sample_id'=>$_GET['sample_id']),
         'nocache'=>true
       ));
       // want a list of attribute value IDs and values, keyed by sample ID and ttl ID for lookup later.
-      $valuesBySampleTtl=array();
+      $valuesBySampleTtl=[];
       foreach ($existingValues as $value) {
         $valuesBySampleTtl["{$value[sample_id]}|{$value[taxa_taxon_list_id]}"]="{$value[id]}|{$value[occurrence_id]}|{$value[value]}";
       }
     }
     $attrOptions = array(
-        'valuetable'=>'occurrence_attribute_value',
-        'attrtable'=>'occurrence_attribute',
-        'key'=>'occurrence_id',
-        'fieldprefix'=>'sc#wk#:#ttlId#:#occId#:occAttr',
+        'valuetable' => 'occurrence_attribute_value',
+        'attrtable' => 'occurrence_attribute',
+        'key' => 'occurrence_id',
+        'fieldprefix' => 'sc#wk#:#ttlId#:#occId#:occAttr',
         'extraParams'=>$auth['read'],
         'survey_id'=>$args['survey_id']
     );
@@ -310,8 +307,8 @@ class iform_dynamic_weekly_counts extends iform_dynamic_sample_occurrence {
     if (!preg_match('/^[TI]$/', $attr['data_type']))
       throw new exception('The occurrence attribute configured for the survey associated with this form must be an integer.');
     $speciesList = data_entry_helper::get_population_data(array(
-      'table'=>'cache_taxa_taxon_list',
-      'extraParams' => array('taxon_list_id'=>$args['list_id'], 'preferred'=>'t', 'orderby'=>'taxonomic_sort_order') + $auth['read']
+      'table' => 'cache_taxa_taxon_list',
+      'extraParams' => array('taxon_list_id'=>$args['list_id'], 'preferred' => 't', 'orderby' => 'taxonomic_sort_order') + $auth['read']
     ));
     foreach ($speciesList as $species) {
       $name=empty($species['default_common_name']) ? '<em>' . $species['preferred_taxon'] . '</em>' : $species['default_common_name'];
@@ -368,10 +365,10 @@ class iform_dynamic_weekly_counts extends iform_dynamic_sample_occurrence {
     if ($dateEnd>time()) $dateEnd=time();
     $values['sample:date_end']=date('Y-m-d', $dateEnd);
     $values['sample:date_type']='DD';
-    $weekData=array();
+    $weekData=[];
     $countValues = json_decode($values['table-data']);
     // existing samples being posted?
-    $samplesDates=array();
+    $samplesDates=[];
     if (!empty($values['samples-dates']))
       $samplesDates=json_decode($values['samples-dates'], true);
     unset($values['table-data']);
@@ -383,20 +380,20 @@ class iform_dynamic_weekly_counts extends iform_dynamic_sample_occurrence {
       if (($value!=='' || count($tokens)===6) && preg_match('/^sc([0-9]+):/', $key, $matches)) {
         $weekIdx=$matches[1];
         if (!isset($weekData["week$weekIdx"]))
-          $weekData["week$weekIdx"]=array();
+          $weekData["week$weekIdx"]=[];
         $datelessKey=preg_replace('/^sc([0-9]+):/', 'sc:', $key);
         $weekData["week$weekIdx"][$datelessKey]=$value;
         $presenceKey=preg_replace('/occAttr:[0-9]+(:[0-9]+)?$/', 'present', $datelessKey);
         $weekData["week$weekIdx"][$presenceKey]=$tokens[1];
       }
     }
-    $parentSample['subModels']=array();
+    $parentSample['subModels']=[];
     // retrieve any sample data for each week
-    $weekSampleData = array();
+    $weekSampleData = [];
     foreach ($values as $key => $value) {
       if (preg_match('/^smpAttr(\d+):(.+)/', $key, $matches)) {
         if (!isset($weekSampleData["week$matches[1]"]))
-          $weekSampleData["week$matches[1]"]=array();
+          $weekSampleData["week$matches[1]"]=[];
         $weekSampleData["week$matches[1]"]["smpAttr:$matches[2]"] = $value;
       }
     }
@@ -416,7 +413,7 @@ class iform_dynamic_weekly_counts extends iform_dynamic_sample_occurrence {
       if (isset($weekSampleData["week$weekno"]))
         $data = array_merge($data, $weekSampleData["week$weekno"]);
       $subSampleAndOccs = data_entry_helper::build_sample_occurrences_list_submission($data);
-      $parentSample['subModels'][] = array('fkId'=>'parent_id', 'model'=>$subSampleAndOccs);
+      $parentSample['subModels'][] = array('fkId' => 'parent_id', 'model'=>$subSampleAndOccs);
     }
     return $parentSample;
   }

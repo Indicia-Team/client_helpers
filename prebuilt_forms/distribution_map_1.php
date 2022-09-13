@@ -19,26 +19,24 @@
  * @link https://github.com/indicia-team/client_helpers/
  */
 
-require_once('includes/map.php');
-require_once('includes/language_utils.php');
+require_once 'includes/map.php' ;
+require_once 'includes/language_utils.php';
 /**
- *
- *
- * @package Client
- * @subpackage PrebuiltForms
- * @todo A simple distribution map.
+ * A simple distribution map.
  */
 class iform_distribution_map_1 {
 
   /**
    * Return the form metadata.
-   * @return string The definition of the form.
+   *
+   * @return string
+   *   The definition of the form.
    */
   public static function get_distribution_map_1_definition() {
     return array(
-      'title'=>'Distribution Map 1',
+      'title' => 'Distribution Map 1',
       'category' => 'Reporting',
-      'description'=>'Outputs a distribution map using Indicia data from GeoServer. Can output a map for a single species '.
+      'description' => 'Outputs a distribution map using Indicia data from GeoServer. Can output a map for a single species '.
           'or all data from a website. Also features clicking on the data points to see details.'
     );
   }
@@ -169,13 +167,13 @@ class iform_distribution_map_1 {
           'required' => 'false'
         ),
         array(
-          'fieldname'=>'taxon_list_id',
-          'label'=>'Species List used to find external key',
-          'helpText'=>'If External Key is ticked, then choose the list which has the external key set for each of the taxa that might be displayed.',
-          'type'=>'select',
-          'table'=>'taxon_list',
-          'valueField'=>'id',
-          'captionField'=>'title',
+          'fieldname' => 'taxon_list_id',
+          'label' => 'Species List used to find external key',
+          'helpText' => 'If External Key is ticked, then choose the list which has the external key set for each of the taxa that might be displayed.',
+          'type' => 'select',
+          'table' => 'taxon_list',
+          'valueField' => 'id',
+          'captionField' => 'title',
           'group' => 'Distribution Layer',
           'required' => false
         ),
@@ -321,7 +319,7 @@ class iform_distribution_map_1 {
       if (!empty($args['click_columns'])) {
         // convert the input column list argument to a structured array to pass to the map
         $inputarr = explode("\r\n", $args['click_columns']);
-        $outputarr = array();
+        $outputarr = [];
         foreach ($inputarr as $coldef) {
           $coldef = explode('=', $coldef);
           $outputarr[$coldef[0]] = $coldef[1];

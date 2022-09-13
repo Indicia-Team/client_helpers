@@ -181,7 +181,7 @@ class data_entry_helper extends helper_base {
    * @return string
    *   HTML to insert into the page for the autocomplete control.
    *
-   * @link http://code.google.com/p/indicia/wiki/DataModel
+   * @link https://github.com/Indicia-Team/client_helperswiki/DataModel
    */
   public static function autocomplete($options) {
     global $indicia_templates;
@@ -1283,7 +1283,7 @@ JS;
    *
    * @link http://code.google.com/apis/ajaxsearch/terms.html Google AJAX Search
    *   API Terms of Use.
-   * @link http://code.google.com/p/indicia/wiki/GeoreferenceLookupDrivers
+   * @link https://github.com/Indicia-Team/client_helperswiki/GeoreferenceLookupDrivers
    *   Documentation for the driver architecture.
    *
    * @return string
@@ -2168,7 +2168,7 @@ JS;
     $mapPanelOptions = array('initialFeatureWkt' => $options['wkt']);
     if (array_key_exists('presetLayers', $options)) $mapPanelOptions['presetLayers'] = $options['presetLayers'];
     if (array_key_exists('tabDiv', $options)) $mapPanelOptions['tabDiv'] = $options['tabDiv'];
-    require_once('map_helper.php');
+    require_once 'map_helper.php';
     $r .= map_helper::map_panel($mapPanelOptions);
     return $r;
   }
@@ -2375,7 +2375,7 @@ JS;
    *   Use report_helper::report_chart.
    */
   public static function report_chart(array $options) {
-    require_once('report_helper.php');
+    require_once 'report_helper.php';
     return report_helper::report_chart($options);
   }
 
@@ -6274,7 +6274,7 @@ JS;
   /**
    * Removes any data entry values persisted into the $_SESSION by Indicia.
    *
-   * @link	http://code.google.com/p/indicia/wiki/TutorialDataEntryWizard
+   * @link	https://github.com/Indicia-Team/client_helperswiki/TutorialDataEntryWizard
    */
   public static function clear_session() {
     foreach ($_SESSION as $name=>$value) {
@@ -6288,7 +6288,7 @@ JS;
    * Adds the data from the $_POST array into the session. Call this method when arriving at the second
    * and subsequent pages of a data entry wizard to keep the previous page's data available for saving later.
    *
-   * @link	http://code.google.com/p/indicia/wiki/TutorialDataEntryWizard
+   * @link	https://github.com/Indicia-Team/client_helperswiki/TutorialDataEntryWizard
    */
   public static function add_post_to_session () {
     foreach ($_POST as $name=>$value) {
@@ -6300,7 +6300,7 @@ JS;
    * Returns an array constructed from all the indicia variables that have previously been stored
    * in the session.
    *
-   * @link	http://code.google.com/p/indicia/wiki/TutorialDataEntryWizard
+   * @link	https://github.com/Indicia-Team/client_helperswiki/TutorialDataEntryWizard
    */
   public static function extract_session_array () {
     $result = [];
@@ -6317,7 +6317,7 @@ JS;
    *
    * @param string $name Name of the session value to retrieve
    * @param string $default Default value to return if not set or empty
-   * @link	http://code.google.com/p/indicia/wiki/TutorialDataEntryWizard
+   * @link	https://github.com/Indicia-Team/client_helperswiki/TutorialDataEntryWizard
    */
   public static function get_from_session($name, $default='') {
     $result = '';

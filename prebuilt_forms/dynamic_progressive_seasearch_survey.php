@@ -13,21 +13,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author    Indicia Team
- * @license    http://www.gnu.org/licenses/gpl.html GPL 3.0
+ * @author Indicia Team
+ * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers/
  */
 
 /**
  * Prebuilt Indicia data entry form.
  * NB has Drupal specific code. Relies on presence of IForm Proxy.
- *
- * @package    Client
- * @subpackage PrebuiltForms
  */
 
-require_once('includes/dynamic.php');
-require_once('dynamic_sample_occurrence.php');
+require_once 'includes/dynamic.php';
+require_once 'dynamic_sample_occurrence.php';
 
 class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_occurrence {
 
@@ -35,7 +32,7 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
    * @var array List of custom sample attributes in array keyed by caption. Helps to make this form
    * ID independent.
    */
-  private static $attrsByCaption = array();
+  private static $attrsByCaption = []
 
   /**
    * Return the form metadata.
@@ -43,9 +40,9 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
    */
   public static function get_dynamic_progressive_seasearch_survey_definition() {
     return array(
-      'title'=>'Progressive survey form for Seasearch',
+      'title' => 'Progressive survey form for Seasearch',
       'category' => 'Forms for specific surveying methods',
-      'description'=>'A form based on Dynamic Sample Occurrence where habitats are sub-samples and occurrences are  ' .
+      'description' => 'A form based on Dynamic Sample Occurrence where habitats are sub-samples and occurrences are  ' .
         'attached to a third sample layer. Images are loaded onto the form first.',
     );
   }
@@ -60,95 +57,95 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
       parent::get_parameters(),
       array(
         array(
-          'name'=>'habitat_smpAttr_cluster_ids',
-          'caption'=>' Habitat Attribute Cluster Ids',
-          'description'=>'Id of the first sample attribute associated with a habitat. Required so the system knows how to create habitat attribute groupings.
+          'name' => 'habitat_smpAttr_cluster_ids',
+          'caption' => ' Habitat Attribute Cluster Ids',
+          'description' => 'Id of the first sample attribute associated with a habitat. Required so the system knows how to create habitat attribute groupings.
           Enter the Ids in the order they will appear on the Habitats tab where the attribute at the top appears first.',
-          'type'=>'string',
-          'group'=>'Other Settings'
+          'type' => 'string',
+          'group' => 'Other Settings'
         ),
         array(
-          'name'=>'mandatory_habitat_smpAttr_cluster_ids',
-          'caption'=>'Mandatory Cluster Ids',
-          'description'=>'Same as Habitat Attribute Cluster Ids but only list fields you want to be mandatory.',
-          'type'=>'string',
-          'group'=>'Other Settings'
+          'name' => 'mandatory_habitat_smpAttr_cluster_ids',
+          'caption' => 'Mandatory Cluster Ids',
+          'description' => 'Same as Habitat Attribute Cluster Ids but only list fields you want to be mandatory.',
+          'type' => 'string',
+          'group' => 'Other Settings'
         ),
         array(
-          'name'=>'in_progress_sample_attr_id',
-          'caption'=>'In Progress Sample Atrribute Id',
-          'description'=>'The id of the custom attribute that holds whether a sample is in progress.',
-          'type'=>'string',
-          'group'=>'Other Settings'
+          'name' => 'in_progress_sample_attr_id',
+          'caption' => 'In Progress Sample Atrribute Id',
+          'description' => 'The id of the custom attribute that holds whether a sample is in progress.',
+          'type' => 'string',
+          'group' => 'Other Settings'
         ),
         array(
-          'name'=>'gpx_data_attr_id',
-          'caption'=>'GPX Data Atrribute Id',
-          'description'=>'The id of the custom attribute that holds the GPX file data that is uploaded.',
-          'type'=>'string',
-          'group'=>'Other Settings'
+          'name' => 'gpx_data_attr_id',
+          'caption' => 'GPX Data Atrribute Id',
+          'description' => 'The id of the custom attribute that holds the GPX file data that is uploaded.',
+          'type' => 'string',
+          'group' => 'Other Settings'
         ),
         array(
-          'name'=>'dive_duration_attr_id',
-          'caption'=>'Dive Duration Attribute Id',
-          'description'=>'The id of the custom attribute that holds the dive duration.',
-          'type'=>'string',
-          'group'=>'Other Settings'
+          'name' => 'dive_duration_attr_id',
+          'caption' => 'Dive Duration Attribute Id',
+          'description' => 'The id of the custom attribute that holds the dive duration.',
+          'type' => 'string',
+          'group' => 'Other Settings'
         ),
         array(
-          'name'=>'dive_start_time_attr_id',
-          'caption'=>'Dive Start Time Attribute Id',
-          'description'=>'The id of the custom attribute that holds the dive start time.',
-          'type'=>'string',
-          'group'=>'Other Settings'
+          'name' => 'dive_start_time_attr_id',
+          'caption' => 'Dive Start Time Attribute Id',
+          'description' => 'The id of the custom attribute that holds the dive start time.',
+          'type' => 'string',
+          'group' => 'Other Settings'
         ),
         array(
-          'name'=>'exif_date_time_attr_id',
-          'caption'=>'Exif date time attr id',
-          'description'=>'The id of the custom attribute that holds the date and times from the photo exifs. Although already stored in the media database tables, this allows for quick access by Javascript.',
-          'type'=>'string',
-          'group'=>'Other Settings'
+          'name' => 'exif_date_time_attr_id',
+          'caption' => 'Exif date time attr id',
+          'description' => 'The id of the custom attribute that holds the date and times from the photo exifs. Although already stored in the media database tables, this allows for quick access by Javascript.',
+          'type' => 'string',
+          'group' => 'Other Settings'
         ),
         array(
-          'name'=>'image_media_type_id',
-          'caption'=>'Media Sub Type Used For Photos.',
-          'description'=>'Media sub type id used for photos (not sketches).',
-          'type'=>'string',
-          'group'=>'Other Settings'
+          'name' => 'image_media_type_id',
+          'caption' => 'Media Sub Type Used For Photos.',
+          'description' => 'Media sub type id used for photos (not sketches).',
+          'type' => 'string',
+          'group' => 'Other Settings'
         ),
         array(
-          'name'=>'gps_sync_warning',
-          'caption'=>'GPS Sync Warning',
-          'description'=>'Warning displayed to the user if they try to upload a GPX file, it should warn them that
+          'name' => 'gps_sync_warning',
+          'caption' => 'GPS Sync Warning',
+          'description' => 'Warning displayed to the user if they try to upload a GPX file, it should warn them that
                 the time needs to be synchronised between the camera and the GPS device otherwise the automatic GPS selection for images will fail.
                 If this option is not filled in then the warning will not be displayed.',
-          'type'=>'textarea',
-          'group'=>'Other Settings'
+          'type' => 'textarea',
+          'group' => 'Other Settings'
         ),
         array(
-          'name'=>'no_photos_with_date_warning',
-          'caption'=>'No Photos With Date Warning',
-          'description'=>'Warning displayed to user if they change the dive date to a date that is not associated with any of the photos.
+          'name' => 'no_photos_with_date_warning',
+          'caption' => 'No Photos With Date Warning',
+          'description' => 'Warning displayed to user if they change the dive date to a date that is not associated with any of the photos.
                 Note that the user is able to continue anyway, it is simply a warning.
                 If this option is not filled in, then the warning will not be displayed.',
-          'type'=>'textarea',
-          'group'=>'Other Settings'
+          'type' => 'textarea',
+          'group' => 'Other Settings'
         ),
         array(
-          'name'=>'dive_start_outside_one_hour_warning',
-          'caption'=>'Dive Start Outside One Hour Warning',
-          'description'=>'Warning that is displayed if the Dive Start Time is set to be beyond one hour either side of the first photo time.
+          'name' => 'dive_start_outside_one_hour_warning',
+          'caption' => 'Dive Start Outside One Hour Warning',
+          'description' => 'Warning that is displayed if the Dive Start Time is set to be beyond one hour either side of the first photo time.
                 Note that the user is able to continue anyway, it is simply a warning.
                 If this option is not filled in, then the warning will not be displayed.',
-          'type'=>'textarea',
-          'group'=>'Other Settings'
+          'type' => 'textarea',
+          'group' => 'Other Settings'
         ),
         /*
         array(
-          'name'=>'structure',
-          'caption'=>'Form Structure',
-          'description'=>'Define the structure of the form. Please edit the example given to include the attribute IDs appropriate to your website IDs to replace appear in <>.',
-          'type'=>'textarea',
+          'name' => 'structure',
+          'caption' => 'Form Structure',
+          'description' => 'Define the structure of the form. Please edit the example given to include the attribute IDs appropriate to your website IDs to replace appear in <>.',
+          'type' => 'textarea',
           'default' => "<ToDo WHEN final structure is know, fill in>",
           'group' => 'User Interface'
         ),*/
@@ -249,7 +246,7 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
       ));
       $attrOptions = data_entry_helper::getAttrSpecificOptions($options);
       if (!empty($existingHabitatSubSamples)) {
-        $existingHabitatSubSamplesIds=array();
+        $existingHabitatSubSamplesIds=[];
         //Setup the html as we initially see it on the page
         $r .= self::initial_habitat_html_setup($existingHabitatSubSamples,$args,$auth,$NextHabitatNum,$attrOptions,$existingHabitatSubSamplesIds);
       }
@@ -313,7 +310,7 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
       //Cycle through the attributes for the habitat
       foreach ($habitatSmpAttrIds as $habitatSmpAttrId) {
         //Only get sample attributes and then store them in an array so they can be passed to the existing function that builds the html
-        $attrbuteArray=array();
+        $attrbuteArray=[]
         foreach ($habitatAttrs as $habitatAttr) {
           if (!empty($habitatAttr['sample_attribute_id'])) {
             if ($habitatSmpAttrId==$habitatAttr['sample_attribute_id']) {
@@ -377,15 +374,15 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
     if (!empty($_GET['sample_id'])) {
       iform_load_helpers(['report_helper']);
       $habitats = report_helper::get_report_data(array(
-        'dataSource'=>'reports_for_prebuilt_forms/seasearch/habitats_for_parent_sample',
+        'dataSource' => 'reports_for_prebuilt_forms/seasearch/habitats_for_parent_sample',
         'readAuth'=>$auth['read'],
         'extraParams'=>array('parent_sample_id' => $_GET['sample_id'], 'name_attr_id'=>$nameAttrId)
       ));
     } else {
-      $habitats=array();
+      $habitats=[];
     }
     //Generate a colour for the habitat based on its index
-    $habitatColours=array();
+    $habitatColours=[];
     if (!empty($habitats)) {
       $numberOfHabitats=count($habitats);
       foreach ($habitats as $habIdx=>$habitat) {
@@ -396,14 +393,14 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
       $numberOfHabitats=0;
     //Draw to screen the control that will actually display the taxa images.
     $r .= self::taxa_image_to_link(array_merge(array(
-      'table'=>'sample_medium',
+      'table' => 'sample_medium',
       'readAuth' => $auth['read'],
       'caption'=>lang::get('Photos'),
       'readAuth'=>$auth['read']
     ), $options),$habitats,$args['dive_duration_attr_id'],$habitatColours,$numberOfHabitats);
 
 
-    $habitatIds=array();
+    $habitatIds=[]
     $r.='<div class="habitats-div" style="float: left; width: 50%"><h3>Habitats</h3>';
     //Create the html to display the habitats and a splitter for each habitat
     if (!empty($habitats)) {
@@ -584,7 +581,7 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
    */
   private static function set_photo_order($photoResults) {
     //TODO if a photo lacks exif data it currently isn't handled.
-    $photosWithExif=array();
+    $photosWithExif=[]
     //Order pictures by date
     foreach ($photoResults as $photoResult) {
       $photoResultDecoded = json_decode($photoResult['exif'],true);
@@ -594,7 +591,7 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
     if (!empty($photosWithExif)) {
       usort($photosWithExif, "self::orderByDate");
     } else {
-      $photosWithExif = array();
+      $photosWithExif = [];
     }
     return $photosWithExif;
   }
@@ -828,7 +825,7 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
    */
 
   public static function build_three_level_sample_with_occ_submission($values,$website_id, $password,$gpxDataAttrId,$diveStartTimeAttrId,$exifDateTimeAttrId,$imageMediaTypeId) {
-    $standardGridValues=array();
+    $standardGridValues=[];
     //Create two different $values arrays.
     //The $standardGridValues array contains all the values you would expect from a normal species grid entry form. This contains the species grid we don't have images for.
     //The $values array contains the values from the form and only includes the other three level sample species grid
@@ -871,7 +868,7 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
             $exif = exif_read_data($uploadpath.$mediaItem['path'], 0, true);
             $media[$idx]['exif'] = json_encode($exif);
             if (empty($exif['EXIF']['DateTimeOriginal'])) {
-              return array('fatalSubmissionError'=>'A photo you have uploaded does not contain suitable date information in the EXIF data and therefore cannot be used.');
+              return array('fatalSubmissionError' => 'A photo you have uploaded does not contain suitable date information in the EXIF data and therefore cannot be used.');
             }
             $strToTime=strtotime($exif['EXIF']['DateTimeOriginal']);
             if (!empty($lastPhotoToCheckDate)&&$lastPhotoToCheckDate!==date('d/m/Y',$strToTime)) {
@@ -967,7 +964,7 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
     $modelWrapped=self::create_third_level_sample_model($modelWrapped,$values,$website_id, $password,$gpxDataAttrId);
     //The user is can rearrange which third level sample points to which second level sample. When the user does this we just need to attach the
     //change to the parent_id to the end of the submission model
-    $thirdLevelSampleShiftModel=array();
+    $thirdLevelSampleShiftModel=[];
     foreach ($values as $key=>$value) {
       //TODO I think this name is misleading, as it isn't the sample_id for the occurrence, it is the sample_id for the occurrence sample's parent sample.
       //Maybe change name at some point.
@@ -993,10 +990,10 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
   private static function extract_sub_sample_data($values,$website_id, $password,$gpxDataAttrId) {
     //Remove the existing ID of the main sample, otherwise it gets copied to sub-samples
     unset($values['sample:id']);
-    $r = array();
-    $valuesCollection=array();
-    $cleanValues=array();
-    $existingValuesCollections=array();
+    $r = [];
+    $valuesCollection=[];
+    $cleanValues=[];
+    $existingValuesCollections=[];
     //Cycle through all the values on the page
     //Extract the attributes related to habitats (sub-samples) into arrays
     //So, for instance, if there happen to be 4 existing habitats, then there will be 4 items in the $existingValuesCollections and each
@@ -1039,7 +1036,7 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
     foreach ($existingValuesCollections as $existingValuesCollection) {
       $valuesCollection[] = $existingValuesCollection;
     }
-    $completeValuesCollection=array();
+    $completeValuesCollection=[];
     //Merge each set of sub-sample values with elements required to make a basic sample (such as entered_sref)
     foreach ($valuesCollection as $idx=>$incompleteSubSampleValueSet) {
       $completeValuesCollection[$idx]=array_merge($incompleteSubSampleValueSet,$cleanValues);
@@ -1052,7 +1049,7 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
             $media[]=array('id'=>$keyBreakdown[1],'sample_id'=>$value, 'path'=>$values['sample_medium:'.$keyBreakdown[1].':image_path']);
         }
       }
-      $mediaIds=array();
+      $mediaIds=[];
       $mediaIdsSet='';
       //Create a set (string) of media ids ready for use in sql
       foreach ($media as $mediaItem) {
@@ -1087,7 +1084,7 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
           $gpsArray=explode(';',$value);
         }
       }
-      $mediaSpatialRefs=array();
+      $mediaSpatialRefs=[];
       $smallestTimeDistance=null;
       //For each photo, we need to cycle through all the gpx file trackpoints. We then use the trackpoint which is closest in time to the time on the photo exif
       //Save an array containing all these photos and associated spatial references.
@@ -1167,7 +1164,7 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
         //If the third level sample doesn't include images then delete it.
         if (!empty($thirdLevelSample['model']['fields']['id']['value'])) {
           $id=$thirdLevelSample['model']['fields']['id']['value'];
-          $thirdLevelSample['model']['fields']=array();
+          $thirdLevelSample['model']['fields']=[];
           $thirdLevelSample['model']['fields']['id']['value']=$id;
           $thirdLevelSample['model']['fields']['deleted']['value']='t';
           unset($thirdLevelSample['model']['subModels']);
@@ -1182,7 +1179,7 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
     }
     //Take the 3rd level samples (which contain occurrences), find the correct 2nd level sample to add them to, calculate the third level grid ref from GPX file if needed.
     $modelWrapped=self::transfer_3rd_lev_samps_to_2nd_lev_samples_calc_3rd_lev_grid_refs($modelWrapped,$thirdLevelSamples,$presentSpeciesListSubSampleIds,$gpsArray,$website_id, $password,$gpxDataAttrId);
-    $multiSubmission['submission_list']['entries']=array();
+    $multiSubmission['submission_list']['entries']=[];
     //Any third level samples that have been deleted need adding to the model at the top, this because we don't know the parent_id
     //Note, there is a bug in PHP foreach which was causing the foreach to cycle over the first element here twice. From the php docs
     //I think this is caused by previously using foreach ($thirdLevelSamples  as &$thirdLevelSample) {, so using normal "for loop"
@@ -1245,7 +1242,7 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
                 iform_load_helpers(['report_helper']);
                 $photoResults = report_helper::get_report_data($reportOptions);
                 //TODO this code is very similar to code used earlier, perhaps put in separate method when get chance.
-                $mediaSpatialRefs=array();
+                $mediaSpatialRefs=[];
                 $smallestTimeDistance=null;
                 $photoResultExifDecoded = json_decode($photoResults[0]['exif'],true);
                 $photoResultExifFormatted = strtotime($photoResultExifDecoded['EXIF']['DateTimeOriginal']);
@@ -1286,7 +1283,7 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
   //Does two things, one is return an array of present occurrences that have actually been filled in.
   //The other is to convert the sample_media intially present on the grid into occurrence media.
   private static function convert_grid_sample_media_to_occurrence_media_and_return_present_items(&$values) {
-    $presentSpeciesListSubSampleIds=array();
+    $presentSpeciesListSubSampleIds=[];
     foreach ($values as $key=>&$value) {
       $splitKey=explode(':',$key);
       //If we find a field which is a sample_medium on the occurrences grid then save its current second level sample id for use later
@@ -1362,8 +1359,8 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
     if (isset($options['view']))
       $extraParams['view'] = $options['view'];
     // There may be options in the form occAttr:n|param => value targetted at specific attributes
-    $occAttrOptions = array();
-    $optionToUnset = array();
+    $occAttrOptions = []
+    $optionToUnset = [];
     foreach ($options as $option => $value) {
       // split the id of the option into the attribute name and option name.
       $optionParts = explode('|', $option);
@@ -1374,7 +1371,7 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
         // split the attribute name into the type and id (type will always be occAttr)
         $attrParts = explode(':', $attrName);
         $attrId = $attrParts[1];
-        if (!isset($occAttrOptions[$attrId])) $occAttrOptions[$attrId]=array();
+        if (!isset($occAttrOptions[$attrId])) $occAttrOptions[$attrId]=[];
         $occAttrOptions[$attrId][$optName] = apply_user_replacements($value);
         $optionToUnset[] = $option;
       }
@@ -1466,8 +1463,8 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
       data_entry_helper::$javascript .= "indiciaData['taxonExtraParams-".$options['id']."'] = $filterParam;\n";
       // Apply a filter to extraParams that can be used when loading the initial species list, to get just the correct names.
       if (isset($options['speciesNameFilterMode']) && !empty($options['listId'])) {
-        $filterFields = array();
-        $filterWheres = array();
+        $filterFields = [];
+        $filterWheres = [];
         self::parse_species_name_filter_mode($options, $filterFields, $filterWheres);
         if (count($filterWheres))
           $options['extraParams'] += array('query' => json_encode(array('where' => $filterWheres)));
@@ -1515,11 +1512,11 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
       if ($indicia_templates['file_box_uploaded_image']!='')
         data_entry_helper::$javascript .= "file_box_uploaded_imageTemplate = '".str_replace('"','\"', $indicia_templates['file_box_uploaded_image'])."';\n";
     }
-    $occAttrControls = array();
-    $occAttrs = array();
-    $occAttrControlsExisting = array();
-    $taxonRows = array();
-    $subSampleRows = array();
+    $occAttrControls = [];
+    $occAttrs = [];
+    $occAttrControlsExisting = [];
+    $taxonRows = [];
+    $subSampleRows = [];
     if (!empty($options['useThirdLevelSamples']) && $options['useThirdLevelSamples']==true)
       $useThirdLevelSamples=true;
     else
@@ -1535,9 +1532,9 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
     if (! array_key_exists('error', $taxalist)) {
       $attrOptions = array(
           'id' => null
-           ,'valuetable'=>'occurrence_attribute_value'
-           ,'attrtable'=>'occurrence_attribute'
-           ,'key'=>'occurrence_id'
+           ,'valuetable' => 'occurrence_attribute_value'
+           ,'attrtable' => 'occurrence_attribute'
+           ,'key' => 'occurrence_id'
            ,'fieldprefix'=>"sc:-idx-::occAttr"
            ,'extraParams'=>$options['readAuth']
            ,'survey_id'=>array_key_exists('survey_id', $options) ? $options['survey_id'] : null
@@ -1567,9 +1564,9 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
         }
       }
       $grid = data_entry_helper::get_species_checklist_header($options, $occAttrs, $onlyImages);
-      $mediaIdArray = array();
+      $mediaIdArray = [];
       if ($options['id']=='third-level-smp-occ-grid') {
-        $subSampleImagesToLoad=array();
+        $subSampleImagesToLoad=[];
         //Cycle through sub-samples of the main parent sample
         foreach ($subSampleRows as $subSampleIdx=>$subSampleRow) {
           foreach (data_entry_helper::$entity_to_load as $key=>$value) {
@@ -1598,9 +1595,9 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
       }
       $encodedMediaArray = json_encode($mediaIdArray);
       data_entry_helper::$javascript .= "indiciaData.encodedMediaArray=".json_encode($encodedMediaArray).";\n";
-      $rows = array();
-      $imageRowIdxs = array();
-      $taxonCounter = array();
+      $rows = [];
+      $imageRowIdxs = [];
+      $taxonCounter = [];
       $rowIdx = 0;
       data_entry_helper::$javascript .= "indiciaData['gridCounter-".$options['id']."'] = 0;\n";
       data_entry_helper::$javascript .= "indiciaData['gridSampleCounter-".$options['id']."'] = ".count($subSampleRows).";\n";
@@ -1753,7 +1750,7 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
         $idx = 0;
 
         if ($options['mediaTypes']) {
-          $existingImages = is_array(data_entry_helper::$entity_to_load) ? preg_grep("/^sc:$loadedTxIdx:$existing_record_id:occurrence_medium:id:[a-z0-9]*$/", array_keys(data_entry_helper::$entity_to_load)) : array();
+          $existingImages = is_array(data_entry_helper::$entity_to_load) ? preg_grep("/^sc:$loadedTxIdx:$existing_record_id:occurrence_medium:id:[a-z0-9]*$/", array_keys(data_entry_helper::$entity_to_load)) : [];
           $row .= "\n<td class=\"ui-widget-content scAddMediaCell\">";
           $style = (count($existingImages)>0) ? ' style="display: none"' : '';
           $fieldname = "add-media:$options[id]-$txIdx:$existing_record_id";
@@ -1879,8 +1876,8 @@ if ($('#$options[id]').parents('.ui-tabs-panel').length) {
    */
   private static function preload_species_checklist_occurrences($sampleId, $readAuth, $loadMedia, $extraParams, &$subSamples, $useSubSamples, $subSampleMethodID='',$gridId, $useThirdLevelSamples=false) {
     //Obviously this would need to not be hardcoded
-    $occurrenceIds = array();
-    $taxonCounter = array();
+    $occurrenceIds = []
+    $taxonCounter = []
     // don't load from the db if there are validation errors, since the $_POST will already contain all the
     // data we need.
     if (is_null(data_entry_helper::$validation_errors)) {
@@ -1894,7 +1891,7 @@ if ($('#$options[id]').parents('.ui-tabs-panel').length) {
       }
       $extraParamsCopy=$extraParams;
       if($useSubSamples){
-        $extraParams += $readAuth + array('view'=>'detail','parent_id'=>$sampleId,'deleted'=>'f', 'orderby'=>'id', 'sortdir'=>'ASC' );
+        $extraParams += $readAuth + array('view' => 'detail','parent_id'=>$sampleId,'deleted' => 'f', 'orderby' => 'id', 'sortdir' => 'ASC' );
         if($subSampleMethodID != '')
           $extraParams['sample_method_id'] = $subSampleMethodID;
         $subSamples = data_entry_helper::get_population_data(array(
@@ -1903,9 +1900,9 @@ if ($('#$options[id]').parents('.ui-tabs-panel').length) {
             'nocache' => true
         ));
         if (!empty($useThirdLevelSamples) && $useThirdLevelSamples==true) {
-          $allThirdLevelSamples=array();
+          $allThirdLevelSamples=[];
           foreach ($subSamples as $subSample) {
-            $extraParams = $extraParamsCopy + $readAuth + array('view'=>'detail','parent_id'=>$subSample['id'],'deleted'=>'f', 'orderby'=>'id', 'sortdir'=>'ASC' );
+            $extraParams = $extraParamsCopy + $readAuth + array('view' => 'detail','parent_id'=>$subSample['id'],'deleted' => 'f', 'orderby' => 'id', 'sortdir' => 'ASC' );
             //if($subSampleMethodID != '')
             //  $extraParams['sample_method_id'] = $subSampleMethodID;
             $thirdLevelSamplesForSingleSubSample = data_entry_helper::get_population_data(array(
@@ -1919,7 +1916,7 @@ if ($('#$options[id]').parents('.ui-tabs-panel').length) {
           if (!empty($allThirdLevelSamples))
             $subSamples=array_merge($subSamples,$allThirdLevelSamples);
         }
-        $subSampleList = array();
+        $subSampleList = [];
         foreach($subSamples as $idx => $subsample)  {
           $subSampleList[] = $subsample['id'];
           //If we are using third level samples and there are no third level samples yet, then we don't want to load
@@ -1940,7 +1937,7 @@ if ($('#$options[id]').parents('.ui-tabs-panel').length) {
         $extraParams['sample_id']=$subSampleList;
         $sampleCount = count($subSampleList);
       } else {
-        $extraParams += $readAuth + array('view'=>'detail','sample_id'=>$sampleId,'deleted'=>'f', 'orderby'=>'id', 'sortdir'=>'ASC' );
+        $extraParams += $readAuth + array('view' => 'detail','sample_id'=>$sampleId,'deleted' => 'f', 'orderby' => 'id', 'sortdir' => 'ASC' );
           $sampleCount = 1;
       }
       if($sampleCount>0) {
@@ -1981,7 +1978,7 @@ if ($('#$options[id]').parents('.ui-tabs-panel').length) {
                 = $attrValue['raw_value'];
           }
           if (count($loadMedia)>0) {
-            $media=array();
+            $media=[];
             //TODO: Probably would be better to do this bit with a report but haven't got round to writing it.
             foreach ($subSamples as $subSample) {
               //TODO: This will currently overwrite previous result, but for now this doesn't matter much, won't happen if I use a report
@@ -2117,7 +2114,7 @@ if ($('#$options[id]').parents('.ui-tabs-panel').length) {
    * Altered for Seasearch as it needs to understand there is a third level of samples. There is one third level sample for each occurrence to hold its spatial reference.
    */
     private static function wrap_species_checklist_with_third_level_samples($arr, $include_if_any_data=false,
-          $zero_attrs = true, $zero_values=array('0','None','Absent'), $gridsToExclude=array()){
+          $zero_attrs = true, $zero_values=array('0','None','Absent'), $gridsToExclude=[]){
     if (array_key_exists('website_id', $arr)){
       $website_id = $arr['website_id'];
     } else {
@@ -2131,10 +2128,10 @@ if ($('#$options[id]').parents('.ui-tabs-panel').length) {
     // Set the default method of looking for rows to include - either using data, or the checkbox (which could be hidden)
     $include_if_any_data = $include_if_any_data || (isset($arr['rowInclusionCheck']) && $arr['rowInclusionCheck']=='hasData');
 
-    $occurrenceRecords = array();
-    $sampleRecord = array();
-    $sampleRecords = array();
-    $subModels = array();
+    $occurrenceRecords = [];
+    $sampleRecord = [];
+    $sampleRecords = [];
+    $subModels = [];
     foreach ($arr as $key=>$value){
       //At this stage we just collect all the information to create a general sample which
       //can be duplicated for each occurrence. This sample is then altered later in submission to set things like entered_sref.
@@ -2163,10 +2160,10 @@ if ($('#$options[id]').parents('.ui-tabs-panel').length) {
         }
       }
     }
-    $sampleRecords=array();
+    $sampleRecords=[];
     foreach ($occurrenceRecords as $id => $record) {
       $present = submission_builder::wrap_species_checklist_record_present($record, $include_if_any_data,
-          $zero_attrs, $zero_values, array());
+          $zero_attrs, $zero_values, []);
       if (array_key_exists('id', $record) || $present!==null) { // must always handle row if already present in the db
         if ($present===null)
           // checkboxes do not appear if not checked. If uncheck, delete record.

@@ -405,6 +405,20 @@ TXT;
   }
 
   /**
+   * A select box for choosing from a list of unindexed location boundaries.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-locationSelect
+   *
+   * @return string
+   *   Control HTML
+   */
+  protected static function get_control_locationSelect($auth, $args, $tabalias, $options) {
+    return ElasticsearchReportHelper::locationSelect(array_merge($options, [
+      'readAuth' => $auth['read'],
+    ]));
+  }
+
+  /**
    * An Elasticsearch or Indicia powered map control.
    *
    * @deprecated Use leafletMap instead.

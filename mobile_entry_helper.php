@@ -13,16 +13,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package	Client
- * @author	Indicia Team
- * @license	http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link 	http://code.google.com/p/indicia/
+ * @author Indicia Team
+ * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
+ * @link https://github.com/Indicia-Team/client_helpers
  */
 
 /**
  * Link in other required php files.
  */
-require_once('data_entry_helper.php');
+require_once 'data_entry_helper.php';
 
 global $indicia_templates;
 $indicia_templates['form'] = <<<'EOD'
@@ -110,16 +109,15 @@ $indicia_templates['fieldcontain_prefix'] = '<div class="ui-field-contain">';
 $indicia_templates['fieldcontain_suffix'] = '</div>';
 
 /**
- * Static helper class that provides automatic HTML and JavaScript generation for 
+ * Static helper class that provides automatic HTML and JavaScript generation for
  * Indicia online recording mobile app data entry controls.
  *
- * @package	Client
  */
 class mobile_entry_helper extends data_entry_helper {
 
  /**
   * Ouputs a hidden date control set to the current date.
-  * The output of this control can be configured using the following templates: 
+  * The output of this control can be configured using the following templates:
   * <ul>
   * <li><b>hidden_text</b></br>
   * Template used for the for hidden inputs.
@@ -128,10 +126,10 @@ class mobile_entry_helper extends data_entry_helper {
   *
   * @param array $options Options array with the following possibilities:<ul>
   * <li><b>fieldname</b><br/>
-  * Required. The name of the database field this control is bound to. 
+  * Required. The name of the database field this control is bound to.
   * Default 'sample:date'.</li>
   * <li><b>id</b><br/>
-  * Optional. The id to assign to the HTML control. If not assigned the 
+  * Optional. The id to assign to the HTML control. If not assigned the
   * fieldname is used.</li>
   * <li><b>default</b><br/>
   * Optional. The default value to assign to the control. This is overridden
@@ -150,7 +148,7 @@ class mobile_entry_helper extends data_entry_helper {
     $id = (isset($options['id'])) ? $options['id'] : $options['fieldname'];
     $options['id'] = $id;
     $id = self::jq_esc($id);
-    
+
     // JavaScript to obtain the date value;
     self::$javascript .= "
     (function ($) {
@@ -162,11 +160,11 @@ class mobile_entry_helper extends data_entry_helper {
       month = ((month < 10) ? '0' : '') + month
       var year = d.getFullYear()
       var date = year + '-' + month + '-' + day;
-      
+
       $('#$id').attr('value', date);
     }) (jqm);
     ";
-    
+
     // HTML which will accept the date value
     if (is_null($hidden) || $hidden){
       $r .= self::hidden_text($options);
@@ -175,11 +173,11 @@ class mobile_entry_helper extends data_entry_helper {
     }
     return $r;
   }
-  
+
  /**
   * Outputs hidden spatial reference and system controls set to the current
-  * position in latitude and longitude. 
-  * The output of this control can be configured using the following templates: 
+  * position in latitude and longitude.
+  * The output of this control can be configured using the following templates:
   * <ul>
   * <li><b>hidden_text</b></br>
   * Template used for the for hidden inputs.
@@ -219,7 +217,7 @@ class mobile_entry_helper extends data_entry_helper {
       'fieldname' => 'sample:entered_sref',
       'defaultSys' => '4326'
     ), $options);
-    
+
     // HTML which will accept the sref value
     // $r = '<p id="sref">Replace this with the sref.</p>';
     if(is_null($hidden) || $hidden ){
@@ -232,15 +230,15 @@ class mobile_entry_helper extends data_entry_helper {
     } else {
       $r .= self::sref_textbox($options);
     }
-    
+
     return $r;
   }
-  
+
   /**
    * A version of the select control which supports hierarchical termlist data by
-   * adding new selects to the next line populated with the child terms when a 
+   * adding new selects to the next line populated with the child terms when a
    * parent term is selected. Applies jQuery Mobile enhancement to the added
-   * select. 
+   * select.
    *
    * @param array $options Options array with the following possibilities:<ul>
    * <li><b>fieldname</b><br/>
@@ -272,10 +270,10 @@ class mobile_entry_helper extends data_entry_helper {
    * Optional. Associative array of items to pass via the query string to the
    * service. This should at least contain the read authorisation array if the
    * select is being populated by a service call. It can also contain
-   * view=cache to use the cached termlists entries or view=detail for the 
+   * view=cache to use the cached termlists entries or view=detail for the
    * uncached version.</li>
    * </ul>
-   * The output of this control can be configured using the following templates: 
+   * The output of this control can be configured using the following templates:
    * <ul>
    * <li><b>select</b></br>
    * Template used for the HTML select element.
@@ -294,13 +292,13 @@ class mobile_entry_helper extends data_entry_helper {
       'blankText' => '<please select>'
     ), $options);
     $options['extraParams']['preferred'] = 't';
-    
+
     // Get the data for the control. Not Ajax populated at the moment. We either
-    // populate the lookupValues for the top level control or store in the 
+    // populate the lookupValues for the top level control or store in the
     // childData for output into JavaScript
     $values = self::get_population_data($options);
-    $lookupValues = array();
-    $childData = array();
+    $lookupValues = [];
+    $childData = [];
     foreach ($values as $value) {
       if (empty($value['parent_id'])) {
         $lookupValues[$value[$options['valueField']]] = $value[$options['captionField']];
@@ -308,14 +306,14 @@ class mobile_entry_helper extends data_entry_helper {
       else {
         // not a top level item, so put in a data array we can store in JSON.
         if (!isset($childData[$value['parent_id']])) {
-          $childData[$value['parent_id']] = array();
+          $childData[$value['parent_id']] = [];
         }
         $childData[$value['parent_id']][] = array(
             'id' => $value[$options['valueField']],
             'caption' => $value[$options['captionField']]
             );
       }
-    }    
+    }
     // build an ID with just alphanumerics, that we can use to keep JavaScript
     // function and data names unique
     $dataId = preg_replace('/[^a-zA-Z0-9]/', '', $options['id']);
@@ -329,7 +327,7 @@ class mobile_entry_helper extends data_entry_helper {
     unset($options['captionField']);
     unset($options['valueField']);
     $options['lookupValues'] = $lookupValues;
-    
+
     // Output a hidden input that contains the value to post.
     $hiddenOptions = array(
         'id' => 'fld-' . $options['id'],
@@ -340,9 +338,9 @@ class mobile_entry_helper extends data_entry_helper {
       $hiddenOptions['default'] = $options['default'];
     }
     $r = self::hidden_text($hiddenOptions);
-    
+
     // Output a select. Use templating to add a wrapper div, so we can keep all
-    // the hierarchical selects together. 
+    // the hierarchical selects together.
     global $indicia_templates;
     $oldTemplate = $indicia_templates['select'];
     $classes = 'hierarchical-select control-box ';
@@ -359,13 +357,13 @@ class mobile_entry_helper extends data_entry_helper {
     $indicia_templates['select'] = $oldTemplate;
 
     // Now output JavaScript that creates and populates child selects as each
-    // option is selected. There is also code for reloading existing values.    
+    // option is selected. There is also code for reloading existing values.
     $options['blankText'] = htmlspecialchars(lang::get($options['blankText']));
-    // jQuery safe version of the Id. 
+    // jQuery safe version of the Id.
     $safeId = preg_replace('/[:]/', '\\\\\\:', $options['id']);
     self::$javascript .= <<<EOD
   // Enclosure needed in case there are multiple on the page.
-  // Call the enclosed function with the version of jQuery installed with the 
+  // Call the enclosed function with the version of jQuery installed with the
   // jQuery Mobile module.
   (function ($) {
     function pickHierarchySelectNode(select) {
@@ -373,8 +371,8 @@ class mobile_entry_helper extends data_entry_helper {
       var dad = select.parent();
       var grandpa = dad.parent();
       if(grandpa.hasClass('ui-select')) {
-      
-        // Remove selects lower in the hierarchy. Something seems to prevent 
+
+        // Remove selects lower in the hierarchy. Something seems to prevent
         // jQuery.remove() propagating to all children so we traverse the
         // DOM ourselves to do this.
         var youngGreatUncles = grandpa.nextAll();
@@ -383,7 +381,7 @@ class mobile_entry_helper extends data_entry_helper {
         cousins2.remove();
         cousins.remove();
         youngGreatUncles.remove();
-        
+
         if (typeof indiciaData.selectData$dataId [select.val()] !== 'undefined') {
           // We need to add a select.
           // Create a unique id for the select.
@@ -398,7 +396,7 @@ class mobile_entry_helper extends data_entry_helper {
           html += '</select>';
           // Add a change event to the select.
           var obj = $(html);
-          obj.change(function(evt) { 
+          obj.change(function(evt) {
             $('#fld-$safeId').val($(evt.target).val());
             pickHierarchySelectNode($(evt.target));
           });
@@ -408,14 +406,14 @@ class mobile_entry_helper extends data_entry_helper {
           safeNewId = newId.replace(':', '\\\\:');
           $('#' + safeNewId).selectmenu();
         }
-      }    
+      }
     }
-    
+
     $('#$safeId').change(function(evt) {
       $('#fld-$safeId').val($(evt.target).val());
       pickHierarchySelectNode($(evt.target));
     });
-    
+
     // Code from here on is to reload existing values.
     function findItemParent(idToFind) {
       var found = false;
@@ -435,8 +433,8 @@ class mobile_entry_helper extends data_entry_helper {
         tree.push(found);
         last=found;
       }
-    }   
-  
+    }
+
     // now we have the tree, work backwards to select each item
     thisselect = $('#$safeId');
     while (tree.length > 0) {
@@ -456,9 +454,9 @@ EOD;
 
   /**
   * Insert buttons which, when clicked, displays the next or previous tab.
-  * Insert this inside the tab divs on each tab you want to have a next or 
+  * Insert this inside the tab divs on each tab you want to have a next or
   * previous button, excluding the last tab.
-  * The output of this control can be configured using the following templates: 
+  * The output of this control can be configured using the following templates:
   * <ul>
   * <li><b>jqmLeftButton</b></br>
   * HTML template used for previous buttons.
@@ -489,7 +487,7 @@ EOD;
   *
   * @link http://docs.jquery.com/UI/Tabs
   */
-  public static function wizard_buttons($options = array()) {
+  public static function wizard_buttons($options = []) {
     // Default values
     $defaults = array(
       'prev'        => '',
@@ -501,11 +499,11 @@ EOD;
       'suffixTemplate' => 'blank',
     );
     $options = array_merge($defaults, $options);
-    
+
     // We'll arrange the buttons in a footer.
     $r = '<div data-role="footer" data-position="fixed"';
     $r .= 'class = "' . $options['class'] .= '">';
-    
+
     if ($options['next'] != '') {
        // Add a paragraph to footer to give it height.
        $r .= '<p>&nbsp;</p>';
@@ -521,17 +519,17 @@ EOD;
       $options['align'] = "right";
       $r .= self::apply_template('jqmControlSubmitButton', $options);
     }
-    $r .= '</div>';   
-    
+    $r .= '</div>';
+
     return $r;
   }
 
-  
+
   /**
    * A version of the select control which supports hierarchical termlist data by
-   * adding new selects to the next line populated with the child terms when a 
+   * adding new selects to the next line populated with the child terms when a
    * parent term is selected. Applies jQuery Mobile enhancement to the added
-   * select. 
+   * select.
    *
    * @param array $options Options array with the following possibilities:<ul>
    * <li><b>fieldname</b><br/>
@@ -563,15 +561,15 @@ EOD;
    * Optional. Associative array of items to pass via the query string to the
    * service. This should at least contain the read authorisation array if the
    * select is being populated by a service call. It can also contain
-   * view=cache to use the cached termlists entries or view=detail for the 
+   * view=cache to use the cached termlists entries or view=detail for the
    * uncached version.</li>
    * <li><b>captionTemplate</b><br/>
-   * Optional and only relevant when loading content from a data service call. 
+   * Optional and only relevant when loading content from a data service call.
    * Specifies the template used to build the caption, with each database field
    * represented as {fieldname}.</li>
   * </ul>
    * </ul>
-   * The output of this control can be configured using the following templates: 
+   * The output of this control can be configured using the following templates:
    * <ul>
    * <li><b>collapsible_select_option_group</b></br>
    * Template used for the HTML select element.
@@ -584,13 +582,13 @@ EOD;
   public static function collapsible_select($options) {
    $options = self::check_options($options);
    $options['extraParams']['preferred'] = 't';
-    
-    // Get the data for the control. 
+
+    // Get the data for the control.
     $items = self::get_population_data($options);
     // An array for top level items in the hierarchy.
-    $primaryData = array();
+    $primaryData = [];
     // An array for lower level items in the hierarchy.
-    $childData = array();
+    $childData = [];
     // Loop through all the data to organise it in the arrays.
     foreach ($items as $item) {
       // Obtain the value based on the field set in the options
@@ -602,48 +600,48 @@ EOD;
       else {
         $itemCaption = $item[$options['captionField']];
       }
-      
+
       if (empty($item['parent_id'])) {
         // Store a top level item
         $primaryData[] = array(
-            'id' => $itemValue, 
+            'id' => $itemValue,
             'caption' => $itemCaption);
       }
       else {
         // Store all children of the same parent together.
         $itemParent = $item['parent_id'];
         if (!isset($childData[$itemParent])) {
-          $childData[$itemParent] = array();
+          $childData[$itemParent] = [];
         }
         $childData[$itemParent][] = array(
-            'id' => $itemValue, 
+            'id' => $itemValue,
             'caption' => $itemCaption);
       }
     }
 
     // Construct the html to output the choices
     $options['items'] = self::_collapsible_select_html($primaryData, $childData, $options);
-    // Wrap items and add label  
+    // Wrap items and add label
     $options['labelTemplate'] = 'toplabel';
     return self::apply_template('collapsible_select', $options);
   }
-  
+
   private static function _collapsible_select_html($primaryData, $childData, $options) {
     static $depth = -1;
     $depth++;
-    $indent = str_repeat('  ', $depth);    
+    $indent = str_repeat('  ', $depth);
     $r = '';
     $colapsiblesetOpen = false;
     $fieldsetOpen = false;
-    
+
     // Loop through primary items
     foreach ($primaryData as $primaryItem) {
       // Call recursive function to construct html
       $parentId = $primaryItem['id'];
       // Has primary item got children?
       if(array_key_exists($parentId, $childData)) {
-        // Primary item has children  
-        
+        // Primary item has children
+
         // Manage html of enclosures
          if ($fieldsetOpen) {
           // Close any open fieldset
@@ -655,7 +653,7 @@ EOD;
           $colapsiblesetOpen = true;
           $r .= "\n" . $indent . '<div data-role="collapsibleset">' . "\n";
         }
-        
+
         $r .= $indent . '  <div data-role="collapsible">' . "\n";
         $r .= $indent . '    <h3>' . $primaryItem['caption'] . '</h3>' . "\n";
         // Recursive call to get next level in hierarchy
@@ -677,7 +675,7 @@ EOD;
            $fieldsetOpen = true;
           $r .=  $indent . '<fieldset data-role="controlgroup">' . "\n";
         }
-        
+
         $templateOpts = array(
             'type' => 'radio',
             'fieldname' => $options['fieldname'],
@@ -693,7 +691,7 @@ EOD;
         $r .= self::apply_template('check_or_radio_group_item', $templateOpts);
       }
     }
-    
+
     // Manage html of enclosures
     if ($colapsiblesetOpen) {
       // Close any open collapsibleset
