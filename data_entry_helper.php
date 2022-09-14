@@ -5385,7 +5385,7 @@ HTML;
     }
     $idx = 0;
     foreach ($occAttrControls as $attrId => $oc) {
-      $class = self::speciesChecklistOccAttrClass($options, $idx, $attributes[$attrId]['caption']);
+      $class = self::speciesChecklistOccAttrClass($options, $idx, $attributes[$attrId]['untranslatedCaption']);
       $r .= str_replace(['{content}', '{class}', '{headers}'],
         [
           str_replace('{fieldname}', "$fieldname:occAttr:$attrId", $oc),
