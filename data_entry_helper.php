@@ -5286,7 +5286,7 @@ JS;
             $attrInfo[$attr['system_function']] = [];
           }
           $attrInfo[$attr['system_function']][] =
-          'sc' . preg_replace('/[^a-zA-Z0-9]/', '', ucWords($attr['caption']));
+          'sc' . preg_replace('/[^a-zA-Z0-9]/', '', ucWords($attr['untranslatedCaption']));
         }
       }
       self::$indiciaData["dynamicAttrInfo-$options[id]"] = $attrInfo;
