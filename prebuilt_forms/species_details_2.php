@@ -460,7 +460,7 @@ class iform_species_details_2 extends iform_dynamic {
     }
 
     // Add any general ES taxon filters for taxon specified in URL.
-    $esFilter .= self::createEsFilterHtml('taxon.accepted_name', self::$preferredPlain, 'match_phrase', 'must');
+    $esFilter .= self::createEsFilterHtml('taxon.accepted_taxon_id', self::$externalKey, 'match_phrase', 'must');
 
     // Exclude rejected records in ES queries.
     $esFilter .= self::createEsFilterHtml('identification.verification_status', 'R', 'term', 'must_not');
@@ -1162,13 +1162,13 @@ class iform_species_details_2 extends iform_dynamic {
       'class' => 'media-gallery',
     ], $options);
     // Use this report to return the photos.
-    $reportName = 'reports_for_prebuilt_forms/species_details/occurrences_thumbnails';
+    $reportName = 'reports_for_prebuilt_forms/species_details/occurrences_thumbnails_2';
     $media = report_helper::get_report_data([
       'readAuth' => $auth['read'],
       'dataSource' => $reportName,
       'itemsPerPage' => $options['itemsPerPage'],
       'extraParams' => [
-        'taxon_meaning_list' => self::$taxonMeaningId,
+        'external_key' => self::$externalKey,
         'limit' => $options['itemsPerPage'],
         'wantCount' => 0,
       ],
