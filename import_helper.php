@@ -667,7 +667,7 @@ JS;
     $reload['params']['uploaded_csv'] = $filename;
     $reloadpath = $reload['path'] . '?' . self::array_to_query_string($reload['params']);
     $r = $formWrapper
-      ? "<div><form method=\"post\" id=\"fields_to_retain_form\" action=\"$reloadpath\" class=\"iform\" onSubmit=\"window.location = '$reloadpath;\">\n"
+      ? "<div><form method=\"post\" id=\"fields_to_retain_form\" action=\"$reloadpath\" class=\"iform\">\n"
       : '';
 
     foreach ($settingFields as $field => $value) {
