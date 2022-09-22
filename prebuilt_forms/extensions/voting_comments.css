@@ -1,0 +1,12 @@
+.hovering i {
+  color: cornflowerblue;
+}
+.review {
+  border: solid silver 1px;
+  padding: 8px;
+  margin: 8px;
+  border-radius: 4px;
+}
+.review-details h4 {
+  font-size: 90%;
+}
