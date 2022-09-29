@@ -123,7 +123,7 @@ class iform_location_details extends iform_dynamic {
           'description' => 'Define the structure of the form. Each component must be placed on a new line. <br/>' .
             'The following types of component can be specified. <br/>' .
             '<strong>[control name]</strong> indicates a predefined control is to be added to the form with the following predefined controls available: <br/>' .
-                '&nbsp;&nbsp;<strong>[locationdetails]</strong> - displays information relating to the occurrence and its sample. Set @fieldsToExcludeIfLoggedOut to an array of field names to skip for anonymous users.<br/>' .
+                '&nbsp;&nbsp;<strong>[locationdetails]</strong> - displays information relating to the location. Set @fieldsToExcludeIfLoggedOut to an array of field names to skip for anonymous users.<br/>' .
                 '&nbsp;&nbsp;<strong>[buttons]</strong> - outputs a row of edit and explore buttons. Use the @buttons option to change the list of buttons to output ' .
                 'by setting this to an array, e.g. ["edit"] will output just the edit button, ["explore"] outputs just the explore button, ["edit","record"] outputs an edit and record button. ' .
                 'The edit button is automatically skipped if the user does not have rights to edit the record.<br/>' .
@@ -245,7 +245,7 @@ class iform_location_details extends iform_dynamic {
         'edit',
       ],
     ], $options);
-    $r = '<div class="sample-details-buttons">';
+    $r = '<div class="location-details-buttons">';
     foreach ($options['buttons'] as $button) {
       if ($button === 'edit') {
         $r .= self::buttons_edit($auth, $args, $tabalias, $options);
@@ -381,7 +381,7 @@ class iform_location_details extends iform_dynamic {
       'location_external_key' => lang::get('Location external key'),
       'name' => lang::get('Location name'),
       'centroid_sref' => lang::get('Centre grid ref'),
-      'comment' => lang::get('Sample comment'),
+      'comment' => lang::get('Location comment'),
       'location_type' => lang::get('Location type'),
     ];
     $details_report = '';
@@ -800,7 +800,7 @@ HTML;
       $iform_page_metadata['title'] = self::$location['name'];
       $iform_page_metadata['description'] = lang::get('Details of {1}', self::$location['name']);
       if (!empty(self::$location['location_comment'])) {
-        $iform_page_metadata['description'] .= '. ' . trim(self::$location['sample_comment'], '. \t\n\r\0\x0B') . '.';
+        $iform_page_metadata['description'] .= '. ' . trim(self::$location['location_comment'], '. \t\n\r\0\x0B') . '.';
       }
       $iform_page_metadata['latitude'] = number_format((float) self::$location['lat'], 5, '.', '');
       $iform_page_metadata['longitude'] = number_format((float) self::$location['long'], 5, '.', '');
