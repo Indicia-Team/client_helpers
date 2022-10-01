@@ -32,12 +32,12 @@
  */
 
 
-require_once 'includes/dynamic.php';
+require_once 'includes/BaseDynamicDetails.php';
 require_once 'includes/report.php';
 require_once 'includes/groups.php';
 
 
-class iform_record_details_2 extends iform_dynamic {
+class iform_record_details_2 extends BaseDynamicDetails {
 
   /**
    * Details of the currently loaded record.
@@ -453,7 +453,7 @@ Record ID',
           'occurrence_id' => $_GET['occurrence_id'],
           // The SQL needs to take a set of the hidden fields, so this needs to
           // be converted from an array.
-          'attrs' => strtolower(self::convert_array_to_set($fields)),
+          'attrs' => strtolower(self::convertArrayToSet($fields)),
           'testagainst' => $args['testagainst'],
           'operator' => $args['operator'],
           'sharing' => $args['sharing'],
@@ -495,87 +495,7 @@ Record ID',
    *   title. Set to a string to override the title, or false to hide it.
    */
   protected static function get_control_singleattribute($auth, $args, $tabalias, $options) {
-    if (empty($options['occurrence_attribute_id'])) {
-      hostsite_show_message(lang::get('A occurrence_attribute_id option is required for the single attribute control.', 'warning'));
-      return;
-    }
-    $options = array_merge([
-      'format' => 'text',
-      'ifEmpty' => 'hide',
-      'outputFormatting' => FALSE,
-      'title' => TRUE,
-    ], $options);
-    $attrData = report_helper::get_report_data([
-      'readAuth' => $auth['read'],
-      'dataSource' => 'reports_for_prebuilt_forms/record_details_2/occurrence_attribute_value',
-      'extraParams' => [
-        'occurrence_id' => $_GET['occurrence_id'],
-        'occurrence_attribute_id' => $options['occurrence_attribute_id'],
-        'sharing' => $args['sharing'],
-        'language' => iform_lang_iso_639_2(hostsite_get_user_field('language')),
-        'output_formatting' => $options['outputFormatting'] && $options['format'] === 'text' ? 't' : 'f',
-      ],
-    ]);
-    if (count($attrData) === 0) {
-      hostsite_show_message("Attribute ID $options[occurrence_attribute_id] not found", 'warning');
-      return '';
-    }
-    $r = '';
-    $valueInfo = $attrData[0];
-    if ($options['title'] === TRUE) {
-      $r .= "<h3>$valueInfo[caption]</h3>";
-    }
-    elseif (is_string($options['title'])) {
-      $r .= '<h3>' . lang::get($options['title']) . '</h3>';
-    }
-    if ($valueInfo['value'] === NULL || $valueInfo['value'] === '') {
-      $r .= '<p>' . lang::get($options['ifEmpty']) . '</p>';
-    }
-    else {
-      switch ($options['format']) {
-        case 'text':
-          $r .= "<p>$valueInfo[value]</p>";
-          break;
-
-        case 'complex_attr_grid':
-          $valueRows = explode('; ', $valueInfo['value']);
-          $decoded = json_decode($valueRows[0], TRUE);
-          $r .= '<table class="table"><thead>';
-          $r .= '<tr><th>' . implode('</th><th>', array_keys($decoded)) . '</th></tr>';
-          $r .= '</thead><tbody>';
-          foreach ($valueRows as $valueRow) {
-            $decoded = json_decode($valueRow, TRUE);
-            if ($options['outputFormatting']) {
-              foreach ($decoded as &$value) {
-                $value = str_replace("\n", '<br/>', $value);
-                $value = preg_replace('/(http[^\s]*)/', '<a href="$1">$1</a>', $value);
-              }
-            }
-            $r .= '<tr><td>' . implode('</td><td>', $decoded) . '</td></tr>';
-          }
-          $r .= '</tbody>';
-          $r .= '</table>';
-          break;
-      }
-    }
-
-    return $r;
-  }
-
-  /**
-   * Used to convert an array of attributes to a string formatted like a set.
-   *
-   * This is then used by the record_data_attributes_with_hiddens report to
-   * return custom attributes which aren't in the hidden attributes list.
-   *
-   * @param array $theArray
-   *   Attributes.
-   *
-   * @return string
-   *   The set of hidden custom attributes.
-   */
-  protected static function convert_array_to_set(array $theArray) {
-    return "'" . implode("','", str_replace("'", "''", $theArray)) . "'";
+    return self::getControlSingleattribute('occurrence', $auth, $args, $options);
   }
 
   /**
@@ -585,16 +505,16 @@ Record ID',
    *   The output report grid.
    */
   protected static function get_control_photos($auth, $args, $tabalias, $options) {
-    iform_load_helpers(['data_entry_helper']);
     $options = array_merge([
       'title' => lang::get('Photos and media'),
     ], $options);
     $settings = [
+      'type' => 'occurrence',
       'table' => 'occurrence_medium',
       'key' => 'occurrence_id',
       'value' => $_GET['occurrence_id'],
     ];
-    return self::commonControlPhotos($auth, $args, $options, $settings);
+    return self::getControlPhotos($auth, $args, $options, $settings);
   }
 
   /**
@@ -604,23 +524,24 @@ Record ID',
    *   The output report grid.
    */
   protected static function get_control_samplephotos($auth, $args, $tabalias, $options) {
-    iform_load_helpers(['data_entry_helper']);
     $options = array_merge([
       'title' => lang::get('Sample photos and media'),
     ], $options);
-    $occurrence = data_entry_helper::get_population_data([
+    $occurrence = helper_base::get_population_data([
       'table' => 'occurrence',
       'extraParams' => $auth['read'] + [
         'id' => $_GET['occurrence_id'],
         'view' => 'detail',
       ],
+      'cachePerUser' => FALSE,
     ]);
     $settings = [
+      'type' => 'sample',
       'table' => 'sample_medium',
       'key' => 'sample_id',
       'value' => $occurrence[0]['sample_id'],
     ];
-    return self::commonControlPhotos($auth, $args, $options, $settings);
+    return self::getControlPhotos($auth, $args, $options, $settings);
   }
 
   /**
@@ -630,30 +551,32 @@ Record ID',
    *   The output report grid.
    */
   protected static function get_control_parentsamplephotos($auth, $args, $tabalias, $options) {
-    iform_load_helpers(['data_entry_helper']);
     $options = array_merge([
       'title' => lang::get('Parent sample photos and media'),
     ], $options);
-    $occurrence = data_entry_helper::get_population_data([
+    $occurrence = helper_base::get_population_data([
       'table' => 'occurrence',
       'extraParams' => $auth['read'] + [
         'id' => $_GET['occurrence_id'],
         'view' => 'detail',
       ],
+      'cachePerUser' => FALSE,
     ]);
-    $sample = data_entry_helper::get_population_data([
+    $sample = helper_base::get_population_data([
       'table' => 'sample',
       'extraParams' => $auth['read'] + [
         'id' => $occurrence[0]['sample_id'],
         'view' => 'detail',
       ],
+      'cachePerUser' => FALSE,
     ]);
     $settings = [
+      'type' => 'parentsample',
       'table' => 'sample_image',
       'key' => 'sample_id',
       'value' => $sample[0]['parent_id'],
     ];
-    return self::commonControlPhotos($auth, $args, $options, $settings);
+    return self::getControlPhotos($auth, $args, $options, $settings);
   }
 
   /**
@@ -676,63 +599,6 @@ Record ID',
       $class = '';
     }
     return $class;
-  }
-
-  /**
-   * Draws a common control for all photos controls.
-   *
-   * @return string
-   *   The output report grid.
-   */
-  private static function commonControlPhotos($auth, $args, $options, $settings) {
-    data_entry_helper::add_resource('fancybox');
-    require_once 'includes/report.php';
-    $options = array_merge([
-      'itemsPerPage' => 20,
-      'imageSize' => 'thumb',
-      'class' => 'media-gallery',
-    ], $options);
-    $extraParams = $auth['read'] + [
-      'sharing' => $args['sharing'],
-      'limit' => $options['itemsPerPage'],
-    ];
-    $extraParams[$settings['key']] = $settings['value'];
-    $media = data_entry_helper::get_population_data([
-      'table' => $settings['table'],
-      'extraParams' => $extraParams,
-    ]);
-    $r = <<<HTML
-<div class="detail-panel" id="detail-panel-photos">
-  <h3>$options[title]</h3>
-  <div class="$options[class]">
-
-HTML;
-    if (empty($media)) {
-      $r .= '<p>' . lang::get('No photos or media files available') . '</p>';
-    }
-    else {
-      if (isset($options['helpText'])) {
-        $r .= '<p>' . $options['helpText'] . '</p>';
-      }
-      $r .= '<ul>';
-      $firstImage = TRUE;
-      foreach ($media as $medium) {
-        if ($firstImage && substr($medium['media_type'], 0, 6) === 'Image:') {
-          // First image can be flagged as the main content image. Used for FB OpenGraph for example.
-          global $iform_page_metadata;
-          if (!isset($iform_page_metadata)) {
-            $iform_page_metadata = [];
-          }
-          $imageFolder = data_entry_helper::get_uploaded_image_folder();
-          $iform_page_metadata['image'] = "$imageFolder$medium[path]";
-          $firstImage = FALSE;
-        }
-        $r .= iform_report_get_gallery_item('occurrence', $medium, $options['imageSize']);
-      }
-      $r .= '</ul>';
-    }
-    $r .= '</div></div>';
-    return $r;
   }
 
   /**
@@ -1029,6 +895,9 @@ JS;
    *   * buttons - array containing 'edit' to include the edit button,
    *     'explore' for the explore link button, 'species details' for the
    *     species details page link. Defaults to all buttons.
+   *   * classes - associative array of each button name (edit, explore or
+   *     record), with the value being the class to apply to the button if
+   *     overriding the default.
    *
    * @return string
    *   HTML for the buttons.
@@ -1040,24 +909,24 @@ JS;
         'explore',
         'species details',
       ],
+      'classes' => [],
     ]);
-    $r = '<div class="record-details-buttons">';
+    $buttons = [];
     foreach ($options['buttons'] as $button) {
       if ($button === 'edit') {
-        $r .= self::buttons_edit($auth, $args, $tabalias, $options);
+        $buttons[] = self::buttons_edit($auth, $args, $tabalias, $options);
       }
       elseif ($button === 'explore') {
-        $r .= self::buttons_explore($auth, $args, $tabalias, $options);
+        $buttons[] = self::buttons_explore($auth, $args, $tabalias, $options);
       }
       elseif ($button === 'species details') {
-        $r .= self::buttons_species_details($auth, $args, $tabalias, $options);
+        $buttons[] = self::buttons_species_details($auth, $args, $tabalias, $options);
       }
       else {
         throw new exception("Unknown button $button");
       }
     }
-    $r .= '</div>';
-    return $r;
+    return '<div class="details-buttons">' . implode(' ', $buttons) . '</div>';
   }
 
   /**
@@ -1090,7 +959,8 @@ JS;
       $rootFolder = data_entry_helper::getRootFolder(TRUE);
       $paramJoin = strpos($rootFolder, '?') === FALSE ? '?' : '&';
       $url = "$rootFolder$record[input_form]{$paramJoin}occurrence_id=$record[occurrence_id]";
-      return "<a class=\"$indicia_templates[buttonDefaultClass]\" href=\"$url\">" . lang::get('Edit this record') . '</a>';
+      $class = isset($options['classes']['edit']) ? $options['classes']['edit'] : $indicia_templates['buttonDefaultClass'];
+      return "<a class=\"$class\" href=\"$url\">" . lang::get('Edit this record') . '</a>';
     }
     else {
       // No rights to edit, so button omitted.
@@ -1125,7 +995,8 @@ JS;
       $url .= (strpos($url, '?') === FALSE) ? '?' : '&';
       $url .= $args['explore_param_name'] . '=' . self::$record['taxon_meaning_id'];
       $taxon = empty(self::$record['preferred_taxon']) ? self::$record['taxon_as_entered'] : self::$record['preferred_taxon'];
-      $r = "<a class=\"$indicia_templates[buttonDefaultClass]\" href=\"$url\">" . lang::get('Explore records of {1}', $taxon) . '</a>';
+      $class = isset($options['classes']['taxon']) ? $options['classes']['taxon'] : $indicia_templates['buttonDefaultClass'];
+      $r = "<a class=\"$class\" href=\"$url\">" . lang::get('Explore records of {1}', $taxon) . '</a>';
     }
     else {
       throw new exception('The page has been setup to use an explore records button, but an "Explore URL" or ' .
@@ -1161,7 +1032,8 @@ JS;
       $url .= (strpos($url, '?') === FALSE) ? '?' : '&';
       $url .= 'taxon_meaning_id=' . self::$record['taxon_meaning_id'];
       $taxon = empty(self::$record['preferred_taxon']) ? self::$record['taxon_as_entered'] : self::$record['preferred_taxon'];
-      return "<a class=\"$indicia_templates[buttonDefaultClass]\" href=\"$url\">" . lang::get('{1} details page', $taxon) . '</a>';
+      $class = isset($options['classes']['species details']) ? $options['classes']['species details'] : $indicia_templates['buttonDefaultClass'];
+      return "<a class=\"$class\" href=\"$url\">" . lang::get('{1} details page', $taxon) . '</a>';
     }
     return '';
   }

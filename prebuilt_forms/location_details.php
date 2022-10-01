@@ -30,11 +30,11 @@
  * * Subsite information.
  */
 
-require_once 'includes/dynamic.php';
+require_once 'includes/BaseDynamicDetails.php';
 require_once 'includes/report.php';
 require_once 'includes/groups.php';
 
-class iform_location_details extends iform_dynamic {
+class iform_location_details extends BaseDynamicDetails {
 
   /**
    * Details of the currently loaded location.
@@ -228,63 +228,59 @@ class iform_location_details extends iform_dynamic {
    * @param array $options
    *   Options configured for this control. Specify the following options:
    *   * buttons - array containing 'edit' to include the edit button,
-   *   'explore' to include an explore link or 'record' to include a link to a
-   *   recording form for the site. Other, options may be added in future. The
-   *   'record' button requires an option @enterRecordsPath set to the path of
-   *   a form page for entering a list of records at this location. The form
-   *   should use the [location url param] control to allow it to use the
-   *   location_id parameter passed to the form.
-   *   Defaults to all buttons.
+   *     'explore' to include an explore link or 'record' to include a link to
+   *     a recording form for the site. Other, options may be added in future.
+   *   * enterRecordsPath - The 'record' button requires an option
+   *     @enterRecordsPath set to the path of a form page for entering a list
+   *     of records at this location. The form should use the
+   *     [location url param] control to allow it to use the location_id
+   *     parameter passed to the form. Defaults to edit and explore buttons.
+   *   * classes - associative array of each button name (edit, explore or
+   *     record), with the value being the class to apply to the button if
+   *     overriding the default.
    *
    * @return string
    *   HTML for the buttons.
    */
-  protected static function get_control_buttons($auth, $args, $tabalias, $options) {
+  protected static function get_control_buttons(array $auth, array $args, $tabalias, array $options) {
     $options = array_merge([
       'buttons' => [
         'edit',
+        'explore',
       ],
+      'classes' => [],
+      'title' => FALSE,
     ], $options);
-    $r = '<div class="location-details-buttons">';
+    $buttons = [];
     foreach ($options['buttons'] as $button) {
       if ($button === 'edit') {
-        $r .= self::buttons_edit($auth, $args, $tabalias, $options);
+        $buttons[] = self::buttonsEdit($args, $options);
       }
       elseif ($button === 'explore') {
-        $r .= self::buttons_explore($auth, $args, $tabalias, $options);
+        $buttons[] = self::buttonsExplore($args);
       }
       elseif ($button === 'record') {
-        $r .= self::buttons_record($auth, $args, $tabalias, $options);
+        $buttons[] = self::buttonsRecord($options);
       }
       else {
         throw new exception("Unknown button $button");
       }
     }
-    $r .= '</div>';
-    return $r;
+    return self::controlContainer('Buttons', implode(' ', $buttons), $options);
   }
 
   /**
    * Retrieve the HTML required for an edit location button.
    *
-   * @param array $auth
-   *   Read authorisation array.
    * @param array $args
    *   Form options.
-   * @param string $tabalias
-   *   The alias of the tab this appears on.
    * @param array $options
-   *   Options configured for this control. Options available are:
-   *   * enterRecordsPath - path to the form page for entering a list of
-   *     records at this location. The form should use the [location url param]
-   *     control to allow it to use the location_id parameter passed to the
-   *     form. When this option is set, an "Enter a list of records" button is
-   *     included.
+   *   Options configured for this control as per get_control_buttons().
    *
    * @return string
    *   HTML for the button.
    */
-  protected static function buttons_edit($auth, $args, $tabalias, $options) {
+  protected static function buttonsEdit(array $args, array $options) {
     global $indicia_templates;
     if (!$args['default_input_form']) {
       throw new exception('Please set the default input form path setting before using the [edit button] control');
@@ -295,7 +291,8 @@ class iform_location_details extends iform_dynamic {
       $rootFolder = data_entry_helper::getRootFolder(TRUE);
       $paramJoin = strpos($rootFolder, '?') === FALSE ? '?' : '&';
       $url = "$rootFolder$args[default_input_form]{$paramJoin}location_id=$location[location_id]";
-      return "<a class=\"$indicia_templates[buttonDefaultClass]\" href=\"$url\">" . lang::get('Edit this location') . '</a>';
+      $class = isset($options['classes']['edit']) ? $options['classes']['edit'] : $indicia_templates['buttonDefaultClass'];
+      return "<a class=\"$class\" href=\"$url\">" . lang::get('Edit this location') . '</a>';
     }
     // User does not have rights to edit the location.
     return '';
@@ -310,7 +307,7 @@ class iform_location_details extends iform_dynamic {
    * @return string
    *   HTML for the button.
    */
-  protected static function buttons_explore($args) {
+  protected static function buttonsExplore(array $args) {
     global $indicia_templates;
     if (!empty($args['explore_url']) && !empty($args['explore_param_name'])) {
       $url = $args['explore_url'];
@@ -321,7 +318,8 @@ class iform_location_details extends iform_dynamic {
       $url = str_replace('{rootFolder}', $rootFolder, $url);
       $url .= (strpos($url, '?') === FALSE) ? '?' : '&';
       $url .= "$args[explore_param_name]=" . self::$location['location_id'];
-      $r = "<a class=\"$indicia_templates[buttonDefaultClass]\" href=\"$url\">" . lang::get('Explore records in ', $location['name']) . '</a>';
+      $class = isset($options['classes']['explore']) ? $options['classes']['explore'] : $indicia_templates['buttonDefaultClass'];
+      $r = "<a class=\"$class\" href=\"$url\">" . lang::get('Explore records in ', self::$location['name']) . '</a>';
     }
     else {
       throw new exception('The page has been setup to use an explore records button, but an "Explore URL" or ' .
@@ -333,33 +331,22 @@ class iform_location_details extends iform_dynamic {
   /**
    * Retrieve the HTML for an enter list of records for location button.
    *
-   * @param array $auth
-   *   Read authorisation array.
-   * @param array $args
-   *   Form options.
-   * @param string $tabalias
-   *   The alias of the tab this appears on.
    * @param array $options
-   *   Options configured for this control. Options available are:
-   *   * enterRecordsPath - path to the form page for entering a list of
-   *     records at this location. The form should use the [location url param]
-   *     control to allow it to use the location_id parameter passed to the
-   *     form.
+   *   Options configured for this control as per get_control_buttons().
    *
    * @return string
    *   HTML for the button.
    */
-  protected static function buttons_record($auth, $args, $tabalias, $options) {
+  protected static function buttonsRecord(array $options) {
     global $indicia_templates;
     $location = self::$location;
-    $buttons = [];
     if (!empty($options['enterRecordsPath'])) {
-      $buttons[] = "<a class=\"$indicia_templates[buttonDefaultClass]\" href=\"$options[enterRecordsPath]?location_id=$location[location_id]\">" . lang::get('Enter observations at this location') . '</a>';
+      $class = isset($options['classes']['record']) ? $options['classes']['record'] : $indicia_templates['buttonDefaultClass'];
+      return "<a class=\"$class\" href=\"$options[enterRecordsPath]?location_id=$location[location_id]\">" . lang::get('Enter observations at this location') . '</a>';
     }
     else {
       throw new exception('The page has been setup to use a record button, but the @enterRecordsPath option is missing.');
     }
-    return implode('', $buttons);
   }
 
   protected static function get_control_locationdetails($auth, $args, $tabalias, $options) {
@@ -368,6 +355,7 @@ class iform_location_details extends iform_dynamic {
       'dataSource' => 'reports_for_prebuilt_forms/location_details/location_data_attributes_with_hiddens',
       'fieldsToExcludeIfLoggedOut' => [],
       'outputFormatting' => FALSE,
+      'title' => TRUE,
     ], $options);
     $fieldsToExcludeIfLoggedOut = array_map('strtolower', $options['fieldsToExcludeIfLoggedOut']);
     $loggedIn = hostsite_get_user_field('id') !== 0;
@@ -386,8 +374,7 @@ class iform_location_details extends iform_dynamic {
     ];
     $details_report = '';
     $details_report .= '<div class="location-details-fields ui-helper-clearfix">';
-    $title = self::$location['name'];
-    hostsite_set_page_title($title);
+    hostsite_set_page_title(self::$location['name']);
     foreach ($availableFields as $field => $caption) {
       // Skip some fields if logged out.
       if (!$loggedIn && in_array(strtolower($caption), $fieldsToExcludeIfLoggedOut)) {
@@ -424,22 +411,20 @@ class iform_location_details extends iform_dynamic {
         'location_id' => $_GET['location_id'],
         // The SQL needs to take a set of the hidden fields, so this needs to
         // be converted from an array.
-        'attrs' => strtolower(self::convert_array_to_set($fields)),
+        'attrs' => strtolower(self::convertArrayToSet($fields)),
         'operator' => $args['operator'],
         'sharing' => $args['sharing'],
         'language' => iform_lang_iso_639_2(hostsite_get_user_field('language')),
         'output_formatting' => $options['outputFormatting'] ? 't' : 'f',
       ],
     ]);
-
-    $r = '<h3>' . lang::get('Location details') . '</h3><dl class="detail-panel dl-horizontal" id="detail-panel-locationdetails">';
-
-    $r .= $details_report;
+    $html = '<dl class="dl-horizontal">';
+    $html .= $details_report;
     if (isset($attrs_report)) {
-      $r .= $attrs_report;
+      $html .= $attrs_report;
     }
-    $r .= '</dl>';
-    return $r;
+    $html .= '</dl>';
+    return self::controlContainer('Location details', $html, $options);
   }
 
   /**
@@ -463,71 +448,7 @@ class iform_location_details extends iform_dynamic {
    *   title. Set to a string to override the title, or false to hide it.
    */
   protected static function get_control_singleattribute($auth, $args, $tabalias, $options) {
-    if (empty($options['location_attribute_id'])) {
-      hostsite_show_message(lang::get('A location_attribute_id option is required for the single attribute control.', 'warning'));
-      return;
-    }
-    $options = array_merge([
-      'format' => 'text',
-      'ifEmpty' => 'hide',
-      'outputFormatting' => FALSE,
-      'title' => TRUE,
-    ], $options);
-    $attrData = report_helper::get_report_data([
-      'readAuth' => $auth['read'],
-      'dataSource' => 'reports_for_prebuilt_forms/location_details/location_attribute_value',
-      'extraParams' => [
-        'location_id' => $_GET['location_id'],
-        'location_attribute_id' => $options['location_attribute_id'],
-        'sharing' => $args['sharing'],
-        'language' => iform_lang_iso_639_2(hostsite_get_user_field('language')),
-        'output_formatting' => $options['outputFormatting'] && $options['format'] === 'text' ? 't' : 'f',
-      ],
-    ]);
-    if (count($attrData) === 0) {
-      hostsite_show_message("Attribute ID $options[location_attribute_id] not found", 'warning');
-      return '';
-    }
-    $r = '';
-    $valueInfo = $attrData[0];
-    if ($options['title'] === TRUE) {
-      $r .= "<h3>$valueInfo[caption]</h3>";
-    }
-    elseif (is_string($options['title'])) {
-      $r .= '<h3>' . lang::get($options['title']) . '</h3>';
-    }
-    if ($valueInfo['value'] === NULL || $valueInfo['value'] === '') {
-      $r .= '<p>' . lang::get($options['ifEmpty']) . '</p>';
-    }
-    else {
-      switch ($options['format']) {
-        case 'text':
-          $r .= "<p>$valueInfo[value]</p>";
-          break;
-
-        case 'complex_attr_grid':
-          $valueRows = explode('; ', $valueInfo['value']);
-          $decoded = json_decode($valueRows[0], TRUE);
-          $r .= '<table class="table"><thead>';
-          $r .= '<tr><th>' . implode('</th><th>', array_keys($decoded)) . '</th></tr>';
-          $r .= '</thead><tbody>';
-          foreach ($valueRows as $valueRow) {
-            $decoded = json_decode($valueRow, TRUE);
-            if ($options['outputFormatting']) {
-              foreach ($decoded as &$value) {
-                $value = str_replace("\n", '<br/>', $value);
-                $value = preg_replace('/(http[^\s]*)/', '<a href="$1">$1</a>', $value);
-              }
-            }
-            $r .= '<tr><td>' . implode('</td><td>', $decoded) . '</td></tr>';
-          }
-          $r .= '</tbody>';
-          $r .= '</table>';
-          break;
-      }
-    }
-
-    return $r;
+    return self::getControlSingleattribute('location', $auth, $args, $options);
   }
 
   /**
@@ -537,10 +458,13 @@ class iform_location_details extends iform_dynamic {
    *   The output map panel.
    */
   protected static function get_control_map($auth, $args, $tabalias, $options) {
-    iform_load_helpers(array('map_helper'));
+    iform_load_helpers(['map_helper']);
     $options = array_merge(
       iform_map_get_map_options($args, $auth['read']),
-      ['clickForSpatialRef' => FALSE],
+      [
+        'clickForSpatialRef' => FALSE,
+        'title' => TRUE,
+      ],
       $options
     );
     if (isset(self::$location['boundary_geom'])) {
@@ -556,9 +480,9 @@ class iform_location_details extends iform_dynamic {
     $olOptions = iform_map_get_ol_options($args);
 
     if (!isset($options['standardControls'])) {
-      $options['standardControls'] = array('layerSwitcher', 'panZoom');
+      $options['standardControls'] = ['layerSwitcher', 'panZoom'];
     }
-    return '<div class="detail-panel" id="detail-panel-map"><h3>' . lang::get('Map') .'</h3>' . map_helper::map_panel($options, $olOptions) . '</div>';
+    return self::controlContainer('Map', map_helper::map_panel($options, $olOptions), $options);
   }
 
   /**
@@ -575,7 +499,7 @@ class iform_location_details extends iform_dynamic {
   protected static function get_control_photos($auth, $args, $tabalias, $options) {
     iform_load_helpers(['data_entry_helper']);
     $options = array_merge([
-      'title' => lang::get('Photos and media'),
+      'title' => TRUE,
     ], $options);
     $settings = [
       'table' => 'location_medium',
@@ -589,29 +513,27 @@ class iform_location_details extends iform_dynamic {
       'imageSize' => 'thumb',
       'class' => 'media-gallery',
     ], $options);
-    $extraParams = $auth['read'] + array(
+    $extraParams = $auth['read'] + [
       'sharing' => $args['sharing'],
       'limit' => $options['itemsPerPage'],
-    );
+    ];
     $extraParams[$settings['key']] = $settings['value'];
     $media = data_entry_helper::get_population_data([
       'table' => $settings['table'],
       'extraParams' => $extraParams,
     ]);
-    $r = <<<HTML
-<div class="detail-panel" id="detail-panel-photos">
-  <h3>$options[title]</h3>
+    $html = <<<HTML
   <div class="$options[class]">
 
 HTML;
     if (empty($media)) {
-      $r .= '<p>' . lang::get('No photos or media files available') . '</p>';
+      $html .= '<p>' . lang::get('No photos or media files available') . '</p>';
     }
     else {
       if (isset($options['helpText'])) {
-        $r .= '<p>' . $options['helpText'] . '</p>';
+        $html .= '<p>' . $options['helpText'] . '</p>';
       }
-      $r .= '<ul>';
+      $html .= '<ul>';
       $firstImage = TRUE;
       foreach ($media as $medium) {
         if ($firstImage && substr($medium['media_type'], 0, 6) === 'Image:') {
@@ -624,12 +546,12 @@ HTML;
           $iform_page_metadata['image'] = "$imageFolder$medium[path]";
           $firstImage = FALSE;
         }
-        $r .= iform_report_get_gallery_item('occurrence', $medium, $options['imageSize']);
+        $html .= iform_report_get_gallery_item('occurrence', $medium, $options['imageSize']);
       }
-      $r .= '</ul>';
+      $html .= '</ul>';
     }
-    $r .= '</div></div>';
-    return $r;
+    $html .= '</div>';
+    return self::controlContainer('Photos and media', $html, $options);
   }
 
   /**
@@ -641,37 +563,35 @@ HTML;
    * * @block - machine name of the block.
    */
   protected static function get_control_block($auth, $args, $tabalias, $options) {
+    $options = array_merge([
+      'title' => FALSE,
+    ], $options);
     if ($options['module'] === 'addtoany') {
       report_helper::$javascript .= "$('.a2a_kit').attr('data-a2a-url', window.location.href);\n";
       $title = str_replace("'", "\'", 'Check out ' . self::$location['name']);
       report_helper::$javascript .= "$('.a2a_kit').attr('data-a2a-title', '$title');\n";
     }
-    $r = '';
-    if (!empty($options['title'])) {
-      $r .= "<fieldset><legend>$options[title]</legend>";
-    }
+    $html = '';
     if (function_exists('module_invoke')) {
       $block = module_invoke($options['module'], $options['hook'], $options['args']);
-      $r .= render($block['content']);
+      $html .= render($block['content']);
     }
     else {
       $block_manager = \Drupal::service('plugin.manager.block');
       $plugin_block = $block_manager->createInstance($options['block'], empty($options['args']) ? [] : $options['args']);
       $render = $plugin_block->build();
       $renderer = \Drupal::service('renderer');
-      $r .= $renderer->render($render);
+      $html .= $renderer->render($render);
     }
-    if (!empty($options['title'])) {
-      $r .= "</fieldset>";
-    }
-    return $r;
+    return self::controlContainer($options['module'], $html, $options);
   }
 
   /**
    * Render Photos section of the page.
    *
    * Options include:
-   * * @title
+   * * @title - default to true. Set to a string to override the title, or
+   *   false to remove it.
    * * @addChildrenEditFormPaths - Allows addition of buttons for adding a
    *   child site. A JSON object where the property names are button labels
    *   and the values are paths, e.g.:
@@ -694,7 +614,7 @@ HTML;
   protected static function get_control_subsites($auth, $args, $tabalias, $options) {
     iform_load_helpers(['report_helper']);
     $options = array_merge([
-      'title' => 'Subsites',
+      'title' => TRUE,
       'dataSource' => 'reports_for_prebuilt_forms/location_details/location_data',
       'extraParams' => [],
     ], $options);
@@ -739,39 +659,16 @@ HTML;
       $reportOptions['class'] = $options['class'];
     }
     $grid = report_helper::report_grid($reportOptions);
-    $buttons = '';
+    $html = "$mapOutput\n$grid";
     if (!empty($options['addChildrenEditFormPaths'])) {
       global $indicia_templates;
       foreach ($options['addChildrenEditFormPaths'] as $label => $path) {
         $href = helper_base::getRootFolder(TRUE) . "$path?parent_id=$_GET[location_id]";
-        $buttons .= "<a class=\"$indicia_templates[anchorButtonClass]\" href=\"$href\" title=\"" .
+        $html .= "\n<a class=\"$indicia_templates[anchorButtonClass]\" href=\"$href\" title=\"" .
           lang::get('Add a subsite to this location.') . '">' . lang::get($label) . '</a>';
       }
     }
-    return <<<HTML
-<div class="detail-panel" id="detail-panel-subsites">
-  <h3>$options[title]</h3>
-  $mapOutput
-  $grid
-</div>
-$buttons
-HTML;
-  }
-
-  /**
-   * Used to convert an array of attributes to a string formatted like a set.
-   *
-   * This is then used by the record_data_attributes_with_hiddens report to
-   * return custom attributes which aren't in the hidden attributes list.
-   *
-   * @param array
-   *   Attributes.
-   *
-   * @return string
-   *   The set of hidden custom attributes.
-   */
-  protected static function convert_array_to_set(array $theArray) {
-    return "'" . implode("','", str_replace("'", "''", $theArray)) . "'";
+    return self::controlContainer('Sub-sites', $html, $options);
   }
 
   /**
