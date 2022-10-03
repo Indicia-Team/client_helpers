@@ -527,19 +527,12 @@ Record ID',
     $options = array_merge([
       'title' => lang::get('Sample photos and media'),
     ], $options);
-    $occurrence = helper_base::get_population_data([
-      'table' => 'occurrence',
-      'extraParams' => $auth['read'] + [
-        'id' => $_GET['occurrence_id'],
-        'view' => 'detail',
-      ],
-      'cachePerUser' => FALSE,
-    ]);
+    self::load_record($auth, $args);
     $settings = [
       'type' => 'sample',
       'table' => 'sample_medium',
       'key' => 'sample_id',
-      'value' => $occurrence[0]['sample_id'],
+      'value' => self::$record['sample_id'],
     ];
     return self::getControlPhotos($auth, $args, $options, $settings);
   }
@@ -554,27 +547,12 @@ Record ID',
     $options = array_merge([
       'title' => lang::get('Parent sample photos and media'),
     ], $options);
-    $occurrence = helper_base::get_population_data([
-      'table' => 'occurrence',
-      'extraParams' => $auth['read'] + [
-        'id' => $_GET['occurrence_id'],
-        'view' => 'detail',
-      ],
-      'cachePerUser' => FALSE,
-    ]);
-    $sample = helper_base::get_population_data([
-      'table' => 'sample',
-      'extraParams' => $auth['read'] + [
-        'id' => $occurrence[0]['sample_id'],
-        'view' => 'detail',
-      ],
-      'cachePerUser' => FALSE,
-    ]);
+    self::load_record($auth, $args);
     $settings = [
       'type' => 'parentsample',
       'table' => 'sample_image',
       'key' => 'sample_id',
-      'value' => $sample[0]['parent_id'],
+      'value' => self::$record['parent_sample_id'],
     ];
     return self::getControlPhotos($auth, $args, $options, $settings);
   }
