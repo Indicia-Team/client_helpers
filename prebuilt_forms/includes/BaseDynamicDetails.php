@@ -170,7 +170,6 @@ HTML;
       ],
     ]);
     if (count($attrData) === 0) {
-      hostsite_show_message('Attribute ID ' . $options["{$entity}_attribute_id"] . ' not found', 'warning');
       return '';
     }
     $html = '';
