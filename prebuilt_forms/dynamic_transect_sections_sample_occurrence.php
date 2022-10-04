@@ -29,36 +29,41 @@ class iform_dynamic_transect_sections_sample_occurrence extends iform_dynamic_sa
 
   /**
    * Return the form metadata.
-   * @return array The definition of the form.
+   *
+   * @return array
+   *   The definition of the form.
    */
   public static function get_dynamic_transect_sections_sample_occurrence_definition() {
-    return array(
+    return [
       'title' => 'Dynamic transect sections sample occurrence',
       'category' => 'General Purpose Data Entry Forms',
       'description' => 'A variant of the dynamic sample occurrence form which allows records to be attributes to sections of a transect using a section ID attribute in the grid. ' .
-         'This form does not currently support occurrence media or different methods of detecting if a record is present in the grid.'
-    );
+         'This form does not currently support occurrence media or different methods of detecting if a record is present in the grid.',
+      'supportsGroups' => TRUE,
+    ];
   }
 
   /**
    * Get the list of parameters for this form.
-   * @return array List of parameters that this form requires.
+   *
+   * @return array
+   *   List of parameters that this form requires.
    */
   public static function get_parameters() {
     $r = array_merge(
       parent::get_parameters(),
-      array(
-        array(
-            'fieldname' => 'section_id_attribute',
-            'label' => 'Section ID attribute',
-            'helpText' => 'Choose the custom occurrence attribute which is used to store the section ID.',
-            'type' => 'select',
-            'table' => 'occurrence_attribute',
-            'captionField' => 'caption',
-            'valueField' => 'id',
-            'group' => 'Species'
-        )
-      )
+      [
+        [
+          'fieldname' => 'section_id_attribute',
+          'label' => 'Section ID attribute',
+          'helpText' => 'Choose the custom occurrence attribute which is used to store the section ID.',
+          'type' => 'select',
+          'table' => 'occurrence_attribute',
+          'captionField' => 'caption',
+          'valueField' => 'id',
+          'group' => 'Species',
+        ],
+      ],
     );
     return $r;
   }
