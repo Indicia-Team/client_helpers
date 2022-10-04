@@ -60,6 +60,8 @@ class extension_voting_comments {
     helper_base::addLanguageStringsToJs('votingCommentsForm', [
       'msgNothingToSave' => 'Please provide some information for your review before saving it.',
       'msgSaveFail' => 'An error occurred whilst saving the review.',
+      'msgSaveReplyFail' => 'An error occurred whilst saving the reply.',
+      'msgSaveReplySuccess' => 'Your reply has been saved.',
       'msgSaveSuccess' => 'Your review has been saved.',
     ]);
     $r = '<div class="voting-form">';
@@ -116,6 +118,8 @@ HTML;
    * Options include:
    * * title - block heading title.
    * * entity - occurrence, sample or location.
+   * * repliesMode - set to 'loggedIn' to allow all logged in users to reply to
+   *   comments. Other modes may be added in future.
    * * textFields - associative array of key/title pairs for textarea fields
    *   that the user can complete when filling in a vote or review.
    * * voteFields - associative array of key/title pairs for star voting fields
@@ -125,21 +129,32 @@ HTML;
     self::validateOptions($options, 'votes_list');
     $options = array_merge([
       'title' => 'Reviews',
+      'repliesMode' => NULL,
     ], $options);
+    helper_base::addLanguageStringsToJs('votesList', [
+      'repliedJustNow' => 'Replied just now',
+      'noReviewsPosted' => 'No reviews posted yet.',
+      'reply' => 'Reply',
+      'you' => 'You',
+    ]);
     $id = $_GET["$options[entity]_id"];
     $voteFields = htmlspecialchars(json_encode($options['voteFields']));
     $textFields = htmlspecialchars(json_encode($options['textFields']));
     $lang = [
       'title' => lang::get($options['title']),
     ];
+    $repliesMode = $options['repliesMode'] ?? 'off';
     return <<<HTML
-<section class="vote-list panel panel-default" data-id="$id" data-offset="0" data-votefields="$voteFields" data-textfields="$textFields" data-entity="$options[entity]">
-  <div class="panel-heading">$lang[title]</div>
+<section class="vote-list panel panel-default" data-id="$id" data-offset="0" data-votefields="$voteFields" data-textfields="$textFields" data-entity="$options[entity]" data-repliesmode="$repliesMode">
+  <header class="panel-heading">$lang[title]</header>
   <div class="panel-body"></div>
 </section>
 HTML;
   }
 
+  /**
+   * Common validation for the options passed to the voting controls.
+   */
   private static function validateOptions(array $options, $control) {
     $validEntities = ['occurrence', 'sample', 'location'];
     if (empty($options['entity']) || !in_array($options['entity'], $validEntities)) {

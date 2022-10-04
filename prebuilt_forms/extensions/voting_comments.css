@@ -3,10 +3,24 @@
 }
 .review {
   border: solid silver 1px;
-  padding: 8px;
   margin: 8px;
   border-radius: 4px;
 }
 .review-details h4 {
   font-size: 90%;
+  font-weight: bold;
+}
+.review-details p:last-child {
+  margin-bottom: 15px;
+}
+.review header {
+  font-size: 80%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+.reply-form textarea {
+  margin: 15px 0;
+}
+.reply-form button {
+  margin-left: 8px;
 }
