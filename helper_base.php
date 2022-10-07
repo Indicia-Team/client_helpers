@@ -1858,16 +1858,16 @@ HTML;
   public static function mergeParamsIntoTemplate($params, $template, $useTemplateAsIs=FALSE, $allowHtml=FALSE, $allowEscapeQuotes=FALSE) {
     global $indicia_templates;
     // Build an array of all the possible tags we could replace in the template.
-    $replaceTags=[];
-    $replaceValues=[];
-    foreach ($params as $param=>$value) {
-      if (!is_array($value) && !is_object($value)) {
-        array_push($replaceTags, '{'.$param.'}');
+    $replaceTags = [];
+    $replaceValues = [];
+    foreach ($params as $param => $value) {
+      if (!is_array($value) && !is_object($value) && !is_null($value)) {
+        array_push($replaceTags, '{' . $param . '}');
         if ($allowEscapeQuotes) {
-          array_push($replaceTags, '{'.$param.'-escape-quote}');
-          array_push($replaceTags, '{'.$param.'-escape-dblquote}');
-          array_push($replaceTags, '{'.$param.'-escape-htmlquote}');
-          array_push($replaceTags, '{'.$param.'-escape-htmldblquote}');
+          array_push($replaceTags, '{' . $param . '-escape-quote}');
+          array_push($replaceTags, '{' . $param . '-escape-dblquote}');
+          array_push($replaceTags, '{' . $param . '-escape-htmlquote}');
+          array_push($replaceTags, '{' . $param . '-escape-htmldblquote}');
         }
         // allow sep to have <br/>
         $value = ($param == 'sep' || $allowHtml) ? $value : htmlspecialchars($value, ENT_QUOTES, "UTF-8");
@@ -1876,14 +1876,16 @@ HTML;
           $value = " $param=\"$value\"";
         array_push($replaceValues, $value);
         if ($allowEscapeQuotes) {
-          array_push($replaceValues, str_replace("'","\'",$value));
-          array_push($replaceValues, str_replace('"','\"',$value));
-          array_push($replaceValues, str_replace("'","&#39;",$value));
-          array_push($replaceValues, str_replace('"','&quot;',$value));
+          array_push($replaceValues, str_replace("'", "\'", $value));
+          array_push($replaceValues, str_replace('"', '\"', $value));
+          array_push($replaceValues, str_replace("'", "&#39;", $value));
+          array_push($replaceValues, str_replace('"', '&quot;', $value));
         }
       }
     }
-    if (!$useTemplateAsIs) $template = $indicia_templates[$template];
+    if (!$useTemplateAsIs) {
+      $template = $indicia_templates[$template];
+    }
     return str_replace($replaceTags, $replaceValues, $template);
   }
 
@@ -2879,7 +2881,7 @@ if (typeof validator!=='undefined') {
     $replaceTags=[];
     $replaceValues=[];
     foreach (array_keys($options) as $option) {
-      $value = is_array($options[$option]) || is_object($options[$option]) ? '' : $options[$option];
+      $value = is_array($options[$option]) || is_object($options[$option]) || is_null($options[$option]) ? '' : $options[$option];
       array_push($replaceTags, '{'.$option.'}');
       array_push($replaceValues, $value);
       array_push($replaceTags, '{'.$option.'|escape}');

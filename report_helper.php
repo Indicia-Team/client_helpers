@@ -2695,19 +2695,25 @@ if (typeof mapSettingsHooks!=='undefined') {
 
   /**
    * Retrieve the HTML for the actions in a grid row.
-   * @param array $actions List of the action definitions to convert to HTML.
-   * @param array $row The content of the row loaded from the database.
-   * @param string $pathParam Set to the name of a URL param used to pass the path to this page. E.g. in Drupal
-   * with clean urls disabled, this is set to q. Otherwise leave empty.
+   *
+   * @param array $actions
+   *   List of the action definitions to convert to HTML.
+   * @param array $row
+   *   The content of the row loaded from the database.
+   * @param string $pathParam
+   *   Set to the name of a URL param used to pass the path to this page. E.g.
+   *   in Drupal with clean urls disabled, this is set to q. Otherwise leave
+   *   empty.
    */
-  private static function get_report_grid_actions($actions, $row, $pathParam='') {
+  private static function get_report_grid_actions($actions, $row, $pathParam = '') {
     $jsReplacements = [];
     foreach ($row as $key=>$value) {
-      $jsReplacements[$key]=$value;
-      $jsReplacements["$key-escape-quote"]=str_replace("'", "\'", $value);
-      $jsReplacements["$key-escape-dblquote"]=str_replace('"', '\"', $value);
-      $jsReplacements["$key-escape-htmlquote"]=str_replace("'", "&#39;", $value);
-      $jsReplacements["$key-escape-htmldblquote"]=str_replace('"', '&quot;', $value);
+      $value = $value === NULL ? '' : $value;
+      $jsReplacements[$key] = $value;
+      $jsReplacements["$key-escape-quote"] = str_replace("'", "\'", $value);
+      $jsReplacements["$key-escape-dblquote"] = str_replace('"', '\"', $value);
+      $jsReplacements["$key-escape-htmlquote"] = str_replace("'", "&#39;", $value);
+      $jsReplacements["$key-escape-htmldblquote"] = str_replace('"', '&quot;', $value);
     }
     $links = [];
     $currentUrl = self::get_reload_link_parts(); // needed for params
