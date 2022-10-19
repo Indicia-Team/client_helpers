@@ -363,6 +363,7 @@ class extension_notifications_centre {
       'paramDefaults' => ['source_filter' => 'all'],
       'paramsFormButtonCaption' => lang::get('Filter'),
       'columns' => array_values($columns),
+      'fieldsetClass' => 'filter-bar',
       'responsiveOpts' => [
         'breakpoints' => [
           'phone' => 480,
