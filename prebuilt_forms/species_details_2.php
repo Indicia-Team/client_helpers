@@ -16,10 +16,10 @@
  *
  * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link http://code.google.com/p/indicia/
+ * @link https://github.com/Indicia-Team/client_helpers
  */
 
-require_once 'includes/dynamic.php';
+require_once 'includes/BaseDynamicDetails.php';
 require_once 'includes/report.php';
 
 /**
@@ -41,7 +41,7 @@ require_once 'includes/report.php';
  * @var preferred
  *   Comment for blah.
  */
-class iform_species_details_2 extends iform_dynamic {
+class iform_species_details_2 extends BaseDynamicDetails {
 
   /**
    * Stores the preferred name of the taxon with markup and authority.
@@ -658,7 +658,7 @@ class iform_species_details_2 extends iform_dynamic {
         'extraParams' => [
           'taxa_taxon_list_id' => self::$taxaTaxonListId,
           // The SQL takes a set of the hidden fields, so convert from an array.
-          'attrs' => strtolower(self::convert_array_to_set($fields)),
+          'attrs' => strtolower(self::convertArrayToSet($fields)),
           'testagainst' => $args['testagainst'],
           'operator' => $args['operator'],
           'sharing' => 'reporting',
@@ -1563,21 +1563,6 @@ class iform_species_details_2 extends iform_dynamic {
 [map]';
     }
     return $args;
-  }
-
-  /**
-   * Convert array of attributes to a set.
-   *
-   * @return string
-   *   The set of hidden custom attributes.
-   */
-  protected static function convert_array_to_set($theArray) {
-    /*
-     * Used to convert an array of attributes to a string formatted like a set,
-     * this is then used by the species_data_attributes_with_hiddens report to
-     * return custom attributes which aren't in the hidden attributes list.
-     */
-    return "'" . implode("','", str_replace("'", "''", $theArray)) . "'";
   }
 
   /**

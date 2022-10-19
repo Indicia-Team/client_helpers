@@ -14,8 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package Client
- * @subpackage PrebuiltForms
  * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers/
@@ -25,10 +23,6 @@ require_once 'includes/map.php';
 require_once 'includes/user.php';
 require_once 'includes/form_generation.php';
 
-/**
- * @package Client
- * @subpackage PrebuiltForms
- */
 function iform_timed_count_subsample_cmp($a, $b)
 {
     return strcmp($a["date_start"], $b["date_start"]);
@@ -49,9 +43,9 @@ class iform_timed_count {
    */
   public static function get_timed_count_definition() {
     return array(
-      'title'=>'Timed Count',
+      'title' => 'Timed Count',
       'category' => 'Forms for specific surveying methods',
-      'description'=>'A form for inputting the counts of species during a timed period. Can be called with sample=<id> to edit an existing sample.'
+      'description' => 'A form for inputting the counts of species during a timed period. Can be called with sample=<id> to edit an existing sample.'
     );
   }
 
@@ -65,60 +59,60 @@ class iform_timed_count {
       iform_map_get_georef_parameters(),
       array(
       	array(
-      		'name'=>'manager_permission',
-      		'caption'=>'Drupal Permission for Manager mode',
-      		'description'=>'Enter the Drupal permission name to be used to determine if this user is a manager: such people may modify the shape of an existing flight area.',
-      		'type'=>'string',
+      		'name' => 'manager_permission',
+      		'caption' => 'Drupal Permission for Manager mode',
+      		'description' => 'Enter the Drupal permission name to be used to determine if this user is a manager: such people may modify the shape of an existing flight area.',
+      		'type' => 'string',
       		'required' => false
       	),
         array(
-          'name'=>'survey_id',
-          'caption'=>'Survey',
-          'description'=>'The survey that data will be posted into.',
-          'type'=>'select',
-          'table'=>'survey',
-          'captionField'=>'title',
-          'valueField'=>'id',
+          'name' => 'survey_id',
+          'caption' => 'Survey',
+          'description' => 'The survey that data will be posted into.',
+          'type' => 'select',
+          'table' => 'survey',
+          'captionField' => 'title',
+          'valueField' => 'id',
           'siteSpecific'=>true
         ),
         array(
-          'name'=>'defaults',
-          'caption'=>'Default Values',
-          'description'=>'Supply default values for each field as required. On each line, enter fieldname=value, e.g. occurrence:record_status. '.
+          'name' => 'defaults',
+          'caption' => 'Default Values',
+          'description' => 'Supply default values for each field as required. On each line, enter fieldname=value, e.g. occurrence:record_status. '.
               'NOTE, currently only supports occurrence:record_status, but will be extended in future.',
-          'type'=>'textarea',
-          'default'=>'occurrence:record_status=C',
+          'type' => 'textarea',
+          'default' => 'occurrence:record_status=C',
           'siteSpecific'=>true,
           'required'=>false
         ),
         array(
-          'name'=>'occurrence_attribute_id',
-          'caption'=>'Occurrence Attribute',
-          'description'=>'The attribute (typically an abundance attribute) that will be presented in the grid for input. Entry of an attribute value will create '.
+          'name' => 'occurrence_attribute_id',
+          'caption' => 'Occurrence Attribute',
+          'description' => 'The attribute (typically an abundance attribute) that will be presented in the grid for input. Entry of an attribute value will create '.
               ' an occurrence.',
-          'type'=>'select',
-          'table'=>'occurrence_attribute',
-          'captionField'=>'caption',
-          'valueField'=>'id',
+          'type' => 'select',
+          'table' => 'occurrence_attribute',
+          'captionField' => 'caption',
+          'valueField' => 'id',
           'siteSpecific'=>true
         ),
         array(
-          'name'=>'taxon_list_id',
-          'caption'=>'Species List',
-          'description'=>'The species checklist used for the species autocomplete.',
-          'type'=>'select',
-          'table'=>'taxon_list',
-          'captionField'=>'title',
-          'valueField'=>'id',
+          'name' => 'taxon_list_id',
+          'caption' => 'Species List',
+          'description' => 'The species checklist used for the species autocomplete.',
+          'type' => 'select',
+          'table' => 'taxon_list',
+          'captionField' => 'title',
+          'valueField' => 'id',
           'siteSpecific'=>true,
-          'group'=>'Species'
+          'group' => 'Species'
         ),
         array(
-          'name'=>'taxon_filter_field',
-          'caption'=>'Species List: Field used to filter taxa',
-          'description'=>'If you want to allow recording for just part of the selected Species List, then select which field you will '.
+          'name' => 'taxon_filter_field',
+          'caption' => 'Species List: Field used to filter taxa',
+          'description' => 'If you want to allow recording for just part of the selected Species List, then select which field you will '.
               'use to specify the filter by.',
-          'type'=>'select',
+          'type' => 'select',
           'options' => array(
             'taxon' => 'Taxon',
             'taxon_meaning_id' => 'Taxon Meaning ID',
@@ -126,69 +120,69 @@ class iform_timed_count {
           ),
           'siteSpecific'=>true,
           'required'=>false,
-          'group'=>'Species'
+          'group' => 'Species'
         ),
         array(
-          'name'=>'taxon_filter',
-          'caption'=>'Species List: Taxon filter items',
-          'description'=>'When filtering the list of available taxa, taxa will not be available for recording unless they match one of the '.
+          'name' => 'taxon_filter',
+          'caption' => 'Species List: Taxon filter items',
+          'description' => 'When filtering the list of available taxa, taxa will not be available for recording unless they match one of the '.
               'values you input in this box. Enter one value per line. E.g. enter a list of taxon group titles if you are filtering by taxon group.',
           'type' => 'textarea',
           'siteSpecific'=>true,
           'required'=>false,
-          'group'=>'Species'
+          'group' => 'Species'
         ),
         array(
-          'name'=>'custom_attribute_options',
-          'caption'=>'Options for custom attributes',
-          'description'=>'A list of additional options to pass through to custom attributes, one per line. Each option should be specified as '.
+          'name' => 'custom_attribute_options',
+          'caption' => 'Options for custom attributes',
+          'description' => 'A list of additional options to pass through to custom attributes, one per line. Each option should be specified as '.
               'the attribute name followed by | then the option name, followed by = then the value. For example, smpAttr:1|class=control-width-5.',
-          'type'=>'textarea',
+          'type' => 'textarea',
           'required'=>false,
           'siteSpecific'=>true
         ),
         array(
-          'name'=>'summary_page',
-          'caption'=>'Path to summary page',
-          'description'=>'Path used to access the main page giving a summary of the entered time walks after a successful submission (e.g. a report_calendar_grid page).',
-          'type'=>'text_input',
+          'name' => 'summary_page',
+          'caption' => 'Path to summary page',
+          'description' => 'Path used to access the main page giving a summary of the entered time walks after a successful submission (e.g. a report_calendar_grid page).',
+          'type' => 'text_input',
           'required'=>true,
           'siteSpecific'=>true
         ),
         array(
-          'name'=>'numberOfCounts',
-          'caption'=>'Min number of counts',
-          'description'=>'Min number of counts to be displayed on the entry page for this location.',
-          'type'=>'int',
+          'name' => 'numberOfCounts',
+          'caption' => 'Min number of counts',
+          'description' => 'Min number of counts to be displayed on the entry page for this location.',
+          'type' => 'int',
           'required'=>true,
           'siteSpecific'=>true,
           'default'=>2
         ),
         array(
-          'name'=>'numberOfSpecies',
-          'caption'=>'Number of species',
-          'description'=>'The number of species that can be entered per count.',
-          'type'=>'int',
+          'name' => 'numberOfSpecies',
+          'caption' => 'Number of species',
+          'description' => 'The number of species that can be entered per count.',
+          'type' => 'int',
           'required'=>true,
           'siteSpecific'=>true,
           'default'=>2
         ),
         array(
-          'name'=>'spatial_systems',
-          'caption'=>'Allowed Spatial Ref Systems',
-          'description'=>'List of allowable spatial reference systems, comma separated. Use the spatial ref system code (e.g. OSGB or the EPSG code number such as 4326). '.
+          'name' => 'spatial_systems',
+          'caption' => 'Allowed Spatial Ref Systems',
+          'description' => 'List of allowable spatial reference systems, comma separated. Use the spatial ref system code (e.g. OSGB or the EPSG code number such as 4326). '.
               'Set to "default" to use the settings defined in the IForm Settings page.',
-          'type'=>'string',
+          'type' => 'string',
           'default' => 'default',
-          'group'=>'Other Map Settings'
+          'group' => 'Other Map Settings'
         ),
         array(
-          'name'=>'precision',
-          'caption'=>'Sref Precision',
-          'description'=>'The precision to be applied to the polygon centroid when determining the SREF. Leave blank to not set.',
-          'type'=>'int',
+          'name' => 'precision',
+          'caption' => 'Sref Precision',
+          'description' => 'The precision to be applied to the polygon centroid when determining the SREF. Leave blank to not set.',
+          'type' => 'int',
           'required'=>false,
-          'group'=>'Other Map Settings'
+          'group' => 'Other Map Settings'
         )
       )
     );
@@ -580,17 +574,17 @@ mapInitialisationHooks.push(function(mapdiv) {
 
     $attributes = data_entry_helper::getAttributes(array(
       'id' => $sampleId,
-      'valuetable'=>'sample_attribute_value',
-      'attrtable'=>'sample_attribute',
-      'key'=>'sample_id',
-      'fieldprefix'=>'smpAttr',
+      'valuetable' => 'sample_attribute_value',
+      'attrtable' => 'sample_attribute',
+      'key' => 'sample_id',
+      'fieldprefix' => 'smpAttr',
       'extraParams'=>$auth['read'],
       'survey_id'=>$args['survey_id'],
       'sample_method_id'=>$sampleMethods[0]['id']
     ));
     $r .= get_user_profile_hidden_inputs($attributes, $args, isset(data_entry_helper::$entity_to_load['sample:id']), $auth['read']).
         data_entry_helper::text_input(array('label' => lang::get('Site Name'), 'fieldname' => 'sample:location_name', 'validation' => array('required') /*, 'class' => 'control-width-5' */ ))
-        // .data_entry_helper::textarea(array('label'=>lang::get('Recorder names'), 'fieldname'=>'sample:recorder_names'))
+        // .data_entry_helper::textarea(array('label'=>lang::get('Recorder names'), 'fieldname' => 'sample:recorder_names'))
         ;
     if ($sampleId == null){
       if(isset($_GET['date'])) data_entry_helper::$entity_to_load['C1:sample:date'] = $_GET['date'];
@@ -598,13 +592,13 @@ mapInitialisationHooks.push(function(mapdiv) {
     }
     unset(data_entry_helper::$default_validation_rules['sample:date']);
     $help = lang::get('The Year field is read-only, and is calculated automatically from the date(s) of the Counts.');
-    $r .= data_entry_helper::text_input(array('label' => lang::get('Year'), 'fieldname' => 'sample:date', 'readonly'=>' readonly="readonly" ', 'helpText'=>$help));
+    $r .= data_entry_helper::text_input(array('label' => lang::get('Year'), 'fieldname' => 'sample:date', 'readonly' => ' readonly="readonly" ', 'helpText'=>$help));
     data_entry_helper::$javascript .= "$('#sample\\\\:date').css('color','graytext').css('background-color','#d0d0d0');\n";
 
     // are there any option overrides for the custom attributes?
     if (isset($args['custom_attribute_options']) && $args['custom_attribute_options'])
       $blockOptions = get_attr_options_array_with_user_data($args['custom_attribute_options']);
-    else $blockOptions=array();
+    else $blockOptions=[];
     $r .= get_attribute_html($attributes, $args, array('extraParams'=>$auth['read']), null, $blockOptions);
     foreach($blockOptions as $attr => $block){
       foreach($block as $item => $value){
@@ -626,12 +620,12 @@ mapInitialisationHooks.push(function(mapdiv) {
     $options['clickForSpatialRef'] = false;
     $olOptions = iform_map_get_ol_options($args);
 
-    $systems=array();
+    $systems=[];
     $list = explode(',', str_replace(' ', '', $args['spatial_systems']));
     foreach($list as $system) $systems[$system] = lang::get('sref:'.$system) == 'sref:'.$system ? lang::get($system) : lang::get('sref:'.$system);
     $r .= data_entry_helper::sref_and_system(array(
       'label' => lang::get('Grid Reference'),
-      'fieldname'=>'sample:entered_sref',
+      'fieldname' => 'sample:entered_sref',
       'findMeButton' => false,
       'systems' => $systems
     ));
@@ -642,7 +636,7 @@ mapInitialisationHooks.push(function(mapdiv) {
     iform_load_helpers(['map_helper']);
     $r .= map_helper::map_panel($options, $olOptions);
 
-    $r .= data_entry_helper::textarea(array('label'=>'Comment', 'fieldname'=>'sample:comment', 'class'=>'wide'));
+    $r .= data_entry_helper::textarea(array('label' => 'Comment', 'fieldname' => 'sample:comment', 'class' => 'wide'));
     if (lang::get('LANG_DATA_PERMISSION') !== 'LANG_DATA_PERMISSION') {
       $r .= '<p>' . lang::get('LANG_DATA_PERMISSION') . '</p>';
     }
@@ -699,10 +693,10 @@ mapInitialisationHooks.push(function(mapdiv) {
     if (count($sampleMethods)==0)
       return 'The sample method "Timed Count Count" must be defined in the termlist in order to use this form.';
     $attributes = data_entry_helper::getAttributes(array(
-      'valuetable'=>'sample_attribute_value',
-      'attrtable'=>'sample_attribute',
-      'key'=>'sample_id',
-      'fieldprefix'=>'smpAttr',
+      'valuetable' => 'sample_attribute_value',
+      'attrtable' => 'sample_attribute',
+      'key' => 'sample_id',
+      'fieldprefix' => 'smpAttr',
       'extraParams'=>$auth['read'],
       'survey_id'=>$args['survey_id'],
       'sample_method_id'=>$sampleMethods[0]['id'],
@@ -714,7 +708,7 @@ mapInitialisationHooks.push(function(mapdiv) {
       // using the report returns the attributes as well.
       $subSamples = data_entry_helper::get_population_data(array(
         'report' => 'library/samples/samples_list_for_parent_sample',
-        'extraParams' => $auth['read'] + array('sample_id'=>$parentSampleId,'date_from'=>'','date_to'=>'', 'sample_method_id'=>'', 'smpattrs'=>implode(',', array_keys($attributes))),
+        'extraParams' => $auth['read'] + array('sample_id'=>$parentSampleId,'date_from' => '','date_to' => '', 'sample_method_id' => '', 'smpattrs'=>implode(',', array_keys($attributes))),
         'nocache'=>true
       ));
       // subssamples ordered by id desc, so reorder by date asc.
@@ -753,14 +747,14 @@ indiciaData.indiciaSvc = '".data_entry_helper::$base_url."';\n";
       // Only need to load the occurrences for a pre-existing sample
       $o = data_entry_helper::get_population_data(array(
         'report' => 'library/occurrences/occurrences_list_for_parent_sample',
-        'extraParams' => $auth['read'] + array('view'=>'detail','sample_id'=>$parentSampleId,'survey_id'=>'','date_from'=>'','date_to'=>'','taxon_group_id'=>'',
-            'smpattrs'=>'', 'occattrs'=>$args['occurrence_attribute_id']),
+        'extraParams' => $auth['read'] + array('view' => 'detail','sample_id'=>$parentSampleId,'survey_id' => '','date_from' => '','date_to' => '','taxon_group_id' => '',
+            'smpattrs' => '', 'occattrs'=>$args['occurrence_attribute_id']),
         // don't cache as this is live data
         'nocache' => true
       ));
       // the report is ordered id desc. REverse it
       $o = array_reverse($o);
-    } else $o = array(); // empty array of occurrences when no creating a new sample.
+    } else $o = []; // empty array of occurrences when no creating a new sample.
 
     // we pass through the read auth. This makes it possible for the get_submission method to authorise against the warehouse
     // without an additional (expensive) warehouse call.
@@ -778,13 +772,13 @@ indiciaData.indiciaSvc = '".data_entry_helper::$base_url."';\n";
 <input type='hidden' name='sample:geom' value='".data_entry_helper::$entity_to_load['sample:geom']."'/>
 ";
 
-    $defaults = isset($args['defaults']) ? helper_base::explode_lines_key_value_pairs($args['defaults']): array();
+    $defaults = isset($args['defaults']) ? helper_base::explode_lines_key_value_pairs($args['defaults']): [];
     $record_status = (isset($defaults['occurrence:record_status']) ? $defaults['occurrence:record_status'] : 'C');
     $r .= '<input type="hidden" name="occurrence:record_status" value="'.$record_status.'">'."\n";
 
     if (isset($args['custom_attribute_options']) && $args['custom_attribute_options'])
       $blockOptions = get_attr_options_array_with_user_data($args['custom_attribute_options']);
-    else $blockOptions=array();
+    else $blockOptions=[];
     for($i = 0; $i < max($args['numberOfCounts'], count($subSamples)+1); $i++){
       $subSampleId = (isset($subSamples[$i]) ? $subSamples[$i]['sample_id'] : null);
       $r .= "<fieldset id=\"count-$i\"><legend>".lang::get('Count ').($i+1)."</legend>";
@@ -816,7 +810,7 @@ indiciaData.indiciaSvc = '".data_entry_helper::$base_url."';\n";
         if(strcasecmp($attr['untranslatedCaption'],'Unconfirmed Individuals')==0) continue;
         // output the attribute - tag it with a class & id to make it easy to find from JS.
         $attrOpts = array_merge(
-          (isset($blockOptions[$attr['fieldname']]) ? $blockOptions[$attr['fieldname']] : array()),
+          (isset($blockOptions[$attr['fieldname']]) ? $blockOptions[$attr['fieldname']] : []),
           array(
             'class' => 'smp-input smpAttr-'.($i+1),
             'id' => 'C'.($i+1).':'.$attr['fieldname'],
@@ -839,7 +833,7 @@ indiciaData.indiciaSvc = '".data_entry_helper::$base_url."';\n";
       $r .= '<table id="timed-counts-input-'.$i.'" class="ui-widget">';
       $r .= '<thead><tr><th class="ui-widget-header">' . lang::get('Species') . '</th><th class="ui-widget-header">' . lang::get('Count') . '</th><th class="ui-widget-header"></th></tr></thead>';
       $r .= '<tbody class="ui-widget-content">';
-      $occs = array();
+      $occs = [];
       // not very many occurrences so no need to optimise.
       if (isset($subSampleId) && $existing && count($o)>0)
         foreach ($o as $oc)
@@ -913,7 +907,7 @@ indiciaData.indiciaSvc = '".data_entry_helper::$base_url."';\n";
    * @return array Submission structure.
    */
   public static function get_submission($values, $args) {
-    $subsampleModels = array();
+    $subsampleModels = [];
     $read = array('nonce' => $values['read_nonce'], 'auth_token' => $values['read_auth_token']);
     if (!isset($values['page']) || $values['page']=='site') {
       // submitting the first page, with top level sample details
@@ -928,7 +922,7 @@ indiciaData.indiciaSvc = '".data_entry_helper::$base_url."';\n";
                                        'date' => array('value' => $values['C1:sample:date']),
                                        'sample_method_id' => array('value' => $sampleMethods[0]['id'])
                      )),
-                   'copyFields' => array('entered_sref'=>'entered_sref','entered_sref_system'=>'entered_sref_system'));
+                   'copyFields' => array('entered_sref' => 'entered_sref','entered_sref_system' => 'entered_sref_system'));
         $subsampleModels[] = $smp;
       }
     } else if($values['page']=='occurrences'){
@@ -936,15 +930,15 @@ indiciaData.indiciaSvc = '".data_entry_helper::$base_url."';\n";
       // loop from 1 to numberOfCounts, or number of existing subsamples+1, whichever is bigger.
       $subSamples = data_entry_helper::get_population_data(array(
         'table' => 'sample',
-        'extraParams' => $read + array('parent_id'=>$values['sample:id'], 'view'=>'detail', 'survey_id'=>$values['sample:survey_id']),
+        'extraParams' => $read + array('parent_id'=>$values['sample:id'], 'view' => 'detail', 'survey_id'=>$values['sample:survey_id']),
         'nocache'=>true
       ));
       for($i = 1; $i <= max(count($subSamples)+1, $args['numberOfCounts']); $i++){
         if(isset($values['C'.$i.':sample:id']) || (isset($values['C'.$i.':sample:date']) && $values['C'.$i.':sample:date']!='')){
           $subSample = array('website_id' => $values['website_id'],
                              'survey_id' => $values['sample:survey_id']);
-          $occurrences = array();
-          $occModels = array();
+          $occurrences = [];
+          $occModels = [];
           // separate out the sample and occurrence details for the subsample visit
           foreach($values as $field => $value){
             $parts = explode(':',$field,2);
@@ -970,7 +964,7 @@ indiciaData.indiciaSvc = '".data_entry_helper::$base_url."';\n";
           }
           $smp = array('fkId' => 'parent_id',
             'model' => submission_builder::wrap($subSample, 'sample'),
-            'copyFields' => array('entered_sref'=>'entered_sref','entered_sref_system'=>'entered_sref_system')); // from parent->to child
+            'copyFields' => array('entered_sref' => 'entered_sref','entered_sref_system' => 'entered_sref_system')); // from parent->to child
           if(!isset($subSample['sample:deleted']) && count($occModels)>0) $smp['model']['subModels'] = $occModels;
           $subsampleModels[] = $smp;
         }

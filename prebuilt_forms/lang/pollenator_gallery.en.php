@@ -13,18 +13,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package	Client
- * @author	Indicia Team
- * @license	http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link 	http://code.google.com/p/indicia/
+ * @author Indicia Team
+ * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
+ * @link https://github.com/Indicia-Team/client_helpers
  */
 
 global $custom_terms;
 
 /**
  * Language terms for the pollenator insect form.
- *
- * @package	Client
  */
 $custom_terms = array(
 	'LANG_Invocation_Error' => 'Warning : invalid GET parameters in URL'
@@ -72,7 +69,7 @@ $custom_terms = array(
 	,'LANG_Display' => 'Show'
 	,'LANG_No_Determinations' => 'No identifications recorded.'
 	,'LANG_No_Comments' => 'No comments recorded.'
-	
+
 	,'LANG_Filter_Title' => 'Filters'
 	,'LANG_Name_Filter_Title' => 'Name'
 	,'LANG_Name' => 'Collection creator Username'
@@ -91,14 +88,14 @@ $custom_terms = array(
 	,'LANG_Search_Collections' => 'Search for Collections'
 	,'LANG_Insects_Search_Results' => 'Insects'
 	,'LANG_Collections_Search_Results' => 'Collections'
-		
+
 	,'LANG_Additional_Info_Title' => 'ADDITIONAL INFORMATION'
 	,'LANG_Date' => 'Date'
 	,'LANG_Time' => 'Time'
 	,'LANG_To' => ' to '
 	,'Temperature Bands' => 'Temperature'
 	,'LANG_User_Link' => 'View all collections for this user'
-	
+
 	,'LANG_Submit_Location' => 'Submit'
 	,'LANG_Comments_Title' => 'COMMENTS'
 	,'LANG_New_Comment' => 'Add a comment'
@@ -136,13 +133,13 @@ $custom_terms = array(
 	,'LANG_Removed_From_Front_Page' => 'This collection has been removed from the list to be used on the front page.'
 	,'LANG_Number_In_Front_Page' => 'Number of collections in the front page list: '
 	,'LANG_Location_Updated' => 'The location for this collection has been updated.'
-	
+
 	,'Foraging'=> "The insect was not photo'ed on the flower "
-	
+
 	,'LANG_Bad_Collection_ID' => 'You have tried to load a session as a collection: this ID is not a valid collection.'
 	,'LANG_Bad_Insect_ID' => 'You have tried to load a flower as an insect: this ID is not a valid insect.'
 	,'LANG_Bad_Flower_ID' => 'You have tried to load an insect as a flower: this ID is not a valid flower.'
-	
+
 	,'LANG_Add' => 'Add'
 	,'LANG_ID_Flower_Unknown' => 'Flower Species Not Known'
 );

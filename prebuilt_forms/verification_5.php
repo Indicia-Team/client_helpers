@@ -849,16 +849,16 @@ HTML
     $log = '<div id="log-filter">' .
       data_entry_helper::radio_group(array(
         'label'=>lang::get('Show'),
-        'fieldname'=>'log-created-by',
+        'fieldname' => 'log-created-by',
         'lookupValues' => array('all'=>lang::get('All log entries'), 'mine'=>lang::get('Only my actions'), 'others'=>lang::get("Only other verifiers' actions")),
-        'default'=>'all',
-        'class'=>'radio-log-created-by inline'
+        'default' => 'all',
+        'class' => 'radio-log-created-by inline'
       )) .
 
       data_entry_helper::checkbox(array(
         'label'=>lang::get('Only verification decisions'),
-        'fieldname'=>'verification-only',
-        'class'=>'checkbox-log-verification-comments'
+        'fieldname' => 'verification-only',
+        'class' => 'checkbox-log-verification-comments'
       )) .
 
       '</div>' .
@@ -1024,7 +1024,7 @@ HTML
   private static function clear_verifier_task_notifications($auth) {
     // Using 'submission_list' and 'entries' allows us to specify several top-level submissions to the system
     // i.e. we need to be able to submit several notifications.
-    $submission['submission_list']['entries'] = array();
+    $submission['submission_list']['entries'] = [];
     $submission['id'] = 'notification';
     $notifications = data_entry_helper::get_population_data(array(
       'table' => 'notification',
@@ -1100,14 +1100,14 @@ HTML
     ], $reportData['records'][0]);
     // Build an array of all the data. This allows the JS to insert the data into emails etc. Note we
     // use an array rather than an assoc array to build the JSON, so that order is guaranteed.
-    $data = array();
+    $data = [];
     $email = '';
     foreach ($reportData['columns'] as $col => $def) {
       if (!empty($def['display']) && $def['visible'] !== 'false' && !empty($record[$col])) {
         $caption = explode(':', $def['display']);
         // Is this a new heading?
         if (!isset($data[$caption[0]])) {
-          $data[$caption[0]] = array();
+          $data[$caption[0]] = [];
         }
         $val = ($col === 'record_status') ?
           VerificationHelper::getStatusLabel($record[$col], $record['record_substatus'], $record['query']) : $record[$col];
@@ -1135,7 +1135,7 @@ HTML
     foreach ($reportData as $attribute) {
       if (!empty($attribute['value'])) {
         if (!isset($data[$attribute['attribute_type'] . ' attributes'])) {
-          $data[$attribute['attribute_type'] . ' attributes'] = array();
+          $data[$attribute['attribute_type'] . ' attributes'] = [];
         }
         $data[$attribute['attribute_type'] . ' attributes'][] = array('caption' => $attribute['caption'], 'value' => $attribute['value']);
       }
@@ -1166,7 +1166,7 @@ HTML
     }
     $r .= "</table>\n";
 
-    $extra = array();
+    $extra = [];
     $extra['wkt'] = $record['wkt'];
     $extra['taxon'] = $record['taxon'];
     $extra['preferred_taxon'] = $record['preferred_taxon'];
@@ -1313,7 +1313,7 @@ HTML
     else {
       $fromEmail = $params['email_from_address'];
     }
-    $headers = array();
+    $headers = [];
     $headers[] = 'MIME-Version: 1.0';
     $headers[] = 'Content-type: text/html; charset=UTF-8;';
     $headers[] = 'From: ' . $fromEmail;
@@ -1548,7 +1548,7 @@ HTML;
       'sharing' => $params['sharing']
     ));
     // Must output all months.
-    $output = array();
+    $output = [];
     for ($i = 1; $i <= 12; $i++) {
       $output[] = array($i, 0);
     }

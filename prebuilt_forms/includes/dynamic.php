@@ -44,7 +44,7 @@ class iform_dynamic {
   protected static $called_class;
 
   // The authorisation tokens for accessing the warehouse.
-  protected static $auth = array();
+  protected static $auth = [];
 
   // The form mode. Stored in case other inheriting forms need it.
   protected static $mode;
@@ -411,7 +411,7 @@ class iform_dynamic {
         'divId' => 'controls',
         'style' => $args['interface'],
         'progressBar' => isset($args['tabProgress']) && $args['tabProgress'] == TRUE,
-        'progressBarOptions' => isset($args['progressBarOptions']) ? $args['progressBarOptions'] : array(),
+        'progressBarOptions' => isset($args['progressBarOptions']) ? $args['progressBarOptions'] : [],
         'navButtons' => isset($args['force_next_previous']) && $args['force_next_previous'],
       ]);
     }

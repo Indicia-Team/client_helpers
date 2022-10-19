@@ -13,11 +13,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package    Client
- * @subpackage PrebuiltForms
- * @author    Indicia Team
- * @license    http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link     http://code.google.com/p/indicia/
+ * @author Indicia Team
+ * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
+ * @link https://github.com/Indicia-Team/client_helpers
  */
 
 /**
@@ -28,15 +26,12 @@
  *    jQuery >= 1.8, as required by jQuery Mobile,
  *    jQuery Mobile <= 1.3, as required by the sub page plugin
  * This also requires the mobile_indicia theme.
- *
- * @package    Client
- * @subpackage PrebuiltForms
  */
 
-require_once('includes/map.php');
-require_once('includes/user.php');
-require_once('includes/language_utils.php');
-require_once('includes/form_generation.php');
+require_once 'includes/map.php';
+require_once 'includes/user.php';
+require_once 'includes/language_utils.php';
+require_once 'includes/form_generation.php';
 
 //JQM constants
 define("JQM_HEADER", "header");
@@ -47,6 +42,7 @@ define("JQM_ATTR", "attr");
 /**
  * Store remembered field settings, since these need to be accessed from a hook
  * function which runs outside the class.
+ *
  * @var string
  */
 global $remembered;
@@ -61,7 +57,7 @@ class iform_mobile_sample_occurrence {
   protected static $called_class;
 
   // The authorisation tokens for accessing the warehouse.
-  protected static $auth = array();
+  protected static $auth = [];
 
   /**
    * The list of sample attributes. Keep a class level variable,
@@ -101,7 +97,7 @@ class iform_mobile_sample_occurrence {
       ]
    * @var array
    */
-  protected $pages_array = array();
+  protected $pages_array = [];
 
   /**
    * Return the form metadata.
@@ -111,7 +107,7 @@ class iform_mobile_sample_occurrence {
     return array(
       'title' => 'Mobile sample with occurrences form',
       'category' => 'General Purpose Data Entry Forms',
-      'helpLink' => 'http://code.google.com/p/indicia/wiki/TutorialDynamicForm',
+      'helpLink' => 'https://github.com/Indicia-Team/client_helperswiki/TutorialDynamicForm',
       'description' => 'A sample and occurrence entry form for mobile devices. '
         . 'Can be used for entry of a single occurrence. The attributes on the '
         . 'form are dynamically generated from the survey setup on the Indicia '
@@ -127,11 +123,11 @@ class iform_mobile_sample_occurrence {
     $retVal = array_merge(
       array(
         array(
-          'name'=>'interface',
-          'caption'=>'Interface Style Option',
-          'description'=>'Choose the style of user interface, either dividing the form up onto separate tabs, '.
+          'name' => 'interface',
+          'caption' => 'Interface Style Option',
+          'description' => 'Choose the style of user interface, either dividing the form up onto separate tabs, '.
               'wizard pages or having all controls on a single page.',
-          'type'=>'select',
+          'type' => 'select',
           'options' => array(
               'tabs' => 'Tabs',
               'one_page' => 'All One Page'
@@ -528,7 +524,7 @@ EOD
     // Render the form
     $renderedForm = self::renderForm($structure, $args, $auth);
 
-    $options = array(); //build options for form template
+    $options = []; //build options for form template
     $options['content'] = $renderedForm;
 
     //use mobile authentication
@@ -701,7 +697,7 @@ EOD
    */
   protected static function renderOnePageContent($structure, $args, $auth){
     //generate form content
-    $content = array();
+    $content = [];
     if(!empty($structure)){
       //build page content & initiate child pages
       foreach(array_values($structure) as $section){
@@ -727,8 +723,8 @@ EOD
    * @return string
    */
   protected static function generateTabs($tabs, $args, $auth) {
-    $tabHtml = array();
-    $tabaliases = array();
+    $tabHtml = [];
+    $tabaliases = [];
     foreach ($tabs as $tab => $tabContent) {
       // keep track on if the tab actually has real content, so we can avoid
       // floating instructions if all the controls were removed by user profile
@@ -816,7 +812,7 @@ EOD
           // Some of the options may be targetted at specific attributes whereas
           // others apply to all. We need to separate the two.
           $sharedOpts = array('extraParams' => $auth['read']);
-          $specificOpts = array();
+          $specificOpts = [];
           self::parseForAttrSpecificOptions($options, $sharedOpts, $specificOpts);
           $attrHtml = get_attribute_html(self::$smpAttrs, $args, $sharedOpts, $tab, $specificOpts, '', 'mobile_entry_helper');
           if (!empty($attrHtml)) {
@@ -871,7 +867,7 @@ EOD
       }
 
       //put content together
-      $options = array();
+      $options = [];
       $options['role'] = $role;
       $options[JQM_ATTR] = $element_attr;
       $options[JQM_CONTENT] = $element_content;
@@ -879,7 +875,7 @@ EOD
     }
 
     //put it all together
-    $options = array();
+    $options = [];
     $options['role'] = 'page';
     $options[JQM_ATTR] = $attr;
     $options[JQM_CONTENT] = $content;
@@ -916,7 +912,7 @@ EOD
   protected static function structureForm($strucText, $attrTabs) {
     $strucArray = helper_base::explode_lines($strucText);
     // An array to contain the tabs defined in $structure.
-    $strucTabs = array();
+    $strucTabs = [];
     // The name of the current tab
     $name = '-';
 
@@ -932,7 +928,7 @@ EOD
       if (preg_match($regexTab, $component, $matches) === 1) {
         // Found a tab. Trim the '=' to get the tab name.
         $name = substr($matches[0], 1, -1);
-        $strucTabs[$name] = array();
+        $strucTabs[$name] = [];
       } else {
         // Found some other component so add it to the array for the tab that
         // it occurs on.
@@ -953,7 +949,7 @@ EOD
 
     // Now we have a list of form structure tabs, with the position of the
     // $attrTabs marked by *. So join it all together.
-    $allTabs = array();
+    $allTabs = [];
     foreach($strucTabs as $strucTabname => $strucTabContent) {
       if ($strucTabname == '*') {
         $allTabs += $attrTabs;
@@ -974,7 +970,7 @@ EOD
    * the form structure to be placed in that tab.
    */
   protected static function structureFormContent($tabs) {
-    $structure = array();
+    $structure = [];
     foreach($tabs as $name => $content) {
       $structure[$name] = self::structureOneTabContent($content);
     }
@@ -991,7 +987,7 @@ EOD
    */
   protected static function structureOneTabContent($tabContent) {
     // The structure within the tab.
-    $structure = array();
+    $structure = [];
     // An index of our current position in the structure
     $i = -1;
 
@@ -1016,8 +1012,8 @@ EOD
         // Found a control wild card component
         $structure[] = array(
           'type' => 'wildctrl',
-          'options' => array(),
-          'attropts' => array());
+          'options' => [],
+          'attropts' => []);
 
         $i++;
       }
@@ -1044,8 +1040,8 @@ EOD
           'type' => 'control',
           'name' => $value,
           'method' => $method,
-          'options' => array(),
-          'attropts' => array());
+          'options' => [],
+          'attropts' => []);
         $i++;
       }
       elseif(substr($component, 0, 1) == '@') {
@@ -1106,7 +1102,7 @@ EOD
 //      mobile_entry_helper::sref_now($options, false);
 //    static::unshift_pages_array($page);
 //
-//    $options = array();
+//    $options = [];
 //    $options['class'] = '';
 //    $options['id'] = "sref-button";
 //    $options['href'] = '#' . $id;
@@ -1318,7 +1314,7 @@ EOD
 
     static::unshift_pages_array($page);
 
-    $options = array();
+    $options = [];
     $options['class'] = '';
     $options['id'] = "comment-button";
     $options['href'] = '#' . $id;
@@ -1357,7 +1353,7 @@ EOD
   protected static function get_control_speciesattributes(
           $auth, $args, $tabAlias, $options) {
     $ctrlOptions = array('extraParams'=>$auth['read']);
-    $attrSpecificOptions = array();
+    $attrSpecificOptions = [];
     self::parseForAttrSpecificOptions($options, $ctrlOptions, $attrSpecificOptions);
     $r = '';
     if ($args['occurrence_sensitivity']) {
@@ -1411,7 +1407,7 @@ EOD
       mobile_entry_helper::date_now($options, false);
     static::unshift_pages_array($page);
 
-    $options = array();
+    $options = [];
     $options['class'] = '';
     $options['id'] = "date-button";
     $options['href'] = '#' . $id;
@@ -1519,7 +1515,7 @@ EOD
   protected static function get_control_sensitivity(
           $auth, $args, $tabAlias, $options) {
     $ctrlOptions = array('extraParams'=>$auth['read']);
-    $attrSpecificOptions = array();
+    $attrSpecificOptions = [];
 
     self::parseForAttrSpecificOptions($options, $ctrlOptions, $attrSpecificOptions);
 
@@ -1565,7 +1561,7 @@ EOD
       if (strpos($option, '|') !== false) {
         $optionId = explode('|', $option);
         if (!isset($attrSpecificOptions[$optionId[0]])) {
-          $attrSpecificOptions[$optionId[0]]=array();
+          $attrSpecificOptions[$optionId[0]]=[];
         }
         $attrSpecificOptions[$optionId[0]][$optionId[1]] = $value;
       }
@@ -1610,7 +1606,7 @@ EOD
     $page = static::get_blank_page($id, $caption);
 
     //submit button
-    $options = array();
+    $options = [];
     $options['id'] = "entry-form-submit";
     $options['align'] = "right";
     $options['caption'] = "Save";
@@ -1628,7 +1624,7 @@ EOD
    */
   public static function get_blank_page($id = NULL, $caption = NULL){
     //back button
-    $options = array();
+    $options = [];
     $options['href'] = '#';
     $options['caption'] = 'Back';
     $options['icon'] = 'arrow-l';
@@ -1643,12 +1639,12 @@ EOD
           JQM_CONTENT => array($back_button, $caption)
         ),
         JQM_CONTENT => array(
-          JQM_ATTR => array(),
-          JQM_CONTENT => array()
+          JQM_ATTR => [],
+          JQM_CONTENT => []
         ),
         JQM_FOOTER => array(
           JQM_ATTR => array("data-position" => "fixed", "data-tap-toggle" => "false"),
-          JQM_CONTENT => array()
+          JQM_CONTENT => []
         )
       )
     );
@@ -1724,7 +1720,7 @@ EOD
    * Convert the unstructured textarea of default values into a structured array.
    */
   protected static function parse_defaults(&$args) {
-    $result=array();
+    $result=[];
     if (isset($args['defaults']))
       $result = helper_base::explode_lines_key_value_pairs($args['defaults']);
     $args['defaults'] = $result;
@@ -1795,7 +1791,7 @@ EOD
         return helper_base::explode_lines($args['taxon_filter']);
     }
     // default - no filter to apply
-    return array();
+    return [];
   }
 
   /**

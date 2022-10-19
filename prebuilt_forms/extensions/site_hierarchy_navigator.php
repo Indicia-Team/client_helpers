@@ -13,11 +13,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package	Client
- * @subpackage PrebuiltForms
- * @author	Indicia Team
- * @license	http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link 	http://code.google.com/p/indicia/
+ * @author Indicia Team
+ * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
+ * @link https://github.com/Indicia-Team/client_helpers
  */
 
 /**
@@ -83,9 +81,9 @@ class extension_site_hierarchy_navigator {
     );
     map_helper::$javascript .= "indiciaData.layerLocationTypes=".json_encode($layerLocationTypes).";\n";
     $reportOptions = array(
-      'dataSource'=>'reports_for_prebuilt_forms/CUDI/get_layer_list_names',
+      'dataSource' => 'reports_for_prebuilt_forms/CUDI/get_layer_list_names',
       'readAuth'=>$auth['read'],
-      'mode'=>'report',
+      'mode' => 'report',
       'extraParams' => array('layer_ids'=>$options['layerLocationTypes'])
     );
     //Return a list of location type names for the location type id layers list
@@ -108,8 +106,8 @@ class extension_site_hierarchy_navigator {
     //Get translatable label for top-level breadcrub item.
     map_helper::$javascript .= "indiciaData.allSitesLabel='".lang::get('All Sites')."';\n";
     $reportOptions = array(
-      'linkOnly'=>'true',
-      'dataSource'=>'reports_for_prebuilt_forms/cudi/get_boundaries_and_locations_for_cudi_map',
+      'linkOnly' => 'true',
+      'dataSource' => 'reports_for_prebuilt_forms/cudi/get_boundaries_and_locations_for_cudi_map',
       'readAuth'=>$auth['read']
     );
     //Get the report options such as the Preset Parameters on the Edit Tab
@@ -121,8 +119,8 @@ class extension_site_hierarchy_navigator {
        report_helper::get_report_data($reportOptions)."';\n";
     //Options for the report that is used to draw the map breadcrumb
     $reportOptions = array(
-      'linkOnly'=>'true',
-      'dataSource'=>'reports_for_prebuilt_forms/CUDI/get_map_hierarchy_for_current_position',
+      'linkOnly' => 'true',
+      'dataSource' => 'reports_for_prebuilt_forms/CUDI/get_map_hierarchy_for_current_position',
       'readAuth'=>$auth['read']
     );
     //Get the report options such as the Preset Parameters on the Edit Tab

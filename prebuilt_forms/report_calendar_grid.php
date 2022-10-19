@@ -13,22 +13,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package Client
- * @subpackage PrebuiltForms
  * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers/
  */
 
-require_once('includes/form_generation.php');
-require_once('includes/report.php');
-require_once('includes/user.php');
+require_once 'includes/form_generation.php';
+require_once 'includes/report.php';
+require_once 'includes/user.php';
 
 /**
- * Prebuilt Indicia data form that lists the output of any report
- *
- * @package Client
- * @subpackage PrebuiltForms
+ * Prebuilt Indicia data form that lists the output of any report.
  */
 class iform_report_calendar_grid {
 
@@ -48,7 +43,7 @@ class iform_report_calendar_grid {
   // internal key, not used on URL: maps the location_id to a url extension.
   private static $URLExtensionKey = 'URLExtension';
 
-  private static $siteUrlParams = array();
+  private static $siteUrlParams = [];
 
   /**
    * Return the form metadata.
@@ -59,7 +54,7 @@ class iform_report_calendar_grid {
       'title' => 'Report Calendar Grid',
       'category' => 'Reporting',
       'description' => 'Outputs a grid of data loaded from an Indicia report, arranged as a calendar.',
-      'helpLink' => 'http://code.google.com/p/indicia/wiki/PrebuiltFormReportCalendarGrid'
+      'helpLink' => 'https://github.com/Indicia-Team/client_helperswiki/PrebuiltFormReportCalendarGrid'
     );
   }
 
@@ -99,7 +94,7 @@ class iform_report_calendar_grid {
         [
           'name' => 'report_group',
           'caption' => 'Report group',
-          'description' => 'When using several reports on a single page (e.g. <a href="http://code.google.com/p/indicia/wiki/DrupalDashboardReporting">dashboard reporting</a>) '.
+          'description' => 'When using several reports on a single page (e.g. <a href="https://github.com/Indicia-Team/client_helperswiki/DrupalDashboardReporting">dashboard reporting</a>) '.
             'you must ensure that all reports that share a set of input parameters have the same report group as the parameters report.',
           'type' => 'text_input',
           'default' => 'report',
@@ -276,8 +271,8 @@ class iform_report_calendar_grid {
       'extraParams' => $presets,
       'reportGroup' => isset($args['report_group']) ? $args['report_group'] : '',
       'rememberParamsReportGroup' => isset($args['remember_params_report_group']) ? $args['remember_params_report_group'] : '',
-      'paramsToExclude' => array(),
-      'paramDefaults' => array()
+      'paramsToExclude' => [],
+      'paramDefaults' => []
     );
     $reportOptions['extraParams']['survey_id'] = $siteUrlParams[self::$SurveyKey]['value']; // location_type mapping overrides preset
     if ($siteUrlParams[self::$locationKey]['value'] != NULL)
@@ -318,7 +313,7 @@ class iform_report_calendar_grid {
 
   public static function get_sorted_termlist_terms($auth, $key, $filter){
   	$terms = helper_base::get_termlist_terms($auth, $key, $filter);
-  	$retVal = array();
+  	$retVal = [];
   	foreach($filter as $f) {
   		foreach($terms as $term) {
   			if($f == $term['term']) $retVal[] = $term;
@@ -370,7 +365,7 @@ jQuery('#".$ctrlid."').change(function(){
          }
       }
       if(count($types)>1){
-        $lookUpValues = array();
+        $lookUpValues = [];
         foreach($terms as $termDetails){
           $lookUpValues[$termDetails['id']] = $termDetails['term'];
         }
@@ -521,8 +516,8 @@ jQuery('#".$ctrlid."').change(function(){
   private static function get_url($url, $extensions) {
     $split = strpos($url, '?');
     // convert the query parameters into an array
-    $gets = ($split!==FALSE && strlen($url) > $split+1) ? explode('&', substr($url, $split+1)) : array();
-    $getsAssoc = array();
+    $gets = ($split!==FALSE && strlen($url) > $split+1) ? explode('&', substr($url, $split+1)) : [];
+    $getsAssoc = [];
     foreach ($gets as $get) {
       $tokens = explode('=', $get);
       if (count($tokens)===1) $tokens[] = '';

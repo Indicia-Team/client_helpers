@@ -13,18 +13,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package	Client
- * @author	Indicia Team
- * @license	http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link 	http://code.google.com/p/indicia/
+ * @author Indicia Team
+ * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
+ * @link https://github.com/Indicia-Team/client_helpers
  */
 
 global $custom_terms;
 
 /**
  * Language terms for the pollenators form.
- *
- * @package	Client
  */
 $custom_terms = array(
 	'LANG_Insufficient_Privileges' => "Créez-vous un compte ou connectez-vous pour accéder à la page de création de collection"
@@ -40,7 +37,7 @@ $custom_terms = array(
 	,'LANG_Confirm_Reinit' => 'Êtes-vous sûr de vouloir réinitialiser ? Toutes les données de cette collection seront supprimées.'
 	,'LANG_Collection_Trailer_Point_1' => "Vous ne pouvez créer qu'une seule collection à la fois."
 	,'LANG_Collection_Trailer_Point_2' => 'Autrement dit, vous pourrez créer une autre collection lorsque la présente collection sera achevée ou réinitialisée.'
-	
+
 	,'LANG_Flower_Station' => "VOTRE STATION FLORALE"
 	,'LANG_Upload_Flower' => "Charger l'image de la fleur"
 	,'LANG_Identify_Flower' => 'Indiquer le nom de cette fleur'
@@ -74,7 +71,7 @@ $custom_terms = array(
 	,'LANG_Validate_Flower' => 'VALIDER VOTRE STATION FLORALE'
 	,'LANG_Must_Provide_Pictures' => "Les photos de la fleur et de son environnement doivent être chargées"
 	,'LANG_Must_Provide_Location' => 'Localisez votre station florale'
-	
+
 	,'LANG_Sessions_Title' => 'VOTRE SESSION'
 	,'LANG_Sessions_Title_Plural' => 'VOS SESSIONS'
 	,'LANG_Session' => 'Session'
@@ -93,7 +90,7 @@ $custom_terms = array(
 	,'Temperature' => 'Température '
 	,'Wind' => 'Vent '
 	,'Shade' => "Fleur à l\\'ombre "
-	
+
 	,'LANG_Photos' => "VOS PHOTOS D'INSECTES"
 	,'LANG_Photo_Blurb' => 'Télécharger ou modifier vos observations.'
 	,'LANG_Upload_Insect' => "Charger la photo de l'insecte"
@@ -111,7 +108,7 @@ $custom_terms = array(
 	,'LANG_Must_Provide_Insect_Picture' => "La photo de l'insecte doit être chargée"
 	,'LANG_Confirm_Insect_Delete' => 'Êtes-vous sûr de vouloir supprimer cet insecte ?'
 	,'LANG_Delete_Insect' => "Supprimer l'insecte"
-	
+
 	,'LANG_Can_Complete_Msg' => "Vous avez identifié votre fleur et un pourcentage suffisant d'insectes, vous pouvez maintenant clôturer la collection"
 	,'LANG_Cant_Complete_Msg' => "Vous n'avez pas identifié la fleur, et/ou pas identifié un pourcentage suffisant d'insectes (50%), conditions indispensables pour clôturer votre collection."
 	,'LANG_Complete_Collection' => 'Clôturer la collection'
@@ -120,7 +117,7 @@ $custom_terms = array(
 	,'LANG_Trailer_Point_2' => "Vous ne pourrez plus modifier les descriptions de la station floral, de la (ou des) session(s) et des insectes."
 	,'LANG_Trailer_Point_3' => "Vous pourrez ré(identifier) vos insectes dans la rubrique «Mes collections»"
 	,'LANG_Trailer_Point_4' => "Vous pourrez créer une nouvelle collection"
-	
+
 	,'validation_required' => "Ce champ est obligatoire"
 	,'validation_time' => 'Entrez une heure valide (HH:MM)'
 	,'validation_endtime_before_start' => "L'Heure de fin doit être postérieure à l'heure de début"
@@ -128,26 +125,26 @@ $custom_terms = array(
 	,'validation_please_check' => 'Veuillez vérifier'
 	,'validation_time_not_20' => "Votre session dure plus ou moins de 20 mn alors que le protocole Flash requiert une durée d'observation de 20 minutes précisément. Veuillez vérifier les heures de début et de fin de votre session"
 	,'validation_session_date_error' => "Vos sessions s'échelonnent sur une durée supérieure à 3 jours. Veuillez vérifier les dates et heures de vos sessions."
-	
+
 	,'ajax_error' => "Une erreur s'est produite dans le transfert de données."
 	,'ajax_error_bumpf' => "Maintenant nous ne sommes pas sûr que les données sur le serveur est la même que celle de notre formulaire. S'il vous plaît, actualisez la page."
 	,'validation_integer' => "Entrez un nombre entier, laissez en blanc si inconnu."
 	,'LANG_Invalid_Location' => "Le format donné pour ce Lat / Long combinaison n'est pas valide"
 	,'LANG_Session_Error' => "Une erreur interne s'est produite. Il ne semble pas être une session jointe à la présente collection."
-	
-	,'close'=>'Fermer'	
-  	,'search'=>'Chercher'
+
+	,'close' => 'Fermer'
+  	,'search' => 'Chercher'
 	,'Yes' => 'Oui'
 	,'No' => 'Non'
 	,'LANG_Help_Button' => '?'
 	,'LANG_Upload' => 'OK'
-	,'click here'=>'Cliquez ici'
-	
+	,'click here' => 'Cliquez ici'
+
 	,'LANG_Final_1' => 'Cette collection a été enregistrée et ajoutée à votre galerie'
 	,'LANG_Final_2' => "Cette collection peut être consultée dans la rubrique «Mes collections», où vous pouvez modifier l'identification de vos insectes."
 	,'LANG_Consult_Collection' => 'Consulter cette collection'
 	,'LANG_Create_New_Collection' => 'Créer une nouvelle collection'
-	
+
 	,'LANG_Indicia_Warehouse_Error' => 'Erreur renvoyée par Indicia Warehouse'
 	,'loading' => 'Chargement'
 	,'Internal Error 1: sample id not filled in, so not safe to save collection' => "Erreur interne 1: Identifiant collection n'est pas remplie, il n'est donc pas sûr de valider la collection"

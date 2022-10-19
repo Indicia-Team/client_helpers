@@ -13,24 +13,21 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package	Client
- * @author	Indicia Team
- * @license	http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link 	http://code.google.com/p/indicia/
+ * @author Indicia Team
+ * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
+ * @link https://github.com/Indicia-Team/client_helpers
  */
 
 global $custom_terms;
 
 /**
  * Language terms for the pollenator insect form.
- *
- * @package	Client
  */
 $custom_terms = array(
 	'LANG_Invocation_Error' => "Avertissement: GET valide les paramètres dans l'URL"
 	,'LANG_Insufficient_Privileges' => "Vous n'avez pas de privilèges suffisants pour accéder à cette page."
 	,'LANG_Please_Refresh_Page' => "Une erreur s'est produite. S'il vous plaît, actualisez la page."
-	
+
 	,'LANG_Enter_Filter_Name' => 'Entrer un nom pour ce filtre'
 	,'LANG_Save_Filter_Button' => 'Enregistrer'
 	,'LANG_Collection' => 'Retour à la Collection'
@@ -73,7 +70,7 @@ $custom_terms = array(
 	,'LANG_Display' => 'Afficher'
 	,'LANG_No_Determinations' => 'Aucune identification enregistrée.'
 	,'LANG_No_Comments' => 'Aucun commentaire enregistré.'
-	
+
 	,'LANG_Filter_Title' => 'Filtres'
 	,'LANG_Name_Filter_Title' => 'Pseudo'
 	,'LANG_Name' => "Pseudo"
@@ -96,7 +93,7 @@ $custom_terms = array(
     ,'msgGeorefSelectPlace' => "Sélectionnez dans les endroits suivants qui correspondent à vos critères de recherche, puis cliquez sur la carte pour indiquer l'emplacement exact"
     ,'msgGeorefNothingFound' => "Aucune ville portant ce nom n'a été trouvée. Essayez le nom d'une ville proche."
 	,'LANG_INSEE' => "No/nom de INSEE/Département/Région"
-	,'LANG_Search'=>'Chercher par :'
+	,'LANG_Search' => 'Chercher par :'
 	,'LANG_Enter_Location'=>"Précisez ici votre recherche"
 	,'LANG_NO_INSEE' => "Il n'ya pas de zone qui répond à ce critère de recherche."
 	,'LANG_Max_INSEE_Features' => 'Vous avez atteint le nombre maximum de zones (<>) qui peut être retourné par cette recherche. La liste est abrégée. Précisez éventuellement votre recherche.'
@@ -108,21 +105,21 @@ $custom_terms = array(
 	,'LANG_Validate_Page' => "Valider l'identification de l'ensemble des photos de cette page"
 	,'LANG_Bulk_Validation_Error' => 'An error has occurred during this bulk validation.'
 	,'LANG_Bulk_Page_Validation_Completed' => "Votre validation a bien été prise en compte."
-	,'LANG_Confirm_Bulk_Page_Validation'=>'Voulez-vous valider toutes les identifications de cette page?'
+	,'LANG_Confirm_Bulk_Page_Validation' => 'Voulez-vous valider toutes les identifications de cette page?'
 	,'LANG_Validate_Taxon' => "Valider l'ensemble des identifications pour ce taxon"
 	,'LANG_Bulk_Taxon_Validation_Error' => 'An error has occurred during this bulk validation.'
 	,'LANG_Bulk_Taxon_Validation_Completed' => "Votre validation a bien été prise en compte."
-	,'LANG_Confirm_Bulk_Taxon_Validation'=>'Voulez-vous valider toutes les identifications de ce taxon?'
+	,'LANG_Confirm_Bulk_Taxon_Validation' => 'Voulez-vous valider toutes les identifications de ce taxon?'
 	,'LANG_Validate_Collection' => "Valider l'ensemble des identifications pour cette collection"
 	,'LANG_Bulk_Collection_Validation_Error' => 'An error has occurred during this bulk validation.'
 	,'LANG_Bulk_Collection_Validation_Completed' => "Votre validation a bien été prise en compte."
-	,'LANG_Confirm_Bulk_Collection_Validation'=>'Voulez-vous valider toutes les identifications de cette collection?'
+	,'LANG_Confirm_Bulk_Collection_Validation' => 'Voulez-vous valider toutes les identifications de cette collection?'
 	,'LANG_Bulk_Validation_Comment'=>"(validation par lot)."
 	,'LANG_Bulk_Page_Nothing_To_Do'=>"Il n'y a aucune identification à valider dans cette page."
 	,'LANG_Bulk_Taxon_Nothing_To_Do'=>"Il n'y a aucune identification à valider pour ce taxon."
 	,'LANG_Bulk_Collection_Nothing_To_Do'=>"Il n'y a aucune identification à valider pour cette collection."
 	,'LANG_Cancel' => 'Annuler'
-	,'LANG_Bulk_Validation_Canceled'=>'Cette validation a été annulée mi-chemin. Certains changements peuvent avoir déjà été appliquée à la base de données.'
+	,'LANG_Bulk_Validation_Canceled' => 'Cette validation a été annulée mi-chemin. Certains changements peuvent avoir déjà été appliquée à la base de données.'
 	,'LANG_ClearTooltip' => 'Effacer polygones'
 	,'LANG_User_Link' => 'Toutes ses collections dans les Galeries'
 	,'LANG_Additional_Info_Title' => 'Informations Complémentaires'
@@ -138,7 +135,7 @@ $custom_terms = array(
 	,'Foraging'=> "L'insecte a été photographié ailleurs que sur la fleur "
 	,'Latitude' => 'Latitude '
 	,'Longitude' => 'Longitude '
-	
+
 	,'LANG_Comments_Title' => 'COMMENTAIRES DES INTERNAUTES'
 	,'LANG_New_Comment' => 'Ajouter un commentaire'
 	,'LANG_Username' => 'Pseudo'
@@ -152,13 +149,13 @@ $custom_terms = array(
 	,'LANG_Insect_Delete_Confirmation' => 'Are you sure you wish to delete this insect?'
 	,'LANG_Determination_Delete_Confirmation' => 'Are you sure you wish to delete this identification?'
 	,'LANG_Submit_delete-insect' => 'Delete this insect'
-	
+
 	,'validation_required' => "Ce champ est obligatoire"
 	,'Yes' => 'Oui'
 	,'No' => 'Non'
-	,'close'=>'Fermer'	
-  	,'search'=>'Chercher'
-  	,'click here'=>'Cliquez ici'
+	,'close' => 'Fermer'
+  	,'search' => 'Chercher'
+  	,'click here' => 'Cliquez ici'
 	,'LANG_Unknown' => '?'
 	,'LANG_Dubious' => '!'
 	,'LANG_Confirm_Express_Doubt' => 'Etes-vous sûr de vouloir émettre un doute au sujet de cette identification?'
@@ -188,16 +185,16 @@ $custom_terms = array(
 	,'LANG_Locality_Commune' => 'Commune'
 	,'LANG_Locality_Department' => 'Département'
 	,'LANG_Locality_Region' => 'Région'
-	
+
 	,'LANG_Bad_Collection_ID' => "Vous avez essayé de charger une session comme une collection: ce ID n'est pas une collection."
 	,'LANG_Bad_Insect_ID' => "Vous avez essayé de charger une fleur comme un insecte: cette ID n'est pas un insect."
 	,'LANG_Bad_Flower_ID' => "Vous avez essayé de charger un insecte comme une fleur: cet ID n'est pas une fleur."
-	
+
 	,'LANG_Add' => 'Ajouter'
 	,'LANG_ID_Flower_Unknown' => 'Fleur espèces ne sait pas'
 	,'Species' => 'Espèces'
 	,'Status' => 'Statut'
 	,'LANG_Known_Species' => 'Entrez le nom du taxon ou choisissez le dans cette liste'
 	,'Remove this entry' => 'Supprimer cette entrée'
-			
+
 );

@@ -13,11 +13,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package	Client
- * @subpackage PrebuiltForms
- * @author	Indicia Team
- * @license	http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link 	http://code.google.com/p/indicia/
+ * @author Indicia Team
+ * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
+ * @link https://github.com/Indicia-Team/client_helpers
  */
 
 /**
@@ -66,7 +64,7 @@ class extension_associations {
     if (!empty(data_entry_helper::$entity_to_load['sample:id'])) {
       $data = data_entry_helper::get_population_data(array(
         'table' => 'occurrence_association',
-        'extraParams' => $auth['read'] + array('sample_id' => data_entry_helper::$entity_to_load['sample:id'], 'view'=>'detail'),
+        'extraParams' => $auth['read'] + array('sample_id' => data_entry_helper::$entity_to_load['sample:id'], 'view' => 'detail'),
         'caching' => false
       ));
       data_entry_helper::$javascript .= "populate_existing_associations(" . json_encode($data) . ");\n";
@@ -81,7 +79,7 @@ class extension_associations {
   private static function read_termlist_details($auth, &$options) {
     $allRelevantTermlists = array('association_type', 'position', 'part', 'impact');
     // check which of all the termlists we have a title for but no ID so we know to convert them
-    $termlistsToConvert = array();
+    $termlistsToConvert = [];
     foreach ($allRelevantTermlists as $termlistToCheck) {
       if (!empty($options["{$termlistToCheck}_termlist"]) && empty($options["{$termlistToCheck}_termlist_id"])) {
         $termlistsToConvert[] = $options["{$termlistToCheck}_termlist"];
@@ -118,7 +116,7 @@ class extension_associations {
               'columns' => 'id,term'
             )
         ));
-        $termsArray = array();
+        $termsArray = [];
         foreach ($terms as $term) {
           $termsArray[$term['id']] = $term['term'];
         }

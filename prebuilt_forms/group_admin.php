@@ -13,8 +13,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package Client
- * @subpackage PrebuiltForms
  * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers/
@@ -22,9 +20,6 @@
 
 /**
  * A page for managing the list of members of a group.
- *
- * @package Client
- * @subpackage PrebuiltForms
  */
 class iform_group_admin {
 
@@ -50,51 +45,51 @@ class iform_group_admin {
   public static function get_parameters() {
     return array(
       array(
-        'name'=>'allow_remove',
-        'caption'=>'Allow users to be removed from the group',
-        'description'=>'Show an icon next to each user to allow them to be removed from the group?',
-        'type'=>'boolean',
+        'name' => 'allow_remove',
+        'caption' => 'Allow users to be removed from the group',
+        'description' => 'Show an icon next to each user to allow them to be removed from the group?',
+        'type' => 'boolean',
         'default' => false,
         'group' => 'Other IForm Parameters',
         'required'=>false
       ),
       array(
-        'name'=>'allow_role_toggle',
-        'caption'=>'Allow users role to be altered',
-        'description'=>'Show an icon next to each user to allow their role to be toggled between administrator and member?',
-        'type'=>'boolean',
+        'name' => 'allow_role_toggle',
+        'caption' => 'Allow users role to be altered',
+        'description' => 'Show an icon next to each user to allow their role to be toggled between administrator and member?',
+        'type' => 'boolean',
         'default' => false,
         'group' => 'Other IForm Parameters',
         'required'=>false
       ),
       array(
-        'name'=>'member_role_name',
-        'caption'=>'Member role name',
-        'description'=>'On screen name to give to the member role (e.g. student).',
-        'type'=>'string',
+        'name' => 'member_role_name',
+        'caption' => 'Member role name',
+        'description' => 'On screen name to give to the member role (e.g. student).',
+        'type' => 'string',
         'group' => 'Other IForm Parameters',
         'required'=>false
       ),
       array(
-        'name'=>'admin_role_name',
-        'caption'=>'Administrator role name',
-        'description'=>'On screen name to give to the administrator role (e.g. mentor).',
-        'type'=>'string',
+        'name' => 'admin_role_name',
+        'caption' => 'Administrator role name',
+        'description' => 'On screen name to give to the administrator role (e.g. mentor).',
+        'type' => 'string',
         'group' => 'Other IForm Parameters',
         'required'=>false
       ),
       array(
-        'name'=>'groups_page_path',
-        'caption'=>'Path to main groups page',
-        'description'=>'Path to the Drupal page which my groups are listed on.',
-        'type'=>'text_input',
+        'name' => 'groups_page_path',
+        'caption' => 'Path to main groups page',
+        'description' => 'Path to the Drupal page which my groups are listed on.',
+        'type' => 'text_input',
         'required'=>false
       ),
       array(
-        'name'=>'include_page_access_levels',
-        'caption'=>'Include page access level controls',
-        'description'=>'Include the option to specify the access level for the member when viewing restricted group pages?',
-        'type'=>'checkbox',
+        'name' => 'include_page_access_levels',
+        'caption' => 'Include page access level controls',
+        'description' => 'Include the option to specify the access level for the member when viewing restricted group pages?',
+        'type' => 'checkbox',
         'default'=>FALSE,
         'required'=>FALSE
       ),
@@ -135,9 +130,9 @@ class iform_group_admin {
     $actions =
     array(
       array(
-        'caption'=>'Approve member',
-        'javascript'=>'approveMember({groups_user_id});',
-        'visibility_field'=>'pending'
+        'caption' => 'Approve member',
+        'javascript' => 'approveMember({groups_user_id});',
+        'visibility_field' => 'pending'
       ),
     );
     if ($adminRoleOnScreenName === 'administrator') {
@@ -169,7 +164,7 @@ class iform_group_admin {
     if (!empty($args['include_page_access_levels'])) {
       $actions[] = array(
         'caption'=>lang::get('change access level'),
-        'javascript'=>'changeAccessLevel({groups_user_id}, \'{access_level}\');'
+        'javascript' => 'changeAccessLevel({groups_user_id}, \'{access_level}\');'
       );
     }
     $columns = array(
@@ -179,10 +174,10 @@ class iform_group_admin {
       )
     );
     if (empty($args['include_page_access_levels'])) {
-      $columns[] = array('fieldname'=>'access_level', 'visible'=>false);
+      $columns[] = array('fieldname' => 'access_level', 'visible'=>false);
     }
     $r = report_helper::report_grid(array(
-      'dataSource'=>'library/groups/group_members',
+      'dataSource' => 'library/groups/group_members',
       'readAuth'=>$auth['read'],
       'extraParams'=>array('group_id'=>$group['id']),
       'columns'=>$columns
@@ -231,16 +226,16 @@ class iform_group_admin {
    */
   private static function loadExistingGroup($id, $auth, $args) {
     $group = data_entry_helper::get_population_data(array(
-      'table'=>'group',
-      'extraParams'=>$auth['read']+array('view'=>'detail', 'id'=>$_GET['group_id']),
+      'table' => 'group',
+      'extraParams'=>$auth['read']+array('view' => 'detail', 'id'=>$_GET['group_id']),
       'nocache'=>true
     ));
     if ($group[0]['created_by_id']!==hostsite_get_user_field('indicia_user_id')) {
       if (!hostsite_user_has_permission('IForm groups admin')) {
         // user did not create group. So, check they are an admin
         $admins = data_entry_helper::get_population_data(array(
-          'table'=>'groups_user',
-          'extraParams'=>$auth['read']+array('group_id'=>$_GET['group_id'], 'administrator'=>'t'),
+          'table' => 'groups_user',
+          'extraParams'=>$auth['read']+array('group_id'=>$_GET['group_id'], 'administrator' => 't'),
           'nocache'=>true
         ));
         $found=false;

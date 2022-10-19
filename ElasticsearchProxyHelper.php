@@ -1174,6 +1174,7 @@ class ElasticsearchProxyHelper {
     self::applyUserFiltersWho($definition, $bool);
     self::applyUserFiltersOccId($definition, $bool);
     self::applyUserFiltersOccExternalKey($definition, $bool);
+    self::applyUserFiltersSmpId($definition, $bool);
     self::applyUserFiltersQuality($definition, $bool);
     self::applyUserFiltersIdentificationDifficulty($definition, $bool);
     self::applyUserFiltersAutoChecks($definition, $bool);
@@ -1580,6 +1581,36 @@ class ElasticsearchProxyHelper {
         $bool['must'][] = [
           'range' => [
             'id' => [
+              $translate[$op] => $filter['value'],
+            ],
+          ],
+        ];
+      }
+    }
+  }
+
+  /**
+   * Converts an Indicia filter definition smp_id to an ES query.
+   *
+   * @param array $definition
+   *   Definition loaded for the Indicia filter.
+   * @param array $bool
+   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   */
+  private static function applyUserFiltersSmpId(array $definition, array &$bool) {
+    $filter = self::getDefinitionFilter($definition, ['smp_id']);
+    if (!empty($filter)) {
+      $op = empty($filter['op']) ? '=' : $filter['op'];
+      if ($op === '=') {
+        $bool['must'][] = [
+          'terms' => ['event.event_id' => explode(',', $filter['value'])],
+        ];
+      }
+      else {
+        $translate = ['>=' => 'gte', '<=' => 'lte'];
+        $bool['must'][] = [
+          'range' => [
+            'event.event_id' => [
               $translate[$op] => $filter['value'],
             ],
           ],

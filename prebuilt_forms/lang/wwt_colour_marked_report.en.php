@@ -49,7 +49,7 @@ $custom_terms = [
   // The search button may be changed by adding an entry for 'search'
 
   'LANG_Other_Information_Tab' => 'Other Information',
-  'LANG_Tab_Instructions _otherinformation'=>'<strong>Other Information</strong><br/>Please tell us when the observation took place, the biotope, whether a voucher specimen was taken (in the case where identification was difficult, to allow verification), and whether the observation details have been completed.',
+  'LANG_Tab_Instructions _otherinformation' => '<strong>Other Information</strong><br/>Please tell us when the observation took place, the biotope, whether a voucher specimen was taken (in the case where identification was difficult, to allow verification), and whether the observation details have been completed.',
   'LANG_Date' => 'Date',
   // Below gives an example of setting the biotope and voucher attribute captions used in this tab.
   // Note these do not have LANG_ prefixes.

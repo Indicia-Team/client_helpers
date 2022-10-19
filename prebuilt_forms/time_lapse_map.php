@@ -133,7 +133,7 @@ class iform_time_lapse_map {
           ),
         )
     );
-    $retVal = array();
+    $retVal = [];
     foreach ($paramArray as $param) {
       if (!in_array($param['name'], [
         'map_width',
@@ -280,7 +280,7 @@ HTML;
   }
 
   private static function addTimeLapseInitJs($args) {
-    $currentParamValues = array();
+    $currentParamValues = [];
     if (isset($options['extraParams'])) {
       foreach ($options['extraParams'] as $key => $value) {
         // Trim data to ensure blank lines are not handled.

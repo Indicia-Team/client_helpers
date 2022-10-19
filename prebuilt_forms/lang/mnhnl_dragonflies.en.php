@@ -13,10 +13,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package	Client
- * @author	Indicia Team
- * @license	http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link 	http://code.google.com/p/indicia/
+ * @author Indicia Team
+ * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
+ * @link https://github.com/Indicia-Team/client_helpers
  */
 
 // Translation strings for when in Amphibian mode, on top of reptile ones.
@@ -29,24 +28,24 @@ $custom_term_overrides[] = array(
 	,'LANG_LocModTool_CantCreate' => "You can't create a new site using this tool - that has to be done within the survey data entry itself."
 	,'LANG_DE_Instructions2'=>"To choose a site, either click the relevant site on the map (ensuring that the select tool on the map is active) or pick it using the drop down lists.<br />You may add a new site: click the 'Start a new site' button on the map, and click on the map. You can change the position by dragging the circles. To delete a point (purple circle) or shape vertex (red circle), place the mouse over the circle and press the 'Delete' button.<br />Selecting an existing site, re-clicking the 'Start a new site' (tick) button or clicking the 'Remove the selected new site' (red cross) button will remove any new site.<br />It is not possible to change a site name or position on this form once it has been saved - this can be done by an Admin user using their special tool."
 	,'LANG_Location_X_Label' => 'Site coordinates: X'
-	,'LANG_PointTooltip'=>'Click on map to set site position'
+	,'LANG_PointTooltip' => 'Click on map to set site position'
 	,'LANG_SpeciesInstructions'=>"Species records may be added using the control under the grid.<br />Click the red 'X' to delete the relevant row."
 	,'Village' => 'Village/Locality'
 	,'Site name' => 'Site number'
-	,'LANG_LocModTool_IDLabel'=>'Old site number'
+	,'LANG_LocModTool_IDLabel' => 'Old site number'
 	,'LANG_CommonLocationNameLabel' => 'Site number'
-	,'LANG_LocModTool_NameLabel'=>'New site number'
-	,'LANG_CommonFilterNameLabel'=>'Existing site number'
-	,'Dragonfly Survey Method'=>'Survey method'
-	,'Dragonfly stage'=>'Stage'
+	,'LANG_LocModTool_NameLabel' => 'New site number'
+	,'LANG_CommonFilterNameLabel' => 'Existing site number'
+	,'Dragonfly Survey Method' => 'Survey method'
+	,'Dragonfly stage' => 'Stage'
 	,'LANG_CommuneLookUpFailed' => 'Internal error: Lookup of the Commune for this location failed.'
 	,'LANG_PositionInDifferentCommune' => 'The position you have chosen is outside the selected Commune. Do you wish to change the Commune field to match the point?'
-	,'LANG_NumSites'=>'Number of sites in this square'
+	,'LANG_NumSites' => 'Number of sites in this square'
 	,'LANG_Data_Download' => 'These reports provide details of the data entered in the survey.'
 	,'LANG_Date_Explanation' => '(Indicate the date of the beginning of the survey)'
 	,'LANG_FirstChooseParentFilter' => 'First choose a square'
-	,'LANG_ZoomToParent'=>'Zoom to Commune'
-	,'Add species to list'=>'Add species record to list'
+	,'LANG_ZoomToParent' => 'Zoom to Commune'
+	,'Add species to list' => 'Add species record to list'
 
 	,'LANG_PositionOutsideCommune_1' => "The position you have chosen is outside the set of allowable Communes. You will not be able to save this location until you change it so it has a valid Commune."
 	,'LANG_PositionOutsideCommune_2' => "The position you have chosen is outside the set of allowable Communes. Select 'OK' if you wish to keep the currently selected Commune value. (If you choose 'Cancel', the Commune will be cleared, and you will not be able to save this location until you change it so it has a valid Commune field)"

@@ -13,23 +13,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package	Client
- * @subpackage PrebuiltForms
- * @author	Indicia Team
- * @license	http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link 	http://code.google.com/p/indicia/
+ * @author Indicia Team
+ * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
+ * @link https://github.com/Indicia-Team/client_helpers
  */
 
 /**
  * Prebuilt Indicia data entry form.
  * NB has Drupal specific code.
- *
- * @package	Client
- * @subpackage PrebuiltForms
  */
 
-require_once('includes/language_utils.php');
-require_once('includes/user.php');
+require_once 'includes/language_utils.php';
+require_once 'includes/user.php';
 
 class iform_pollenator_reidentify {
 
@@ -41,53 +36,53 @@ class iform_pollenator_reidentify {
     $retVal = array_merge(
      array(
        array(
-        'name'=>'survey_id',
-        'caption'=>'Survey ID',
-        'description'=>'The Indicia ID of the survey that data will be posted into.',
-        'type'=>'int'
+        'name' => 'survey_id',
+        'caption' => 'Survey ID',
+        'description' => 'The Indicia ID of the survey that data will be posted into.',
+        'type' => 'int'
       ),
       array(
-          'name'=>'search_url',
-          'caption'=>'URL for Search WFS service',
-          'description'=>'The URL used for the WFS feature lookup when searching.',
-          'type'=>'string',
-          'group'=>'Search'
+          'name' => 'search_url',
+          'caption' => 'URL for Search WFS service',
+          'description' => 'The URL used for the WFS feature lookup when searching.',
+          'type' => 'string',
+          'group' => 'Search'
       ),
       array(
-          'name'=>'search_prefix',
-          'caption'=>'Feature type prefix for Search',
-          'description'=>'The Feature type prefix used for the WFS feature lookup when searching.',
-          'type'=>'string',
-          'group'=>'Search'
+          'name' => 'search_prefix',
+          'caption' => 'Feature type prefix for Search',
+          'description' => 'The Feature type prefix used for the WFS feature lookup when searching.',
+          'type' => 'string',
+          'group' => 'Search'
       ),
       array(
-          'name'=>'search_ns',
-          'caption'=>'Name space for Search',
-          'description'=>'The Name space used for the WFS feature lookup when searching.',
-          'type'=>'string',
-          'group'=>'Search'
+          'name' => 'search_ns',
+          'caption' => 'Name space for Search',
+          'description' => 'The Name space used for the WFS feature lookup when searching.',
+          'type' => 'string',
+          'group' => 'Search'
       ),
       array(
-          'name'=>'search_insects_layer',
-          'caption'=>'Name layer for the Insects Search',
-          'description'=>'The Name of the Geoserver Layer used for the WFS feature lookup when searching Insects.',
-          'type'=>'string',
-          'group'=>'Search'
+          'name' => 'search_insects_layer',
+          'caption' => 'Name layer for the Insects Search',
+          'description' => 'The Name of the Geoserver Layer used for the WFS feature lookup when searching Insects.',
+          'type' => 'string',
+          'group' => 'Search'
       ),
       array(
-          'name'=>'max_features',
-          'caption'=>'Max number of items returned',
-          'description'=>'Maximum number of features returned by the WFS search.',
-          'type'=>'int',
+          'name' => 'max_features',
+          'caption' => 'Max number of items returned',
+          'description' => 'Maximum number of features returned by the WFS search.',
+          'type' => 'int',
           'default'=>1000,
-          'group'=>'Search'
+          'group' => 'Search'
       ),
       array(
-          'name'=>'insect_list_id',
-          'caption'=>'Insect Species List ID',
-          'description'=>'The Indicia ID for the species list that insects can be selected from.',
-          'type'=>'int',
-          'group'=>'Insect Attributes'
+          'name' => 'insect_list_id',
+          'caption' => 'Insect Species List ID',
+          'description' => 'The Indicia ID for the species list that insects can be selected from.',
+          'type' => 'int',
+          'group' => 'Insect Attributes'
       )
     ));
     return $retVal;
@@ -102,7 +97,7 @@ class iform_pollenator_reidentify {
     return array(
       'title'=>self::get_title(),
       'category' => 'SPIPOLL forms',
-      'description'=>'Pollenators: Re-identifier of insects following taxa reorganisations.'
+      'description' => 'Pollenators: Re-identifier of insects following taxa reorganisations.'
     );
   }
 
@@ -146,15 +141,15 @@ class iform_pollenator_reidentify {
     // the controls for the filter include all taxa, not just the ones allowed for data entry, just to be on the safe side.
 	$source_insect_ctrl_args=array(
     	    'label'=>lang::get('Insect Species'),
-        	'id'=>'insect-taxa-taxon-list-id',
-			'fieldname'=>'insect:taxa_taxon_list_id',
-	        'table'=>'taxa_taxon_list',
-    	    'captionField'=>'taxon',
+        	'id' => 'insect-taxa-taxon-list-id',
+			'fieldname' => 'insect:taxa_taxon_list_id',
+	        'table' => 'taxa_taxon_list',
+    	    'captionField' => 'taxon',
 			'listCaptionSpecialChars'=>true,
-        	'valueField'=>'id',
+        	'valueField' => 'id',
 	        'columns'=>2,
     		'blankText'=>lang::get('Choose Taxon'),
-    	    'extraParams'=>$readAuth + array('taxon_list_id' => $args['insect_list_id'], 'view'=>'detail','orderby'=>'taxonomic_sort_order','allow_data_entry'=>'f')
+    	    'extraParams'=>$readAuth + array('taxon_list_id' => $args['insect_list_id'], 'view' => 'detail','orderby' => 'taxonomic_sort_order','allow_data_entry' => 'f')
 	);
 
  	$r .= '<h1 id="poll-banner"></h1>
@@ -229,8 +224,8 @@ class iform_pollenator_reidentify {
 </div>
 ';
 
-	$extraParams = $readAuth + array('taxon_list_id' => $args['insect_list_id'], 'view'=>'list', 'allow_data_entry'=>'t');
-	$species_data_def=array('table'=>'taxa_taxon_list','extraParams'=>$extraParams);
+	$extraParams = $readAuth + array('taxon_list_id' => $args['insect_list_id'], 'view' => 'list', 'allow_data_entry' => 't');
+	$species_data_def=array('table' => 'taxa_taxon_list','extraParams'=>$extraParams);
 	$taxa = data_entry_helper::get_population_data($species_data_def);
 	data_entry_helper::$javascript .= "var insectTaxa = [";
 	// No XPER ID here

@@ -13,15 +13,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package Client
- * @subpackage PrebuiltForms
  * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers/
  */
 
-require_once('includes/dynamic.php');
-require_once('includes/groups.php');
+require_once 'includes/dynamic.php';
+require_once 'includes/groups.php';
 
 /**
  * A page for listing a series of links to the pages related to a particular group.
@@ -41,16 +39,16 @@ class iform_group_link_to_pages_from_single_group extends iform_dynamic {
     $retVal = array_merge(
       array(
         array(
-          'name'=>'group_id',
-          'caption'=>'Group For Page',
-          'description'=>'Id of the group you wish to display links for',
-          'type'=>'string',
+          'name' => 'group_id',
+          'caption' => 'Group For Page',
+          'description' => 'Id of the group you wish to display links for',
+          'type' => 'string',
           'group' => 'Page Group',
           'required'=>false
         ),
         array(
-          'name'=>'instructions_configuration',
-          'caption'=>'Link Names And Instructions Configuration',
+          'name' => 'instructions_configuration',
+          'caption' => 'Link Names And Instructions Configuration',
           'description'=>
             'For each title you wish to specify instructions for, simply type the title inside square brackets [] '.
             'and then type the instruction to appear on the following lines (Note that titles without instructions are also allowed) e.g.<br>
@@ -58,15 +56,15 @@ class iform_group_link_to_pages_from_single_group extends iform_dynamic {
             This link takes you to a page where the recording group can be setup.<br>
             [Group Records]<br>
             Display records associated with the group.<br>',
-          'type'=>'textarea',
+          'type' => 'textarea',
           'group' => 'User Interface',
           'required'=>false
         ),
         array(
-          'name'=>'no_group_found_message',
-          'caption'=>'Message displayed when user is not group member',
-          'description'=>'When the user is not a group member there are no links to display, display this message instead. Supports html.',
-          'type'=>'textarea',
+          'name' => 'no_group_found_message',
+          'caption' => 'Message displayed when user is not group member',
+          'description' => 'When the user is not a group member there are no links to display, display this message instead. Supports html.',
+          'type' => 'textarea',
           'group' => 'User Interface',
           'required'=>false
         ),
@@ -81,9 +79,9 @@ class iform_group_link_to_pages_from_single_group extends iform_dynamic {
    */
   public static function get_group_link_to_pages_from_single_group_definition() {
     return array(
-      'title'=>'Group link to pages from single group',
+      'title' => 'Group link to pages from single group',
       'category' => 'Recording groups',
-      'description'=>'Display a list of page links on a page for a single reporting group.',
+      'description' => 'Display a list of page links on a page for a single reporting group.',
       'supportsGroups'=>true,
       'recommended' => true
     );
@@ -141,11 +139,11 @@ class iform_group_link_to_pages_from_single_group extends iform_dynamic {
     $auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
     // Get all the links to display.
     $reportOptions = array(
-      'dataSource'=>'library/groups/groups_list',
+      'dataSource' => 'library/groups/groups_list',
       'readAuth'=>$auth['read'],
-      'mode'=>'report',
+      'mode' => 'report',
       'extraParams' => array('currentUser'=>hostsite_get_user_field('indicia_user_id'), 'id'=>$args['group_id'],
-          'pending_path'=>'{rootFolder}?q=groups/pending&group_id=','userFilterMode'=>'member')
+          'pending_path' => '{rootFolder}?q=groups/pending&group_id=','userFilterMode' => 'member')
     );
     // Automatic handling for Drupal clean urls.
     $rootFolder = helper_base::getRootFolder(true);

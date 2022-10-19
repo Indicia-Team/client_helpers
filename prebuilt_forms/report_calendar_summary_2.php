@@ -14,8 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package Client
- * @subpackage PrebuiltForms
  * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers/
@@ -28,15 +26,12 @@
  * Extend Header processing on table to allow configuration so that user can choose whether to have week numbers or dates.
  * Extend X label processing on chart to allow configuration so that user can choose whether to have week numbers or dates.
  */
-require_once('includes/form_generation.php');
-require_once('includes/report.php');
-require_once('includes/user.php');
+require_once 'includes/form_generation.php';
+require_once 'includes/report.php';
+require_once 'includes/user.php';
 
 /**
- * Prebuilt Indicia data form that lists the output of any report
- *
- * @package Client
- * @subpackage PrebuiltForms
+ * Prebuilt Indicia data form that lists the output of any report.
  */
 class iform_report_calendar_summary_2 {
 
@@ -61,11 +56,11 @@ class iform_report_calendar_summary_2 {
   // internal key, not used on URL: maps the location_id to a url extension.
   private static $URLExtensionKey = 'URLExtension';
 
-  private static $removableParams = array();
+  private static $removableParams = [];
 
-  private static $siteUrlParams = array();
+  private static $siteUrlParams = [];
 
-  private static $branchLocationList = array();
+  private static $branchLocationList = [];
 
   /**
    * Return the form metadata.
@@ -73,9 +68,9 @@ class iform_report_calendar_summary_2 {
    */
   public static function get_report_calendar_summary_2_definition() {
     return array(
-      'title'=>'Report Calendar Summary 2',
+      'title' => 'Report Calendar Summary 2',
       'category' => 'Reporting',
-      'description'=>'Outputs a grid of sumary data loaded from the Summary Builder Module. Can be displayed as a table, or a line or bar chart.',
+      'description' => 'Outputs a grid of sumary data loaded from the Summary Builder Module. Can be displayed as a table, or a line or bar chart.',
     );
   }
 
@@ -90,15 +85,15 @@ class iform_report_calendar_summary_2 {
     return
       array(
         array(
-            'name'=>'taxon_column',
-            'caption'=>'Display Taxon field',
-            'description'=>'When displaying a taxon, choose what to use.',
+            'name' => 'taxon_column',
+            'caption' => 'Display Taxon field',
+            'description' => 'When displaying a taxon, choose what to use.',
             'type' => 'select',
-            'lookupValues' => array('common_name'=>'Common Name',
-                'preferred_taxon'=>'Preferred Taxon (usually Latin)'),
+            'lookupValues' => array('common_name' => 'Common Name',
+                'preferred_taxon' => 'Preferred Taxon (usually Latin)'),
             'required' => true,
             'default' => 'taxon',
-            'group'=>'General Settings'
+            'group' => 'General Settings'
         ),
 
         array(
@@ -129,49 +124,49 @@ class iform_report_calendar_summary_2 {
           'group' => 'Data Inclusion'
         ),
         array(
-          'name'=>'manager_permission',
-          'caption'=>'Drupal Permission for Manager mode',
-          'description'=>'Enter the Drupal permission name to be used to determine if this user is a manager (i.e. full access to full data set). This primarily determines the functionality of the User and Location filters, if selected.',
-          'type'=>'string',
+          'name' => 'manager_permission',
+          'caption' => 'Drupal Permission for Manager mode',
+          'description' => 'Enter the Drupal permission name to be used to determine if this user is a manager (i.e. full access to full data set). This primarily determines the functionality of the User and Location filters, if selected.',
+          'type' => 'string',
           'required' => false,
           'group' => 'Access Control'
         ),
         array(
-          'name'=>'branch_manager_permission',
-          'caption'=>'Drupal Permission for Branch Coordinator mode',
-          'description'=>'Enter the Drupal permission name to be used to determine if this user is a Branch Coordinator. This primarily determines the functionality of the User and Location filters, if selected.',
-          'type'=>'string',
+          'name' => 'branch_manager_permission',
+          'caption' => 'Drupal Permission for Branch Coordinator mode',
+          'description' => 'Enter the Drupal permission name to be used to determine if this user is a Branch Coordinator. This primarily determines the functionality of the User and Location filters, if selected.',
+          'type' => 'string',
           'required' => false,
           'group' => 'Access Control'
         ),
         array(
-          'name'=>'branchFilterAttribute',
-          'caption'=>'Location Branch Coordinator Attribute',
-          'description'=>'Location attribute used to assign locations to Branch Coordinators.',
-          'type'=>'select',
-          'table'=>'location_attribute',
-          'valueField'=>'id',
-          'captionField'=>'caption',
+          'name' => 'branchFilterAttribute',
+          'caption' => 'Location Branch Coordinator Attribute',
+          'description' => 'Location attribute used to assign locations to Branch Coordinators.',
+          'type' => 'select',
+          'table' => 'location_attribute',
+          'valueField' => 'id',
+          'captionField' => 'caption',
           'required' => false,
           'group' => 'Access Control'
         ),
         array(
-          'name'=>'countryAttribute',
-          'caption'=>'Country Location attribute',
-          'description'=>'Location attribute that stores the Country. Single value integer.',
-          'type'=>'select',
-          'table'=>'location_attribute',
-          'valueField'=>'id',
-          'captionField'=>'caption',
+          'name' => 'countryAttribute',
+          'caption' => 'Country Location attribute',
+          'description' => 'Location attribute that stores the Country. Single value integer.',
+          'type' => 'select',
+          'table' => 'location_attribute',
+          'valueField' => 'id',
+          'captionField' => 'caption',
           'required' => false,
           'group' => 'Access Control'
         ),
 
         array(
-          'name'=>'dateFilter',
-          'caption'=>'Date Filter type',
-          'description'=>'Type of control used to select the start and end dates.',
-          'type'=>'select',
+          'name' => 'dateFilter',
+          'caption' => 'Date Filter type',
+          'description' => 'Type of control used to select the start and end dates.',
+          'type' => 'select',
           'options' => array(
 //            'none' => 'None',
             'year' => 'User selectable year'
@@ -180,91 +175,91 @@ class iform_report_calendar_summary_2 {
           'group' => 'Controls'
         ),
         array(
-          'name'=>'first_year',
-          'caption'=>'First Year of Data',
-          'description'=>'Used to determine first year displayed in the year select control. Final Year will be current year.',
-          'type'=>'int',
+          'name' => 'first_year',
+          'caption' => 'First Year of Data',
+          'description' => 'Used to determine first year displayed in the year select control. Final Year will be current year.',
+          'type' => 'int',
           'required' => false,
-          'group'=>'Controls'
+          'group' => 'Controls'
         ),
 
         array(
-          'name'=>'includeUserFilter',
-          'caption'=>'Include user filter',
-          'description'=>'Choose whether to include a filter on the user. This is passed through to the report_helper and raw data reports as user_id. If not selected, user_id is not included in the report parameter list.',
-          'type'=>'boolean',
+          'name' => 'includeUserFilter',
+          'caption' => 'Include user filter',
+          'description' => 'Choose whether to include a filter on the user. This is passed through to the report_helper and raw data reports as user_id. If not selected, user_id is not included in the report parameter list.',
+          'type' => 'boolean',
           'default' => false,
           'required' => false,
           'group' => 'Controls'
         ),
         array(
-          'name'=>'userLookUp', // TODO Convert to use new report.
-          'caption'=>'Only Users who have entered data',
-          'description'=>'Choose whether to include only users which have entered data (indicated by the created_by_id sample field if Easy Login is enabled, or the CMS User ID attribute lodged against a sample if not).',
-          'type'=>'boolean',
+          'name' => 'userLookUp', // TODO Convert to use new report.
+          'caption' => 'Only Users who have entered data',
+          'description' => 'Choose whether to include only users which have entered data (indicated by the created_by_id sample field if Easy Login is enabled, or the CMS User ID attribute lodged against a sample if not).',
+          'type' => 'boolean',
           'default' => false,
           'required' => false,
           'group' => 'Controls'
         ),
         array(
-          'name'=>'userLookUpSampleMethod',
-          'caption'=>'Sample Method',
-          'description'=>'When looking up the sample attributes, enter an optional sample method term.',
-          'type'=>'string',
+          'name' => 'userLookUpSampleMethod',
+          'caption' => 'Sample Method',
+          'description' => 'When looking up the sample attributes, enter an optional sample method term.',
+          'type' => 'string',
           'required' => false,
           'group' => 'Controls'
         ),
         array(
-          'name'=>'includeLocationFilter',
-          'caption'=>'Include location filter',
-          'description'=>'Choose whether to include a filter on the locations. This is passed through to the report parameter list as location_id. If not selected, location_id is not included in the report parameter list.',
-          'type'=>'boolean',
+          'name' => 'includeLocationFilter',
+          'caption' => 'Include location filter',
+          'description' => 'Choose whether to include a filter on the locations. This is passed through to the report parameter list as location_id. If not selected, location_id is not included in the report parameter list.',
+          'type' => 'boolean',
           'default' => false,
           'required' => false,
           'group' => 'Controls'
         ),
         array(
-          'name'=>'userSpecificLocationLookUp',
-          'caption'=>'Make location list user specific',
-          'description'=>'Choose whether to restrict the list of locations to those assigned to the selected user using the CMS User ID location attribute.',
-          'type'=>'boolean',
+          'name' => 'userSpecificLocationLookUp',
+          'caption' => 'Make location list user specific',
+          'description' => 'Choose whether to restrict the list of locations to those assigned to the selected user using the CMS User ID location attribute.',
+          'type' => 'boolean',
           'default' => true,
           'required' => false,
           'group' => 'Controls'
         ),
         array(
-          'name'=>'locationTypesFilter',
-          'caption'=>'Restrict locations to types',
-          'description'=>'Implies a location type selection control. Comma separated list of the location types definitions to be included in the control, of form {Location Type Term}:{Survey ID}[:{Link URL Extension}]. Restricts the locations in the user specific location filter to the selected location type, and restricts the data retrieved to the defined survey. In the Raw Data grid, the Links to the data entry page have the optional extension added. The CMS User ID attribute must be defined for all location types selected or all location types.',
-          'type'=>'string',
+          'name' => 'locationTypesFilter',
+          'caption' => 'Restrict locations to types',
+          'description' => 'Implies a location type selection control. Comma separated list of the location types definitions to be included in the control, of form {Location Type Term}:{Survey ID}[:{Link URL Extension}]. Restricts the locations in the user specific location filter to the selected location type, and restricts the data retrieved to the defined survey. In the Raw Data grid, the Links to the data entry page have the optional extension added. The CMS User ID attribute must be defined for all location types selected or all location types.',
+          'type' => 'string',
           'default' => false,
           'required' => false,
           'group' => 'Controls'
         ),
         array(
-          'name'=>'includeSrefInLocationFilter',
-          'caption'=>'Include Sref in location filter name',
-          'description'=>'When including the user specific location filter, choose whether to include the sref when generating the select name.',
-          'type'=>'boolean',
+          'name' => 'includeSrefInLocationFilter',
+          'caption' => 'Include Sref in location filter name',
+          'description' => 'When including the user specific location filter, choose whether to include the sref when generating the select name.',
+          'type' => 'boolean',
           'default' => true,
           'required' => false,
           'group' => 'Controls'
         ),
         array(
-          'name'=>'removable_params',
-          'caption'=>'Removable report parameters',
+          'name' => 'removable_params',
+          'caption' => 'Removable report parameters',
           'description' => 'Provide a list of any report parameters from the Preset Parameter Values list that can be set to a "blank" value by '.
             'use of a checkbox. For example the report might allow a taxon_list_id parameter to filter for a taxon list or to return all taxon list data '.
             'if an empty value is provided, so the taxon_list_id parameter can be listed here to provide a checkbox to remove this filter. Provide each '.
             'parameter on one line, followed by an equals then the caption of the check box, e.g. taxon_list_id=Check this box to include all species.',
           'type' => 'textarea',
           'required' => false,
-          'group'=>'Controls'
+          'group' => 'Controls'
         ),
         array(
           'name' => 'report_group',
           'caption' => 'Report group',
-          'description' => 'When using several reports on a single page (e.g. <a href="http://code.google.com/p/indicia/wiki/DrupalDashboardReporting">dashboard reporting</a>) '.
+          'description' => 'When using several reports on a single page (e.g. <a href="https://github.com/Indicia-Team/client_helperswiki/DrupalDashboardReporting">dashboard reporting</a>) '.
           'you must ensure that all reports that share a set of input parameters have the same report group as the parameters report.',
           'type' => 'text_input',
           'default' => 'report',
@@ -277,10 +272,10 @@ class iform_report_calendar_summary_2 {
           'The parameters are saved site wide, so if several reports share the same value and the same report group then the parameter '.
           'settings will be shared across the reports even if they are on different pages of the site. This functionality '.
           'requires cookies to be enabled on the browser.',
-          'type'=>'text_input',
+          'type' => 'text_input',
           'required'=>false,
           'default' => '',
-          'group'=>'Controls'
+          'group' => 'Controls'
         ),
 
         array(
@@ -290,15 +285,15 @@ class iform_report_calendar_summary_2 {
                'processing against a sample attribute.',
           'type' => 'string',
           'required' => false,
-          'group'=>'Raw Data Report Settings'
+          'group' => 'Raw Data Report Settings'
         ),
         array(
-          'name'=>'report_name',
-          'caption'=>'Raw Data Report Name',
-          'description'=>'Select the report to provide the raw data for this page. If not provided, then Raw Data will not be available.',
-          'type'=>'report_helper::report_picker',
+          'name' => 'report_name',
+          'caption' => 'Raw Data Report Name',
+          'description' => 'Select the report to provide the raw data for this page. If not provided, then Raw Data will not be available.',
+          'type' => 'report_helper::report_picker',
           'required' => false,
-          'group'=>'Raw Data Report Settings'
+          'group' => 'Raw Data Report Settings'
         ),
         array(
           'name' => 'param_presets',
@@ -308,59 +303,59 @@ class iform_report_calendar_summary_2 {
               'user ID from the CMS logged in user or {username} as a value replaces with the logged in username.',
           'type' => 'textarea',
           'required' => false,
-          'group'=>'Raw Data Report Settings'
+          'group' => 'Raw Data Report Settings'
         ),
 
 
         array(
-          'name'=>'includeRawGridDownload',
-          'caption'=>'Raw Grid Download',
-          'description'=>'Choose whether to include the ability to download the Raw data as a grid. The inclusion of raw data is a pre-requisite for this.',
-          'type'=>'boolean',
+          'name' => 'includeRawGridDownload',
+          'caption' => 'Raw Grid Download',
+          'description' => 'Choose whether to include the ability to download the Raw data as a grid. The inclusion of raw data is a pre-requisite for this.',
+          'type' => 'boolean',
           'default' => false,
           'required' => false,
           'group' => 'Downloads'
         ),
         array(
-          'name'=>'includeSummaryGridDownload',
-          'caption'=>'Summary Grid Download',
-          'description'=>'Choose whether to include the ability to download the Summary data as a grid. The inclusion of Summary data is a pre-requisite for this.',
-          'type'=>'boolean',
+          'name' => 'includeSummaryGridDownload',
+          'caption' => 'Summary Grid Download',
+          'description' => 'Choose whether to include the ability to download the Summary data as a grid. The inclusion of Summary data is a pre-requisite for this.',
+          'type' => 'boolean',
           'default' => false,
           'required' => false,
           'group' => 'Downloads'
         ),
         array(
-          'name'=>'includeEstimatesGridDownload',
-          'caption'=>'Estimates Grid Download',
-          'description'=>'Choose whether to include the ability to download the Estimates data as a grid. The inclusion of Estimates data is a pre-requisite for this.',
-          'type'=>'boolean',
+          'name' => 'includeEstimatesGridDownload',
+          'caption' => 'Estimates Grid Download',
+          'description' => 'Choose whether to include the ability to download the Estimates data as a grid. The inclusion of Estimates data is a pre-requisite for this.',
+          'type' => 'boolean',
           'default' => false,
           'required' => false,
           'group' => 'Downloads'
         ),
         array(
-          'name'=>'Download1Caption',
-          'caption'=>'Report 1 Download Caption',
-          'description'=>'Caption for the first download report.',
-          'type'=>'string',
+          'name' => 'Download1Caption',
+          'caption' => 'Report 1 Download Caption',
+          'description' => 'Caption for the first download report.',
+          'type' => 'string',
           'required' => false,
           'default' => 'report-1',
           'group' => 'Downloads'
         ),
         array(
-          'name'=>'download_report_1',
-          'caption'=>'Download Report 1',
-          'description'=>'Select the report to provide the first download report.',
-          'type'=>'report_helper::report_picker',
+          'name' => 'download_report_1',
+          'caption' => 'Download Report 1',
+          'description' => 'Select the report to provide the first download report.',
+          'type' => 'report_helper::report_picker',
           'required' => false,
-          'group'=>'Downloads'
+          'group' => 'Downloads'
         ),
         array(
-          'name'=>'download_report_1_format',
-          'caption'=>'Report Format',
-          'description'=>'Format of file produced.<br/>Note that some options have restrictions on the formats of fields (e.g. geometries in GPX and KML formats) in the report. Please see the Wiki for more details.',
-          'type'=>'select',
+          'name' => 'download_report_1_format',
+          'caption' => 'Report Format',
+          'description' => 'Format of file produced.<br/>Note that some options have restrictions on the formats of fields (e.g. geometries in GPX and KML formats) in the report. Please see the Wiki for more details.',
+          'type' => 'select',
           'options' => array(
               'json' => 'JSON',
               'xml' => 'XML',
@@ -385,27 +380,27 @@ class iform_report_calendar_summary_2 {
         ),
 
         array(
-          'name'=>'Download2Caption',
-          'caption'=>'Report 2 Download Caption',
-          'description'=>'Caption for the second download report.',
-          'type'=>'string',
+          'name' => 'Download2Caption',
+          'caption' => 'Report 2 Download Caption',
+          'description' => 'Caption for the second download report.',
+          'type' => 'string',
           'required' => false,
           'default' => 'report-2',
           'group' => 'Downloads'
         ),
         array(
-          'name'=>'download_report_2',
-          'caption'=>'Download Report 2',
-          'description'=>'Select the report to provide the second download report.',
-          'type'=>'report_helper::report_picker',
+          'name' => 'download_report_2',
+          'caption' => 'Download Report 2',
+          'description' => 'Select the report to provide the second download report.',
+          'type' => 'report_helper::report_picker',
           'required' => false,
           'group' => 'Downloads'
         ),
         array(
-          'name'=>'download_report_2_format',
-          'caption'=>'Report Format',
-          'description'=>'Format of file produced.<br/>Note that some options have restrictions on the formats of fields (e.g. geometries in GPX and KML formats) in the report. Please see the Wiki for more details.',
-          'type'=>'select',
+          'name' => 'download_report_2_format',
+          'caption' => 'Report Format',
+          'description' => 'Format of file produced.<br/>Note that some options have restrictions on the formats of fields (e.g. geometries in GPX and KML formats) in the report. Please see the Wiki for more details.',
+          'type' => 'select',
           'options' => array(
               'json' => 'JSON',
               'xml' => 'XML',
@@ -430,27 +425,27 @@ class iform_report_calendar_summary_2 {
         ),
 
         array(
-          'name'=>'Download3Caption',
-          'caption'=>'Report 3 Download Caption',
-          'description'=>'Caption for the third download report.',
-          'type'=>'string',
+          'name' => 'Download3Caption',
+          'caption' => 'Report 3 Download Caption',
+          'description' => 'Caption for the third download report.',
+          'type' => 'string',
           'required' => false,
           'default' => 'report-3',
           'group' => 'Downloads'
         ),
         array(
-          'name'=>'download_report_3',
-          'caption'=>'Download Report 3',
-          'description'=>'Select the report to provide the third download report.',
-          'type'=>'report_helper::report_picker',
+          'name' => 'download_report_3',
+          'caption' => 'Download Report 3',
+          'description' => 'Select the report to provide the third download report.',
+          'type' => 'report_helper::report_picker',
           'required' => false,
-          'group'=>'Downloads'
+          'group' => 'Downloads'
         ),
         array(
-          'name'=>'download_report_3_format',
-          'caption'=>'Report Format',
-          'description'=>'Format of file produced.<br/>Note that some options have restrictions on the formats of fields (e.g. geometries in GPX and KML formats) in the report. Please see the Wiki for more details.',
-          'type'=>'select',
+          'name' => 'download_report_3_format',
+          'caption' => 'Report Format',
+          'description' => 'Format of file produced.<br/>Note that some options have restrictions on the formats of fields (e.g. geometries in GPX and KML formats) in the report. Please see the Wiki for more details.',
+          'type' => 'select',
           'options' => array(
               'json' => 'JSON',
               'xml' => 'XML',
@@ -475,27 +470,27 @@ class iform_report_calendar_summary_2 {
         ),
 
         array(
-          'name'=>'Download4Caption',
-          'caption'=>'Report 4 Download Caption',
-          'description'=>'Caption for the fourth download report.',
-          'type'=>'string',
+          'name' => 'Download4Caption',
+          'caption' => 'Report 4 Download Caption',
+          'description' => 'Caption for the fourth download report.',
+          'type' => 'string',
           'required' => false,
           'default' => 'report-4',
           'group' => 'Downloads'
         ),
         array(
-          'name'=>'download_report_4',
-          'caption'=>'Download Report 4',
-          'description'=>'Select the report to provide the fourth download report.',
-          'type'=>'report_helper::report_picker',
+          'name' => 'download_report_4',
+          'caption' => 'Download Report 4',
+          'description' => 'Select the report to provide the fourth download report.',
+          'type' => 'report_helper::report_picker',
           'required' => false,
-          'group'=>'Downloads'
+          'group' => 'Downloads'
         ),
         array(
-          'name'=>'download_report_4_format',
-          'caption'=>'Report Format',
-          'description'=>'Format of file produced.<br/>Note that some options have restrictions on the formats of fields (e.g. geometries in GPX and KML formats) in the report. Please see the Wiki for more details.',
-          'type'=>'select',
+          'name' => 'download_report_4_format',
+          'caption' => 'Report Format',
+          'description' => 'Format of file produced.<br/>Note that some options have restrictions on the formats of fields (e.g. geometries in GPX and KML formats) in the report. Please see the Wiki for more details.',
+          'type' => 'select',
           'options' => array(
               'json' => 'JSON',
               'xml' => 'XML',
@@ -520,31 +515,31 @@ class iform_report_calendar_summary_2 {
         ),
 
         array(
-          'name'=>'includeFilenameTimestamps',
-          'caption'=>'Include Timestamp in Filename',
-          'description'=>'Include a Timestamp (YYYYMMDDHHMMSS) in the download filenames.',
-          'type'=>'boolean',
+          'name' => 'includeFilenameTimestamps',
+          'caption' => 'Include Timestamp in Filename',
+          'description' => 'Include a Timestamp (YYYYMMDDHHMMSS) in the download filenames.',
+          'type' => 'boolean',
           'default' => false,
           'required' => false,
           'group' => 'Downloads'
         ),
 
         array(
-          'name'=>'weekNumberFilter',
-          'caption'=>'Restrict displayed weeks',
-          'description'=>'Restrict displayed weeks to between 2 weeks defined by their week numbers. Colon separated.<br />'.
+          'name' => 'weekNumberFilter',
+          'caption' => 'Restrict displayed weeks',
+          'description' => 'Restrict displayed weeks to between 2 weeks defined by their week numbers. Colon separated.<br />'.
                          'Leaving an empty value means the end of the year. Blank means no restrictions.<br />'.
                          'Examples: "1:30" - Weeks one to thirty inclusive. "4:" - Week four onwards. ":5" - Upto and including week five.',
-          'type'=>'string',
+          'type' => 'string',
           'required' => false,
           'group' => 'Date Axis Options'
         ),
 
         array(
-          'name'=>'tableHeaders',
-          'caption'=>'Type of header rows to include in the table output',
-          'description'=>'Choose whether to include either the week comence date, week number or both as rows in the table header for each column.',
-          'type'=>'select',
+          'name' => 'tableHeaders',
+          'caption' => 'Type of header rows to include in the table output',
+          'description' => 'Choose whether to include either the week comence date, week number or both as rows in the table header for each column.',
+          'type' => 'select',
           'options' => array(
             'date' => 'Date Only',
             'number' => 'Week number only',
@@ -553,12 +548,12 @@ class iform_report_calendar_summary_2 {
           'group' => 'Table Options'
         ),
         array(
-          'name'=>'linkURL',
-          'caption'=>'Link URL',
-          'description'=>'Used when generating link URLs to associated samples. If not included, no links will be generated.',
-          'type'=>'string',
+          'name' => 'linkURL',
+          'caption' => 'Link URL',
+          'description' => 'Used when generating link URLs to associated samples. If not included, no links will be generated.',
+          'type' => 'string',
           'required' => false,
-          'group'=>'Raw Data Report Settings'
+          'group' => 'Raw Data Report Settings'
         ),
         array(
           'name' => 'chartType',
@@ -568,13 +563,13 @@ class iform_report_calendar_summary_2 {
           'lookupValues' => array('line'=>lang::get('Line'), 'bar'=>lang::get('Bar')),
           'required' => true,
           'default' => 'line',
-          'group'=>'Chart Options'
+          'group' => 'Chart Options'
         ),
         array(
-          'name'=>'chartLabels',
-          'caption'=>'Chart X-axis labels',
-          'description'=>'Choose whether to have either the week commence date or week number as the chart X-axis labels.',
-          'type'=>'select',
+          'name' => 'chartLabels',
+          'caption' => 'Chart X-axis labels',
+          'description' => 'Choose whether to have either the week commence date or week number as the chart X-axis labels.',
+          'type' => 'select',
           'options' => array(
             'date' => 'Date Only',
             'number' => 'Week number only'
@@ -582,19 +577,19 @@ class iform_report_calendar_summary_2 {
           'group' => 'Chart Options'
         ),
         array(
-          'name'=>'includeChartTotalSeries',
-          'caption'=>'Include Total Series',
-          'description'=>'Choose whether to generate a series which gives the totals for each week.',
-          'type'=>'boolean',
+          'name' => 'includeChartTotalSeries',
+          'caption' => 'Include Total Series',
+          'description' => 'Choose whether to generate a series which gives the totals for each week.',
+          'type' => 'boolean',
           'default' => true,
           'required' => false,
           'group' => 'Chart Options'
         ),
         array(
-          'name'=>'includeChartItemSeries',
-          'caption'=>'Include Item Series',
-          'description'=>'Choose whether to individual series for the counts of each species for each week on the charts. Summary (with optional estimates) data only.',
-          'type'=>'boolean',
+          'name' => 'includeChartItemSeries',
+          'caption' => 'Include Item Series',
+          'description' => 'Choose whether to individual series for the counts of each species for each week on the charts. Summary (with optional estimates) data only.',
+          'type' => 'boolean',
           'default' => true,
           'required' => false,
           'group' => 'Chart Options'
@@ -605,7 +600,7 @@ class iform_report_calendar_summary_2 {
           'description' => 'Width of the output chart in pixels: if not set then it will automatically to fill the space.',
           'type' => 'text_input',
           'required' => false,
-          'group'=>'Chart Options'
+          'group' => 'Chart Options'
         ),
         array(
           'name' => 'height',
@@ -614,7 +609,7 @@ class iform_report_calendar_summary_2 {
           'type' => 'text_input',
           'required' => true,
           'default' => 500,
-          'group'=>'Chart Options'
+          'group' => 'Chart Options'
         ),
         array(
           'name' => 'disableableSeries',
@@ -623,7 +618,7 @@ class iform_report_calendar_summary_2 {
           'type' => 'boolean',
           'required' => false,
           'default' => true,
-          'group'=>'Chart Options'
+          'group' => 'Chart Options'
         ),
         array(
           'name' => 'renderer_options',
@@ -655,7 +650,7 @@ class iform_report_calendar_summary_2 {
   }
 }',
           'required' => false,
-          'group'=>'Advanced Chart Options'
+          'group' => 'Advanced Chart Options'
         ),
         array(
           'name' => 'axes_options',
@@ -666,8 +661,8 @@ class iform_report_calendar_summary_2 {
               'For example, <em>{"yaxis":{"min":0,"max":100}}</em>.',
           'type' => 'jsonwidget',
           'required' => false,
-          'group'=>'Advanced Chart Options',
-          'schema'=>'{
+          'group' => 'Advanced Chart Options',
+          'schema' => '{
   "type":"map",
   "title":"Axis options",
   "mapping":{
@@ -762,26 +757,26 @@ class iform_report_calendar_summary_2 {
         ),
 
         array(
-          'name'=>'rowGroupColumn',
-          'caption'=>'Vertical Axis',
-          'description'=>'The column in the report which is used as the data series label.',
-          'type'=>'string',
-          'default'=>'taxon',
+          'name' => 'rowGroupColumn',
+          'caption' => 'Vertical Axis',
+          'description' => 'The column in the report which is used as the data series label.',
+          'type' => 'string',
+          'default' => 'taxon',
           'group' => 'Raw Data Report Settings'
         ),
         array(
-          'name'=>'rowGroupID',
-          'caption'=>'Vertical Axis ID',
-          'description'=>'The column in the report which is used as the data series id. This is used to pass the series displayed as part of a URL which has a restricted length.',
-          'type'=>'string',
-          'default'=>'taxon_meaning_id',
+          'name' => 'rowGroupID',
+          'caption' => 'Vertical Axis ID',
+          'description' => 'The column in the report which is used as the data series id. This is used to pass the series displayed as part of a URL which has a restricted length.',
+          'type' => 'string',
+          'default' => 'taxon_meaning_id',
           'group' => 'Raw Data Report Settings'
         ),
         array(
-          'name'=>'countColumn',
-          'caption'=>'Count Column',
-          'description'=>'The column in the report which is used as the count associated with the occurrence. If not proviced then each occurrence has a count of one.',
-          'type'=>'string',
+          'name' => 'countColumn',
+          'caption' => 'Count Column',
+          'description' => 'The column in the report which is used as the count associated with the occurrence. If not proviced then each occurrence has a count of one.',
+          'type' => 'string',
           'required' => false,
           'group' => 'Raw Data Report Settings'
         ),
@@ -828,8 +823,8 @@ class iform_report_calendar_summary_2 {
       'downloadFilePrefix' => '',
       'reportGroup' => isset($args['report_group']) ? $args['report_group'] : '',
       'rememberParamsReportGroup' => isset($args['remember_params_report_group']) ? $args['remember_params_report_group'] : '',
-      'paramsToExclude' => array(),
-      'paramDefaults' => array()
+      'paramsToExclude' => [],
+      'paramDefaults' => []
     ) + $presets;
     $reportOptions['extraParams']['survey_id'] = self::$siteUrlParams[self::$SurveyKey]; // catch if not in presets: location_type control
     return $reportOptions;
@@ -851,8 +846,8 @@ class iform_report_calendar_summary_2 {
       self::$siteUrlParams[self::$SurveyKey]=$presets['survey_id'];
     if(isset($args['locationTypesFilter']) && $args['locationTypesFilter']!=""){
       $types = explode(',',$args['locationTypesFilter']);
-      $types1=array();
-      $types2=array();
+      $types1=[];
+      $types2=[];
       foreach($types as $type){
         $parts = explode(':',$type);
         $types1[] = $parts[0];
@@ -908,8 +903,8 @@ class iform_report_calendar_summary_2 {
 
     if(isset($args['locationTypesFilter']) && $args['locationTypesFilter']!=""){
       $types = explode(',',$args['locationTypesFilter']);
-      $types1 = array();
-      $types2 = array();
+      $types1 = [];
+      $types2 = [];
       foreach ($types as $type) {
         $parts = explode(':',$type);
         $types1[] = $parts[0];
@@ -926,7 +921,7 @@ class iform_report_calendar_summary_2 {
       $locationListArgs['extraParams']['location_type_id'] = $siteUrlParams[self::$locationTypeKey]['value'];
 
       if(count($types)>1){
-        $lookUpValues = array();
+        $lookUpValues = [];
         foreach($terms as $termDetails){
           $lookUpValues[$termDetails['id']] = $termDetails['term'];
         }
@@ -938,7 +933,7 @@ class iform_report_calendar_summary_2 {
                  'lookupValues' => $lookUpValues,
                  'default' => $siteUrlParams[self::$locationTypeKey]['value']
         )).'</th><th>';
-        self::set_up_control_change($ctrlid, $siteUrlParams[self::$locationTypeKey]['name'], array());
+        self::set_up_control_change($ctrlid, $siteUrlParams[self::$locationTypeKey]['name'], []);
         $options['downloadFilePrefix'] .= preg_replace('/[^A-Za-z0-9]/i', '', $lookUpValues[$siteUrlParams[self::$locationTypeKey]['value']]).'_';
       }
     }
@@ -1090,7 +1085,7 @@ class iform_report_calendar_summary_2 {
         $ctrl .= '<option value="'.$id.'" class="location-select-option" '.($siteUrlParams[self::$locationKey]['value'] == $id ? 'selected="selected" ' : '').'>'.$location['name'].'</option>';
     }
     $ctrl.='</select>';
-    self::set_up_control_change($ctrlid, self::$locationKey, array());
+    self::set_up_control_change($ctrlid, self::$locationKey, []);
 
     // set up download file prefix
     if($siteUrlParams[self::$locationKey]['value']=='')
@@ -1155,7 +1150,7 @@ class iform_report_calendar_summary_2 {
     $isManager = (!empty($args['manager_permission']) && hostsite_user_has_permission($args['manager_permission']));
     $isBranchManager = (!empty($args['branch_manager_permission']) && hostsite_user_has_permission($args['branch_manager_permission']));
     if(!($userList = self::_fetchDBCache($myId))) {
-        $userList=array();
+        $userList=[];
         // assume easy login. For performance reasons, we no longer check to see if users have entered any data.
         // Drupal 7 and beyond
         $branchUserList = [];
@@ -1375,7 +1370,7 @@ jQuery('#".$ctrlid."').change(function(){
 
   public static function get_sorted_termlist_terms($auth, $key, $filter){
     $terms = helper_base::get_termlist_terms($auth, $key, $filter);
-    $retVal = array();
+    $retVal = [];
     foreach($filter as $f) {
       foreach($terms as $term) {
         if($f == $term['term']) $retVal[] = $term;
@@ -1458,14 +1453,14 @@ jQuery('#".$ctrlid."').change(function(){
         if($checked != '')
           $reportOptions['downloadFilePrefix'] .= 'RM'.preg_replace('/[^A-Za-z0-9]/i', '', $param).'_';
       }
-      self::set_up_control_change('removeParam-'.$param, $param, array(), true);
+      self::set_up_control_change('removeParam-'.$param, $param, [], true);
     }
     // Caching
     $checked = self::$siteUrlParams[self::$cacheKey]['value'] === true ? ' checked="checked"' : '';
     $retVal .= '<th><input type="checkbox" name="cachingParam" id="cachingParam" class="cachingParam"'.$checked.'/>'.
         '<label for="cachingParam" title="'.lang::get("When fetching the full data set, selecting this improves performance by not going to the warehouse to get the data. Occassionally, even when selected, the data will be refreshed, which will appear to slow down the response.").'" >'.lang::get("Use cached data").'</label></th>';
     $reportOptions['caching'] = self::$siteUrlParams[self::$cacheKey]['value'];
-    self::set_up_control_change('cachingParam', self::$cacheKey, array(), true);
+    self::set_up_control_change('cachingParam', self::$cacheKey, [], true);
     // are there any params that should be set to blank using one of the removable params tickboxes?
     foreach (self::$removableParams as $param=>$caption)
       if (isset($_GET[$param]) && $_GET[$param]==='true') {
@@ -1491,7 +1486,7 @@ jQuery('#".$ctrlid."').change(function(){
 
     $retVal.= '</tr></thead></table>';
     $reportOptions['survey_id']=self::$siteUrlParams[self::$SurveyKey]; // Sort of assuming that only one location type recorded against per survey.
-    $reportOptions['downloads'] = array();
+    $reportOptions['downloads'] = [];
 
     // add the additional downloads.
     $isManager = (!empty($args['manager_permission']) && hostsite_user_has_permission($args['manager_permission']));

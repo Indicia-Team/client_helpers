@@ -13,22 +13,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package    Client
- * @subpackage PrebuiltForms
  * @author     Indicia Team
- * @license    http://www.gnu.org/licenses/gpl.html GPL 3.0
+ * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link       https://github.com/Indicia-Team/
  */
 
 /**
  * Prebuilt Indicia data entry form.
  * NB has Drupal specific code.
- *
- * @package    Client
- * @subpackage PrebuiltForms
  */
 
-require_once('includes/dynamic.php');
+require_once 'includes/dynamic.php';
 
 class iform_verification_template_edit extends iform_dynamic {
 
@@ -38,9 +33,9 @@ class iform_verification_template_edit extends iform_dynamic {
      */
     public static function get_verification_template_edit_definition() {
         return array(
-            'title'=>'Create or edit a verification template',
+            'title' => 'Create or edit a verification template',
             'category' => 'Verification',
-            'description'=>'A form for creating or editing verification templates. ' .
+            'description' => 'A form for creating or editing verification templates. ' .
             'Although based on dynamic, this form is not customisable.',
             'recommended' => true,
         );
@@ -59,18 +54,18 @@ class iform_verification_template_edit extends iform_dynamic {
                     'caption' => 'Taxon Rank Break Point',
                     'description' => 'This is the break point value in the species list between normal species and familes. ' .
                     'Value is the max value for families, start point for species is one more than this.',
-                    'type'=>'int',
+                    'type' => 'int',
                     'required'=>true,
                     'default' => 180,
                     'group' => 'User Interface',
                 ),
                 array(
-                    'name'=>'taxon_display_field',
-                    'caption'=>'Field used to display taxa',
-                    'description'=>'When viewing the lists of keys, it is possible to display one taxon and a count of other ' .
+                    'name' => 'taxon_display_field',
+                    'caption' => 'Field used to display taxa',
+                    'description' => 'When viewing the lists of keys, it is possible to display one taxon and a count of other ' .
                     'taxa this key applies to. Use this control to choose whther to display a taxon, and if ' .
                     'so, which field to use.',
-                    'type'=>'select',
+                    'type' => 'select',
                     'options' => array(
                         'off' => 'Do not display a taxon.',
                         'preferred_taxon' => 'Preferred name of the taxon',
@@ -80,13 +75,13 @@ class iform_verification_template_edit extends iform_dynamic {
                     'group' => 'User Interface',
                 ),
                 array(
-                    'name'=>'taxon_list_id',
-                    'label'=>'Species List',
-                    'helpText'=>'The species list that species can be selected from.',
-                    'type'=>'select',
-                    'table'=>'taxon_list',
-                    'valueField'=>'id',
-                    'captionField'=>'title',
+                    'name' => 'taxon_list_id',
+                    'label' => 'Species List',
+                    'helpText' => 'The species list that species can be selected from.',
+                    'type' => 'select',
+                    'table' => 'taxon_list',
+                    'valueField' => 'id',
+                    'captionField' => 'title',
                     'required'=>true,
                     'group' => 'User Interface',
                 )
@@ -192,7 +187,7 @@ class iform_verification_template_edit extends iform_dynamic {
                     'Note that a template available for "V" will also be available for "V1" and "V2", and similar for "R" and "R4"/"R5".'),
                 'validation' => array('required'),
                 'default' => isset(data_entry_helper::$entity_to_load['verification_template:template_statuses']) ?
-                    data_entry_helper::$entity_to_load['verification_template:template_statuses'] : array(),
+                    data_entry_helper::$entity_to_load['verification_template:template_statuses'] : [],
             )) .
             '</fieldset>';
     }
@@ -307,7 +302,7 @@ class iform_verification_template_edit extends iform_dynamic {
         } else if (array_key_exists('new', $_GET)){
             // request to create new record (e.g. by clicking on button in grid view)
             $mode = self::MODE_NEW;
-            data_entry_helper::$entity_to_load = array();
+            data_entry_helper::$entity_to_load = [];
         }
         return $mode;
     }
@@ -346,17 +341,17 @@ class iform_verification_template_edit extends iform_dynamic {
      * @param array $auth authentication tokens for accessing the warehouse.
      */
     protected static function getEntity($args, $auth) {
-        data_entry_helper::$entity_to_load = array();
+        data_entry_helper::$entity_to_load = [];
         if (isset($_GET['id'])) {
             data_entry_helper::load_existing_record($auth['read'], 'verification_template', $_GET['id'], 'list', false, false);
             $keys = self::array_parse(data_entry_helper::$entity_to_load['verification_template:restrict_to_external_keys']);
-            data_entry_helper::$entity_to_load['verification_template:restrict_to_external_keys'] = array();
+            data_entry_helper::$entity_to_load['verification_template:restrict_to_external_keys'] = [];
             foreach ($keys as $key) {
                 if ($args['taxon_display_field'] !== 'off') {
                     $species = data_entry_helper::get_population_data(
                         array(
                             'table' => 'cache_taxa_taxon_list',
-                            'extraParams' => $auth['read'] + array('external_key' => $key, 'preferred'=>'t'),
+                            'extraParams' => $auth['read'] + array('external_key' => $key, 'preferred' => 't'),
                         )
                         );
                     $numRecords = count($species);
@@ -382,13 +377,13 @@ class iform_verification_template_edit extends iform_dynamic {
             }
 
             $keys = self::array_parse(data_entry_helper::$entity_to_load['verification_template:restrict_to_family_external_keys']);
-            data_entry_helper::$entity_to_load['verification_template:restrict_to_family_external_keys'] = array();
+            data_entry_helper::$entity_to_load['verification_template:restrict_to_family_external_keys'] = [];
             foreach ($keys as $key) {
                 if ($args['taxon_display_field'] !== 'off') {
                     $species = data_entry_helper::get_population_data(
                         array(
                             'table' => 'cache_taxa_taxon_list',
-                            'extraParams' => $auth['read'] + array('external_key' => $key, 'preferred'=>'t'),
+                            'extraParams' => $auth['read'] + array('external_key' => $key, 'preferred' => 't'),
                         )
                         );
                     $numRecords = count($species);
@@ -428,9 +423,9 @@ class iform_verification_template_edit extends iform_dynamic {
     private static function array_parse($s, $start = 0, &$end = null)
     {
         if (empty($s) || $s[0] != '{') {
-            return array();
+            return [];
         }
-        $return = array();
+        $return = [];
         $string = false;
         $quote = '';
         $s = str_replace('&quot;', '"', $s);
@@ -502,7 +497,7 @@ class iform_verification_template_edit extends iform_dynamic {
             $values['verification_template:restrict_to_external_keys'] =
             array_unique(array_values($values['verification_template:restrict_to_external_keys']));
         } else {
-            $values['verification_template:restrict_to_external_keys'] = array();
+            $values['verification_template:restrict_to_external_keys'] = [];
         }
 
         if(isset($values['verification_template:restrict_to_family_external_keys'])) {
@@ -515,7 +510,7 @@ class iform_verification_template_edit extends iform_dynamic {
             $values['verification_template:restrict_to_family_external_keys'] =
             array_unique(array_values($values['verification_template:restrict_to_family_external_keys']));
         } else {
-            $values['verification_template:restrict_to_family_external_keys'] = array();
+            $values['verification_template:restrict_to_family_external_keys'] = [];
         }
 
         return submission_builder::build_submission($values, $struct);
@@ -533,7 +528,7 @@ class iform_verification_template_edit extends iform_dynamic {
                     array(
                         'caption' => lang::get('Edit'),
                         'url' => '{currentUrl}',
-                        'urlParams' => array('id'=>'{id}')
+                        'urlParams' => array('id' => '{id}')
                     )
                 )
             )

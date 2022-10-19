@@ -13,23 +13,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package    Client
- * @subpackage PrebuiltForms
- * @author    Indicia Team
- * @license    http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link     http://code.google.com/p/indicia/
+ * @author Indicia Team
+ * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
+ * @link https://github.com/Indicia-Team/client_helpers
  */
 
 /**
  * Prebuilt Indicia data entry form.
  * NB has Drupal specific code. Relies on presence of IForm Proxy.
- *
- * @package    Client
- * @subpackage PrebuiltForms
  */
 
-require_once('dynamic_sample_occurrence.php');
-require_once('includes/mnhnl_common.php');
+require_once 'dynamic_sample_occurrence.php';
+require_once 'includes/mnhnl_common.php';
 
 class iform_mnhnl_dynamic_1 extends iform_dynamic_sample_occurrence {
 
@@ -39,10 +34,10 @@ class iform_mnhnl_dynamic_1 extends iform_dynamic_sample_occurrence {
    */
   public static function get_mnhnl_dynamic_1_definition() {
     return array(
-      'title'=>'MNHNL Dynamic 1 - dynamically generated data entry form',
+      'title' => 'MNHNL Dynamic 1 - dynamically generated data entry form',
       'category' => 'MNHNL forms',
-      'helpLink'=>'http://code.google.com/p/indicia/wiki/TutorialDynamicForm',
-      'description'=>'Derived from the Dynamic Sample Occurrence Form with custom headers and footers.',
+      'helpLink' => 'https://github.com/Indicia-Team/client_helperswiki/TutorialDynamicForm',
+      'description' => 'Derived from the Dynamic Sample Occurrence Form with custom headers and footers.',
       'supportsGroups'=>true
     );
   }
@@ -56,28 +51,28 @@ class iform_mnhnl_dynamic_1 extends iform_dynamic_sample_occurrence {
       parent::get_parameters(),
       array(
         array(
-          'name'=>'headerAndFooter',
-          'caption'=>'Use Header and Footer',
-          'description'=>'Include MNHNL header and footer html.',
-          'type'=>'boolean',
+          'name' => 'headerAndFooter',
+          'caption' => 'Use Header and Footer',
+          'description' => 'Include MNHNL header and footer html.',
+          'type' => 'boolean',
           'group' => 'User Interface',
           'default' => false,
           'required' => false
         ),
         array(
-          'name'=>'uses_location_assignment',
-          'caption'=>'Uses Location Assignment',
-          'description'=>'Does the form use locations assigned to users?',
-          'type'=>'boolean',
+          'name' => 'uses_location_assignment',
+          'caption' => 'Uses Location Assignment',
+          'description' => 'Does the form use locations assigned to users?',
+          'type' => 'boolean',
           'group' => 'User Interface',
           'default' => false,
           'required' => false
         ),
         array(
-          'name'=>'location_assignment_type',
-          'caption'=>'Location Assignment Type',
-          'description'=>'Choose the method by which locations are assigned to users. The Indicia User ID option requires easy_login.',
-          'type'=>'select',
+          'name' => 'location_assignment_type',
+          'caption' => 'Location Assignment Type',
+          'description' => 'Choose the method by which locations are assigned to users. The Indicia User ID option requires easy_login.',
+          'type' => 'select',
           'options' => array(
             'indicia' => 'Indicia Warehouse User ID recorded in a location attribute',
             'cms' => 'CMS User ID recorded in a location attribute'
@@ -87,28 +82,28 @@ class iform_mnhnl_dynamic_1 extends iform_dynamic_sample_occurrence {
           'required' => false
         ),
         array(
-          'name'=>'location_assignment_attr_id',
-          'caption'=>'Location Assignment Attribute',
-          'description'=>'The Location attribute that stores the user ID (as defined in the type above). ' .
+          'name' => 'location_assignment_attr_id',
+          'caption' => 'Location Assignment Attribute',
+          'description' => 'The Location attribute that stores the user ID (as defined in the type above). ' .
                          'Depending on the exact configuration, this may need to be a multi-value one.',
-          'type'=>'select',
-          'table'=>'location_attribute',
-          'valueField'=>'id',
-          'captionField'=>'caption',
+          'type' => 'select',
+          'table' => 'location_attribute',
+          'valueField' => 'id',
+          'captionField' => 'caption',
           'group' => 'User Interface',
           'required' => false
         ),
         array(
-          'name'=>'location_assignment_location_type_id',
-          'caption'=>'Location Assignment Location Type',
-          'description'=>'When performing location assignment to users, filter available locations by this location type',
+          'name' => 'location_assignment_location_type_id',
+          'caption' => 'Location Assignment Location Type',
+          'description' => 'When performing location assignment to users, filter available locations by this location type',
           'type' => 'select',
-          'table'=>'termlists_term',
-          'captionField'=>'term',
-          'valueField'=>'id',
-          'extraParams' => array('view'=>'list', 'termlist_external_key'=>'indicia:location_types'),
+          'table' => 'termlists_term',
+          'captionField' => 'term',
+          'valueField' => 'id',
+          'extraParams' => array('view' => 'list', 'termlist_external_key' => 'indicia:location_types'),
           'required' => false,
-          'group'=>'User Interface'
+          'group' => 'User Interface'
         )
       )
     );
@@ -169,9 +164,9 @@ class iform_mnhnl_dynamic_1 extends iform_dynamic_sample_occurrence {
       return false;
     }
     $reportOptions = array(
-      'dataSource'=>'library/groups/group_members',
+      'dataSource' => 'library/groups/group_members',
       'readAuth'=>$auth['read'],
-      'mode'=>'report',
+      'mode' => 'report',
       'extraParams' => array('group_id'=>$options['groupId'])
     );
     $usersInGroup = report_helper::get_report_data($reportOptions);

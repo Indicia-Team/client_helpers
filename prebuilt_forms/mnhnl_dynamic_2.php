@@ -13,19 +13,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package	Client
- * @subpackage PrebuiltForms
- * @author	Indicia Team
- * @license	http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link 	http://code.google.com/p/indicia/
+ * @author Indicia Team
+ * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
+ * @link https://github.com/Indicia-Team/client_helpers
  */
 
 /**
  * Prebuilt Indicia data entry form.
  * NB has Drupal specific code. Relies on presence of IForm Proxy.
- *
- * @package	Client
- * @subpackage PrebuiltForms
  */
 
 /* Development Stream: TBD
@@ -46,8 +41,8 @@
  * Extend Species grid - optional date: sort datepicker & ID
  * Sample attributes in species grid.
  */
-require_once('mnhnl_dynamic_1.php');
-require_once('includes/mnhnl_common.php');
+require_once 'mnhnl_dynamic_1.php';
+require_once 'includes/mnhnl_common.php';
 
 class iform_mnhnl_dynamic_2 extends iform_mnhnl_dynamic_1 {
 
@@ -68,10 +63,10 @@ class iform_mnhnl_dynamic_2 extends iform_mnhnl_dynamic_1 {
    */
   public static function get_mnhnl_dynamic_2_definition() {
     return array(
-      'title'=>'MNHNL Dynamic 2 - dynamically generated form for entry of a series of ad-hoc occurrences',
+      'title' => 'MNHNL Dynamic 2 - dynamically generated form for entry of a series of ad-hoc occurrences',
       'category' => 'General Purpose Data Entry Forms',
-      'helpLink'=>'http://code.google.com/p/indicia/wiki/TutorialDynamicForm',
-      'description'=>'A data entry form that is dynamically generated from the survey\'s attributes. The form lets the user create '.
+      'helpLink' => 'https://github.com/Indicia-Team/client_helperswiki/TutorialDynamicForm',
+      'description' => 'A data entry form that is dynamically generated from the survey\'s attributes. The form lets the user create '.
           'a series of occurrences by clicking on the map to set the location of each one then entering details. Data entered in a '.
           'single session in this way is joined using a simple sample hierarchy (so the top level sample encapsulates all data for the '.
           'session).'
@@ -88,26 +83,26 @@ class iform_mnhnl_dynamic_2 extends iform_mnhnl_dynamic_1 {
       iform_mnhnl_getParameters(),
       array(
         array(
-          'name'=>'attributeValidation',
-          'caption'=>'Attribute Validation Rules',
-          'description'=>'Client Validation rules to be enforced on attributes: allows more options than allowed by straight class led validation.',
-          'type'=>'textarea',
+          'name' => 'attributeValidation',
+          'caption' => 'Attribute Validation Rules',
+          'description' => 'Client Validation rules to be enforced on attributes: allows more options than allowed by straight class led validation.',
+          'type' => 'textarea',
           'required' => false,
           'group' => 'User Interface'
         ),
         array(
-          'name'=>'targetSpeciesAttr',
-          'caption'=>'Target Species Attribute',
-          'description'=>'Name of lookup type Sample Attribute used to hold the target species. This is used in the reporting and control.',
-          'type'=>'text_input',
+          'name' => 'targetSpeciesAttr',
+          'caption' => 'Target Species Attribute',
+          'description' => 'Name of lookup type Sample Attribute used to hold the target species. This is used in the reporting and control.',
+          'type' => 'text_input',
           'group' => 'User Interface',
           'required' => false
         ),
       	array(
-      	  'name'=>'targetSpeciesAttrList',
-      	  'caption'=>'Target Species Attribute List',
-      	  'description'=>'Comma separated list of sample attribute IDs used in the target species grid. This is used in the control and the reporting.',
-      	  'type'=>'text_input',
+      	  'name' => 'targetSpeciesAttrList',
+      	  'caption' => 'Target Species Attribute List',
+      	  'description' => 'Comma separated list of sample attribute IDs used in the target species grid. This is used in the control and the reporting.',
+      	  'type' => 'text_input',
       	  'group' => 'User Interface',
           'required' => false
       	),
@@ -115,10 +110,10 @@ class iform_mnhnl_dynamic_2 extends iform_mnhnl_dynamic_1 {
           'name' => 'target_species_subsample_method_id',
           'caption' => 'Target Species Sample Method',
           'type' => 'select',
-          'table'=>'termlists_term',
-          'captionField'=>'term',
-          'valueField'=>'id',
-          'extraParams' => array('termlist_external_key'=>'indicia:sample_methods'),
+          'table' => 'termlists_term',
+          'captionField' => 'term',
+          'valueField' => 'id',
+          'extraParams' => array('termlist_external_key' => 'indicia:sample_methods'),
           'required' => false,
           'helpText' => 'The sample method that will be used when creating subsamples in the target species grid.'
         ),
@@ -135,10 +130,10 @@ class iform_mnhnl_dynamic_2 extends iform_mnhnl_dynamic_1 {
           'name' => 'subsample_method_id',
           'caption' => 'Subsample Method',
           'type' => 'select',
-          'table'=>'termlists_term',
-          'captionField'=>'term',
-          'valueField'=>'id',
-          'extraParams' => array('termlist_external_key'=>'indicia:sample_methods'),
+          'table' => 'termlists_term',
+          'captionField' => 'term',
+          'valueField' => 'id',
+          'extraParams' => array('termlist_external_key' => 'indicia:sample_methods'),
           'required' => false,
           'helpText' => 'The sample method that will be used for created subsamples in the species grid.'
         ),
@@ -154,7 +149,7 @@ class iform_mnhnl_dynamic_2 extends iform_mnhnl_dynamic_1 {
           'name' => 'sites_download_report',
           'caption' => 'Sites download report',
           'description' => 'Name of the sites download report.',
-          'type'=>'string',
+          'type' => 'string',
           'group' => 'Reporting',
           'required' => false
         ),
@@ -162,7 +157,7 @@ class iform_mnhnl_dynamic_2 extends iform_mnhnl_dynamic_1 {
           'name' => 'conditions_download_report',
           'caption' => 'Conditions download report',
           'description' => 'Name of the conditions download report.',
-          'type'=>'string',
+          'type' => 'string',
           'group' => 'Reporting',
           'required' => false
         ),
@@ -170,12 +165,12 @@ class iform_mnhnl_dynamic_2 extends iform_mnhnl_dynamic_1 {
           'name' => 'species_download_report',
           'caption' => 'Species download report',
           'description' => 'Name of the species download report.',
-          'type'=>'string',
+          'type' => 'string',
           'group' => 'Reporting',
         )
       )
     );
-    $retVal=array();
+    $retVal=[];
     foreach($parentVal as $param){
       if($param['name'] == 'grid_report'){
         $param['description'] = 'Name of the report to use to populate the grid for selecting existing data. The report must return a sample_id '.
@@ -324,9 +319,9 @@ deleteSurvey = function(sampleID){
   }
   protected static function getReportActions() {
     return array(array('display' => '', 'actions' =>
-            array(array('caption' => lang::get('Edit'), 'url'=>'{currentUrl}', 'urlParams'=>array('sample_id'=>'{sample_id}')))),
+            array(array('caption' => lang::get('Edit'), 'url' => '{currentUrl}', 'urlParams'=>array('sample_id' => '{sample_id}')))),
         array('display' => '', 'actions' =>
-            array(array('caption' => lang::get('Delete'), 'javascript'=>'deleteSurvey({sample_id})'))));
+            array(array('caption' => lang::get('Delete'), 'javascript' => 'deleteSurvey({sample_id})'))));
   }
 
   /*
@@ -366,7 +361,7 @@ deleteSurvey = function(sampleID){
   }
   protected static function get_control_locationcomment($auth, $args, $tabalias, $options) {
     return data_entry_helper::textarea(array_merge(array(
-      'fieldname'=>'location:comment',
+      'fieldname' => 'location:comment',
       'label'=>lang::get('Location Comment')
     ), $options));
   }
@@ -397,9 +392,9 @@ if($.browser.msie && $.browser.version < 9)
     // possible clash with link_species_popups, so latter disabled.
     iform_mnhnl_addCancelButton($args['interface']);
     $attrOpts = array(
-    		'valuetable'=>'sample_attribute_value'
-    		,'attrtable'=>'sample_attribute'
-    		,'key'=>'sample_id'
+    		'valuetable' => 'sample_attribute_value'
+    		,'attrtable' => 'sample_attribute'
+    		,'key' => 'sample_id'
     		,'extraParams'=>$auth['read']
     		,'survey_id'=>$args['survey_id']);
     if(isset($args['sample_method_id']) && $args['sample_method_id']!="") $attrOpts['sample_method_id'] = $args['sample_method_id'];
@@ -407,12 +402,12 @@ if($.browser.msie && $.browser.version < 9)
     foreach($attributes as $attribute){
       data_entry_helper::$javascript .= "$('#smpAttr\\\\:".$attribute['attributeId']."').addClass('smpAttr-".str_replace(' ', '', ucWords($attribute['untranslatedCaption']))."');\n";
     }
-    $restrictText = array();
+    $restrictText = [];
     if(isset($options["attrRestrictions"]) && $options["attrRestrictions"]!=""){
       $restrictionRules = explode(';', $options["attrRestrictions"]);
       foreach($restrictionRules as $restrictionRule){
         $parts = explode(':', $restrictionRule);
-        $valList = array();
+        $valList = [];
         for($i = 2; $i < count($parts); $i++){
           $values = explode(',', trim($parts[$i]));
           $valString = "{value : ".$values[0].", list: [\"";
@@ -464,7 +459,7 @@ jQuery('.mnhnl-species-grid').find('".$selector."').change(function(){
     }
 
     if (!empty($args['attributeValidation'])) {
-      $rules = array();
+      $rules = [];
       $argRules = explode(';', $args['attributeValidation']);
       foreach($argRules as $rule){
         $rules[] = explode(',', $rule);
@@ -501,10 +496,10 @@ $.validator.addMethod('no_observation', function(arg1, arg2){
           } else if($rule[$i]=='end_time'){
             // we are assuming this is on the main supersample.
           	$attrOpts = array(
-          			'valuetable'=>'sample_attribute_value'
-          			,'attrtable'=>'sample_attribute'
-          			,'key'=>'sample_id'
-                    ,'fieldprefix'=>'smpAttr'
+          			'valuetable' => 'sample_attribute_value'
+          			,'attrtable' => 'sample_attribute'
+          			,'key' => 'sample_id'
+                    ,'fieldprefix' => 'smpAttr'
           			,'extraParams'=>$auth['read']
           			,'survey_id'=>$args['survey_id']);
           	if(isset($args['sample_method_id']) && $args['sample_method_id']!="") $attrOpts['sample_method_id'] = $args['sample_method_id'];
@@ -586,19 +581,19 @@ indiciaData.speciesListInTextMax = '".$ctrlArgs[2]."';\n";
     // 2) a default set of attributes to be loaded: visit, Unsuitablity
     // 3) Overrides for specific target species: Common wall disabled second survey
     $termlist = $targetSpeciesAttr["termlist_id"];
-    $extraParams = $auth['read'] + array('termlist_id' => $termlist, 'view'=>'detail');
+    $extraParams = $auth['read'] + array('termlist_id' => $termlist, 'view' => 'detail');
     $targetSpecies = data_entry_helper::get_population_data(array('table' => 'termlists_term', 'extraParams' => $extraParams)); // cachable
     $smpAttributes = data_entry_helper::getAttributes(array(
-       'attrtable'=>'sample_attribute'
-       ,'key'=>'sample_id'
-       ,'fieldprefix'=>'{MyPrefix}:smpAttr'
+       'attrtable' => 'sample_attribute'
+       ,'key' => 'sample_id'
+       ,'fieldprefix' => '{MyPrefix}:smpAttr'
        ,'extraParams'=>$auth['read']
        ,'survey_id'=>$args['survey_id']
        ,'sample_method_id'=>$args['target_species_subsample_method_id']
     ), true);
     $retval = '<br /><input type="hidden" name="includeTargetSpeciesGrid" value="true" ><input type="hidden" name="target_species_subsample_method_id" value="'.$args['target_species_subsample_method_id'].'" ><table class="target-species-grid"><tr><th colspan=2>'.lang::get('Target Species').'</th>';
     $attrList = explode(',', $args['targetSpeciesAttrList']);
-    $attrIDs = array();
+    $attrIDs = [];
     foreach($attrList as $attr){
       $cell = false;
       // $retval .= '<th></th>'; // blank headings: will put captions in table itself.
@@ -625,23 +620,23 @@ indiciaData.speciesListInTextMax = '".$ctrlArgs[2]."';\n";
     if(isset($options['useCaptionsInHeader']))
       foreach($smpAttributes as $id=>$sattr)
         unset($smpAttributes[$id]['caption']);
-    $subSamples = array();
-    $subSamplesAttrs = array();
+    $subSamples = [];
+    $subSamplesAttrs = [];
     if(isset(data_entry_helper::$entity_to_load['sample:id'])){
       $smpOptions = array(
-        'table'=>'sample',
+        'table' => 'sample',
         'nocache'=>true,
-        'extraParams'=> $auth['read']+ array('view'=>'detail',
+        'extraParams'=> $auth['read']+ array('view' => 'detail',
             'parent_id' => data_entry_helper::$entity_to_load['sample:id'],
             'sample_method_id'=>$args['target_species_subsample_method_id']));
       $subSamples = data_entry_helper::get_population_data($smpOptions);
       foreach($subSamples as $sample) {
         $subSamplesAttrs[$sample['id']] = data_entry_helper::getAttributes(array(
-             'attrtable'=>'sample_attribute'
-            ,'valuetable'=>'sample_attribute_value'
+             'attrtable' => 'sample_attribute'
+            ,'valuetable' => 'sample_attribute_value'
             ,'id'=>$sample['id']
-            ,'key'=>'sample_id'
-            ,'fieldprefix'=>'{MyPrefix}:smpAttr'
+            ,'key' => 'sample_id'
+            ,'fieldprefix' => '{MyPrefix}:smpAttr'
             ,'extraParams'=>$auth['read']
             ,'survey_id'=>$args['survey_id']
             ,'sample_method_id'=>$args['target_species_subsample_method_id']), true);
@@ -653,10 +648,10 @@ indiciaData.speciesListInTextMax = '".$ctrlArgs[2]."';\n";
       $smpID=false;
       $fieldname = '{MyPrefix}:presence:'.$targetSpeciesAttr["attributeId"];
       $present='';
-      $attrOpts = array('lookUpKey'=>'meaning_id',
+      $attrOpts = array('lookUpKey' => 'meaning_id',
                         'extraParams' => $auth['read'],
                         'language' => iform_lang_iso_639_2($args['language']),
-                        'disabled'=>' disabled="disabled"');
+                        'disabled' => ' disabled="disabled"');
       foreach($subSamples as $subSample){
         foreach($subSamplesAttrs[$subSample['id']] as $id=>$attr) {
           if(isset($options['useCaptionsInHeader']))
@@ -857,7 +852,7 @@ hook_species_checklist_pre_delete_row=function(e) {
         '  if($record["id"] == {id}){'."\n".
         '    $taxaMeaning=$record["taxon_meaning_id"];'."\n".
         '  }'."\n".
-        '$taxaList=array();'."\n".
+        '$taxaList=[];'."\n".
         'foreach ($responseRecords as $record){'."\n".
         '  if($taxaMeaning==$record["taxon_meaning_id"]){'."\n".
         '    if($record["preferred"] == "f"){'."\n".
@@ -894,17 +889,17 @@ hook_species_checklist_pre_delete_row=function(e) {
 //    $options = data_entry_helper::check_arguments(func_get_args(), array('speciesListID', 'occAttrs', 'readAuth', 'extraParams'));
     $options = self::get_species_checklist_options($options);
     data_entry_helper::add_resource('autocomplete');
-    $occAttrControls = array();
-    $occAttrCaptions = array();
-    $occAttrs = array();
+    $occAttrControls = [];
+    $occAttrCaptions = [];
+    $occAttrs = [];
     // Load any existing sample's occurrence data into $entity_to_load
     if (isset(data_entry_helper::$entity_to_load['sample:id']))
       self::preload_species_checklist_occurrences(data_entry_helper::$entity_to_load['sample:id'], $options['readAuth'], $options);
     // at this point we are only dealing with occurrence attributes.
     $attributes = data_entry_helper::getAttributes(array(
-           'valuetable'=>'occurrence_attribute_value'
-           ,'attrtable'=>'occurrence_attribute'
-           ,'key'=>'occurrence_id'
+           'valuetable' => 'occurrence_attribute_value'
+           ,'attrtable' => 'occurrence_attribute'
+           ,'key' => 'occurrence_id'
            ,'fieldprefix'=>"{fieldname}"
            ,'extraParams'=>$options['readAuth']
            ,'survey_id'=>array_key_exists('survey_id', $options) ? $options['survey_id'] : null));
@@ -939,9 +934,9 @@ hook_species_checklist_pre_delete_row=function(e) {
     if($options['includeSubSample']) {
       $grid.="<input type='hidden' name='includeSubSample' id='includeSubSample' value='true' >";
       $smpattributes = data_entry_helper::getAttributes(array(
-           'valuetable'=>'sample_attribute_value'
-           ,'attrtable'=>'sample_attribute'
-           ,'key'=>'sample_id'
+           'valuetable' => 'sample_attribute_value'
+           ,'attrtable' => 'sample_attribute'
+           ,'key' => 'sample_id'
            ,'fieldprefix'=>"smpAttr"
            ,'extraParams'=>$options['readAuth']+array("untranslatedCaption"=>"Precision")
            ,'survey_id'=>(array_key_exists('survey_id', $options) ? $options['survey_id'] : null)
@@ -956,7 +951,7 @@ hook_species_checklist_pre_delete_row=function(e) {
       $grid .= self::get_species_checklist_clonable_row($options, $occAttrControls, $occAttrCaptions, $attributes, $precision);
       $grid .= '<table class="ui-widget ui-widget-content mnhnl-species-grid '.$options['class'].'" id="'.$options['id'].'">';
       $grid .= self::get_species_checklist_header($options, $occAttrs);
-      $rows = array();
+      $rows = [];
       $rowIdx = 1;
       /*
        * fieldnames: SC:<RowGroup>:<sampleID>:<ttlID>:<occurrenceID>:[present|sample:[date|etc]|occAttr:<attrID>[:<valueID>]]
@@ -1005,7 +1000,7 @@ hook_species_checklist_pre_delete_row=function(e) {
             $existing_value = (isset(data_entry_helper::$entity_to_load[$oldCtrlName]) ? data_entry_helper::$entity_to_load[$oldCtrlName] :
                                   (array_key_exists('default', $precision) ? $precision['default'] : ''));
             $ctrlOptions = array(
-              'class'=>'scPrecision ' . (isset($precision['class']) ? ' '.$precision['class'] : ''),
+              'class' => 'scPrecision ' . (isset($precision['class']) ? ' '.$precision['class'] : ''),
               'extraParams' => $options['readAuth'],
               'language' => $options['language']
             );
@@ -1033,7 +1028,7 @@ hook_species_checklist_pre_delete_row=function(e) {
               $attrDef = array_merge($attribute);
               // sc:<rowIdx>:<smp_id>:<ttlid>:<occ_id>:[field]";
               $ctrlArr = explode(':',$ctrlName,6);
-              $default = array();
+              $default = [];
               if ($ctrlArr[4]!="") {
                 $search = preg_grep("/^sc:".'[0-9]*'.":$ctrlArr[2]:$ctrlArr[3]:$ctrlArr[4]:$ctrlArr[5]".':[0-9]*$/', array_keys(data_entry_helper::$entity_to_load));
                 if(count($search)>0){
@@ -1153,7 +1148,7 @@ bindSpeciesOptions = {selectorID: \"addTaxonControl\",
           data_entry_helper::$javascript .= "bindSpeciesOptions.unitSpeciesMeaning=\"".$options['unitSpeciesMeaning']."\";\n";
       if(isset($options['rowControl'])){
         $rowControls = explode(';',$options['rowControl']);
-        $controlArr = array();
+        $controlArr = [];
         for($i=2; $i < count($rowControls); $i++){
           $parts=explode(',',$rowControls[$i],2);
           $termList = helper_base::get_termlist_terms(parent::$auth, $rowControls[1], array($parts[0]));
@@ -1259,14 +1254,14 @@ $('#entry_form').before(cloneableDiv);\n";
       throw new Exception('The speciesListID parameter must be provided for this species checklist.');
     // Apply default values
     $options = array_merge(array(
-        'header'=>'true',
+        'header' => 'true',
         'columns'=>1,
-        'attrCellTemplate'=>'attribute_cell',
+        'attrCellTemplate' => 'attribute_cell',
         'PHPtaxonLabel' => false,
         'occurrenceComment' => false,
         'occurrenceImages' => false,
         'id' => 'mnhnl-species-grid-'.rand(0,1000),
-        'colWidths' => array(),
+        'colWidths' => [],
         'taxonFilterField' => 'none'
     ), $options);
     // If filtering for a language, then use any taxa of that language. Otherwise, just pick the preferred names.
@@ -1291,7 +1286,7 @@ $('#entry_form').before(cloneableDiv);\n";
     // this sets up client side only required validation
     if (array_key_exists('required', $options))
       $requiredAttrs = explode(',',$options['required']);
-    else $requiredAttrs = array();
+    else $requiredAttrs = [];
 
     if (array_key_exists('occAttrs', $options))
       $attrs = $options['occAttrs'];
@@ -1325,27 +1320,27 @@ $('#entry_form').before(cloneableDiv);\n";
   }
 
   public static function preload_species_checklist_occurrences($sampleId, $readAuth, $options) {
-    $occurrenceIds = array();
-    $sampleIds = array();
-    $sampleAttrs = array();
+    $occurrenceIds = [];
+    $sampleIds = [];
+    $sampleAttrs = [];
     // don't load from the db if there are validation errors, since the $_POST will already contain all the
     // data we need.
     if (is_null(data_entry_helper::$validation_errors)) {
-      $extraParams = $readAuth + array('view'=>'detail','sample_id'=>$sampleId,'deleted'=>'f');
+      $extraParams = $readAuth + array('view' => 'detail','sample_id'=>$sampleId,'deleted' => 'f');
       if($options['includeSubSample']){
         if(!isset($options['subsample_method_id']) || $options['subsample_method_id']=="")
           throw new exception('subsample_method_id must be set for this form configuration.');
         $samples = data_entry_helper::get_population_data(array(
           'table' => 'sample',
-          'extraParams' => $readAuth + array('view'=>'detail','parent_id'=>$sampleId,'deleted'=>'f','sample_method_id'=>$options['subsample_method_id']),
+          'extraParams' => $readAuth + array('view' => 'detail','parent_id'=>$sampleId,'deleted' => 'f','sample_method_id'=>$options['subsample_method_id']),
           'nocache' => true));
         foreach($samples as $sample) {
           $sampleIds[$sample['id']] = $sample;
           $sampleAttrs[$sample['id']] = data_entry_helper::getAttributes(array(
-               'attrtable'=>'sample_attribute'
-              ,'valuetable'=>'sample_attribute_value'
-              ,'key'=>'sample_id'
-              ,'fieldprefix'=>'smpAttr'
+               'attrtable' => 'sample_attribute'
+              ,'valuetable' => 'sample_attribute_value'
+              ,'key' => 'sample_id'
+              ,'fieldprefix' => 'smpAttr'
               ,'extraParams'=>$readAuth
               ,'survey_id'=>$options['survey_id']
               ,'sample_method_id'=>$options['subsample_method_id']
@@ -1465,7 +1460,7 @@ mapInitialisationHooks.push(function(mapdiv) {
       if ($precision) {
       	$ctrlId = $prefix.":smpAttr:".$precision['attributeId'];
       	$ctrlOptions = array(
-      			'class'=>'scPrecision ' . (isset($precision['class']) ? ' '.$precision['class'] : ''),
+      			'class' => 'scPrecision ' . (isset($precision['class']) ? ' '.$precision['class'] : ''),
       			'extraParams' => $options['readAuth'],
       			'language' => $options['language']
       	);
@@ -1547,9 +1542,9 @@ mapInitialisationHooks.push(function(mapdiv) {
 
   public static function get_species_checklist_record_list($options) {
     // at this point the data_entry_helper::$entity_to_load has been preloaded with the occurrence data.
-    $taxalist = array();
+    $taxalist = [];
     // copy the options array so we can modify it
-    $extraTaxonOptions = array_merge(array(), $options);
+    $extraTaxonOptions = array_merge([], $options);
     // We don't want to filter the taxa to be added, because if they are in the sample, then they must be included whatever.
     // unset($extraTaxonOptions['extraParams']['taxon_list_id']);
     unset($extraTaxonOptions['extraParams']['preferred']);
@@ -1557,7 +1552,7 @@ mapInitialisationHooks.push(function(mapdiv) {
     unset($extraTaxonOptions['nocache']);
     // append the taxa to the list to load into the grid
     $fullTaxalist = data_entry_helper::get_population_data($extraTaxonOptions);
-    $recordList = array();
+    $recordList = [];
     foreach(data_entry_helper::$entity_to_load as $key => $value) {
       $parts = explode(':', $key,6);
       // Is this taxon attribute data?
@@ -1642,13 +1637,13 @@ mapInitialisationHooks.push(function(mapdiv) {
        foreach($values as $key => $value){
         $parts = explode(':', $key, 5);
         if ($parts[0] == 'targ' && $parts[3] == 'presence'){
-          $smp = array('fkId' => 'parent_id', 'model' => array('id' => 'sample', 'fields' => array()));
+          $smp = array('fkId' => 'parent_id', 'model' => array('id' => 'sample', 'fields' => []));
           $smp['model']['fields']['survey_id'] = array('value' => $values['survey_id']);
           $smp['model']['fields']['website_id'] = array('value' => $values['website_id']);
           $smp['model']['fields']['date'] = array('value' => $values['sample:date']);
           $smp['model']['fields']['sample_method_id'] = array('value' => $values['target_species_subsample_method_id']);
           $smp['model']['fields']['smpAttr:'.$parts[4]] = array('value' => $parts[2]);
-          $smp['copyFields'] = array('location_id'=>'location_id'); // from parent->to child
+          $smp['copyFields'] = array('location_id' => 'location_id'); // from parent->to child
           if($value != '1') $smp['model']['fields']['deleted'] = array('value' => 't');
           if($parts[1] != '-') $smp['model']['fields']['id'] = array('value' => $parts[1]);
           foreach($values as $key1 => $value1){
@@ -1683,8 +1678,8 @@ mapInitialisationHooks.push(function(mapdiv) {
     if (!array_key_exists('website_id', $arr))
       throw new Exception('Cannot find website id in POST array!');
     // not doing occurrence images at this point - TBD
-    $samples = array();
-    $occurrences = array();
+    $samples = [];
+    $occurrences = [];
     foreach ($arr as $key=>$value){
       // Don't explode the last element for attributes
       $a = explode(':', $key, 6);
@@ -1699,7 +1694,7 @@ mapInitialisationHooks.push(function(mapdiv) {
             // for a multiple entry checkbox group, need to remove the sc:--GroupID--:--SampleID--:--TTLID--:--OccurrenceID-- to give value:occAttr:value[:value]
             $newvalue = $value;
             if(is_array($value)) {
-              $newvalue = array();
+              $newvalue = [];
               foreach($value as $X){
                 $tokens = explode(':', $X, 7);
                 $newvalue[] = (count($tokens)==7 ? $tokens[0].':'.$tokens[6] : $X);
@@ -1713,7 +1708,7 @@ mapInitialisationHooks.push(function(mapdiv) {
         }
       }
     }
-    $subModels = array();
+    $subModels = [];
     foreach ($occurrences as $id => $occurrence) {
       $present = self::wrap_species_checklist_record_present($occurrence);
       if (array_key_exists('id', $occurrence) || $present) { // must always handle row if already present in the db
@@ -1730,7 +1725,7 @@ mapInitialisationHooks.push(function(mapdiv) {
           $smp = submission_builder::wrap($samples[$id], 'sample');
           $smp['subModels'] = array(array('fkId' => 'sample_id', 'model' => $occ));
           $smp = array('fkId' => 'parent_id', 'model' => $smp);
-          if(!isset($samples[$id]['date'])) $smp['copyFields'] = array('date_start'=>'date_start','date_end'=>'date_end','date_type'=>'date_type'); // from parent->to child
+          if(!isset($samples[$id]['date'])) $smp['copyFields'] = array('date_start' => 'date_start','date_end' => 'date_end','date_type' => 'date_type'); // from parent->to child
           $subModels[] = $smp;
         } else {
           $subModels[] = array('fkId' => 'sample_id', 'model' => $occ);

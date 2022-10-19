@@ -22,8 +22,6 @@ global $custom_terms;
 
 /**
  * Language terms for the survey_reporting_form_2 form.
- *
- * @package  Client
  */
 $custom_terms = [
 // Tab Titles

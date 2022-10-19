@@ -21,12 +21,9 @@
 /**
  * Prebuilt Indicia data entry form.
  * NB has Drupal specific code.
- *
- * @package    Client
- * @subpackage PrebuiltForms
  */
 
-require_once('includes/dynamic.php');
+require_once 'includes/dynamic.php';
 
 class iform_dynamic_person extends iform_dynamic {
 
@@ -36,9 +33,9 @@ class iform_dynamic_person extends iform_dynamic {
    */
   public static function get_dynamic_person_definition() {
     return array(
-      'title'=>'Person entry form',
+      'title' => 'Person entry form',
       'category' => 'General Purpose Data Entry Forms',
-      'description'=>'A data entry form allowing people to be entered directly into the person table without needing a drupal account. '.
+      'description' => 'A data entry form allowing people to be entered directly into the person table without needing a drupal account. '.
           'An example use might be for people wishing to register interest in events without needing a formal account.'
     );
   }
@@ -54,9 +51,9 @@ class iform_dynamic_person extends iform_dynamic {
       parent::get_parameters(),
       array(
         array(
-          'name'=>'structure',
-          'caption'=>'Form Structure',
-          'description'=>'Define the structure of the form. Each component goes on a new line and is nested inside the previous component where appropriate. The following types of '.
+          'name' => 'structure',
+          'caption' => 'Form Structure',
+          'description' => 'Define the structure of the form. Each component goes on a new line and is nested inside the previous component where appropriate. The following types of '.
             "component can be specified. <br/>".
             "<strong>=tab/page name=</strong> is used to specify the name of a tab or wizard page. (Alpha-numeric characters only)<br/>".
             "<strong>=*=</strong> indicates a placeholder for putting any custom attribute tabs not defined in this form structure. <br/>".
@@ -76,7 +73,7 @@ class iform_dynamic_person extends iform_dynamic {
             "<strong>[psnAttr:<i>n</i>]</strong> is used to insert a particular custom attribute identified by its ID number<br/>".
             "<strong>@helpText</strong> is used to define help text to add to the tab, e.g. @helpText=Enter the surname of the person. <br/>".
             "<strong>all else</strong> is copied to the output html so you can add structure for styling.",
-          'type'=>'textarea',
+          'type' => 'textarea',
           'default' =>
               "=Information=\r\n".
               "[first name]\r\n".
@@ -87,11 +84,11 @@ class iform_dynamic_person extends iform_dynamic {
           'group' => 'User Interface'
         ),
         array(
-          'name'=>'defaults',
-          'caption'=>'Default Values',
-          'description'=>'Supply default values for each field as required. On each line, enter fieldname=value. For custom attributes, '.
+          'name' => 'defaults',
+          'caption' => 'Default Values',
+          'description' => 'Supply default values for each field as required. On each line, enter fieldname=value. For custom attributes, '.
               'the fieldname is the untranslated caption. For other fields, it is the model and fieldname, e.g. person.first_name. ',
-          'type'=>'textarea',
+          'type' => 'textarea',
           'required' => false,
         ),
       )
@@ -121,14 +118,14 @@ class iform_dynamic_person extends iform_dynamic {
     } else if (array_key_exists('new', $_GET)){
       // request to create new record (e.g. by clicking on button in grid view)
       $mode = self::MODE_NEW;
-      data_entry_helper::$entity_to_load = array();
+      data_entry_helper::$entity_to_load = [];
     }
     return $mode;
   }
 
   // Get an existing person.
   protected static function getEntity($args, $auth) {
-    data_entry_helper::$entity_to_load = array();
+    data_entry_helper::$entity_to_load = [];
     data_entry_helper::load_existing_record($auth['read'], 'person', $_GET['person_id'], 'detail', false, false);
   }
 
@@ -137,10 +134,10 @@ class iform_dynamic_person extends iform_dynamic {
             data_entry_helper::$entity_to_load['person:id'] : null;
     $attrOpts = array(
     'id' => $id
-    ,'valuetable'=>'person_attribute_value'
-    ,'attrtable'=>'person_attribute'
-    ,'key'=>'person_id'
-    ,'fieldprefix'=>'psnAttr'
+    ,'valuetable' => 'person_attribute_value'
+    ,'attrtable' => 'person_attribute'
+    ,'key' => 'person_id'
+    ,'fieldprefix' => 'psnAttr'
     ,'extraParams'=>$auth['read']
     );
     $attributes = data_entry_helper::getAttributes($attrOpts, false);

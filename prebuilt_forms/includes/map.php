@@ -258,7 +258,7 @@ function iform_map_get_georef_parameters() {
  */
 function iform_map_get_map_options($args, $readAuth) {
   // read out the activated preset layers
-  $presetLayers = array();
+  $presetLayers = [];
   if (!empty($args['preset_layers'])) {
     foreach($args['preset_layers'] as $key => $value) {
       if (is_int($key)) {
@@ -275,7 +275,7 @@ function iform_map_get_map_options($args, $readAuth) {
     'readAuth' => $readAuth,
     'presetLayers' => $presetLayers,
     'editLayer' => true,
-    'layers' => array(),
+    'layers' => [],
     'initial_lat'=>$args['map_centroid_lat'],
     'initial_long'=>$args['map_centroid_long'],
     'initial_zoom'=>(int) $args['map_zoom'],
@@ -363,7 +363,7 @@ function iform_map_zoom_to_location($locationId, $readAuth) {
       )
   );
   $response = data_entry_helper::get_population_data($getPopDataOpts);
-  $geoms = array();
+  $geoms = [];
   foreach ($response as $location)
     $geoms[] = $location['boundary_geom'] ?
         $location['boundary_geom'] : $location['centroid_geom'];

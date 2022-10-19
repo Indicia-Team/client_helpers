@@ -14,11 +14,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package Client
- * @subpackage PrebuiltForms
  * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link http://code.google.com/p/indicia/
+ * @link https://github.com/Indicia-Team/client_helpers
  */
 
 require_once 'includes/map.php';
@@ -30,9 +28,6 @@ require_once 'includes/language_utils.php';
  *
  * Prebuilt Indicia data entry form that presents taxon search box, date control, map picker,
  * survey selector and comment entry controls.
- *
- * @package Client
- * @subpackage PrebuiltForms
  */
 class iform_mnhnl_citizen_science_1 {
 
@@ -407,7 +402,7 @@ class iform_mnhnl_citizen_science_1 {
     $r .= "<input type=\"hidden\" name=\"record_status\" value=\"$args[record_status]\" />\n";
     $r .= '<p class="page-notice ui-state-highlight ui-corner-all">' . lang::get('place tab instructions') . "</p>";
     // Build the array of spatial reference systems into a format Indicia can use.
-    $systems = array();
+    $systems = [];
     $list = explode(',', str_replace(' ', '', $args['spatial_systems']));
     foreach ($list as $system) {
       $systems[$system] = lang::get($system);

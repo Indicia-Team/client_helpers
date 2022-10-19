@@ -14,8 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package Client
- * @subpackage PrebuiltForms
  * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers/
@@ -23,9 +21,6 @@
 
 /**
  * Form for editing a scratchpad list (a list of pointers to entities in the database, e.g. a list of species or locations).
- *
- * @package Client
- * @subpackage PrebuiltForms
  */
 class iform_scratchpad_list_edit {
 

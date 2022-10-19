@@ -1,6 +1,6 @@
 <?php
 
-require_once('mobile_sample_occurrence.php');
+require_once 'mobile_sample_occurrence.php';
 
 global $indicia_templates;
 
@@ -8,17 +8,17 @@ global $indicia_templates;
 $indicia_templates['label'] = '<label for="{id}"{labelClass}>{label}</label>'."\n";
 
 class iform_icpveg_mobile extends iform_mobile_sample_occurrence {
-  
+
   public static function get_icpveg_mobile_definition() {
     return array(
-      'title'=>'ICP Vegetaion Ozone Injury Survey MOBILE!',
+      'title' => 'ICP Vegetaion Ozone Injury Survey MOBILE!',
       'category' => 'Specific Surveys',
-      'description'=>'A mobile sample-occurrence form for ICP Vegetation.'
+      'description' => 'A mobile sample-occurrence form for ICP Vegetation.'
     );
   }
 
   /**
-   * Override the sensitivity control to create a simple select with default value 
+   * Override the sensitivity control to create a simple select with default value
    * set by user profile.
    */
   protected static function get_control_sensitivity($auth, $args, $tabAlias, $options) {
@@ -32,9 +32,9 @@ class iform_icpveg_mobile extends iform_mobile_sample_occurrence {
       // no blurring of detail.
       $default_value = '';
     }
-    
+
     return data_entry_helper::select(array_merge(array(
-      'fieldname'=>'occurrence:sensitivity_precision',
+      'fieldname' => 'occurrence:sensitivity_precision',
       'label'=>lang::get('ICPVeg Sensitivity'),
       'lookupValues' => array('50000'=>lang::get('ICPVeg Sensitivity 50km')),
       'blankText' => lang::get('ICPVeg Sensitivity blankText'),
@@ -49,7 +49,7 @@ class iform_icpveg_mobile extends iform_mobile_sample_occurrence {
    */
   public static function get_blank_page($id = NULL, $caption = NULL){
     //back button
-    $options = array();
+    $options = [];
     $options['href'] = '#';
     $options['caption'] = 'Back';
     $options['icon'] = 'arrow-l';
@@ -57,7 +57,7 @@ class iform_icpveg_mobile extends iform_mobile_sample_occurrence {
     $back_button = mobile_entry_helper::apply_template('jqmBackButton', $options);
 
     //gps button
-    $options = array();
+    $options = [];
     $options['onclick'] = "app.navigation.gpsPopup()";
     $options['href'] = "#";
     $options['id'] = "";
@@ -76,18 +76,18 @@ class iform_icpveg_mobile extends iform_mobile_sample_occurrence {
           JQM_CONTENT => array($back_button, $caption, $gps_button)
         ),
         JQM_CONTENT => array(
-          JQM_ATTR => array(),
-          JQM_CONTENT => array()
+          JQM_ATTR => [],
+          JQM_CONTENT => []
         ),
         JQM_FOOTER => array(
           JQM_ATTR => array("data-position" => "fixed", "data-tap-toggle" => "false"),
-          JQM_CONTENT => array()
+          JQM_CONTENT => []
         )
       )
     );
   }
 
 
-  
+
 }
 

@@ -13,19 +13,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package	Client
- * @subpackage PrebuiltForms
- * @author	Indicia Team
- * @license	http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link 	http://code.google.com/p/indicia/
+ * @author Indicia Team
+ * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
+ * @link https://github.com/Indicia-Team/client_helpers
  */
 
 /**
  * Prebuilt Indicia data entry form.
  * NB has Drupal specific code.
- *
- * @package	Client
- * @subpackage PrebuiltForms
  *
  * TBD:
  * Introduce read only fields on section list for transect and date, copied over from front page.
@@ -36,8 +31,8 @@
  * Should be set up in "wizard" buttons mode
  */
 
-require_once('mnhnl_dynamic_1.php');
-require_once('includes/mnhnl_common.php');
+require_once 'mnhnl_dynamic_1.php';
+require_once 'includes/mnhnl_common.php';
 
 class iform_mnhnl_butterflies extends iform_mnhnl_dynamic_1 {
   protected static $locations;
@@ -51,7 +46,7 @@ class iform_mnhnl_butterflies extends iform_mnhnl_dynamic_1 {
     return array(
       'title'=>self::get_title(),
       'category' => 'MNHNL forms',
-      'description'=>'MNHNL Butterflies form. Inherits from Dynamic 1.'
+      'description' => 'MNHNL Butterflies form. Inherits from Dynamic 1.'
     );
   }
   /**
@@ -67,71 +62,71 @@ class iform_mnhnl_butterflies extends iform_mnhnl_dynamic_1 {
       parent::get_parameters(),
       array(
         array(
-          'name'=>'qual_dist_term_id',
-          'caption'=>'Qualitive Distribution Termlist ID',
-          'description'=>'The Indicia ID of the termlist for the Qualitive distribution flag.',
-          'type'=>'int'
+          'name' => 'qual_dist_term_id',
+          'caption' => 'Qualitive Distribution Termlist ID',
+          'description' => 'The Indicia ID of the termlist for the Qualitive distribution flag.',
+          'type' => 'int'
         ),
         array(
-          'name'=>'qual_dist_attr_id',
-          'caption'=>'Qualitive Distribution Occurrence Attribute ID',
-          'description'=>'The Indicia ID of the occurrence Attribute for the Qualitive distribution flag.',
-          'type'=>'int'
+          'name' => 'qual_dist_attr_id',
+          'caption' => 'Qualitive Distribution Occurrence Attribute ID',
+          'description' => 'The Indicia ID of the occurrence Attribute for the Qualitive distribution flag.',
+          'type' => 'int'
         ),
         array(
-          'name'=>'ignore_qual_dist_id',
-          'caption'=>'Qualitive Distribution Termlist Term Ignore ID',
-          'description'=>'The Indicia ID of the termlist term for which a occurrence is not generated.',
-          'type'=>'int'
+          'name' => 'ignore_qual_dist_id',
+          'caption' => 'Qualitive Distribution Termlist Term Ignore ID',
+          'description' => 'The Indicia ID of the termlist term for which a occurrence is not generated.',
+          'type' => 'int'
         ),
         array(
-          'name'=>'quant_dist_attr_id',
-          'caption'=>'Quantative Distribution Occurrence Count Attribute ID',
-          'description'=>'The Indicia ID of the Occurrence Attribute for the Quantative Distribution Count.',
-          'type'=>'int'
+          'name' => 'quant_dist_attr_id',
+          'caption' => 'Quantative Distribution Occurrence Count Attribute ID',
+          'description' => 'The Indicia ID of the Occurrence Attribute for the Quantative Distribution Count.',
+          'type' => 'int'
         ),
         array(
-          'name'=>'observer_attr_id',
-          'caption'=>'Observer Sample Attribute ID',
-          'description'=>'The Indicia ID of the Sample Attribute for the Observer.',
-          'type'=>'int'
+          'name' => 'observer_attr_id',
+          'caption' => 'Observer Sample Attribute ID',
+          'description' => 'The Indicia ID of the Sample Attribute for the Observer.',
+          'type' => 'int'
         ),
         array(
-          'name'=>'month_attr_id',
-          'caption'=>'Month Sample Attribute ID',
-          'description'=>'The Indicia ID of the Sample Month drop down Attribute.',
-          'type'=>'int'
+          'name' => 'month_attr_id',
+          'caption' => 'Month Sample Attribute ID',
+          'description' => 'The Indicia ID of the Sample Month drop down Attribute.',
+          'type' => 'int'
         ),
         array(
-          'name'=>'aucune_attr_id',
-          'caption'=>'No observation Sample Attribute ID',
-          'description'=>'The Indicia ID of the Sample Attribute for No observation.',
-          'type'=>'int'
+          'name' => 'aucune_attr_id',
+          'caption' => 'No observation Sample Attribute ID',
+          'description' => 'The Indicia ID of the Sample Attribute for No observation.',
+          'type' => 'int'
         ),
         array(
-          'name'=>'init_species_ids',
-          'caption'=>'List of default species to be included in Quantative Distribution list',
-          'description'=>'Comma separated list of the Indicia IDs of those species to be included by default in the Quantative Distribution list.',
-          'type'=>'string',
+          'name' => 'init_species_ids',
+          'caption' => 'List of default species to be included in Quantative Distribution list',
+          'description' => 'Comma separated list of the Indicia IDs of those species to be included by default in the Quantative Distribution list.',
+          'type' => 'string',
           'required'=>false
         ),
         array(
-          'name'=>'max_species_ids',
-          'caption'=>'max number of species to be returned by a search',
-          'description'=>'The maximum number of species to be returned by the drop downs at any one time.',
+          'name' => 'max_species_ids',
+          'caption' => 'max number of species to be returned by a search',
+          'description' => 'The maximum number of species to be returned by the drop downs at any one time.',
           'default'=>25,
-          'type'=>'int'
+          'type' => 'int'
         ),
         array(
-          'name'=>'max_number_sections',
-          'caption'=>'Maximum Number of Sections',
-          'description'=>'The Maximum Number of Sections in the Section List.',
+          'name' => 'max_number_sections',
+          'caption' => 'Maximum Number of Sections',
+          'description' => 'The Maximum Number of Sections in the Section List.',
           'default'=>8,
-          'type'=>'int'
+          'type' => 'int'
         )
       )
     );
-    $retVal=array();
+    $retVal=[];
     foreach($parentVal as $param){
       if($param['name'] == 'structure'){
         $param['default'] =
@@ -382,8 +377,8 @@ deleteSurvey = function(sampleID){
   protected static function get_control_transect($auth, $args, $tabalias, $options) {
     $defAttrOptions = array('extraParams'=>$auth['read'], 'validation' => array('required'));
     if(self::$locations == 'all'){
-      $locOptions = array_merge(array('label'=>lang::get('LANG_Transect'), 'id'=>'sample:location_id'), $defAttrOptions);
-      $locOptions['extraParams'] = array_merge(array('parent_id'=>'NULL', 'view'=>'detail', 'orderby'=>'name'), $locOptions['extraParams']);
+      $locOptions = array_merge(array('label'=>lang::get('LANG_Transect'), 'id' => 'sample:location_id'), $defAttrOptions);
+      $locOptions['extraParams'] = array_merge(array('parent_id' => 'NULL', 'view' => 'detail', 'orderby' => 'name'), $locOptions['extraParams']);
       $ret = data_entry_helper::location_select($locOptions);
     } else {
       // can't use location select due to location filtering.
@@ -436,13 +431,13 @@ jQuery(\"#sample\\\\:location_id\").change();
       $extraParams['taxon_list_id'] = array($args['list_id'], $args['extra_list_id']);
     $species_list_args=array_merge(array(
           'label'=>lang::get('transectgrid:taxa_taxon_list_id'),
-          'fieldname'=>'transectgrid_taxa_taxon_list_id',
-          'id'=>'transectgrid_taxa_taxon_list_id',
-          'table'=>'taxa_taxon_list',
-          'captionField'=>'taxon',
-          'valueField'=>'taxon_meaning_id',
+          'fieldname' => 'transectgrid_taxa_taxon_list_id',
+          'id' => 'transectgrid_taxa_taxon_list_id',
+          'table' => 'taxa_taxon_list',
+          'captionField' => 'taxon',
+          'valueField' => 'taxon_meaning_id',
           'columns'=>2,
-          'parentField'=>'parent_id',
+          'parentField' => 'parent_id',
           'extraParams'=>$extraParams,
           'numValues'=>$args['max_species_ids']
     ), $options);
@@ -451,11 +446,11 @@ jQuery(\"#sample\\\\:location_id\").change();
       return '<p>Can not use tree browser in this context</p>';
     // this termlist is language independant so ignore language
     $detail_args = array(
-        'label'=>'{LABEL}',
-        'fieldname'=>'{FIELDNAME}',
-        'table'=>'termlists_term',
-        'captionField'=>'term',
-        'valueField'=>'id',
+        'label' => '{LABEL}',
+        'fieldname' => '{FIELDNAME}',
+        'table' => 'termlists_term',
+        'captionField' => 'term',
+        'valueField' => 'id',
         'extraParams'=>$auth['read'] + array('termlist_id' => $args['qual_dist_term_id']),
         'suffixTemplate' => 'zilch',
         'optionSeparator' => '',
@@ -592,10 +587,10 @@ jQuery('input#transectgrid_taxa_taxon_list_id\\\\:taxon').result(function(event,
   protected static function get_control_sectionlist($auth, $args, $tabalias, $options) {
     $numAttrs=count($options['smpAttr']);
     $attributes = data_entry_helper::getAttributes(array(
-       'valuetable'=>'sample_attribute_value'
-       ,'attrtable'=>'sample_attribute'
-       ,'key'=>'sample_id'
-       ,'fieldprefix'=>'smpAttr'
+       'valuetable' => 'sample_attribute_value'
+       ,'attrtable' => 'sample_attribute'
+       ,'key' => 'sample_id'
+       ,'fieldprefix' => 'smpAttr'
        ,'extraParams'=>$auth['read']
        ,'survey_id'=>$args['survey_id']
     ));
@@ -616,17 +611,17 @@ jQuery('input#transectgrid_taxa_taxon_list_id\\\\:taxon').result(function(event,
     else
       $extraParams['taxon_list_id'] = array($args['list_id'], $args['extra_list_id']);
     $species_list_args=array_merge(array(
-          'fieldname'=>'sectionlist_taxa_taxon_list_id',
-          'id'=>'sectionlist_taxa_taxon_list_id',
-          'table'=>'taxa_taxon_list',
-          'captionField'=>'taxon',
-          'valueField'=>'taxon_meaning_id',
+          'fieldname' => 'sectionlist_taxa_taxon_list_id',
+          'id' => 'sectionlist_taxa_taxon_list_id',
+          'table' => 'taxa_taxon_list',
+          'captionField' => 'taxon',
+          'valueField' => 'taxon_meaning_id',
           'columns'=>2,
-          'parentField'=>'parent_id',
+          'parentField' => 'parent_id',
           'extraParams'=>$extraParams,
           'numValues'=>$args['max_species_ids']
     ), $options);
-    $defNRAttrOptions = array('extraParams'=>$auth['read']+array('orderby'=>'id'),
+    $defNRAttrOptions = array('extraParams'=>$auth['read']+array('orderby' => 'id'),
         'lookUpKey' => 'meaning_id',
 //      'language' => iform_lang_iso_639_2($args['language']),
     );
@@ -926,7 +921,7 @@ jQuery('input#sectionlist_taxa_taxon_list_id\\\\:taxon').result(function(event, 
     iform_load_helpers(['submission_builder']);
     $sampleMod = submission_builder::wrap_with_images($values, 'sample');
     if(isset($values['sample:deleted'])) return($sampleMod);
-    $subsamples = array();
+    $subsamples = [];
     // first do transect grid
   	for($i=0; $i<5; $i++) {
       // Fieldname is TG:speciesID:gridX:gridY:GridsampleID:OccID:AttrID
@@ -935,7 +930,7 @@ jQuery('input#sectionlist_taxa_taxon_list_id\\\\:taxon').result(function(event, 
 	      'fkId' => 'parent_id',
 		  'model' => array(
             'id' => 'sample',
-            'fields' => array()));
+            'fields' => []));
         if(isset($values['TGS:'.($j*2).':'.($i*2)]))
           $sa['model']['fields']['id'] = array('value' => $values['TGS:'.($j*2).':'.($i*2)]);
         $sa['model']['fields']['date'] = array('value' => $values['sample:date']);
@@ -943,12 +938,12 @@ jQuery('input#sectionlist_taxa_taxon_list_id\\\\:taxon').result(function(event, 
         $sa['model']['fields']['location_name'] = array('value' => 'GR '.$values['sample:location_name'].' '.($j*2).($i*2));
         $sa['model']['fields']['website_id'] = array('value' => $values['website_id']);
         $sa['model']['fields']['survey_id'] = array('value' => $values['survey_id']);
-        $suboccs = array();
+        $suboccs = [];
         foreach($values as $key => $value){
         	$parts = explode(':', $key);
         	if ($parts[0] == 'TG' && $parts[2] == (string)($j*2) && $parts[3] == (string)($i*2)){
         		$occ = array('fkId' => 'sample_id',
-                             'model' => array('id' => 'occurrence', 'fields' => array()));
+                             'model' => array('id' => 'occurrence', 'fields' => []));
                 $occ['model']['fields']['taxa_taxon_list_id'] = array('value' => $parts[1]);
                 $occ['model']['fields']['website_id'] = array('value' => $values['website_id']);
                 if($parts[5] != '-'){
@@ -959,7 +954,7 @@ jQuery('input#sectionlist_taxa_taxon_list_id\\\\:taxon').result(function(event, 
                   $attrFields['id'] = $parts[6];
                 }
                 $occ['model']['metaFields'] = array(
-                    'occAttributes' => array('value' => array(array('id'=>'occurrence', 'fields' => $attrFields))));
+                    'occAttributes' => array('value' => array(array('id' => 'occurrence', 'fields' => $attrFields))));
                 if($parts[5] != '-' || $value != $args['ignore_qual_dist_id'])
                   $suboccs[] = $occ;
             }
@@ -976,7 +971,7 @@ jQuery('input#sectionlist_taxa_taxon_list_id\\\\:taxon').result(function(event, 
 	      'fkId' => 'parent_id',
 	      'model' => array(
           'id' => 'sample',
-          'fields' => array()));
+          'fields' => []));
       if(isset($values['SLS:'.$i]))
           $sa['model']['fields']['id'] = array('value' => $values['SLS:'.$i]);
       $sa['model']['fields']['date'] = array('value' => $values['sample:date']);
@@ -984,12 +979,12 @@ jQuery('input#sectionlist_taxa_taxon_list_id\\\\:taxon').result(function(event, 
       $sa['model']['fields']['location_name'] = array('value' => 'SL '.$values['sample:location_name'].' '.$i);
       $sa['model']['fields']['website_id'] = array('value' => $values['website_id']);
       $sa['model']['fields']['survey_id'] = array('value' => $values['survey_id']);
-      $saattrs = array();
+      $saattrs = [];
       foreach($values as $key => $value){
         $parts = explode(':', $key);
         if ($parts[0] == 'SLA' && $parts[1] == (string)$i){
           // Fieldname is SLA:section:SectionsampleID:AttrValID:AttrID
-          $attr = array("id" => "sample", "fields" => array());
+          $attr = array("id" => "sample", "fields" => []);
           $attr['fields']['sample_attribute_id'] = $parts[4];
           if($parts[3] != '-') $attr['fields']['id'] = $parts[3];
           $attr['fields']['value'] = $value;
@@ -998,7 +993,7 @@ jQuery('input#sectionlist_taxa_taxon_list_id\\\\:taxon').result(function(event, 
       }
       if(count($saattrs)>0)
           $sa['model']['metaFields'] = array('smpAttributes' => array('value' => $saattrs));
-      $suboccs = array();
+      $suboccs = [];
       foreach($values as $key => $value){
         $parts = explode(':', $key);
         if ($parts[0] == 'SL' && $parts[2] == (string)$i){
@@ -1022,7 +1017,7 @@ jQuery('input#sectionlist_taxa_taxon_list_id\\\\:taxon').result(function(event, 
         $delList = explode(',', $values['TGDEL']);
         foreach($delList as $occID){
           $occ = array('fkId' => 'sample_id',
-                             'model' => array('id' => 'occurrence', 'fields' => array()));
+                             'model' => array('id' => 'occurrence', 'fields' => []));
           $occ['model']['fields']['website_id'] = array('value' => $values['website_id']);
           $occ['model']['fields']['id'] = array('value' => $occID);
           $occ['model']['fields']['deleted'] = array('value' => 't');
@@ -1035,7 +1030,7 @@ jQuery('input#sectionlist_taxa_taxon_list_id\\\\:taxon').result(function(event, 
         $delList = explode(',', $values['SLDEL']);
         foreach($delList as $occID){
           $occ = array('fkId' => 'sample_id',
-                             'model' => array('id' => 'occurrence', 'fields' => array()));
+                             'model' => array('id' => 'occurrence', 'fields' => []));
           $occ['model']['fields']['website_id'] = array('value' => $values['website_id']);
           $occ['model']['fields']['id'] = array('value' => $occID);
           $occ['model']['fields']['deleted'] = array('value' => 't');
@@ -1050,9 +1045,9 @@ jQuery('input#sectionlist_taxa_taxon_list_id\\\\:taxon').result(function(event, 
 
   protected static function getReportActions() {
     return array(array('display' => '', 'actions' =>
-            array(array('caption' => lang::get('Edit'), 'url'=>'{currentUrl}', 'urlParams'=>array('sample_id'=>'{sample_id}')))),
+            array(array('caption' => lang::get('Edit'), 'url' => '{currentUrl}', 'urlParams'=>array('sample_id' => '{sample_id}')))),
         array('display' => '', 'actions' =>
-            array(array('caption' => lang::get('Delete'), 'javascript'=>'deleteSurvey({sample_id})'))));
+            array(array('caption' => lang::get('Delete'), 'javascript' => 'deleteSurvey({sample_id})'))));
   }
 
 

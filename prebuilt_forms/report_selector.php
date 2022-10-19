@@ -14,8 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package Client
- * @subpackage PrebuiltForms
  * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers/
@@ -23,9 +21,6 @@
 
 /**
  * A form for providing a way of selecting and running one of a catalogue of reports.
- *
- * @package Client
- * @subpackage PrebuiltForms
  */
 class iform_report_selector {
 
@@ -47,7 +42,7 @@ class iform_report_selector {
    */
   public static function get_report_selector_definition() {
     return array(
-      'title'=>'Report selector',
+      'title' => 'Report selector',
       'category' => 'Reporting',
       'description' => 'Provides a library of ready made reports that the user can browse through and run.'
     );
@@ -65,13 +60,13 @@ class iform_report_selector {
       iform_map_get_map_parameters(),
       array(
         array(
-          'name'=>'my_sites_psn_attr_id',
-          'caption'=>'Attribute used to store my sites',
-          'description'=>'Select the person attribute used to link users to their recording sites.',
-          'type'=>'select',
-          'table'=>'person_attribute',
-          'valueField'=>'id',
-          'captionField'=>'caption'
+          'name' => 'my_sites_psn_attr_id',
+          'caption' => 'Attribute used to store my sites',
+          'description' => 'Select the person attribute used to link users to their recording sites.',
+          'type' => 'select',
+          'table' => 'person_attribute',
+          'valueField' => 'id',
+          'captionField' => 'caption'
 	      ),
         array(
           'name' => 'main_location_layer_type_id',
@@ -81,10 +76,10 @@ class iform_report_selector {
               'administrator if not sure.',
           'required' => true,
           'type' => 'select',
-          'table'=>'termlists_term',
-          'captionField'=>'term',
-          'valueField'=>'id',
-          'extraParams' => array('termlist_external_key'=>'indicia:location_types'),
+          'table' => 'termlists_term',
+          'captionField' => 'term',
+          'valueField' => 'id',
+          'extraParams' => array('termlist_external_key' => 'indicia:location_types'),
         ),
         array(
           'name' => 'min_rank_sort_order_for_species',
@@ -108,7 +103,7 @@ class iform_report_selector {
           'type' => 'checkbox',
           'default' => 1,
           'required' => false,
-          'group'=>'Reports to include'
+          'group' => 'Reports to include'
         ),
         array(
           'name' => 'report_my_sites_species',
@@ -116,7 +111,7 @@ class iform_report_selector {
           'type' => 'checkbox',
           'default' => 1,
           'required' => false,
-          'group'=>'Reports to include'
+          'group' => 'Reports to include'
         ),
         array(
           'name' => 'report_regions_records',
@@ -124,7 +119,7 @@ class iform_report_selector {
           'type' => 'checkbox',
           'default' => 1,
           'required' => false,
-          'group'=>'Reports to include'
+          'group' => 'Reports to include'
         ),
         array(
           'name' => 'report_regions_species',
@@ -132,7 +127,7 @@ class iform_report_selector {
           'type' => 'checkbox',
           'default' => 1,
           'required' => false,
-          'group'=>'Reports to include'
+          'group' => 'Reports to include'
         ),
         array(
           'name' => 'report_months_records',
@@ -140,7 +135,7 @@ class iform_report_selector {
           'type' => 'checkbox',
           'default' => 1,
           'required' => false,
-          'group'=>'Reports to include'
+          'group' => 'Reports to include'
         ),
         array(
           'name' => 'report_months_species',
@@ -148,7 +143,7 @@ class iform_report_selector {
           'type' => 'checkbox',
           'default' => 1,
           'required' => false,
-          'group'=>'Reports to include'
+          'group' => 'Reports to include'
         ),
         array(
           'name' => 'report_months_records_by_taxon_groups',
@@ -156,7 +151,7 @@ class iform_report_selector {
           'type' => 'checkbox',
           'default' => 1,
           'required' => false,
-          'group'=>'Reports to include'
+          'group' => 'Reports to include'
         ),
         array(
           'name' => 'report_months_species_by_taxon_groups',
@@ -164,7 +159,7 @@ class iform_report_selector {
           'type' => 'checkbox',
           'default' => 1,
           'required' => false,
-          'group'=>'Reports to include'
+          'group' => 'Reports to include'
         ),
         array(
           'name' => 'report_years_records',
@@ -172,7 +167,7 @@ class iform_report_selector {
           'type' => 'checkbox',
           'default' => 1,
           'required' => false,
-          'group'=>'Reports to include'
+          'group' => 'Reports to include'
         ),
         array(
           'name' => 'report_years_species',
@@ -180,7 +175,7 @@ class iform_report_selector {
           'type' => 'checkbox',
           'default' => 1,
           'required' => false,
-          'group'=>'Reports to include'
+          'group' => 'Reports to include'
         ),
         array(
           'name' => 'report_taxon_groups_records',
@@ -188,7 +183,7 @@ class iform_report_selector {
           'type' => 'checkbox',
           'default' => 1,
           'required' => false,
-          'group'=>'Reports to include'
+          'group' => 'Reports to include'
         ),
         array(
           'name' => 'report_taxon_groups_species',
@@ -196,7 +191,7 @@ class iform_report_selector {
           'type' => 'checkbox',
           'default' => 1,
           'required' => false,
-          'group'=>'Reports to include'
+          'group' => 'Reports to include'
         ),
       )
     );
@@ -469,7 +464,7 @@ class iform_report_selector {
       $reportOptions += array(
         'valueOutput' => array(
           'fillColor'=>array(
-            'from'=>'#0000ff',
+            'from' => '#0000ff',
             'to' => '#ff0000',
             'valueField' => 'value',
             'minValue'=> '{minvalue}',
@@ -524,7 +519,7 @@ class iform_report_selector {
       $reportOptions += array(
         'chartType' => 'bar',
         'yValues'=>array('count'),
-        'xLabels'=>'month',
+        'xLabels' => 'month',
         'autoParamsForm' => false,
         'axesOptions' => array('yaxis'=>array('min' => 0, 'tickOptions' => array('formatString' => '%d')))
       );
@@ -549,7 +544,7 @@ class iform_report_selector {
     $reportOptions = array(
       'readAuth' => $readAuth,
       'dataSource' => "library/taxon_groups/filterable_explore_list",
-      'extraParams' => array('limit' => 10, 'orderby'=>$sortField, 'sortdir'=>'DESC',
+      'extraParams' => array('limit' => 10, 'orderby'=>$sortField, 'sortdir' => 'DESC',
           'restrict_to_taxon_list_id' => hostsite_get_config_value('iform', 'master_checklist_id', 0),
           'min_taxon_rank_sort_order' => $args['min_rank_sort_order_for_species']),
       'caching' => true,
@@ -562,8 +557,8 @@ class iform_report_selector {
       return lang::get('No data available');
     // to prevent errors if not enough groups available, pad them out
     $groups = array_pad($groups, 5, $groups[0]);
-    $extraParams = array();
-    $groupLabels = array();
+    $extraParams = [];
+    $groupLabels = [];
     // pass the group data to the report
     foreach ($groups as $idx => $group) {
       $extraParams['group_' . ($idx+1)] = $group['taxon_group_id'];
@@ -589,7 +584,7 @@ class iform_report_selector {
         'chartType' => 'bar',
         'height' => '500',
         'yValues'=>array('other', 'group_10', 'group_9', 'group_8', 'group_7', 'group_6', 'group_5', 'group_4', 'group_3', 'group_2', 'group_1'),
-        'xLabels'=>'month',
+        'xLabels' => 'month',
         'autoParamsForm' => false,
         'axesOptions' => array('yaxis'=>array('min' => 0, 'tickOptions' => array('formatString' => '%d'))),
         'legendOptions' => array(
@@ -609,7 +604,7 @@ class iform_report_selector {
         $reportOptions['responsiveOpts'] = array(
           'breakpoints' => array('tp' => 768),
         );
-        $reportOptions['columns'] = array();
+        $reportOptions['columns'] = [];
         $reportOptions['columns'][] = array('fieldname' => 'month');
         for ($i = 0; $i < 10; $i++) {
           $reportOptions['columns'][] = array(
@@ -636,7 +631,7 @@ class iform_report_selector {
     $reportOptions = array(
       'readAuth' => $readAuth,
       'dataSource' => "library/occurrences/filterable_explore_list",
-      'extraParams' => array('limit' => 1, 'orderby'=>'date_start', 'sortdir'=>'ASC', 'smpattrs'=>'', 'occattrs'=>''),
+      'extraParams' => array('limit' => 1, 'orderby' => 'date_start', 'sortdir' => 'ASC', 'smpattrs' => '', 'occattrs' => ''),
       'caching' => true,
       'cachePerUser' => $reportPerUser,
       'cachetimeout' => $reportPerUser ? self::FAST_CACHE_REFRESH : self::SLOW_CACHE_REFRESH
@@ -666,7 +661,7 @@ class iform_report_selector {
         'chartType' => 'bar',
         'height' => '500',
         'yValues'=>array('count'),
-        'xLabels'=>'year',
+        'xLabels' => 'year',
         'autoParamsForm' => false,
         'axesOptions' => array('yaxis'=>array('min' => 0, 'tickOptions' => array('formatString' => '%d')))
       );
@@ -708,12 +703,12 @@ class iform_report_selector {
         'cachetimeout' => self::SLOW_CACHE_REFRESH
       ));
       // make an easy lookup
-      $groupIds = array();
+      $groupIds = [];
       foreach($groups as $group)
         $groupIds[$group['id']] = $group['title'];
       // roll categories into 'other' if too many and process to remove unofficial groups
       $totalOther = 0;
-      $processedData = array();
+      $processedData = [];
       foreach ($data as $row) {
         if (count($processedData)>=10 || !array_key_exists($row['id'], $groupIds))
           $totalOther += $row['count'];
@@ -728,8 +723,8 @@ class iform_report_selector {
         'chartType' => 'pie',
         'seriesColors' => array('#ccebc5','#ffffb3','#bebada','#fb8072','#80b1d3','#fdb462', '#b3de69', '#fccde5', '#8dd3c7', '#bc80bd', '#d9d9d9'),
         'height' => '500',
-        'yValues'=>'count',
-        'xLabels'=>'taxon_group',
+        'yValues' => 'count',
+        'xLabels' => 'taxon_group',
         'autoParamsForm' => false,
         'axesOptions' => array('yaxis'=>array('min' => 0, 'tickOptions' => array('formatString' => '%d'))),
         'legendOptions' => array('show' => true),

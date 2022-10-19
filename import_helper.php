@@ -215,12 +215,12 @@ class import_helper extends helper_base {
 
     $request = parent::$base_url . "index.php/services/import/get_import_settings/" . $options['model'];
     $request .= '?' . self::array_to_query_string($options['auth']['read']);
-    $switches = isset($options['switches']) && is_array($options['switches']) ? $options['switches'] : array();
+    $switches = isset($options['switches']) && is_array($options['switches']) ? $options['switches'] : [];
     if (!empty($options['occurrenceAssociations'])) {
       $switches['occurrence_associations'] = 't';
     }
     $request .= '&' . self::array_to_query_string($switches);
-    $response = self::http_post($request, array());
+    $response = self::http_post($request, []);
     if (!empty($response['output'])) {
       // Get the path back to the same page.
       $reload = self::get_reload_link_parts();
@@ -247,7 +247,7 @@ class import_helper extends helper_base {
         $formOptions['extraParams'] = $options['presetSettings'];
       }
       else {
-        $formOptions['extraParams'] = array();
+        $formOptions['extraParams'] = [];
       }
       // Copy any $_POST data into the extraParams, as this would mean preset
       // values that are provided by the form which the uploader was triggered
@@ -386,7 +386,7 @@ class import_helper extends helper_base {
         && trim($settings['taxa_taxon_list:taxon_list_id']) !== '') {
       $request .= '&taxon_list_id=' . trim($settings['taxa_taxon_list:taxon_list_id']);
     }
-    $response = self::http_post($request, array());
+    $response = self::http_post($request, []);
     $fields = json_decode($response['output'], TRUE);
     if (!is_array($fields)) {
       return "curl request to $request failed. Response " . print_r($response, TRUE);
@@ -407,7 +407,7 @@ class import_helper extends helper_base {
           foreach ($modelSpec->fields as $fieldSpec) {
             foreach ($fieldSpec->virtualFields as $subFieldSpec) {
               // Merge the field in at the end on the similar fields.
-              $newFields = array();
+              $newFields = [];
               $parts = explode(':', $fieldSpec->fieldName);
               $lastMatch = FALSE;
               foreach ($fields as $key => $value) {
@@ -446,7 +446,7 @@ class import_helper extends helper_base {
       return "curl request to $request failed. Response " . print_r($response, TRUE);
     }
     $model_required_fields = self::expand_ids_to_fks($responseIds);
-    $preset_fields = !empty($settings) ? self::expand_ids_to_fks(array_keys(array_filter($settings))) : array();
+    $preset_fields = !empty($settings) ? self::expand_ids_to_fks(array_keys(array_filter($settings))) : [];
     $unlinked_fields = !empty($preset_fields) ? array_diff_key($fields, array_combine($preset_fields, $preset_fields)) : $fields;
     // Only use the required fields that are available for selection - the rest
     // are handled somehow else.
@@ -493,7 +493,7 @@ HTML;
     // e.g. external_key can't be used unless external_key is filled in
     // However these options come from the importDuplicateCheckCombinations option in the model, some fields from here are not suitable for use
     // and if left in cause problems. Remove this options (held in $importDuplicateCheckCombinationsToRemove)
-    $existingDataLookupOptions = array();
+    $existingDataLookupOptions = [];
     $importDuplicateCheckCombinations = json_decode($response['output'], TRUE);
     if (isset($importDuplicateCheckCombinations[$options['model']])) {
       $importDuplicateCheckCombinationsToRemove = array('taxa_taxon_list:taxon_id', 'sample:sample_method_id');
@@ -508,7 +508,7 @@ HTML;
 
       if (!is_array($existingDataLookupOptions)) {
         // There is a possibility that the warehouse is not as advanced as the form: in this case we carry on as if no options are avaailable.
-        $existingDataLookupOptions = array();
+        $existingDataLookupOptions = [];
       }
       if (count($existingDataLookupOptions) > 0) {
         $r .= "<th>{$t['Used in lookup of existing data?']}</th>";
@@ -993,11 +993,11 @@ JS;
   private static function collect_errors($options, $filename) {
     $request = parent::$base_url . "index.php/services/import/get_upload_result?uploaded_csv=" . $filename;
     $request .= '&'.self::array_to_query_string($options['auth']['read']);
-    $response = self::http_post($request, array());
+    $response = self::http_post($request, []);
     if (isset($response['output'])) {
       $output = json_decode($response['output'], TRUE);
     } else {
-      $output = array();
+      $output = [];
     }
     return $output;
   }
@@ -1167,7 +1167,7 @@ JS;
     $r = '';
     $heading = '';
     $labelListIndex = 0;
-    $labelList = array();
+    $labelList = [];
     $itWasSaved[$column] = 0;
     foreach ($fields as $field => $caption) {
       if (strpos($field, ":")) {
@@ -1200,7 +1200,7 @@ JS;
       }
     }
     $labelList = array_count_values($labelList);
-    $multiMatch = array();
+    $multiMatch = [];
     foreach ($fields as $field => $caption) {
       if (strpos($field, ":")) {
         list($prefix, $fieldname) = explode(':', $field);
@@ -1765,7 +1765,7 @@ TD;
   }
 
   private static function save_user_import_mappings($mappings) {
-    $userSettings = array();
+    $userSettings = [];
     foreach ($mappings as $column => $setting) {
       $userSettings[str_replace("_", " ", $column)] = $setting;
     }
@@ -1788,7 +1788,7 @@ TD;
   private static function sample_external_key_issue_checks($options, $rows) {
     $mappingsAndSettings = self::getMappingsAndSettings($options);
     $columnIdx=0;
-    $columnIdxsToCheck=array();
+    $columnIdxsToCheck=[];
     // Cycle through each of the column mappings and get the position of the sample external key column
     foreach ($mappingsAndSettings['mappings'] as $columnName=>$mapping) {
       if ($mapping==='sample:external_key') {
@@ -1801,10 +1801,10 @@ TD;
     }
     // Hold the latest row which has a given sample external key. All rows with matching external keys must have consistant
 	  // sample data, so we only need to hold one for examination
-	  $latestRowForEachSampleKey=array();
+	  $latestRowForEachSampleKey=[];
     // Rows which have inconsistencies
-    $inconsistencyFailureRows=array();
-    $clusteringFailureRows=array();
+    $inconsistencyFailureRows=[];
+    $clusteringFailureRows=[];
     // Flag individual rows which have the same sample external key but the sample data such as the date is inconsistent
     $rowInconsistencyFailure=false;
     // Flag individual rows which have the same sample external key but are not on consecutive rows as this would cause
@@ -1850,7 +1850,7 @@ TD;
 	      $rowNumber++;
       }
     }
-    $returnArray=array();
+    $returnArray=[];
     $returnArray['inconsistencyFailureRows']=$inconsistencyFailureRows;
     $returnArray['clusteringFailureRows']=$clusteringFailureRows;
     return $returnArray;
@@ -1860,7 +1860,7 @@ TD;
    * Show results of any consistency issues between rows with the same sample external key
    * (if using that import mode)
    */
-  private static function display_sample_external_key_data_mismatches($inconsistencyFailureRows=array(),$clusteringFailureRows=array()) {
+  private static function display_sample_external_key_data_mismatches($inconsistencyFailureRows=[],$clusteringFailureRows=[]) {
     $r='';
     $r.='<div><p>You have selected to use the Sample External Key to determine which samples '
         . 'your occurrences are placed into. A scan has been made of your data and problems have been found. '

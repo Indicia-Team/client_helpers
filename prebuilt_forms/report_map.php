@@ -13,22 +13,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package Client
- * @subpackage PrebuiltForms
  * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers/
  */
 
-require_once('includes/report.php');
-require_once('includes/map.php');
+require_once 'includes/report.php';
+require_once 'includes/map.php';
 
 
 /**
  * Prebuilt Indicia data form that lists the output of any report on a map.
- *
- * @package Client
- * @subpackage PrebuiltForms
  */
 class iform_report_map {
 
@@ -38,9 +33,9 @@ class iform_report_map {
    */
   public static function get_report_map_definition() {
     return array(
-      'title'=>'Report Map',
+      'title' => 'Report Map',
       'category' => 'Reporting',
-      'description'=>'Outputs data from a report onto a map. To work, the report must include a column containing spatial data. '.
+      'description' => 'Outputs data from a report onto a map. To work, the report must include a column containing spatial data. '.
           'Can automatically include the report parameters form required for the generation of the report.',
       'recommended' => true
     );
@@ -64,12 +59,12 @@ class iform_report_map {
           'type' => 'select',
           'required' => true,
           'options' => array(
-            'none'=>'Exclude the layer picker',
-            'before'=>'Include the layer picker before the map.',
-            'after'=>'Include the layer picker after the map.'
+            'none' => 'Exclude the layer picker',
+            'before' => 'Include the layer picker before the map.',
+            'after' => 'Include the layer picker after the map.'
           ),
-          'default'=>'none',
-          'group'=>'Report Map Settings'
+          'default' => 'none',
+          'group' => 'Report Map Settings'
         ),
         array(
           'name' => 'legend',
@@ -79,12 +74,12 @@ class iform_report_map {
           'type' => 'select',
           'required' => true,
           'options' => array(
-            'none'=>'Exclude the legend',
-            'before'=>'Include the legend before the map.',
-            'after'=>'Include the legend after the map.',
+            'none' => 'Exclude the legend',
+            'before' => 'Include the legend before the map.',
+            'after' => 'Include the legend after the map.',
           ),
-          'default'=>'after',
-          'group'=>'Report Map Settings'
+          'default' => 'after',
+          'group' => 'Report Map Settings'
         ),
         array(
           'name' => 'map_toolbar_pos',
@@ -103,7 +98,7 @@ class iform_report_map {
           'description' => 'Choose the behaviour you want when clicking on distribution points on the map. The output can display as a popup, '.
               'or can be loaded into the div specified in the next parameter. If you select to filter Indicia '.
               'report grids, then this assumes you have built a page containing other report grids e.g. by following '.
-              '<a href="http://code.google.com/p/indicia/wiki/DrupalDashboardReporting">this tutorial</a>. The report you are using must '.
+              '<a href="https://github.com/Indicia-Team/client_helperswiki/DrupalDashboardReporting">this tutorial</a>. The report you are using must '.
               'have a parameter of type "idlist" which allows the report to filter to the selection on the map.',
           'type' => 'select',
           'options' => array(
@@ -204,7 +199,7 @@ class iform_report_map {
     $options['clickForSpatialRef'] = false;
     if ($args['layer_picker']!='none') {
       $picker = array(
-        'id'=>'map-layer-picker',
+        'id' => 'map-layer-picker',
         'includeIcons'=>false,
         'includeSwitchers'=>true,
         'includeHiddenLayers'=>true
@@ -220,7 +215,7 @@ class iform_report_map {
     }
     if ($args['legend']!='none') {
       $legend = array(
-        'id'=>'map-legend',
+        'id' => 'map-legend',
         'includeIcons'=>true,
         'includeSwitchers'=>false,
         'includeHiddenLayers'=>false

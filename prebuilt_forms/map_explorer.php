@@ -13,34 +13,34 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package Client
- * @subpackage PrebuiltForms
  * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers/
  */
 
-require_once('includes/map.php');
-require_once('includes/report.php');
+require_once 'includes/map.php';
+require_once 'includes/report.php';
 
 /**
  * Map Explorer. A prebuilt form integrating a map and grid with various options for exploring the data.
- *
- * @package Client
- * @subpackage PrebuiltForms
  */
 class iform_map_explorer {
 
   /**
-   * Return the form metadata. Note the title of this method includes the name of the form file. This ensures
-   * that if inheritance is used in the forms, subclassed forms don't return their parent's form definition.
-   * @return array The definition of the form.
+   * Return the form metadata.
+   *
+   * Note the title of this method includes the name of the form file. This
+   * ensures that if inheritance is used in the forms, subclassed forms don't
+   * return their parent's form definition.
+   *
+   * @return array
+   *   The definition of the form.
    */
   public static function get_map_explorer_definition() {
     return array(
-      'title'=>'Map explorer',
+      'title' => 'Map explorer',
       'category' => 'Reporting',
-      'description'=>'A map plus grid of data, with various options for exploring the data. This is designed to integrate with the Easy Login feature\'s '.
+      'description' => 'A map plus grid of data, with various options for exploring the data. This is designed to integrate with the Easy Login feature\'s '.
           'preferred taxon groups and locality for the logged in user and is therefore specific to Drupal.'
     );
   }
@@ -138,7 +138,7 @@ class iform_map_explorer {
   ]
 }',
           'required' => false,
-          'group'=>'Report Settings'
+          'group' => 'Report Settings'
         ),
       )
     );
@@ -187,13 +187,13 @@ class iform_map_explorer {
     $reportOptions = array_merge(
       iform_report_get_report_options($args, $readAuth),
       array(
-        'reportGroup'=>'explore',
-        'rememberParamsReportGroup'=>'explore',
+        'reportGroup' => 'explore',
+        'rememberParamsReportGroup' => 'explore',
         'paramsOnly'=>true,
         'paramsInMapToolbar'=>true,
         'sharing'=>$sharing,
         'paramsFormButtonCaption'=>lang::get('Filter'),
-        'rowId'=>'occurrence_id',
+        'rowId' => 'occurrence_id',
       )
     );
     iform_report_apply_explore_user_own_preferences($reportOptions);
@@ -206,20 +206,20 @@ class iform_map_explorer {
       'extraParams'=>$reportOptions['extraParams'],
       'paramDefaults'=>$reportOptions['paramDefaults'],
       'autoParamsForm'=>false,
-      'reportGroup'=>'explore',
-      'rememberParamsReportGroup'=>'explore',
-      'clickableLayersOutputMode'=>'report',
+      'reportGroup' => 'explore',
+      'rememberParamsReportGroup' => 'explore',
+      'clickableLayersOutputMode' => 'report',
       'sharing'=>$sharing,
-      'rowId'=>'occurrence_id',
+      'rowId' => 'occurrence_id',
       'ajax'=>TRUE
     ));
     $options = array_merge(
       iform_map_get_map_options($args, $readAuth),
       array(
-        'featureIdField'=>'occurrence_id',
+        'featureIdField' => 'occurrence_id',
         'clickForSpatialRef'=>false,
-        'reportGroup'=>'explore',
-        'toolbarDiv'=>'top'
+        'reportGroup' => 'explore',
+        'toolbarDiv' => 'top'
       )
     );
     $olOptions = iform_map_get_ol_options($args);
@@ -236,18 +236,18 @@ class iform_map_explorer {
     $reportOptions = array_merge(
         $reportOptions,
         array(
-          'id'=>'explore-records',
+          'id' => 'explore-records',
           'paramsOnly'=>false,
           'autoParamsForm'=>false,
           'downloadLink'=>$allowDownload,
-          'rowClass'=>'certainty{certainty}'
+          'rowClass' => 'certainty{certainty}'
         )
     );
     if (isset($args['includeEditLink']) && $args['includeEditLink'] && !empty($args['includeEditLinkPath']))
       $reportOptions['columns'][] = array(
-          'display'=>'Actions',
+          'display' => 'Actions',
           'actions'=>array(
-            array('caption'=>'edit','url'=>url($args['includeEditLinkPath']),'urlParams'=>array('occurrence_id'=>'{occurrence_id}'),'visibility_field'=>'belongs_to_user')
+            array('caption' => 'edit','url'=>url($args['includeEditLinkPath']),'urlParams'=>array('occurrence_id' => '{occurrence_id}'),'visibility_field' => 'belongs_to_user')
           )
       );
     $r .= report_helper::report_grid($reportOptions);

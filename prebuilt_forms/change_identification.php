@@ -13,31 +13,30 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author	Indicia Team
- * @license	http://www.gnu.org/licenses/gpl.html GPL 3.0
+ * @author Indicia Team
+ * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers/
  */
 
-require_once('includes/form_generation.php');
+require_once 'includes/form_generation.php' ;
 
 /**
  * Prebuilt Indicia data entry form that presents taxon search box, date control, map picker,
  * survey selector and comment entry controls.
- *
- * @package	Client
- * @subpackage PrebuiltForms
  */
 class iform_change_identification {
 
   /**
    * Return the form metadata.
-   * @return string The definition of the form.
+   *
+   * @return string
+   *   The definition of the form.
    */
   public static function get_change_identification_definition() {
     return array(
-      'title'=>'Change identification of a record',
+      'title' => 'Change identification of a record',
       'category' => 'Utilities',
-      'description'=>'A form allowing updating of the identification of an existing record. The form should be accessed '.
+      'description' => 'A form allowing updating of the identification of an existing record. The form should be accessed '.
           'by calling the url with a parameter occurrence_id set to the ID of the occurrence being changed. Displays a summary '.
           'of the record with a list of the sample and occurrence attributes and a control for changing the identification. '
     );
@@ -50,10 +49,10 @@ class iform_change_identification {
   public static function get_parameters() {
     return array(
       array(
-      	'name'=>'species_ctrl',
-        'caption'=>'Species Control Type',
-        'description'=>'The type of control that will be available to select a species.',
-        'type'=>'select',
+      	'name' => 'species_ctrl',
+        'caption' => 'Species Control Type',
+        'description' => 'The type of control that will be available to select a species.',
+        'type' => 'select',
         'options' => array(
           'autocomplete' => 'Autocomplete',
           'select' => 'Select',
@@ -63,19 +62,19 @@ class iform_change_identification {
         )
       ),
       array(
-      	'fieldname'=>'list_id',
-        'label'=>'Species List',
-        'helpText'=>'The species list that species can be selected from.',
-        'type'=>'select',
-        'table'=>'taxon_list',
-        'valueField'=>'id',
-        'captionField'=>'title'
+      	'fieldname' => 'list_id',
+        'label' => 'Species List',
+        'helpText' => 'The species list that species can be selected from.',
+        'type' => 'select',
+        'table' => 'taxon_list',
+        'valueField' => 'id',
+        'captionField' => 'title'
       ),
       array(
-      	'name'=>'preferred',
-        'caption'=>'Preferred species only?',
-        'description'=>'Should the selection of species be limited to preferred names only?',
-        'type'=>'boolean',
+      	'name' => 'preferred',
+        'caption' => 'Preferred species only?',
+        'description' => 'Should the selection of species be limited to preferred names only?',
+        'type' => 'boolean',
         'required'=>false
       )
     );
@@ -102,25 +101,25 @@ class iform_change_identification {
     $r .= "<table>\n";
     $r .= "<tr><td><strong>Date</strong></td><td>".data_entry_helper::$entity_to_load['sample:date']."</td></tr>\n";
     $r .= "<tr><td><strong>Spatial Reference</strong></td><td>".data_entry_helper::$entity_to_load['sample:entered_sref']."</td></tr>\n";
-    $siteLabels = array();
+    $siteLabels = [];
     if (!empty(data_entry_helper::$entity_to_load['sample:location'])) $siteLabels[] = data_entry_helper::$entity_to_load['sample:location'];
     if (!empty(data_entry_helper::$entity_to_load['sample:location_name'])) $siteLabels[] = data_entry_helper::$entity_to_load['sample:location_name'];
     $r .= "<tr><td><strong>Site</strong></td><td>".implode(' | ', $siteLabels)."</td></tr>\n";
     $smpAttrs = data_entry_helper::getAttributes(array(
         'id' => data_entry_helper::$entity_to_load['sample:id'],
-        'valuetable'=>'sample_attribute_value',
-        'attrtable'=>'sample_attribute',
-        'fieldprefix'=>'smpAttr',
-        'key'=>'sample_id',
+        'valuetable' => 'sample_attribute_value',
+        'attrtable' => 'sample_attribute',
+        'fieldprefix' => 'smpAttr',
+        'key' => 'sample_id',
         'extraParams'=>$auth['read'],
         'survey_id'=>data_entry_helper::$entity_to_load['occurrence:survey_id']
     ));
     $occAttrs = data_entry_helper::getAttributes(array(
         'id' => $_GET['occurrence_id'],
-        'valuetable'=>'occurrence_attribute_value',
-        'attrtable'=>'occurrence_attribute',
-        'fieldprefix'=>'occAttr',
-        'key'=>'occurrence_id',
+        'valuetable' => 'occurrence_attribute_value',
+        'attrtable' => 'occurrence_attribute',
+        'fieldprefix' => 'occAttr',
+        'key' => 'occurrence_id',
         'extraParams'=>$auth['read'],
         'survey_id'=>data_entry_helper::$entity_to_load['occurrence:survey_id']
     ));
@@ -135,10 +134,10 @@ class iform_change_identification {
     }
     $species_list_args=array(
         'itemTemplate' => 'select_species',
-        'fieldname'=>'occurrence:taxa_taxon_list_id',
-        'table'=>'taxa_taxon_list',
-        'captionField'=>'taxon',
-        'valueField'=>'id',
+        'fieldname' => 'occurrence:taxa_taxon_list_id',
+        'table' => 'taxa_taxon_list',
+        'captionField' => 'taxon',
+        'valueField' => 'id',
         'columns'=>2,
         'extraParams'=>$extraParams
     );
@@ -159,7 +158,7 @@ class iform_change_identification {
    * @return array Submission structure.
    */
   public static function get_submission($values, $args) {
-    return submission_builder::build_submission($values, array('model'=>'occurrence'));
+    return submission_builder::build_submission($values, array('model' => 'occurrence'));
   }
 
 }

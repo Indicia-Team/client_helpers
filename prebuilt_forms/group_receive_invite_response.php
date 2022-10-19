@@ -18,15 +18,11 @@
  * @link https://github.com/indicia-team/client_helpers/
  */
 
-use Masterminds\HTML5;
 
-require_once('includes/report_filters.php');
+
+require_once 'includes/report_filters.php';
 
 /**
- *
- *
- * @package Client
- * @subpackage PrebuiltForms
  * A page for receiving invitation responses from invited users.
  */
 class iform_group_receive_invite_response {
@@ -37,9 +33,9 @@ class iform_group_receive_invite_response {
    */
   public static function get_group_receive_invite_response_definition() {
     return array(
-      'title'=>'Receive responses from invites',
+      'title' => 'Receive responses from invites',
       'category' => 'Recording groups',
-      'description'=>'A page that is hit when the user clicks on a link to accept an email invite to a group. Use the Drupal Blocks '.
+      'description' => 'A page that is hit when the user clicks on a link to accept an email invite to a group. Use the Drupal Blocks '.
           'system to ensure that a login block is present on this page for non-logged in users.',
       'recommended' => true
     );
@@ -52,15 +48,15 @@ class iform_group_receive_invite_response {
    */
   public static function get_parameters() {
     return array(array(
-      'name'=>'groups_page_path',
-      'caption'=>'Path to main groups page',
-      'description'=>'Path to the Drupal page which my groups are listed on.',
-      'type'=>'text_input'
+      'name' => 'groups_page_path',
+      'caption' => 'Path to main groups page',
+      'description' => 'Path to the Drupal page which my groups are listed on.',
+      'type' => 'text_input'
     ), array(
-      'name'=>'group_home_path',
-      'caption'=>'Path to the group home page',
-      'description'=>'Path to the Drupal page which hosts group home pages.',
-      'type'=>'text_input'
+      'name' => 'group_home_path',
+      'caption' => 'Path to the group home page',
+      'description' => 'Path to the Drupal page which hosts group home pages.',
+      'type' => 'text_input'
     ));
   }
 
@@ -220,7 +216,7 @@ HTML;
     $values = array(
       'group_id'=>$invite['group_id'],
       'user_id'=>hostsite_get_user_field('indicia_user_id'),
-      'administrator'=>'f'
+      'administrator' => 'f'
     );
     $auth['write_tokens']['persist_auth']=true;
     $s = submission_builder::build_submission($values, array('model' => 'groups_user'));
@@ -239,7 +235,7 @@ HTML;
       // delete the invitation
       $values = array(
         'id'=>$invite['id'],
-        'deleted'=>'t'
+        'deleted' => 't'
       );
       $s = submission_builder::build_submission($values, array('model' => 'group_invitation'));
       $r = data_entry_helper::forward_post_to('group_invitation', $s, $auth['write_tokens']);
@@ -267,7 +263,7 @@ HTML;
   private static function reject($args, $invite, $auth) {
     $values = array(
       'id'=>$invite['id'],
-      'deleted'=>'t'
+      'deleted' => 't'
     );
     $s = submission_builder::build_submission($values, array('model' => 'group_invitation'));
     $r = data_entry_helper::forward_post_to('group_invitation', $s, $auth['write_tokens']);

@@ -13,8 +13,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package Client
- * @subpackage PrebuiltForms
  * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers/
@@ -22,9 +20,6 @@
 
 /**
  * A page for editing or creating a user trust for verification.
- *
- * @package Client
- * @subpackage PrebuiltForms
  */
 class iform_user_trust_edit {
 
@@ -34,9 +29,9 @@ class iform_user_trust_edit {
    */
   public static function get_user_trust_edit_definition() {
     return array(
-      'title'=>'Create or edit a user trust',
+      'title' => 'Create or edit a user trust',
       'category' => 'Verification',
-      'description'=>'A form for creating or editing user trusts.'
+      'description' => 'A form for creating or editing user trusts.'
     );
   }
 
@@ -73,47 +68,47 @@ class iform_user_trust_edit {
     $r = "<form method=\"post\" id=\"entry_form\" action=\"$reloadPath\">\n";
     $r .= $auth['write'].
           "<input type=\"hidden\" id=\"website_id\" name=\"website_id\" value=\"".$args['website_id']."\" />\n";
-    $r .= data_entry_helper::hidden_text(array('fieldname'=>'user_trust:id'));
+    $r .= data_entry_helper::hidden_text(array('fieldname' => 'user_trust:id'));
     $r .= data_entry_helper::autocomplete(array(
       'label'=>lang::get('Recorder to trust'),
-      'fieldname'=>'user_trust:user_id',
-      'table'=>'user',
-      'valueField'=>'id',
-      'captionField'=>'person_name',
-      'extraParams'=>$auth['read'] + array('view'=>'detail'),
-      'class'=>'control-width-4'
+      'fieldname' => 'user_trust:user_id',
+      'table' => 'user',
+      'valueField' => 'id',
+      'captionField' => 'person_name',
+      'extraParams'=>$auth['read'] + array('view' => 'detail'),
+      'class' => 'control-width-4'
     ));
     $col1 = '<p>Define the combination of survey, taxon group and/or location that this recorder is trusted for below.</p>';
     $col1 .= '<fieldset><legend>'.lang::get('Trust settings').'</legend>';
     $col1 .= data_entry_helper::autocomplete(array(
       'label'=>lang::get('Trust records in this survey'),
-      'fieldname'=>'user_trust:survey_id',
-      'table'=>'survey',
-      'valueField'=>'id',
-      'captionField'=>'title',
-      'blankText'=>'<'.lang::get('any').'>',
+      'fieldname' => 'user_trust:survey_id',
+      'table' => 'survey',
+      'valueField' => 'id',
+      'captionField' => 'title',
+      'blankText' => '<'.lang::get('any').'>',
       'extraParams'=>$auth['read'] + array('sharing' => 'verification'),
-      'class'=>'control-width-4'
+      'class' => 'control-width-4'
     ));
     $col1 .= data_entry_helper::autocomplete(array(
       'label'=>lang::get('Trust records in this taxon group'),
-      'fieldname'=>'user_trust:taxon_group_id',
-      'table'=>'taxon_group',
-      'valueField'=>'id',
-      'captionField'=>'title',
-      'blankText'=>'<'.lang::get('any').'>',
+      'fieldname' => 'user_trust:taxon_group_id',
+      'table' => 'taxon_group',
+      'valueField' => 'id',
+      'captionField' => 'title',
+      'blankText' => '<'.lang::get('any').'>',
       'extraParams'=>$auth['read'],
-      'class'=>'control-width-4'
+      'class' => 'control-width-4'
     ));
     $col1 .= data_entry_helper::autocomplete(array(
       'label'=>lang::get('Trust records in this location'),
-      'fieldname'=>'user_trust:location_id',
-      'table'=>'location',
-      'valueField'=>'id',
-      'captionField'=>'name',
-      'blankText'=>'<'.lang::get('any').'>',
+      'fieldname' => 'user_trust:location_id',
+      'table' => 'location',
+      'valueField' => 'id',
+      'captionField' => 'name',
+      'blankText' => '<'.lang::get('any').'>',
       'extraParams'=>$auth['read'] + array('location_type_id'=>hostsite_get_config_value('iform', 'profile_location_type_id', '')),
-      'class'=>'control-width-4'
+      'class' => 'control-width-4'
     ));
     $col2 = '<p>'.lang::get('Review this recorder\'s experience in the tabs below').'</p>';
     $col2 .= '<div id="summary-tabs">';
@@ -125,11 +120,11 @@ class iform_user_trust_edit {
       )
     ));
     data_entry_helper::enable_tabs(array(
-      'divId'=>'summary-tabs'
+      'divId' => 'summary-tabs'
     ));
     $col2 .= '<div id="tab-surveys">';
     $col2 .= report_helper::report_grid(array(
-      'id'=>'surveys-summary',
+      'id' => 'surveys-summary',
       'readAuth'=>$auth['read'],
       'dataSource' => 'library/surveys/filterable_surveys_verification_breakdown',
       'ajax'=>TRUE,
@@ -139,7 +134,7 @@ class iform_user_trust_edit {
     $col2 .= '</div>';
     $col2 .= '<div id="tab-taxon-groups">';
     $col2 .= report_helper::report_grid(array(
-      'id'=>'taxon-groups-summary',
+      'id' => 'taxon-groups-summary',
       'readAuth'=>$auth['read'],
       'dataSource' => 'library/taxon_groups/filterable_taxon_groups_verification_breakdown',
       'ajax'=>TRUE,
@@ -149,7 +144,7 @@ class iform_user_trust_edit {
     $col2 .= '</div>';
     $col2 .= '<div id="tab-locations">';
     $col2 .= report_helper::report_grid(array(
-      'id'=>'locations-summary',
+      'id' => 'locations-summary',
       'readAuth'=>$auth['read'],
       'dataSource' => 'library/locations/filterable_locations_verification_breakdown',
       'ajax'=>TRUE,
@@ -215,8 +210,8 @@ class iform_user_trust_edit {
    */
   private static function loadExistingUserTrust($id, $auth) {
     $trust = data_entry_helper::get_population_data(array(
-      'table'=>'user_trust',
-      'extraParams'=>$auth['read']+array('view'=>'detail', 'id'=>$_GET['user_trust_id']),
+      'table' => 'user_trust',
+      'extraParams'=>$auth['read']+array('view' => 'detail', 'id'=>$_GET['user_trust_id']),
       'nocache'=>true
     ));
 

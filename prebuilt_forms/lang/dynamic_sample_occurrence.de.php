@@ -13,25 +13,22 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package	Client
- * @author	Indicia Team
- * @license	http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link 	http://code.google.com/p/indicia/
+ * @author Indicia Team
+ * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
+ * @link https://github.com/Indicia-Team/client_helpers
  */
 
 include_once 'dynamic.de.php';
 
 /**
  * Additional language terms or overrides for dynamic_sample_occurrence form.
- *
- * @package	Client
  */
 $custom_terms = array_merge($custom_terms, array(
 	'LANG_Add_Sample' => 'Add New Sample',
   'LANG_Add_Sample_Single' => 'Add Single Occurrence',
   'LANG_Add_Sample_Grid' => 'Add List of Occurrences',
 
-	'LANG_Tab_aboutyou' => 'About You',      
+	'LANG_Tab_aboutyou' => 'About You',
 	'LANG_Tab_Instructions_aboutyou' => '<strong>About You</strong><br/>Please tell us about yourself first.',
 	// Can also add entries each of the attribute captions used in this tab.
 	// Note these do not have LANG_ prefixes.
@@ -44,9 +41,9 @@ $custom_terms = array_merge($custom_terms, array(
 
 	'LANG_Tab_place' => 'Where Was It?',
 	'LANG_Tab_Instructions_place' => '<strong>Place Selection</strong><br/>Please either enter the spatial reference of the observation if you know it, or click on the map to specify the place as accurately as you can.',
-	
+
 	'LANG_Other_Information_Tab' => 'Other Information',
-	'LANG_Tab_Instructions _otherinformation'=>'<strong>Other Information</strong><br/>Please tell us when the observation took place, the biotope, whether a voucher specimen was taken (in the case where identification was difficult, to allow verification), and whether the observation details have been completed.',
+	'LANG_Tab_Instructions _otherinformation' => '<strong>Other Information</strong><br/>Please tell us when the observation took place, the biotope, whether a voucher specimen was taken (in the case where identification was difficult, to allow verification), and whether the observation details have been completed.',
 
   'LANG_Record_Status_Label' => 'Record Status',
 	'LANG_Record_Status_I' => 'In Progress',

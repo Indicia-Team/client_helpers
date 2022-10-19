@@ -13,17 +13,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author	Indicia Team
- * @license	http://www.gnu.org/licenses/gpl.html GPL 3.0
+ * @author Indicia Team
+ * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers/
  */
 
 /**
  * Prebuilt Indicia data entry form that presents taxon search box, date control, map picker,
  * survey selector and comment entry controls.
- *
- * @package	Client
- * @subpackage PrebuiltForms
  */
 class iform_basic_1 {
 
@@ -33,9 +30,9 @@ class iform_basic_1 {
    */
   public static function get_basic_1_definition() {
     return array(
-      'title'=>'Basic 1 - species, date, place, survey and comment',
+      'title' => 'Basic 1 - species, date, place, survey and comment',
       'category' => 'Training/Testing forms',
-      'description'=>'A very simple form designed to illustrate the prebuilt form development and setup process.'
+      'description' => 'A very simple form designed to illustrate the prebuilt form development and setup process.'
     );
   }
 
@@ -46,10 +43,10 @@ class iform_basic_1 {
   public static function get_parameters() {
     return array(
       array(
-      	'fieldname'=>'species_ctrl',
-        'label'=>'Species Control Type',
-        'helpText'=>'The type of control that will be available to select a species.',
-        'type'=>'select',
+      	'fieldname' => 'species_ctrl',
+        'label' => 'Species Control Type',
+        'helpText' => 'The type of control that will be available to select a species.',
+        'type' => 'select',
         'lookupValues' => array(
           'autocomplete' => 'Autocomplete',
           'select' => 'Select',
@@ -59,26 +56,26 @@ class iform_basic_1 {
         )
       ),
       array(
-      	'fieldname'=>'list_id',
-        'label'=>'Species List',
-        'helpText'=>'The species list that species can be selected from.',
-        'type'=>'select',
-        'table'=>'taxon_list',
-        'valueField'=>'id',
-        'captionField'=>'title'
+      	'fieldname' => 'list_id',
+        'label' => 'Species List',
+        'helpText' => 'The species list that species can be selected from.',
+        'type' => 'select',
+        'table' => 'taxon_list',
+        'valueField' => 'id',
+        'captionField' => 'title'
       ),
       array(
-      	'fieldname'=>'preferred',
-        'label'=>'Preferred species only?',
-        'helpText'=>'Should the selection of species be limited to preferred names only?',
-        'type'=>'boolean',
+      	'fieldname' => 'preferred',
+        'label' => 'Preferred species only?',
+        'helpText' => 'Should the selection of species be limited to preferred names only?',
+        'type' => 'boolean',
         'required'=>false
       ),
       array(
-      	'fieldname'=>'tabs',
-        'label'=>'Use Tabbed Interface',
-        'helpText'=>'If checked, then the page will be built using a tabbed interface style.',
-        'type'=>'boolean',
+      	'fieldname' => 'tabs',
+        'label' => 'Use Tabbed Interface',
+        'helpText' => 'If checked, then the page will be built using a tabbed interface style.',
+        'type' => 'boolean',
         'required'=>false
       )
     );
@@ -103,7 +100,7 @@ class iform_basic_1 {
         <li><a href=\"#other\"><span>Other Information</span></a></li>
       </ul>\n";
       data_entry_helper::enable_tabs(array(
-          'divId'=>'controls'
+          'divId' => 'controls'
       ));
     }
 
@@ -113,12 +110,12 @@ class iform_basic_1 {
       $extraParams += array('preferred' => 't');
     }
     $species_list_args=array(
-        'label'=>'Species',
+        'label' => 'Species',
         'itemTemplate' => 'select_species',
-        'fieldname'=>'occurrence:taxa_taxon_list_id',
-        'table'=>'taxa_taxon_list',
-        'captionField'=>'taxon',
-        'valueField'=>'id',
+        'fieldname' => 'occurrence:taxa_taxon_list_id',
+        'table' => 'taxa_taxon_list',
+        'captionField' => 'taxon',
+        'valueField' => 'id',
         'columns'=>2,
         'extraParams'=>$extraParams
     );
@@ -139,21 +136,21 @@ class iform_basic_1 {
     $r .= "</div>\n";
     $r .= "<div id=\"other\">\n";
     $r .= data_entry_helper::date_picker(array(
-        'label'=>'Date',
-        'fieldname'=>'sample:date'
+        'label' => 'Date',
+        'fieldname' => 'sample:date'
     ));
     $r .= data_entry_helper::select(array(
-        'label'=>'Survey',
-        'fieldname'=>'sample:survey_id',
-        'table'=>'survey',
-        'captionField'=>'title',
-        'valueField'=>'id',
+        'label' => 'Survey',
+        'fieldname' => 'sample:survey_id',
+        'table' => 'survey',
+        'captionField' => 'title',
+        'valueField' => 'id',
         'extraParams' => $readAuth
     ));
     $r .= data_entry_helper::textarea(array(
-        'label'=>'Comment',
-        'fieldname'=>'sample:comment',
-        'class'=>'wide',
+        'label' => 'Comment',
+        'fieldname' => 'sample:comment',
+        'class' => 'wide',
     ));
     $r .= "</div>\n";
     $r .= "</div>\n";

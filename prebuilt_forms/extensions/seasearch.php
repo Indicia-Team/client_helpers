@@ -13,11 +13,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package	Client
- * @subpackage PrebuiltForms
- * @author	Indicia Team
- * @license	http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link 	http://code.google.com/p/indicia/
+ * @author Indicia Team
+ * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
+ * @link https://github.com/Indicia-Team/client_helpers
  */
 
 /**
@@ -43,8 +41,8 @@ class extension_seasearch {
           'and @drift_start_attr_id options to be supplied.';
     $options = array_merge(array(
       'systems' => array(
-        '4326'=>'Latitude and longitude (degrees and decimal minutes WGS84)',
-        '4277'=>'Latitude and longitude (degrees and decimal minutes OSGB36)',
+        '4326' => 'Latitude and longitude (degrees and decimal minutes WGS84)',
+        '4277' => 'Latitude and longitude (degrees and decimal minutes OSGB36)',
         'OSGB' => 'Ordnance Survey British National Grid'
       )
     ), $options);
@@ -66,15 +64,15 @@ class extension_seasearch {
     preg_match($regexToExtractPartsOfLatLong, $driftEndDefault, $driftEndTokens);
     // fill in defaults to make code cleaner later
     $driftStartTokens = array_merge(
-      array('latdeg'=>'', 'latmin'=>'', 'longdeg'=>'', 'longmin'=>'', 'longdir'=>''),
+      array('latdeg' => '', 'latmin' => '', 'longdeg' => '', 'longmin' => '', 'longdir' => ''),
       $driftStartTokens);
     $driftEndTokens = array_merge(
-      array('latdeg'=>'', 'latmin'=>'', 'longdeg'=>'', 'longmin'=>'', 'longdir'=>''),
+      array('latdeg' => '', 'latmin' => '', 'longdeg' => '', 'longmin' => '', 'longdir' => ''),
       $driftEndTokens);
     // Add a GPS datum or grid system selection control
     $r = '<label class="auto">Position format and datum '.
       data_entry_helper::sref_system_select(array(
-        'fieldname'=>'sample:entered_sref_system',
+        'fieldname' => 'sample:entered_sref_system',
         'systems'=>$options['systems']
       )) . '</label>';
     $r .= '<div><div id="input-ll-container"><p>'.lang::get('Position (degrees and decimal minutes)').'</p>';
@@ -86,8 +84,8 @@ class extension_seasearch {
     $r .= "<td class=\"td-pad\"><input id=\"input-lat-min\" class=\"input-lat input-min {required: true,pattern:/^[0-9]+(.[\d]+)?$/}\" type=\"text\" value=\"$centreTokens[latmin]\"/>N</td>";
     $r .= "<td><input id=\"input-long-deg\" class=\"input-long input-deg {required: true,pattern:/^[0-9]*$/}\" type=\"text\" value=\"$centreTokens[longdeg]\"/>&deg;</td>";
     $r .= "<td><input id=\"input-long-min\" class=\"input-long input-min {required: true,pattern:/^[0-9]+(.[\d]+)?$/}\" type=\"text\" value=\"$centreTokens[longmin]\"/></td>";
-    $r .= '<td>'.data_entry_helper::select(array('lookupValues'=>array('E'=>'E','W'=>'W'), 'blankText'=>lang::get('choose'),
-        'fieldname'=>'e-w', 'default'=>$centreTokens['longdir'])).'</td>';
+    $r .= '<td>'.data_entry_helper::select(array('lookupValues'=>array('E' => 'E','W' => 'W'), 'blankText'=>lang::get('choose'),
+        'fieldname' => 'e-w', 'default'=>$centreTokens['longdir'])).'</td>';
     $r .= '</tr>';
     $r .= '<tr><td colspan="6">'.lang::get('For drift dives').'</td></tr>';
     $r .= '<tr id="input-drift-from"><td>'.lang::get('From').'</td>';
@@ -96,8 +94,8 @@ class extension_seasearch {
     $r .= "<td class=\"td-pad\"><input id=\"input-lat-min-from\" class=\"input-lat input-min {pattern:/^[0-9]+(.[\d]+)?$/}\" type=\"text\" value=\"$driftStartTokens[latmin]\"/>N</td>";
     $r .= "<td><input id=\"input-long-deg-from\" class=\"input-long input-deg {pattern:/^[0-9]*$/}\" type=\"text\" value=\"$driftStartTokens[longdeg]\"/>&deg;</td>";
     $r .= "<td><input id=\"input-long-min-from\" class=\"input-long input-min {pattern:/^[0-9]+(.[\d]+)?$/}\" type=\"text\" value=\"$driftStartTokens[longmin]\"/></td>";
-    $r .= '<td>'.data_entry_helper::select(array('lookupValues'=>array('E'=>'E','W'=>'W'), 'blankText'=>lang::get('choose'),
-        'fieldname'=>'e-w-from', 'default'=>$driftStartTokens['longdir'])).'</td>';
+    $r .= '<td>'.data_entry_helper::select(array('lookupValues'=>array('E' => 'E','W' => 'W'), 'blankText'=>lang::get('choose'),
+        'fieldname' => 'e-w-from', 'default'=>$driftStartTokens['longdir'])).'</td>';
     $r .= '</tr>';
     $r .= '<tr id="input-drift-to"><td>'.lang::get('To').'</td>';
     $r .= "<td><input type=\"radio\" title=\"".lang::get('Select this option then click on the map to set the dive end')."\" name=\"which-point\" value=\"to\" />";
@@ -105,8 +103,8 @@ class extension_seasearch {
     $r .= "<td class=\"td-pad\"><input id=\"input-lat-min-to\" class=\"input-lat input-min {pattern:/^[0-9]+(.[\d]+)?$/}\" type=\"text\" value=\"$driftEndTokens[latmin]\"/>N</td>";
     $r .= "<td><input id=\"input-long-deg-to\" class=\"input-long input-deg {pattern:/^[0-9]*$/}\" type=\"text\" value=\"$driftEndTokens[longdeg]\"/>&deg;</td>";
     $r .= "<td><input id=\"input-long-min-to\" class=\"input-long input-min {pattern:/^[0-9]+(.[\d]+)?$/}\" type=\"text\" value=\"$driftEndTokens[longmin]\"/></td>";
-    $r .= '<td>'.data_entry_helper::select(array('lookupValues'=>array('E'=>'E','W'=>'W'), 'blankText'=>lang::get('choose'),
-        'fieldname'=>'e-w-to', 'default'=>$driftEndTokens['longdir'])).'</td>';
+    $r .= '<td>'.data_entry_helper::select(array('lookupValues'=>array('E' => 'E','W' => 'W'), 'blankText'=>lang::get('choose'),
+        'fieldname' => 'e-w-to', 'default'=>$driftEndTokens['longdir'])).'</td>';
     $r .= '</tr>';
     $r .= '</tbody></table></div>';
     $r .= '<label id="input-os-grid-container">OS Grid Reference<input id="input-os-grid" type="text"/></label>';
@@ -126,7 +124,7 @@ class extension_seasearch {
    * @return array Array of tokens for control default values.
    */
   private static function getCentreTokens() {
-    $r = array();
+    $r = [];
     if (!empty(data_entry_helper::$entity_to_load['sample:entered_sref'])) {
       // If a decimal lat long, decode this to degrees + decimal minutes
       if (preg_match('/(?P<latdeg>\d+).(?P<latdec>\d+)N,? (?P<longdeg>\d+).(?P<longdec>\d+)(?P<longdir>[EW])/',
@@ -140,7 +138,7 @@ class extension_seasearch {
       }
     }
     $r = array_merge(
-      array('latdeg'=>'', 'latmin'=>'', 'longdeg'=>'', 'longmin'=>'', 'longdir'=>''),
+      array('latdeg' => '', 'latmin' => '', 'longdeg' => '', 'longmin' => '', 'longdir' => ''),
       $r);
     return $r;
   }

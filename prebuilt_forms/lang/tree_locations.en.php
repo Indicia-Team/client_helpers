@@ -13,28 +13,25 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package	Client
- * @author	Indicia Team
- * @license	http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link 	http://code.google.com/p/indicia/
+ * @author Indicia Team
+ * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
+ * @link https://github.com/Indicia-Team/client_helpers
  */
 
 global $custom_terms;
 
 /**
  * Additional language terms or overrides for dynamic_sample_occurrence form.
- *
- * @package	Client
  */
 $custom_terms = array(
-  '4326'=>'Lat/Long',
-  'Distance to woodland edge'=>'Distance to edge of woodland (m)',
-  'Girth'=>'Girth at Breast Height',
-  'Canopy 1'=>'Canopy Measure (1)',
-  'Canopy 2'=>'Canopy Measure (2)',
-  'Canopy 3'=>'Canopy Measure (3)',
-  'Canopy 4'=>'Canopy Measure (4)',
-  'Understorey Trees'=>'Number of Trees in Understorey area',
-  'Young Understorey Trees'=>'Number of Young Trees in Understorey area',
-  'Young Coppice Understorey Trees'=>'Number of Young Coppice in Understorey area'
+  '4326' => 'Lat/Long',
+  'Distance to woodland edge' => 'Distance to edge of woodland (m)',
+  'Girth' => 'Girth at Breast Height',
+  'Canopy 1' => 'Canopy Measure (1)',
+  'Canopy 2' => 'Canopy Measure (2)',
+  'Canopy 3' => 'Canopy Measure (3)',
+  'Canopy 4' => 'Canopy Measure (4)',
+  'Understorey Trees' => 'Number of Trees in Understorey area',
+  'Young Understorey Trees' => 'Number of Young Trees in Understorey area',
+  'Young Coppice Understorey Trees' => 'Number of Young Coppice in Understorey area'
 );

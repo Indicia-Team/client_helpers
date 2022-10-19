@@ -13,11 +13,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package Client
- * @subpackage PrebuiltForms
  * @author  Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link  http://code.google.com/p/indicia/
+ * @link  https://github.com/Indicia-Team/client_helpers
  */
 
 require_once 'includes/user.php';
@@ -87,10 +85,6 @@ function ukbms_stis2_sectionSort($a, $b)
 }
 
 /**
- *
- *
- * @package Client
- * @subpackage PrebuiltForms
  * A form for data entry of transect data by entering counts of each for sections along the transect.
  */
 class iform_ukbms_sectioned_transects_input_sample_2
@@ -127,7 +121,7 @@ class iform_ukbms_sectioned_transects_input_sample_2
   public static function get_parameters()
   {
     self::setupTranslations();
-    
+
     return [
         // Although UKBMS has 3 different surveys which are fundamentally the same, they differ in the main location
         // type, and there are differences in the sample attributes: we need three different instances of this page.
@@ -676,7 +670,7 @@ class iform_ukbms_sectioned_transects_input_sample_2
     data_entry_helper::add_resource('jquery_form');
     data_entry_helper::add_resource('jquery_ui');
     data_entry_helper::add_resource('autocomplete');
-    
+
     self::setupTranslations();
     self::$timings = 'Form Start '.date('Y-m-d H:i:s');
 
@@ -734,14 +728,14 @@ class iform_ukbms_sectioned_transects_input_sample_2
         self::$locationID = !empty($_POST['sample:location_id']) && intval($_POST['sample:location_id']) == $_POST['sample:location_id'] ? $_POST['sample:location_id'] : NULL;
       }
     }
-           
+
     // TODO protect against injection
     $parsedURL = parse_url(isset($_REQUEST['from']) ? $_REQUEST['from'] : $args['my_walks_page']);
     $scheme   = isset($parsedURL['scheme']) ? $parsedURL['scheme'] . '://' : '';
     $host     = isset($parsedURL['host']) ? $parsedURL['host'] : '';
     $path     = isset($parsedURL['path']) ? $parsedURL['path'] : '';
     $query    = isset($parsedURL['query']) ? $parsedURL['query'] : '';
-    $fragment = isset($parsedURL['fragment']) ? $parsedURL['fragment'] : ''; 
+    $fragment = isset($parsedURL['fragment']) ? $parsedURL['fragment'] : '';
     $args['return_page'] = hostsite_get_url("$scheme$host$path", ['query' => $query, 'fragment' => $fragment, 'absolute' => TRUE]);
 
     data_entry_helper::$javascript .= 'indiciaData.nid = "' . $nid . '";' . PHP_EOL;
@@ -793,7 +787,7 @@ class iform_ukbms_sectioned_transects_input_sample_2
       self::$translated[$index] = lang::get($value, " ");
     }
   }
-  
+
   private static function mergeSettings($settings, $toMerge) {
     if (!is_array($settings)) {
       return $toMerge;
@@ -920,13 +914,13 @@ class iform_ukbms_sectioned_transects_input_sample_2
   /**************************************************************
    * The following functions are specific to the core Sample Page
    **************************************************************/
-  
+
   private static function getSampleForm($args, $nid, $response) {
 
     global $indicia_templates;
 
     $settings = self::getBranchSettings($args, [], []);
-    
+
     $formOptions = [
       'userID' => self::$userId,
       'surveyID' => $args['survey_id'],
@@ -968,7 +962,7 @@ class iform_ukbms_sectioned_transects_input_sample_2
           }
         }
       }
-    }    
+    }
     foreach ($attributesToCheck as $attributeId) {
       $attribute = $attributes[$attributeId];
       $rules = explode("\n", $attribute['validation_rules']);
@@ -985,7 +979,7 @@ class iform_ukbms_sectioned_transects_input_sample_2
         }
       }
     }
-    
+
     $attributeConfiguration = (!empty($args['attribute_configuration']) ? json_decode($args['attribute_configuration'], TRUE) : []);
     foreach ($attributes as $key => $attribute) {
       $rules = explode("\n", $attribute['validation_rules']);
@@ -1002,7 +996,7 @@ class iform_ukbms_sectioned_transects_input_sample_2
         }
       }
     }
-    
+
     // we pass through the read auth. This makes it possible for the get_submission method to authorise against the warehouse
     // without an additional (expensive) warehouse call, so it can get location details.
     $pageHtml = '<form method="post" id="sample">' .
@@ -1015,7 +1009,7 @@ class iform_ukbms_sectioned_transects_input_sample_2
       '<input type="hidden" name="sample:survey_id" value="' . $args['survey_id'] . '"/>' .
       '<input type="hidden" name="sample:sample_method_id" value="' . $args['transect_sample_method_term_id'] . '" />' .
       get_user_profile_hidden_inputs($attributes, $args, isset(data_entry_helper::$entity_to_load['sample:id']), self::$auth['read']);
-    
+
     if (!empty(data_entry_helper::$entity_to_load['sample:id'])) {
       $pageHtml .= '<input type="hidden" name="sample:id" value="' . data_entry_helper::$entity_to_load['sample:id'] . '"/>';
     }
@@ -1033,7 +1027,7 @@ class iform_ukbms_sectioned_transects_input_sample_2
     $pageHtml .= '<div class="row">';
     $oldControlWrapTemplate = $indicia_templates['controlWrap'];
     $indicia_templates['controlWrap'] = '<div id="ctrl-wrap-{id}" class="form-group ctrl-wrap col-sm-6">{control}</div>';
-    
+
     // first deal with any attributes before the date. we ignore the structure blocks
     $ctrlOptions = ['extraParams' => self::$auth['read']];
     $attrSpecificOptions= (!empty($args['custom_attribute_options']) ? get_attr_options_array_with_user_data($args['custom_attribute_options']) : []);
@@ -1087,7 +1081,7 @@ class iform_ukbms_sectioned_transects_input_sample_2
       'label' => self::$translated['notes'],
       'helpText' => self::$translated['notes_help']
     ]);
-    
+
     // images
     if ($settings["super_sample_images"]) {
       $maxUploadSize = !empty($args['media_upload_size']) ? $args['media_upload_size'] :
@@ -1101,23 +1095,23 @@ class iform_ukbms_sectioned_transects_input_sample_2
         'maxUploadSize' => $maxUploadSize,
       ]);
     }
-    
+
     // GDPR message: positioning is potentially branch/country/scheme dependent
     if ($settings['sample_gdpr_message_position']['bottom']) {
       $pageHtml .= str_replace('{1}',
           '<a href="' . $settings['gdpr_link'] .'">'  . $settings['gdpr_link'] .'</a>',
           '<p class="gdpr">' .  lang::get(self::$translations['gdpr_message']) . '</p>');
       // have to do this this way so response leaves in the link
-      
+
     }
-    
+
     // Buttons
     $pageHtml .= '<div><input type="submit" value="' . self::$translated['next'] . '" class="btn btn-primary btn-lg" />' .
       '<a href="'.$args['return_page'].'" class="btn btn-warning btn-lg">' . self::$translated['cancel'] . '</a>';
     if (isset(data_entry_helper::$entity_to_load['sample:id'])) {
       $pageHtml .= '<button id="delete-button" type="button" class="btn btn-danger btn-lg" />' . self::$translated['delete'] . '</button>';
     }
-    
+
     $pageHtml .= '</div></form>';
 
     // Extra form to delete sample.
@@ -1127,7 +1121,7 @@ class iform_ukbms_sectioned_transects_input_sample_2
     foreach ($attributes as $attrID => $attr) {
       if (strcasecmp('Recorder Name', $attr["untranslatedCaption"]) == 0) {
         $formOptions['recorderNameAttrID'] = $attrID; // will be undefined if not present.
-      } 
+      }
       // Want to convert the time fields to html5 type=time
       // Don't want to use the time control type as doesn't meet customer requirements.
       // Am fully aware that functionality is very browser dependant.
@@ -1142,16 +1136,16 @@ class iform_ukbms_sectioned_transects_input_sample_2
         $safeId = str_replace(':', '\\\\:', $attr["id"]);
         data_entry_helper::$javascript .= "$('#".$safeId."').prop('type', 'time').prop('placeholder', '__:__');\n";
       }
-      
+
     }
-    
+
     data_entry_helper::$javascript .= "\nsetUpSamplesForm(".json_encode((object)$formOptions).");\n";
     data_entry_helper::enable_validation('sample');
 
     return $pageHtml;
   }
 
-  
+
   private static function getLocationControl($args, &$formOptions)
   {
     if (!empty(self::$locationID)) {
@@ -1183,7 +1177,7 @@ class iform_ukbms_sectioned_transects_input_sample_2
         '<input type="hidden" name="sample:entered_sref_system" value="" id="entered_sref_system"/>';
       // sref values for the sample will be populated automatically when the submission is built.
     }
-    
+
     // location control
     if (self::$locationID && (isset(data_entry_helper::$entity_to_load['sample:id']) || isset($_GET['site']))) {
       // for reload of existing data or if the site is specified in the URL, user can't change the transect.
@@ -1273,7 +1267,7 @@ class iform_ukbms_sectioned_transects_input_sample_2
   /******************************************************************
    * The following functions are specific to the core Occurrence Page
    ******************************************************************/
-  
+
   private static function getOccurrencesForm($args, $nid, $response, $existing) {
     global $indicia_templates;
 
@@ -1285,7 +1279,7 @@ class iform_ukbms_sectioned_transects_input_sample_2
     $sectionAttributes = self::getSectionAttributes($args);
     $occurrenceAttributes = self::getOccurrenceAttributes($args);
     $settings = self::getBranchSettings($args, $occurrenceAttributes, $sectionAttributes);
-    
+
 	// Check for required flag for subsample attributes
     foreach ($sectionAttributes as $key => $attribute) {
       $rules = explode("\n", $attribute['validation_rules']);
@@ -1305,11 +1299,11 @@ class iform_ukbms_sectioned_transects_input_sample_2
 
     $subSampleList = [];
     $subSamplesByCode = [];
-    
+
     $subSamples = self::getSubSamples($args, self::$sampleId, $sectionAttributes);
-    
+
     self::transcribeSubSamples($subSamples, $subSampleList, $subSamplesByCode);
-    
+
     $maxUploadSize = !empty($args['media_upload_size']) ? $args['media_upload_size'] :
         (isset(helper_base::$maxUploadSize) ? helper_base::$maxUploadSize : '4M');
     $maxUploadSize = self::convert_to_bytes($maxUploadSize);
@@ -1364,7 +1358,7 @@ class iform_ukbms_sectioned_transects_input_sample_2
     ];
 
     self::getOccurrences($formOptions, $args, $existing);
-    
+
     $date = data_entry_helper::$entity_to_load['sample:date_start'];
     $pageHtml = '<div id="grid-loading"><div class="spinner" ></div></div>';
     $pageHtml .= '<div>' . self::occurrencePageHeader($args, self::$locationID, $date);
@@ -1375,31 +1369,31 @@ class iform_ukbms_sectioned_transects_input_sample_2
             '<p class="gdpr">' .  lang::get(self::$translations['gdpr_message']) . '</p>');
         // have to do this this way so response leaves in the link
     }
-    
+
     $pageHtml .= self::buildMultiGrid($args, $formOptions, $settings, $subSamplesByCode);
-    
+
     if ($settings['occurrence_gdpr_message_position']['bottom']) {
         $pageHtml .= str_replace('{1}',
             '<a href="' . $settings['gdpr_link'] .'">'  . $settings['gdpr_link'] .'</a>',
             '<p class="gdpr">' .  lang::get(self::$translations['gdpr_message']) . '</p>');
         // have to do this this way so response leaves in the link
     }
-    
+
     $pageHtml .= self::occurrenceLinks($args);
-    
+
     $pageHtml .= '</div>';
 
     // stub form to attach validation to.
     $pageHtml .= '<form style="display: none" id="validation-form"></form>';
     data_entry_helper::enable_validation('validation-form');
-    
+
     // A stub forms for AJAX posting when we need to update a supersample, subsample or occurrence
     $pageHtml .= self::occurrenceStubForm($nid, $args, $formOptions, $occurrenceAttributes);
     $pageHtml .= self::subSampleStubForm($nid, $args, $settings, self::$sampleId, $date, $sectionAttributes);
     $pageHtml .= self::superSampleStubForm($nid, $args, $settings, $date, $transectAttributes);
 
     $pageHtml .= self::warningDialog($nid, $args, self::$sampleId, $date, $sectionAttributes);
-    
+
     data_entry_helper::$javascript .= "\nsetUpOccurrencesForm(".json_encode((object)$formOptions).");\n\n";
 
     $indicia_templates['controlWrap'] = $oldCtrlWrapTemplate;
@@ -1413,7 +1407,7 @@ class iform_ukbms_sectioned_transects_input_sample_2
     foreach ($reloadUrl['params'] as $key => $value) {
       $reloadUrl['path'] .= (strpos($reloadUrl['path'], '?') === false ? '?' : '&') . "$key=$value";
     }
-    
+
     return '<a href="' . $reloadUrl['path'] . '" class="btn btn-info btn-lg">' .
       lang::get('Back to visit details') .
       '</a>' .
@@ -1421,7 +1415,7 @@ class iform_ukbms_sectioned_transects_input_sample_2
       lang::get('Finish and return to walk list') .
       '</a>';
   }
-  
+
   private static function superSampleStubForm($nid, $args, $settings, $date, $superSampleAttributes)
   {
     // A stub form for AJAX posting when we need to update a supersample: only do one attribute at a time
@@ -1441,7 +1435,7 @@ class iform_ukbms_sectioned_transects_input_sample_2
       }
     }
     foreach ($superSampleAttributes as $attr) {
-      if ($attr['id'] != $attr['fieldname']) {        
+      if ($attr['id'] != $attr['fieldname']) {
         $formHtml .= '<input id="' . $attr['id'] . '" name="' . $attr['fieldname'] . '" value="' . $attr['default'] . '"/>';
       }
     }
@@ -1451,7 +1445,7 @@ class iform_ukbms_sectioned_transects_input_sample_2
       '</form>';
     return $formHtml;
   }
-  
+
   private static function subSampleStubForm($nid, $args, $settings, $parentSampleId, $date, $attributes)
   {
     // A stub form for AJAX posting when we need to update a subsample
@@ -1480,7 +1474,7 @@ class iform_ukbms_sectioned_transects_input_sample_2
 */
     return $formHtml;
   }
-  
+
   private static function occurrenceStubForm($nid, $args, $formOptions, $occurrenceAttributes) {
     // A stub form for AJAX posting when we need to create an occurrence
     if (!empty($args["sensitiveAttrID"]) && !empty($args["sensitivityPrecision"])) {
@@ -1497,10 +1491,10 @@ class iform_ukbms_sectioned_transects_input_sample_2
     }
     if(!empty($args["confidentialAttrID"])) {
       $confidentialSiteAttributes = data_entry_helper::getAttributes([
-        'valuetable'=>'location_attribute_value',
-        'attrtable'=>'location_attribute',
-        'key'=>'location_id',
-        'fieldprefix'=>'locAttr',
+        'valuetable' => 'location_attribute_value',
+        'attrtable' => 'location_attribute',
+        'key' => 'location_id',
+        'fieldprefix' => 'locAttr',
         'extraParams'=>self::$auth['read'] + ['id'=>$args['confidentialAttrID']],
         'location_type_id'=>$args['transect_type_term_id'],
         'survey_id'=>$args['survey_id'],
@@ -1525,15 +1519,15 @@ class iform_ukbms_sectioned_transects_input_sample_2
         '<input name="occurrence:confidential" id="occConfidential" value="'.(count($confidentialSiteAttributes)>0 && $confidentialSiteAttributes[$args["confidentialAttrID"]]['default']=="1" ? '1' : '0').'"/>' : '') .
       '<input name="transaction_id" id="occurrence_transaction_id"/>' .
       '<input name="user_id" value="' . self::$userId . '"/>';
-    
+
     foreach ($formOptions['settings']['occurrence_attributes'] as $occurrenceAttributeID) {
       $formHtml .= '<input name="occAttr:' . $occurrenceAttributeID . '" id="occattr-' . $occurrenceAttributeID . '"/>';
     }
     $formHtml .= '</form>';
-    
+
     return $formHtml;
   }
-  
+
   private static function getTransectAttributes($args) {
     // find any attributes that apply to transect samples.
     return data_entry_helper::getAttributes([
@@ -1548,7 +1542,7 @@ class iform_ukbms_sectioned_transects_input_sample_2
       'multiValue' => FALSE // ensures that array_keys are the list of attribute IDs.
     ]);
   }
-  
+
   private static function getSectionAttributes($args) {
     // find any attributes that apply to transect section samples.
     return data_entry_helper::getAttributes([
@@ -1560,9 +1554,9 @@ class iform_ukbms_sectioned_transects_input_sample_2
       'survey_id' => $args['survey_id'],
       'sample_method_id' => $args['section_sample_method_term_id'],
       'multiValue' => FALSE // ensures that array_keys are the list of attribute IDs.
-    ]);    
+    ]);
   }
-  
+
   private static function getSubSamples($args, $sampleId, $transectSectionAttributes) {
     // The parent sample and sub-samples have already been created: can't cache in case a new section added.
     self::$timings .= '(5) Start '.date('Y-m-d H:i:s'); // OK
@@ -1578,7 +1572,7 @@ class iform_ukbms_sectioned_transects_input_sample_2
       'nocache' => TRUE
     ]);
   }
-  
+
   private static function transcribeSubSamples($subSamples, &$subSampleList, &$subSamplesByCode) {
     // transcribe the response array into a couple of forms that are useful elsewhere - one for outputting JSON so the JS knows about
     // the samples, and another for lookup of sample data by code later.
@@ -1587,7 +1581,7 @@ class iform_ukbms_sectioned_transects_input_sample_2
       $subSamplesByCode[$subSample['code']] = $subSample;
     }
   }
-  
+
   private static function getOccurrenceAttributes($args) {
     // The occurrence attribute must be flagged as numeric:true in the survey specific validation rules in order for totals to be worked out.
     return data_entry_helper::getAttributes([
@@ -1600,7 +1594,7 @@ class iform_ukbms_sectioned_transects_input_sample_2
       'multiValue' => FALSE // ensures that array_keys are the list of attribute IDs.
     ]);
   }
-  
+
   private static function getSections($args) {
     // Fetch the sections
     self::$timings .= '(6) Start '.date('Y-m-d H:i:s'); // OK
@@ -1617,7 +1611,7 @@ class iform_ukbms_sectioned_transects_input_sample_2
     usort($sections, "ukbms_stis2_sectionSort");
     return $sections;
   }
-  
+
   private static function getOccurrences(&$formOptions, $args, $existing) {
     $formOptions['existingTaxonMeaningIDs'] = [];
     $formOptions['existingOccurrences'] = [];
@@ -1655,7 +1649,7 @@ class iform_ukbms_sectioned_transects_input_sample_2
       $formOptions['existingTaxonMeaningIDs'] = array_keys($formOptions['existingTaxonMeaningIDs']);
     }
   }
-  
+
   private static function getOccurrenceAttributeControls($args, $occurrenceAttributes) {
     $defaults = helper_base::explode_lines_key_value_pairs($args['defaults']);
     $defAttrOptions = ['extraParams'=>self::$auth['read']];
@@ -1671,7 +1665,7 @@ class iform_ukbms_sectioned_transects_input_sample_2
     }
     return $controls;
   }
-  
+
   private static function branchSpeciesLists($args, $settings) {
     $branchSpeciesList = [];
     $speciesTabs = json_decode($args['species_tab_definition'], TRUE);
@@ -1697,7 +1691,7 @@ class iform_ukbms_sectioned_transects_input_sample_2
     if (empty($args['species_attr_values'])) {
       return $branchSpeciesList;
     }
-    
+
     $taxaAttrValues = data_entry_helper::get_population_data([
         'table' => 'taxa_taxon_list_attribute_value',
         'extraParams' => array_merge(self::$auth['read'], ['view' => 'list', 'taxa_taxon_list_attribute_id' => $attr_id]),
@@ -1736,7 +1730,7 @@ class iform_ukbms_sectioned_transects_input_sample_2
     }
     return $branchSpeciesList;
   }
-  
+
   private static function commonSpeciesList($args, $settings) {
       $commonSpeciesList = [];
       $speciesTabs = json_decode($args['species_tab_definition'], TRUE);
@@ -1759,7 +1753,7 @@ class iform_ukbms_sectioned_transects_input_sample_2
       if (empty($args['species_attr_values'])) {
           return $commonSpeciesList;
       }
-      
+
       $taxaAttrValues = data_entry_helper::get_population_data([
           'table' => 'taxa_taxon_list_attribute_value',
           'extraParams' => array_merge(self::$auth['read'], ['view' => 'list', 'taxa_taxon_list_attribute_id' => $attr_id]),
@@ -1804,7 +1798,7 @@ class iform_ukbms_sectioned_transects_input_sample_2
     $rangeList->attrId = FALSE;
     $rangeList->walk = [];
     $rangeList->section = [];
-    
+
     if (empty($args['occurrenceValueRangeAttributeID'])) {
       return $rangeList;
     }
@@ -1871,43 +1865,43 @@ class iform_ukbms_sectioned_transects_input_sample_2
     }
     return $rangeList;
   }
-  
+
   private static function allSpeciesAtTransect($args) {
-    
+
     $allTaxonMeaningIDsAtTransect = [];
-    
+
     self::$timings .= '(10) Start '.date('Y-m-d H:i:s'); // OK
     $taxa = data_entry_helper::get_population_data([
       'report' => 'projects/ukbms/ukbms_taxon_meanings_at_transect',
       'extraParams' => self::$auth['read'] + ['location_id' => self::$locationID, 'survey_id'=>$args['survey_id']],
 //      'nocache' => true // ?? don't cache as this is live data
     ]);
-    
+
     foreach($taxa as $taxon){
       $allTaxonMeaningIDsAtTransect[] = $taxon['taxon_meaning_id'];
     } // all meanings is list independant.
-    
+
     return $allTaxonMeaningIDsAtTransect;
   }
-  
+
   private static function mySpecies($args) {
-    
+
     $mySpecies = [];
-    
+
     self::$timings .= '(11) Start '.date('Y-m-d H:i:s');
     $taxa = data_entry_helper::get_population_data([
         'report' => 'projects/ukbms/ukbms_taxon_meanings_for_user',
         'extraParams' => self::$auth['read'] + ['user_id' => self::$userId, 'survey_id'=>$args['survey_id']],
 //        'nocache' => true // ?? don't cache as this is live data
     ]);
-    
+
     foreach($taxa as $taxon){
         $mySpecies[] = $taxon['taxon_meaning_id'];
     } // all meanings is list independant.
-    
+
     return $mySpecies;
   }
-  
+
   private static function occurrencePageHeader($args, $locationID, $date) {
     self::$timings .= '(12) Start '.date('Y-m-d H:i:s');
     $location = data_entry_helper::get_population_data([
@@ -1918,7 +1912,7 @@ class iform_ukbms_sectioned_transects_input_sample_2
     $displayDate = $dateObj->format('l jS F Y');
     return '<h2 id="ukbms_stis_header">' . $location[0]['name'] . " on " . $displayDate . "</h2>";
   }
-  
+
   private static function warningDialog($nid, $args, $sampleId, $date, $transect_section_attributes) {
     return '<div style="display: none"><div id="warning-dialog"><p>' .
       lang::get('The following warnings have been identified') .
@@ -1926,7 +1920,7 @@ class iform_ukbms_sectioned_transects_input_sample_2
       lang::get('Do you still wish to enter this data?') .
       '</p></div></div>';
   }
-  
+
 
   private static function buildMultiGrid ($args, &$formOptions, $settings, $subSamplesByCode)
   {
@@ -1944,7 +1938,7 @@ class iform_ukbms_sectioned_transects_input_sample_2
   private static function buildMultiGridSimple ($args, &$formOptions, $settings, $subSamplesByCode)
   {
     global $indicia_templates;
-    
+
     $format = 'simple';
     $formOptions['format'] = $format;
     $formOptions['addSpeciesPosition'] = (!empty($args['add_species_position']) ? $args['add_species_position'] : 'below');
@@ -1957,7 +1951,7 @@ class iform_ukbms_sectioned_transects_input_sample_2
         $gridHtml .= '<div class="species_grid_flex species_grid_title species_grid_title_' . $index . '" ' . $style . '>' .
             '<h3>' . lang::get($tabDefinition['title']) . '</h3></div>' .
             '<div id="species_grid_supersample_attributes_' . $index . '" class="species_grid_flex species_grid_supersample_attributes" ' . $style . '>';
-        
+
         foreach ($settings['species_supersample_attributes'] as $speciesSupersampleAttribute) {
             if ($speciesSupersampleAttribute['grid'] == $index) {
                 $gridHtml .= '<div>' .
@@ -2016,15 +2010,15 @@ class iform_ukbms_sectioned_transects_input_sample_2
   private static function buildMultiGridComplex ($args, &$formOptions, $settings, $subSamplesByCode)
   {
       global $indicia_templates;
-      
+
       // In the following cases we switch to the complex grid: >1 occurrence attribute, occurrence media or comments, subsample media
       $format = 'complex';
       $formOptions['format'] = $format;
       $formOptions['addSpeciesPosition'] = (!empty($args['add_species_position']) ? $args['add_species_position'] : 'below');
-      
+
       $numberOfColumns = self::numberOfColumnsInMultiGrid($formOptions, $settings);
       $gridHtml = '<div id="multi-grid">';
-   
+
       $gridHtml .= '<div class="species_grid_flex">' . self::sectionSelectorControl($formOptions['sections']) . '</div>';
 
       $gridHtml .= '<div class="species_grid_flex"><table class="species_grid table-hover table-striped sticky-enabled"><thead>';
@@ -2033,13 +2027,13 @@ class iform_ukbms_sectioned_transects_input_sample_2
       // In order for the Section headings to line up, this has to be the row with the <th>s
       $gridHtml .= self::buildMultiGridSectionHeader($formOptions, $settings, true);
       $gridHtml .= '</thead>'. PHP_EOL;
-      
+
       $gridHtml .= '<tbody id="global_subsample_attributes">';
       foreach ($settings['global_subsample_attributes'] as  $idx => $globalSubsampleAttribute) {
           $gridHtml .= self::buildMultiGridGlobalSubsampleAttribute($formOptions, $settings, $globalSubsampleAttribute, FALSE);
       }
       $gridHtml .= '</tbody></table></div>'. PHP_EOL;
-      
+
       foreach ($formOptions['speciesTabDefinition'] as $index => $tabDefinition) {
           $gridHtml .= '<hr><div class="species_grid_flex species_grid_title">' .
               '<h3>' . lang::get($tabDefinition['title']) . '</h3></div>' .
@@ -2052,7 +2046,7 @@ class iform_ukbms_sectioned_transects_input_sample_2
                       "</div>";
               }
           }
-          
+
           $gridHtml .= "</div>";
           $speciesControlDisplay = FALSE;
           $speciesControl = self::speciesListControl($index, $tabDefinition, $args, $formOptions, TRUE, '<div>{{control}}</div>', $speciesControlDisplay) .
@@ -2092,7 +2086,7 @@ class iform_ukbms_sectioned_transects_input_sample_2
           $gridHtml .= '</table>';
       }
       $gridHtml .= '</div>';
-          
+
       if ($settings['occurrence_images']) {
           data_entry_helper::add_resource('plupload');
           // store some globals that we need later when creating uploaders
@@ -2159,7 +2153,7 @@ class iform_ukbms_sectioned_transects_input_sample_2
     $ctrlHTML .= '</div></div>';
     return $ctrlHTML;
   }
-  
+
   private static function numberOfColumnsInMultiGrid($formOptions, $settings) {
     $numberOfColumns = 1; // for row label: taxon or attribute label
     $numberOfColumns += count($formOptions['sections']) * count($settings['occurrence_attributes']);
@@ -2178,7 +2172,7 @@ class iform_ukbms_sectioned_transects_input_sample_2
     $row = '<tr id="smp-' . $globalSubsampleAttribute . '">';
     $row .= '<th class="' . ($lastRow ? 'last-row' : '') . '">' . $formOptions['subSampleAttributes'][$globalSubsampleAttribute]['caption'] . '</th>';
     $attr = $formOptions['subSampleAttributes'][$globalSubsampleAttribute];
-    
+
     unset($attr['caption']);
     foreach ($formOptions['sections'] as $index => $section) {
       $style = ($formOptions['format'] === 'simple' || $section['code'] === 'S1' ? '' : 'style="display: none;"');
@@ -2221,7 +2215,7 @@ class iform_ukbms_sectioned_transects_input_sample_2
     $row .= '</tr>';
     return $row;
   }
-  
+
   private static function buildMultiGridSupersampleAttribute($formOptions, $settings, $supersampleAttribute) {
     // Currently no application of custom_attribute_options
     $row = '<tr id="superSampleAttribute-' . $supersampleAttribute . '">';
@@ -2253,7 +2247,7 @@ class iform_ukbms_sectioned_transects_input_sample_2
     $row .= '</tr>';
     return $row;
   }
-  
+
   private static function buildMultiGridSectionHeader($formOptions, $settings, $includeTotals) {
     $row = '<tr class="section-header"><th><a class="top-link" href="#main-content">' . lang::get('Top') . '<span class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span></a></th>';
     foreach ($formOptions['sections'] as $index => $section) {
@@ -2282,11 +2276,11 @@ class iform_ukbms_sectioned_transects_input_sample_2
     $attrSpecificOptions= (!empty($args['custom_attribute_options']) ? get_attr_options_array_with_user_data($args['custom_attribute_options']) : []);
     $row = '<tr><td>' . lang::get('Species') . '</td>';
     foreach ($settings['occurrence_attributes'] as $attribute) {
-      $row .= '<td>' . 
-          (!empty($attrSpecificOptions[$formOptions['occurrenceAttributes'][$attribute]['id']]) && 
+      $row .= '<td>' .
+          (!empty($attrSpecificOptions[$formOptions['occurrenceAttributes'][$attribute]['id']]) &&
               !empty($attrSpecificOptions[$formOptions['occurrenceAttributes'][$attribute]['id']]['label']) ?
               lang::get($attrSpecificOptions[$formOptions['occurrenceAttributes'][$attribute]['id']]['label']) :
-              $formOptions['occurrenceAttributes'][$attribute]['caption']) . 
+              $formOptions['occurrenceAttributes'][$attribute]['caption']) .
         '</td>';
     }
     if (!empty($settings['occurrence_images'])) {
@@ -2324,19 +2318,19 @@ class iform_ukbms_sectioned_transects_input_sample_2
     }
     return $row;
   }
-  
+
   /****************************************************************************
    * The following functions are common to both flavours of the Occurrence page
    ****************************************************************************/
-  
+
   private static function speciesListControl($tabNum, $tabDefinition, $args, $formOptions, $showRow, $template, &$showControl) {
-    
+
     $listSelected = hostsite_get_user_field('default_species_view');
     if (empty($listSelected)) {
       $listSelected = !empty($tabDefinition['start_list']) ? $tabDefinition['start_list'] : 'here';
     }
     $listSelected = in_array($listSelected, array('branch','full','common','mine','here')) ? $listSelected : 'here';
-    
+
     $default = FALSE;
     $options = [];
     // The use of the branch list is toggled purely on the provision of a branch species attribute
@@ -2390,7 +2384,7 @@ class iform_ukbms_sectioned_transects_input_sample_2
         [$showControl ? '' : ' keepHidden', $ctrlHTML, $showRow ? '' : 'display: none;'],
         $template);
   }
-  
+
   private static function buildSortControl($tabNum, $tabDefinition, $args, $showRow, $template, &$showControl) {
     $default = FALSE;
     $options = [];
@@ -2434,26 +2428,26 @@ class iform_ukbms_sectioned_transects_input_sample_2
       [$showControl ? '' : ' keepHidden', $ctrlHTML, $showRow ? '' : 'display: none;'],
       $template);
   }
-  
+
   /*
    * Build HTML for species list autocompletes.
-   * 
+   *
    * @param $tabNum
    * @param $tabDefinition
    * @param $args
    * @param $template
    * @return String
-   */  
+   */
   private static function autocompleteControl($tabNum, $tabDefinition, $args, $template) {
     $ctrlHTML = '<span id="taxonLookupControlContainer' . $tabNum . '">' .
       '<label for="taxonLookupControl' . $tabNum . '" class="auto-width">' .
       lang::get('Search for or add species to list ({1})', lang::get($tabDefinition['title'])) .
       ':</label> ' .
       '<input id="taxonLookupControl' . $tabNum . '" name="taxonLookupControl' . $tabNum . '" class="willAutocomplete"></span>';
-      
+
     return str_replace('{{control}}', $ctrlHTML, $template);
   }
-  
+
   /**
    * Handles the construction of a submission array from a set of form values.
    * @param array $values Associative array of form data values.
@@ -2461,7 +2455,7 @@ class iform_ukbms_sectioned_transects_input_sample_2
    * @return array Submission structure.
    */
   public static function get_submission($values, $args) {
-    $subsampleModels = array();
+    $subsampleModels = [];
     if (!isset($values['page']) || ($values['page']=='mainSample')) {
       // submitting the first page, with top level sample details
       $read = array(
@@ -2494,7 +2488,7 @@ class iform_ukbms_sectioned_transects_input_sample_2
           'extraParams' => $read + array('view' => 'detail','parent_id'=>$values['sample:id'],'deleted' => 'f'),
           'nocache' => TRUE  // may have recently added or removed a section
         ));
-      } else $existingSubSamples = array();
+      } else $existingSubSamples = [];
       $sampleMethods = helper_base::get_termlist_terms(array('read'=>$read), 'indicia:sample_methods', array('Transect Section'));
       $attributes = data_entry_helper::getAttributes(array(
         'valuetable' => 'sample_attribute_value',
@@ -2696,7 +2690,7 @@ class iform_ukbms_sectioned_transects_input_sample_2
    * Ajax function call: provided with taxon_meaning_id, location_id and date
    */
   public static function ajax_taxon_autocomplete($website_id, $password, $nid) {
-      
+
       $qField = $_GET['qfield'];
       $limit = $_GET['limit'];
       $_GET['q'] = trim($_GET['q']);
@@ -2790,11 +2784,11 @@ class iform_ukbms_sectioned_transects_input_sample_2
               $entities = array_slice($entities, 0, $limit);
           }
       }
-      
+
       header('Content-type: application/json');
       echo $callback . '(' . json_encode($entities) . ')';
   }
-  
+
   private static function vr_extract($type, $data, $key, $length = NULL) {
     foreach ($data as $pair) {
       if ($pair['key'] == $key && ($length === NULL || strlen($pair['value']) === $length)) {
@@ -2811,7 +2805,7 @@ class iform_ukbms_sectioned_transects_input_sample_2
    * @return array List of distinct permissions.
    */
   public static function get_perms($nid, $args) {
-      $perms = array();
+      $perms = [];
       if (!empty($args['managerPermission'])) {
           $perms[] = $args['managerPermission'];
       }

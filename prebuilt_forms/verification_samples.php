@@ -15,7 +15,7 @@
  *
  * @author Indicia Team
  * @licence http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link http://code.google.com/p/indicia/
+ * @link https://github.com/Indicia-Team/client_helpers
  */
 
 require_once 'includes/map.php';
@@ -25,9 +25,6 @@ require_once 'includes/report_filters.php';
 /**
  * Prebuilt Indicia data form that lists the output of a samples report with an option
  * to accept or reject.
- *
- * @package Client
- * @subpackage PrebuiltForms
  */
 class iform_verification_samples {
 
@@ -48,9 +45,9 @@ class iform_verification_samples {
    */
   public static function get_verification_samples_definition() {
     return array(
-      'title'=>'Verification for samples',
+      'title' => 'Verification for samples',
       'category' => 'Verification',
-      'description'=>'Verification form supporting verification of samples/submitted forms.'
+      'description' => 'Verification form supporting verification of samples/submitted forms.'
     );
   }
 
@@ -64,29 +61,29 @@ class iform_verification_samples {
       iform_report_get_minimal_report_parameters(),
       array(
         array(
-          'name'=>'mapping_report_name',
-          'caption'=>'Report for map output',
-          'description'=>'Report used to obtain the output for the map. Should have the same parameters as the grid report but only needs to '.
+          'name' => 'mapping_report_name',
+          'caption' => 'Report for map output',
+          'description' => 'Report used to obtain the output for the map. Should have the same parameters as the grid report but only needs to '.
             'return the sample id, geom and any shape formatting.',
-          'type'=>'report_helper::report_picker',
-          'group'=>'Report Settings',
-          'default'=>'library/samples/filterable_explore_list_mapping'
+          'type' => 'report_helper::report_picker',
+          'group' => 'Report Settings',
+          'default' => 'library/samples/filterable_explore_list_mapping'
         ),
         array(
-          'name'=>'record_details_report',
-          'caption'=>'Report for record details',
-          'description'=>'Report used to obtain the details of a sample. See reports_for_prebuilt_forms/verification_3/record_data.xml for an example.',
-          'type'=>'report_helper::report_picker',
-          'group'=>'Report Settings',
-          'default'=>'reports_for_prebuilt_forms/verification_samples/record_data'
+          'name' => 'record_details_report',
+          'caption' => 'Report for record details',
+          'description' => 'Report used to obtain the details of a sample. See reports_for_prebuilt_forms/verification_3/record_data.xml for an example.',
+          'type' => 'report_helper::report_picker',
+          'group' => 'Report Settings',
+          'default' => 'reports_for_prebuilt_forms/verification_samples/record_data'
         ),
         array(
-          'name'=>'record_attrs_report',
-          'caption'=>'Report for record attributes',
-          'description'=>'Report used to obtain the custom attributes of a record. See reports_for_prebuilt_forms/verification_3/record_data_attributes.xml for an example.',
-          'type'=>'report_helper::report_picker',
-          'group'=>'Report Settings',
-          'default'=>'reports_for_prebuilt_forms/verification_samples/record_data_attributes'
+          'name' => 'record_attrs_report',
+          'caption' => 'Report for record attributes',
+          'description' => 'Report used to obtain the custom attributes of a record. See reports_for_prebuilt_forms/verification_3/record_data_attributes.xml for an example.',
+          'type' => 'report_helper::report_picker',
+          'group' => 'Report Settings',
+          'default' => 'reports_for_prebuilt_forms/verification_samples/record_data_attributes'
         ),
         array(
           'name' => 'columns_config',
@@ -146,68 +143,68 @@ class iform_verification_samples {
           'group' => 'Report Settings',
           'required' => false
         ), array(
-          'name'=>'email_subject_send_to_verifier',
-          'caption'=>'Send to Expert Email Subject',
-          'description'=>'Default subject for the send to expert email. Replacements allowed include %id%.',
-          'type'=>'string',
+          'name' => 'email_subject_send_to_verifier',
+          'caption' => 'Send to Expert Email Subject',
+          'description' => 'Default subject for the send to expert email. Replacements allowed include %id%.',
+          'type' => 'string',
           'default' => 'Requesting your opinion on a sample (ID:%id%)',
           'group' => 'Verifier emails'
         ), array(
-          'name'=>'email_body_send_to_verifier',
-          'caption'=>'Send to Expert Email Body',
-          'description'=>'Default body for the send to expert email. Replacements allowed include %id% and %record% which is replaced to give details of the record.',
-          'type'=>'textarea',
+          'name' => 'email_body_send_to_verifier',
+          'caption' => 'Send to Expert Email Body',
+          'description' => 'Default body for the send to expert email. Replacements allowed include %id% and %record% which is replaced to give details of the record.',
+          'type' => 'textarea',
           'default' => 'We would appreciate your opinion on the following record. Please reply to this mail with "accepted", "not accepted" or "query" '.
             'in the email body, followed by any comments you have including the proposed re-identification if relevant on the next line.'.
             "\n\n%record%",
           'group' => 'Verifier emails'
         ), array(
-          'name'=>'email_subject_send_to_recorder',
-          'caption'=>'Send to Recorder Email Subject',
-          'description'=>'Default subject for the send query to recorder email. Replacements allowed include %id%.',
-          'type'=>'string',
+          'name' => 'email_subject_send_to_recorder',
+          'caption' => 'Send to Recorder Email Subject',
+          'description' => 'Default subject for the send query to recorder email. Replacements allowed include %id%.',
+          'type' => 'string',
           'default' => 'Query on your sample (ID:%id%)',
           'group' => 'Recorder emails'
         ), array(
-          'name'=>'email_body_send_to_recorder',
-          'caption'=>'Send to Recorder Email Body',
-          'description'=>'Default body for the send to recorder email. Replacements allowed include %id% and %record% which is replaced to give details of the record.',
-          'type'=>'textarea',
+          'name' => 'email_body_send_to_recorder',
+          'caption' => 'Send to Recorder Email Body',
+          'description' => 'Default body for the send to recorder email. Replacements allowed include %id% and %record% which is replaced to give details of the record.',
+          'type' => 'textarea',
           'default' => 'The following record requires confirmation. Please could you reply to this email stating how confident you are that the record is correct '.
             'and any other information you have which may help to confirm this.'.
             "\n\n%record%",
           'group' => 'Recorder emails'
         ), array(
-          'name'=>'auto_discard_rows',
-          'caption'=>'Automatically remove rows',
-          'description'=>'If checked, then when changing the status of a record the record is removed from the grid if it no '.
+          'name' => 'auto_discard_rows',
+          'caption' => 'Automatically remove rows',
+          'description' => 'If checked, then when changing the status of a record the record is removed from the grid if it no '.
             'longer matches the grid filter.',
-          'type'=>'checkbox',
-          'default'=>'true',
+          'type' => 'checkbox',
+          'default' => 'true',
           'required'=>false
         ),
         array(
-          'name'=>'indexed_location_type_ids',
-          'caption'=>'Indexed location type IDs',
-          'description'=>'Comma separated list of location type IDs for location layers that are available to search against.',
-          'type'=>'text_input',
+          'name' => 'indexed_location_type_ids',
+          'caption' => 'Indexed location type IDs',
+          'description' => 'Comma separated list of location type IDs for location layers that are available to search against.',
+          'type' => 'text_input',
           'required'=>false,
-          'group'=>'Other Map Settings'
+          'group' => 'Other Map Settings'
         ),
         array(
-          'name'=>'other_location_type_ids',
-          'caption'=>'Other location type IDs',
-          'description'=>'Comma separated list of location type IDs for location layers that are available to search against.',
-          'type'=>'text_input',
+          'name' => 'other_location_type_ids',
+          'caption' => 'Other location type IDs',
+          'description' => 'Comma separated list of location type IDs for location layers that are available to search against.',
+          'type' => 'text_input',
           'required'=>false,
-          'group'=>'Other Map Settings'
+          'group' => 'Other Map Settings'
         ),
         array(
-          'name'=>'clear_verification_task_notifications',
-          'caption'=>'Clear verification task notifications?',
-          'description'=>'Automatically clear any verification task notifications when the user opens the verification screen.',
-          'type'=>'boolean',
-          'group'=>'Notification Settings',
+          'name' => 'clear_verification_task_notifications',
+          'caption' => 'Clear verification task notifications?',
+          'description' => 'Automatically clear any verification task notifications when the user opens the verification screen.',
+          'type' => 'boolean',
+          'group' => 'Notification Settings',
           'default' => false,
           'required' => 'false'
         )
@@ -268,8 +265,8 @@ idlist=';
       'paramDefaults' => $paramDefaults,
       'reportGroup' => 'verification',
       'clickableLayersOutputMode' => 'report',
-      'rowId'=>'sample_id',
-      'sharing'=>'verification',
+      'rowId' => 'sample_id',
+      'sharing' => 'verification',
       'ajax'=>TRUE
     );
     $r .= report_helper::report_map($reportMapOpts);
@@ -300,7 +297,7 @@ idlist=';
     ));
     data_entry_helper::$javascript .= "indiciaData.detailsTabs = ['details','media','comments'];\n";
     data_entry_helper::enable_tabs(array(
-      'divId'=>'record-details-tabs'
+      'divId' => 'record-details-tabs'
     ));
     $r .= '<div id="details-tab"></div>';
     $r .= self::other_tab_html();
@@ -433,15 +430,15 @@ idlist=';
         'reportGroup' => 'verification',
         'rowId' => 'sample_id',
         'paramsFormButtonCaption' => lang::get('Filter'),
-        'paramPrefix'=>'<div class="report-param">',
-        'paramSuffix'=>'</div>',
-        'sharing'=>'verification',
+        'paramPrefix' => '<div class="report-param">',
+        'paramSuffix' => '</div>',
+        'sharing' => 'verification',
         'ajax'=>TRUE,
         'callback' => 'verificationGridLoaded'
       )
     );
     $opts['columns'][] = array(
-      'display'=>'',
+      'display' => '',
       'template' => '<div class="nowrap">'.
           '<input type="hidden" class="row-input-form" value="{rootFolder}{input_form}"/><input type="hidden" class="row-belongs-to-site" value="{belongs_to_site}"/>'.
           '<input type="checkbox" class="check-row no-select" style="display: none" value="{occurrence_id}" /></div>'
@@ -557,7 +554,7 @@ idlist=';
   private static function clear_verifier_task_notifications($auth) {
     //Using 'submission_list' and 'entries' allows us to specify several top-level submissions to the system
     //i.e. we need to be able to submit several notifications.
-    $submission['submission_list']['entries'] = array();
+    $submission['submission_list']['entries'] = [];
     $submission['id']='notification';
     $notifications = data_entry_helper::get_population_data(array(
       'table' => 'notification',
@@ -613,18 +610,18 @@ idlist=';
     $reportData = report_helper::get_report_data($options);
     // set some values which must exist in the record
     $record = array_merge(array(
-      'wkt'=>'','sample_id'=>'','date'=>'','entered_sref'=>'','record_status'=>''
+      'wkt' => '','sample_id' => '','date' => '','entered_sref' => '','record_status' => ''
     ), $reportData['records'][0]);
     // build an array of all the data. This allows the JS to insert the data into emails etc. Note we
     // use an array rather than an assoc array to build the JSON, so that order is guaranteed.
-    $data = array();
+    $data = [];
     $email='';
     foreach($reportData['columns'] as $col=>$def) {
       if ($def['visible']!=='false' && !empty($record[$col])) {
         $caption = explode(':', $def['display']);
         // is this a new heading?
         if (!isset($data[$caption[0]]))
-          $data[$caption[0]]=array();
+          $data[$caption[0]]=[];
         $val = ($col==='record_status') ? self::status_label($record[$col]) : $record[$col];
         $data[$caption[0]][] = array('caption'=>$caption[1], 'value'=>$val);
       }
@@ -642,7 +639,7 @@ idlist=';
     foreach ($reportData as $attribute) {
       if (!empty($attribute['value'])) {
         if (!isset($data[$attribute['attribute_type'] . ' attributes']))
-          $data[$attribute['attribute_type'] . ' attributes']=array();
+          $data[$attribute['attribute_type'] . ' attributes']=[];
         $data[$attribute['attribute_type'] . ' attributes'][] = array('caption'=>$attribute['caption'], 'value'=>$attribute['value']);
       }
     }
@@ -660,7 +657,7 @@ idlist=';
     }
     $r .= "</table>\n";
 
-    $extra=array();
+    $extra=[];
     $extra['wkt'] = $record['wkt'];
     $extra['recorder'] = $record['recorder'];
     $extra['sample_id'] = $record['sample_id'];
@@ -710,7 +707,7 @@ idlist=';
       'table' => 'sample_medium',
       'extraParams'=>$readAuth + array('sample_id'=>$_GET['sample_id']),
       'nocache'=>true,
-      'sharing'=>'verification'
+      'sharing' => 'verification'
     ));
     $r = '';
     if (count($media)===0)
@@ -763,9 +760,9 @@ idlist=';
     iform_load_helpers(array('data_entry_helper'));
     $comments = data_entry_helper::get_population_data(array(
       'table' => 'sample_comment',
-      'extraParams' => $readAuth + array('sample_id'=>$_GET['sample_id'], 'sortdir'=>'DESC', 'orderby'=>'updated_on'),
+      'extraParams' => $readAuth + array('sample_id'=>$_GET['sample_id'], 'sortdir' => 'DESC', 'orderby' => 'updated_on'),
       'nocache'=>true,
-      'sharing'=>'verification'
+      'sharing' => 'verification'
     ));
     $imgPath = empty(data_entry_helper::$images_path) ? data_entry_helper::relative_client_helper_path()."../media/images/" : data_entry_helper::$images_path;
     $r = '';
@@ -818,7 +815,7 @@ idlist=';
   public static function ajax_email() {
     global $user;
     $site_email = hostsite_get_config_value('site', 'mail', '');
-    $headers = array();
+    $headers = [];
     $headers[] = 'MIME-Version: 1.0';
     $headers[] = 'Content-type: text/html; charset=UTF-8;';
     $headers[] = 'From: '. $site_email;
@@ -869,9 +866,9 @@ idlist=';
     $options = array(
       'allowSave' => true,
       'sharing' => 'verification',
-      'linkToMapDiv'=>'map',
-      'filter-quality'=>'P',
-      'entity'=>'sample'
+      'linkToMapDiv' => 'map',
+      'filter-quality' => 'P',
+      'entity' => 'sample'
     );
     if (!empty($args['indexed_location_type_ids']))
       $options['indexedLocationTypeIds'] = array_map('intval', explode(',', $args['indexed_location_type_ids']));

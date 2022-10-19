@@ -23,9 +23,9 @@
  * NB has Drupal specific code. Relies on presence of IForm Proxy.
  */
 
-require_once('includes/dynamic.php');
-require_once('dynamic_sample_occurrence.php');
-require_once('includes/shorewatch_grid_reference_processor.php');
+require_once 'includes/dynamic.php';
+require_once 'dynamic_sample_occurrence.php';
+require_once 'includes/shorewatch_grid_reference_processor.php';
 
 class iform_dynamic_shorewatch extends iform_dynamic_sample_occurrence {
   /**
@@ -34,9 +34,9 @@ class iform_dynamic_shorewatch extends iform_dynamic_sample_occurrence {
    */
   public static function get_dynamic_shorewatch_definition() {
     return array(
-      'title'=>'Shorewatch sample with occurrences form',
+      'title' => 'Shorewatch sample with occurrences form',
       'category' => 'Forms for specific surveying methods',
-      'description'=>'A sample and occurrence entry form with a grid listing the user\'s occurrences.' .
+      'description' => 'A sample and occurrence entry form with a grid listing the user\'s occurrences.' .
         'The form supports an "adhoc mode" which is more geared to use by the general public.' .
         'The attributes on the form are dynamically generated from the survey setup on the Indicia Warehouse.'
     );
@@ -53,249 +53,249 @@ class iform_dynamic_shorewatch extends iform_dynamic_sample_occurrence {
         //As the attribute ids will vary between different databases, we need to manually
         //map the attribute ids to variables in the code
         array(
-          'name'=>'observer_name',
-          'caption'=>'Observer Name',
-          'description'=>'Indicia ID for the sample attribute that is the name of the observer.',
-          'type'=>'select',
-          'table'=>'sample_attribute',
-          'valueField'=>'id',
-          'captionField'=>'caption',
-          'group'=>'Shorewatch Sample Attributes'
+          'name' => 'observer_name',
+          'caption' => 'Observer Name',
+          'description' => 'Indicia ID for the sample attribute that is the name of the observer.',
+          'type' => 'select',
+          'table' => 'sample_attribute',
+          'valueField' => 'id',
+          'captionField' => 'caption',
+          'group' => 'Shorewatch Sample Attributes'
         ),
         array(
-          'name'=>'observer_email',
-          'caption'=>'Observer Email',
-          'description'=>'Indicia ID for the sample attribute that is the email of the observer.',
-          'type'=>'select',
-          'table'=>'sample_attribute',
-          'valueField'=>'id',
-          'captionField'=>'caption',
-          'group'=>'Shorewatch Sample Attributes'
+          'name' => 'observer_email',
+          'caption' => 'Observer Email',
+          'description' => 'Indicia ID for the sample attribute that is the email of the observer.',
+          'type' => 'select',
+          'table' => 'sample_attribute',
+          'valueField' => 'id',
+          'captionField' => 'caption',
+          'group' => 'Shorewatch Sample Attributes'
         ),
         array(
-          'name'=>'observer_phone_number',
-          'caption'=>'Observer Phone Number',
-          'description'=>'Indicia ID for the sample attribute that is the phone number of the observer.',
-          'type'=>'select',
-          'table'=>'sample_attribute',
-          'valueField'=>'id',
-          'captionField'=>'caption',
-          'group'=>'Shorewatch Sample Attributes'
+          'name' => 'observer_phone_number',
+          'caption' => 'Observer Phone Number',
+          'description' => 'Indicia ID for the sample attribute that is the phone number of the observer.',
+          'type' => 'select',
+          'table' => 'sample_attribute',
+          'valueField' => 'id',
+          'captionField' => 'caption',
+          'group' => 'Shorewatch Sample Attributes'
         ),
         array(
-          'name'=>'start_time',
-          'caption'=>'Start time',
-          'description'=>'Indicia ID for the sample attribute that records the start time of the watch.',
-          'type'=>'select',
-          'table'=>'sample_attribute',
-          'valueField'=>'id',
-          'captionField'=>'caption',
-          'group'=>'Shorewatch Sample Attributes'
+          'name' => 'start_time',
+          'caption' => 'Start time',
+          'description' => 'Indicia ID for the sample attribute that records the start time of the watch.',
+          'type' => 'select',
+          'table' => 'sample_attribute',
+          'valueField' => 'id',
+          'captionField' => 'caption',
+          'group' => 'Shorewatch Sample Attributes'
         ),
         array(
-          'name'=>'end_time',
-          'caption'=>'End time',
-          'description'=>'Indicia ID for the sample attribute that records the end time of the watch.',
-          'type'=>'select',
-          'table'=>'sample_attribute',
-          'valueField'=>'id',
-          'captionField'=>'caption',
-          'group'=>'Shorewatch Sample Attributes'
+          'name' => 'end_time',
+          'caption' => 'End time',
+          'description' => 'Indicia ID for the sample attribute that records the end time of the watch.',
+          'type' => 'select',
+          'table' => 'sample_attribute',
+          'valueField' => 'id',
+          'captionField' => 'caption',
+          'group' => 'Shorewatch Sample Attributes'
         ),
         array(
-          'name'=>'cetaceans_seen',
-          'caption'=>'Cetaceans seen?',
-          'description'=>'Indicia ID for the sample attribute that records whether Cetaceans have been seen.',
-          'type'=>'select',
-          'table'=>'sample_attribute',
-          'valueField'=>'id',
-          'captionField'=>'caption',
-          'group'=>'Shorewatch Sample Attributes'
+          'name' => 'cetaceans_seen',
+          'caption' => 'Cetaceans seen?',
+          'description' => 'Indicia ID for the sample attribute that records whether Cetaceans have been seen.',
+          'type' => 'select',
+          'table' => 'sample_attribute',
+          'valueField' => 'id',
+          'captionField' => 'caption',
+          'group' => 'Shorewatch Sample Attributes'
         ),
         array(
-          'name'=>'cetaceans_seen_yes',
-          'caption'=>'Cetaceans Seen Yes Answer',
-          'description'=>'Indicia ID for the termlists_term that stores the Yes answer for Cetaceans Seen?.',
-          'type'=>'string',
-          'group'=>'Shorewatch Sample Attributes'
+          'name' => 'cetaceans_seen_yes',
+          'caption' => 'Cetaceans Seen Yes Answer',
+          'description' => 'Indicia ID for the termlists_term that stores the Yes answer for Cetaceans Seen?.',
+          'type' => 'string',
+          'group' => 'Shorewatch Sample Attributes'
         ),
         array(
-          'name'=>'sea_state',
-          'caption'=>'Sea state?',
-          'description'=>'Indicia ID for the sample attribute that records sea state.',
-          'type'=>'select',
-          'table'=>'sample_attribute',
-          'valueField'=>'id',
-          'captionField'=>'caption',
-          'group'=>'Shorewatch Sample Attributes'
+          'name' => 'sea_state',
+          'caption' => 'Sea state?',
+          'description' => 'Indicia ID for the sample attribute that records sea state.',
+          'type' => 'select',
+          'table' => 'sample_attribute',
+          'valueField' => 'id',
+          'captionField' => 'caption',
+          'group' => 'Shorewatch Sample Attributes'
         ),
         array(
-          'name'=>'visibility',
-          'caption'=>'Visibility?',
-          'description'=>'Indicia ID for the sample attribute that records visibility.',
-          'type'=>'select',
-          'table'=>'sample_attribute',
-          'valueField'=>'id',
-          'captionField'=>'caption',
-          'group'=>'Shorewatch Sample Attributes'
+          'name' => 'visibility',
+          'caption' => 'Visibility?',
+          'description' => 'Indicia ID for the sample attribute that records visibility.',
+          'type' => 'select',
+          'table' => 'sample_attribute',
+          'valueField' => 'id',
+          'captionField' => 'caption',
+          'group' => 'Shorewatch Sample Attributes'
         ),
         array(
-          'name'=>'non_cetacean_marine_animals_seen',
-          'caption'=>'Non cetacean marine animals seen?',
-          'description'=>'Indicia ID for the sample attribute that records whether non-cetacean marine animals have been seen.',
-          'type'=>'select',
-          'table'=>'sample_attribute',
-          'valueField'=>'id',
-          'captionField'=>'caption',
-          'group'=>'Shorewatch Sample Attributes'
+          'name' => 'non_cetacean_marine_animals_seen',
+          'caption' => 'Non cetacean marine animals seen?',
+          'description' => 'Indicia ID for the sample attribute that records whether non-cetacean marine animals have been seen.',
+          'type' => 'select',
+          'table' => 'sample_attribute',
+          'valueField' => 'id',
+          'captionField' => 'caption',
+          'group' => 'Shorewatch Sample Attributes'
         ),
         array(
-          'name'=>'feeding_birds_seen',
-          'caption'=>'Feeding birds seen?',
-          'description'=>'Indicia ID for the sample attribute that records whether feeding birds have been seen.',
-          'type'=>'select',
-          'table'=>'sample_attribute',
-          'valueField'=>'id',
-          'captionField'=>'caption',
-          'group'=>'Shorewatch Sample Attributes'
+          'name' => 'feeding_birds_seen',
+          'caption' => 'Feeding birds seen?',
+          'description' => 'Indicia ID for the sample attribute that records whether feeding birds have been seen.',
+          'type' => 'select',
+          'table' => 'sample_attribute',
+          'valueField' => 'id',
+          'captionField' => 'caption',
+          'group' => 'Shorewatch Sample Attributes'
         ),
         array(
-          'name'=>'number_of_people_spoken_to_during_watch',
-          'caption'=>'Number of people spoken to during watch?',
-          'description'=>'Indicia ID for the sample attribute that records the number of people spoken to during the watch.',
-          'type'=>'select',
-          'table'=>'sample_attribute',
-          'valueField'=>'id',
-          'captionField'=>'caption',
-          'group'=>'Shorewatch Sample Attributes'
+          'name' => 'number_of_people_spoken_to_during_watch',
+          'caption' => 'Number of people spoken to during watch?',
+          'description' => 'Indicia ID for the sample attribute that records the number of people spoken to during the watch.',
+          'type' => 'select',
+          'table' => 'sample_attribute',
+          'valueField' => 'id',
+          'captionField' => 'caption',
+          'group' => 'Shorewatch Sample Attributes'
         ),
         array(
-          'name'=>'wdcs_newsletter',
-          'caption'=>'WDCS newsletter opt-in',
-          'description'=>'Indicia ID for the sample attribute that records whether a guest has chosen to receive
+          'name' => 'wdcs_newsletter',
+          'caption' => 'WDCS newsletter opt-in',
+          'description' => 'Indicia ID for the sample attribute that records whether a guest has chosen to receive
             the WDCS newsletter.',
-          'type'=>'select',
-          'table'=>'sample_attribute',
-          'valueField'=>'id',
-          'captionField'=>'caption',
-          'group'=>'Shorewatch Sample Attributes'
+          'type' => 'select',
+          'table' => 'sample_attribute',
+          'valueField' => 'id',
+          'captionField' => 'caption',
+          'group' => 'Shorewatch Sample Attributes'
         ),
         array(
-          'name'=>'bearing_to_sighting',
-          'caption'=>'Bearing to sighting',
-          'description'=>'Indicia ID for the occurrence attribute that stores the bearing to the sighting.',
-          'type'=>'select',
-          'table'=>'occurrence_attribute',
-          'valueField'=>'id',
-          'captionField'=>'caption',
-          'group'=>'Shorewatch Occurrence Attributes'
+          'name' => 'bearing_to_sighting',
+          'caption' => 'Bearing to sighting',
+          'description' => 'Indicia ID for the occurrence attribute that stores the bearing to the sighting.',
+          'type' => 'select',
+          'table' => 'occurrence_attribute',
+          'valueField' => 'id',
+          'captionField' => 'caption',
+          'group' => 'Shorewatch Occurrence Attributes'
         ),
         array(
-          'name'=>'reticules',
-          'caption'=>'Reticules',
-          'description'=>'Indicia ID for the occurrence attribute that holds the number of reticules.',
-          'type'=>'select',
-          'table'=>'occurrence_attribute',
-          'valueField'=>'id',
-          'captionField'=>'caption',
-          'group'=>'Shorewatch Occurrence Attributes'
+          'name' => 'reticules',
+          'caption' => 'Reticules',
+          'description' => 'Indicia ID for the occurrence attribute that holds the number of reticules.',
+          'type' => 'select',
+          'table' => 'occurrence_attribute',
+          'valueField' => 'id',
+          'captionField' => 'caption',
+          'group' => 'Shorewatch Occurrence Attributes'
         ),
         array(
-          'name'=>'reticules_from',
-          'caption'=>'Reticules from',
-          'description'=>'Indicia ID for the occurrence attribute that stores whether the Reticules value
+          'name' => 'reticules_from',
+          'caption' => 'Reticules from',
+          'description' => 'Indicia ID for the occurrence attribute that stores whether the Reticules value
             is from the land or sky.',
-          'type'=>'select',
-          'table'=>'occurrence_attribute',
-          'valueField'=>'id',
-          'captionField'=>'caption',
-          'group'=>'Shorewatch Occurrence Attributes'
+          'type' => 'select',
+          'table' => 'occurrence_attribute',
+          'valueField' => 'id',
+          'captionField' => 'caption',
+          'group' => 'Shorewatch Occurrence Attributes'
         ),
         array(
-          'name'=>'distance_estimate',
-          'caption'=>'Distance Estimate',
-          'description'=>'Indicia ID for the occurrence attribute that stores the distance estimate to the sighting.',
-          'type'=>'select',
-          'table'=>'occurrence_attribute',
-          'valueField'=>'id',
-          'captionField'=>'caption',
-          'group'=>'Shorewatch Occurrence Attributes'
+          'name' => 'distance_estimate',
+          'caption' => 'Distance Estimate',
+          'description' => 'Indicia ID for the occurrence attribute that stores the distance estimate to the sighting.',
+          'type' => 'select',
+          'table' => 'occurrence_attribute',
+          'valueField' => 'id',
+          'captionField' => 'caption',
+          'group' => 'Shorewatch Occurrence Attributes'
         ),
         array(
-          'name'=>'adults',
-          'caption'=>'Adults',
-          'description'=>'Indicia ID for the occurrence attribute that stores the number of adults associated with the sighting.',
-          'type'=>'select',
-          'table'=>'occurrence_attribute',
-          'valueField'=>'id',
-          'captionField'=>'caption',
-          'group'=>'Shorewatch Occurrence Attributes'
+          'name' => 'adults',
+          'caption' => 'Adults',
+          'description' => 'Indicia ID for the occurrence attribute that stores the number of adults associated with the sighting.',
+          'type' => 'select',
+          'table' => 'occurrence_attribute',
+          'valueField' => 'id',
+          'captionField' => 'caption',
+          'group' => 'Shorewatch Occurrence Attributes'
         ),
         array(
-          'name'=>'calves',
-          'caption'=>'Calves',
-          'description'=>'Indicia ID for the occurrence attribute that stores the number of Calves associated with the sighting.',
-          'type'=>'select',
-          'table'=>'occurrence_attribute',
-          'valueField'=>'id',
-          'captionField'=>'caption',
-          'group'=>'Shorewatch Occurrence Attributes'
+          'name' => 'calves',
+          'caption' => 'Calves',
+          'description' => 'Indicia ID for the occurrence attribute that stores the number of Calves associated with the sighting.',
+          'type' => 'select',
+          'table' => 'occurrence_attribute',
+          'valueField' => 'id',
+          'captionField' => 'caption',
+          'group' => 'Shorewatch Occurrence Attributes'
         ),
         array(
-          'name'=>'activity',
-          'caption'=>'Activity',
-          'description'=>'Indicia ID for the occurrence attribute that stores whether a sighting is travelling or staying.',
-          'type'=>'select',
-          'table'=>'occurrence_attribute',
-          'valueField'=>'id',
-          'captionField'=>'caption',
-          'group'=>'Occurrence Attributes'
+          'name' => 'activity',
+          'caption' => 'Activity',
+          'description' => 'Indicia ID for the occurrence attribute that stores whether a sighting is travelling or staying.',
+          'type' => 'select',
+          'table' => 'occurrence_attribute',
+          'valueField' => 'id',
+          'captionField' => 'caption',
+          'group' => 'Occurrence Attributes'
         ),
         array(
-          'name'=>'behaviour',
-          'caption'=>'Behaviour',
-          'description'=>'Indicia ID for the occurrence attribute that stores whether a sighting is calm or active.',
-          'type'=>'select',
-          'table'=>'occurrence_attribute',
-          'valueField'=>'id',
-          'captionField'=>'caption',
-          'group'=>'Shorewatch Occurrence Attributes'
+          'name' => 'behaviour',
+          'caption' => 'Behaviour',
+          'description' => 'Indicia ID for the occurrence attribute that stores whether a sighting is calm or active.',
+          'type' => 'select',
+          'table' => 'occurrence_attribute',
+          'valueField' => 'id',
+          'captionField' => 'caption',
+          'group' => 'Shorewatch Occurrence Attributes'
         ),
         array(
-          'name'=>'platform_height',
-          'caption'=>'Platform Height',
-          'description'=>'Indicia ID for the location attribute that stores the platform height.',
-          'type'=>'select',
-          'table'=>'location_attribute',
-          'valueField'=>'id',
-          'captionField'=>'caption',
-          'group'=>'Shorewatch Location Attributes'
+          'name' => 'platform_height',
+          'caption' => 'Platform Height',
+          'description' => 'Indicia ID for the location attribute that stores the platform height.',
+          'type' => 'select',
+          'table' => 'location_attribute',
+          'valueField' => 'id',
+          'captionField' => 'caption',
+          'group' => 'Shorewatch Location Attributes'
         ),
         array(
-          'name'=>'effort',
-          'caption'=>'Effort',
-          'description'=>'Indicia ID for the termlists_term that stores the effort sample method id.',
-          'type'=>'select',
-          'table'=>'termlists_term',
-          'valueField'=>'id',
-          'captionField'=>'term',
-          'group'=>'Shorewatch Sample Methods'
+          'name' => 'effort',
+          'caption' => 'Effort',
+          'description' => 'Indicia ID for the termlists_term that stores the effort sample method id.',
+          'type' => 'select',
+          'table' => 'termlists_term',
+          'valueField' => 'id',
+          'captionField' => 'term',
+          'group' => 'Shorewatch Sample Methods'
         ),
         array(
-          'name'=>'reticule_sighting',
-          'caption'=>'Reticule Sighting',
-          'description'=>'Indicia ID for the termlists_term that stores the reticule sighting sample method id.',
-          'type'=>'select',
-          'table'=>'termlists_term',
-          'valueField'=>'id',
-          'captionField'=>'term',
-          'group'=>'Shorewatch Sample Methods'
+          'name' => 'reticule_sighting',
+          'caption' => 'Reticule Sighting',
+          'description' => 'Indicia ID for the termlists_term that stores the reticule sighting sample method id.',
+          'type' => 'select',
+          'table' => 'termlists_term',
+          'valueField' => 'id',
+          'captionField' => 'term',
+          'group' => 'Shorewatch Sample Methods'
         ),
         array(
-          'name'=>'adhocMode',
-          'caption'=>'Run the page in ad-hoc mode?',
-          'description'=>'Select if you wish to run the page in ad-hoc mode',
-          'type'=>'boolean',
+          'name' => 'adhocMode',
+          'caption' => 'Run the page in ad-hoc mode?',
+          'description' => 'Select if you wish to run the page in ad-hoc mode',
+          'type' => 'boolean',
           'default' => false,
           'required' => false,
           'group' => 'Shorewatch Page Configuration'
@@ -339,7 +339,7 @@ class iform_dynamic_shorewatch extends iform_dynamic_sample_occurrence {
     $readAuth = data_entry_helper::get_read_auth($args['website_id'], $args['password']);
     //Need to collect the user's name from the people table
     $defaultUserData = report_helper::get_report_data(array(
-      'dataSource'=>'library/users/get_people_details_for_website_or_user',
+      'dataSource' => 'library/users/get_people_details_for_website_or_user',
       'readAuth'=>$readAuth,
       'extraParams'=>array('user_id' => hostsite_get_user_field('indicia_user_id'), 'website_id' => $args['website_id'])
     ));
@@ -402,7 +402,7 @@ class iform_dynamic_shorewatch extends iform_dynamic_sample_occurrence {
     if (!empty($_GET['sample_id'])) {
       $readAuth = data_entry_helper::get_read_auth($args['website_id'], $args['password']);
       $sightingsData = report_helper::get_report_data(array(
-        'dataSource'=>'reports_for_prebuilt_forms/Shorewatch/get_sightings_for_sample',
+        'dataSource' => 'reports_for_prebuilt_forms/Shorewatch/get_sightings_for_sample',
         'readAuth'=>$readAuth,
         'extraParams'=>array('sample_id' => $_GET['sample_id'])
       ));
@@ -437,7 +437,7 @@ class iform_dynamic_shorewatch extends iform_dynamic_sample_occurrence {
     //Get the name of the currently logged in user
     iform_load_helpers(['report_helper']);
     $defaultUserData = report_helper::get_report_data(array(
-      'dataSource'=>'library/users/get_people_details_for_website_or_user',
+      'dataSource' => 'library/users/get_people_details_for_website_or_user',
       'readAuth'=>$auth['read'],
       'extraParams'=>array('user_id' => hostsite_get_user_field('indicia_user_id'), 'website_id' => $args['website_id'])
     ));

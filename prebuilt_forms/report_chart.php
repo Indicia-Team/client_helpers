@@ -14,32 +14,29 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package Client
- * @subpackage PrebuiltForms
  * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers/
  */
 
-require_once('includes/report.php');
+require_once 'includes/report.php';
 
 /**
  * Prebuilt Indicia data form that lists the output of any report on a chart
- *
- * @package Client
- * @subpackage PrebuiltForms
  */
 class iform_report_chart {
 
   /**
    * Return the form metadata.
-   * @return string The definition of the form.
+   *
+   * @return string
+   *   The definition of the form.
    */
   public static function get_report_chart_definition() {
     return array(
-      'title'=>'Report Chart',
+      'title' => 'Report Chart',
       'category' => 'Reporting',
-      'description'=>'Outputs a chart of data loaded from an Indicia report. Can automatically include the report parameters form required for the '.
+      'description' => 'Outputs a chart of data loaded from an Indicia report. Can automatically include the report parameters form required for the '.
           'generation of the report.',
       'recommended' => true
     );
@@ -61,7 +58,7 @@ class iform_report_chart {
           'lookupValues' => array('line'=>lang::get('Line'), 'bar'=>lang::get('bar'), 'pie'=>lang::get('Pie')),
           'required' => true,
           'default' => 'line',
-          'group'=>'Basic Chart Options'
+          'group' => 'Basic Chart Options'
         ),
         array(
           'name' => 'width',
@@ -70,7 +67,7 @@ class iform_report_chart {
           'type' => 'text_input',
           'required' => true,
           'default' => 500,
-          'group'=>'Basic Chart Options'
+          'group' => 'Basic Chart Options'
         ),
         array(
           'name' => 'height',
@@ -79,7 +76,7 @@ class iform_report_chart {
           'type' => 'text_input',
           'required' => true,
           'default' => 500,
-          'group'=>'Basic Chart Options'
+          'group' => 'Basic Chart Options'
         ),
         array(
           'name' => 'y_values',
@@ -87,7 +84,7 @@ class iform_report_chart {
           'description' => 'Fields containing the y values or pie segment sizes, comma separated if this is a multi-series chart.',
           'type' => 'text_input',
           'required' => true,
-          'group'=>'Basic Chart Options'
+          'group' => 'Basic Chart Options'
         ),
         array(
           'name' => 'x_values',
@@ -96,7 +93,7 @@ class iform_report_chart {
               'comma separated if this is a multi-series chart.',
           'type' => 'text_input',
           'required' => false,
-          'group'=>'Basic Chart Options'
+          'group' => 'Basic Chart Options'
         ),
         array(
           'name' => 'x_labels',
@@ -105,7 +102,7 @@ class iform_report_chart {
               'comma separated if this is a multi-series chart.',
           'type' => 'text_input',
           'required' => false,
-          'group'=>'Basic Chart Options'
+          'group' => 'Basic Chart Options'
         ),
         array(
           'name' => 'renderer_options',
@@ -152,7 +149,7 @@ class iform_report_chart {
   }
 }',
           'required' => false,
-          'group'=>'Advanced Chart Options'
+          'group' => 'Advanced Chart Options'
         ),
         array(
           'name' => 'legend_options',
@@ -162,7 +159,7 @@ class iform_report_chart {
               'For example, set the value to <em>{"show":true,"location":"ne"}</em> to show the legend in the top-right '.
               '(north east) corner.',
           'type' => 'jsonwidget',
-          'schema'=>'{
+          'schema' => '{
   "type":"map",
   "title":"Legend Options",
   "mapping":{
@@ -188,7 +185,7 @@ class iform_report_chart {
   }
 }',
           'required' => false,
-          'group'=>'Advanced Chart Options'
+          'group' => 'Advanced Chart Options'
         ),
         array(
           'name' => 'series_options',
@@ -197,7 +194,7 @@ class iform_report_chart {
               'Applies to line and bar charts only. For full details of the options available, see '.
               '<a href="http://www.jqplot.com/docs/files/jqplot-core-js.html#Series">chart series options</a>. ',
           'type' => 'jsonwidget',
-          'schema'=>'{
+          'schema' => '{
   "type":"seq",
   "title":"Series List",
   "sequence":
@@ -247,7 +244,7 @@ class iform_report_chart {
   ]
 }',
           'required' => false,
-          'group'=>'Advanced Chart Options'
+          'group' => 'Advanced Chart Options'
         ),
         array(
           'name' => 'axes_options',
@@ -258,8 +255,8 @@ class iform_report_chart {
               'For example, <em>{"yaxis":{"min":0,"max":100}}</em>.',
           'type' => 'jsonwidget',
           'required' => false,
-          'group'=>'Advanced Chart Options',
-          'schema'=>'{
+          'group' => 'Advanced Chart Options',
+          'schema' => '{
   "type":"map",
   "title":"Axis options",
   "mapping":{

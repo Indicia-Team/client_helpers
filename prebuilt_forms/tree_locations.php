@@ -14,8 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package Client
- * @subpackage PrebuiltForms
  * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers/
@@ -25,11 +23,7 @@ require_once 'includes/map.php';
 require_once 'includes/form_generation.php';
 
 /**
- *
- *
- * @package Client
- * @subpackage PrebuiltForms
- * Form for adding or editing the site details at a location which contains a number of trees.
+ *Form for adding or editing the site details at a location which contains a number of trees.
  */
 class iform_tree_locations {
 
@@ -52,9 +46,9 @@ class iform_tree_locations {
    */
   public static function get_tree_locations_definition() {
     return array(
-      'title'=>'Tree Location editor',
+      'title' => 'Tree Location editor',
       'category' => 'Custom Forms',
-      'description'=>'Form for adding or editing the site details at a location which has a number of trees.'
+      'description' => 'Form for adding or editing the site details at a location which has a number of trees.'
     );
   }
 
@@ -68,88 +62,88 @@ class iform_tree_locations {
         iform_map_get_georef_parameters(),
         array(
           array(
-            'name'=>'survey_id',
-            'caption'=>'Survey',
-            'description'=>'The survey that data will be posted into.',
-            'type'=>'select',
-            'table'=>'survey',
-            'captionField'=>'title',
-            'valueField'=>'id',
+            'name' => 'survey_id',
+            'caption' => 'Survey',
+            'description' => 'The survey that data will be posted into.',
+            'type' => 'select',
+            'table' => 'survey',
+            'captionField' => 'title',
+            'valueField' => 'id',
             'siteSpecific'=>true
           ), array(
-            'name'=>'sites_list_path',
-            'caption'=>'Site list page path',
-            'description'=>'Enter the path to the page which the site list is on.',
+            'name' => 'sites_list_path',
+            'caption' => 'Site list page path',
+            'description' => 'Enter the path to the page which the site list is on.',
             'type' => 'string',
             'required' => true,
-            'group'=>'General Settings'
+            'group' => 'General Settings'
           ), array(
-            'name'=>'visit_path',
-            'caption'=>'Visit Data Entry page path',
-            'description'=>'Enter the path to the page which the Visit Data Entry is on.',
+            'name' => 'visit_path',
+            'caption' => 'Visit Data Entry page path',
+            'description' => 'Enter the path to the page which the Visit Data Entry is on.',
             'type' => 'string',
             'required' => true,
-            'group'=>'General Settings'
+            'group' => 'General Settings'
           ), array(
-            'name'=>'location_type_term',
-            'caption'=>'Site location type term',
-            'description'=>'Select the term used for the main site location types.',
+            'name' => 'location_type_term',
+            'caption' => 'Site location type term',
+            'description' => 'Select the term used for the main site location types.',
             'type' => 'select',
-            'table'=>'termlists_term',
-            'captionField'=>'term',
-            'valueField'=>'term',
-            'extraParams' => array('termlist_external_key'=>'indicia:location_types'),
+            'table' => 'termlists_term',
+            'captionField' => 'term',
+            'valueField' => 'term',
+            'extraParams' => array('termlist_external_key' => 'indicia:location_types'),
             'required' => true,
-            'group'=>'General Settings'
+            'group' => 'General Settings'
           ), array(
-            'name'=>'tree_type_term',
-            'caption'=>'Tree location type term',
-            'description'=>'Select the term used for tree location types.',
+            'name' => 'tree_type_term',
+            'caption' => 'Tree location type term',
+            'description' => 'Select the term used for tree location types.',
             'type' => 'select',
-            'table'=>'termlists_term',
-            'captionField'=>'term',
-            'valueField'=>'term',
-            'extraParams' => array('termlist_external_key'=>'indicia:location_types'),
+            'table' => 'termlists_term',
+            'captionField' => 'term',
+            'valueField' => 'term',
+            'extraParams' => array('termlist_external_key' => 'indicia:location_types'),
             'required' => true,
-            'group'=>'General Settings'
+            'group' => 'General Settings'
           ), array(
-            'name'=>'spatial_systems',
-            'caption'=>'Allowed Spatial Ref Systems',
-            'description'=>'List of allowable spatial reference systems, comma separated. Use the spatial ref system code (e.g. OSGB or the EPSG code number such as 4326).',
-            'type'=>'text_input',
-            'group'=>'Other Map Settings'
+            'name' => 'spatial_systems',
+            'caption' => 'Allowed Spatial Ref Systems',
+            'description' => 'List of allowable spatial reference systems, comma separated. Use the spatial ref system code (e.g. OSGB or the EPSG code number such as 4326).',
+            'type' => 'text_input',
+            'group' => 'Other Map Settings'
           ),
           array(
-            'name'=>'maxPrecision',
-            'caption'=>'Max Sref Precision',
-            'description'=>'The maximum precision to be applied when determining the SREF. Leave blank to not set.',
-            'type'=>'int',
+            'name' => 'maxPrecision',
+            'caption' => 'Max Sref Precision',
+            'description' => 'The maximum precision to be applied when determining the SREF. Leave blank to not set.',
+            'type' => 'int',
             'required'=>false,
-            'group'=>'Other Map Settings'
+            'group' => 'Other Map Settings'
           ),
           array(
-            'name'=>'minPrecision',
-            'caption'=>'Min Sref Precision',
-            'description'=>'The minimum precision to be applied when determining the SREF. Leave blank to not set.',
-            'type'=>'int',
+            'name' => 'minPrecision',
+            'caption' => 'Min Sref Precision',
+            'description' => 'The minimum precision to be applied when determining the SREF. Leave blank to not set.',
+            'type' => 'int',
             'required'=>false,
-            'group'=>'Other Map Settings'
+            'group' => 'Other Map Settings'
           ),
           array(
-            'name'=>'tree_map_height',
-            'caption'=>'Tree Map Height (px)',
-            'description'=>'Height in pixels of the map.',
-            'type'=>'int',
-            'group'=>'Initial Map View',
+            'name' => 'tree_map_height',
+            'caption' => 'Tree Map Height (px)',
+            'description' => 'Height in pixels of the map.',
+            'type' => 'int',
+            'group' => 'Initial Map View',
             'default'=>600
           ),
           array(
-            'name'=>'tree_map_buffer',
-            'caption'=>'Site Trees Map Buffer',
-            'description'=>'Factor to multiple the size of the site by, in order to generate a margin around the site when displaying the site on the Site Trees tab.',
-            'type'=>'string',
-            'group'=>'Initial Map View',
-            'default'=>'0.1'
+            'name' => 'tree_map_buffer',
+            'caption' => 'Site Trees Map Buffer',
+            'description' => 'Factor to multiple the size of the site by, in order to generate a margin around the site when displaying the site on the Site Trees tab.',
+            'type' => 'string',
+            'group' => 'Initial Map View',
+            'default' => '0.1'
           ),
           array(
             'name' => 'allow_user_assignment',
@@ -161,10 +155,10 @@ class iform_tree_locations {
             'group' => 'General Settings'
           ),
           array(
-            'name'=>'manager_permission',
-            'caption'=>'Drupal Permission for Manager mode',
-            'description'=>'Enter the Drupal permission name to be used to determine if this user is a manager.',
-            'type'=>'string',
+            'name' => 'manager_permission',
+            'caption' => 'Drupal Permission for Manager mode',
+            'description' => 'Enter the Drupal permission name to be used to determine if this user is a manager.',
+            'type' => 'string',
             'required' => false
           ),
           array(
@@ -173,26 +167,26 @@ class iform_tree_locations {
             'description' => 'List of map controls, one per line. Select from layerSwitcher, zoomBox, panZoom, panZoomBar, drawPolygon, drawPoint, drawLine, '.
                 'hoverFeatureHighlight, clearEditLayer, modifyFeature, graticule.',
             'type' => 'textarea',
-            'group'=>'Other Map Settings',
+            'group' => 'Other Map Settings',
             'required'=>false,
             'default'=>"layerSwitcher\npanZoomBar\nselectFeature\nhoverFeatureHighlight"
           ),
           array(
-            'fieldname'=>'taxon_list_id',
-            'label'=>'Tree Species List ',
-            'helpText'=>'The species list that tree species can be selected from.',
-            'type'=>'select',
-            'table'=>'taxon_list',
-            'valueField'=>'id',
-            'captionField'=>'title',
-            'group'=>'Species',
+            'fieldname' => 'taxon_list_id',
+            'label' => 'Tree Species List ',
+            'helpText' => 'The species list that tree species can be selected from.',
+            'type' => 'select',
+            'table' => 'taxon_list',
+            'valueField' => 'id',
+            'captionField' => 'title',
+            'group' => 'Species',
             'siteSpecific'=>true
           ),
         array(
-          'name'=>'species_ctrl',
-          'caption'=>'Species Selection Control Type',
-          'description'=>'The type of control that will be available to select the species.',
-          'type'=>'select',
+          'name' => 'species_ctrl',
+          'caption' => 'Species Selection Control Type',
+          'description' => 'The type of control that will be available to select the species.',
+          'type' => 'select',
           'options' => array(
             'species_autocomplete' => 'Autocomplete',
             'select' => 'Select',
@@ -202,13 +196,13 @@ class iform_tree_locations {
             'tree_browser' => 'Tree browser'
           ),
           'default' => 'select',
-          'group'=>'Species'
+          'group' => 'Species'
         ),
         array(
-          'name'=>'speciesNameFilterMode',
-          'caption'=>'Species Names Filter',
-          'description'=>'Select the filter to apply to the species names which are available to choose from.',
-          'type'=>'select',
+          'name' => 'speciesNameFilterMode',
+          'caption' => 'Species Names Filter',
+          'description' => 'Select the filter to apply to the species names which are available to choose from.',
+          'type' => 'select',
           'options' => array(
             'all' => 'All names are available',
             'currentLanguage' => 'Only allow selection of species using common names in the user\'s language',
@@ -216,14 +210,14 @@ class iform_tree_locations {
             'excludeSynonyms' => 'Allow common names or preferred latin names'
           ),
           'default' => 'all',
-          'group'=>'Species'
+          'group' => 'Species'
         ),
         array(
-          'name'=>'taxon_filter_field',
-          'caption'=>'Field used to filter taxa',
-          'description'=>'If you want to allow recording for just part of the selected list(s), then select which field you will '.
+          'name' => 'taxon_filter_field',
+          'caption' => 'Field used to filter taxa',
+          'description' => 'If you want to allow recording for just part of the selected list(s), then select which field you will '.
                          'use to specify the filter by.',
-          'type'=>'select',
+          'type' => 'select',
           'options' => array(
                          'id' => 'Taxon ID',
                          'taxon' => 'Common name of the taxa',
@@ -233,28 +227,28 @@ class iform_tree_locations {
                          'external_key' => 'Taxon external key'
           ),
           'required'=>false,
-          'group'=>'Species'
+          'group' => 'Species'
         ),
         array(
-          'name'=>'taxon_filter',
-          'caption'=>'Taxon filter items',
-          'description'=>'Taxa can be filtered by entering values into this box. '.
+          'name' => 'taxon_filter',
+          'caption' => 'Taxon filter items',
+          'description' => 'Taxa can be filtered by entering values into this box. '.
                          'Enter one value per line. E.g. enter a list of taxon group titles if you are filtering by taxon group. '.
                          'If you provide a single taxon preferred name, taxon meaning ID or external key in this box, then the form is set up for recording just this single '.
                          'species. Therefore there will be no species picker control or input grid, and the form will always operate in the single record, non-grid mode. ',
           'type' => 'textarea',
           'required'=>false,
-          'group'=>'Species'
+          'group' => 'Species'
         ),
         array(
-          'name'=>'attrOptions',
-          'caption'=>'Attribute Options',
-          'description'=>'Provides the ability to set the value of options used to generate the attribute controls. One setting per line, each of the format '.
+          'name' => 'attrOptions',
+          'caption' => 'Attribute Options',
+          'description' => 'Provides the ability to set the value of options used to generate the attribute controls. One setting per line, each of the format '.
                          '"{option}={value}" to apply to the entire control (e.g. "label=Grid Ref"), or "{attr}|{option}={value}" which apply to a specific '.
                          'custom attribute (e.g. "smpAttr:3|label=Quantity").',
           'type' => 'textarea',
           'required'=>false,
-          'group'=>'General Settings'
+          'group' => 'General Settings'
         )
       )
     );
@@ -316,20 +310,20 @@ class iform_tree_locations {
     );
     $settings['attributes'] = data_entry_helper::getAttributes(array(
         'id' => $settings['locationId'],
-        'valuetable'=>'location_attribute_value',
-        'attrtable'=>'location_attribute',
-        'key'=>'location_id',
-        'fieldprefix'=>'locAttr',
+        'valuetable' => 'location_attribute_value',
+        'attrtable' => 'location_attribute',
+        'key' => 'location_id',
+        'fieldprefix' => 'locAttr',
         'extraParams'=>$auth['read'],
         'survey_id'=>$args['survey_id'],
         'location_type_id' => $settings['SiteLocationType'][0]['id'],
         'multiValue' => true
     ));
     $settings['tree_attributes'] = data_entry_helper::getAttributes(array(
-        'valuetable'=>'location_attribute_value',
-        'attrtable'=>'location_attribute',
-        'key'=>'location_id',
-        'fieldprefix'=>'locAttr',
+        'valuetable' => 'location_attribute_value',
+        'attrtable' => 'location_attribute',
+        'key' => 'location_id',
+        'fieldprefix' => 'locAttr',
         'extraParams'=>$auth['read'],
         'survey_id'=>$args['survey_id'],
         'location_type_id' => $settings['TreeLocationType'][0]['id'],
@@ -389,7 +383,7 @@ check_attrs = function(){
 });\n";
     }
     data_entry_helper::$javascript .= "check_attrs();\nindiciaData.trees = {};\n";
-    $settings['trees']=array();
+    $settings['trees']=[];
     if ($settings['locationId']) {
       data_entry_helper::load_existing_record($auth['read'], 'location', $settings['locationId']);
       // Work out permissions for this user
@@ -406,7 +400,7 @@ check_attrs = function(){
         return 'You do not have access to this site.';
       $trees = data_entry_helper::get_population_data(array(
         'table' => 'location',
-        'extraParams' => $auth['read'] + array('view'=>'detail','parent_id'=>$settings['locationId'],'deleted'=>'f','orderby'=>'name'),
+        'extraParams' => $auth['read'] + array('view' => 'detail','parent_id'=>$settings['locationId'],'deleted' => 'f','orderby' => 'name'),
         'nocache' => true
       ));
       foreach($trees as $tree) {
@@ -417,7 +411,7 @@ check_attrs = function(){
     }
     $r = '<div id="controls">';
     $headerOptions = array('tabs'=>array('#site-details'=>lang::get('Site Details')));
-    $tabOptions = array('divId'=>'controls', 'style'=>'Tabs');
+    $tabOptions = array('divId' => 'controls', 'style' => 'Tabs');
     if ($settings['locationId']) {
       $headerOptions['tabs']['#site-trees'] = lang::get('Tree Details');
       $tabOptions['active']='#site-trees';
@@ -438,7 +432,7 @@ check_attrs = function(){
     $r .= '</div>'; // controls
     data_entry_helper::enable_validation('input-form');
     if (function_exists('drupal_set_breadcrumb')) {
-      $breadcrumb = array();
+      $breadcrumb = [];
       $breadcrumb[] = l(lang::get('Home'), '<front>');
       $breadcrumb[] = l(lang::get('Sites'), $args['sites_list_path']);
       if ($settings['locationId'])
@@ -510,7 +504,7 @@ check_attrs = function(){
       'fieldname' => 'location:centroid_sref',
       'geomFieldname' => 'location:centroid_geom',
       'label' => 'Site Central Grid Ref',
-      'systems' => array('4326'=>'4326'),
+      'systems' => array('4326' => '4326'),
       'class' => 'required',
       'disabled' => ' readonly="readonly" ',
       'helpText' => lang::get('The following field is filled in automatically when the site is drawn on the map.')
@@ -595,7 +589,7 @@ indiciaFns.bindTabsActivate(jQuery(jQuery('#site-details').parent()), mapTabHand
     $r .='</form>';
     $r .= '</div>'; // site-details
     if($settings['locationId']) {
-      $treeIDs = array();
+      $treeIDs = [];
       foreach($settings['trees'] as $id=>$tree)
         $treeIDs[] = $tree['id'];
       data_entry_helper::$javascript .= "
@@ -639,7 +633,7 @@ $('#delete-site').click(deleteSite);
     		'label' => lang::get('Tree ID'),
     		'class' => 'control-width-4 required'
     ));
-    $systems = array();
+    $systems = [];
     $list = explode(',', str_replace(' ', '', $args['spatial_systems']));
     foreach($list as $system) {
       $systems[$system] = lang::get($system);
@@ -650,7 +644,7 @@ $('#delete-site').click(deleteSite);
     		'geomid' => 'imp-geom-tree',
     		'geomFieldname' => 'location:centroid_geom',
     		'label' => 'Grid Ref',
-            'labelClass'=>'auto',
+            'labelClass' => 'auto',
     		'class' => 'required',
     		'helpText' => lang::get('You can also click on the map to set the grid reference. If directly entering the coordinates from a GPS device, set the format to "Lat/Long" first. To enter an OS Grid square, choose the "OSGB" or "OSIE" formats.')
     );
@@ -693,7 +687,7 @@ $('#imp-sref-tree').attr('title',
     }
     $r .= data_entry_helper::date_picker(array(
     		'label'=>lang::get('Date Tree Selected'),
-    		'fieldname'=>'sample:date',
+    		'fieldname' => 'sample:date',
     		'class' => 'control-width-2 required'
     ));
     $r .= '<input type="hidden" id="sample:sample_method_id" value="'.$settings['treeSampleMethod']['id'].'" name="sample:sample_method_id">';
@@ -705,10 +699,10 @@ $('#imp-sref-tree').attr('title',
     $options = array('speciesNameFilterMode' => $args['speciesNameFilterMode']);
     $ctrl = $args['species_ctrl'];
     $species_ctrl_opts=array_merge(array(
-        'fieldname'=>'occurrence:taxa_taxon_list_id',
+        'fieldname' => 'occurrence:taxa_taxon_list_id',
         'label'=>lang::get('Tree Species'),
         'columns'=>1, // applies to radio buttons
-        'parentField'=>'parent_id', // applies to tree browsers
+        'parentField' => 'parent_id', // applies to tree browsers
         'blankText'=>lang::get('Please select') // applies to selects
     ), $options);
     if (isset($species_ctrl_opts['extraParams']))
@@ -756,7 +750,7 @@ $('#imp-sref-tree').attr('title',
     // Dynamically generate the species selection control required.
     $r .= call_user_func(array('data_entry_helper', $ctrl), $species_ctrl_opts);
     $ctrlOptions = array('extraParams'=>$auth['read']);
-    $attrSpecificOptions = array();
+    $attrSpecificOptions = [];
     $options = helper_base::explode_lines_key_value_pairs($args['attrOptions']);
     self::parseForAttrSpecificOptions($options, $ctrlOptions, $attrSpecificOptions);
     $r .= get_attribute_html($settings['tree_attributes'], $args, $ctrlOptions, '', $attrSpecificOptions);
@@ -798,7 +792,7 @@ $('#imp-sref-tree').attr('title',
     $r .= '<div class="ui-state-highlight page-notice ui-corner-all">'.$help.'</div>';
     $r .= map_helper::map_panel($options, $olOptions);
     $r .= data_entry_helper::file_box(/* array_merge( */array(
-    		'table'=>'location_medium',
+    		'table' => 'location_medium',
         'readAuth' => $auth['read'],
     		'caption'=>lang::get('Photos of Tree'),
     		'readAuth'=>$auth['read']
@@ -810,10 +804,10 @@ $('#imp-sref-tree').attr('title',
 $('#fieldset-optional-external-sc').prepend(\"".lang::get('If you choose to record this tree for one of the citizen science projects below, please submit the tree ID used for that scheme.')."\");
 ";
     $r .= data_entry_helper::textarea(array(
-    		'id'=>'location-comment',
-    		'fieldname'=>'location:comment',
+    		'id' => 'location-comment',
+    		'fieldname' => 'location:comment',
     		'label'=>lang::get("Additional information"),
-    		'labelClass'=>'autowidth'))."<br />";
+    		'labelClass' => 'autowidth'))."<br />";
     $r .= '<input type="submit" value="'.lang::get('Save').'" class="form-button right" id="submit-tree" />';
     $r .= '</div></form></div>';
     data_entry_helper::$onload_javascript .= "$('#current-tree').change(selectTree);\n";
@@ -831,7 +825,7 @@ $('#fieldset-optional-external-sc').prepend(\"".lang::get('If you choose to reco
   		// split the id of the option into the control name and option name.
   		if (strpos($option, '|')!==false) {
   			$optionId = explode('|', $option);
-  			if (!isset($attrSpecificOptions[$optionId[0]])) $attrSpecificOptions[$optionId[0]]=array();
+  			if (!isset($attrSpecificOptions[$optionId[0]])) $attrSpecificOptions[$optionId[0]]=[];
   			$attrSpecificOptions[$optionId[0]][$optionId[1]] = $value;
   		} else {
   			$ctrlOptions[$option]=$value;
@@ -857,7 +851,7 @@ $('#fieldset-optional-external-sc').prepend(\"".lang::get('If you choose to reco
   private static function get_user_assignment_control($readAuth, $cmsUserAttr, $args) {
     $r = "";
   	if(self::$cmsUserList == null) {
-      $users = array();
+      $users = [];
       // there have been DB API changes for Drupal7: db_query now returns the result array.
       if (version_compare(VERSION, '7', '<')) {
         $query = db_query("select uid, name from {users} where name <> '' order by name");

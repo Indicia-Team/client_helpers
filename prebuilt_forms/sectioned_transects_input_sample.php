@@ -13,8 +13,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package Client
- * @subpackage PrebuiltForms
  * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers/
@@ -38,10 +36,6 @@ function sectionSort($a, $b)
 }
 
 /**
- *
- *
- * @package Client
- * @subpackage PrebuiltForms
  * A form for data entry of transect data by entering counts of each for sections along the transect.
  */
 class iform_sectioned_transects_input_sample {
@@ -53,9 +47,9 @@ class iform_sectioned_transects_input_sample {
    */
   public static function get_sectioned_transects_input_sample_definition() {
     return array(
-      'title'=>'Sectioned Transects Sample Input',
+      'title' => 'Sectioned Transects Sample Input',
       'category' => 'Sectioned Transects',
-      'description'=>'A form for inputting the counts of species observed at each section along a transect. Can be called with site=<id> in the URL to force the '.
+      'description' => 'A form for inputting the counts of species observed at each section along a transect. Can be called with site=<id> in the URL to force the '.
           'selection of a fixed site, or sample=<id> to edit an existing sample.'
     );
   }
@@ -69,42 +63,42 @@ class iform_sectioned_transects_input_sample {
     return array_merge(
       array(
         array(
-          'name'=>'survey_id',
-          'caption'=>'Survey',
-          'description'=>'The survey that data will be posted into.',
-          'type'=>'select',
-          'table'=>'survey',
-          'captionField'=>'title',
-          'valueField'=>'id',
+          'name' => 'survey_id',
+          'caption' => 'Survey',
+          'description' => 'The survey that data will be posted into.',
+          'type' => 'select',
+          'table' => 'survey',
+          'captionField' => 'title',
+          'valueField' => 'id',
           'siteSpecific'=>true
         ),
         array(
-          'name'=>'occurrence_attribute_id',
-          'caption'=>'Occurrence Attribute',
-          'description'=>'The attribute (typically an abundance attribute) that will be presented in the grid for input. Entry of an attribute value will create '.
+          'name' => 'occurrence_attribute_id',
+          'caption' => 'Occurrence Attribute',
+          'description' => 'The attribute (typically an abundance attribute) that will be presented in the grid for input. Entry of an attribute value will create '.
               ' an occurrence.',
-          'type'=>'select',
-          'table'=>'occurrence_attribute',
-          'captionField'=>'caption',
-          'valueField'=>'id',
+          'type' => 'select',
+          'table' => 'occurrence_attribute',
+          'captionField' => 'caption',
+          'valueField' => 'id',
           'siteSpecific'=>true
         ),
         array(
-          'name'=>'taxon_list_id',
-          'caption'=>'Species List',
-          'description'=>'The species checklist used to populate the grid.',
-          'type'=>'select',
-          'table'=>'taxon_list',
-          'captionField'=>'title',
-          'valueField'=>'id',
+          'name' => 'taxon_list_id',
+          'caption' => 'Species List',
+          'description' => 'The species checklist used to populate the grid.',
+          'type' => 'select',
+          'table' => 'taxon_list',
+          'captionField' => 'title',
+          'valueField' => 'id',
           'siteSpecific'=>true
         ),
         array(
-          'name'=>'custom_attribute_options',
-          'caption'=>'Options for custom attributes',
-          'description'=>'A list of additional options to pass through to custom attributes, one per line. Each option should be specified as '.
+          'name' => 'custom_attribute_options',
+          'caption' => 'Options for custom attributes',
+          'description' => 'A list of additional options to pass through to custom attributes, one per line. Each option should be specified as '.
               'the attribute name followed by | then the option name, followed by = then the value. For example, smpAttr:1|class=control-width-5.',
-          'type'=>'textarea',
+          'type' => 'textarea',
           'siteSpecific'=>true
         ),
       )
@@ -165,7 +159,7 @@ class iform_sectioned_transects_input_sample {
     if ($locationId) {
       $site = data_entry_helper::get_population_data(array(
         'table' => 'location',
-        'extraParams' => $auth['read'] + array('view'=>'detail','id'=>$locationId,'deleted'=>'f')
+        'extraParams' => $auth['read'] + array('view' => 'detail','id'=>$locationId,'deleted' => 'f')
       ));
       $site = $site[0];
       $r .= '<input type="hidden" name="sample:location_id" value="'.$locationId.'"/>';
@@ -180,14 +174,14 @@ class iform_sectioned_transects_input_sample {
       // we always use the same warehouse call and therefore it uses the cache.
       $locationTypes = helper_base::get_termlist_terms($auth, 'indicia:location_types', array('Transect', 'Transect Section'));
       $availableSites = data_entry_helper::get_population_data(array(
-        'report'=>'library/locations/locations_list',
+        'report' => 'library/locations/locations_list',
         'extraParams' => $auth['read'] + array('website_id' => $args['website_id'], 'location_type_id'=>$locationTypes[0]['id'],
-            'locattrs'=>'CMS User ID', 'attr_location_cms_user_id'=>$user->uid),
+            'locattrs' => 'CMS User ID', 'attr_location_cms_user_id'=>$user->uid),
         'nocache' => true
       ));
       // convert the report data to an array for the lookup, plus one to pass to the JS so it can keep the hidden sref fields updated
-      $sitesLookup = array();
-      $sitesJs = array();
+      $sitesLookup = [];
+      $sitesJs = [];
       foreach ($availableSites as $site) {
         $sitesLookup[$site['location_id']]=$site['name'];
         $sitesJs[$site['location_id']] = array('centroid_sref'=>$site['centroid_sref'], 'centroid_sref_system'=>$site['centroid_sref_system']);
@@ -211,10 +205,10 @@ class iform_sectioned_transects_input_sample {
     $sampleMethods = helper_base::get_termlist_terms($auth, 'indicia:sample_methods', array('Transect'));
     $attributes = data_entry_helper::getAttributes(array(
       'id' => $sampleId,
-      'valuetable'=>'sample_attribute_value',
-      'attrtable'=>'sample_attribute',
-      'key'=>'sample_id',
-      'fieldprefix'=>'smpAttr',
+      'valuetable' => 'sample_attribute_value',
+      'attrtable' => 'sample_attribute',
+      'key' => 'sample_id',
+      'fieldprefix' => 'smpAttr',
       'extraParams'=>$auth['read'],
       'survey_id'=>$args['survey_id'],
       'sample_method_id'=>$sampleMethods[0]['id']
@@ -236,7 +230,7 @@ class iform_sectioned_transects_input_sample {
       ));
     }
     // are there any option overrides for the custom attributes?
-    $blockOptions = array();
+    $blockOptions = [];
     if (isset($args['custom_attribute_options']) && $args['custom_attribute_options']) {
       $blockOptionList = explode("\n", $args['custom_attribute_options']);
       foreach($blockOptionList as $opt) {
@@ -276,7 +270,7 @@ class iform_sectioned_transects_input_sample {
       }
       $sample = data_entry_helper::get_population_data(array(
         'table' => 'sample',
-        'extraParams' => $auth['read'] + array('view'=>'detail','id'=>$parentSampleId,'deleted'=>'f')
+        'extraParams' => $auth['read'] + array('view' => 'detail','id'=>$parentSampleId,'deleted' => 'f')
       ));
       $sample=$sample[0];
       $parentLocId = $sample['location_id'];
@@ -286,10 +280,10 @@ class iform_sectioned_transects_input_sample {
     $sampleMethods = helper_base::get_termlist_terms($auth, 'indicia:sample_methods', array('Transect Section'));
     $attributes = data_entry_helper::getAttributes(array(
       'id' => $sampleId,
-      'valuetable'=>'sample_attribute_value',
-      'attrtable'=>'sample_attribute',
-      'key'=>'sample_id',
-      'fieldprefix'=>'smpAttr',
+      'valuetable' => 'sample_attribute_value',
+      'attrtable' => 'sample_attribute',
+      'key' => 'sample_id',
+      'fieldprefix' => 'smpAttr',
       'extraParams'=>$auth['read'],
       'survey_id'=>$args['survey_id'],
       'sample_method_id'=>$sampleMethods[0]['id'],
@@ -299,14 +293,14 @@ class iform_sectioned_transects_input_sample {
       // as the parent sample exists, we need to load the sub-samples and occurrences
       $subSamples = data_entry_helper::get_population_data(array(
         'report' => 'library/samples/samples_list_for_parent_sample',
-        'extraParams' => $auth['read'] + array('sample_id'=>$parentSampleId,'date_from'=>'','date_to'=>'', 'sample_method_id'=>'', 'smpattrs'=>implode(',', array_keys($attributes))),
+        'extraParams' => $auth['read'] + array('sample_id'=>$parentSampleId,'date_from' => '','date_to' => '', 'sample_method_id' => '', 'smpattrs'=>implode(',', array_keys($attributes))),
         'nocache'=>true
       ));
 
       // transcribe the response array into a couple of forms that are useful elsewhere - one for outputting JSON so the JS knows about
       // the samples, and another for lookup of sample data by code later.
-      $subSampleJson = array();
-      $subSamplesByCode = array();
+      $subSampleJson = [];
+      $subSamplesByCode = [];
       foreach ($subSamples as $subSample) {
         $subSampleJson[] = '"'.$subSample['code'].'": '.$subSample['sample_id'];
         $subSamplesByCode[$subSample['code']] = $subSample;
@@ -314,13 +308,13 @@ class iform_sectioned_transects_input_sample {
       data_entry_helper::$javascript .= "indiciaData.samples = { ".implode(', ', $subSampleJson)."};\n";
       $o = data_entry_helper::get_population_data(array(
         'report' => 'library/occurrences/occurrences_list_for_parent_sample',
-        'extraParams' => $auth['read'] + array('view'=>'detail','sample_id'=>$parentSampleId,'survey_id'=>'','date_from'=>'','date_to'=>'','taxon_group_id'=>'',
-            'smpattrs'=>'', 'occattrs'=>$args['occurrence_attribute_id']),
+        'extraParams' => $auth['read'] + array('view' => 'detail','sample_id'=>$parentSampleId,'survey_id' => '','date_from' => '','date_to' => '','taxon_group_id' => '',
+            'smpattrs' => '', 'occattrs'=>$args['occurrence_attribute_id']),
         // don't cache as this is live data
         'nocache' => true
       ));
       // build an array keyed for easy lookup
-      $occurrences = array();
+      $occurrences = [];
       foreach($o as $occurrence) {
         $occurrences[$occurrence['sample_id'].':'.$occurrence['taxa_taxon_list_id']] = array(
           'value'=>$occurrence['attr_occurrence_'.$args['occurrence_attribute_id']],
@@ -336,7 +330,7 @@ class iform_sectioned_transects_input_sample {
     }
     $sections = data_entry_helper::get_population_data(array(
       'table' => 'location',
-      'extraParams' => $auth['read'] + array('view'=>'detail','parent_id'=>$parentLocId,'deleted'=>'f')
+      'extraParams' => $auth['read'] + array('view' => 'detail','parent_id'=>$parentLocId,'deleted' => 'f')
     ));
     usort($sections, "sectionSort");
     $r = "<form method=\"post\"><div id=\"tabs\">\n";
@@ -349,7 +343,7 @@ class iform_sectioned_transects_input_sample {
         '#notes'=>lang::get('Notes')
     )));
     data_entry_helper::enable_tabs(array(
-        'divId'=>'tabs',
+        'divId' => 'tabs',
         'style'=>$args['interface']
     ));
     $r .= "<div id=\"grid\">\n";
@@ -397,7 +391,7 @@ class iform_sectioned_transects_input_sample {
     $r .= '</div>';
     $r .= "<div id=\"notes\">\n";
     $r .= data_entry_helper::textarea(array(
-      'fieldname'=>'sample:comment',
+      'fieldname' => 'sample:comment',
       'label'=>lang::get('Notes'),
       'helpText'=>lang::get("Use this space to input comments about this week's walk.")
     ));
@@ -467,7 +461,7 @@ class iform_sectioned_transects_input_sample {
         );
         $site = data_entry_helper::get_population_data(array(
           'table' => 'location',
-          'extraParams' => $read + array('view'=>'detail','id'=>$values['sample:location_id'],'deleted'=>'f')
+          'extraParams' => $read + array('view' => 'detail','id'=>$values['sample:location_id'],'deleted' => 'f')
         ));
         $site = $site[0];
         $values['sample:entered_sref'] = $site['centroid_sref'];

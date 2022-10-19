@@ -22,8 +22,6 @@ global $custom_terms;
 
 /**
  * Language terms for  dynamic_sample_occurrence form.
- *
- * @package	Client
  */
 $custom_terms = [
 	'LANG_Georef_Label' => 'Search for place',

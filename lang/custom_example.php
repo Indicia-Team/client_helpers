@@ -13,10 +13,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package	Client
- * @author	Indicia Team
- * @license	http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link 	http://code.google.com/p/indicia/
+ * @author Indicia Team
+ * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
+ * @link https://github.com/Indicia-Team/client_helpers
  */
 
 global $custom_terms;
@@ -30,9 +29,8 @@ global $custom_terms;
  * in the same folder across into your own file, and change the list of term values as required. Finally
  * require your custom file in the data entry page's PHP before the data_entry_helper.php file is included.
  *
- * @package	Client
  */
 $custom_terms = array(
-  'species_checklist.species'=>'Taxon',
+  'species_checklist.species' => 'Taxon',
 );
 

@@ -13,15 +13,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package	Client
- * @subpackage PrebuiltForms
- * @author	Indicia Team
- * @license	http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link 	http://code.google.com/p/indicia/
+ * @author Indicia Team
+ * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
+ * @link https://github.com/Indicia-Team/client_helpers
  */
 
 /*
- * Extension class that creates links back to the map homepage. Clicking on a link 
+ * Extension class that creates links back to the map homepage. Clicking on a link
  * passes a location_id (id) in the URL which allows the homepage to draw the map in the correct state.
  */
 class extension_cudi_homepage_links {
@@ -51,36 +49,36 @@ class extension_cudi_homepage_links {
       }
     } while ($locationTypeId != $layerLocationTypes[$i] &&
              $i < count($layerLocationTypes)-1);
-    
+
     //Use a report to get a list of locations that match the different layer location types and also intersect the location we are interested in.
     $reportOptions = array(
-      'dataSource'=>'reports_for_prebuilt_forms/CUDI/get_map_hierarchy_for_current_position',
+      'dataSource' => 'reports_for_prebuilt_forms/CUDI/get_map_hierarchy_for_current_position',
       'readAuth'=>$auth['read'],
-      'mode'=>'report',
+      'mode' => 'report',
       'extraParams' => array('location_id'=>$locationId,'location_type_ids'=>$SupportedLocationTypeIdsAsString)
     );
-    
+
     $breadcrumbHierarchy = report_helper::get_report_data($reportOptions);
     //The report doesn't know the order of the layers we want, so re-order the data.
     $breadcrumbHierarchy = self::reorderBreadcrumbHierarchy($breadcrumbHierarchy,$layerLocationTypes);
     return $breadcrumbHierarchy;
   }
-  
+
   /*
    * The report that returns the data for the homepage links doesn't know the order of the layers we need, so we need to reorder the data.
    */
   private function reorderBreadcrumbHierarchy($breadcrumbHierarchy,$layerLocationTypes) {
-    $orderedBreadcrumbHierarchy = array();
+    $orderedBreadcrumbHierarchy = [];
     foreach ($layerLocationTypes as $locationTypeLayerId) {
       foreach ($breadcrumbHierarchy as $breadcrumbHierarchyItem) {
         if ($locationTypeLayerId===$breadcrumbHierarchyItem['location_type_id']) {
           array_push($orderedBreadcrumbHierarchy,$breadcrumbHierarchyItem);
         }
-      }   
+      }
     }
     return $orderedBreadcrumbHierarchy;
   }
-  
+
   /*
    * Displays a list of links back to the homepage for use with the cudi project.
    * Each link returns to the appropriate position on the homepage map
@@ -90,7 +88,7 @@ class extension_cudi_homepage_links {
     $layerLocationTypes = explode(',',$options['layerLocationTypes']);
     //Get the location data to make the links with
     $breadcrumbHierarchy = self::get_links_hierarchy($auth, $layerLocationTypes,$options['countUnitBoundaryTypeId'],$options['urlParameter']);
-    $homepageLinkIdsArray = array();
+    $homepageLinkIdsArray = [];
     //Get the ids of the locations
     foreach ($breadcrumbHierarchy as $id => $hierarchyItem) {
       array_push($homepageLinkIdsArray,$hierarchyItem['id']);
@@ -109,7 +107,7 @@ class extension_cudi_homepage_links {
       //Loop through the links to show
       foreach ($homepageLinkIdsArray as $num=>$homepageLinkLocationId) {
         //Get the name of the location for each link we are creating
-        foreach ($locationRecords as $locationRecord) {     
+        foreach ($locationRecords as $locationRecord) {
           if ($locationRecord['id']===$homepageLinkLocationId) {
             $homepageLinkLocationName = $locationRecord['name'];
           }
@@ -124,7 +122,7 @@ class extension_cudi_homepage_links {
         $r .= '</li>';
       }
       $r .= '</ul></div>';
-    }   
+    }
     return $r;
   }
 }

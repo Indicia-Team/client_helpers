@@ -13,11 +13,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package	Client
- * @subpackage PrebuiltForms
- * @author	Indicia Team
- * @license	http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link 	http://code.google.com/p/indicia/
+ * @author Indicia Team
+ * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
+ * @link https://github.com/Indicia-Team/client_helpers
  */
 
 /**
@@ -258,7 +256,7 @@ class extension_event_reports {
         'height'=> 340,
         'chartType' => 'pie',
         'yValues'=>array('count'),
-        'xValues'=>'taxon_group',
+        'xValues' => 'taxon_group',
         'rendererOptions' => array(
           'sliceMargin' => 4,
           'showDataLabels' => true,

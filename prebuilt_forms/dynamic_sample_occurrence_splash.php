@@ -24,8 +24,8 @@
  * NB has Drupal specific code. Relies on presence of IForm Proxy.
  */
 
-require_once('includes/dynamic.php');
-require_once('dynamic_sample_occurrence.php');
+require_once 'includes/dynamic.php';
+require_once 'dynamic_sample_occurrence.php';
 
 
 class iform_dynamic_sample_occurrence_splash extends iform_dynamic_sample_occurrence {
@@ -47,9 +47,9 @@ class iform_dynamic_sample_occurrence_splash extends iform_dynamic_sample_occurr
    */
   public static function get_dynamic_sample_occurrence_splash_definition() {
     return array(
-      'title'=>'Splash sample with occurrences form for Epiphyte surveys',
+      'title' => 'Splash sample with occurrences form for Epiphyte surveys',
       'category' => 'Forms for specific surveying methods',
-      'description'=>'Form for submitting Splash sample/occurrence records for Epiphyte surveys'
+      'description' => 'Form for submitting Splash sample/occurrence records for Epiphyte surveys'
     );
   }
 
@@ -62,32 +62,32 @@ class iform_dynamic_sample_occurrence_splash extends iform_dynamic_sample_occurr
       parent::get_parameters(),
       array(
         array(
-          'name'=>'tree_occ_attrs',
-          'caption'=>'Tree Occurrence Attributes',
-          'description'=>'The occcurrence attribute that hold the Epiphyte count for trees 1 to 10 as a comma seperated list. The list should be in the correct order with tree 1 first e.g. 34,35,36,37,38,39,40,41,42,43',
+          'name' => 'tree_occ_attrs',
+          'caption' => 'Tree Occurrence Attributes',
+          'description' => 'The occcurrence attribute that hold the Epiphyte count for trees 1 to 10 as a comma seperated list. The list should be in the correct order with tree 1 first e.g. 34,35,36,37,38,39,40,41,42,43',
           'required'=>true,
-          'type'=>'string',
-          'group'=>'Attribute Setup'
+          'type' => 'string',
+          'group' => 'Attribute Setup'
         ),
         array(
-          'name'=>'tree_grid_ref_occ_attr_id',
-          'caption'=>'Tree Grid Reference Occurrence Attribute',
-          'description'=>'The occurrence attribute relating to a tree\'s grid reference',
-          'type'=>'select',
-          'table'=>'occurrence_attribute',
-          'valueField'=>'id',
-          'captionField'=>'caption',
-          'group'=>'Attribute Setup'
+          'name' => 'tree_grid_ref_occ_attr_id',
+          'caption' => 'Tree Grid Reference Occurrence Attribute',
+          'description' => 'The occurrence attribute relating to a tree\'s grid reference',
+          'type' => 'select',
+          'table' => 'occurrence_attribute',
+          'valueField' => 'id',
+          'captionField' => 'caption',
+          'group' => 'Attribute Setup'
         ),
         array(
-          'name'=>'occurrence_record_grid_id',
-          'caption'=>'Occurrence Record Grid Occurrence Attribute',
-          'description'=>'The occurrence attribute which holds the id of the grid that occurrences will be loaded onto in edit mode.',
-          'type'=>'select',
-          'table'=>'occurrence_attribute',
-          'valueField'=>'id',
-          'captionField'=>'caption',
-          'group'=>'Attribute Setup'
+          'name' => 'occurrence_record_grid_id',
+          'caption' => 'Occurrence Record Grid Occurrence Attribute',
+          'description' => 'The occurrence attribute which holds the id of the grid that occurrences will be loaded onto in edit mode.',
+          'type' => 'select',
+          'table' => 'occurrence_attribute',
+          'valueField' => 'id',
+          'captionField' => 'caption',
+          'group' => 'Attribute Setup'
         ),
       )
     );
@@ -322,7 +322,7 @@ class iform_dynamic_sample_occurrence_splash extends iform_dynamic_sample_occurr
     }
     //Place any deleted samples at the back of the sub-sample array as we need to submit them,
     //but we don't want to process them any further
-    $removeCounter = array();
+    $removeCounter = []
     $subModelsDeletedAtEnd = array_merge($subModels);
     $treeOccurrencesDeletedAtEnd = array_merge($treeOccurrenceRecords);
     foreach ($subModels as $treeIdx=>&$subSampleModel) {
@@ -422,7 +422,7 @@ class iform_dynamic_sample_occurrence_splash extends iform_dynamic_sample_occurr
                 //Add the Epiphyte to the sub-models of the tree sub-sample
                 if (!empty($epiphyteOccModel['model']['fields'])) {
                   $subSampleModel['model']['subModels'][]=$epiphyteOccModel;
-                  $epiphyteOccModel=array();
+                  $epiphyteOccModel=[];
                 }
               }
             }
@@ -431,7 +431,7 @@ class iform_dynamic_sample_occurrence_splash extends iform_dynamic_sample_occurr
           //so it still needs to be submitted for deletion
           if (!empty($epiphyteOccModel['model']['fields'])) {
             $subSampleModel['model']['subModels'][]=$epiphyteOccModel;
-            $epiphyteOccModel=array();
+            $epiphyteOccModel=[];
           }
         }
       }

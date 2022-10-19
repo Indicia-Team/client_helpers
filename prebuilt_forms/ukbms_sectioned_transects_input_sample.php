@@ -13,8 +13,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package Client
- * @subpackage PrebuiltForms
  * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers/
@@ -56,10 +54,6 @@ function ukbms_stis_sectionSort($a, $b)
 }
 
 /**
- *
- *
- * @package Client
- * @subpackage PrebuiltForms
  * A form for data entry of transect data by entering counts of each for sections along the transect.
  */
 class iform_ukbms_sectioned_transects_input_sample {
@@ -76,9 +70,9 @@ class iform_ukbms_sectioned_transects_input_sample {
    */
   public static function get_ukbms_sectioned_transects_input_sample_definition() {
     return array(
-      'title'=>'UKBMS Sectioned Transects Sample Input',
+      'title' => 'UKBMS Sectioned Transects Sample Input',
       'category' => 'BMS Specific forms',
-      'description'=>'A form for inputting the counts of species observed at each section along a transect. Can be called with site=<id> in the URL to force the '.
+      'description' => 'A form for inputting the counts of species observed at each section along a transect. Can be called with site=<id> in the URL to force the '.
           'selection of a fixed site, or sample=<id> to edit an existing sample.'
     );
   }
@@ -92,77 +86,77 @@ class iform_ukbms_sectioned_transects_input_sample {
       iform_map_get_map_parameters(),
       array(
         array(
-          'name'=>'survey_id',
-          'caption'=>'Survey',
-          'description'=>'The survey that data will be posted into.',
-          'type'=>'select',
-          'table'=>'survey',
-          'captionField'=>'title',
-          'valueField'=>'id',
-          'extraParams' => array('orderby'=>'title'),
+          'name' => 'survey_id',
+          'caption' => 'Survey',
+          'description' => 'The survey that data will be posted into.',
+          'type' => 'select',
+          'table' => 'survey',
+          'captionField' => 'title',
+          'valueField' => 'id',
+          'extraParams' => array('orderby' => 'title'),
           'siteSpecific'=>true
         ),
         array(
-          'name'=>'occurrence_attribute_id',
-          'caption'=>'Occurrence Attribute',
-          'description'=>'The attribute (typically an abundance attribute) that will be presented in the grid for input. Entry of an attribute value will create '.
+          'name' => 'occurrence_attribute_id',
+          'caption' => 'Occurrence Attribute',
+          'description' => 'The attribute (typically an abundance attribute) that will be presented in the grid for input. Entry of an attribute value will create '.
               ' an occurrence.',
-          'type'=>'select',
-          'table'=>'occurrence_attribute',
-          'captionField'=>'caption',
-          'valueField'=>'id',
-          'extraParams' => array('orderby'=>'caption'),
+          'type' => 'select',
+          'table' => 'occurrence_attribute',
+          'captionField' => 'caption',
+          'valueField' => 'id',
+          'extraParams' => array('orderby' => 'caption'),
           'required' => true,
           'siteSpecific'=>true,
-          'group'=>'Transects Editor Settings'
+          'group' => 'Transects Editor Settings'
         ),
         array(
-          'name'=>'transect_type_term',
-          'caption'=>'Transect Location type term',
-          'description'=>'Select the location type for the Transects.',
+          'name' => 'transect_type_term',
+          'caption' => 'Transect Location type term',
+          'description' => 'Select the location type for the Transects.',
           'type' => 'select',
-          'table'=>'termlists_term',
-          'captionField'=>'term',
-          'valueField'=>'term',
-          'extraParams' => array('termlist_external_key'=>'indicia:location_types','orderby'=>'title'),
+          'table' => 'termlists_term',
+          'captionField' => 'term',
+          'valueField' => 'term',
+          'extraParams' => array('termlist_external_key' => 'indicia:location_types','orderby' => 'title'),
           'required' => true,
-          'group'=>'Transects Editor Settings'
+          'group' => 'Transects Editor Settings'
         ),
         array(
-          'name'=>'section_type_term',
-          'caption'=>'Section Location type term',
-          'description'=>'Select the location type for the Transect Sections.',
+          'name' => 'section_type_term',
+          'caption' => 'Section Location type term',
+          'description' => 'Select the location type for the Transect Sections.',
           'type' => 'select',
-          'table'=>'termlists_term',
-          'captionField'=>'term',
-          'valueField'=>'term',
-          'extraParams' => array('termlist_external_key'=>'indicia:location_types','orderby'=>'title'),
+          'table' => 'termlists_term',
+          'captionField' => 'term',
+          'valueField' => 'term',
+          'extraParams' => array('termlist_external_key' => 'indicia:location_types','orderby' => 'title'),
           'required' => true,
-          'group'=>'Transects Editor Settings'
+          'group' => 'Transects Editor Settings'
         ),
         array(
-          'name'=>'transect_sample_method_term',
-          'caption'=>'Transect Sample method term',
-          'description'=>'Select the sample method used for samples registered on the Transects.',
+          'name' => 'transect_sample_method_term',
+          'caption' => 'Transect Sample method term',
+          'description' => 'Select the sample method used for samples registered on the Transects.',
           'type' => 'select',
-          'table'=>'termlists_term',
-          'captionField'=>'term',
-          'valueField'=>'term',
-          'extraParams' => array('termlist_external_key'=>'indicia:sample_methods','orderby'=>'title'),
+          'table' => 'termlists_term',
+          'captionField' => 'term',
+          'valueField' => 'term',
+          'extraParams' => array('termlist_external_key' => 'indicia:sample_methods','orderby' => 'title'),
           'required' => true,
-          'group'=>'Transects Editor Settings'
+          'group' => 'Transects Editor Settings'
         ),
         array(
-          'name'=>'section_sample_method_term',
-          'caption'=>'Section Sample method term',
-          'description'=>'Select the sample method used for samples registered on the Transect Sections.',
+          'name' => 'section_sample_method_term',
+          'caption' => 'Section Sample method term',
+          'description' => 'Select the sample method used for samples registered on the Transect Sections.',
           'type' => 'select',
-          'table'=>'termlists_term',
-          'captionField'=>'term',
-          'valueField'=>'term',
-          'extraParams' => array('termlist_external_key'=>'indicia:sample_methods','orderby'=>'title'),
+          'table' => 'termlists_term',
+          'captionField' => 'term',
+          'valueField' => 'term',
+          'extraParams' => array('termlist_external_key' => 'indicia:sample_methods','orderby' => 'title'),
           'required' => true,
-          'group'=>'Transects Editor Settings'
+          'group' => 'Transects Editor Settings'
         ),
         array(
           'name' => 'interacting_sample_attributes',
@@ -178,7 +172,7 @@ class iform_ukbms_sectioned_transects_input_sample {
           'description' => 'Custom configuration for attributes',
           'type' => 'jsonwidget',
           'required' => false,
-          'group'=>'Transects Editor Settings',
+          'group' => 'Transects Editor Settings',
           'schema' => '{
   "type":"seq",
   "title":"Attribute Custom Configuration List",
@@ -221,7 +215,7 @@ class iform_ukbms_sectioned_transects_input_sample {
           'description' => 'Select options for Species Grid Sort',
           'type' => 'jsonwidget',
           'required' => false,
-          'group'=>'Transects Editor Settings',
+          'group' => 'Transects Editor Settings',
           'schema' => '{
   "type":"map",
   "title":"Sort Order Options",
@@ -263,15 +257,15 @@ class iform_ukbms_sectioned_transects_input_sample {
           ),
 
           array(
-              'name'=>'taxon_column',
-              'caption'=>'Display Taxon field',
-              'description'=>'When displaying a taxon, choose what to use.',
+              'name' => 'taxon_column',
+              'caption' => 'Display Taxon field',
+              'description' => 'When displaying a taxon, choose what to use.',
               'type' => 'select',
-              'lookupValues' => array('taxon'=>'Common Name',
-                  'preferred_taxon'=>'Preferred Taxon (usually Latin)'),
+              'lookupValues' => array('taxon' => 'Common Name',
+                  'preferred_taxon' => 'Preferred Taxon (usually Latin)'),
               'required' => true,
               'default' => 'taxon',
-              'group'=>'Transects Editor Settings'
+              'group' => 'Transects Editor Settings'
           ),
 
         array(
@@ -280,7 +274,7 @@ class iform_ukbms_sectioned_transects_input_sample {
           'description' => 'Custom configuration for out of range validation',
           'type' => 'jsonwidget',
           'required' => false,
-          'group'=>'Transects Editor Settings',
+          'group' => 'Transects Editor Settings',
           'schema' =>
 '{
   "type":"seq",
@@ -302,25 +296,25 @@ class iform_ukbms_sectioned_transects_input_sample {
         ),
 
         array(
-          'name'=>'species_tab_1',
-          'caption'=>'Species Tab 1 Title',
-          'description'=>'The title to be used on the species checklist for the main tab.',
-          'type'=>'string',
+          'name' => 'species_tab_1',
+          'caption' => 'Species Tab 1 Title',
+          'description' => 'The title to be used on the species checklist for the main tab.',
+          'type' => 'string',
           'required' => true,
-          'group'=>'Species'
+          'group' => 'Species'
         ),
         array(
-          'name'=>'taxon_list_id',
-          'caption'=>'All Species List',
-          'description'=>'The species checklist used to populate the grid on the main grid when All Species is selected. Also used to drive the autocomplete when other options selected.',
-          'type'=>'select',
-          'table'=>'taxon_list',
-          'captionField'=>'title',
-          'valueField'=>'id',
-          'extraParams' => array('orderby'=>'title'),
+          'name' => 'taxon_list_id',
+          'caption' => 'All Species List',
+          'description' => 'The species checklist used to populate the grid on the main grid when All Species is selected. Also used to drive the autocomplete when other options selected.',
+          'type' => 'select',
+          'table' => 'taxon_list',
+          'captionField' => 'title',
+          'valueField' => 'id',
+          'extraParams' => array('orderby' => 'title'),
           'required' => true,
           'siteSpecific'=>true,
-          'group'=>'Species'
+          'group' => 'Species'
         ),
         array(
           'name' => 'taxon_min_rank_1',
@@ -332,11 +326,11 @@ class iform_ukbms_sectioned_transects_input_sample {
           'group' => 'Species'
         ),
         array(
-          'name'=>'main_taxon_filter_field',
-          'caption'=>'All Species List: Field used to filter taxa',
-          'description'=>'If you want to allow recording for just part of the selected All Species List, then select which field you will '.
+          'name' => 'main_taxon_filter_field',
+          'caption' => 'All Species List: Field used to filter taxa',
+          'description' => 'If you want to allow recording for just part of the selected All Species List, then select which field you will '.
               'use to specify the filter by.',
-          'type'=>'select',
+          'type' => 'select',
           'options' => array(
             'taxon' => 'Taxon',
             'taxon_meaning_id' => 'Taxon Meaning ID',
@@ -344,37 +338,37 @@ class iform_ukbms_sectioned_transects_input_sample {
           ),
           'siteSpecific'=>true,
           'required'=>false,
-          'group'=>'Species'
+          'group' => 'Species'
         ),
         array(
-          'name'=>'main_taxon_filter',
-          'caption'=>'All Species List: Taxon filter items',
-          'description'=>'When filtering the list of available taxa, taxa will not be available for recording unless they match one of the '.
+          'name' => 'main_taxon_filter',
+          'caption' => 'All Species List: Taxon filter items',
+          'description' => 'When filtering the list of available taxa, taxa will not be available for recording unless they match one of the '.
               'values you input in this box. Enter one value per line. E.g. enter a list of taxon group titles if you are filtering by taxon group.',
           'type' => 'textarea',
           'siteSpecific'=>true,
           'required'=>false,
-          'group'=>'Species'
+          'group' => 'Species'
         ),
         array(
-          'name'=>'common_taxon_list_id',
-          'caption'=>'Common Species List',
-          'description'=>'The species checklist used to populate the grid on the main grid when Common Species is selected.',
-          'type'=>'select',
-          'table'=>'taxon_list',
-          'captionField'=>'title',
-          'valueField'=>'id',
-          'extraParams' => array('orderby'=>'title'),
+          'name' => 'common_taxon_list_id',
+          'caption' => 'Common Species List',
+          'description' => 'The species checklist used to populate the grid on the main grid when Common Species is selected.',
+          'type' => 'select',
+          'table' => 'taxon_list',
+          'captionField' => 'title',
+          'valueField' => 'id',
+          'extraParams' => array('orderby' => 'title'),
           'required'=>false,
           'siteSpecific'=>true,
-          'group'=>'Species'
+          'group' => 'Species'
         ),
         array(
-          'name'=>'common_taxon_filter_field',
-          'caption'=>'Common Species List: Field used to filter taxa',
-          'description'=>'If you want to allow recording for just part of the selected Common Species List, then select which field you will '.
+          'name' => 'common_taxon_filter_field',
+          'caption' => 'Common Species List: Field used to filter taxa',
+          'description' => 'If you want to allow recording for just part of the selected Common Species List, then select which field you will '.
               'use to specify the filter by.',
-          'type'=>'select',
+          'type' => 'select',
           'options' => array(
             'taxon' => 'Taxon',
             'taxon_meaning_id' => 'Taxon Meaning ID',
@@ -382,23 +376,23 @@ class iform_ukbms_sectioned_transects_input_sample {
           ),
           'siteSpecific'=>true,
           'required'=>false,
-          'group'=>'Species'
+          'group' => 'Species'
         ),
         array(
-          'name'=>'common_taxon_filter',
-          'caption'=>'Common Species List: Taxon filter items',
-          'description'=>'When filtering the list of available taxa, taxa will not be available for recording unless they match one of the '.
+          'name' => 'common_taxon_filter',
+          'caption' => 'Common Species List: Taxon filter items',
+          'description' => 'When filtering the list of available taxa, taxa will not be available for recording unless they match one of the '.
               'values you input in this box. Enter one value per line. E.g. enter a list of taxon group titles if you are filtering by taxon group.',
           'type' => 'textarea',
           'siteSpecific'=>true,
           'required'=>false,
-          'group'=>'Species'
+          'group' => 'Species'
         ),
         array(
           'name' => 'start_list_1',
           'caption' => 'Start with species list',
           'description' => 'Preselect which species list to polulate the first species grid with.',
-          'type'=>'select',
+          'type' => 'select',
           'options' => array(
             'branch' => 'Branch specific species list',
             'full' => 'Full species list',
@@ -415,7 +409,7 @@ class iform_ukbms_sectioned_transects_input_sample {
           'name' => 'disable_full_1',
           'caption' => 'Disable Full List',
           'description' => 'Some lists (e.g. the full UK Species List) may be too big to allow the grid to populate the full list. Select this to prevent the full list being displayed in the first tab.',
-          'type'=>'boolean',
+          'type' => 'boolean',
           'default' => false,
           'required' => false,
           'group' => 'Species'
@@ -424,7 +418,7 @@ class iform_ukbms_sectioned_transects_input_sample {
           'name' => 'disable_tso_1',
           'caption' => 'Disable Taxonomic Sort Order',
           'description' => 'Some lists (e.g. the full UK Species List) may not have the taxonomic sort order filled in. In this case, there is no point in sorting by the TSO. The default will be the next available SO from the list common name, preferred taxon, taxon.',
-          'type'=>'boolean',
+          'type' => 'boolean',
           'default' => false,
           'required' => false,
           'group' => 'Species'
@@ -435,7 +429,7 @@ class iform_ukbms_sectioned_transects_input_sample {
           'description' => 'Custom configuration for branch specific taxon lists',
           'type' => 'jsonwidget',
           'required' => false,
-          'group'=>'Species',
+          'group' => 'Species',
           'schema' =>
 '{
   "type":"seq",
@@ -465,18 +459,18 @@ class iform_ukbms_sectioned_transects_input_sample {
         ),
 
         array(
-          'name'=>'species_tab_2',
-          'caption'=>'Species Tab 2 Title',
-          'description'=>'The title to be used on the species checklist for the second tab.',
-          'type'=>'string',
+          'name' => 'species_tab_2',
+          'caption' => 'Species Tab 2 Title',
+          'description' => 'The title to be used on the species checklist for the second tab.',
+          'type' => 'string',
           'required'=>false,
-          'group'=>'Species 2'
+          'group' => 'Species 2'
         ),
         array(
           'name' => 'start_list_2',
           'caption' => 'Start with species list',
           'description' => 'Preselect which species list to populate the second species grid with: if not Full a species control will be provided to allow the addition of extra taxa to the list.',
-          'type'=>'select',
+          'type' => 'select',
           'options' => array(
             'full' => 'Full species list',
             'here' => 'Previous species recorded at this location',
@@ -490,23 +484,23 @@ class iform_ukbms_sectioned_transects_input_sample {
           'name' => 'disable_full_2',
           'caption' => 'Disable Full List',
           'description' => 'Some lists (e.g. the full UK Species List) may be too big to allow the grid to populate the full list. Select this to prevent the full list being displayed in the second tab.',
-          'type'=>'boolean',
+          'type' => 'boolean',
           'default' => false,
           'required' => false,
           'group' => 'Species 2'
         ),
         array(
-          'name'=>'second_taxon_list_id',
-          'caption'=>'Second Tab Species List',
-          'description'=>'The species checklist used to drive the autocomplete in the optional second grid. If not provided, the second grid and its tab are omitted.',
-          'type'=>'select',
-          'table'=>'taxon_list',
-          'captionField'=>'title',
-          'valueField'=>'id',
-          'extraParams' => array('orderby'=>'title'),
+          'name' => 'second_taxon_list_id',
+          'caption' => 'Second Tab Species List',
+          'description' => 'The species checklist used to drive the autocomplete in the optional second grid. If not provided, the second grid and its tab are omitted.',
+          'type' => 'select',
+          'table' => 'taxon_list',
+          'captionField' => 'title',
+          'valueField' => 'id',
+          'extraParams' => array('orderby' => 'title'),
           'required'=>false,
           'siteSpecific'=>true,
-          'group'=>'Species 2'
+          'group' => 'Species 2'
         ),
         array(
           'name' => 'taxon_min_rank_2',
@@ -518,11 +512,11 @@ class iform_ukbms_sectioned_transects_input_sample {
           'group' => 'Species 2'
         ),
         array(
-          'name'=>'second_taxon_filter_field',
-          'caption'=>'Second Tab Species List: Field used to filter taxa',
-          'description'=>'If you want to allow recording for just part of the selected Species List, then select which field you will '.
+          'name' => 'second_taxon_filter_field',
+          'caption' => 'Second Tab Species List: Field used to filter taxa',
+          'description' => 'If you want to allow recording for just part of the selected Species List, then select which field you will '.
               'use to specify the filter by.',
-          'type'=>'select',
+          'type' => 'select',
           'options' => array(
             'taxon' => 'Taxon',
             'taxon_meaning_id' => 'Taxon Meaning ID',
@@ -530,53 +524,53 @@ class iform_ukbms_sectioned_transects_input_sample {
           ),
           'siteSpecific'=>true,
           'required'=>false,
-          'group'=>'Species 2'
+          'group' => 'Species 2'
         ),
         array(
-          'name'=>'second_taxon_filter',
-          'caption'=>'Second Tab Species List: Taxon filter items',
-          'description'=>'When filtering the list of available taxa, taxa will not be available for recording unless they match one of the '.
+          'name' => 'second_taxon_filter',
+          'caption' => 'Second Tab Species List: Taxon filter items',
+          'description' => 'When filtering the list of available taxa, taxa will not be available for recording unless they match one of the '.
               'values you input in this box. Enter one value per line. E.g. enter a list of taxon group titles if you are filtering by taxon group.',
           'type' => 'textarea',
           'siteSpecific'=>true,
           'required'=>false,
-          'group'=>'Species 2'
+          'group' => 'Species 2'
         ),
         array(
-          'name'=>'occurrence_attribute_id_2',
-          'caption'=>'Second Tab Occurrence Attribute',
-          'description'=>'The attribute that will be presented in the Second Species Tab grid for input, if different to the Occurrence Attribute above. Omit if using the same.',
-          'type'=>'select',
-          'table'=>'occurrence_attribute',
-          'captionField'=>'caption',
-          'valueField'=>'id',
-          'extraParams' => array('orderby'=>'caption'),
+          'name' => 'occurrence_attribute_id_2',
+          'caption' => 'Second Tab Occurrence Attribute',
+          'description' => 'The attribute that will be presented in the Second Species Tab grid for input, if different to the Occurrence Attribute above. Omit if using the same.',
+          'type' => 'select',
+          'table' => 'occurrence_attribute',
+          'captionField' => 'caption',
+          'valueField' => 'id',
+          'extraParams' => array('orderby' => 'caption'),
           'required' => false,
           'siteSpecific'=>true,
-          'group'=>'Species 2'
+          'group' => 'Species 2'
         ),
         array(
           'name' => 'disable_tso_2',
           'caption' => 'Disable Taxonomic Sort Order',
           'description' => 'Some lists (e.g. the full UK Species List) may not have the taxonomic sort order filled in. In this case, there is no point in sorting by the TSO. The default will be the next available SO from the list common name, preferred taxon, taxon.',
-          'type'=>'boolean',
+          'type' => 'boolean',
           'default' => false,
           'required' => false,
           'group' => 'Species 2'
         ),
         array(
-          'name'=>'species_tab_3',
-          'caption'=>'Species Tab 3 Title',
-          'description'=>'The title to be used on the species checklist for the third tab.',
-          'type'=>'string',
+          'name' => 'species_tab_3',
+          'caption' => 'Species Tab 3 Title',
+          'description' => 'The title to be used on the species checklist for the third tab.',
+          'type' => 'string',
           'required'=>false,
-          'group'=>'Species 3'
+          'group' => 'Species 3'
         ),
         array(
           'name' => 'start_list_3',
           'caption' => 'Start with species list',
           'description' => 'Preselect which species list to polulate the third species grid with: if not Full a species control will be provided to allow the addition of extra taxa to the list.',
-          'type'=>'select',
+          'type' => 'select',
           'options' => array(
             'full' => 'Full species list',
             'here' => 'Previous species recorded at this location',
@@ -590,23 +584,23 @@ class iform_ukbms_sectioned_transects_input_sample {
           'name' => 'disable_full_3',
           'caption' => 'Disable Full List',
           'description' => 'Some lists (e.g. the full UK Species List) may be too big to allow the grid to populate the full list. Select this to prevent the full list being displayed in the third tab.',
-          'type'=>'boolean',
+          'type' => 'boolean',
           'default' => false,
           'required' => false,
           'group' => 'Species 3'
         ),
         array(
-          'name'=>'third_taxon_list_id',
-          'caption'=>'Third Tab Species List',
-          'description'=>'The species checklist used to drive the autocomplete in the optional third grid. If not provided, the third grid and its tab are omitted.',
-          'type'=>'select',
-          'table'=>'taxon_list',
-          'captionField'=>'title',
-          'valueField'=>'id',
-          'extraParams' => array('orderby'=>'title'),
+          'name' => 'third_taxon_list_id',
+          'caption' => 'Third Tab Species List',
+          'description' => 'The species checklist used to drive the autocomplete in the optional third grid. If not provided, the third grid and its tab are omitted.',
+          'type' => 'select',
+          'table' => 'taxon_list',
+          'captionField' => 'title',
+          'valueField' => 'id',
+          'extraParams' => array('orderby' => 'title'),
           'required'=>false,
           'siteSpecific'=>true,
-          'group'=>'Species 3'
+          'group' => 'Species 3'
         ),
         array(
           'name' => 'taxon_min_rank_3',
@@ -618,11 +612,11 @@ class iform_ukbms_sectioned_transects_input_sample {
           'group' => 'Species 3'
         ),
         array(
-          'name'=>'third_taxon_filter_field',
-          'caption'=>'Third Tab Species List: Field used to filter taxa',
-          'description'=>'If you want to allow recording for just part of the selected Species List, then select which field you will '.
+          'name' => 'third_taxon_filter_field',
+          'caption' => 'Third Tab Species List: Field used to filter taxa',
+          'description' => 'If you want to allow recording for just part of the selected Species List, then select which field you will '.
               'use to specify the filter by.',
-          'type'=>'select',
+          'type' => 'select',
           'options' => array(
             'taxon' => 'Taxon',
             'taxon_meaning_id' => 'Taxon Meaning ID',
@@ -630,53 +624,53 @@ class iform_ukbms_sectioned_transects_input_sample {
           ),
           'siteSpecific'=>true,
           'required'=>false,
-          'group'=>'Species 3'
+          'group' => 'Species 3'
         ),
         array(
-          'name'=>'third_taxon_filter',
-          'caption'=>'Third Tab Species List: Taxon filter items',
-          'description'=>'When filtering the list of available taxa, taxa will not be available for recording unless they match one of the '.
+          'name' => 'third_taxon_filter',
+          'caption' => 'Third Tab Species List: Taxon filter items',
+          'description' => 'When filtering the list of available taxa, taxa will not be available for recording unless they match one of the '.
               'values you input in this box. Enter one value per line. E.g. enter a list of taxon group titles if you are filtering by taxon group.',
           'type' => 'textarea',
           'siteSpecific'=>true,
           'required'=>false,
-          'group'=>'Species 3'
+          'group' => 'Species 3'
         ),
         array(
-          'name'=>'occurrence_attribute_id_3',
-          'caption'=>'Third Tab Occurrence Attribute',
-          'description'=>'The attribute that will be presented in the Third Species Tab grid for input, if different to the Occurrence Attribute above. Omit if using the same.',
-          'type'=>'select',
-          'table'=>'occurrence_attribute',
-          'captionField'=>'caption',
-          'valueField'=>'id',
-          'extraParams' => array('orderby'=>'caption'),
+          'name' => 'occurrence_attribute_id_3',
+          'caption' => 'Third Tab Occurrence Attribute',
+          'description' => 'The attribute that will be presented in the Third Species Tab grid for input, if different to the Occurrence Attribute above. Omit if using the same.',
+          'type' => 'select',
+          'table' => 'occurrence_attribute',
+          'captionField' => 'caption',
+          'valueField' => 'id',
+          'extraParams' => array('orderby' => 'caption'),
           'required' => false,
           'siteSpecific'=>true,
-          'group'=>'Species 3'
+          'group' => 'Species 3'
         ),
         array(
           'name' => 'disable_tso_3',
           'caption' => 'Disable Taxonomic Sort Order',
           'description' => 'Some lists (e.g. the full UK Species List) may not have the taxonomic sort order filled in. In this case, there is no point in sorting by the TSO. The default will be the next available SO from the list common name, preferred taxon, taxon.',
-          'type'=>'boolean',
+          'type' => 'boolean',
           'default' => false,
           'required' => false,
           'group' => 'Species 3'
         ),
         array(
-          'name'=>'species_tab_4',
-          'caption'=>'Fourth Species Tab Title',
-          'description'=>'The title to be used on the species checklist for the fourth tab.',
-          'type'=>'string',
+          'name' => 'species_tab_4',
+          'caption' => 'Fourth Species Tab Title',
+          'description' => 'The title to be used on the species checklist for the fourth tab.',
+          'type' => 'string',
           'required'=>false,
-          'group'=>'Species 4'
+          'group' => 'Species 4'
         ),
         array(
           'name' => 'start_list_4',
           'caption' => 'Start with species list',
           'description' => 'Preselect which species list to polulate the fourth species grid with: if not Full a species control will be provided to allow the addition of extra taxa to the list.',
-          'type'=>'select',
+          'type' => 'select',
           'options' => array(
             'full' => 'Full species list',
             'here' => 'Previous species recorded at this location',
@@ -690,23 +684,23 @@ class iform_ukbms_sectioned_transects_input_sample {
           'name' => 'disable_full_4',
           'caption' => 'Disable Full List',
           'description' => 'Some lists (e.g. the full UK Species List) may be too big to allow the grid to populate the full list. Select this to prevent the full list being displayed in the fourth tab.',
-          'type'=>'boolean',
+          'type' => 'boolean',
           'default' => false,
           'required' => false,
           'group' => 'Species 4'
         ),
         array(
-          'name'=>'fourth_taxon_list_id',
-          'caption'=>'Fourth Tab Species List',
-          'description'=>'The species checklist used to drive the autocomplete in the optional fourth grid. If not provided, the fourth grid and its tab are omitted.',
-          'type'=>'select',
-          'table'=>'taxon_list',
-          'captionField'=>'title',
-          'valueField'=>'id',
-          'extraParams' => array('orderby'=>'title'),
+          'name' => 'fourth_taxon_list_id',
+          'caption' => 'Fourth Tab Species List',
+          'description' => 'The species checklist used to drive the autocomplete in the optional fourth grid. If not provided, the fourth grid and its tab are omitted.',
+          'type' => 'select',
+          'table' => 'taxon_list',
+          'captionField' => 'title',
+          'valueField' => 'id',
+          'extraParams' => array('orderby' => 'title'),
           'required'=>false,
           'siteSpecific'=>true,
-          'group'=>'Species 4'
+          'group' => 'Species 4'
         ),
         array(
           'name' => 'taxon_min_rank_4',
@@ -718,11 +712,11 @@ class iform_ukbms_sectioned_transects_input_sample {
           'group' => 'Species 4'
         ),
         array(
-          'name'=>'fourth_taxon_filter_field',
-          'caption'=>'Fourth Tab Species List: Field used to filter taxa',
-          'description'=>'If you want to allow recording for just part of the selected Species List, then select which field you will '.
+          'name' => 'fourth_taxon_filter_field',
+          'caption' => 'Fourth Tab Species List: Field used to filter taxa',
+          'description' => 'If you want to allow recording for just part of the selected Species List, then select which field you will '.
               'use to specify the filter by.',
-          'type'=>'select',
+          'type' => 'select',
           'options' => array(
             'taxon' => 'Taxon',
             'taxon_meaning_id' => 'Taxon Meaning ID',
@@ -730,58 +724,58 @@ class iform_ukbms_sectioned_transects_input_sample {
           ),
           'siteSpecific'=>true,
           'required'=>false,
-          'group'=>'Species 4'
+          'group' => 'Species 4'
         ),
         array(
-          'name'=>'fourth_taxon_filter',
-          'caption'=>'Fourth Tab Species List: Taxon filter items',
-          'description'=>'When filtering the list of available taxa, taxa will not be available for recording unless they match one of the '.
+          'name' => 'fourth_taxon_filter',
+          'caption' => 'Fourth Tab Species List: Taxon filter items',
+          'description' => 'When filtering the list of available taxa, taxa will not be available for recording unless they match one of the '.
               'values you input in this box. Enter one value per line. E.g. enter a list of taxon group titles if you are filtering by taxon group.',
           'type' => 'textarea',
           'siteSpecific'=>true,
           'required'=>false,
-          'group'=>'Species 4'
+          'group' => 'Species 4'
         ),
         array(
-          'name'=>'occurrence_attribute_id_4',
-          'caption'=>'Fourth Tab Occurrence Attribute',
-          'description'=>'The attribute that will be presented in the Fourth Species Tab grid for input, if different to the Occurrence Attribute above. Omit if using the same.',
-          'type'=>'select',
-          'table'=>'occurrence_attribute',
-          'captionField'=>'caption',
-          'valueField'=>'id',
-          'extraParams' => array('orderby'=>'caption'),
+          'name' => 'occurrence_attribute_id_4',
+          'caption' => 'Fourth Tab Occurrence Attribute',
+          'description' => 'The attribute that will be presented in the Fourth Species Tab grid for input, if different to the Occurrence Attribute above. Omit if using the same.',
+          'type' => 'select',
+          'table' => 'occurrence_attribute',
+          'captionField' => 'caption',
+          'valueField' => 'id',
+          'extraParams' => array('orderby' => 'caption'),
           'required' => false,
           'siteSpecific'=>true,
-          'group'=>'Species 4'
+          'group' => 'Species 4'
         ),
         array(
           'name' => 'disable_tso_4',
           'caption' => 'Disable Taxonomic Sort Order',
           'description' => 'Some lists (e.g. the full UK Species List) may not have the taxonomic sort order filled in. In this case, there is no point in sorting by the TSO. The default will be the next available SO from the list common name, preferred taxon, taxon.',
-          'type'=>'boolean',
+          'type' => 'boolean',
           'default' => false,
           'required' => false,
           'group' => 'Species 4'
         ),
         array(
-          'fieldname'=>'cache_lookup',
-          'label'=>'Cache lookups',
-          'helpText'=>'Tick this box to select to use a cached version of the lookup list when '.
+          'fieldname' => 'cache_lookup',
+          'label' => 'Cache lookups',
+          'helpText' => 'Tick this box to select to use a cached version of the lookup list when '.
               'searching for extra species names to add to the grid, or set to false to use the '.
               'live version (default). The latter is slower and places more load on the warehouse so should only be '.
               'used during development or when there is a specific need to reflect taxa that have only '.
               'just been added to the list.',
-          'type'=>'checkbox',
+          'type' => 'checkbox',
           'required'=>false,
-          'group'=>'Species Map',
+          'group' => 'Species Map',
           'siteSpecific'=>false
         ),
         array(
-          'name'=>'species_ctrl',
-          'caption'=>'Single Species Selection Control Type',
-          'description'=>'The type of control that will be available to select a single species.',
-          'type'=>'select',
+          'name' => 'species_ctrl',
+          'caption' => 'Single Species Selection Control Type',
+          'description' => 'The type of control that will be available to select a single species.',
+          'type' => 'select',
           'options' => array(
             'autocomplete' => 'Autocomplete',
             'select' => 'Select',
@@ -791,42 +785,42 @@ class iform_ukbms_sectioned_transects_input_sample {
             'tree_browser' => 'Tree browser'
           ),
           'default' => 'autocomplete',
-          'group'=>'Species Map'
+          'group' => 'Species Map'
         ),
         array(
-          'name'=>'defaults',
-          'caption'=>'Default Values',
-          'description'=>'Supply default values for each field as required. On each line, enter fieldname=value. For custom attributes, '.
+          'name' => 'defaults',
+          'caption' => 'Default Values',
+          'description' => 'Supply default values for each field as required. On each line, enter fieldname=value. For custom attributes, '.
               'the fieldname is the untranslated caption. For other fields, it is the model and fieldname, e.g. occurrence.record_status. '.
               'For date fields, use today to dynamically default to today\'s date. NOTE, currently only supports occurrence:record_status and '.
               'sample:date but will be extended in future.',
-              'type'=>'textarea',
-              'default'=>'occurrence:record_status=C',
-          'group'=>'Species Map',
+              'type' => 'textarea',
+              'default' => 'occurrence:record_status=C',
+          'group' => 'Species Map',
           'required' => false
         ),
         array(
-          'name'=>'custom_attribute_options',
-          'caption'=>'Options for custom attributes',
-          'description'=>'A list of additional options to pass through to custom attributes, one per line. Each option should be specified as '.
+          'name' => 'custom_attribute_options',
+          'caption' => 'Options for custom attributes',
+          'description' => 'A list of additional options to pass through to custom attributes, one per line. Each option should be specified as '.
               'the attribute name followed by | then the option name, followed by = then the value. For example, smpAttr:1|class=control-width-5.',
-          'type'=>'textarea',
+          'type' => 'textarea',
           'required'=>false,
           'siteSpecific'=>true
         ),
         array(
-          'name'=>'my_walks_page',
-          'caption'=>'Path to My Walks',
-          'description'=>'Path used to access the My Walks page after a successful submission. This is the default if not from URL parameter provided.',
-          'type'=>'text_input',
+          'name' => 'my_walks_page',
+          'caption' => 'Path to My Walks',
+          'description' => 'Path used to access the My Walks page after a successful submission. This is the default if not from URL parameter provided.',
+          'type' => 'text_input',
           'required'=>true,
           'siteSpecific'=>true
         ),
         array(
-            'name'=>'managerPermission',
-            'caption'=>'Drupal Permission for Manager mode',
-            'description'=>'Enter the Drupal permission name to be used to determine if this user is a manager. Entering this will allow the identified users access to the full locations list when entering a walk.',
-            'type'=>'string',
+            'name' => 'managerPermission',
+            'caption' => 'Drupal Permission for Manager mode',
+            'description' => 'Enter the Drupal permission name to be used to determine if this user is a manager. Entering this will allow the identified users access to the full locations list when entering a walk.',
+            'type' => 'string',
             'required' => false,
             'group' => 'Transects Editor Settings'
         ),
@@ -858,26 +852,26 @@ class iform_ukbms_sectioned_transects_input_sample {
           'group' => 'Transects Editor Settings'
         ),
         array(
-          'name'=>'confidentialAttrID',
+          'name' => 'confidentialAttrID',
           'caption' => 'Location attribute used to indicate confidential sites',
           'description' => 'A boolean location attribute, set to true if a site is confidential.',
-          'type'=>'select',
-          'table'=>'location_attribute',
-          'captionField'=>'caption',
-          'valueField'=>'id',
-          'extraParams' => array('orderby'=>'caption'),
+          'type' => 'select',
+          'table' => 'location_attribute',
+          'captionField' => 'caption',
+          'valueField' => 'id',
+          'extraParams' => array('orderby' => 'caption'),
           'required' => false,
           'group' => 'Confidential and Sensitivity Handling'
         ),
         array(
-          'name'=>'sensitiveAttrID',
+          'name' => 'sensitiveAttrID',
           'caption' => 'Location attribute used to indicate sensitive sites',
           'description' => 'A boolean location attribute, set to true if a site is sensitive.',
-          'type'=>'select',
-          'table'=>'location_attribute',
-          'captionField'=>'caption',
-          'valueField'=>'id',
-          'extraParams' => array('orderby'=>'caption'),
+          'type' => 'select',
+          'table' => 'location_attribute',
+          'captionField' => 'caption',
+          'valueField' => 'id',
+          'extraParams' => array('orderby' => 'caption'),
           'required' => false,
           'group' => 'Confidential and Sensitivity Handling'
         ),
@@ -890,14 +884,14 @@ class iform_ukbms_sectioned_transects_input_sample {
           'group' => 'Confidential and Sensitivity Handling'
         ),
         array(
-          'name'=>'finishedAttrID',
+          'name' => 'finishedAttrID',
           'caption' => 'Sample attribute used to flag walk as finished.',
           'description' => 'A boolean sample attribute, which is set to true if data entry on the walk has been finished. Should be flagged as applies_to_location, single value, integer. Cant flag integers attributes as hidden fields, so this is done by the form. This stores the year for which entry of walks for the location is finished.',
-          'type'=>'select',
-          'table'=>'sample_attribute',
-          'captionField'=>'caption',
-          'valueField'=>'id',
-          'extraParams' => array('orderby'=>'caption'),
+          'type' => 'select',
+          'table' => 'sample_attribute',
+          'captionField' => 'caption',
+          'valueField' => 'id',
+          'extraParams' => array('orderby' => 'caption'),
           'siteSpecific'=>true,
           'required' => false
         )
@@ -994,10 +988,10 @@ class iform_ukbms_sectioned_transects_input_sample {
 
     $attributes = data_entry_helper::getAttributes(array(
         'id' => self::$sampleID,
-        'valuetable'=>'sample_attribute_value',
-        'attrtable'=>'sample_attribute',
-        'key'=>'sample_id',
-        'fieldprefix'=>'smpAttr',
+        'valuetable' => 'sample_attribute_value',
+        'attrtable' => 'sample_attribute',
+        'key' => 'sample_id',
+        'fieldprefix' => 'smpAttr',
         'extraParams'=>self::$auth['read'],
         'survey_id'=>$args['survey_id'],
         'sample_method_id'=>$sampleMethods[0]['id']
@@ -1047,7 +1041,7 @@ class iform_ukbms_sectioned_transects_input_sample {
     if (self::$locationID) {
       $site = data_entry_helper::get_population_data(array(
         'table' => 'location',
-        'extraParams' => self::$auth['read'] + array('view'=>'detail','id'=>self::$locationID,'deleted'=>'f', 'location_type_id'=>$locationType[0]['id'])
+        'extraParams' => self::$auth['read'] + array('view' => 'detail','id'=>self::$locationID,'deleted' => 'f', 'location_type_id'=>$locationType[0]['id'])
       ));
       if (count($site) !== 1) {
         throw new exception("Could not identify specific site");
@@ -1072,17 +1066,17 @@ class iform_ukbms_sectioned_transects_input_sample {
       $siteParams = self::$auth['read'] + array('website_id' => $args['website_id'], 'location_type_id'=>$locationType[0]['id']);
       if ((!isset($args['user_locations_filter']) || $args['user_locations_filter']) &&
           (!isset($args['managerPermission']) || !hostsite_user_has_permission($args['managerPermission']))) {
-        $siteParams += array('locattrs'=>'CMS User ID', 'attr_location_cms_user_id'=>hostsite_get_user_field('id'));
+        $siteParams += array('locattrs' => 'CMS User ID', 'attr_location_cms_user_id'=>hostsite_get_user_field('id'));
       } else
-        $siteParams += array('locattrs'=>'');
+        $siteParams += array('locattrs' => '');
       $availableSites = data_entry_helper::get_population_data(array(
-        'report'=>'library/locations/locations_list',
+        'report' => 'library/locations/locations_list',
         'extraParams' => $siteParams,
         'nocache' => true
       ));
       // convert the report data to an array for the lookup, plus one to pass to the JS so it can keep the hidden sref fields updated
-      $sitesLookup = array();
-      $sitesJs = array();
+      $sitesLookup = [];
+      $sitesJs = [];
       foreach ($availableSites as $site) {
         $sitesLookup[$site['location_id']]=$site['name'];
         $sitesJs[$site['location_id']] = array('centroid_sref'=>$site['centroid_sref'], 'centroid_sref_system'=>$site['centroid_sref_system']);
@@ -1094,7 +1088,7 @@ class iform_ukbms_sectioned_transects_input_sample {
         $siteParams['attr_location_branch_cms_user_id']=hostsite_get_user_field('id');
         unset($siteParams['attr_location_cms_user_id']);
         $availableSites = data_entry_helper::get_population_data(array(
-            'report'=>'library/locations/locations_list',
+            'report' => 'library/locations/locations_list',
             'extraParams' => $siteParams,
             'nocache' => true
         ));
@@ -1147,9 +1141,9 @@ class iform_ukbms_sectioned_transects_input_sample {
   }
     $r .= get_attribute_html($attributes, $args, array('extraParams'=>self::$auth['read']), null,
           (isset($args['custom_attribute_options']) && $args['custom_attribute_options'] ?
-          get_attr_options_array_with_user_data($args['custom_attribute_options']) : array())) .
+          get_attr_options_array_with_user_data($args['custom_attribute_options']) : [])) .
         data_entry_helper::textarea(array(
-            'fieldname'=>'sample:comment',
+            'fieldname' => 'sample:comment',
             'label'=>lang::get('Notes'),
             'helpText'=>lang::get("Use this space to input comments about this week's walk.")
           )) .
@@ -1217,32 +1211,32 @@ class iform_ukbms_sectioned_transects_input_sample {
     $formOptions = array(
         'userID' => self::$userId,
         'surveyID' => $args['survey_id'],
-        'autoCompletes' => array(),
-        'speciesList' => array(),
-        'speciesListForce' => array(),
-        'speciesListFilterField' => array(),
-        'speciesListFilterValues' => array(),
-        'speciesMinRank' => array(),
+        'autoCompletes' => [],
+        'speciesList' => [],
+        'speciesListForce' => [],
+        'speciesListFilterField' => [],
+        'speciesListFilterValues' => [],
+        'speciesMinRank' => [],
         'duplicateTaxonMessage' => lang::get('LANG_Duplicate_Taxon'),
         'requiredMessage' => lang::get('This field is required'),
-        'existingOccurrences' => array(),
-        'occurrence_attribute' => array(),
-        'occurrence_attribute_ctrl' => array(),
+        'existingOccurrences' => [],
+        'occurrence_attribute' => [],
+        'occurrence_attribute_ctrl' => [],
         'maxTabs' => 4,
-        'branchSpeciesLists' => array(),
-        'branchTaxonMeaningIDs' => array(),
-        'commonTaxonMeaningIDs' => array(),
-        'allTaxonMeaningIDsAtTransect' => array(),
-        'existingTaxonMeaningIDs' => array(),
-        'myTaxonMeaningIDs' => array(),
-        'attribute_configuration' => (!empty($args['attribute_configuration']) ? json_decode($args['attribute_configuration'], true) : array()),
-        'species_sort' => (!empty($args['species_sort']) ? json_decode($args['species_sort'], true) : array()),
+        'branchSpeciesLists' => [],
+        'branchTaxonMeaningIDs' => [],
+        'commonTaxonMeaningIDs' => [],
+        'allTaxonMeaningIDsAtTransect' => [],
+        'existingTaxonMeaningIDs' => [],
+        'myTaxonMeaningIDs' => [],
+        'attribute_configuration' => (!empty($args['attribute_configuration']) ? json_decode($args['attribute_configuration'], true) : []),
+        'species_sort' => (!empty($args['species_sort']) ? json_decode($args['species_sort'], true) : []),
         'taxon_column' => (isset($args['taxon_column']) ? $args['taxon_column'] : 'taxon'),
         'verificationTitle' => lang::get('Warnings'),
         'verificationSectionLimitMessage' => lang::get('The value entered for this taxon on this transect section ({{ value }}) exceeds the expected maximum ({{ limit }})'),
         'verificationWalkLimitMessage' => lang::get('The total seen for this taxon on this walk ({{ total }}) exceeds the expected maximum ({{ limit }})'),
-        'outOfRangeVerification' => array(),
-        'interactingSampleAttributes' => array()
+        'outOfRangeVerification' => [],
+        'interactingSampleAttributes' => []
     );
 
     // remove the ctrlWrap as it complicates the grid & JavaScript unnecessarily
@@ -1282,10 +1276,10 @@ class iform_ukbms_sectioned_transects_input_sample {
     // find any attributes that apply to transect section samples.
     $sampleMethods = helper_base::get_termlist_terms(self::$auth, 'indicia:sample_methods', array('Transect Section'));
     $attributes = data_entry_helper::getAttributes(array(
-      'valuetable'=>'sample_attribute_value',
-      'attrtable'=>'sample_attribute',
-      'key'=>'sample_id',
-      'fieldprefix'=>'smpAttr',
+      'valuetable' => 'sample_attribute_value',
+      'attrtable' => 'sample_attribute',
+      'key' => 'sample_id',
+      'fieldprefix' => 'smpAttr',
       'extraParams'=>self::$auth['read'],
       'survey_id'=>$args['survey_id'],
       'sample_method_id'=>$sampleMethods[0]['id'],
@@ -1296,13 +1290,13 @@ class iform_ukbms_sectioned_transects_input_sample {
     // Only returns section based subsamples, not map.
     $subSamples = data_entry_helper::get_population_data(array(
       'report' => 'library/samples/samples_list_for_parent_sample',
-      'extraParams' => self::$auth['read'] + array('sample_id'=>$parentSampleId,'date_from'=>'','date_to'=>'', 'sample_method_id'=>$sampleMethods[0]['id'], 'smpattrs'=>implode(',', array_keys($attributes))),
+      'extraParams' => self::$auth['read'] + array('sample_id'=>$parentSampleId,'date_from' => '','date_to' => '', 'sample_method_id'=>$sampleMethods[0]['id'], 'smpattrs'=>implode(',', array_keys($attributes))),
       'nocache'=>true
     ));
     // transcribe the response array into a couple of forms that are useful elsewhere - one for outputting JSON so the JS knows about
     // the samples, and another for lookup of sample data by code later.
-    $subSampleList = array();
-    $subSamplesByCode = array();
+    $subSampleList = [];
+    $subSamplesByCode = [];
     foreach ($subSamples as $subSample) {
       $subSampleList[$subSample['code']] = $subSample['sample_id'];
       $subSamplesByCode[$subSample['code']] = $subSample;
@@ -1311,7 +1305,7 @@ class iform_ukbms_sectioned_transects_input_sample {
     if(!empty($args['interacting_sample_attributes']) && count(explode(',', $args['interacting_sample_attributes'])) === 2) {
         $formOptions['interactingSampleAttributes'] = explode(',', $args['interacting_sample_attributes']);
     }
-    $occurrences = array();
+    $occurrences = [];
     if ($existing) {
       // Only need to load the occurrences for a pre-existing sample
       $attrs = array($args['occurrence_attribute_id']);
@@ -1320,8 +1314,8 @@ class iform_ukbms_sectioned_transects_input_sample {
       if(isset($args['occurrence_attribute_id_4']) && $args['occurrence_attribute_id_4'] != "") $attrs[] = $args['occurrence_attribute_id_4'];
       $o = data_entry_helper::get_population_data(array(
         'report' => 'reports_for_prebuilt_forms/UKBMS/ukbms_occurrences_list_for_parent_sample',
-        'extraParams' => self::$auth['read'] + array('view'=>'detail','sample_id'=>$parentSampleId,'survey_id'=>$args['survey_id'],'date_from'=>'','date_to'=>'','taxon_group_id'=>'',
-            'smpattrs'=>'', 'occattrs'=>implode(',',$attrs)),
+        'extraParams' => self::$auth['read'] + array('view' => 'detail','sample_id'=>$parentSampleId,'survey_id'=>$args['survey_id'],'date_from' => '','date_to' => '','taxon_group_id' => '',
+            'smpattrs' => '', 'occattrs'=>implode(',',$attrs)),
         // don't cache as this is live data
         'nocache' => true
       ));
@@ -1346,10 +1340,10 @@ class iform_ukbms_sectioned_transects_input_sample {
 
     // The occurrence attribute must be flagged as numeric:true in the survey specific validation rules in order for totals to be worked out.
     $occ_attributes = data_entry_helper::getAttributes(array(
-        'valuetable'=>'occurrence_attribute_value',
-        'attrtable'=>'occurrence_attribute',
-        'key'=>'occurrence_id',
-        'fieldprefix'=>'occAttr',
+        'valuetable' => 'occurrence_attribute_value',
+        'attrtable' => 'occurrence_attribute',
+        'key' => 'occurrence_id',
+        'fieldprefix' => 'occAttr',
         'extraParams'=>self::$auth['read'],
         'survey_id'=>$args['survey_id'],
         'multiValue'=>false // ensures that array_keys are the list of attribute IDs.
@@ -1374,7 +1368,7 @@ class iform_ukbms_sectioned_transects_input_sample {
     $sectionLocationType = helper_base::get_termlist_terms(self::$auth, 'indicia:location_types', array(empty($args['section_type_term']) ? 'Section' : $args['section_type_term']));
     $sections = data_entry_helper::get_population_data(array(
       'table' => 'location',
-      'extraParams' => self::$auth['read'] + array('view'=>'detail','parent_id'=>$parentLocId,'deleted'=>'f','location_type_id'=>$sectionLocationType[0]['id']),
+      'extraParams' => self::$auth['read'] + array('view' => 'detail','parent_id'=>$parentLocId,'deleted' => 'f','location_type_id'=>$sectionLocationType[0]['id']),
       'nocache' => true
     ));
     usort($sections, "ukbms_stis_sectionSort");
@@ -1382,7 +1376,7 @@ class iform_ukbms_sectioned_transects_input_sample {
 
     $location = data_entry_helper::get_population_data(array(
       'table' => 'location',
-      'extraParams' => self::$auth['read'] + array('view'=>'detail','id'=>$parentLocId)
+      'extraParams' => self::$auth['read'] + array('view' => 'detail','id'=>$parentLocId)
     ));
 
     $dateObj   = DateTime::createFromFormat('!Y#m#d', $date);
@@ -1398,11 +1392,11 @@ class iform_ukbms_sectioned_transects_input_sample {
       // Get all the samples for this location for this year
       $samples = data_entry_helper::get_population_data(array(
           'table' => 'sample',
-          'extraParams' => self::$auth['read'] + array('view'=>'detail','location_id'=>$parentLocId),
+          'extraParams' => self::$auth['read'] + array('view' => 'detail','location_id'=>$parentLocId),
             'nocache' => true
       ));
-      $thisYearsSamples = array();
-      $sampleDates = array();
+      $thisYearsSamples = [];
+      $sampleDates = [];
       foreach($samples as $sample) {
         $sampleDates[$sample['id']] = $sample['display_date'];
         if(substr($sample['display_date'],0,4) == substr($date,0,4))
@@ -1410,7 +1404,7 @@ class iform_ukbms_sectioned_transects_input_sample {
       }
       $sample_finished_attributes = data_entry_helper::get_population_data(array(
           'table' => 'sample_attribute_value',
-          'extraParams' => self::$auth['read'] + array('view'=>'list',
+          'extraParams' => self::$auth['read'] + array('view' => 'list',
               'sample_id'=>$thisYearsSamples,
               'sample_attribute_id' => $args['finishedAttrID']),
             'nocache' => true
@@ -1457,8 +1451,8 @@ class iform_ukbms_sectioned_transects_input_sample {
       $tabs['#grid4']=t(isset($args['species_tab_4']) && $args['species_tab_4'] != '' ? $args['species_tab_4'] : 'Species Tab 4');
     $r .= data_entry_helper::tab_header(array('tabs'=>$tabs));
     data_entry_helper::enable_tabs(array(
-        'divId'=>'tabs',
-        'style'=>'Tabs'
+        'divId' => 'tabs',
+        'style' => 'Tabs'
     ));
 
     // Produce special lists required for grid one, where user can choose branch list, full list, common, here or mine.
@@ -1467,7 +1461,7 @@ class iform_ukbms_sectioned_transects_input_sample {
     // The branch list is a branch specific taxon list, where the branch is defined by the a multivalue field in the user account
     // It is only available in the first species tab.
     // It is assumed that the meaning_ids it comes up with are a subset of the main tab1 list: this assumption also applies for the common list.
-    $branches = hostsite_get_user_field('branch_record_in', array(), true);
+    $branches = hostsite_get_user_field('branch_record_in', [], true);
     // $branches = array("1953") ;  // TODOconfirm comes in as a string
     if (count($branches) > 0 && isset($args['branch_taxon_list_configuration']) && $args['branch_taxon_list_configuration'] != '') {
       $branchesConfiguration = json_decode($args['branch_taxon_list_configuration'], true);
@@ -1486,7 +1480,7 @@ class iform_ukbms_sectioned_transects_input_sample {
           foreach ($intersect as $branch) {
             $formOptions['branchSpeciesLists']['branch'.$branch] = count($formOptions['branchTaxonMeaningIDs']);
           }
-          $taxaList = array();
+          $taxaList = [];
           foreach($taxa as $taxon){
             $taxaList[] = $taxon['taxon_meaning_id'];
           }
@@ -1542,10 +1536,10 @@ class iform_ukbms_sectioned_transects_input_sample {
     $locationType = helper_base::get_termlist_terms(self::$auth, 'indicia:location_types', array(empty($args['transect_type_term']) ? 'Transect' : $args['transect_type_term']));
     if(!empty($args["sensitiveAttrID"]) && isset($args["sensitivityPrecision"]) && $args["sensitivityPrecision"] != "") {
       $sensitive_site_attributes = data_entry_helper::getAttributes(array(
-            'valuetable'=>'location_attribute_value'
-            ,'attrtable'=>'location_attribute'
-            ,'key'=>'location_id'
-            ,'fieldprefix'=>'locAttr'
+            'valuetable' => 'location_attribute_value'
+            ,'attrtable' => 'location_attribute'
+            ,'key' => 'location_id'
+            ,'fieldprefix' => 'locAttr'
             ,'extraParams'=>self::$auth['read'] + array('id'=>$args["sensitiveAttrID"])
             ,'location_type_id'=>$locationType[0]['id']
             ,'survey_id'=>$args['survey_id']
@@ -1554,10 +1548,10 @@ class iform_ukbms_sectioned_transects_input_sample {
     }
     if(!empty($args["confidentialAttrID"])) {
         $confidential_site_attributes = data_entry_helper::getAttributes(array(
-            'valuetable'=>'location_attribute_value'
-            ,'attrtable'=>'location_attribute'
-            ,'key'=>'location_id'
-            ,'fieldprefix'=>'locAttr'
+            'valuetable' => 'location_attribute_value'
+            ,'attrtable' => 'location_attribute'
+            ,'key' => 'location_id'
+            ,'fieldprefix' => 'locAttr'
             ,'extraParams'=>self::$auth['read'] + array('id'=>$args["confidentialAttrID"])
             ,'location_type_id'=>$locationType[0]['id']
             ,'survey_id'=>$args['survey_id']
@@ -1608,10 +1602,10 @@ class iform_ukbms_sectioned_transects_input_sample {
       $formOptions['return_page'] = $args['return_page'];
       $sampleMethods = helper_base::get_termlist_terms(self::$auth, 'indicia:sample_methods', array(empty($args['transect_sample_method_term']) ? 'Transect' : $args['transect_sample_method_term']));
       $finished_attributes = data_entry_helper::getAttributes(array(
-            'valuetable'=>'sample_attribute_value'
-            ,'attrtable'=>'sample_attribute'
-            ,'key'=>'sample_id'
-            ,'fieldprefix'=>'smpAttr'
+            'valuetable' => 'sample_attribute_value'
+            ,'attrtable' => 'sample_attribute'
+            ,'key' => 'sample_id'
+            ,'fieldprefix' => 'smpAttr'
             ,'extraParams'=>self::$auth['read']
             ,'sample_method_id'=>$sampleMethods[0]['id']
             ,'survey_id'=>$args['survey_id']
@@ -1656,7 +1650,7 @@ class iform_ukbms_sectioned_transects_input_sample {
     $r = '<input name="species-sort-order-'.$tabNum.'" type="hidden" value="'.$default.'">';
     if(isset($args['species_sort'])) {
       $configuration = json_decode($args['species_sort'], true);
-      $options = array();
+      $options = [];
       if(isset($configuration['taxonomic']) && (!isset($args['disable_tso_'.$tabNum]) || $args['disable_tso_'.$tabNum] == false)) {
         if(isset($configuration['taxonomic']['enabled']) && $configuration['taxonomic']['enabled'])
           $options['taxonomic_sort_order'] = lang::get('Taxonomic Sort Order');
@@ -1685,17 +1679,17 @@ class iform_ukbms_sectioned_transects_input_sample {
       } else if (count($options) > 1) {
         $r = '<br/>'.data_entry_helper::radio_group(array(
               'label'=>lang::get('Species Sort Order'),
-              'fieldname'=>'species-sort-order-'.$tabNum,
+              'fieldname' => 'species-sort-order-'.$tabNum,
               'lookupValues' => $options,
               'default'=>$default,
-              'class'=>'species-sort-order'
+              'class' => 'species-sort-order'
         ));
       } // count=0 -> defaults to initial value of $r, i.e. taxonomic sort order.
     }
     return $r;
   }
 
-  protected static function _buildGrid (&$formOptions, $tabNum, $args, $sections, $occ_attributes, $existing, $includeControl = false, $attributes = array(), $subSamplesByCode = array()) {
+  protected static function _buildGrid (&$formOptions, $tabNum, $args, $sections, $occ_attributes, $existing, $includeControl = false, $attributes = [], $subSamplesByCode = []) {
     $isNumber = ($occ_attributes[(isset($args['occurrence_attribute_id_'.$tabNum]) && $args['occurrence_attribute_id_'.$tabNum]!="" ?
         $args['occurrence_attribute_id_'.$tabNum] : $args['occurrence_attribute_id'])]["data_type"] == 'I');
 
@@ -1752,7 +1746,7 @@ class iform_ukbms_sectioned_transects_input_sample {
     // output rows at the top for any transect section level sample attributes
     $rowClass='';
     $r .= '<tbody class="ui-widget-content">';
-    $attribute_configuration = (!empty($args['attribute_configuration']) ? json_decode($args['attribute_configuration'], true) : array());
+    $attribute_configuration = (!empty($args['attribute_configuration']) ? json_decode($args['attribute_configuration'], true) : []);
 //    var_dump($attributes);
     foreach ($attributes as $attrID => $attr) {
       $inc = true;
@@ -1859,7 +1853,7 @@ class iform_ukbms_sectioned_transects_input_sample {
    * @return array Submission structure.
    */
   public static function get_submission($values, $args) {
-    $subsampleModels = array();
+    $subsampleModels = [];
     if (!isset($values['page']) || ($values['page']=='mainSample')) {
       // submitting the first page, with top level sample details
       $read = array(
@@ -1871,7 +1865,7 @@ class iform_ukbms_sectioned_transects_input_sample {
         // site's centroid across to the sample. Should this be cached?
         $site = data_entry_helper::get_population_data(array(
           'table' => 'location',
-          'extraParams' => $read + array('view'=>'detail','id'=>$values['sample:location_id'],'deleted'=>'f'),
+          'extraParams' => $read + array('view' => 'detail','id'=>$values['sample:location_id'],'deleted' => 'f'),
           'caching' => false
         ));
         $site = $site[0];
@@ -1883,22 +1877,22 @@ class iform_ukbms_sectioned_transects_input_sample {
       // Build the subsamples
       $sections = data_entry_helper::get_population_data(array(
         'table' => 'location',
-        'extraParams' => $read + array('view'=>'detail','parent_id'=>$values['sample:location_id'],'deleted'=>'f'),
+        'extraParams' => $read + array('view' => 'detail','parent_id'=>$values['sample:location_id'],'deleted' => 'f'),
         'nocache' => true // may have recently added or removed a section
       ));
       if(isset($values['sample:id'])){
         $existingSubSamples = data_entry_helper::get_population_data(array(
           'table' => 'sample',
-          'extraParams' => $read + array('view'=>'detail','parent_id'=>$values['sample:id'],'deleted'=>'f'),
+          'extraParams' => $read + array('view' => 'detail','parent_id'=>$values['sample:id'],'deleted' => 'f'),
           'nocache' => true  // may have recently added or removed a section
         ));
-      } else $existingSubSamples = array();
+      } else $existingSubSamples = [];
       $sampleMethods = helper_base::get_termlist_terms(array('read'=>$read), 'indicia:sample_methods', array('Transect Section'));
       $attributes = data_entry_helper::getAttributes(array(
-        'valuetable'=>'sample_attribute_value',
-        'attrtable'=>'sample_attribute',
-        'key'=>'sample_id',
-        'fieldprefix'=>'smpAttr',
+        'valuetable' => 'sample_attribute_value',
+        'attrtable' => 'sample_attribute',
+        'key' => 'sample_id',
+        'fieldprefix' => 'smpAttr',
         'extraParams'=>$read,
         'survey_id'=>$values['sample:survey_id'],
         'sample_method_id'=>$sampleMethods[0]['id'],
@@ -1925,7 +1919,7 @@ class iform_ukbms_sectioned_transects_input_sample {
                                        'entered_sref_system' => array('value' => $section['centroid_sref_system']),
                                        'sample_method_id' => array('value' => $sampleMethods[0]['id'])
                      )),
-                   'copyFields' => array('date_start'=>'date_start','date_end'=>'date_end','date_type'=>'date_type'));
+                   'copyFields' => array('date_start' => 'date_start','date_end' => 'date_end','date_type' => 'date_type'));
           // for a new subsample, fill in the attributes: set any default, or if none, copy from same main sample attr
           foreach ($attributes as $attr) {
             if (!empty($attr['default'])) {
@@ -1950,7 +1944,7 @@ class iform_ukbms_sectioned_transects_input_sample {
                                     'date' => array('value' => $values['sample:date']),
                       'location_id' => array('value' => $exists['location_id'])
                   )),
-              'copyFields' => array('date_start'=>'date_start','date_end'=>'date_end','date_type'=>'date_type'));
+              'copyFields' => array('date_start' => 'date_start','date_end' => 'date_end','date_type' => 'date_type'));
         }
         if($smp) $subsampleModels[] = $smp;
       }
@@ -1983,9 +1977,9 @@ class iform_ukbms_sectioned_transects_input_sample {
    * Ajax function call: provided with taxon_meaning_id, location_id and date
    */
   public static function ajax_check_verification_rules($website_id, $password, $nid) {
-    $ruleIDs = array();
-    $warnings = array();
-    $info = array();
+    $ruleIDs = [];
+    $warnings = [];
+    $info = [];
     $ruleTypesDone = array('WithoutPolygon' => false, 'PeriodWithinYear' => false);
 
     iform_load_helpers(array('data_entry_helper', 'report_helper'));
@@ -2007,7 +2001,7 @@ class iform_ukbms_sectioned_transects_input_sample {
       foreach ($fieldsToCheck as $entry) {
         $metadata = data_entry_helper::get_population_data(array(
             'table' => 'verification_rule_metadatum',
-            'extraParams' => $readAuth + array('view'=>'detail',
+            'extraParams' => $readAuth + array('view' => 'detail',
                 'key' => $entry['key'],
                 'value' => $cttl[0][$entry['field']],
                 'columns' => 'verification_rule_id')
@@ -2021,7 +2015,7 @@ class iform_ukbms_sectioned_transects_input_sample {
             'table' => 'verification_rule',
             'extraParams' => $readAuth + array('view' => 'detail',
                 'orderby' => 'created_on',
-                'sortdir'=>'DESC',
+                'sortdir' => 'DESC',
                 'query' => json_encode(array('in' => array('id' => $ruleIDs, 'test_type' => array('WithoutPolygon', 'PeriodWithinYear')))))
         ));
         // we are assuming no reverse rules
@@ -2032,7 +2026,7 @@ class iform_ukbms_sectioned_transects_input_sample {
             $ruleTypesDone[$rule['test_type']] = true;
             $metadata = data_entry_helper::get_population_data(array(
                 'table' => 'verification_rule_metadatum',
-                'extraParams' => $readAuth + array('view'=>'detail',
+                'extraParams' => $readAuth + array('view' => 'detail',
                     'verification_rule_id' => $rule['id'])
             ));
             switch ($rule['test_type']) {
@@ -2045,7 +2039,7 @@ class iform_ukbms_sectioned_transects_input_sample {
                     // report is cacheable: the geometry for a particular parent location won't change, and the
                     // verification rule geometry will rarely change
                     $reportResult = data_entry_helper::get_population_data(array(
-                        'report'=>'projects/ukbms/location_verification_intersection',
+                        'report' => 'projects/ukbms/location_verification_intersection',
                         'extraParams' => $readAuth + array('location_id' => $_GET['location_id'],
                             'verification_rule_id' => $rule['id'])
                     ));

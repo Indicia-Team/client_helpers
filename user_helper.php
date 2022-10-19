@@ -15,7 +15,7 @@
  *
  * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link http://code.google.com/p/indicia/
+ * @link https://github.com/Indicia-Team/client_helpers
  */
 
 /**
@@ -127,7 +127,7 @@ class user_helper extends helper_base {
    * @return string HTML to insert into the page for the login control.
    */
 
-  public static function login_control($options = array()) {
+  public static function login_control($options = []
     $r = '';
     $method = (array_key_exists('control_method', $options)) ? ' method="'.$options['control_method'].'"' : ' method="post"';
     $id = (array_key_exists('control_id', $options)) ? ' id="'.$options['control_id'].'"' : ' id="indicia-login-control"';
@@ -263,7 +263,7 @@ class user_helper extends helper_base {
    * @return string HTML to insert into the page for the login control.
    */
 
-  public static function forgotten_password_control($options = array()) {
+  public static function forgotten_password_control($options = []) {
     $r = '';
     $method = (array_key_exists('control_method', $options)) ? ' method="'.$options['control_method'].'"' : ' method="post"';
     $id = (array_key_exists('control_id', $options)) ? ' id="'.$options['control_id'].'"' : ' id="indicia-forgotten-password-control"';
@@ -358,7 +358,7 @@ class user_helper extends helper_base {
    *   options.
    */
 
-  public static function authenticate_user($username, $password, $readAuth, $website_password, $options=array()) {
+  public static function authenticate_user($username, $password, $readAuth, $website_password, $options=[]) {
     // encrypt and seal the sensitive data
     $secrets = array("username" => $username, "password" => $password, "options" => $options);
     $sealed = secure_msg::seal($secrets, $website_password);
@@ -397,7 +397,7 @@ class user_helper extends helper_base {
    * This is only returned if the 'getrole' option is true in the request options.</li>
    * </ul>
    */
-  public static function request_password_reset($userid, $readAuth, $options=array()) {
+  public static function request_password_reset($userid, $readAuth, $options=[]) {
 
     // send reset password request to indicia core
     $url = self::$base_url."index.php/services/site_user/request_password_reset";

@@ -21,9 +21,6 @@
 
 /**
  * Page for configuring the locations used by a recording group.
- *
- * @package Client
- * @subpackage PrebuiltForms
  */
 class iform_group_locations {
 

@@ -13,21 +13,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package Client
- * @subpackage PrebuiltForms
  * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers/
  */
 
-require_once('includes/map.php');
-require_once('includes/language_utils.php');
+require_once 'includes/map.php';
+require_once 'includes/language_utils.php';
 /**
- *
- *
- * @package Client
- * @subpackage PrebuiltForms
- * @todo Provide form description in this comment block.
+ *@todo Provide form description in this comment block.
  * @todo Rename the form class to iform_...
  */
 class iform_my_dot_map {
@@ -463,7 +457,7 @@ class iform_my_dot_map {
    */
   private static function prepare_layer_titles(&$args, $occurrences) {
     if (count($occurrences) <= 4) {
-      $speciesList = array();
+      $speciesList = [];
       foreach ($occurrences as $record) {
         $speciesList[] = empty($record['taxon']) ? $record['preferrred_taxon'] : $record['taxon'];
         $survey = $record['survey_title'];
@@ -503,10 +497,10 @@ class iform_my_dot_map {
       // @todo support passing an occurrence ID.
       if ($args["wms_dist_{$layerId}_filter_against"] != 'none' && array_key_exists('table', $_GET) && $_GET['table'] ==  'sample') {
         // Build a list of filters for each record. If there are multiple, then wrap in an OR filter.
-        data_entry_helper::$onload_javascript .= "var filters = new Array();\n";
+        data_entry_helper::$onload_javascript .= "var filters = new [];\n";
         $filterField = $args["wms_dist_{$layerId}_internal"] ? $args["wms_dist_{$layerId}_filter_against"] : $args["wms_dist_{$layerId}_filter_field"];
         // Use an array of handled values so we only build each distinct filter once
-        $handled = array();
+        $handled = [];
         foreach ($occurrence as $record) {
           $filterValue = $record[$args["wms_dist_{$layerId}_filter_against"]];
           if (!in_array($filterValue, $handled)) {

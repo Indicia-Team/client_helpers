@@ -13,22 +13,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package    Client
- * @subpackage PrebuiltForms
- * @author    Indicia Team
- * @license    http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link     http://code.google.com/p/indicia/
+ * @author Indicia Team
+ * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
+ * @link https://github.com/Indicia-Team/client_helpers
  */
 
 /**
  * Prebuilt Indicia data entry form.
  * NB has Drupal specific code. Relies on presence of IForm Proxy.
- *
- * @package    Client
- * @subpackage PrebuiltForms
  */
 
-require_once('dynamic_sample_occurrence.php');
+require_once 'dynamic_sample_occurrence.php';
 
 class iform_tree_sample_occurrence extends iform_dynamic_sample_occurrence {
 
@@ -38,9 +33,9 @@ class iform_tree_sample_occurrence extends iform_dynamic_sample_occurrence {
    */
   public static function get_tree_sample_occurrence_definition() {
     return array(
-      'title'=>'Track a Tree : Visit data entry form',
+      'title' => 'Track a Tree : Visit data entry form',
       'category' => 'Custom Forms',
-      'description'=>'Track a Tree specific visit (sample and occurrences) entry form based on the generic dynamic_sample_occurrence form. ' .
+      'description' => 'Track a Tree specific visit (sample and occurrences) entry form based on the generic dynamic_sample_occurrence form. ' .
         'The attributes on the form are dynamically generated from the survey setup on the Indicia Warehouse.'
     );
   }
@@ -57,10 +52,10 @@ class iform_tree_sample_occurrence extends iform_dynamic_sample_occurrence {
           'name' => 'reg_sample_method_id',
           'caption' => 'Registration Sample Method',
           'type' => 'select',
-          'table'=>'termlists_term',
-          'captionField'=>'term',
-          'valueField'=>'id',
-          'extraParams' => array('termlist_external_key'=>'indicia:sample_methods'),
+          'table' => 'termlists_term',
+          'captionField' => 'term',
+          'valueField' => 'id',
+          'extraParams' => array('termlist_external_key' => 'indicia:sample_methods'),
           'required' => true,
           'helpText' => 'The sample method used to register the tree species in the Location form.'
         )
@@ -68,7 +63,7 @@ class iform_tree_sample_occurrence extends iform_dynamic_sample_occurrence {
     );
     return $retVal;
   }
-  
+
   // TODO setup required understorey species list, and Tree species list.
   // TODO check errors on all data returned, php and JS
   // TODO Custom location control with display of pictures.
@@ -76,7 +71,7 @@ class iform_tree_sample_occurrence extends iform_dynamic_sample_occurrence {
   // get_submission should be OK.
 
   static $treeOccurrenceRecord;
-  
+
   /**
    * Preparing to display an existing sample with occurrences.
    * When displaying a grid of occurrences, just load the sample and data_entry_helper::species_checklist
@@ -84,8 +79,8 @@ class iform_tree_sample_occurrence extends iform_dynamic_sample_occurrence {
    * When displaying just one occurrence we must load the sample and the occurrence
    */
   protected static function getEntity(&$args, $auth) {
-  	data_entry_helper::$entity_to_load = array();
-  
+  	data_entry_helper::$entity_to_load = [];
+
   	// If we know the occurrence ID but not the sample, we must look it up
   	if ( self::$loadedOccurrenceId && !self::$loadedSampleId  ) {
   		$response = data_entry_helper::get_population_data(array(
@@ -97,7 +92,7 @@ class iform_tree_sample_occurrence extends iform_dynamic_sample_occurrence {
   			self::$loadedSampleId = $response[0]['sample_id'];
   		}
   	}
-  
+
   	// Load the sample record
   	if (self::$loadedSampleId) {
       data_entry_helper::load_existing_record($auth['read'], 'sample', self::$loadedSampleId, 'detail', false, true);
@@ -127,12 +122,12 @@ class iform_tree_sample_occurrence extends iform_dynamic_sample_occurrence {
         $d = new DateTime(data_entry_helper::$entity_to_load['sample:date']);
         data_entry_helper::$entity_to_load['sample:date'] = $d->format('d/m/Y');
       }
-      return data_entry_helper::text_input(array('label' => lang::get('Date'), 'fieldname' => 'sample:date', 'disabled'=>'readonly="readonly"', 'class'=>'tree-details-readonly' ));
+      return data_entry_helper::text_input(array('label' => lang::get('Date'), 'fieldname' => 'sample:date', 'disabled' => 'readonly="readonly"', 'class' => 'tree-details-readonly' ));
     } else {
       return self::get_control_date($auth, $args, $tabAlias, $options);
     }
   }
-  
+
   /**
    * Get the location control as a select dropdown.
    * Default control ordering is by name.
@@ -143,7 +138,7 @@ class iform_tree_sample_occurrence extends iform_dynamic_sample_occurrence {
   protected static function get_control_treelocationselect($auth, $args, $tabAlias, $options) {
     global $indicia_templates;
     global $user;
-    
+
     data_entry_helper::$helpTextPos = 'before';
     $indicia_templates['two-col-50'] = '<div class="two_columns"><div id="leftcol" class="column">{col-1}</div><div id="rightcol" class="column">{col-2}</div></div>';
     $r="";
@@ -156,18 +151,18 @@ $r .= '<span style="display:none;">'.print_r($_SERVER,true).'</span>';
       $r .= '<input name="referer" type="hidden" value="'.$referer.'" />';
 
     $attrArgs = array(
-    		'valuetable'=>'sample_attribute_value',
-    		'attrtable'=>'sample_attribute',
-    		'key'=>'sample_id',
+    		'valuetable' => 'sample_attribute_value',
+    		'attrtable' => 'sample_attribute',
+    		'key' => 'sample_id',
     		'extraParams'=>$auth['read'],
     		'survey_id'=>$args['survey_id'],
-    		'fieldprefix'=>'smpAttr'
+    		'fieldprefix' => 'smpAttr'
     );
     $attrArgs['extraParams'] += array('query'=>json_encode(array('in'=>array('caption'=>array('No Understorey Observed')))));
     $smpAttrs = data_entry_helper::getAttributes($attrArgs, false);
     if(!count($smpAttrs))
       throw new exception(lang::get('This form must be used with an "No Understorey Observed" sample attribute.'));
-    
+
     data_entry_helper::$javascript .= "
 // assume map projection is same as indicia internal
 // Create vector layers: one to display the Parent Site onto, and another for the tree locations list
@@ -236,47 +231,47 @@ $.validator.addMethod('no_observation', function(arg1, arg2){
   \"The <strong>".lang::get('No Understorey Observed')."</strong> checkbox must be selected if there are no species entered in the Flowering plant phenology grid, otherwise it must be unchecked.\");
 \n";
     self::$treeOccurrenceRecord = false;
-    
+
     if (self::$loadedSampleId) {
       $location_id = data_entry_helper::$entity_to_load['sample:location_id'];
     } else if(isset($_GET['location_id'])) {
       $location_id = $_GET['location_id'];
     } else $location_id = false;
-    
+
     $attrArgs = array(
-    		'valuetable'=>'location_attribute_value',
-    		'attrtable'=>'location_attribute',
-    		'key'=>'location_id',
+    		'valuetable' => 'location_attribute_value',
+    		'attrtable' => 'location_attribute',
+    		'key' => 'location_id',
     		'extraParams'=>$auth['read'],
     		'survey_id'=>$args['survey_id'],
-    		'fieldprefix'=>'locAttr',
+    		'fieldprefix' => 'locAttr',
             'location_type_id' => $options['tree_location_type_id']
     );
-    
+
     if($location_id) $attrArgs['id'] = $location_id;
     $attrArgs['extraParams'] += array('query'=>json_encode(array('in'=>array('caption'=>array('Recorder Name')))));
     $locAttrs = data_entry_helper::getAttributes($attrArgs, false);
-    
+
     $attrArgs = array(
-    		'valuetable'=>'sample_attribute_value',
-    		'attrtable'=>'sample_attribute',
-    		'key'=>'sample_id',
+    		'valuetable' => 'sample_attribute_value',
+    		'attrtable' => 'sample_attribute',
+    		'key' => 'sample_id',
     		'extraParams'=>$auth['read'],
     		'survey_id'=>$args['survey_id'],
-    		'fieldprefix'=>'smpAttr',
+    		'fieldprefix' => 'smpAttr',
     		'sample_method_id'=>$args['sample_method_id']
     );
     $attrArgs['extraParams'] += array('query'=>json_encode(array('in'=>array('caption'=>array('Recorder Name')))));
     $smpAttrs = data_entry_helper::getAttributes($attrArgs, false);
-    
+
     if(!count($locAttrs))
       throw new exception(lang::get('This form must be used with a "Recorder Name" tree location attribute.'));
     if(!count($smpAttrs))
     	throw new exception(lang::get('This form must be used with a "Recorder Name" sample attribute.'));
-    
+
     data_entry_helper::$javascript .= "indiciaData.assignedRecorderAttrID='".$locAttrs[0]['attributeId']."';\n";
     data_entry_helper::$javascript .= "indiciaData.recorderNameID='".$smpAttrs[0]['id']."';\n";
-    
+
     if($location_id){
       $r .= '<div class="page-notice ui-state-highlight ui-corner-all">This visit is registered against the tree highlighted on the map. All fields followed by a red asterisk (<span class="deh-required">*</span>) must be filled in. You can not modify any field that is greyed out.</div>';
       $locationRecord = data_entry_helper::get_population_data(array(
@@ -286,7 +281,7 @@ $.validator.addMethod('no_observation', function(arg1, arg2){
       ));
       if(count($locationRecord)!=1)
         throw new exception(lang::get('Could not identify tree location : ID ').$location_id);
-      
+
       if(count($locAttrs) && count($smpAttrs))
         data_entry_helper::$entity_to_load[$smpAttrs[0]['fieldname']] = $locAttrs[0]['default'];
 
@@ -508,13 +503,13 @@ $('[name=sample\\\\:date]').change(function(){
     }
     // Get list of sites alocated to me, using CMS User ID.
     $site_attributes = data_entry_helper::getAttributes(array(
-    		'valuetable'=>'location_attribute_value',
-    		'attrtable'=>'location_attribute',
-    		'key'=>'location_id',
+    		'valuetable' => 'location_attribute_value',
+    		'attrtable' => 'location_attribute',
+    		'key' => 'location_id',
     		'extraParams'=>$auth['read'],
     		'survey_id'=>$args['survey_id'],
     		'location_type_id' => $options['location_type_id'],
-    		'fieldprefix'=>'locAttr'
+    		'fieldprefix' => 'locAttr'
     ));
     if (false==($cmsUserAttr = extract_cms_user_attr($site_attributes)))
       return 'This form is designed to be used with the "CMS User ID" attribute setup for Site locations in the survey.';
@@ -525,16 +520,16 @@ $('[name=sample\\\\:date]').change(function(){
     ));
     if(count($response)==0)
       throw new exception(lang::get('You have no sites, so you can not enter any phenology observations. Please create a site and some trees first.'));
-    $siteIDs = array();
+    $siteIDs = [];
     foreach($response as $loc) {
       $siteIDs[] = $loc['location_id'];
     }
-    
+
     $location_list_args = array_merge(array(
         'label'=>lang::get('Site'),
-        'view'=>'detail',
-        'fieldname'=>'location:parent_id',
-        'id'=>'imp-site-location',
+        'view' => 'detail',
+        'fieldname' => 'location:parent_id',
+        'id' => 'imp-site-location',
         'blankText'=>lang::get('Please select a site.'),
         'validation' => 'required',
         'nocache' => true
@@ -545,7 +540,7 @@ $('[name=sample\\\\:date]').change(function(){
 
     $location_list_args = array_merge(array(
         'label'=>lang::get('Tree'),
-        'view'=>'detail',
+        'view' => 'detail',
         'blankText'=>lang::get('Please select a tree.'),
         'validation' => 'required',
         'nocache' => true
@@ -752,9 +747,9 @@ $('[name=sample\\\\:date]').change(function(){
 
   protected static function get_control_occurrenceattributes($auth, $args, $tabAlias, $options) {
     $attrArgs = array(
-         'valuetable'=>'occurrence_attribute_value',
-         'attrtable'=>'occurrence_attribute',
-         'key'=>'occurrence_id',
+         'valuetable' => 'occurrence_attribute_value',
+         'attrtable' => 'occurrence_attribute',
+         'key' => 'occurrence_id',
          'extraParams'=>$auth['read'],
          'survey_id'=>$args['survey_id']
     );
@@ -770,7 +765,7 @@ $('[name=sample\\\\:date]').change(function(){
     }
     $occAttrs = data_entry_helper::getAttributes($attrArgs, false);
     $ctrlOptions = array('extraParams'=>$auth['read']);
-    $attrSpecificOptions = array();
+    $attrSpecificOptions = [];
     self::parseForAttrSpecificOptions($options, $ctrlOptions, $attrSpecificOptions);
     return get_attribute_html($occAttrs, $args, $ctrlOptions, '', $attrSpecificOptions);
   }
@@ -779,10 +774,10 @@ $('[name=sample\\\\:date]').change(function(){
     $r = '';
   	$tab = (isset($options['tab']) ? $options['tab'] : null);
     $attrArgs = array(
-         'valuetable'=>'sample_attribute_value',
-         'attrtable'=>'sample_attribute',
-         'key'=>'sample_id',
-         'fieldprefix'=>'smpAttr',
+         'valuetable' => 'sample_attribute_value',
+         'attrtable' => 'sample_attribute',
+         'key' => 'sample_id',
+         'fieldprefix' => 'smpAttr',
          'extraParams'=>$auth['read'],
          'survey_id'=>$args['survey_id']
     );
@@ -797,7 +792,7 @@ $('[name=sample\\\\:date]').change(function(){
     }
     $smpAttrs = data_entry_helper::getAttributes($attrArgs, false);
     $ctrlOptions = array('extraParams'=>$auth['read']);
-    $attrSpecificOptions = array();
+    $attrSpecificOptions = [];
     self::parseForAttrSpecificOptions($options, $ctrlOptions, $attrSpecificOptions);
     foreach($attrSpecificOptions as $attr => $opts)
       if(isset($attrSpecificOptions[$attr]['default']))
@@ -845,7 +840,7 @@ $('[name=sample\\\\:date]').change(function(){
   	}
   	return $r;
   }
-  
+
   /**
    * Override the default submit buttons to add a cancel button.
    */
@@ -864,7 +859,7 @@ $('[name=sample\\\\:date]').change(function(){
   }
 });\n";
     }
-    
+
     return $r;
   }
 
@@ -873,8 +868,8 @@ $('[name=sample\\\\:date]').change(function(){
     $split = strpos($_SERVER['HTTP_REFERER'], '?');
     // convert the query parameters into an array
     $gets = ($split!==false && strlen($_SERVER['HTTP_REFERER']) > $split+1) ?
-        explode('&', substr($_SERVER['HTTP_REFERER'], $split+1)) : array();
-    $getsAssoc = array();
+        explode('&', substr($_SERVER['HTTP_REFERER'], $split+1)) : [];
+    $getsAssoc = [];
     foreach ($gets as $get) {
       $tokens = explode('=', $get);
       // ensure a key without value in the URL gets an empty value
@@ -912,9 +907,9 @@ $('[name=sample\\\\:date]').change(function(){
 
   protected static function getReportActions() {
     return array(array('display' => 'Actions', 'actions' =>
-        array(array('caption' => lang::get('Edit'), 'url'=>'{currentUrl}', 'urlParams'=>array('sample_id'=>'{sample_id}')))));
+        array(array('caption' => lang::get('Edit'), 'url' => '{currentUrl}', 'urlParams'=>array('sample_id' => '{sample_id}')))));
   }
-  
+
   public static function get_redirect_on_success($values, $args) {
   	if (isset($values['referer'])) {
   		return $values['referer'];
@@ -933,5 +928,5 @@ $('[name=sample\\\\:date]').change(function(){
   }
 
 }
-  
+
 

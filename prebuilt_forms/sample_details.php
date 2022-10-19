@@ -32,12 +32,12 @@
  */
 
 
-require_once 'includes/dynamic.php';
+require_once 'includes/baseDynamicDetails.php';
 require_once 'includes/report.php';
 require_once 'includes/groups.php';
 
 
-class iform_sample_details extends iform_dynamic {
+class iform_sample_details extends BaseDynamicDetails {
 
   /**
    * Details of the currently loaded sample.
@@ -67,6 +67,7 @@ class iform_sample_details extends iform_dynamic {
       'title' => 'View details of a sample',
       'category' => 'Utilities',
       'description' => 'A summary view of a sample. Pass a parameter in the URL called sample_id to define which occurrence to show.',
+      'helpLink' => 'https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/sample-details.html',
       'recommended' => TRUE,
     ];
   }
@@ -242,7 +243,10 @@ Sample ID',
    * @param array $options
    *   Options configured for this control. Specify the following options:
    *   * buttons - array containing 'edit' to include the edit button. other
-   *   options may be added in future. Defaults to all buttons.
+   *     options may be added in future. Defaults to all buttons.
+   *   * classes - associative array of each button name (edit, explore or
+   *     record), with the value being the class to apply to the button if
+   *     overriding the default.
    *
    * @return string
    *   HTML for the buttons.
@@ -252,24 +256,28 @@ Sample ID',
       'buttons' => [
         'edit',
       ],
-    ]);
-    $r = '<div class="sample-details-buttons">';
+      'classes' => [],
+      'title' => FALSE,
+    ], $options);
+    $buttons = [];
     foreach ($options['buttons'] as $button) {
       if ($button === 'edit') {
-        $r .= self::buttons_edit($auth, $args, $tabalias, $options);
+        $buttons[] = self::buttons_edit($auth, $args, $tabalias, $options);
       }
       else {
         throw new exception("Unknown button $button");
       }
     }
-    $r .= '</div>';
-    return $r;
+    return self::controlContainer('Buttons', implode(' ', $buttons), $options);
   }
 
   /**
    * A report grid of occurrences in the sample.
    */
   protected static function get_control_recordsgrid($auth, $args, $tabalias, $options) {
+    $options = array_merge([
+      'title' => TRUE,
+    ], $options);
     $columns = [
       ['fieldname' => 'occurrence_id'],
       ['fieldname' => 'taxon'],
@@ -317,8 +325,7 @@ Sample ID',
       // If sensitive, hide all images.
       $columns[] = ['fieldname' => 'images', 'visible' => FALSE];
     }
-    $r = '<div class="detail-panel" id="detail-panel-recordsgrid"><h3>' . lang::get('Occurrences') . '</h3>';
-    $r .= report_helper::report_grid([
+    $html = report_helper::report_grid([
       'readAuth' => $auth['read'],
       'dataSource' => 'reports_for_prebuilt_forms/sample_details/occurrences_list',
       'ajax' => FALSE,
@@ -334,14 +341,16 @@ Sample ID',
       'cachePerUser' => FALSE,
       'columns' => $columns,
     ]);
-    $r .= '</div>';
-    return $r;
+    return self::controlContainer('Occurrences', $html, $options);
   }
 
   /**
    * A simplified list of the records in the sample.
    */
   protected static function get_control_recordslist($auth, $args, $tabalias, $options) {
+    $options = array_merge([
+      'title' => TRUE,
+    ], $options);
     $records = report_helper::get_report_data([
       'readAuth' => $auth['read'],
       'dataSource' => 'reports_for_prebuilt_forms/sample_details/occurrences_list_simple',
@@ -356,9 +365,9 @@ Sample ID',
       'cacheTimeout' => 60,
       'cachePerUser' => FALSE,
     ]);
-    $r = '<div class="detail-panel" id="detail-panel-recordslist"><h3>' . lang::get('Occurrences') . '</h3>';
-    $r .= lang::get('{1} species seen', count($records));
-    $r .= '<ul>';
+
+    $html = lang::get('{1} species seen', count($records));
+    $html .= '<ul>';
     if (count($records) > 0) {
       foreach ($records as $record) {
         $label = $record['count'] === '' ? '' : "$record[count] ";
@@ -366,11 +375,11 @@ Sample ID',
         if (!empty($record['common']) && $record['common'] !== $record['taxon']) {
           $label .= " ($record[common])";
         }
-        $r .= "<li>$label</li>";
+        $html .= "<li>$label</li>";
       }
     }
-    $r .= '</ul></div>';
-    return $r;
+    $html .= '</ul>';
+    return self::controlContainer('Occurrences', $html, $options);
   }
 
   /**
@@ -383,6 +392,8 @@ Sample ID',
     global $indicia_templates;
     $options = array_merge([
       'dataSource' => 'reports_for_prebuilt_forms/sample_details/sample_data_attributes_with_hiddens',
+      'outputFormatting' => FALSE,
+      'title' => TRUE,
     ], $options);
     $fields = helper_base::explode_lines($args['fields']);
     $fieldsLower = helper_base::explode_lines(strtolower($args['fields']));
@@ -453,36 +464,45 @@ Sample ID',
         'extraParams' => [
           'sample_id' => $_GET['sample_id'],
           // The SQL needs to take a set of the hidden fields, so this needs to be converted from an array.
-          'attrs' => strtolower(self::convert_array_to_set($fields)),
+          'attrs' => strtolower(self::convertArrayToSet($fields)),
           'testagainst' => $args['testagainst'],
           'operator' => $args['operator'],
           'sharing' => $args['sharing'],
           'language' => iform_lang_iso_639_2(hostsite_get_user_field('language')),
+          'output_formatting' => $options['outputFormatting'] ? 't' : 'f',
         ],
       ]);
     }
-
-    $r = '<div class="detail-panel" id="detail-panel-sampledetails"><h3>' . lang::get('Sample details') . '</h3><dl class="dl-horizontal">';
-
-    $r .= $details_report;
+    $html = '<dl class="dl-horizontal">' . $details_report;
     if (isset($attrs_report)) {
-      $r .= $attrs_report;
+      $html .= $attrs_report;
     }
-    $r .= '</dl></div>';
-    return $r;
+    $html .= '</dl>';
+    return self::controlContainer('Sample details', $html, $options);
   }
 
   /**
-   * Convert an array of attributes to a string formatted like a set.
+   * A control for outputting a block containing a single attribute's value.
    *
-   * This is then used by the record_data_attributes_with_hiddens report to return
-   * custom attributes which aren't in the hidden attributes list.
+   * Provides more layout control than the list of attribute values and other
+   * details provided by the sample details control.
    *
-   * @return string
-   *   The set of hidden custom attributes.
+   * Options include:
+   * * format - control formatting of the value. Default is "text". Set to
+   *   "complex_attr_grid" to output tabular data created by a multi-value
+   *   attribute using the complex_attr_grid control type.
+   * * ifEmpty - Behaviour when no data present. Default is "hide", but can be
+   *   set to text which will be output in place of the value when there is no
+   *   data value.
+   * * outputFormatting - default false. Set to true to enable auto-formatting
+   *   of HTML links and line-feeds.
+   * * sample_attribute_id - required. ID of the attribute to output the value
+   *   for.
+   * * title - default true, which shows the attribute's caption as a block
+   *   title. Set to a string to override the title, or false to hide it.
    */
-  protected static function convert_array_to_set($theArray) {
-    return "'" . implode("','", str_replace("'", "''", $theArray)) . "'";
+  protected static function get_control_singleattribute($auth, $args, $tabalias, $options) {
+    return self::getControlSingleattribute('sample', $auth, $args, $options);
   }
 
   /**
@@ -492,15 +512,16 @@ Sample ID',
    *   The output report grid.
    */
   protected static function get_control_samplephotos($auth, $args, $tabalias, $options) {
-    iform_load_helpers(['data_entry_helper']);
     $options = array_merge([
       'title' => lang::get('Sample photos and media'),
     ], $options);
     $settings = [
       'type' => 'sample',
+      'table' => 'sample_medium',
+      'key' => 'sample_id',
       'value' => $_GET['sample_id'],
     ];
-    return self::commonControlPhotos($auth, $args, $options, $settings);
+    return self::getControlPhotos($auth, $args, $options, $settings);
   }
 
   /**
@@ -518,67 +539,11 @@ Sample ID',
     ], $options);
     $settings = [
       'type' => 'parentsample',
+      'table' => 'sample_medium',
+      'key' => 'sample_id',
       'value' => $sample[0]['parent_sample_id'],
     ];
-    return self::commonControlPhotos($auth, $args, $options, $settings);
-  }
-
-  /**
-   * Draws a common control for all photos controls.
-   *
-   * @return string
-   *   The output report grid.
-   */
-  private static function commonControlPhotos($auth, $args, $options, $settings) {
-    data_entry_helper::add_resource('fancybox');
-    require_once 'includes/report.php';
-    $options = array_merge([
-      'itemsPerPage' => 20,
-      'imageSize' => 'thumb',
-      'class' => 'media-gallery',
-    ], $options);
-    $extraParams = $auth['read'] + [
-      'sharing' => $args['sharing'],
-      'limit' => $options['itemsPerPage'],
-    ];
-    $extraParams['sample_id'] = $settings['value'];
-    $media = data_entry_helper::get_population_data([
-      'table' => 'sample_medium',
-      'extraParams' => $extraParams,
-    ]);
-    $r = <<<HTML
-<div class="detail-panel" id="detail-panel-photos-$settings[type]">
-  <h3>$options[title]</h3>
-  <div class="$options[class]">
-
-HTML;
-    if (empty($media)) {
-      $r .= '<p>' . lang::get('No photos or media files available') . '</p>';
-    }
-    else {
-      if (isset($options['helpText'])) {
-        $r .= '<p>' . $options['helpText'] . '</p>';
-      }
-      $r .= '<ul>';
-      $firstImage = TRUE;
-      foreach ($media as $medium) {
-        if ($firstImage && substr($medium['media_type'], 0, 6) === 'Image:') {
-          // First image can be flagged as the main content image. Used for FB
-          // OpenGraph for example.
-          global $iform_page_metadata;
-          if (!isset($iform_page_metadata)) {
-            $iform_page_metadata = [];
-          }
-          $imageFolder = data_entry_helper::get_uploaded_image_folder();
-          $iform_page_metadata['image'] = "$imageFolder$medium[path]";
-          $firstImage = FALSE;
-        }
-        $r .= iform_report_get_gallery_item('sample', $medium, $options['imageSize']);
-      }
-      $r .= '</ul>';
-    }
-    $r .= '</div></div>';
-    return $r;
+    return self::getControlPhotos($auth, $args, $options, $settings);
   }
 
   /**
@@ -601,6 +566,7 @@ HTML;
         'maxZoomBuffer' => 1,
         'showParentChildSampleGeoms' => FALSE,
         'clickForSpatialRef' => FALSE,
+        'title' => TRUE,
       ],
       $options
     );
@@ -634,7 +600,7 @@ HTML;
     if (!isset($options['standardControls'])) {
       $options['standardControls'] = ['layerSwitcher', 'panZoom'];
     }
-    return '<div class="detail-panel" id="detail-panel-map"><h3>' . lang::get('Map')  .'</h3>' . map_helper::map_panel($options, $olOptions) . '</div>';
+    return self::controlContainer('Map', map_helper::map_panel($options, $olOptions), $options);
   }
 
   /**
@@ -657,13 +623,12 @@ HTML;
   protected static function get_control_login($auth, $args, $tabalias, $options) {
     $options = array_merge([
       'instruct' => 'Please log in or <a href="user/register">register</a> to see more details of this record.',
+      'title' => TRUE,
     ], $options);
     if (hostsite_get_user_field('id') === 0) {
-      return '<div class="detail-panel" id="detail-panel-login">' .
-          '<h3>' . lang::get('Login') . '</h3>' .
-          '<p>' . lang::get($options['instruct']) . '</p>' .
-         hostsite_render_form('user_login', ['noredirect' => TRUE]) .
-          '</div>';
+      $html = '<p>' . lang::get($options['instruct']) . '</p>' .
+         hostsite_render_form('user_login', ['noredirect' => TRUE]);
+      return self::controlContainer('Login', $html, $options);
     }
     else {
       return '';
@@ -777,7 +742,7 @@ STRUCT;
   protected static function buttons_edit($auth, $args, $tabalias, $options) {
     global $indicia_templates;
     if (!$args['default_input_form']) {
-      throw new exception('Please set the default input form path setting before using the [edit button] control');
+      throw new exception('Please set the default input form path setting before using the [buttons] control to output an edit button.');
     }
     self::load_sample($auth, $args);
     $sample = self::$sample;
@@ -789,7 +754,8 @@ STRUCT;
       $rootFolder = data_entry_helper::getRootFolder(TRUE);
       $paramJoin = strpos($rootFolder, '?') === FALSE ? '?' : '&';
       $url = "$rootFolder$sample[input_form]{$paramJoin}sample_id=$sample[sample_id]";
-      return "<a class=\"$indicia_templates[buttonDefaultClass]\" href=\"$url\">" . lang::get('Edit this sample') . '</a>';
+      $class = isset($options['classes']['edit']) ? $options['classes']['edit'] : $indicia_templates['buttonDefaultClass'];
+      return "<a class=\"$class\" href=\"$url\">" . lang::get('Edit this sample') . '</a>';
     }
     else {
       // No rights to edit, so button omitted.

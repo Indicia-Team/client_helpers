@@ -12,19 +12,14 @@
  * GNU General Public License for more details.
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
- *
- * @package Client
- * @subpackage PrebuiltForms
  * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers/
  */
 
-require_once('includes/user.php');
+require_once 'includes/user.php';
 
 /**
- * @package Client
- * @subpackage PrebuiltForms
  * Form for adding or editing the site details on a transect which contains a number of sections.
  */
 class iform_ebms_transects_allocation {
@@ -35,9 +30,9 @@ class iform_ebms_transects_allocation {
    */
   public static function get_ebms_transects_allocation_definition() {
     return array(
-      'title'=>'EBMS Location allocator',
+      'title' => 'EBMS Location allocator',
       'category' => 'BMS Specific forms',
-      'description'=>'Form assigning locations to normal users or region/country controllers.'
+      'description' => 'Form assigning locations to normal users or region/country controllers.'
     );
   }
 
@@ -83,13 +78,13 @@ class iform_ebms_transects_allocation {
 ]
 }',
               'required' => true,
-              'group'=>'Report Settings'
+              'group' => 'Report Settings'
           ),
           array(
-              'name'=>'managerPermission',
-              'caption'=>'Drupal Permission for Manager mode',
-              'description'=>'Enter the Drupal permission name to be used to determine if this user is a manager (i.e. full access to full data set).',
-              'type'=>'string',
+              'name' => 'managerPermission',
+              'caption' => 'Drupal Permission for Manager mode',
+              'description' => 'Enter the Drupal permission name to be used to determine if this user is a manager (i.e. full access to full data set).',
+              'type' => 'string',
               'required' => false,
           ),
           array(
@@ -156,7 +151,7 @@ class iform_ebms_transects_allocation {
   ]
 }',
               'required' => true,
-              'group'=>'Download Report'
+              'group' => 'Download Report'
           )
       ));
     return $retVal;
@@ -185,7 +180,7 @@ class iform_ebms_transects_allocation {
       }
     }
 
-    $auth = array();
+    $auth = []
     $current = self::_identify_current_type($args, $auth); // config object
 
     data_entry_helper::add_resource('jquery_ui');
@@ -254,7 +249,7 @@ class iform_ebms_transects_allocation {
     $terms = helper_base::get_termlist_terms($auth, 'indicia:location_types', $config[$selected]->location_types);
     if(count($terms) == 0)
       throw new exception("Form configuration error: could not find location types ".print_r($config[$selected]->location_types, true)." for allocation index ".$selected);
-    $config[$selected]->location_type_ids = array();
+    $config[$selected]->location_type_ids = [];
     foreach($terms as $term)
       $config[$selected]->location_type_ids[] = $term['id'];
     if(empty($config[$selected]->attr_id) || count($config[$selected]->location_types) == 0)
@@ -277,7 +272,7 @@ class iform_ebms_transects_allocation {
 
   private static function _allocation_type_control($auth, $args, $nid, $settings) {
     $config = json_decode($args['allocation_config_list']);
-    $lookup_values = array();
+    $lookup_values = [];
     foreach($config as $idx=>$config_entry) {
       if(empty($config_entry->permission) || hostsite_user_has_permission($config_entry->permission))
         $lookup_values[$idx] = empty($config_entry->label) ? $idx : $config_entry->label;
@@ -309,10 +304,10 @@ class iform_ebms_transects_allocation {
             data_entry_helper::select(array(
                 'fieldname'=>$settings['region_select_id'],
                 'label'=>lang::get($settings['config']->region_control_location_type),
-                'table'=>'location',
-                'valueField'=>'id',
-                'captionField'=>'name',
-                'extraParams'=>$auth['read'] + array('view'=>'detail', 'id'=>$default)
+                'table' => 'location',
+                'valueField' => 'id',
+                'captionField' => 'name',
+                'extraParams'=>$auth['read'] + array('view' => 'detail', 'id'=>$default)
             )) .
             '</th>';
     } else {
@@ -320,15 +315,15 @@ class iform_ebms_transects_allocation {
         data_entry_helper::select(array(
           'fieldname'=>$settings['region_select_id'],
           'label'=>lang::get($settings['config']->region_control_location_type),
-          'table'=>'location',
-          'valueField'=>'id',
-          'captionField'=>'name',
+          'table' => 'location',
+          'valueField' => 'id',
+          'captionField' => 'name',
           'blankText'=>lang::get('<Please select '.($settings['config']->region_control_location_type).'>'),
           'default' => $default,
           'extraParams'=>$auth['read'] +
-                array('view'=>'detail',
+                array('view' => 'detail',
                     'location_type_id'=>$settings['config']->region_control_location_type_id,
-                    'orderby'=>'name')
+                    'orderby' => 'name')
              )) .
         '</th>';
     }
@@ -340,14 +335,14 @@ class iform_ebms_transects_allocation {
         data_entry_helper::select(array(
           'fieldname'=>$settings['site_select_id'],
           'label' => lang::get('Site'),
-          'table'=>'location',
-          'valueField'=>'id',
-          'captionField'=>'name',
+          'table' => 'location',
+          'valueField' => 'id',
+          'captionField' => 'name',
           'blankText'=>lang::get('<Please select Site>'),
           'extraParams'=>$auth['read'] +
-                array('view'=>'detail',
+                array('view' => 'detail',
                     'location_type_id'=>$settings['config']->location_type_ids,
-                    'orderby'=>'name'),
+                    'orderby' => 'name'),
           'caching'=>false
              )) .
         '</th>';
@@ -379,7 +374,7 @@ class iform_ebms_transects_allocation {
     // TODO I18N of JS
     // Want users available as soon as they are created.
     $ctrl = '';
-    $user_list=array();
+    $user_list=[];
 
     // Check how a location is allocated to a user: location attribute holding either the users indicia ID or their CMS ID
     if((empty($settings['config']->indicia_location) || !$settings['config']->indicia_location) &&
@@ -534,7 +529,7 @@ class iform_ebms_transects_allocation {
       echo json_encode($userList);
       return;
   }
-  
+
   public static function ajax_saveLocationAttribute($website_id, $password, $nid) {
     $conn = iform_get_connection_details($nid);
     iform_load_helpers(array('data_entry_helper'));
@@ -629,7 +624,7 @@ class iform_ebms_transects_allocation {
               $outputrow = [];
               foreach ($columns as $idx => $column) {
                   if (array_key_exists('template', $column)) {
-                      $matches = array();
+                      $matches = [];
                       preg_match_all('/\[([\w:]+)\]/', $column['template'], $matches);
 //                      $outputrow[] = print_r($matches, true);
                       $output = $column['template'];
@@ -674,7 +669,7 @@ class iform_ebms_transects_allocation {
    * @return array List of distinct permissions.
    */
   public static function get_perms($nid, $args) {
-      $perms = array();
+      $perms = [];
       if (!empty($args['managerPermission']))
           $perms[] = $args['managerPermission'];
       return $perms;

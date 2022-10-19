@@ -13,22 +13,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package Client
- * @subpackage PrebuiltForms
  * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers/
  */
 
 /**
- *
- *
- * @package Client
- * @subpackage PrebuiltForms
  * @todo Provide form description in this comment block.
  * @todo Rename the form class to iform_...
  */
-require_once("mobile_sample_occurrence.php");
+require_once "mobile_sample_occurrence.php";
 
 global $list_templates;
 $list_templates['gallery'] = <<<'EOD'
@@ -81,7 +75,7 @@ class iform_mobile_species_list{
       ]
    * @var array
    */
-  protected $pages_array = array();
+  protected $pages_array = [];
 
   /**
    * Return the form metadata. Note the title of this method includes the name of the form file. This ensures
@@ -91,10 +85,10 @@ class iform_mobile_species_list{
    */
   public static function get_mobile_species_list_definition() {
     return array(
-      'title'=>'Mobile Species List',
+      'title' => 'Mobile Species List',
       'category' => 'Mobile',
-      'helpLink'=>'<optional help URL>',
-      'description'=>'Generates a species list.'
+      'helpLink' => '<optional help URL>',
+      'description' => 'Generates a species list.'
     );
   }
 

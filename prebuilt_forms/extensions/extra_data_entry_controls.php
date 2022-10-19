@@ -16,7 +16,7 @@
  *
  * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link http://code.google.com/p/indicia/
+ * @link https://github.com/Indicia-Team/client_helpers
  */
 
 /**
@@ -208,7 +208,7 @@ class extension_extra_data_entry_controls {
     }
     // Clone and clean up the main species record by removing unwanted
     // attributes and media.
-    $copiedAttrs = array();
+    $copiedAttrs = [];
     if (!empty($values["association_copy_attributes:$index"])) {
       $copiedAttrs = explode(',', $values["association_copy_attributes:$index"]);
     }
@@ -242,7 +242,7 @@ class extension_extra_data_entry_controls {
     $s_array[0]['subModels']["assoc:$index"] = $assoc;
     // Add an association between the 2 records.
     if (!isset($s_array[0]['subModels'][0]['model']['subModels'])) {
-      $s_array[0]['subModels'][0]['model']['subModels'] = array();
+      $s_array[0]['subModels'][0]['model']['subModels'] = [];
     }
     $fields = array(
       'to_occurrence_id' => array(

@@ -27,8 +27,6 @@ require_once 'helper_base.php';
 
 /**
  * Static helper class that provides methods for dealing with reports.
- *
- * @package	Client
  */
 class report_helper extends helper_base {
 
@@ -57,7 +55,7 @@ class report_helper extends helper_base {
   public static function report_picker($options) {
     self::add_resource('reportPicker');
     $options = array_merge(array(
-      'id'=>'report-picker',
+      'id' => 'report-picker',
       'fieldname' => 'report_name',
       'default' => '',
       'class' => ''
@@ -312,7 +310,7 @@ HTML;
   *       array('fieldname' => 'survey', 'display' => 'Survey Title'),
   *       array('display' => 'action', 'template' => '<a href="www.mysite.com\survey\{id}\edit">Edit</a>'),
   *       array('display' => 'Actions', 'actions' => array(
-  *         array('caption' => 'edit', 'url'=>'{currentUrl}', 'urlParams'=>array('survey_id'=>'{id}'))
+  *         array('caption' => 'edit', 'url' => '{currentUrl}', 'urlParams'=>array('survey_id' => '{id}'))
   *       ))
   *     )
   *  - json: set to true if the column contains a json string object with properties that can be decoded to give strings that
@@ -712,7 +710,7 @@ HTML;
         foreach ($options['columns'] as $field) {
           $classes = [];
           if ($options['sendOutputToMap'] && isset($field['mappable']) && ($field['mappable']==='true' || $field['mappable']===true)) {
-            $data = json_encode($row + array('type'=>'linked'));
+            $data = json_encode($row + array('type' => 'linked'));
             $addFeaturesJs.= "div.addPt(features, ".$data.", '".$field['fieldname']."', {}".
                 ", '$rowId');\n";
           }
@@ -1281,7 +1279,7 @@ JS;
   * </li>
   * <li><b>seriesOptions</b><br/>
   * For line and bar charts, associative array of options to pass to the jqplot series. For example:<br/>
-  * 'seriesOptions' => array(array('label'=>'My first series','label'=>'My 2nd series'))<br/>
+  * 'seriesOptions' => array(array('label' => 'My first series','label' => 'My 2nd series'))<br/>
   * For more information see links below.
   * </li>
   * <li><b>seriesColors</b><br/>
@@ -1364,10 +1362,10 @@ JS;
       "rendererOptions:" . json_encode($options['rendererOptions']) .
       "\n    }";
     $optsToCopyThrough = [
-      'legend'=>'legendOptions',
-      'series'=>'seriesOptions',
-      'seriesColors'=>'seriesColors',
-      'grid'=>'gridOptions'
+      'legend' => 'legendOptions',
+      'series' => 'seriesOptions',
+      'seriesColors' => 'seriesColors',
+      'grid' => 'gridOptions'
     ];
     foreach ($optsToCopyThrough as $key=>$settings) {
       if (!empty($options[$settings]))
@@ -1911,7 +1909,7 @@ JS;
   * to a range of colours from blue to red.
   * array(
   *   'fillColor'=>array(
-  *     'from'=>'#0000ff',
+  *     'from' => '#0000ff',
   *     'to' => '#ff0000',
   *     'valueField' => 'value',
   *     'minValue'=> '{minvalue}',
@@ -2347,9 +2345,9 @@ JS;
       if (!empty($locationParamVals)) {
         foreach ($locationParamVals as $locationParamVal) {
           $location=data_entry_helper::get_population_data(array(
-            'table'=>'location',
+            'table' => 'location',
             'nocache'=>true,
-            'extraParams'=>$options['readAuth'] + array('id'=>$locationParamVal,'view'=>'detail')
+            'extraParams'=>$options['readAuth'] + array('id'=>$locationParamVal,'view' => 'detail')
           ));
           if (count($location)===1) {
             $location=$location[0];
@@ -2697,19 +2695,25 @@ if (typeof mapSettingsHooks!=='undefined') {
 
   /**
    * Retrieve the HTML for the actions in a grid row.
-   * @param array $actions List of the action definitions to convert to HTML.
-   * @param array $row The content of the row loaded from the database.
-   * @param string $pathParam Set to the name of a URL param used to pass the path to this page. E.g. in Drupal
-   * with clean urls disabled, this is set to q. Otherwise leave empty.
+   *
+   * @param array $actions
+   *   List of the action definitions to convert to HTML.
+   * @param array $row
+   *   The content of the row loaded from the database.
+   * @param string $pathParam
+   *   Set to the name of a URL param used to pass the path to this page. E.g.
+   *   in Drupal with clean urls disabled, this is set to q. Otherwise leave
+   *   empty.
    */
-  private static function get_report_grid_actions($actions, $row, $pathParam='') {
+  private static function get_report_grid_actions($actions, $row, $pathParam = '') {
     $jsReplacements = [];
     foreach ($row as $key=>$value) {
-      $jsReplacements[$key]=$value;
-      $jsReplacements["$key-escape-quote"]=str_replace("'", "\'", $value);
-      $jsReplacements["$key-escape-dblquote"]=str_replace('"', '\"', $value);
-      $jsReplacements["$key-escape-htmlquote"]=str_replace("'", "&#39;", $value);
-      $jsReplacements["$key-escape-htmldblquote"]=str_replace('"', '&quot;', $value);
+      $value = $value === NULL ? '' : $value;
+      $jsReplacements[$key] = $value;
+      $jsReplacements["$key-escape-quote"] = str_replace("'", "\'", $value);
+      $jsReplacements["$key-escape-dblquote"] = str_replace('"', '\"', $value);
+      $jsReplacements["$key-escape-htmlquote"] = str_replace("'", "&#39;", $value);
+      $jsReplacements["$key-escape-htmldblquote"] = str_replace('"', '&quot;', $value);
     }
     $links = [];
     $currentUrl = self::get_reload_link_parts(); // needed for params
@@ -3079,12 +3083,12 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue, removeparam) {
     $header_date=clone $consider_date;
     $r .= "<tr>".($options['includeWeekNumber'] ? "<td></td>" : "")."<td></td>";
 
-    require_once('prebuilt_forms/includes/language_utils.php');
+    require_once 'prebuilt_forms/includes/language_utils.php';
     $lang = iform_lang_iso_639_2(hostsite_get_user_field('language'));
     setlocale (LC_TIME, $lang);
 
     for($i=0; $i<7; $i++){
-      $r .= "<td class=\"day\">".utf8_encode(strftime("%a" , $header_date->getTimestamp()))."</td>"; // i8n
+      $r .= "<td class=\"day\">".utf8_encode(date('D', $header_date->getTimestamp()))."</td>"; // i8n
       $header_date->modify('+1 day');
     }
     $r .= "</tr>";
@@ -3123,7 +3127,7 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue, removeparam) {
     while($consider_date->format('Y') <= $options["year"] && ($weeknumberfilter[1]=='' || $consider_date->format('N')!=$weekstart[1] || $weekno < $weeknumberfilter[1])){
       if($consider_date->format('N')==$weekstart[1]) {
         $weekno++;
-        $r .= "<tr class=\"datarow\">".($options['includeWeekNumber'] ? "<td class=\"weeknum\">".$weekno."</td>" : "")."<td class\"month\">".utf8_encode(strftime("%b" , $consider_date->getTimestamp()))."</td>";
+        $r .= "<tr class=\"datarow\">".($options['includeWeekNumber'] ? "<td class=\"weeknum\">".$weekno."</td>" : "")."<td class\"month\">".utf8_encode(date('M', $consider_date->getTimestamp()))."</td>";
       }
       $cellContents=$consider_date->format('j');  // day in month.
       $cellclass="";
@@ -3552,8 +3556,8 @@ update_controls();
         $parts = explode(':',$avgField);
         if(count($parts)==2 && $parts[0]='smpattr') {
           $smpAttribute=data_entry_helper::get_population_data(array(
-              'table'=>'sample_attribute',
-              'extraParams'=>$options['readAuth'] + array('view'=>'list', 'id'=>$parts[1])
+              'table' => 'sample_attribute',
+              'extraParams'=>$options['readAuth'] + array('view' => 'list', 'id'=>$parts[1])
           ));
           if(count($smpAttribute)>=1){ // may be assigned to more than one survey on this website. This is not relevant to info we want.
             $avgFields[$avgField]['id'] = $parts[1];
@@ -3561,8 +3565,8 @@ update_controls();
             $avgFields[$avgField]['caption'] = $smpAttribute[0]['caption'];
             if($smpAttribute[0]['data_type']=='L')
               $avgFields[$avgField]['attr']['termList'] = data_entry_helper::get_population_data(array(
-                'table'=>'termlists_term',
-                'extraParams'=>$options['readAuth'] + array('view'=>'detail', 'termlist_id'=>$avgFields[$avgField]['attr']['termlist_id'])
+                'table' => 'termlists_term',
+                'extraParams'=>$options['readAuth'] + array('view' => 'detail', 'termlist_id'=>$avgFields[$avgField]['attr']['termlist_id'])
             ));
           }
         }
@@ -4341,7 +4345,7 @@ jQuery('#".$options['chartID']."-series-disable').click(function(){
   				'hasData'=>false,
   				'hasEstimates'=>false,
   				'forcedZero'=>isset($weekList[$weekno]),
-  				'location'=>'');
+  				'location' => '');
   	self::$initLoc = $locationArray;
   }
 
@@ -4529,8 +4533,8 @@ jQuery('#".$options['chartID']."-series-disable').click(function(){
       'includeWeekNumber' => false,
       'weekstart' => 'weekday=7', // Default Sunday
       'weekNumberFilter' => ':',
-      'rowGroupColumn'=>'taxon',
-      'rowGroupID'=>'taxa_taxon_list_id',
+      'rowGroupColumn' => 'taxon',
+      'rowGroupID' => 'taxa_taxon_list_id',
       'chartContainerID' => 'chartdiv-container',
       'chartID' => 'chartdiv',
       'chartClass' => 'ui-widget ui-widget-content ui-corner-all',
@@ -4649,7 +4653,7 @@ jQuery('#".$options['chartID']."-series-disable').click(function(){
 
     $extraParams = $options['readAuth'] + array('survey_id'=>$options['survey_id']);
     $definition = data_entry_helper::get_population_data(array(
-        'table'=>'summariser_definition',
+        'table' => 'summariser_definition',
         'extraParams'=>$extraParams,
     ));
     if (isset($records['error'])) return $records['error'];
@@ -4677,7 +4681,7 @@ jQuery('#".$options['chartID']."-series-disable').click(function(){
                               'default_common_name,taxon_meaning_id,summarised_data';
     $options['caching'] = isset($options['caching']) ? $options['caching'] : true;
   	$records = data_entry_helper::get_population_data(array(
-  			'table'=>'summary_occurrence',
+  			'table' => 'summary_occurrence',
   			'extraParams'=>$extraParams,
   			'caching'=> $options['caching']
   	));
@@ -4798,8 +4802,8 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue) {
   			$field = array('caption'=>$parts[0], 'field'=>$parts[1], 'attr'=>false);
   			if(count($parts)==3 && $parts[1]='smpattr') {
   				$smpAttribute=data_entry_helper::get_population_data(array(
-  						'table'=>'sample_attribute',
-  						'extraParams'=>$options['readAuth'] + array('view'=>'list', 'id'=>$parts[2])
+  						'table' => 'sample_attribute',
+  						'extraParams'=>$options['readAuth'] + array('view' => 'list', 'id'=>$parts[2])
   				));
   				if(count($smpAttribute)>=1){ // may be assigned to more than one survey on this website. This is not relevant to info we want.
   					$field['id'] = $parts[2];
@@ -4824,7 +4828,7 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue) {
         } else if(!empty($record['taxon'])) {
           $seriesLabels[$taxonMeaningID]=array('label'=>$record['taxon']); // various fall backs.
         } else {
-          $seriesLabels[$taxonMeaningID]=array('label'=>'['.$record['taxa_taxon_list_id'].']');
+          $seriesLabels[$taxonMeaningID]=array('label' => '['.$record['taxa_taxon_list_id'].']');
         }
         $summaryArray[$taxonMeaningID]=[];
         $sortData[$taxonMeaningID]=array($record['taxonomic_sort_order'],$taxonMeaningID);
@@ -5299,7 +5303,7 @@ $('#rawData .sample-datarow').eq(sampleDatarows-1).addClass('last-sample-datarow
           '<div id="rawData">'.$rawTab.'</div>'.
           ($downloadTab!="" ? '<div id="dataDownloads"><table><tbody style="border:none;">'.$downloadTab.'</tbody></table></div>' : '').
         '</div>';
-    data_entry_helper::enable_tabs(array('divId'=>'controls'));
+    data_entry_helper::enable_tabs(array('divId' => 'controls'));
     return $r;
   }
 

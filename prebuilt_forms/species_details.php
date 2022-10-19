@@ -16,7 +16,7 @@
  *
  * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link http://code.google.com/p/indicia/
+ * @link https://github.com/Indicia-Team/client_helpers
  */
 
 require_once 'includes/dynamic.php';
@@ -257,8 +257,6 @@ class iform_species_details extends iform_dynamic {
    * Override the getHidden function.
    * getForm in dynamic.php will now call this and return an empty array when creating a list of hidden input
    * controls for form submission as this functionality is not being used for the Species Details page.
-   * @package    Client
-   * @subpackage PrebuiltForms
    */
   protected static function getHidden() {
     return NULL;
@@ -269,8 +267,6 @@ class iform_species_details extends iform_dynamic {
    * Override the getMode function.
    * getForm in dynamic.php will now call this and return an empty array when creating a mode list
    * as this functionality is not being used for the Species Details page.
-   * @package    Client
-   * @subpackage PrebuiltForms
    */
   protected static function getMode() {
     return [];
@@ -281,8 +277,6 @@ class iform_species_details extends iform_dynamic {
   * Override the getAttributes function.
   * getForm in dynamic.php will now call this and return an empty array when creating an attributes list
   * as this functionality is not being used for the Species Details page.
-  * @package    Client
-  * @subpackage PrebuiltForms
   */
  protected static function getAttributes() {
    return [];
@@ -292,9 +286,6 @@ class iform_species_details extends iform_dynamic {
    * Override the get_form_html function.
    * getForm in dynamic.php will now call this.
    * Vary the display of the page based on the interface type
-   *
-   * @package    Client
-   * @subpackage PrebuiltForms
    */
   protected static function get_form_html($args, $auth, $attributes) {
     if (empty($_GET['taxa_taxon_list_id']) && empty($_GET['taxon_meaning_id'])) {
@@ -381,6 +372,7 @@ class iform_species_details extends iform_dynamic {
     global $indicia_templates;
     $options = array_merge([
       'includeAttributes' => TRUE,
+      'outputFormatting' => FALSE,
     ], $options);
     $fields = helper_base::explode_lines($args['fields']);
     $fieldsLower = helper_base::explode_lines(strtolower($args['fields']));
@@ -422,11 +414,11 @@ class iform_species_details extends iform_dynamic {
           $hideTaxonomy = FALSE;
       }
     }
-    //Draw the names on the page
+    // Draw the names on the page.
     $details_report = self::draw_names($auth['read'], $hidePreferred, $hideCommon, $hideSynonym, $hideTaxonomy);
 
     if ($options['includeAttributes']) {
-      //draw any custom attributes for the species added by the user
+      // Draw any custom attributes for the species added by the user.
       $attrs_report = report_helper::freeform_report(array(
         'readAuth' => $auth['read'],
         'class' => 'species-details-fields',
@@ -434,12 +426,14 @@ class iform_species_details extends iform_dynamic {
         'bands' => array(array('content' => str_replace(['{class}'], '', $indicia_templates['dataValue']))),
         'extraParams' => array(
           'taxa_taxon_list_id' => self::$taxa_taxon_list_id,
-          //the SQL needs to take a set of the hidden fields, so this needs to be converted from an array.
+          // The SQL needs to take a set of the hidden fields, so this needs to
+          // be converted from an array.
           'attrs' => strtolower(self::convert_array_to_set($fields)),
           'testagainst' => $args['testagainst'],
           'operator' => $args['operator'],
           'sharing' => 'reporting',
           'language' => iform_lang_iso_639_2(hostsite_get_user_field('language')),
+          'output_formatting' => $options['outputFormatting'] ? 't' : 'f',
         )
       ));
     }
@@ -457,6 +451,95 @@ class iform_species_details extends iform_dynamic {
       $indicia_templates['dataValueList']
     );
   }
+
+  /**
+   * A control for outputting a block containing a single attribute's value.
+   *
+   * Provides more layout control than the list of attribute values and other
+   * details provided by the species details control.
+   *
+   * Options include:
+   * * format - control formatting of the value. Default is "text". Set to
+   *   "complex_attr_grid" to output tabular data created by a multi-value
+   *   attribute using the complex_attr_grid control type.
+   * * ifEmpty - Behaviour when no data present. Default is "hide", but can be
+   *   set to text which will be output in place of the value when there is no
+   *   data value.
+   * * outputFormatting - default false. Set to true to enable auto-formatting
+   *   of HTML links and line-feeds.
+   * * taxa_taxon_list_attribute_id - required. ID of the attribute to output
+   *   the value for.
+   * * title - default true, which shows the attribute's caption as a block
+   *   title. Set to a string to override the title, or false to hide it.
+   */
+  protected static function get_control_singleattribute($auth, $args, $tabalias, $options) {
+    if (empty($options['taxa_taxon_list_attribute_id'])) {
+      hostsite_show_message(lang::get('A taxa_taxon_list_attribute_id option is required for the single attribute control.', 'warning'));
+      return;
+    }
+    $options = array_merge([
+      'format' => 'text',
+      'ifEmpty' => 'hide',
+      'outputFormatting' => FALSE,
+      'title' => TRUE,
+    ], $options);
+    $attrData = report_helper::get_report_data([
+      'readAuth' => $auth['read'],
+      'dataSource' => 'reports_for_prebuilt_forms/species_details/taxa_taxon_list_attribute_value',
+      'extraParams' => [
+        'taxa_taxon_list_id' => self::$taxa_taxon_list_id,
+        'taxa_taxon_list_attribute_id' => $options['taxa_taxon_list_attribute_id'],
+        'sharing' => $args['sharing'],
+        'language' => iform_lang_iso_639_2(hostsite_get_user_field('language')),
+        'output_formatting' => $options['outputFormatting'] && $options['format'] === 'text' ? 't' : 'f',
+      ],
+    ]);
+    if (count($attrData) === 0) {
+      hostsite_show_message("Attribute ID $options[taxa_taxon_list_attribute_id] not found", 'warning');
+      return '';
+    }
+    $r = '';
+    $valueInfo = $attrData[0];
+    if ($options['title'] === TRUE) {
+      $r .= "<h3>$valueInfo[caption]</h3>";
+    }
+    elseif (is_string($options['title'])) {
+      $r .= '<h3>' . lang::get($options['title']) . '</h3>';
+    }
+    if ($valueInfo['value'] === NULL || $valueInfo['value'] === '') {
+      $r .= '<p>' . lang::get($options['ifEmpty']) . '</p>';
+    }
+    else {
+      switch ($options['format']) {
+        case 'text':
+          $r .= "<p>$valueInfo[value]</p>";
+          break;
+
+        case 'complex_attr_grid':
+          $valueRows = explode('; ', $valueInfo['value']);
+          $decoded = json_decode($valueRows[0], TRUE);
+          $r .= '<table class="table"><thead>';
+          $r .= '<tr><th>' . implode('</th><th>', array_keys($decoded)) . '</th></tr>';
+          $r .= '</thead><tbody>';
+          foreach ($valueRows as $valueRow) {
+            $decoded = json_decode($valueRow, TRUE);
+            if ($options['outputFormatting']) {
+              foreach ($decoded as &$value) {
+                $value = str_replace("\n", '<br/>', $value);
+                $value = preg_replace('/(http[^\s]*)/', '<a href="$1">$1</a>', $value);
+              }
+            }
+            $r .= '<tr><td>' . implode('</td><td>', $decoded) . '</td></tr>';
+          }
+          $r .= '</tbody>';
+          $r .= '</table>';
+          break;
+      }
+    }
+
+    return $r;
+  }
+
 
   /**
    * Draw the names in the Species Details section of the page.
@@ -508,6 +591,8 @@ class iform_species_details extends iform_dynamic {
    *   heading name and then a slash and then the sub-category name e.g.  the following includes just the hoglets sub-category
    *   and the entire rabbits section @headingsToInclude=Hedgehogs/Hoglets,Rabbits
    *   @headingsToExclude - Same as @headingsToInclude but items are exluded instead (any items that appear in both headingsToInclude and headingsToExclude will be excluded).
+   *
+   * @deprecated in 8.5.0.
    *
    * @return string
    *   Html for the description.
@@ -760,10 +845,9 @@ class iform_species_details extends iform_dynamic {
 
   /**
    * Draw Map section of the page.
-   * @return string The output map panel.
    *
-   * @package    Client
-   * @subpackage PrebuiltForms
+   * @return string
+   *   The output map panel.
    */
   protected static function get_control_map($auth, $args, $tabalias, $options) {
     // Draw a distribution map by calling Indicia report when Geoserver isn't
@@ -836,10 +920,9 @@ class iform_species_details extends iform_dynamic {
 
   /**
    * Draw a distribution map by calling Indicia report when Geoserver isn't available
-   * @return string The output map panel.
    *
-   * @package    Client
-   * @subpackage PrebuiltForms
+   * @return string
+   *   The output map panel.
    */
   protected static function mapWithoutGeoserver($auth, $args, $tabalias, $options) {
     iform_load_helpers(array('map_helper', 'report_helper'));
@@ -916,10 +999,9 @@ class iform_species_details extends iform_dynamic {
 
   /**
    * Draw the explore button on the page.
-   * @return string The output HTML string.
    *
-   * @package    Client
-   * @subpackage PrebuiltForms
+   * @return string
+   *   The output HTML string.
    */
   protected static function get_control_explore($auth, $args) {
     if (!empty($args['explore_url']) && !empty($args['explore_param_name'])) {
@@ -1027,10 +1109,9 @@ class iform_species_details extends iform_dynamic {
    * Used to convert an array of attributes to a string formatted like a set,
    * this is then used by the species_data_attributes_with_hiddens report to return
    * custom attributes which aren't in the hidden attributes list.
-   * @return string The set of hidden custom attributes.
    *
-   * @package    Client
-   * @subpackage PrebuiltForms
+   * @return string
+   *   The set of hidden custom attributes.
    */
   protected static function convert_array_to_set($theArray) {
     return "'".implode("','", str_replace("'", "''", $theArray))."'";

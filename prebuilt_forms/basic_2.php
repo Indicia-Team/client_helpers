@@ -13,17 +13,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author	Indicia Team
- * @license	http://www.gnu.org/licenses/gpl.html GPL 3.0
+ * @author Indicia Team
+ * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers/
  */
 
 /**
  * Prebuilt Indicia data entry form that presents taxon search box, date control and map picker
  * controls. The survey data is posted into must be specified as a form parameter.
- *
- * @package	Client
- * @subpackage PrebuiltForms
  */
 class iform_basic_2 {
 
@@ -33,9 +30,9 @@ class iform_basic_2 {
    */
   public static function get_basic_2_definition() {
     return array(
-      'title'=>'Basic 2 - species, date, place',
+      'title' => 'Basic 2 - species, date, place',
       'category' => 'Training/Testing forms',
-      'description'=>'A second very simple form designed to illustrate the prebuilt form development and setup process.'
+      'description' => 'A second very simple form designed to illustrate the prebuilt form development and setup process.'
     );
   }
 
@@ -46,22 +43,22 @@ class iform_basic_2 {
   public static function get_parameters() {
     return array(
       array(
-          'name'=>'survey_id',
-          'caption'=>'Survey',
-          'description'=>'The survey that data will be posted into.',
-          'type'=>'select',
-          'table'=>'survey',
-          'captionField'=>'title',
-          'valueField'=>'id'
+          'name' => 'survey_id',
+          'caption' => 'Survey',
+          'description' => 'The survey that data will be posted into.',
+          'type' => 'select',
+          'table' => 'survey',
+          'captionField' => 'title',
+          'valueField' => 'id'
         ),
       array(
-        'fieldname'=>'taxon_list_id',
-        'label'=>'Species List',
-        'helpText'=>'The species list that species can be selected from.',
-        'type'=>'select',
-        'table'=>'taxon_list',
-        'valueField'=>'id',
-        'captionField'=>'title'
+        'fieldname' => 'taxon_list_id',
+        'label' => 'Species List',
+        'helpText' => 'The species list that species can be selected from.',
+        'type' => 'select',
+        'table' => 'taxon_list',
+        'valueField' => 'id',
+        'captionField' => 'title'
       ),
     );
   }
@@ -79,16 +76,16 @@ class iform_basic_2 {
     $r .= '<input type="hidden" name="sample:survey_id" value="'.$args['survey_id'].'" />'."\n";
     $r .= "<input type=\"hidden\" id=\"record_status\" value=\"C\" />\n";
     $r .= data_entry_helper::autocomplete(array(
-        'label'=>'Species',
-        'fieldname'=>'occurrence:taxa_taxon_list_id',
-        'table'=>'taxa_taxon_list',
-        'captionField'=>'taxon',
-        'valueField'=>'id',
+        'label' => 'Species',
+        'fieldname' => 'occurrence:taxa_taxon_list_id',
+        'table' => 'taxa_taxon_list',
+        'captionField' => 'taxon',
+        'valueField' => 'id',
         'extraParams'=>$readAuth + array('taxon_list_id' => $args['taxon_list_id'])
     ));
     $r .= data_entry_helper::date_picker(array(
-        'label'=>'Date',
-        'fieldname'=>'sample:date'
+        'label' => 'Date',
+        'fieldname' => 'sample:date'
     ));
     $r .= data_entry_helper::map();
     $r .= "<input type=\"submit\" class=\"ui-state-default ui-corner-all\" value=\"Save\" />\n";

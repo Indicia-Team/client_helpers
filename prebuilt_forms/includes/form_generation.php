@@ -54,21 +54,22 @@ function get_attribute_html(&$attributes, $args, $ctrlOptions, $outerFilter = NU
     if (in_array($attribute['id'], data_entry_helper::$handled_attributes)) {
       $attribute['handled'] = 1;
     }
+    $outerBlock = $attribute['outer_structure_block'] === NULL ? '' : $attribute['outer_structure_block'];
     // Apply filter to only output 1 block at a time. Also hide controls that have already been handled.
-    if (($outerFilter === NULL || strcasecmp($outerFilter, $attribute['outer_structure_block']) == 0) && !isset($attribute['handled'])) {
-      if (empty($outerFilter) && $lastOuterBlock != $attribute['outer_structure_block']) {
+    if (($outerFilter === NULL || strcasecmp($outerFilter, $outerBlock) == 0) && !isset($attribute['handled'])) {
+      if (empty($outerFilter) && $lastOuterBlock != $outerBlock) {
         if (!empty($lastInnerBlock)) {
           $r .= '</fieldset>';
         }
         if (!empty($lastOuterBlock)) {
           $r .= '</fieldset>';
         }
-        if (!empty($attribute['outer_structure_block'])) {
-          $r .= '<fieldset id="' . get_fieldset_id($attribute['outer_structure_block'], $idPrefix) .
-              '"><legend>' . lang::get($attribute['outer_structure_block']) . '</legend>';
+        if (!empty($outerBlock)) {
+          $r .= '<fieldset id="' . get_fieldset_id($outerBlock, $idPrefix) .
+              '"><legend>' . lang::get($outerBlock) . '</legend>';
         }
         if (!empty($attribute['inner_structure_block'])) {
-          $r .= '<fieldset id="' . get_fieldset_id($attribute['outer_structure_block'], $attribute['inner_structure_block'], $idPrefix) .
+          $r .= '<fieldset id="' . get_fieldset_id($outerBlock, $attribute['inner_structure_block'], $idPrefix) .
               '"><legend>' . lang::get($attribute['inner_structure_block']) . '</legend>';
         }
       }
@@ -82,7 +83,7 @@ function get_attribute_html(&$attributes, $args, $ctrlOptions, $outerFilter = NU
         }
       }
       $lastInnerBlock = $attribute['inner_structure_block'];
-      $lastOuterBlock = $attribute['outer_structure_block'];
+      $lastOuterBlock = $outerBlock;
       $options = $ctrlOptions + get_attr_validation($attribute, $args);
       // When getting the options, only use the first 2 parts of the fieldname
       // as any further imply an existing record ID so would differ.
@@ -169,8 +170,10 @@ function get_fieldset_id($outerBlock, $innerBlock = '', $idPrefix = '') {
 
 /**
  * Finds the list of tab names that are going to be required by the custom attributes.
- * @param array $attributes List of attributes. Any attributes with no outer structure block are assigned
- * to a tab called Other Information.
+ *
+ * @param array $attributes
+ *   List of attributes. Any attributes with no outer structure block are
+ *   assigned to a tab called Other Information.
  */
 function get_attribute_tabs(&$attributes) {
   $r = [];
@@ -221,41 +224,55 @@ function extract_cms_user_attr(&$attributes, $unset = TRUE) {
 }
 
 /**
- * Returns a list of hidden inputs which are extracted from the form attributes which can be extracted
- * from the user's profile information in Drupal. The attributes which are used are marked as handled
- * so they don't need to be output elsewhere on the form. This function also handles non-profile based
+ * Gets user profile related hidden inputs.
+ *
+ * Returns a list of hidden inputs which are extracted from the form attributes
+ * which can be extracted from the user's profile information in Drupal. The
+ * attributes which are used are marked as handled so they don't need to be
+ * output elsewhere on the form. This function also handles non-profile based
  * CMS User ID, Username, and Email; and also special processing for names.
- * @param array $attributes List of form attributes.
- * @param array $args List of form arguments. Can include values called:
- *   copyFromProfile - boolean indicating if values should be copied from the profile when the names match
- *   nameShow - boolean, if true then name values should be displayed rather than hidden.
- *     In fact this extends to all profile fields whose names match attribute
- *     captions. E.g. in D7, field_age would populate an attribute with caption
- *     age.
- *   emailShow - boolean, if true then email values should be displayed rather than hidden.
- * @param boolean $exists Pass true for an existing record. If the record exists, then the attributes
- *   are marked as handled but are not output to avoid overwriting metadata about the original creator of the record.
- * @param array $readAuth Read authorisation tokens.
- * @return string HTML for the hidden inputs.
+ *
+ * @param array $attributes
+ *   List of form attributes.
+ * @param array $args
+ *   List of form arguments. Can include values called:
+ *   * copyFromProfile - boolean indicating if values should be copied from the
+ *     profile when the names match.
+ *   * nameShow - boolean, if true then name values should be displayed rather
+ *     than hidden. In fact this extends to all profile fields whose names match
+ *     attribute captions. E.g. in D7, field_age would populate an attribute
+ *     with caption age.
+ *   * emailShow - boolean, if true then email values should be displayed rather
+ *     than hidden.
+ * @param bool $exists
+ *   Pass true for an existing record. If the record exists, then the
+ *   attributes are marked as handled but are not output to avoid overwriting
+ *   metadata about the original creator of the record.
+ * @param array $readAuth
+ *   Read authorisation tokens.
+ *
+ * @return string
+ *   HTML for the hidden inputs.
  */
-function get_user_profile_hidden_inputs(&$attributes, $args, $exists, $readAuth) {
-  // This is Drupal specific code
-
+function get_user_profile_hidden_inputs(array &$attributes, array $args, $exists, $readAuth) {
+  // This is Drupal specific code.
   $logged_in = hostsite_get_user_field('id') > 0;
   // If the user is not logged in there is no profile so return early.
   if (!$logged_in) {
-    // mark CMS related profile fields as handled as they can't be filled in anyway
-    foreach($attributes as &$attribute) {
-      if ($attribute['system_function']==='cms_user_id' || $attribute['system_function']==='cms_username')
-        $attribute['handled']=true;
+    // Mark CMS related profile fields as handled as they can't be filled in
+    // anyway.
+    foreach ($attributes as &$attribute) {
+      if ($attribute['system_function'] === 'cms_user_id' || $attribute['system_function'] === 'cms_username') {
+        $attribute['handled'] = TRUE;
+      }
     }
     return '';
   }
 
   $hiddens = '';
-  foreach($attributes as &$attribute) {
+  foreach ($attributes as &$attribute) {
     $value = hostsite_get_user_field(strtolower(str_replace(' ', '_', $attribute['untranslatedCaption'])));
-    if ($value && isset($args['copyFromProfile']) && $args['copyFromProfile'] == true) {
+    if ($value && isset($args['copyFromProfile']) && $args['copyFromProfile'] == TRUE) {
       // lookups need to be translated to the termlist_term_id, unless they are already IDs
       if ($attribute['data_type'] === 'L' && !preg_match('/^[\d]+$/', $value)) {
         $terms = data_entry_helper::get_population_data(array(
@@ -265,7 +282,7 @@ function get_user_profile_hidden_inputs(&$attributes, $args, $exists, $readAuth)
         $value = (count($terms) > 0) ? $terms[0]['id'] : '';
       }
 
-      if (isset($args['nameShow']) && $args['nameShow'] == true) {
+      if (isset($args['nameShow']) && $args['nameShow'] == TRUE) {
         // Show the attribute with default value providing we aren't editing, in which case the value should be collected
         // from the saved data (even if that data is blank) so we don't want to overwrite it
         if (!isset($attribute['default']) && !isset($_GET['sample_id']) && !isset($_GET['occurrence_id']))
@@ -273,20 +290,20 @@ function get_user_profile_hidden_inputs(&$attributes, $args, $exists, $readAuth)
       }
       else {
         // Hide the attribute value
-        $attribute['handled']=true;
+        $attribute['handled']=TRUE;
         $attribute['value'] = $value;
       }
     }
     elseif (strcasecmp($attribute['untranslatedCaption'], 'cms user id') == 0) {
       $attribute['value'] = hostsite_get_user_field('id');
-      $attribute['handled']=true; // user id attribute is never displayed
+      $attribute['handled']=TRUE; // user id attribute is never displayed
     }
     elseif (strcasecmp($attribute['untranslatedCaption'], 'cms username') == 0) {
       $attribute['value'] = hostsite_get_user_field('name');
-      $attribute['handled']=true; // username attribute is never displayed
+      $attribute['handled']=TRUE; // username attribute is never displayed
     }
     elseif (strcasecmp($attribute['untranslatedCaption'], 'email') == 0) {
-      if (isset($args['emailShow']) && $args['emailShow'] == true) {
+      if (isset($args['emailShow']) && $args['emailShow'] == TRUE) {
         // Show the email attribute with default value providing we aren't editing, in which case the value should be collected
         // from the saved data (even if that data is blank) so we don't want to overwrite it
         if (!isset($attribute['default']) && !isset($_GET['sample_id']) && !isset($_GET['occurrence_id']))
@@ -295,7 +312,7 @@ function get_user_profile_hidden_inputs(&$attributes, $args, $exists, $readAuth)
       else {
         // Hide the email value
         $attribute['value'] = hostsite_get_user_field('mail');
-        $attribute['handled'] = true;
+        $attribute['handled'] = TRUE;
       }
     }
     elseif ((strcasecmp($attribute['caption'], 'first name') == 0 ||
@@ -303,9 +320,9 @@ function get_user_profile_hidden_inputs(&$attributes, $args, $exists, $readAuth)
         strcasecmp($attribute['caption'], 'surname') == 0)) {
       // This would be the case where the warehouse is configured to store these
       // values but there are no matching profile fields
-      if (!isset($args['nameShow']) || $args['nameShow'] != true) {
+      if (!isset($args['nameShow']) || $args['nameShow'] != TRUE) {
         // Name attributes are not displayed because we have the users login.
-        $attribute['handled'] = true;
+        $attribute['handled'] = TRUE;
       }
     }
     // If we have a value for one of the user login attributes then we need to

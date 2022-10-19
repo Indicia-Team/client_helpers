@@ -181,7 +181,7 @@ class data_entry_helper extends helper_base {
    * @return string
    *   HTML to insert into the page for the autocomplete control.
    *
-   * @link http://code.google.com/p/indicia/wiki/DataModel
+   * @link https://github.com/Indicia-Team/client_helperswiki/DataModel
    */
   public static function autocomplete($options) {
     global $indicia_templates;
@@ -1283,7 +1283,7 @@ JS;
    *
    * @link http://code.google.com/apis/ajaxsearch/terms.html Google AJAX Search
    *   API Terms of Use.
-   * @link http://code.google.com/p/indicia/wiki/GeoreferenceLookupDrivers
+   * @link https://github.com/Indicia-Team/client_helperswiki/GeoreferenceLookupDrivers
    *   Documentation for the driver architecture.
    *
    * @return string
@@ -2168,7 +2168,7 @@ JS;
     $mapPanelOptions = array('initialFeatureWkt' => $options['wkt']);
     if (array_key_exists('presetLayers', $options)) $mapPanelOptions['presetLayers'] = $options['presetLayers'];
     if (array_key_exists('tabDiv', $options)) $mapPanelOptions['tabDiv'] = $options['tabDiv'];
-    require_once('map_helper.php');
+    require_once 'map_helper.php';
     $r .= map_helper::map_panel($mapPanelOptions);
     return $r;
   }
@@ -2375,7 +2375,7 @@ JS;
    *   Use report_helper::report_chart.
    */
   public static function report_chart(array $options) {
-    require_once('report_helper.php');
+    require_once 'report_helper.php';
     return report_helper::report_chart($options);
   }
 
@@ -5286,7 +5286,7 @@ JS;
             $attrInfo[$attr['system_function']] = [];
           }
           $attrInfo[$attr['system_function']][] =
-          'sc' . preg_replace('/[^a-zA-Z0-9]/', '', ucWords($attr['caption']));
+          'sc' . preg_replace('/[^a-zA-Z0-9]/', '', ucWords($attr['untranslatedCaption']));
         }
       }
       self::$indiciaData["dynamicAttrInfo-$options[id]"] = $attrInfo;
@@ -5385,7 +5385,7 @@ HTML;
     }
     $idx = 0;
     foreach ($occAttrControls as $attrId => $oc) {
-      $class = self::speciesChecklistOccAttrClass($options, $idx, $attributes[$attrId]['caption']);
+      $class = self::speciesChecklistOccAttrClass($options, $idx, $attributes[$attrId]['untranslatedCaption']);
       $r .= str_replace(['{content}', '{class}', '{headers}'],
         [
           str_replace('{fieldname}', "$fieldname:occAttr:$attrId", $oc),
@@ -6274,7 +6274,7 @@ JS;
   /**
    * Removes any data entry values persisted into the $_SESSION by Indicia.
    *
-   * @link	http://code.google.com/p/indicia/wiki/TutorialDataEntryWizard
+   * @link	https://github.com/Indicia-Team/client_helperswiki/TutorialDataEntryWizard
    */
   public static function clear_session() {
     foreach ($_SESSION as $name=>$value) {
@@ -6288,7 +6288,7 @@ JS;
    * Adds the data from the $_POST array into the session. Call this method when arriving at the second
    * and subsequent pages of a data entry wizard to keep the previous page's data available for saving later.
    *
-   * @link	http://code.google.com/p/indicia/wiki/TutorialDataEntryWizard
+   * @link	https://github.com/Indicia-Team/client_helperswiki/TutorialDataEntryWizard
    */
   public static function add_post_to_session () {
     foreach ($_POST as $name=>$value) {
@@ -6300,7 +6300,7 @@ JS;
    * Returns an array constructed from all the indicia variables that have previously been stored
    * in the session.
    *
-   * @link	http://code.google.com/p/indicia/wiki/TutorialDataEntryWizard
+   * @link	https://github.com/Indicia-Team/client_helperswiki/TutorialDataEntryWizard
    */
   public static function extract_session_array () {
     $result = [];
@@ -6317,7 +6317,7 @@ JS;
    *
    * @param string $name Name of the session value to retrieve
    * @param string $default Default value to return if not set or empty
-   * @link	http://code.google.com/p/indicia/wiki/TutorialDataEntryWizard
+   * @link	https://github.com/Indicia-Team/client_helperswiki/TutorialDataEntryWizard
    */
   public static function get_from_session($name, $default='') {
     $result = '';
@@ -8082,17 +8082,19 @@ HTML;
    *
    * @param array $response
    *   Response data from the save operation.
-   * @param $bool $update
-   *   True if updating existing data, otherwise false. Alters the success
-   *   message.
+   * @param string $op
+   *   Data operation - C(reate), U(pdate) or D(elete).
    *
    * @return string
    *   Success message.
    */
-  private static function getSuccessMessage($response, $update) {
-    $what = 'data';
-    if ($update) {
-      return lang::get('The information has been updated.');
+  public static function getSuccessMessage($response, $op) {
+    $what = $response['outer_table'];
+    if ($op === 'D') {
+      return lang::get("The $what has been deleted.");
+    }
+    if ($op === 'U') {
+      return lang::get("The $what has been updated.");
     }
     if ($response['success'] === 'multiple records' && $response['outer_table'] === 'sample' && isset($response['struct']['children'])) {
       $count = 0;
@@ -8113,7 +8115,7 @@ HTML;
   }
 
   /**
-   * Output success or errors after a form post.
+   * Output errors after a form post.
    *
    * Takes a response from a call to forward_post_to() and outputs any errors
    * from it onto the screen.
@@ -8123,14 +8125,13 @@ HTML;
    * @param bool $inline Set to true if the errors are to be placed
    *   alongside the controls rather than at the top of the page. Default is
    *   true.
-   * @param $bool $update
+   * @param bool $update
    *   True if updating existing data, otherwise false. Alters the success
    *   message.
    *
    * @see forward_post_to()
    */
-  public static function dump_errors($response, $inline = TRUE, $update = TRUE)
-  {
+  public static function dump_errors($response, $inline = TRUE, $update = TRUE) {
     $r = "";
     if (is_array($response)) {
       // set form mode
@@ -8182,13 +8183,6 @@ HTML;
           $r .= lang::get('A warning occurred when the data was submitted.');
           $r .= '<p class="error">'.$response['error']."</p>\n";
         }
-      }
-      elseif (array_key_exists('success',$response)) {
-        $successMessage = self::getSuccessMessage($response, $update);
-        if (function_exists('hostsite_show_message'))
-          hostsite_show_message($successMessage);
-        else
-          $r .= "<div class=\"ui-widget ui-corner-all ui-state-highlight page-notice\">" . $successMessage . "</div>\n";
       }
     }
     else
@@ -9030,8 +9024,11 @@ HTML;
   public static function extract_media_data($values, $modelName=NULL, $simpleFileInputs = FALSE, $moveSimpleFiles = FALSE, $mediaTypeIdToExtract = NULL) {
     $r = [];
     // legacy reasons, the model name might refer to _image model, rather than _medium.
-    $modelName = preg_replace('/^([a-z_]*)_image/', '${1}_medium', $modelName);
-    $legacyModelName = preg_replace('/^([a-z_]*)_medium/', '${1}_image', $modelName);
+    $legacyModelName = NULL;
+    if ($modelName) {
+      $modelName = preg_replace('/^([a-z_]*)_image/', '${1}_medium', $modelName);
+      $legacyModelName = preg_replace('/^([a-z_]*)_medium/', '${1}_image', $modelName);
+    }
     foreach ($values as $key => $value) {
       if (!empty($value)) {
         // If the field is a path, and the model name matches or we are not filtering on model name

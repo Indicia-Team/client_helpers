@@ -13,8 +13,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package Client
- * @subpackage PrebuiltForms
  * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers/
@@ -24,9 +22,6 @@ require_once 'includes/user.php';
 require_once 'includes/groups.php';
 /**
  * Prebuilt Indicia data form that provides an import wizard
- *
- * @package Client
- * @subpackage PrebuiltForms
  */
 class iform_importer {
 
@@ -372,7 +367,7 @@ class iform_importer {
     // Apply defaults.
     $args = array_merge([
       'occurrenceAssociations' => FALSE,
-      'fieldMap' => array(),
+      'fieldMap' => [],
       'allowDataDeletions' => FALSE,
       'onlyAllowMappedFields' => TRUE,
       'skipMappingIfPossible' => FALSE,

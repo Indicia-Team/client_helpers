@@ -13,8 +13,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package Client
- * @subpackage PrebuiltForms
  * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers/
@@ -22,11 +20,8 @@
 
 /**
  * Prebuilt form for the NPMS Paths survey
- *
- * @package Client
- * @subpackage PrebuiltForms
  */
-require_once('wildflower_count.php');
+require_once 'wildflower_count.php';
 
 class iform_npms_paths extends iform_wildflower_count {
   // Values that $mode can take
@@ -45,9 +40,9 @@ class iform_npms_paths extends iform_wildflower_count {
    */
   public static function get_npms_paths_definition() {
     return array(
-      'title'=>'NPMS Paths',
+      'title' => 'NPMS Paths',
       'category' => 'Forms for specific surveying methods',
-      'description'=>'NPMS paths form based on the Wildflower Count form.'
+      'description' => 'NPMS paths form based on the Wildflower Count form.'
     );
   }
 
@@ -61,7 +56,7 @@ class iform_npms_paths extends iform_wildflower_count {
         'name' => 'grid_report',
         'caption' => 'Grid Report',
         'description' => 'Name of the report to use to populate the grid for selecting existing data from.',
-        'type'=>'string',
+        'type' => 'string',
         'group' => 'User Interface',
         'default' => 'reports_for_prebuilt_forms/dynamic_sample_occurrence_samples'
       ),
@@ -70,7 +65,7 @@ class iform_npms_paths extends iform_wildflower_count {
         'caption' => 'Number of Species Tabs',
         'description' => 'The number of species tabs. This number combined with the Number of Species Per Tab option needs to be
             large enough to accommodate all the species in the species list. If no number is provided then the system assumes 3 tabs.',
-        'type'=>'string',
+        'type' => 'string',
         'group' => 'User Interface',
       ),
       array(
@@ -78,40 +73,40 @@ class iform_npms_paths extends iform_wildflower_count {
         'caption' => 'Number of Species Per Tab',
         'description' => 'The number of species to appear on each species tab. This number combined with the Number of Species Tabs option needs to be
             large enough to accommodate all the species in the species list. If no number is provided then the system assumes 34 species per tab.',
-        'type'=>'string',
+        'type' => 'string',
         'group' => 'User Interface',
       ),
       array(
-          'name'=>'survey_id',
-          'caption'=>'Survey',
-          'description'=>'The survey that data will be posted into.',
-          'type'=>'select',
-          'table'=>'survey',
-          'captionField'=>'title',
-          'valueField'=>'id',
+          'name' => 'survey_id',
+          'caption' => 'Survey',
+          'description' => 'The survey that data will be posted into.',
+          'type' => 'select',
+          'table' => 'survey',
+          'captionField' => 'title',
+          'valueField' => 'id',
           'siteSpecific'=>true
       ),
       array(
-          'fieldname'=>'list_id',
-          'label'=>'Species List ',
-          'helpText'=>'The species list that species can be selected from. This list is pre-populated '.
+          'fieldname' => 'list_id',
+          'label' => 'Species List ',
+          'helpText' => 'The species list that species can be selected from. This list is pre-populated '.
              'into the data entry grids.',
-          'type'=>'select',
-          'table'=>'taxon_list',
-          'valueField'=>'id',
-          'captionField'=>'title',
-          'group'=>'Species',
+          'type' => 'select',
+          'table' => 'taxon_list',
+          'valueField' => 'id',
+          'captionField' => 'title',
+          'group' => 'Species',
           'siteSpecific'=>true
       ),
       array(
-          'fieldname'=>'other_list_id',
-          'label'=>'Other Species List ',
-          'helpText'=>'The species list that species can be selected from for the Other Species tab.',
-          'type'=>'select',
-          'table'=>'taxon_list',
-          'valueField'=>'id',
-          'captionField'=>'title',
-          'group'=>'Species',
+          'fieldname' => 'other_list_id',
+          'label' => 'Other Species List ',
+          'helpText' => 'The species list that species can be selected from for the Other Species tab.',
+          'type' => 'select',
+          'table' => 'taxon_list',
+          'valueField' => 'id',
+          'captionField' => 'title',
+          'group' => 'Species',
           'siteSpecific'=>true
       ),
       array(
@@ -133,23 +128,23 @@ class iform_npms_paths extends iform_wildflower_count {
           'group' => 'Species'
       ),
       array(
-          'name'=>'taxon_filter_field',
-          'caption'=>'Field used to filter taxa',
-          'description'=>'If you want to allow recording for just part of the selected list(s), then select which field you will '.
+          'name' => 'taxon_filter_field',
+          'caption' => 'Field used to filter taxa',
+          'description' => 'If you want to allow recording for just part of the selected list(s), then select which field you will '.
               'use to specify the filter by.',
-          'type'=>'select',
+          'type' => 'select',
           'options' => array(
             'preferred_name' => 'Preferred name of the taxa',
             'taxon_meaning_id' => 'Taxon Meaning ID',
             'taxon_group' => 'Taxon group title'
           ),
           'required'=>false,
-          'group'=>'Species'
+          'group' => 'Species'
       ),
       array(
-          'name'=>'taxon_filter',
-          'caption'=>'Taxon filter items',
-          'description'=>'When filtering the list of available taxa, taxa will not be available for recording unless they match one of the '.
+          'name' => 'taxon_filter',
+          'caption' => 'Taxon filter items',
+          'description' => 'When filtering the list of available taxa, taxa will not be available for recording unless they match one of the '.
               'values you input in this box. Enter one value per line. E.g. enter a list of taxon group titles if you are filtering by taxon group. '.
               'If you provide a single taxon preferred name or taxon meaning ID in this box, then the form is set up for recording just this single '.
               'species. Therefore there will be no species picker control or input grid, and the form will always operate in the single record, non-grid mode. '.
@@ -158,63 +153,63 @@ class iform_npms_paths extends iform_wildflower_count {
               'to a different tab and remove the =species= tab, especially if there are no other occurrence attributes on the form.',
           'type' => 'textarea',
           'required'=>false,
-          'group'=>'Species'
+          'group' => 'Species'
       ),
       array(
-          'name'=>'term_surveyed_given_square',
-          'caption'=>'Termlist terms ID - surveyed given square',
-          'description'=>'The termlists_terms ID corresponding to surveying your given square.',
-          'type'=>'text_input',
+          'name' => 'term_surveyed_given_square',
+          'caption' => 'Termlist terms ID - surveyed given square',
+          'description' => 'The termlists_terms ID corresponding to surveying your given square.',
+          'type' => 'text_input',
           'siteSpecific'=>true
       ),
       array(
-          'name'=>'term_surveyed_other_square',
-          'caption'=>'Termlist terms ID - surveyed other square',
-          'description'=>'The termlists_terms ID corresponding to surveying another square.',
-          'type'=>'text_input',
+          'name' => 'term_surveyed_other_square',
+          'caption' => 'Termlist terms ID - surveyed other square',
+          'description' => 'The termlists_terms ID corresponding to surveying another square.',
+          'type' => 'text_input',
           'siteSpecific'=>true
       ),
       array(
-          'name'=>'term_surveyed_same_square',
-          'caption'=>'Termlist terms ID - surveyed same square',
-          'description'=>'The termlists_terms ID corresponding to surveying the same square as last year.',
-          'type'=>'text_input',
+          'name' => 'term_surveyed_same_square',
+          'caption' => 'Termlist terms ID - surveyed same square',
+          'description' => 'The termlists_terms ID corresponding to surveying the same square as last year.',
+          'type' => 'text_input',
           'siteSpecific'=>true
       ),
       array(
-        'name'=>'attr_surveyed_square',
-        'caption'=>'Custom attribute for surveyed square',
-        'description'=>'The attribute used to store the surveyed square.',
-        'type'=>'select',
-        'table'=>'sample_attribute',
-        'valueField'=>'id',
-        'captionField'=>'caption',
+        'name' => 'attr_surveyed_square',
+        'caption' => 'Custom attribute for surveyed square',
+        'description' => 'The attribute used to store the surveyed square.',
+        'type' => 'select',
+        'table' => 'sample_attribute',
+        'valueField' => 'id',
+        'captionField' => 'caption',
         'siteSpecific'=>true
       ),
       array(
-        'name'=>'attr_surveyed_other_square_reason',
-        'caption'=>'Custom attribute for surveyed other square reason',
-        'description'=>'The attribute used to store the reason given if another square surveyed.',
-        'type'=>'select',
-        'table'=>'sample_attribute',
-        'valueField'=>'id',
-        'captionField'=>'caption',
+        'name' => 'attr_surveyed_other_square_reason',
+        'caption' => 'Custom attribute for surveyed other square reason',
+        'description' => 'The attribute used to store the reason given if another square surveyed.',
+        'type' => 'select',
+        'table' => 'sample_attribute',
+        'valueField' => 'id',
+        'captionField' => 'caption',
         'siteSpecific'=>true
       ),
       array(
-        'name'=>'survey_1_attr',
-        'caption'=>'Survey 1 attribute ID',
-        'description'=>'The sample attribute ID that will store the ID of survey 1.',
-        'type'=>'string',
-        'groupd'=>'Other IForm Parameters',
+        'name' => 'survey_1_attr',
+        'caption' => 'Survey 1 attribute ID',
+        'description' => 'The sample attribute ID that will store the ID of survey 1.',
+        'type' => 'string',
+        'groupd' => 'Other IForm Parameters',
         'required'=>true
       ),
       array(
-        'name'=>'species_tab_instruction',
-        'caption'=>'Species Tab Insturction',
-        'description'=>'Override the default text that appears near to the top of each species tab which gives the user instructions about the tab.',
-        'type'=>'string',
-        'groupd'=>'Other IForm Parameters',
+        'name' => 'species_tab_instruction',
+        'caption' => 'Species Tab Insturction',
+        'description' => 'Override the default text that appears near to the top of each species tab which gives the user instructions about the tab.',
+        'type' => 'string',
+        'groupd' => 'Other IForm Parameters',
         'required'=>false,
       ),
     );
@@ -265,7 +260,7 @@ class iform_npms_paths extends iform_wildflower_count {
       data_entry_helper::enable_validation('entry-form');
       $r .= '<form method="post" action="" id="entry-form">';
       $r .= '<div id="tabs">';
-      data_entry_helper::enable_tabs(array('divId'=>'tabs','navButtons'=>true));
+      data_entry_helper::enable_tabs(array('divId' => 'tabs','navButtons'=>true));
       //User needs to set configuration options for the number of species tabs they want and the
       //number of species to appear on each tab. The user needs to make sure this will result in enough
       //space to display all the required species from the species list.
@@ -278,8 +273,8 @@ class iform_npms_paths extends iform_wildflower_count {
       else
         $numSpeciesPerTab=34;
       $tabsArray=array(
-        '#your-square'=>'Find Place',
-        '#your-plots'=>'Your Path',
+        '#your-square' => 'Find Place',
+        '#your-plots' => 'Your Path',
       );
       //Tell the system that it needs to display the number of tabs specified by the user
       for ($i=0; $i<$numSpeciesTabs; $i++) {
@@ -367,17 +362,17 @@ class iform_npms_paths extends iform_wildflower_count {
     		'<br/><span class="sci binomial"><em>{taxon}</em></span> {authority}</div>';
     $r .= data_entry_helper::species_checklist(array(
         'id'=>"species-$offset",
-        'label'=>'Species',
+        'label' => 'Species',
         'listId'=>$args['list_id'],
         'columns'=>2,
-        'rowInclusionCheck'=>'hasData',
-        'class'=>'checklist',
+        'rowInclusionCheck' => 'hasData',
+        'class' => 'checklist',
         'survey_id' => $args['survey_id'],
         'extraParams'=>$auth['read'] + array('taxon_list_id' => $args['list_id'], 'limit'=>$limit,
-            'offset'=>$offset, 'orderby'=>'common', 'sortdir'=>'ASC', 'view'=>'detail'),
+            'offset'=>$offset, 'orderby' => 'common', 'sortdir' => 'ASC', 'view' => 'detail'),
         'occAttrClasses'=>array('coverage'),
-        'speciesNameFilterMode'=>'preferred',
-        'language'=>'eng',
+        'speciesNameFilterMode' => 'preferred',
+        'language' => 'eng',
         // prevent multiple hits to the db - the first grid can load all the species data
         'useLoadedExistingRecords' => $offset>0
     ));
@@ -440,7 +435,7 @@ class iform_npms_paths extends iform_wildflower_count {
       $r .= '<input type="button" value="'.lang::get('LANG_Add_Sample_Single').'" onclick="window.location.href=\''.url("node/$nid", array('query' => array('new'))).'\'">';
       $r .= '<input type="button" value="'.lang::get('LANG_Add_Sample_Grid').'" onclick="window.location.href=\''.url("node/$nid", array('query' => array('new&gridmode'))).'\'">';
     } else {
-      $r .= '<input type="button" value="'.lang::get('LANG_Add_Sample').'" onclick="window.location.href=\''.url("node/$nid", array('query' => array('new'=>''))).'\'">';
+      $r .= '<input type="button" value="'.lang::get('LANG_Add_Sample').'" onclick="window.location.href=\''.url("node/$nid", array('query' => array('new' => ''))).'\'">';
     }
     $r .= '</form>';
     return $r;
@@ -479,16 +474,16 @@ class iform_npms_paths extends iform_wildflower_count {
   protected static function getReportActions() {
     return array(array('display' => 'Actions',
                        'actions' => array(array('caption' => lang::get('Edit Survey 1'),
-                                                'url'=>'{currentUrl}',
+                                                'url' => '{currentUrl}',
                                                 'urlParams' => array('edit' => '', 'sample_id' => '{sample_id1}')
                                                ),
                                           array('caption' => lang::get('Add Survey 2'),
-                                                'url'=>'{currentUrl}',
+                                                'url' => '{currentUrl}',
                                                 'urlParams' => array('new' => '', 'sample_id' => '{sample_id1}'),
                                                 'visibility_field' => 'done1'
                                                ),
                                           array('caption' => lang::get('Edit Survey 2'),
-                                                'url'=>'{currentUrl}',
+                                                'url' => '{currentUrl}',
                                                 'urlParams' => array('edit' => '', 'sample_id' => '{sample_id2}'),
                                                 'visibility_field' => 'done2'
                                                ),
@@ -594,31 +589,31 @@ class iform_npms_paths extends iform_wildflower_count {
     $r .= '</tr></thead>
   <tbody>';
     $coverageAttrs = data_entry_helper::getAttributes(array(
-        'valuetable'=>'sample_attribute_value',
-        'attrtable'=>'sample_attribute',
+        'valuetable' => 'sample_attribute_value',
+        'attrtable' => 'sample_attribute',
         'fieldprefix'=>"$prefix:smpAttr",
-        'extraParams'=>$auth + array('inner_structure_block'=>'Habitats'),
+        'extraParams'=>$auth + array('inner_structure_block' => 'Habitats'),
         'survey_id'=>$args['survey_id'],
     ));
     $otherInfoAttrs = data_entry_helper::getAttributes(array(
-        'valuetable'=>'sample_attribute_value',
-        'attrtable'=>'sample_attribute',
+        'valuetable' => 'sample_attribute_value',
+        'attrtable' => 'sample_attribute',
         'fieldprefix'=>"$prefix:smpAttr",
-        'extraParams'=>$auth + array('inner_structure_block'=>'HabitatsOtherInfo'),
+        'extraParams'=>$auth + array('inner_structure_block' => 'HabitatsOtherInfo'),
         'survey_id'=>$args['survey_id'],
     ));
     if (isset($_GET['sample_id'])) {
       // use a static here to load all the subsample data in one hit
       if (!isset($existingSubSamples)) {
-        $attrIds = array();
+        $attrIds = [];
         foreach ($coverageAttrs as $attr)
           $attrIds[] = $attr['attributeId'];
         foreach ($otherInfoAttrs as $attr)
           $attrIds[] = $attr['attributeId'];
         $existingSubSamples = data_entry_helper::get_population_data(array(
           'nocache'=>true,
-          'report'=>'library/samples/samples_list_for_parent_sample',
-          'extraParams'=>$auth + array('sample_id'=>$_GET['sample_id'], 'date_from'=>'', 'date_to'=>'', 'sample_method_id'=>'',
+          'report' => 'library/samples/samples_list_for_parent_sample',
+          'extraParams'=>$auth + array('sample_id'=>$_GET['sample_id'], 'date_from' => '', 'date_to' => '', 'sample_method_id' => '',
               'smpattrs'=>implode(',', $attrIds))
         ));
       }

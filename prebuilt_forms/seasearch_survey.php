@@ -13,15 +13,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package Client
- * @subpackage PrebuiltForms
  * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers/
  */
 
-require_once('includes/dynamic.php');
-require_once('dynamic_sample_occurrence.php');
+require_once 'includes/dynamic.php';
+require_once 'dynamic_sample_occurrence.php';
 
 class iform_seasearch_survey extends iform_dynamic_sample_occurrence {
 
@@ -29,19 +27,19 @@ class iform_seasearch_survey extends iform_dynamic_sample_occurrence {
    * @var array List of custom sample attributes in array keyed by caption. Helps to make this form
    * ID independent.
    */
-  private static $attrsByCaption = array();
+  private static $attrsByCaption = [];
 
   /**
    * @var array List of custom sample attributes in array keyed by caption for the habitat level of the
    * hierarchy. Helps to make this form ID independent.
    */
-  private static $habitatAttrsByCaption = array();
+  private static $habitatAttrsByCaption = [];
 
   /**
    * @var array Structured array containing data for habitat subsamples when loading existing
    * data.
    */
-  private static $existingSubsampleData = array();
+  private static $existingSubsampleData = [];
 
   /**
    * Return the form metadata.
@@ -49,9 +47,9 @@ class iform_seasearch_survey extends iform_dynamic_sample_occurrence {
    */
   public static function get_seasearch_survey_definition() {
     return array(
-      'title'=>'Seasearch survey form',
+      'title' => 'Seasearch survey form',
       'category' => 'Forms for specific surveying methods',
-      'description'=>'Form for a seasearch survey. Requires the correct survey structure for Seasearch.'
+      'description' => 'Form for a seasearch survey. Requires the correct survey structure for Seasearch.'
     );
   }
 
@@ -64,26 +62,26 @@ class iform_seasearch_survey extends iform_dynamic_sample_occurrence {
       parent::get_parameters(),
       array(
         array(
-          'name'=>'habitat_sample_method_id',
-          'caption'=>'Habitat sample method',
-          'description'=>'Select the sample method type for the habitat data.',
+          'name' => 'habitat_sample_method_id',
+          'caption' => 'Habitat sample method',
+          'description' => 'Select the sample method type for the habitat data.',
           'required'=>true,
           'type' => 'select',
-          'table'=>'termlists_term',
-          'captionField'=>'term',
-          'valueField'=>'id',
-          'extraParams' => array('termlist_external_key'=>'indicia:sample_methods'),
-          'group'=>'Attribute Setup'
+          'table' => 'termlists_term',
+          'captionField' => 'term',
+          'valueField' => 'id',
+          'extraParams' => array('termlist_external_key' => 'indicia:sample_methods'),
+          'group' => 'Attribute Setup'
         ),
         array(
-          'name'=>'sacforp_attr_id',
-          'caption'=>'SACFORP attribute',
-          'description'=>'Custom attribute used for recording SACFORP for each record.',
-          'type'=>'select',
-          'table'=>'occurrence_attribute',
-          'valueField'=>'id',
-          'captionField'=>'caption',
-          'group'=>'Attribute Setup'
+          'name' => 'sacforp_attr_id',
+          'caption' => 'SACFORP attribute',
+          'description' => 'Custom attribute used for recording SACFORP for each record.',
+          'type' => 'select',
+          'table' => 'occurrence_attribute',
+          'valueField' => 'id',
+          'captionField' => 'caption',
+          'group' => 'Attribute Setup'
         ),
       )
     );
@@ -152,7 +150,7 @@ class iform_seasearch_survey extends iform_dynamic_sample_occurrence {
     ));
     foreach($samples as $sample) {
       self::$existingSubsampleData['sample:'.$sample['id']] = array('sample_id'=>$sample['id'],
-        'comment' => $sample['comment'], 'values' => array(), 'media' => array());
+        'comment' => $sample['comment'], 'values' => [], 'media' => []);
     }
     $values = report_helper::get_report_data(array(
       'dataSource' => 'library/sample_attribute_values/subsample_attribute_values',
@@ -226,7 +224,7 @@ class iform_seasearch_survey extends iform_dynamic_sample_occurrence {
         // Is this an existing habitat we are posting against?
         $habitatKey = isset($_POST["habitat_sample_id:$idx"]) ? 'sample:'.$_POST["habitat_sample_id:$idx"] : "idx:$idx";
         if (!isset(self::$existingSubsampleData[$habitatKey]))
-          self::$existingSubsampleData[$habitatKey] = array('values'=>array(), 'media'=>array());
+          self::$existingSubsampleData[$habitatKey] = array('values'=>[], 'media'=>[]);
         self::grab_posted_value_for($idx, $habitatKey, $habitatName['attributeId'], 'T');
         self::grab_posted_value_for($idx, $habitatKey, $biotopeCode['attributeId'], 'T');
         self::grab_posted_value_for($idx, $habitatKey, $seabedType['attributeId'], 'L');
@@ -283,7 +281,7 @@ class iform_seasearch_survey extends iform_dynamic_sample_occurrence {
       'captionField' => 'term',
       'extraParams' => $auth['read'] + array(
           'termlist_id'=>$seabedType['termlist_id'],
-          'view'=>'cache'
+          'view' => 'cache'
         ),
       'afterControl' =>
         data_entry_helper::text_input(array(
@@ -305,7 +303,7 @@ class iform_seasearch_survey extends iform_dynamic_sample_occurrence {
       'extraParams' => $auth['read'] + array(
           'label' => lang::get('other'),
           'termlist_id'=>$communities['termlist_id'],
-          'view'=>'cache',
+          'view' => 'cache',
           'orderby' => 'sort_order'
         ),
       'labelClass' => 'auto',
@@ -338,7 +336,7 @@ class iform_seasearch_survey extends iform_dynamic_sample_occurrence {
       'extraParams' => $auth['read'] + array(
           'label' => lang::get('other'),
           'termlist_id'=>$sedimentTypes['termlist_id'],
-          'view'=>'cache'
+          'view' => 'cache'
         )
     ));
     $template .= data_entry_helper::file_box(array(
@@ -356,30 +354,30 @@ class iform_seasearch_survey extends iform_dynamic_sample_occurrence {
 
   protected static function get_control_quantitativedataleft($auth, $args, $tabAlias, $options) {
     $depthLimitAttrs = array(
-      'upper depth from sea level'=>'Upper (from sea level) (i.e. minimum)',
-      'lower depth from sea level'=>'Lower (from sea level) (i.e. maximum)',
-      'upper depth from chart datum'=>'Upper (from chart datum)',
-      'lower depth from chart datum'=>'Lower (from chart datum)'
+      'upper depth from sea level' => 'Upper (from sea level) (i.e. minimum)',
+      'lower depth from sea level' => 'Lower (from sea level) (i.e. maximum)',
+      'upper depth from chart datum' => 'Upper (from chart datum)',
+      'lower depth from chart datum' => 'Lower (from chart datum)'
     );
     $substratumAttrs = array(
-      '% bedrock'=>'Bedrock type?:',
-      '% boulders - very large > 1.0m'=>'Boulders - very large > 1.0m',
-      '% boulders - large 0.5 - 1.0 m'=>'Boulders - large 0.5 - 1.0m',
-      '% boulders - small 0.25 - 0.5m'=>'Boulders - small 0.25 - 0.5m',
-      '% cobbles (fist - head size)'=>'Cobbles (fist - head size)',
-      '% pebbles (50p - fist size)'=>'Pebbles (50p - fist size)',
-      '% gravel - stone'=>'Gravel - stone',
-      '% gravel - shell fragments'=>'Gravel - shell fragments',
-      '% sand - coarse'=>'Sand - coarse',
-      '% sand - medium'=>'Sand - medium',
-      '% sand - fine'=>'Sand - fine',
-      '% mud'=>'Mud',
-      '% shells (empty - or as large pieces)'=>'Shells (empty - or as large pieces)',
-      '% shells (living - eg mussels, limpets)'=>'Shells (living - eg mussels, limpets',
-      '% artificial - metal'=>'Artificial - metal',
-      '% atificial - concrete'=>'Artificial - concrete',
-      '% artificial - wood'=>'Artificial - wood',
-      '% other (state)'=>'Other (state)'
+      '% bedrock' => 'Bedrock type?:',
+      '% boulders - very large > 1.0m' => 'Boulders - very large > 1.0m',
+      '% boulders - large 0.5 - 1.0 m' => 'Boulders - large 0.5 - 1.0m',
+      '% boulders - small 0.25 - 0.5m' => 'Boulders - small 0.25 - 0.5m',
+      '% cobbles (fist - head size)' => 'Cobbles (fist - head size)',
+      '% pebbles (50p - fist size)' => 'Pebbles (50p - fist size)',
+      '% gravel - stone' => 'Gravel - stone',
+      '% gravel - shell fragments' => 'Gravel - shell fragments',
+      '% sand - coarse' => 'Sand - coarse',
+      '% sand - medium' => 'Sand - medium',
+      '% sand - fine' => 'Sand - fine',
+      '% mud' => 'Mud',
+      '% shells (empty - or as large pieces)' => 'Shells (empty - or as large pieces)',
+      '% shells (living - eg mussels, limpets)' => 'Shells (living - eg mussels, limpets',
+      '% artificial - metal' => 'Artificial - metal',
+      '% atificial - concrete' => 'Artificial - concrete',
+      '% artificial - wood' => 'Artificial - wood',
+      '% other (state)' => 'Other (state)'
     );
     $r = '<p>' . lang::get('Enter the recorded depth range for each habitat.') . '</p>';
     $r .= '<table id="depth-limits" class="quantitative">';
@@ -519,7 +517,7 @@ class iform_seasearch_survey extends iform_dynamic_sample_occurrence {
    */
   public static function get_submission($values, $args, $nid) {
     // First, build an array of the field values for each habitat sample.
-    $habitatSamples = array();
+    $habitatSamples = [];
     foreach ($values as $key=>$value) {
       if (substr_count($key, ':')===3) {
         $parts = explode(':', $key, 4);
@@ -530,7 +528,7 @@ class iform_seasearch_survey extends iform_dynamic_sample_occurrence {
             // habitat number is the last part of the attribute field name
             $id = array_pop($parts);
             if (!isset($habitatSamples["habitat$id"]))
-              $habitatSamples["habitat$id"]=array();
+              $habitatSamples["habitat$id"]=[];
             // Skip empty new attribute values.
             if (!empty($parts[2]) || !empty($value)) {
               // remove empty stuff from the attribute name (e.g. an unused space for the existing value ID, if a new attribute value).
@@ -548,7 +546,7 @@ class iform_seasearch_survey extends iform_dynamic_sample_occurrence {
       if (preg_match('/^sample_medium(?P<id>\d)/', $key, $matches)) {
         $parts = explode(':', $key);
         if (!isset($habitatSamples["habitat$matches[id]"]))
-          $habitatSamples["habitat$matches[id]"]=array();
+          $habitatSamples["habitat$matches[id]"]=[];
         $parts[0] = 'sample_medium';
         $habitatSamples["habitat$matches[id]"][implode(':', $parts)] = $value;
       }
@@ -574,11 +572,11 @@ class iform_seasearch_survey extends iform_dynamic_sample_occurrence {
     unset($buddyPairSubmission['fields']['habitat-count']);
     // Get the list of records implied by the SACFOR data for each habitat. At this point we'll create 1 big list and split
     // it across the habitats later.
-    $occurrences = submission_builder::wrap_species_checklist($values, true, array(), array());
+    $occurrences = submission_builder::wrap_species_checklist($values, true, [], []);
     // now work out which habitat contains which occurrence
-    $habitatOccurrences = array();
+    $habitatOccurrences = [];
     foreach (array_keys($habitatSamples) as $habitatId)
-      $habitatOccurrences[$habitatId] = array();
+      $habitatOccurrences[$habitatId] = [];
     foreach ($occurrences as $uniqueId => $occurrence) {
       // for existing occurrences, they are already linked to a sample via the SampleIDX field.
       if (!empty($occurrence['model']['fields']['sampleIDX'])) {
@@ -598,7 +596,7 @@ class iform_seasearch_survey extends iform_dynamic_sample_occurrence {
 
     }
     // now create the submodel data for each habitat.
-    $buddyPairSubmission['subModels'] = array();
+    $buddyPairSubmission['subModels'] = [];
     // copy the basic sample data into each set of habitat subsample values
     foreach ($habitatSamples as $habitatId => &$habitatSample) {
       $habitatIdx = str_replace('habitat', '', $habitatId);
@@ -616,7 +614,7 @@ class iform_seasearch_survey extends iform_dynamic_sample_occurrence {
       }
       $habitatSubmission = submission_builder::wrap_with_images($habitatSample, 'sample');
       if (!isset($habitatSubmission['subModels']))
-        $habitatSubmission['subModels'] = array();
+        $habitatSubmission['subModels'] = [];
       $habitatSubmission['subModels'] += $habitatOccurrences[$habitatId];
       $buddyPairSubmission['subModels'][] = array(
         'fkId' => 'parent_id',
