@@ -32,7 +32,7 @@
  */
 
 
-require_once 'includes/baseDynamicDetails.php';
+require_once 'includes/BaseDynamicDetails.php';
 require_once 'includes/report.php';
 require_once 'includes/groups.php';
 
