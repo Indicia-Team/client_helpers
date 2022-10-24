@@ -881,6 +881,8 @@ HTML;
       'pleaseSelect' => '- Please select -',
       'savingMatchesFor' => 'Saving matches for {1}',
       'savedMatches' => 'Matches saved',
+      'severalMatches' => 'Several possible matches were found for {1}. Click on the panel below to select the correct match, or search for a match using the search box above.',
+      'synOf' => 'Syn. of',
       'typeSpeciesNameToSearch' => 'Type the start of a species or taxon name to search',
     ]);
     $lang = [
