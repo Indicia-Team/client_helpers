@@ -749,6 +749,10 @@ HTML;
       }
       // Find variants of field names for auto matching.
       switch ($field) {
+        case 'sample:date':
+          $alt = ' data-alt="eventdate"';
+          break;
+
         case 'sample:entered_sref':
           $alt = ' data-alt="gridref,gridreference,spatialref,spatialreference,mapref,mapreference"';
           break;
@@ -758,7 +762,7 @@ HTML;
           break;
 
         case 'occurrence:fk_taxa_taxon_list':
-          $alt = ' data-alt="species,speciesname,taxon,taxonname"';
+          $alt = ' data-alt="species,speciesname,taxon,taxonname,scientificname"';
           break;
 
         default:
