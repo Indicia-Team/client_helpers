@@ -2675,6 +2675,11 @@ JS;
    *     input.
    *   * disallowManualSrefUpdate - set to true to prevent the user from
    *     setting the value of the sref control (it must then be set by code).
+   *   * outsideBoundsBehaviour - set to "warn" to show a warning if trying to
+   *     add a record outside the boundary shown on the map, or "block" to
+   *     prevent record submission in this case. The boundary might be a group
+   *     boundary, or the location identified by the "Location boundary to
+   *     draw" setting.
    *
    * @return string
    *   HTML to insert into the page for the spatial reference control.
@@ -2696,6 +2701,7 @@ JS;
       'findMeButton' => TRUE,
       'isFormControl' => TRUE,
       'disallowManualSrefUpdate' => FALSE,
+      'outsideBoundsBehaviour' => NULL,
     ], $options);
     $rules = [];
     if (!empty($options['validation'])) {
@@ -2758,6 +2764,12 @@ mapSettingsHooks.push(function(settings) {
 $('#$options[id]').attr('readonly', true);
 
 JS;
+    }
+    self::$indiciaData['outsideBoundsBehaviour'] = $options['outsideBoundsBehaviour'];
+    if ($options['outsideBoundsBehaviour']) {
+      self::addLanguageStringsToJs('sref_textbox', [
+        'outsideBoundsWarning' => 'The location you have selected is not in the area being recorded.',
+      ]);
     }
     return $r;
   }

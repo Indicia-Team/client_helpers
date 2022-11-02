@@ -2186,9 +2186,11 @@ HTML;
   public static function getIndiciaData() {
     require_once 'prebuilt_forms/includes/language_utils.php';
     global $indicia_templates;
-    self::$indiciaData['btnClasses'] = [
-      'default' => $indicia_templates['buttonDefaultClass'],
-      'highlighted' => $indicia_templates['buttonHighlightedClass'],
+    // Add some useful templates.
+    self::$indiciaData['templates'] = [
+      'warningBox' => $indicia_templates['warningBox'],
+      'buttonDefaultClass' => $indicia_templates['buttonDefaultClass'],
+      'buttonHighlightedClass' => $indicia_templates['buttonHighlightedClass'],
     ];
     self::$indiciaData['formControlClass'] = $indicia_templates['formControlClass'];
     self::$indiciaData['inlineErrorClass'] = $indicia_templates['error_class'];
