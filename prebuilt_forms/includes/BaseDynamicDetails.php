@@ -128,7 +128,7 @@ HTML;
           $iform_page_metadata['image'] = "$imageFolder$medium[path]";
           $firstImage = FALSE;
         }
-        $html .= iform_report_get_gallery_item('sample', $medium, $options['imageSize']);
+        $html .= iform_report_get_gallery_item(str_replace('_medium', '', $settings['table']), $medium, $options['imageSize']);
       }
       $html .= '</ul>';
     }
