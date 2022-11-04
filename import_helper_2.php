@@ -439,7 +439,7 @@ class import_helper_2 extends helper_base {
       $templatePickerHtml = data_entry_helper::select([
         'fieldname' => 'import_template_id',
         'label' => lang::get('Template'),
-        'helpText' => lang::get('If you would like to import similar data to a previuos import, choose one of the templates you saved previously to re-use the settings'),
+        'helpText' => lang::get('If you would like to import similar data to a previous import, choose one of the templates you saved previously to re-use the settings'),
         'lookupValues' => $templateOptions,
         'blankText' => lang::get('-no template selected-'),
       ]);
