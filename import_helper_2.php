@@ -603,7 +603,8 @@ HTML;
    * @param string $lookupValues
    *   A lookup values string, in format key:value,key:value.
    * @param array $restrictToKeys
-   *   A list of keys to include in the returned lookup values string.
+   *   A list of keys to include in the returned lookup values string. Keys can
+   *   have the label specified if a colon appended.
    *
    * @return string
    *   Lookup values string which only includes entries whose keys are in the
@@ -618,7 +619,12 @@ HTML;
     }
     $newLookupList = [];
     foreach ($restrictToKeys as $key) {
-      $newLookupList[] = "$key:" . $originalLookupsAssoc[$key];
+      if (strpos(':', $key) === FALSE) {
+        $newLookupList[] = "$key:" . $originalLookupsAssoc[$key];
+      }
+      else {
+        $newLookupList[] = $key;
+      }
     }
     return implode(',', $newLookupList);
   }
