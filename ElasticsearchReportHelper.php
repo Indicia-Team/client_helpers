@@ -49,7 +49,14 @@ class ElasticsearchReportHelper {
    * @var bool
    *   Set to true when done to prevent double-initialisation.
    */
-  private static $proxyEnabled = false;
+  private static $proxyEnabled = FALSE;
+
+  /**
+   * Remember if an attempt made to enable which failed.
+   *
+   * @var bool
+   */
+  private static $proxyEnableFailed = FALSE;
 
   /**
    * List of ES fields with caption and description for each.
@@ -299,22 +306,39 @@ class ElasticsearchReportHelper {
    *
    * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-enableElasticsearchProxy
    */
+  /**
+   * Prepares the page for interacting with the Elasticsearch proxy.
+   *
+   * @param int $nid
+   *   Node ID or NULL if not on a node.
+   *
+   * @return bool
+   *   True if enabled, false if there was an error and it failed to enable.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-enableElasticsearchProxy
+   */
   public static function enableElasticsearchProxy($nid = NULL) {
-    if (!self::$proxyEnabled) {
-      helper_base::add_resource('datacomponents');
+    if (!self::$proxyEnabled && !self::$proxyEnableFailed) {
       // Retrieve the Elasticsearch mappings.
-      self::getMappings($nid);
-      // Prepare the stuff we need to pass to the JavaScript.
-      $mappings = self::$esMappings;
-      $esProxyAjaxUrl = hostsite_get_url('iform/esproxy');
-      helper_base::$indiciaData['esProxyAjaxUrl'] = $esProxyAjaxUrl;
-      helper_base::$indiciaData['esSources'] = [];
-      helper_base::$indiciaData['esMappings'] = $mappings;
-      helper_base::$indiciaData['gridMappingFields'] = self::MAPPING_FIELDS;
-      $config = hostsite_get_es_config($nid);
-      helper_base::$indiciaData['esVersion'] = (int) $config['es']['version'];
-      self::$proxyEnabled = TRUE;
+      try {
+        self::getMappings($nid);
+        helper_base::add_resource('datacomponents');
+        // Prepare the stuff we need to pass to the JavaScript.
+        $mappings = self::$esMappings;
+        $esProxyAjaxUrl = hostsite_get_url('iform/esproxy');
+        helper_base::$indiciaData['esProxyAjaxUrl'] = $esProxyAjaxUrl;
+        helper_base::$indiciaData['esSources'] = [];
+        helper_base::$indiciaData['esMappings'] = $mappings;
+        helper_base::$indiciaData['gridMappingFields'] = self::MAPPING_FIELDS;
+        $config = hostsite_get_es_config($nid);
+        helper_base::$indiciaData['esVersion'] = (int) $config['es']['version'];
+        self::$proxyEnabled = TRUE;
+      }
+      catch (Exception $e) {
+        self::$proxyEnableFailed = TRUE;
+      }
     }
+    return self::$proxyEnabled;
   }
 
   /**

@@ -431,11 +431,13 @@ class iform_species_details_2 extends BaseDynamicDetails {
    *   Page HTML.
    */
   public static function get_form($args, $nid) {
-    iform_load_helpers(['ElasticsearchReportHelper']);
-    ElasticsearchReportHelper::enableElasticsearchProxy($nid);
-    $r = parent::get_form($args, $nid);
-    return $r;
-  }
+    $enabled = ElasticsearchReportHelper::enableElasticsearchProxy($nid);
+    if ($enabled) {
+      return parent::get_form($args, $nid);
+    }
+    global $indicia_templates;
+    return str_replace('{message}', lang::get('This page cannot be accessed due to the server being unavailable.'), $indicia_templates['warningBox']);
+ }
 
   /**
    * Override the get_form_html function.
@@ -939,7 +941,7 @@ class iform_species_details_2 extends BaseDynamicDetails {
     return $r;
   }
 
-  /**
+  /** */
    * Chart to display temporal distribution of records through the year.
    *
    * @return string
