@@ -116,25 +116,40 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
   public static function get_parameters() {
     $defaultFormStructure = <<<TXT
 =Species=
+
 ?Please enter the species you saw and any other information about them.?
+
 [species]
+
 @resizeWidth=1500
 @resizeHeight=1500
+
 [species attributes]
+
 [*]
+
 =Place=
-?Please provide the spatial reference of the record. You can enter
-the reference directly, or search for a place then click on the map
-to set it.?
+
+?Please provide the spatial reference of the record. You can enter the reference directly, or search for a place then click on the map to set it.?
+
 [spatial reference]
+
 [place search]
+
 [map]
+
 [*]
+
 =Other Information=
+
 ?Please provide the following additional information.?
+
 [date]
+
 [sample comment]
+
 [*]
+
 =*=
 TXT;
     $formStructureDescription = <<<TXT
@@ -446,7 +461,7 @@ TXT;
         ],
         [
           'fieldname' => 'list_id',
-          'label' => 'Species List ',
+          'label' => 'Species list',
           'helpText' => 'The species list that species can be selected from.
             This list is pre-populated into the grid when doing grid based data
             entry, or provides the list which a species can be picked from when
@@ -461,7 +476,7 @@ TXT;
         ],
         [
           'fieldname' => 'extra_list_id',
-          'label' => 'Extra Species List',
+          'label' => 'List of species that can be added to the grid',
           'helpText' => 'The second species list that species can be selected
             from. This list is available for additional taxa being added to the
             grid when doing grid based data entry. When using the single record
@@ -782,13 +797,12 @@ TXT;
           'name' => 'defaults',
           'caption' => 'Default Values',
           'description' => 'Supply default values for each field as required. On
-            each line, enter fieldname=value. For custom attributes, the
-            fieldname is the untranslated caption. For other fields, it is the
-            model and fieldname, e.g. occurrence.record_status. For date fields,
-            use today to dynamically default to today\'s date. NOTE, currently
-            only supports occurrence:record_status and sample:date but will be
-            extended in future.',
+            each line, enter fieldname=value. For date fields, use the value "today"
+            to dynamically default to today\'s date. NOTE, only supports
+            occurrence:record_status, occurrence:release_status, occurrence:licence_id
+            and sample:date.',
           'type' => 'textarea',
+          'required' => FALSE,
           'default' => 'occurrence:record_status=C',
         ],
         [
@@ -3072,21 +3086,40 @@ JS;
     if (!isset($args['structure']) || empty($args['structure'])) {
       $args['structure'] = <<<TXT
 =Species=
+
 ?Please enter the species you saw and any other information about them.?
+
 [species]
+
+@resizeWidth=1500
+@resizeHeight=1500
+
 [species attributes]
+
 [*]
+
 =Place=
-?Please provide the spatial reference of the record. You can enter the reference directly, or search for a place then click on the map.?
-"[place search]
+
+?Please provide the spatial reference of the record. You can enter the reference directly, or search for a place then click on the map to set it.?
+
 [spatial reference]
+
+[place search]
+
 [map]
+
 [*]
+
 =Other Information=
+
 ?Please provide the following additional information.?
+
 [date]
+
 [sample comment]
+
 [*]
+
 =*=
 TXT;
     }
