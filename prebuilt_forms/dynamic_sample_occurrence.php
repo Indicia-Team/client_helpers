@@ -611,6 +611,16 @@ TXT;
           'group' => 'Species',
         ],
         [
+          'name' => 'verification_info_columns',
+          'caption' => 'Verification Information Columns',
+          'description' => 'Include columns to show verified by and verified on ' . 
+            'information in the species grid',
+          'type' => 'boolean',
+          'required' => FALSE,
+          'default' => FALSE,
+          'group' => 'Species',
+        ],
+        [
           'name' => 'occurrence_comment',
           'caption' => 'Occurrence Comment',
           'description' => 'Should an input box be present for a comment against
@@ -1609,6 +1619,7 @@ HTML;
       'occAttrOptions' => $attrOptions['occ'],
       'smpAttrOptions' => $attrOptions['smp'],
       'systems' => $args['spatial_systems'],
+      'verificationInfoColumns' => $args['verification_info_columns'],
       'occurrenceComment' => $args['occurrence_comment'],
       'occurrenceSensitivity' => (isset($args['occurrence_sensitivity']) ? $args['occurrence_sensitivity'] : FALSE),
       'occurrenceImages' => $args['occurrence_images'],
@@ -1838,6 +1849,7 @@ HTML;
       'columns' => 1,
       'extraParams' => $extraParams,
       'survey_id' => $args['survey_id'],
+      'verificationInfoColumns' => $args['verification_info_columns'],
       'occurrenceComment' => $args['occurrence_comment'],
       'occurrenceSensitivity' => (isset($args['occurrence_sensitivity']) ? $args['occurrence_sensitivity'] : FALSE),
       'occurrenceImages' => $args['occurrence_images'],
@@ -1860,6 +1872,9 @@ HTML;
     }
     if ($args['extra_list_id'] && !isset($options['lookupListId'])) {
       $species_ctrl_opts['lookupListId'] = $args['extra_list_id'];
+    }
+    if ($args['verification_info_columns'] && !isset($options['verification_info_columns'])) {
+      $species_ctrl_opts['verificationInfoColumns'] = $args['verification_info_columns'];
     }
     // We only do the work to setup the filter if the user has specified a
     // filter in the box.
@@ -2164,6 +2179,25 @@ HTML;
       $attrSpecificOptions = [];
       self::parseForAttrSpecificOptions($options, $ctrlOptions, $attrSpecificOptions);
       $r = '';
+      if ($args['verification_info_columns'] && (!empty($_GET['sample_id']) || !empty($_GET['occurrence_id']))) {
+        $verifiedByValue = data_entry_helper::$entity_to_load['occurrence:verified_by'];
+        if (!empty($verifiedByValue)) {
+          $r .= '<div id="ctrl-wrap-occurrence-verified_by" class="form-row ctrl-wrap">';
+          $r .= '<label for="occurrence:verified_by">' . lang::get('Verified by:') . '</label>';
+          $r .= '<label type="text" id="occurrence:verified_by" name="occurrence:verified_by" >' . $verifiedByValue . '</label>';
+          $r .= '</div>';
+        }
+        $verifiedOnValue = data_entry_helper::$entity_to_load['occurrence:verified_on'];
+        if (!empty(helper_base::$date_format)) {
+          $verifiedOnValue = (new \DateTime($verifiedOnValue))->format(helper_base::$date_format);
+        }
+        if (!empty($verifiedOnValue)) {
+          $r .= '<div id="ctrl-wrap-occurrence-verified_on" class="form-row ctrl-wrap">';
+          $r .= '<label for="occurrence:verified_on">' . lang::get('Verified on:') . '</label>';
+          $r .= '<label type="text" id="occurrence:verified_on" name="occurrence:verified_on" >' . $verifiedOnValue . '</label>';
+          $r .= '</div>';
+        }
+      }
       if ($args['occurrence_sensitivity']) {
         $sensitivity_controls = get_attribute_html(self::$occAttrs, $args, $ctrlOptions, 'sensitivity', $attrSpecificOptions);
         $r .= data_entry_helper::sensitivity_input([
@@ -3122,6 +3156,9 @@ JS;
 
 =*=
 TXT;
+    }
+    if (!isset($args['verification_info_columns'])) {
+      $args['verification_info_columns'] = FALSE;
     }
     if (!isset($args['occurrence_comment'])) {
       $args['occurrence_comment'] = FALSE;

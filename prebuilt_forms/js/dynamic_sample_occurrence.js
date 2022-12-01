@@ -346,4 +346,10 @@ jQuery(document).ready(function docReady($) {
   // If the Client Selects Taxon Filter option is enabled, attach an event
   // handler to the select control that is added.
   $('#taxonListSelect').change(changeTaxonList);
+
+  // In single species mode need to put line through verification information to show it is no longer valid
+  $('#occurrence\\:taxa_taxon_list_id\\:taxon').on('change', function() {
+    $('#occurrence\\:verified_by').wrapInner('<strike>');
+    $('#occurrence\\:verified_on').wrapInner('<strike>');
+  });
 });
