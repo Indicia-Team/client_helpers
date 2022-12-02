@@ -1833,14 +1833,7 @@ class ElasticsearchProxyHelper {
     if (!empty($filter)) {
       $value = str_replace('_', '', $filter['value']);
       $bool['must'][] = [
-        'nested' => [
-          'path' => 'identification.auto_checks.output',
-          'query' => [
-            'bool' => [
-              'must' => ['term' => ['identification.auto_checks.output.rule_type' => $value]],
-            ],
-          ],
-        ],
+        'term' => ['identification.auto_checks.output.rule_type' => $value],
       ];
     }
 
