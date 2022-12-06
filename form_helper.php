@@ -542,7 +542,9 @@ JS;
       else {
         $fieldsets[$fieldset] .= data_entry_helper::$type($ctrlOptions);
       }
-
+      if (!empty($ctrlOptions['enableIf'])) {
+        data_entry_helper::$indiciaData['enableControlIf'][$ctrlOptions['id']] = $ctrlOptions['enableIf'];
+      }
     }
     $class = (isset($options['expandFirst']) && $options['expandFirst']) ? 'collapsible' : 'collapsible collapsed';
     foreach ($fieldsets as $fieldset => $content) {
