@@ -29,8 +29,10 @@ require_once 'lang.php';
 require_once 'helper_base.php';
 
 /**
- * A class with helper methods for handling prebuilt forms and generating complete parameters entry forms from
- * simple input arrays.
+ * Prebuilt form helper class.
+ *
+ * A class with helper methods for handling prebuilt forms and generating
+ * complete parameters entry forms from simple input arrays.
  */
 class form_helper extends helper_base {
 
@@ -57,7 +59,7 @@ class form_helper extends helper_base {
    * @return string
    *   HTML for the form picker.
    */
-  public static function prebuilt_form_picker($readAuth, $options) {
+  public static function prebuilt_form_picker(array $readAuth, array $options) {
     require_once 'data_entry_helper.php';
     form_helper::add_resource('jquery_ui');
     $path = dirname($_SERVER['SCRIPT_FILENAME']) . '/' . self::relative_client_helper_path();
@@ -89,8 +91,14 @@ class form_helper extends helper_base {
           continue;
         }
         ob_start();
-        if (is_callable(['iform_' . $file_tokens[0], 'get_' . $file_tokens[0] . '_definition'])) {
-          $definition = call_user_func(['iform_' . $file_tokens[0], 'get_' . $file_tokens[0] . '_definition']);
+        if (is_callable([
+          'iform_' . $file_tokens[0],
+          'get_' . $file_tokens[0] . '_definition',
+        ])) {
+          $definition = call_user_func([
+            'iform_' . $file_tokens[0],
+            'get_' . $file_tokens[0] . '_definition',
+          ]);
           $definition['title'] = lang::get($definition['title']);
           $forms[$definition['category']][$file_tokens[0]] = $definition;
           if (isset($options['form']) && $file_tokens[0] === $options['form']) {
@@ -111,7 +119,7 @@ class form_helper extends helper_base {
         }
         elseif (is_callable(['iform_' . $file_tokens[0], 'get_title'])) {
           $title = call_user_func(['iform_' . $file_tokens[0], 'get_title']);
-          $forms['Miscellaneous'][$file_tokens[0]] = array('title' => $title);
+          $forms['Miscellaneous'][$file_tokens[0]] = ['title' => $title];
           if (isset($options['form']) && $file_tokens[0] === $options['form']) {
             $defaultCategory = 'Miscellaneous';
           }
@@ -237,16 +245,17 @@ class form_helper extends helper_base {
    * allow the forms to be linked to the recording group functionality.
    *
    * @param array $readAuth
-   *   Read authorisation tokens
-   * @param array $options Control options array. Set
-   *   $options['available_for_groups'] to true to set the available for groups
-   *   checkbox default and $options['limit_to_group_id'] to set the default
-   *   group to limit this form to if any.
+   *   Read authorisation tokens.
+   * @param array $options
+   *   Control options array. Set $options['available_for_groups'] to true to
+   *   set the available for groups checkbox default and
+   *   $options['limit_to_group_id'] to set the default group to limit this
+   *   form to if any.
    *
    * @return string
    *   Additional HTML.
    */
-  private static function linkToGroupFields($readAuth, $options) {
+  private static function linkToGroupFields(array $readAuth, array $options) {
     $r = '';
     if (hostsite_has_group_functionality()) {
       $r .= data_entry_helper::checkbox([
@@ -450,27 +459,30 @@ JS;
   }
 
   /**
+   * Prebuilt form parameters form.
+   *
    * Generates the parameters form required for configuring a prebuilt form.
-   * Fieldsets are given classes which define that they are collapsible and normally initially
-   * collapsed, though the css for handling this must be defined elsewhere. For Drupal usage this
-   * css is normally handled by default in the template.
-   * @param array $options Options array with the following possibilities:<ul>
-   * <li><b>form</b>
-   * Name of the form file without the .php extension, e.g. mnhnl_dynamic_1.</li>
-   * <li><b>currentSettings</b>
-   * Associative array of default values to load into the form controls.</li>
-   * <li><b>expandFirst</b>
-   * Optional. If set to true, then the first fieldset on the form is initially expanded.</li>
-   * <li><b>siteSpecific</b>
-   * Optional. Defaults to false. If true then only parameters marked as specific to a site
-   * are loaded. Used to provide a reduced version of the params form after migrating a
-   * form between sites (e.g. when installing a Drupal feature).</li>
-   * <li><b>generator</b>
-   * Optional. A string which, if it contains 'Drupal 7' is used to output
-   * html specific to that CMS. </li>
-   * </ul>
+   * Fieldsets are given classes which define that they are collapsible and
+   * normally initially collapsed, though the css for handling this must be
+   * defined elsewhere. For Drupal usage this css is normally handled by
+   * default in the template.
+   *
+   * @param array $options
+   *   Options array with the following possibilities:
+   *   * form - Name of the form file without the .php extension, e.g.
+   *     mnhnl_dynamic_1.
+   *   * currentSettings - Associative array of default values to load into
+   *     the form controls.
+   *   * expandFirst - Optional. If set to true, then the first fieldset on the
+   *     form is initially expanded.
+   *   * siteSpecific - Optional. Defaults to false. If true then only
+   *     parameters marked as specific to a site are loaded. Used to provide a
+   *     reduced version of the params form after migrating a form between
+   *     sites (e.g. when installing a Drupal feature).
+   *   * generator - Optional. A string which, if it contains 'Drupal 7' is
+   *     used to output html specific to that CMS.
    */
-  public static function prebuilt_form_params_form($options) {
+  public static function prebuilt_form_params_form(array $options) {
     if (function_exists('hostsite_add_library')) {
       hostsite_add_library('collapse');
     }
@@ -486,22 +498,22 @@ JS;
     $fieldsets = [];
     $r = '';
     foreach ($formparams as $control) {
-      // Skip hidden controls or non-site specific controls when displaying the reduced site specific
-      // version of the form
+      // Skip hidden controls or non-site specific controls when displaying the
+      // reduced site-specific version of the form.
       if ((isset($control['visible']) && !$control['visible']) ||
           ($options['siteSpecific'] && !(isset($control['siteSpecific']) && $control['siteSpecific']))) {
         continue;
       }
       $fieldset = isset($control['group']) ? $control['group'] : 'Other IForm Parameters';
       // Apply default options to the control.
-      $ctrlOptions = array_merge(array(
+      $ctrlOptions = array_merge([
         'id' => $control['fieldname'],
         'sep' => '<br/>',
         'class' => '',
         'blankText' => '<' . lang::get('please select') . '>',
         'extraParams' => [],
         'readAuth' => $options['readAuth'],
-      ), $control);
+      ], $control);
       $type = self::mapType($control);
 
       // Current form settings will overwrite the default.
@@ -538,7 +550,7 @@ JS;
       // In Drupal 7 the fieldset output includes an extra span
       // When called from within Drupal, DRUPAL_CORE_COMPATIBILITY can determine
       // version. When called by Ajax version has to be sent in $options.
-      if ((defined('DRUPAL_CORE_COMPATIBILITY') && DRUPAL_CORE_COMPATIBILITY==='7.x') ||
+      if ((defined('DRUPAL_CORE_COMPATIBILITY') && DRUPAL_CORE_COMPATIBILITY === '7.x') ||
           (isset($options['generator']) && stristr($options['generator'], 'Drupal 7'))) {
         $legendContent = "<span class=\"fieldset-legend\">$fieldset</span>";
       }
@@ -563,8 +575,12 @@ JS;
    * for controls defined in the data entry helper. This makes the forms much more
    * powerful with built in AJAX support etc. However, old forms need to have the
    * control options mapped to the newer option names.
-   * @param array $controlList List of controls as defined by the prebuilt form.
-   * @return array List of modified controls.
+   *
+   * @param array $controlList
+   *   List of controls as defined by the prebuilt form.
+   *
+   * @return array
+   *   List of modified controls.
    */
   private static function mapControlOptions($controlList) {
     $mappings = array(
@@ -610,7 +626,7 @@ JS;
    *   Data_entry_helper control name.
    */
   private static function mapType($control) {
-    $mapping = array(
+    $mapping = [
       // In case there is any Drupal hangover code.
       'textfield' => 'text_input',
       'string' => 'text_input',
@@ -624,29 +640,35 @@ JS;
       'termlist' => 'text_input',
       'boolean' => 'checkbox',
       'list' => 'checkbox_group',
-    );
+    ];
     return array_key_exists($control['type'], $mapping) ? $mapping[$control['type']] : $control['type'];
   }
 
   /**
-   * Retrieve the parameters for an iform. This is defined by each iform individually.
-   * @param object $form The name of the form we are retrieving the parameters for.
-   * @return array list of parameter definitions.
+   * Retrieve the parameters for an iform.
+   *
+   * This is defined by each iform individually.
+   *
+   * @param string $form
+   *   The name of the form we are retrieving the parameters for.
+   *
+   * @return array
+   *   List of parameter definitions.
    */
   public static function get_form_parameters($form) {
     $path = dirname($_SERVER['SCRIPT_FILENAME']) . '/' . self::relative_client_helper_path();
     require_once $path . "prebuilt_forms/$form.php";
     // First some parameters that are always required to configure the website.
-    $params = array(
-      array(
+    $params = [
+      [
         'fieldname' => 'view_access_control',
         'label' => 'View access control',
         'helpText' => 'If ticked, then a Drupal permission is created for this form to allow you to specify which '.
             'roles are able to view the form.',
         'type' => 'checkbox',
         'required' => FALSE,
-      ),
-      array(
+      ],
+      [
         'fieldname' => 'permission_name',
         'label' => 'Permission name for view access control',
         'helpText' => 'If you want to use a default permission name when using view access control, leave this blank. Otherwise, specify the name of '.
@@ -655,13 +677,15 @@ JS;
             'so the permission name can be consistent across sites which share this form.',
         'type' => 'text_input',
         'required' => FALSE,
-      )
-    );
+      ],
+    ];
     // Now get the specific parameters from the form.
-    if (!is_callable(array('iform_' . $form, 'get_parameters'))) {
+    if (!is_callable(['iform_' . $form, 'get_parameters'])) {
       throw new Exception("Form $form does not implement the get_parameters method.");
     }
-    $formParams = self::mapControlOptions(call_user_func(["iform_$form", 'get_parameters']));
+    $formParams = self::mapControlOptions(call_user_func([
+      "iform_$form", 'get_parameters',
+    ]));
     $params = array_merge($params, $formParams);
     // Add in a standard parameter for specifying a redirection.
     $redirectInstruct = <<<TXT
@@ -692,7 +716,7 @@ TXT;
       'required' => FALSE,
       'default' => TRUE,
     ];
-    $params[] = array(
+    $params[] = [
       'fieldname' => 'additional_css',
       'label' => 'Additional CSS files to include',
       'helpText' => 'Additional CSS files to include on the page. You can use the following replacements to simplify the setting '.
@@ -701,8 +725,8 @@ TXT;
           'line.',
       'type' => 'textarea',
       'required' => FALSE,
-    );
-    $params[] = array(
+    ];
+    $params[] = [
       'fieldname' => 'additional_templates',
       'label' => 'Additional template files to include',
       'helpText' => 'Additional templates files to include on the page. You can use the following replacements to simplify the setting '.
@@ -711,8 +735,9 @@ TXT;
           'iform/customising-page-functionality.html#overridding-the-html-templates-used-to-output-the-input-controls">in the documentation</a>.',
       'type' => 'textarea',
       'required' => FALSE,
-    );
-    // allow the user ui options module to add it's own param. This could probably be refactored as a proper Drupal hook...
+    ];
+    // Allow the user ui options module to add it's own param. This could
+    // probably be refactored as a proper Drupal hook...
     if (function_exists('iform_user_ui_options_additional_params')) {
       $params = array_merge($params, iform_user_ui_options_additional_params());
     }
