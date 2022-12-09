@@ -1,16 +1,24 @@
 jQuery(document).ready(function($) {
 
+  // Reset GET form URL parameters before submission (species selector)
+  window.indiciaFns.speciesDetailsSub = () => {
+    $('#taxon-search-form #taxa_taxon_list_id').val($('#occurrence\\:taxa_taxon_list_id').val())
+    document.forms["taxon-search-form"].submit()
+  }
+
   var hectadData;
   var brcmap, brcyearly, brcphenology;
 
   // Translate any attribute names
   fieldTransations = {};
-  $('#species-details-fields-translate').val().split(';').forEach(function(t) {
-    var ft = t.split('|');
-    if (ft.length === 2) {
-      fieldTransations[ft[0].trim()] = ft[1].trim();
-    }
-  })
+  if ($('#species-details-fields-translate').val()) {
+    $('#species-details-fields-translate').val().split(';').forEach(function(t) {
+      var ft = t.split('|');
+      if (ft.length === 2) {
+        fieldTransations[ft[0].trim()] = ft[1].trim();
+      }
+    })
+  }
   // Show non-duplicate attr names in species details table
   // and do any translation
   var prevAttr;
