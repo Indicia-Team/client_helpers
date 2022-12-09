@@ -1,10 +1,5 @@
 jQuery(document).ready(function($) {
 
-  // Adjust CSS on some form elements
-  $('#ctrl-wrap-occurrence-taxa_taxon_list_id').css('margin-bottom', 0)
-  $('#submit-taxon-search-form').css('margin-bottom', '15px')
-  $('#taxon-explore-records').css('margin-bottom', '15px')
-
   // Reset GET form URL parameters before submission (species selector)
   window.indiciaFns.speciesDetailsSub = () => {
     $('#taxon-search-form #taxa_taxon_list_id').val($('#occurrence\\:taxa_taxon_list_id').val())
@@ -15,7 +10,7 @@ jQuery(document).ready(function($) {
   var brcmap, brcyearly, brcphenology;
 
   // Translate any attribute names
-  ieldTransations = {};
+  fieldTransations = {};
   if ($('#species-details-fields-translate').val()) {
     $('#species-details-fields-translate').val().split(';').forEach(function(t) {
       var ft = t.split('|');

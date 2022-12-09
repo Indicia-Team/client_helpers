@@ -160,7 +160,7 @@ class iform_species_details_2 extends BaseDynamicDetails {
           'default' => 'one_page',
           'group' => 'User Interface',
         ],
-        // Taxon selector
+        // Taxon selector.
         [
           'fieldname' => 'list_id',
           'label' => 'Species List',
