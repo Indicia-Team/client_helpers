@@ -5798,6 +5798,7 @@ HTML;
       'controlWrapTemplate' => 'justControl'
     ], self::check_options($options));
     unset($options['label']);
+    unset($options['helpText']);
     return self::apply_template('hidden_text', $options);
   }
 
