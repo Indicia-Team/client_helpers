@@ -37,11 +37,15 @@ require_once 'includes/report.php';
  * - A map displaying occurrences of taxa with the same meaning as the taxon.
  * - A bar chart indicating the accummulation of records over time.
  * - A phenology chart showing the accummulation of records through the year.
- *
- * @var preferred
- *   Comment for blah.
  */
 class iform_species_details_2 extends BaseDynamicDetails {
+
+  /**
+   * Stores a value to indicate of no taxon identified.
+   *
+   * @var notaxon
+   */
+  private static $notaxon;
 
   /**
    * Stores the preferred name of the taxon with markup and authority.
@@ -156,6 +160,64 @@ class iform_species_details_2 extends BaseDynamicDetails {
           'default' => 'one_page',
           'group' => 'User Interface',
         ],
+        // Taxon selector.
+        [
+          'fieldname' => 'list_id',
+          'label' => 'Species List',
+          'helpText' => 'The species list that species can be selected from.',
+          'type' => 'select',
+          'table' => 'taxon_list',
+          'valueField' => 'id',
+          'captionField' => 'title',
+          'required' => FALSE,
+          'group' => 'Species selection',
+          'siteSpecific'  => TRUE,
+        ],
+        [
+          'name' => 'species_include_authorities',
+          'caption' => 'Include species authors in the search string',
+          'description' => 'Should species authors be shown in the search
+            results when searching for a species name?',
+          'type' => 'boolean',
+          'required' => FALSE,
+          'group' => 'Species selection',
+        ],
+        [
+          'name' => 'species_include_both_names',
+          'caption' => 'Include both names in species controls and added rows',
+          'description' => 'When using a species grid with the ability to add
+            new rows, the autocomplete control by default shows just the
+            searched taxon name in the drop down. Set this to include both the
+            latin and common names, with the searched one first. This also
+            controls the label when adding a new taxon row into the grid.',
+          'type' => 'boolean',
+          'required' => FALSE,
+          'group' => 'Species selection',
+        ],
+        [
+          'name' => 'species_include_taxon_group',
+          'caption' => 'Include taxon group name in species autocomplete and added rows',
+          'description' => 'When using a species grid with the ability to add
+            new rows, the autocomplete control by default shows just the
+            searched taxon name in the drop down. Set this to include the taxon
+            group title.  This also controls the label when adding a new taxon
+            row into the grid.',
+          'type' => 'boolean',
+          'required' => FALSE,
+          'group' => 'Species selection',
+        ],
+        [
+          'name' => 'species_include_id_diff',
+          'caption' => 'Include identification_difficulty icons in species
+            autocomplete and added rows',
+          'description' => 'Use data cleaner identification difficulty rules to
+            generate icons indicating when ' .
+          'hard to ID taxa have been selected.',
+          'type' => 'boolean',
+          'required' => FALSE,
+          'default'  => TRUE,
+          'group' => 'Species selection',
+        ],
         // List of fields to hide in the Species Details section.
         [
           'name' => 'fields',
@@ -203,6 +265,7 @@ class iform_species_details_2 extends BaseDynamicDetails {
           'description' => 'Define the structure of the form. Each component must be placed on a new line. <br/>' .
           'The following types of component can be specified. <br/>' .
           "<strong>[control name]</strong> indicates a predefined control is to be added to the form with the following predefined controls available: <br/>" .
+          "&nbsp;&nbsp;<strong>[species]</strong> - a taxon selection control.<br/>" .
           "&nbsp;&nbsp;<strong>[speciesdetails]</strong> - displays information relating to the occurrence and its sample<br/>" .
           "&nbsp;&nbsp;<strong>[explore]</strong> - a button “Explore this species' records” which takes you to explore all records, filtered to the species.<br/>" .
           "&nbsp;&nbsp;<strong>[photos]</strong> - photos associated with the occurrence<br/>" .
@@ -443,29 +506,52 @@ class iform_species_details_2 extends BaseDynamicDetails {
    * Vary the display of the page based on the interface type.
    */
   protected static function get_form_html($args, $auth, $attributes) {
-    if (empty($_GET['taxa_taxon_list_id']) && empty($_GET['taxon_meaning_id']) && empty($_GET['external_key'])) {
-      return 'This form requires a taxa_taxon_list_id or a taxon_meaning_id or an external_key (tvk) parameter in the URL.';
+    
+    // Set global flag if no taxon is specified in URL or form.
+    if (empty($_GET['taxa_taxon_list_id']) && 
+      empty($_GET['taxon_meaning_id']) && 
+      empty($_GET['external_key']) && 
+      empty($_GET['occurrence:taxa_taxon_list_id']) ) {
+      self::$notaxon = TRUE;
+    } else {
+      self::$notaxon = FALSE;
     }
 
-    self::getNames($auth);
+    // Apply options and build species autocomplete formatting function
+    $opts = [
+      'speciesIncludeAuthorities' => isset($args['species_include_authorities']) ?
+        $args['species_include_authorities'] : FALSE,
+      'speciesIncludeBothNames' => $args['species_include_both_names'],
+      'speciesIncludeTaxonGroup' => $args['species_include_taxon_group'],
+      'speciesIncludeIdDiff' => $args['species_include_id_diff'],
+    ];
+    data_entry_helper::build_species_autocomplete_item_function($opts);
 
-    // In Drupal 9, markup cannot be used in page title, so remove em tags.
-    $repArray = ['<em>', '</em>'];
-    hostsite_set_page_title(lang::get('Summary details for {1}', str_replace($repArray, '', self::$preferred)));
+    if (self::$notaxon) {
+      return parent::get_form_html($args, $auth, $attributes);
+    } else {
+      // Get information on species names
+      self::getNames($auth);
 
-    // Make the preferred and default common name available via hidden controls.
-    $taxonNames = '<input type="hidden" id="species-details-preferred-name" value="' . self::$preferred . '"/>';
-    if (isset(self::$defaultCommonName)) {
-      $taxonNames .= '<input type="hidden" id="species-details-default-common-name" value="' . self::$defaultCommonName . '"/>';
+      // In Drupal 9, markup cannot be used in page title, so remove em tags.
+      $repArray = ['<em>', '</em>'];
+      hostsite_set_page_title(lang::get('Summary details for {1}', str_replace($repArray, '', self::$preferred)));
+
+      // Make the preferred and default common name available via 
+      // hidden controls.
+      $taxonNames = '<input type="hidden" id="species-details-preferred-name" value="' . self::$preferred . '"/>';
+      if (isset(self::$defaultCommonName)) {
+        $taxonNames .= '<input type="hidden" id="species-details-default-common-name" value="' . self::$defaultCommonName . '"/>';
+      }
+
+      // Add any general ES taxon filters for taxon specified in URL.
+      $esFilter = self::createEsFilterHtml('taxon.accepted_taxon_id', self::$externalKey, 'match_phrase', 'must');
+
+      // Exclude rejected records in ES queries.
+      $esFilter .= self::createEsFilterHtml('identification.verification_status', 'R', 'term', 'must_not');
+
+      return $taxonNames . $esFilter . parent::get_form_html($args, $auth, $attributes);
     }
-
-    // Add any general ES taxon filters for taxon specified in URL.
-    $esFilter .= self::createEsFilterHtml('taxon.accepted_taxon_id', self::$externalKey, 'match_phrase', 'must');
-
-    // Exclude rejected records in ES queries.
-    $esFilter .= self::createEsFilterHtml('identification.verification_status', 'R', 'term', 'must_not');
-
-    return $taxonNames . $esFilter . parent::get_form_html($args, $auth, $attributes);
   }
 
   /**
@@ -479,6 +565,10 @@ class iform_species_details_2 extends BaseDynamicDetails {
     if (isset($_GET['taxa_taxon_list_id'])) {
       $extraParams['taxa_taxon_list_id'] = $_GET['taxa_taxon_list_id'];
       self::$taxaTaxonListId = $_GET['taxa_taxon_list_id'];
+    }
+    elseif (isset($_GET['occurrence:taxa_taxon_list_id'])) {
+      $extraParams['taxa_taxon_list_id'] = $_GET['occurrence:taxa_taxon_list_id'];
+      self::$taxaTaxonListId = $_GET['occurrence:taxa_taxon_list_id'];
     }
     elseif (isset($_GET['taxon_meaning_id'])) {
       $extraParams['taxon_meaning_id'] = $_GET['taxon_meaning_id'];
@@ -565,6 +655,9 @@ class iform_species_details_2 extends BaseDynamicDetails {
    *   The output html string.
    */
   protected static function get_control_speciesdetails($auth, $args, $tabalias, $options) {
+    if (self::$notaxon) {
+      return '';
+    }
     global $indicia_templates;
     $options = array_merge([
       'includeAttributes' => TRUE,
@@ -749,6 +842,9 @@ class iform_species_details_2 extends BaseDynamicDetails {
    *   Html for the description.
    */
   protected static function get_control_attributedescription($auth, $args, $tabalias, $options) {
+    if (self::$notaxon) {
+      return '';
+    }
     global $indicia_templates;
     $options = array_merge([
       'includeCaptions' => TRUE,
@@ -912,6 +1008,9 @@ class iform_species_details_2 extends BaseDynamicDetails {
    *   The output chart.
    */
   protected static function get_control_recsbyyear($auth, $args, $tabalias, $options) {
+    if (self::$notaxon) {
+      return '';
+    }
     $options = array_merge([
       'title' => 'Number of records by year',
     ], $options);
@@ -946,6 +1045,9 @@ class iform_species_details_2 extends BaseDynamicDetails {
    *   The output chart.
    */
   protected static function get_control_recsthroughyear($auth, $args, $tabalias, $options) {
+    if (self::$notaxon) {
+      return '';
+    }
     $options = array_merge([
       'title' => 'Number of records through the year',
       'period' => 'week'
@@ -984,6 +1086,9 @@ class iform_species_details_2 extends BaseDynamicDetails {
    *   The output map.
    */
   protected static function get_control_exploremap($auth, $args, $tabalias, $options) {
+    if (self::$notaxon) {
+      return '';
+    }
     $r = '<div class="detail-panel" id="detail-panel-exploremap"><h3>' . lang::get('Explore map') . '</h3>';
     $r .= self::get_exploremap_html($auth, $args, $tabalias, $options);
     return $r;
@@ -1027,6 +1132,9 @@ class iform_species_details_2 extends BaseDynamicDetails {
    *   The output html.
    */
   protected static function get_control_dualmap($auth, $args, $tabalias, $options) {
+    if (self::$notaxon) {
+      return '';
+    }
     $r = '<div class="detail-panel" id="detail-panel-dualmap"><h3>' . lang::get('Spatial distribution of records') . '</h3>';
     $r .= '<div class="btn-group btn-group-toggle" data-toggle="buttons" style="margin-bottom: 0.5em">';
     $r .= '<label class="btn btn-primary active">';
@@ -1154,6 +1262,9 @@ class iform_species_details_2 extends BaseDynamicDetails {
    *   The output report grid.
    */
   protected static function get_control_photos($auth, $args, $tabalias, $options) {
+    if (self::$notaxon) {
+      return '';
+    }
     iform_load_helpers(['report_helper']);
     data_entry_helper::add_resource('fancybox');
     $options = array_merge([
@@ -1195,6 +1306,9 @@ class iform_species_details_2 extends BaseDynamicDetails {
    *   A comma seperated list of taxa associated with the species.
    */
   protected static function get_control_taxonassociations($auth, $args, $tabalias, $options) {
+    if (self::$notaxon) {
+      return '';
+    }
     $params = [
       'taxa_taxon_list_id' => empty($_GET['taxa_taxon_list_id']) ? '' : $_GET['taxa_taxon_list_id'],
       'taxon_meaning_id' => empty($_GET['taxon_meaning_id']) ? '' : $_GET['taxon_meaning_id'],
@@ -1227,6 +1341,9 @@ class iform_species_details_2 extends BaseDynamicDetails {
    *   A comma seperated list of taxa associated with the occurence.
    */
   protected static function get_control_occurrenceassociations($auth, $args, $tabalias, $options) {
+    if (self::$notaxon) {
+      return '';
+    }
     iform_load_helpers(['report_helper']);
     $currentUrl = report_helper::get_reload_link_parts();
     // Amend currentUrl path if we have drupal dirty URLs so JS will work.
@@ -1275,6 +1392,9 @@ class iform_species_details_2 extends BaseDynamicDetails {
    *   The output map panel.
    */
   protected static function get_control_map($auth, $args, $tabalias, $options) {
+    if (self::$notaxon) {
+      return '';
+    }
     // Draw a map by calling Indicia report when Geoserver isn't available.
     if (isset($options['noGeoserver']) && $options['noGeoserver'] === TRUE) {
       return self::mapWithoutGeoserver($auth, $args, $tabalias, $options);
@@ -1446,6 +1566,9 @@ class iform_species_details_2 extends BaseDynamicDetails {
    *   The output HTML string.
    */
   protected static function get_control_explore($auth, $args) {
+    if (self::$notaxon) {
+      return '';
+    }
     if (!empty($args['explore_url']) && !empty($args['explore_param_name'])) {
       $url = $args['explore_url'];
       if (strcasecmp(substr($url, 0, 12), '{rootfolder}') !== 0 && strcasecmp(substr($url, 0, 4), 'http') !== 0) {
@@ -1454,7 +1577,7 @@ class iform_species_details_2 extends BaseDynamicDetails {
       $url = str_replace('{rootFolder}', data_entry_helper::getRootFolder(TRUE), $url);
       $url .= (strpos($url, '?') === FALSE) ? '?' : '&';
       $url .= $args['explore_param_name'] . '=' . self::$taxonMeaningId;
-      $r = '<a class="button" href="' . $url . '">' . lang::get('Explore records of {1}', self::get_best_name()) . '</a>';
+      $r = '<div id="taxon-explore-records"><a class="button"  href="' . $url . '">' . lang::get('Explore records of {1}', self::get_best_name()) . '</a></div>';
     }
     else {
       throw new exception('The page has been setup to use an explore records button, but an "Explore URL" or "Explore Parameter Name" has not been specified.');
@@ -1466,6 +1589,9 @@ class iform_species_details_2 extends BaseDynamicDetails {
    * Control gets the description of a taxon and displays it on the screen.
    */
   protected static function get_control_speciesnotes($auth, $args) {
+    if (self::$notaxon) {
+      return '';
+    }
     /*
      * We can't return the notes for a specific taxon unless we have an
      * taxa_taxon_list_id, as the meaning could apply to several taxa. In
@@ -1497,6 +1623,9 @@ class iform_species_details_2 extends BaseDynamicDetails {
    * this species.
    */
   protected static function get_control_speciesphotos($auth, $args, $tabalias, $options) {
+    if (self::$notaxon) {
+      return '';
+    }
     iform_load_helpers(['report_helper']);
     data_entry_helper::add_resource('fancybox');
     $options = array_merge([
@@ -1530,6 +1659,54 @@ class iform_species_details_2 extends BaseDynamicDetails {
     ]);
     return '<div class="detail-panel" id="detail-panel-speciesphotos"><h3>' . lang::get('Photos and media') . '</h3>' .
         $reportResults . '</div>';
+  }
+
+  /**
+   * Returns a control for picking a species.
+   *
+   * @global type $indicia_templates
+   * @param array $auth
+   *   Read authorisation tokens.
+   * @param array $args
+   *   Form configuration.
+   * @param array $extraParams
+   *   Extra parameters pre-configured with taxon and taxon name type filters.
+   * @param array $options
+   *   Additional options for the control, e.g. those configured in the form
+   *   structure.
+   *
+   * @return string
+   *   HTML for the control.
+   */
+  protected static function get_control_species($auth, $args, $tabAlias, $options) {
+
+    $extraParams = $auth['read'];
+    if ($args['list_id'] !== '') {
+      $extraParams['taxon_list_id'] = $args['list_id'];
+    }
+
+    $species_ctrl_opts = array_merge([
+      'fieldname' => 'occurrence:taxa_taxon_list_id',
+    ], $options);
+    if (isset($species_ctrl_opts['extraParams'])) {
+      $species_ctrl_opts['extraParams'] = array_merge($extraParams, $species_ctrl_opts['extraParams']);
+    }
+    else {
+      $species_ctrl_opts['extraParams'] = $extraParams;
+    }
+    $species_ctrl_opts['extraParams'] = array_merge([
+      'orderby' => 'taxonomic_sort_order',
+      'sortdir' => 'ASC',
+    ], $species_ctrl_opts['extraParams']);
+
+    // Dynamically generate the species selection control required.
+    $r = call_user_func(['data_entry_helper', 'species_autocomplete'], $species_ctrl_opts);
+
+    $r .= '<form method="GET" id="taxon-search-form">';
+    $r .= '<input type="hidden" id="taxa_taxon_list_id" name="taxa_taxon_list_id"></input>';
+    $r .= '</form>';
+    $r .= '<button id="submit-taxon-search-form" type="button" onclick="indiciaFns.speciesDetailsSub()">Get details</button>';
+    return $r;
   }
 
   /**
