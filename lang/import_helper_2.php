@@ -51,6 +51,10 @@ $default_terms['import2summaryPageIntro'] = <<<TXT
 Please check the following settings before proceeding with the import.
 TXT;
 
+$default_terms['import2preprocessPageIntro'] = <<<TXT
+Preparing to import your data.
+TXT;
+
 $default_terms['import2doImportPageIntro'] = <<<TXT
 Please wait while your data are imported.
 TXT;
@@ -73,3 +77,7 @@ $default_terms['optionGroup-occAttr-shortLabel'] = 'Occurrence attributes';
 $default_terms['optionGroup-sample-shortLabel'] = 'Sample';
 $default_terms['optionGroup-sample_medium-shortLabel'] = 'Sample media';
 $default_terms['optionGroup-smpAttr-shortLabel'] = 'Sample attributes';
+
+$default_terms['Deleted'] = 'Deleted (for existing records)';
+$default_terms['External key'] = 'External key (your reference)';
+$default_terms['Id'] = 'ID (primary key for existing records)';

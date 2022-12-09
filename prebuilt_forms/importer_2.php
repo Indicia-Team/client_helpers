@@ -96,6 +96,23 @@ TXT;
         'required' => FALSE,
       ],
       [
+        'name' => 'allowUpdates',
+        'caption' => 'Allow updates?',
+        'description' => 'Allows existing records to be update by allowing an import field to be mapped to either an "id" field or an "External Key" field. Only allows updates of the user\'s own records.',
+        'type' => 'boolean',
+        'default' => FALSE,
+        'required' => FALSE,
+      ],
+      [
+        'name' => 'allowDeletes',
+        'caption' => 'Allow deletions?',
+        'description' => 'Allows existing records to be deleted by enabling the Deleted flag field as a destination column which an import field can be mapped to. Requires the Allow updates option to be set and only allows deletes of the user\'s own records.',
+        'type' => 'boolean',
+        'default' => FALSE,
+        'required' => FALSE,
+        'enableIf' => ['allowUpdates' => ['1']],
+      ],
+      [
         'name' => 'fileSelectFormIntro',
         'caption' => 'File select form introduction',
         'category' => 'Instruction texts',
@@ -128,11 +145,11 @@ TXT;
         'required' => FALSE,
       ],
       [
-        'name' => 'validationFormIntro',
+        'name' => 'preprocessPageIntro',
         'caption' => 'Validation form introduction',
         'category' => 'Instruction texts',
         'type' => 'textarea',
-        'default' => $default_terms['import2validationFormIntro'],
+        'default' => $default_terms['import2preprocessPageIntro'],
         'required' => FALSE,
       ],
       [
@@ -192,6 +209,7 @@ TXT;
       'loadChunkToTempTableUrl' => hostsite_get_url('iform/ajax/importer_2') . "/load_chunk_to_temp_table/$nid",
       'getRequiredFieldsUrl' => hostsite_get_url('iform/ajax/importer_2') . "/get_required_fields/$nid",
       'processLookupMatchingUrl' => hostsite_get_url('iform/ajax/importer_2') . "/process_lookup_matching/$nid",
+      'preprocessUrl' => hostsite_get_url('iform/ajax/importer_2') . "/preprocess/$nid",
       'saveLookupMatchesGroupUrl' => hostsite_get_url('iform/ajax/importer_2') . "/save_lookup_matches_group/$nid",
       'importChunkUrl' => hostsite_get_url('iform/ajax/importer_2') . "/import_chunk/$nid",
       'getErrorFileUrl' => helper_base::$base_url . 'index.php/services/import_2/get_errors_file',
@@ -223,8 +241,10 @@ TXT;
     header('Content-type: application/json');
     $writeAuth = self::getAuthFromHeaders();
     iform_load_helpers(['import_helper_2']);
-    $r = import_helper_2::sendFileToWarehouse($_GET['interim-file'], $writeAuth);
-    if ($r === TRUE) {
+    $interimPath = import_helper_2::getInterimImageFolder('fullpath');
+    if (!file_exists($interimPath . $_GET['interim-file'])) {
+      // Assume the page has been loaded twice and the file already sent. If
+      // not we will get other errors anyway.
       echo json_encode([
         'status' => 'ok',
         // Warehouse lowercases the file name and replaces spaces.
@@ -232,7 +252,17 @@ TXT;
       ]);
     }
     else {
-      throw new Exception(var_export($r, TRUE));
+      $r = import_helper_2::sendFileToWarehouse($_GET['interim-file'], $writeAuth);
+      if ($r === TRUE) {
+        echo json_encode([
+          'status' => 'ok',
+          // Warehouse lowercases the file name and replaces spaces.
+          'uploadedFile' => strtolower(str_replace(' ', '_', $_GET['interim-file'])),
+        ]);
+      }
+      else {
+        throw new Exception(var_export($r, TRUE));
+      }
     }
   }
 
@@ -270,6 +300,9 @@ TXT;
     echo json_encode(import_helper_2::loadChunkToTempTable($_GET['data-file'], $writeAuth));
   }
 
+  /**
+   * AJAX handler to retrieve the required fields for the selected survey.
+   */
   public static function ajax_get_required_fields($website_id, $password, $nid) {
     header('Content-type: application/json');
     $readAuth = self::getAuthFromHeaders();
@@ -289,6 +322,16 @@ TXT;
     $writeAuth = self::getAuthFromHeaders();
     iform_load_helpers(['import_helper_2']);
     echo json_encode(import_helper_2::saveLookupMatchesGroup($_GET['data-file'], $_POST, $writeAuth));
+  }
+
+  /**
+   * Perform processing that can be done before the final import stage.
+   */
+  public static function ajax_preprocess($website_id, $password, $nid) {
+    header('Content-type: application/json');
+    $writeAuth = self::getAuthFromHeaders();
+    iform_load_helpers(['import_helper_2']);
+    echo json_encode(import_helper_2::preprocess($_GET['data-file'], $_GET['index'], $writeAuth));
   }
 
   public static function ajax_import_chunk($website_id, $password, $nid) {
