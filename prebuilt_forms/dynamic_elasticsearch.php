@@ -248,6 +248,7 @@ TXT;
    *   Page HTML.
    */
   public static function get_form($args, $nid) {
+    iform_load_helpers(['ElasticsearchReportHelper']);
     $enabled = ElasticsearchReportHelper::enableElasticsearchProxy($nid);
     if ($enabled) {
       return parent::get_form($args, $nid);
