@@ -427,6 +427,36 @@ TXT;
           'required' => FALSE,
         ],
         [
+          'name' => 'add_new_sample_from_existing_sample_mode',
+          'caption' => 'Allow adding new sample from existing sample?',
+          'description' => 'Allow adding of a new sample from an existing sample with the following options:<br>' .
+          "\"Filtered\": only copy fields supplied in the filter configuration.<br>" .
+          "\"Copy all sample fields\": all sample related fields are copied to the new sample being added. " .
+          "Note this functionality only works when an existing sample_id (not occurrence_id) is supplied " .
+          "to the page, and a \"sample_addition_template\" URL parameter is supplied as true.",
+          'type' => 'select',
+          'options' => [
+            'filtered' => 'Limit with filter',
+            'all' => 'Copy all sample fields',
+          ],
+          'group' => 'User Interface',
+          'default' => FALSE,
+          'required' => FALSE,
+        ],
+        [
+          'name' => 'sample_addition_template_fields',
+          'caption' => 'Filter fields',
+          'description' => "List of fields to be copied when a new sample is created from an existing one. " .
+          "Only used when the \"Allow adding new sample from existing sample?\" option is set to \"Filtered\". " .
+          "Fields should be referred to by the internal name the Indicia system uses for the field. This can usually be seen in the field's " .
+          "html \"name\" attribute. There are some exceptions to this for more complex fields, such as the Date field for a sample, " .
+          "which can be referred to as sample:date.",
+          'type' => 'textarea',
+          'group' => 'User Interface',
+          'default' => FALSE,
+          'required' => FALSE,
+        ],
+        [
           'name' => 'users_manage_own_sites',
           'caption' => 'Users can save sites',
           'description' => 'Allow users to save named sites for recall when they
@@ -878,6 +908,7 @@ TXT;
    * to make it available to a hook function which exists outside the form.
    */
   protected static function get_form_html($args, $auth, $attributes) {
+    self::addNewSampleFromExistingSampleEntityToLoadRemover($args);
     group_authorise_form($args, $auth['read']);
     // We always want an autocomplete formatter function for species lookups.
     // The form implementation can specify its own if required.
@@ -1212,8 +1243,10 @@ TXT;
    *   List of attribute definitions.
    */
   protected static function getAttributes(array $args, array $auth) {
-    return self::getAttributesForEntity('sample', $args, $auth['read'],
-        isset(data_entry_helper::$entity_to_load['sample:id']) ? data_entry_helper::$entity_to_load['sample:id'] : '');
+    $attributesList = self::getAttributesForEntity('sample', $args, $auth['read'],
+    isset(data_entry_helper::$entity_to_load['sample:id']) ? data_entry_helper::$entity_to_load['sample:id'] : '');
+    $attributesList = self::addNewSampleFromExistingSampleAttributeRemover($args, $attributesList);
+    return $attributesList;
   }
 
   /**
@@ -1348,7 +1381,93 @@ TXT;
     unset(data_entry_helper::$entity_to_load['occurrence:id']);
   }
 
+  /**
+   * Are we adding a new sample from an existing one?
+   *
+   * @param array $args
+   *   List of page argument options available to the extension.
+   *
+   * @return bool
+   *   Returns TRUE if we are adding a new sample from an existing one.
+   */
+  private static function detectAddingSampleFromExisting(array $args) {
+    if ((!empty($_GET['sample_addition_template']) && ($_GET['sample_addition_template'] == 1 || strtolower($_GET['sample_addition_template']) === 'true'))
+        && !empty($args['add_new_sample_from_existing_sample_mode'])
+        && ($args['add_new_sample_from_existing_sample_mode'] === 'filtered' || $args['add_new_sample_from_existing_sample_mode'] === 'all')
+        && !empty($_GET['sample_id'])) {
+      $addFromExistingSample = TRUE;
+    }
+    else {
+      $addFromExistingSample = FALSE;
+    }
+    return $addFromExistingSample;
+  }
+
+  /**
+   * If copying an existing sample to new sample, prepare entity_to_load.
+   *
+   * Remove all fields we don't want to copy over to the new sample.
+   *
+   * @param array $args
+   *   List of page argument options available to the extension.
+   */
+  private static function addNewSampleFromExistingSampleEntityToLoadRemover(array $args) {
+    $addFromExistingSample = self::detectAddingSampleFromExisting($args);
+    if ($addFromExistingSample == TRUE) {
+      /* Must remove the sample ID to create a new sample instead of editing the old one. */
+      unset(data_entry_helper::$entity_to_load['sample:id']);
+      if (!empty($args['sample_addition_template_fields'])) {
+        $templateFields = helper_base::explode_lines($args['sample_addition_template_fields']);
+      }
+      /* In filtered mode, remove all fields unless the user has chosen to keep them from the existing sample */
+      foreach (data_entry_helper::$entity_to_load as $fieldKey => $fieldValue) {
+        if (!in_array($fieldKey, $templateFields) && $args['add_new_sample_from_existing_sample_mode'] === 'filtered') {
+          unset(data_entry_helper::$entity_to_load[$fieldKey]);
+        }
+      }
+    }
+  }
+
+  /**
+   * If copying an existing sample to new sample, prepare attributes.
+   *
+   * Remove all attribute values we don't want to copy over to the new sample.
+   *
+   * @param array $args
+   *   List of page argument options available to the extension.
+   * @param array $attributesList
+   *   Array of attributes to process.
+   *
+   * @return array
+   *   Array of attrs where vals are cleared which are not used on new sample.
+   */
+  protected static function addNewSampleFromExistingSampleAttributeRemover(array $args, array $attributesList) {
+    $addFromExistingSample = self::detectAddingSampleFromExisting($args);
+    if ($addFromExistingSample == TRUE) {
+      if (!empty($args['sample_addition_template_fields'])) {
+        $templateFields = helper_base::explode_lines($args['sample_addition_template_fields']);
+      }
+      foreach ($attributesList as $idx => $arrayOfFieldAttrs) {
+        /* Must strip the attribute_value id from the field name, failing to do
+        so will cause data from the original sample to be overwritten */
+        if (!empty($attributesList[$idx]['fieldname']) && !empty($attributesList[$idx]['id'])) {
+          $attributesList[$idx]['fieldname'] = $attributesList[$idx]['id'];
+        }
+        /* In filtered mode, clear all attribute values unless the user has chosen to keep them from the existing sample */
+        if (!in_array($arrayOfFieldAttrs['id'], $templateFields) && $args['add_new_sample_from_existing_sample_mode'] === 'filtered') {
+          foreach ($arrayOfFieldAttrs as $fieldAttrName => $fieldAttrValue) {
+            if (strpos($fieldAttrName, 'default') !== FALSE) {
+              $attributesList[$idx][$fieldAttrName] = '';
+            }
+          }
+        }
+      }
+    }
+    return $attributesList;
+  }
+
   protected static function getFormHiddenInputs($args, $auth, &$attributes) {
+    $addFromExistingSample = self::detectAddingSampleFromExisting($args);
     // Get authorisation tokens to update the Warehouse, plus any other hidden
     // data.
     $r = <<<HTML
@@ -1360,7 +1479,7 @@ HTML;
     if (!empty($args['sample_method_id'])) {
       $r .= '<input type="hidden" name="sample:sample_method_id" value="' . $args['sample_method_id'] . '"/>' . PHP_EOL;
     }
-    if (isset(data_entry_helper::$entity_to_load['sample:id'])) {
+    if (isset(data_entry_helper::$entity_to_load['sample:id']) && $addFromExistingSample == FALSE) {
       $r .= '<input type="hidden" id="sample:id" name="sample:id" value="' . data_entry_helper::$entity_to_load['sample:id'] . '" />' . PHP_EOL;
     }
     $gridMode = call_user_func([self::$called_class, 'getGridMode'], $args);
@@ -3276,6 +3395,7 @@ TXT;
   protected static function getSubmitButtons($args) {
     global $indicia_templates;
     $r = '';
+    $addFromExistingSample = self::detectAddingSampleFromExisting($args);
     if (self::$mode === self::MODE_EXISTING_RO) {
       // Don't allow users to submit if in read only mode.
       return $r;
@@ -3285,22 +3405,25 @@ TXT;
       // Use a button here, not input, as Chrome does not post the input value.
       $formType = $args['multiple_occurrence_mode'] === 'single' ? lang::get('record') : lang::get('list of records');
       $btnLabel = lang::get('Delete {1}', $formType);
-      $r .= <<<HTML
-<button type="submit" class="$indicia_templates[buttonWarningClass]" id="delete-button" name="delete-button" value="delete" >
-  $btnLabel
-</button>
+      /* Don't include delete button when we are adding a sample using an existing one as a template */
+      if ($addFromExistingSample === FALSE) {
+        $r .= <<<HTML
+  <button type="submit" class="$indicia_templates[buttonWarningClass]" id="delete-button" name="delete-button" value="delete" >
+    $btnLabel
+  </button>
 
-HTML;
-      $msg = str_replace("'", "\'", lang::get('Are you sure you want to delete this {1}?', $formType));
-      data_entry_helper::$javascript .= <<<JS
-$('#delete-button').click(function(e) {
-  if (!confirm('$msg')) {
-    e.preventDefault();
-    return false;
-  }
-});
+  HTML;
+        $msg = str_replace("'", "\'", lang::get('Are you sure you want to delete this {1}?', $formType));
+        data_entry_helper::$javascript .= <<<JS
+  $('#delete-button').click(function(e) {
+    if (!confirm('$msg')) {
+      e.preventDefault();
+      return false;
+    }
+  });
 
-JS;
+  JS;
+      }
     }
     return $r;
   }
