@@ -336,6 +336,10 @@ class ElasticsearchReportHelper {
         'rowsPerPageOptions',
       ]
     );
+    $lang = [
+      'next' => lang::get('Next record'),
+      'prev' => lang::get('Previous record'),
+    ];
     $dataOptions = helper_base::getOptionsForJs($options, [
       'actions',
       'columns',
@@ -346,7 +350,19 @@ class ElasticsearchReportHelper {
       'rowsPerPageOptions',
       'source',
     ], TRUE);
-    return self::getControlContainer('cardGallery', $options, $dataOptions);
+    // Extra setup required after gallery loads.
+    helper_base::$late_javascript .= <<<JS
+$('#$options[id]').idcCardGallery('bindControls');
+
+JS;
+    return self::getControlContainer('cardGallery', $options, $dataOptions) . <<<HTML
+<div id="card-nav-buttons-cntr" style="display: none">
+  <div id="card-nav-buttons">
+    <button class="nav-prev indicia-button" title="$lang[prev]"><span class="fas fa-caret-left"></span></button>
+    <button class="nav-next indicia-button" title="$lang[next]"><span class="fas fa-caret-right"></span></button>
+  </div>
+</div>
+HTML;
   }
 
   /**
@@ -438,6 +454,11 @@ class ElasticsearchReportHelper {
       'source',
       'sortable',
     ], TRUE);
+    // Extra setup required after grid loads.
+    helper_base::$late_javascript .= <<<JS
+$('#$options[id]').idcDataGrid('bindControls');
+
+JS;
     return self::getControlContainer('dataGrid', $options, $dataOptions);
   }
 
@@ -810,7 +831,7 @@ JS;
     ], TRUE);
     // Extra setup required after map loads.
     helper_base::$late_javascript .= <<<JS
-$('#$options[id]').idcLeafletMap('bindRecordListControls');
+$('#$options[id]').idcLeafletMap('bindControls');
 
 JS;
     return self::getControlContainer('leafletMap', $options, $dataOptions);
@@ -1094,12 +1115,18 @@ JS;
       'showSelectedRow',
     ], TRUE);
     helper_base::add_resource('tabs');
-    helper_base::$late_javascript .= <<<JS
+    // Record details pane must be initialised after the control acting as row
+    // data source, so it can hook to events.
+    helper_base::$javascript .= <<<JS
 $('#$options[id]').idcRecordDetailsPane();
 
 JS;
+    helper_base::$late_javascript .= <<<JS
+$('#$options[id]').idcRecordDetailsPane('bindControls');
+
+JS;
     $r = <<<HTML
-<div class="record-details-container" id="$options[id]" data-idc-config="$dataOptions">
+<div class="idc-control idc-recordDetails" data-idc-class="idcRecordDetails" id="$options[id]" data-idc-config="$dataOptions">
   <div class="empty-message alert alert-info"><span class="fas fa-info-circle fa-2x"></span>Select a row to view details</div>
   <div class="tabs" style="display: none">
     <ul>
@@ -1548,32 +1575,34 @@ HTML;
       <button class="upload-decisions $btnClass" title="$lang[uploadVerificationDecisions]"><span class="fas fa-file-upload"></span>$lang[upload]</button>
 HTML;
     $r = <<<HTML
-<div id="$options[id]" class="idc-verification-buttons" style="display: none;" data-idc-config="$dataOptions">
-  <div class="selection-buttons-placeholder">
-    <div class="all-selected-buttons idc-verification-buttons-row">
-      Actions:
-      <span class="fas fa-toggle-on toggle fa-2x" title="Toggle additional status levels"></span>
-      <button class="verify l1 $btnClass" data-status="V" title="$lang[accepted]"><span class="far fa-check-circle status-V"></span></button>
-      <button class="verify l2 $btnClass" data-status="V1" title="$lang[acceptedCorrect]"><span class="fas fa-check-double status-V1"></span></button>
-      <button class="verify l2 $btnClass" data-status="V2" title="$lang[acceptedConsideredCorrect]"><span class="fas fa-check status-V2"></span></button>
-      <button class="verify $btnClass" data-status="C3" title="$lang[plausible]"><span class="fas fa-check-square status-C3"></span></button>
-      <button class="verify l1 $btnClass" data-status="R" title="$lang[notAccepted]"><span class="far fa-times-circle status-R"></span></button>
-      <button class="verify l2 $btnClass" data-status="R4" title="$lang[notAcceptedUnableToVerify]"><span class="fas fa-times status-R4"></span></button>
-      <button class="verify l2 $btnClass" data-status="R5" title="$lang[notAcceptedIncorrect]"><span class="fas fa-times status-R5"></span></button>
-      <div class="multi-only apply-to">
-        <span>$lang[applyDecisionTo]:</span>
-        <button class="multi-mode-selected active $btnClass">$lang[selected]</button>
-        |
-        <button class="multi-mode-table $btnClass">$lang[all]</button>
+<div id="$options[id]" class="idc-control idc-verificationButtons" data-idc-class="idcVerificationButtons" style="display: none;" data-idc-config="$dataOptions">
+  <div class="verification-buttons-cntr">
+    <div class="selection-buttons-placeholder">
+      <div class="all-selected-buttons idc-verificationButtons-row">
+        Actions:
+        <span class="fas fa-toggle-on toggle fa-2x" title="Toggle additional status levels"></span>
+        <button class="verify l1 $btnClass" data-status="V" title="$lang[accepted]"><span class="far fa-check-circle status-V"></span></button>
+        <button class="verify l2 $btnClass" data-status="V1" title="$lang[acceptedCorrect]"><span class="fas fa-check-double status-V1"></span></button>
+        <button class="verify l2 $btnClass" data-status="V2" title="$lang[acceptedConsideredCorrect]"><span class="fas fa-check status-V2"></span></button>
+        <button class="verify $btnClass" data-status="C3" title="$lang[plausible]"><span class="fas fa-check-square status-C3"></span></button>
+        <button class="verify l1 $btnClass" data-status="R" title="$lang[notAccepted]"><span class="far fa-times-circle status-R"></span></button>
+        <button class="verify l2 $btnClass" data-status="R4" title="$lang[notAcceptedUnableToVerify]"><span class="fas fa-times status-R4"></span></button>
+        <button class="verify l2 $btnClass" data-status="R5" title="$lang[notAcceptedIncorrect]"><span class="fas fa-times status-R5"></span></button>
+        <div class="multi-only apply-to">
+          <span>$lang[applyDecisionTo]:</span>
+          <button class="multi-mode-selected active $btnClass">$lang[selected]</button>
+          |
+          <button class="multi-mode-table $btnClass">$lang[all]</button>
+        </div>
+        <span class="sep"></span>
+        <button class="query $btnClass" data-query="Q" title="$lang[raiseQuery]"><span class="fas fa-question-circle query-Q"></span></button>
+        <button class="email-expert $btnClass" title="$lang[contactExpert]"><span class="fas fa-chalkboard-teacher"></span></button>
+        $uploadButton
       </div>
-      <span class="sep"></span>
-      <button class="query $btnClass" data-query="Q" title="$lang[raiseQuery]"><span class="fas fa-question-circle query-Q"></span></button>
-      <button class="email-expert $btnClass" title="$lang[contactExpert]"><span class="fas fa-chalkboard-teacher"></span></button>
-      $uploadButton
     </div>
-  </div>
-  <div class="single-record-buttons idc-verification-buttons-row">
-    $optionalLinks
+    <div class="single-record-buttons idc-verificationButtons-row">
+      $optionalLinks
+    </div>
   </div>
 </div>
 <div id="redet-panel-wrap" style="display: none">
@@ -1913,7 +1942,7 @@ $('#$options[id]').$initFn({});
 
 JS;
     return <<<HTML
-<div id="$options[id]" class="idc-output idc-output-$controlName" data-idc-config="$dataOptions">
+<div id="$options[id]" class="idc-control idc-$controlName" data-idc-class="$initFn" data-idc-config="$dataOptions">
   $content
 </div>
 
