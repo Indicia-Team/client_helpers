@@ -340,12 +340,17 @@ class ElasticsearchReportHelper {
       'next' => lang::get('Next record'),
       'prev' => lang::get('Previous record'),
     ];
+    // Map options alias, so consistent with dataGrid.
+    if (isset($options['sortable']) && !isset($options['includeSortTool'])) {
+      $options['includeSortTool'] = $options['sortable'];
+    }
     $dataOptions = helper_base::getOptionsForJs($options, [
       'actions',
       'columns',
       'includeFieldCaptions',
       'includeFullScreenTool',
       'includePager',
+      'includeSortTool',
       'keyboardNavigation',
       'rowsPerPageOptions',
       'source',
