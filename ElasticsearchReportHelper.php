@@ -499,10 +499,10 @@ JS;
     // options for a select control that will be used to indicate the selected
     // columns template.
     if (!empty($options['columnsTemplate']) && is_array($options['columnsTemplate'])) {
-      $availableColTypes = array(
+      $availableColTypes = [
         "easy-download" => lang::get("Standard download format"),
         "mapmate" => lang::get("Simple download format"),
-      );
+      ];
       $optionArr = [];
       foreach ($options['columnsTemplate'] as $colType) {
         $optionArr[$colType] = $availableColTypes[$colType];
@@ -688,14 +688,14 @@ JS;
    *   HTML for the list of links.
    */
   public static function getGroupPageLinks(array $group, array $options, $member) {
-    $pageData = data_entry_helper::get_population_data(array(
+    $pageData = data_entry_helper::get_population_data([
       'table' => 'group_page',
-      'extraParams' => $options['readAuth'] + array(
-          'group_id' => $group['id'],
-          'query' => json_encode(array('in'=>array('administrator'=>array('', 'f')))),
-          'orderby' => 'caption'
-        )
-    ));
+      'extraParams' => $options['readAuth'] + [
+        'group_id' => $group['id'],
+        'query' => json_encode(['in' => ['administrator' => ['', 'f']]]),
+        'orderby' => 'caption',
+      ],
+    ]);
     $pageLinks = [];
     $thisPage = empty($options['nid']) ? '' : hostsite_get_alias($options['nid']);;
     foreach ($pageData as $page) {
@@ -703,7 +703,10 @@ JS;
       // non-members.
       if ($page['path'] !== $thisPage && ($member || $page['administrator'] === NULL)) {
         $pageLinks[] = '<li><a href="' .
-          hostsite_get_url($page['path'], array('group_id'=>$group['id'], 'implicit'=>$group['implicit_record_inclusion'])) .
+          hostsite_get_url($page['path'], [
+            'group_id' => $group['id'],
+            'implicit' => $group['implicit_record_inclusion'],
+          ]) .
           '">' . lang::get($page['caption']) . '</a></li>';
       }
     }
@@ -860,18 +863,18 @@ JS;
       'label' => $options['label'],
       'fieldname' => 'es-survey-filter',
       'class' => 'es-filter-param survey-filter',
-      'attributes' => array (
+      'attributes' => [
         'data-es-bool-clause' => 'must',
         'data-es-query' => '{&quot;term&quot;: {&quot;metadata.survey.id&quot;: #value#}}',
-        'data-es-summary' => 'limit to records in survey: #value#'
-      ),
+        'data-es-summary' => 'limit to records in survey: #value#',
+      ],
       'table' => 'survey',
       'valueField' => 'id',
       'captionField' => 'title',
-      'extraParams' => $options['readAuth'] + array(
+      'extraParams' => $options['readAuth'] + [
         'orderby' => 'title',
-        'sharing' => 'data_flow'
-      ),
+        'sharing' => 'data_flow',
+      ],
       'blankText' => '- Please select -',
     ];
 
@@ -956,10 +959,10 @@ JS;
       ];
 
       if ($params['user_id']) {
-        $groups = helper_base::get_population_data(array(
+        $groups = helper_base::get_population_data([
           'table' => 'groups_user',
           'extraParams' => helper_base::$js_read_tokens + $params,
-        ));
+        ]);
         foreach ($groups as $group) {
           $title = $group['group_title'] . (isset($group['group_expired']) && $group['group_expired'] === 't' ?
               ' (' . lang::get('finished') . ')' : '');
