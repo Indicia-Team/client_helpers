@@ -336,6 +336,13 @@ class ElasticsearchReportHelper {
         'rowsPerPageOptions',
       ]
     );
+    helper_base::addLanguageStringsToJs('cardGallery', [
+      'fullScreenToolHint' => 'Click to view grid in full screen mode',
+      'noHeading' => 'no heading',
+      'clickToSort' => 'Click on the data value to sort by:',
+      'sortConfiguration' => 'Sort configuration',
+      'sortToolHint' => 'Click to select the sort order',
+    ]);
     $lang = [
       'next' => lang::get('Next record'),
       'prev' => lang::get('Previous record'),
@@ -436,6 +443,12 @@ HTML;
     }
     // Fancybox for image popups.
     helper_base::add_resource('fancybox');
+    helper_base::addLanguageStringsToJs('dataGrid', [
+      'columnSettingsToolHint' => 'Click to show grid column settings',
+      'fullScreenToolHint' => 'Click to view grid in full screen mode',
+      'noHeading' => 'no heading',
+      'status' => 'Status',
+    ]);
     $dataOptions = helper_base::getOptionsForJs($options, [
       'actions',
       'applyFilterRowToSources',
