@@ -1128,7 +1128,7 @@ class helper_base {
           'javascript' => [self::$js_path . 'drivers/sref/osie.js'],
         ],
         'font_awesome' => [
-          'stylesheets' => ['https://use.fontawesome.com/releases/v5.7.2/css/all.css']
+          'stylesheets' => ['https://use.fontawesome.com/releases/v5.15.4/css/all.css']
         ],
         'leaflet' => [
           'stylesheets' => ['https://unpkg.com/leaflet@1.4.0/dist/leaflet.css'],
