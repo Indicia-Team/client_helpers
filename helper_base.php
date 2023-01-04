@@ -51,7 +51,8 @@ $indicia_templates = [
   'buttonDefaultClass' => 'indicia-button',
   'buttonHighlightedClass' => 'indicia-button',
   'buttonWarningClass' => 'indicia-button',
-    // Classes applied to <a> when styled like a button
+  'buttonSmallClass' => 'btn-xs',
+  // Classes applied to <a> when styled like a button
   'anchorButtonClass' => 'indicia-button',
   'submitButton' => '<input id="{id}" type="submit"{class} name="{name}" value="{caption}" />',
   // Message boxes
