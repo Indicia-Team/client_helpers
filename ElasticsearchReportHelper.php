@@ -1458,12 +1458,14 @@ HTML;
       'taxon_list_id' => hostsite_get_config_value('iform', 'master_checklist_id'),
       'viewPath' => helper_base::getRootFolder(TRUE) . $options['viewPath'],
       'redeterminerNameAttributeHandling' => 'overwriteOnRedet',
+      'verificationTemplates' => FALSE,
     ], $options);
     $dataOptions = helper_base::getOptionsForJs($options, [
       'editPath',
       'keyboardNavigation',
       'showSelectedRow',
       'uploadButtonContainerElement',
+      'verificationTemplates',
       'viewPath',
     ], TRUE);
     $userId = hostsite_get_user_field('indicia_user_id');
@@ -1500,12 +1502,16 @@ HTML;
       'applyRedetermination' => lang::get('Apply redetermination'),
       'cancel' => lang::get('Cancel'),
       'contactExpert' => lang::get('Contact an expert'),
+      'edit' => lang::get('Edit'),
+      'help' => lang::get('Help'),
       'notAccepted' => lang::get('Not accepted'),
       'notAcceptedIncorrect' => lang::get('Not accepted :: incorrect'),
       'notAcceptedUnableToVerify' => lang::get('Not accepted :: unable to verify'),
       'plausible' => lang::get('Plausible'),
       'raiseQuery' => lang::get('Raise a query with the recorder'),
+      'saveTemplate' => lang::get('Save template'),
       'selected' => lang::get('selected'),
+      'showPreview' => lang::get('Preview'),
       'upload' => lang::get('Upload'),
       'uploadVerificationDecisions' => lang::get('Upload a file of verification decisions'),
     ];
@@ -1544,6 +1550,7 @@ HTML;
       'saveQueryToComments' => 'Save query to comments log',
       'sendQueryAsEmail' => 'Send query as email',
       'uploadError' => 'An error occurred whilst uploading your spreadsheet.',
+      'DT' => 'redetermined',
     ]);
     if (empty($options['taxon_list_id'])) {
       throw new Exception('[verificationButtons] requires a @taxon_list_id option, or the Indicia setting Master Checklist ID to be set. This ' .
@@ -1587,7 +1594,9 @@ HTML;
     }
     $commentInput = data_entry_helper::textarea([
       'label' => lang::get('Explanation comment'),
+      'labelClass' => 'auto',
       'helpText' => lang::get('Please give reasons why you are changing this record.'),
+      'helpTextClass' => 'helpTextLeft',
       'fieldname' => 'redet-comment',
       'wrapClasses' => ['not-full-width-lg'],
     ]);
@@ -1595,6 +1604,19 @@ HTML;
     $uploadButton = empty($options['includeUploadButton']) ? '' : <<<HTML
       <button class="upload-decisions $btnClass" title="$lang[uploadVerificationDecisions]"><span class="fas fa-file-upload"></span>$lang[upload]</button>
 HTML;
+    if ($options['verificationTemplates']) {
+      $loadTemplateDropdown = data_entry_helper::select([
+        'label' => lang::get('Or, load the following comment template'),
+        'fieldname' => 'redet-template',
+        'lookupValues' => [],
+        'blankText' => lang::get('- select template to load -'),
+      ]);
+      $saveTemplateTool = "<button type=\"button\" class=\"comment-save-template $indicia_templates[buttonDefaultClass] $indicia_templates[buttonSmallClass]\">$lang[saveTemplate]</button>";
+    }
+    else {
+      $loadTemplateDropdown = '';
+      $saveTemplateTool = '';
+    }
     $r = <<<HTML
 <div id="$options[id]" class="idc-control idc-verificationButtons" data-idc-class="idcVerificationButtons" style="display: none;" data-idc-config="$dataOptions">
   <div class="verification-buttons-cntr">
@@ -1632,9 +1654,19 @@ HTML;
     $speciesInput
     $altListCheckbox
     $redetNameBehaviourOption
-    $commentInput
-    <button type="submit" class="btn btn-primary" id="apply-redet">$lang[applyRedetermination]</button>
-    <button type="button" class="btn btn-danger" id="cancel-redet">$lang[cancel]</button>
+    <div class="comment-cntr">
+      $commentInput
+      <div class="comment-tools">
+        <button type="button" class="comment-show-preview $indicia_templates[buttonDefaultClass] $indicia_templates[buttonSmallClass]">$lang[showPreview]</button>
+        <button type="button" class="comment-edit $indicia_templates[buttonDefaultClass] $indicia_templates[buttonSmallClass]" style="display: none">$lang[edit]</button>
+        $saveTemplateTool
+        <button type="button" class="comment-help $indicia_templates[buttonDefaultClass] $indicia_templates[buttonSmallClass]">$lang[help]</button>
+      </div>
+      <div class="comment-preview" style="display: none"></div>
+    </div>
+    $loadTemplateDropdown
+    <button type="submit" class="$btnClass" id="apply-redet">$lang[applyRedetermination]</button>
+    <button type="button" class="$btnClass" id="cancel-redet">$lang[cancel]</button>
   </form>
 </div>
 HTML;
