@@ -869,50 +869,28 @@ indiciaData.rowIdToReselect = false;
     $('.verify-template').change(function () {
       var templateID = $('.verify-template').val();
       var data = $('.verify-template').data('data');
-      var substitute = function (item) {
-        // The currRec is populated from the details report reports_for_prebuilt_forms/verification_5/record_data
-        var conversions = {
-          date: currRec.extra.date,
-          'entered sref': currRec.extra.entered_sref,
-          species: currRec.extra.taxon,
-          'common name': [currRec.extra.default_common_name, currRec.extra.preferred_taxon, currRec.extra.taxon],
-          'preferred name': [currRec.extra.preferred_taxon, currRec.extra.taxon],
-          action: {
-            V: indiciaData.popupTranslations.V,
-            V1: indiciaData.popupTranslations.V1,
-            V2: indiciaData.popupTranslations.V2,
-            C3: indiciaData.popupTranslations.C3,
-            R: indiciaData.popupTranslations.R,
-            R4: indiciaData.popupTranslations.R4,
-            R5: indiciaData.popupTranslations.R5,
-            DT: indiciaData.popupTranslations.DT
-          }[status],
-          'location name': [currRec.extra.location_name, currRec.extra.entered_sref]
-        };
-        var convs = Object.keys(conversions);
-        var replacement;
-        var i;
-        var j;
-        for (i = 0; i < convs.length; i++) {
-          if (typeof conversions[convs[i]] === 'object') {
-            for (j = 0; j < conversions[convs[i]].length; j++) {
-              replacement = conversions[convs[i]][j];
-              if (typeof replacement !== 'undefined' && replacement !== null  && replacement !== '') {
-                break;
-              }
-            }
-          } else {
-            replacement = conversions[convs[i]];
-          }
-          if (typeof replacement !== 'undefined' && replacement !== null) {
-            item = item.replace(new RegExp('{{\\s*' + convs[i].replace(/ /g, '[\\s|_]') + "\\s*}}", 'gi'), replacement);
-          }
-        }
-        return item;
+      // The currRec is populated from the details report reports_for_prebuilt_forms/verification_5/record_data
+      var conversions = {
+        date: currRec.extra.date,
+        'entered sref': currRec.extra.entered_sref,
+        species: currRec.extra.taxon,
+        'common name': [currRec.extra.default_common_name, currRec.extra.preferred_taxon, currRec.extra.taxon],
+        'preferred name': [currRec.extra.preferred_taxon, currRec.extra.taxon],
+        action: {
+          V: indiciaData.popupTranslations.V,
+          V1: indiciaData.popupTranslations.V1,
+          V2: indiciaData.popupTranslations.V2,
+          C3: indiciaData.popupTranslations.C3,
+          R: indiciaData.popupTranslations.R,
+          R4: indiciaData.popupTranslations.R4,
+          R5: indiciaData.popupTranslations.R5,
+          DT: indiciaData.popupTranslations.DT
+        }[status],
+        'location name': [currRec.extra.location_name, currRec.extra.entered_sref]
       };
       $.each(data, function eachData() {
         if (this.id === templateID) {
-          $('.templatable-comment').val(substitute(this.template));
+          $('.templatable-comment').val(indiciaFns.applyVerificationTemplateSubsitutions(this.template, conversions));
         }
       });
     });
