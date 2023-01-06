@@ -3054,7 +3054,7 @@ if (typeof validator!=='undefined') {
    *         Use helper_base::expireCacheEntry() rather than setting this
    *         option directly.
    *   * **cachePerUser** - if the data are not specific to the logged in user,
-   *     then set to True so that a single cached response can be shared by
+   *     then set to false so that a single cached response can be shared by
    *     multiple users.
    *   * **sharing** - Optional. Set to verification, reporting, peer_review,
    *     moderation, data_flow or editing to request data sharing with other

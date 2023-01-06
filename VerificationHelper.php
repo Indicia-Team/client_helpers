@@ -359,43 +359,47 @@ class VerificationHelper {
    */
   public static function fetchTaxaWithLoggedCommunications($readAuth, $sharing = 'verification') {
     // Allow caching.
-    $wfMetadata = data_entry_helper::get_population_data(array(
+    $wfMetadata = data_entry_helper::get_population_data([
       'table' => 'workflow_metadata',
-      'extraParams' => $readAuth + array(
+      'extraParams' => $readAuth + [
         'log_all_communications' => 't',
         'entity' => 'occurrence',
         'view' => 'detail',
         'columns' => 'key,key_value',
-      ),
-    ));
-    $workflowTaxonMeaningIDsLogAllComms = [];
-    $externalKeys = [];
-    foreach ($wfMetadata as $wfMeta) {
-      switch ($wfMeta['key']) {
-        case 'taxa_taxon_list_external_key':
-          $externalKeys[] = $wfMeta['key_value'];
-          break;
+      ],
+      'cachePerUser' => FALSE,
+    ]);
+    if (!empty($wfMetadata)) {
+      $workflowTaxonMeaningIDsLogAllComms = [];
+      $externalKeys = [];
+      foreach ($wfMetadata as $wfMeta) {
+        switch ($wfMeta['key']) {
+          case 'taxa_taxon_list_external_key':
+            $externalKeys[] = $wfMeta['key_value'];
+            break;
 
-        default:
-          hostsite_show_message("Unrecognised workflow_metadata key $wfMeta[key]");
-          break;
+          default:
+            hostsite_show_message("Unrecognised workflow_metadata key $wfMeta[key]");
+            break;
+        }
       }
+      // Allow caching.
+      $wkMIDs = data_entry_helper::get_population_data([
+        'table' => 'cache_taxa_taxon_list',
+        'extraParams' => $readAuth + [
+          'query' => json_encode(['in' => ['external_key' => $externalKeys]]),
+          'columns' => 'taxon_meaning_id',
+        ],
+        'sharing' => $sharing,
+        'cachePerUser' => FALSE,
+      ]);
+      foreach ($wkMIDs as $wkMID) {
+        $workflowTaxonMeaningIDsLogAllComms[] = $wkMID['taxon_meaning_id'];
+      }
+      data_entry_helper::$indiciaData['workflowEnabled'] = TRUE;
+      data_entry_helper::$indiciaData['workflowTaxonMeaningIDsLogAllComms'] =
+        array_values(array_unique($workflowTaxonMeaningIDsLogAllComms));
     }
-    // Allow caching.
-    $wkMIDs = data_entry_helper::get_population_data(array(
-      'table' => 'cache_taxa_taxon_list',
-      'extraParams' => $readAuth + array(
-        'query' => json_encode(['in' => ['external_key' => $externalKeys]]),
-        'columns' => 'taxon_meaning_id',
-      ),
-      'sharing' => $sharing,
-    ));
-    foreach ($wkMIDs as $wkMID) {
-      $workflowTaxonMeaningIDsLogAllComms[] = $wkMID['taxon_meaning_id'];
-    }
-    data_entry_helper::$indiciaData['workflowEnabled'] = TRUE;
-    data_entry_helper::$indiciaData['workflowTaxonMeaningIDsLogAllComms'] =
-      array_values(array_unique($workflowTaxonMeaningIDsLogAllComms));
   }
 
   /**
