@@ -360,17 +360,45 @@ class ElasticsearchReportHelper {
         'rowsPerPageOptions',
       ]
     );
+    helper_base::addLanguageStringsToJs('cardGallery', [
+      'fullScreenToolHint' => 'Click to view grid in full screen mode',
+      'noHeading' => 'no heading',
+      'clickToSort' => 'Click on the data value to sort by:',
+      'sortConfiguration' => 'Sort configuration',
+      'sortToolHint' => 'Click to select the sort order',
+    ]);
+    $lang = [
+      'next' => lang::get('Next record'),
+      'prev' => lang::get('Previous record'),
+    ];
+    // Map options alias, so consistent with dataGrid.
+    if (isset($options['sortable']) && !isset($options['includeSortTool'])) {
+      $options['includeSortTool'] = $options['sortable'];
+    }
     $dataOptions = helper_base::getOptionsForJs($options, [
       'actions',
       'columns',
       'includeFieldCaptions',
       'includeFullScreenTool',
       'includePager',
+      'includeSortTool',
       'keyboardNavigation',
       'rowsPerPageOptions',
       'source',
     ], TRUE);
-    return self::getControlContainer('cardGallery', $options, $dataOptions);
+    // Extra setup required after gallery loads.
+    helper_base::$late_javascript .= <<<JS
+$('#$options[id]').idcCardGallery('bindControls');
+
+JS;
+    return self::getControlContainer('cardGallery', $options, $dataOptions) . <<<HTML
+<div id="card-nav-buttons-cntr" style="display: none">
+  <div id="card-nav-buttons">
+    <button class="nav-prev indicia-button" title="$lang[prev]"><span class="fas fa-caret-left"></span></button>
+    <button class="nav-next indicia-button" title="$lang[next]"><span class="fas fa-caret-right"></span></button>
+  </div>
+</div>
+HTML;
   }
 
   /**
@@ -439,6 +467,12 @@ class ElasticsearchReportHelper {
     }
     // Fancybox for image popups.
     helper_base::add_resource('fancybox');
+    helper_base::addLanguageStringsToJs('dataGrid', [
+      'columnSettingsToolHint' => 'Click to show grid column settings',
+      'fullScreenToolHint' => 'Click to view grid in full screen mode',
+      'noHeading' => 'no heading',
+      'status' => 'Status',
+    ]);
     $dataOptions = helper_base::getOptionsForJs($options, [
       'actions',
       'applyFilterRowToSources',
@@ -462,6 +496,11 @@ class ElasticsearchReportHelper {
       'source',
       'sortable',
     ], TRUE);
+    // Extra setup required after grid loads.
+    helper_base::$late_javascript .= <<<JS
+$('#$options[id]').idcDataGrid('bindControls');
+
+JS;
     return self::getControlContainer('dataGrid', $options, $dataOptions);
   }
 
@@ -497,10 +536,10 @@ class ElasticsearchReportHelper {
     // options for a select control that will be used to indicate the selected
     // columns template.
     if (!empty($options['columnsTemplate']) && is_array($options['columnsTemplate'])) {
-      $availableColTypes = array(
+      $availableColTypes = [
         "easy-download" => lang::get("Standard download format"),
         "mapmate" => lang::get("Simple download format"),
-      );
+      ];
       $optionArr = [];
       foreach ($options['columnsTemplate'] as $colType) {
         $optionArr[$colType] = $availableColTypes[$colType];
@@ -686,14 +725,14 @@ JS;
    *   HTML for the list of links.
    */
   public static function getGroupPageLinks(array $group, array $options, $member) {
-    $pageData = data_entry_helper::get_population_data(array(
+    $pageData = data_entry_helper::get_population_data([
       'table' => 'group_page',
-      'extraParams' => $options['readAuth'] + array(
-          'group_id' => $group['id'],
-          'query' => json_encode(array('in'=>array('administrator'=>array('', 'f')))),
-          'orderby' => 'caption'
-        )
-    ));
+      'extraParams' => $options['readAuth'] + [
+        'group_id' => $group['id'],
+        'query' => json_encode(['in' => ['administrator' => ['', 'f']]]),
+        'orderby' => 'caption',
+      ],
+    ]);
     $pageLinks = [];
     $thisPage = empty($options['nid']) ? '' : hostsite_get_alias($options['nid']);;
     foreach ($pageData as $page) {
@@ -701,7 +740,10 @@ JS;
       // non-members.
       if ($page['path'] !== $thisPage && ($member || $page['administrator'] === NULL)) {
         $pageLinks[] = '<li><a href="' .
-          hostsite_get_url($page['path'], array('group_id'=>$group['id'], 'implicit'=>$group['implicit_record_inclusion'])) .
+          hostsite_get_url($page['path'], [
+            'group_id' => $group['id'],
+            'implicit' => $group['implicit_record_inclusion'],
+          ]) .
           '">' . lang::get($page['caption']) . '</a></li>';
       }
     }
@@ -834,7 +876,7 @@ JS;
     ], TRUE);
     // Extra setup required after map loads.
     helper_base::$late_javascript .= <<<JS
-$('#$options[id]').idcLeafletMap('bindRecordListControls');
+$('#$options[id]').idcLeafletMap('bindControls');
 
 JS;
     return self::getControlContainer('leafletMap', $options, $dataOptions);
@@ -858,18 +900,18 @@ JS;
       'label' => $options['label'],
       'fieldname' => 'es-survey-filter',
       'class' => 'es-filter-param survey-filter',
-      'attributes' => array (
+      'attributes' => [
         'data-es-bool-clause' => 'must',
         'data-es-query' => '{&quot;term&quot;: {&quot;metadata.survey.id&quot;: #value#}}',
-        'data-es-summary' => 'limit to records in survey: #value#'
-      ),
+        'data-es-summary' => 'limit to records in survey: #value#',
+      ],
       'table' => 'survey',
       'valueField' => 'id',
       'captionField' => 'title',
-      'extraParams' => $options['readAuth'] + array(
+      'extraParams' => $options['readAuth'] + [
         'orderby' => 'title',
-        'sharing' => 'data_flow'
-      ),
+        'sharing' => 'data_flow',
+      ],
       'blankText' => '- Please select -',
     ];
 
@@ -954,10 +996,10 @@ JS;
       ];
 
       if ($params['user_id']) {
-        $groups = helper_base::get_population_data(array(
+        $groups = helper_base::get_population_data([
           'table' => 'groups_user',
           'extraParams' => helper_base::$js_read_tokens + $params,
-        ));
+        ]);
         foreach ($groups as $group) {
           $title = $group['group_title'] . (isset($group['group_expired']) && $group['group_expired'] === 't' ?
               ' (' . lang::get('finished') . ')' : '');
@@ -1118,12 +1160,18 @@ JS;
       'showSelectedRow',
     ], TRUE);
     helper_base::add_resource('tabs');
-    helper_base::$late_javascript .= <<<JS
+    // Record details pane must be initialised after the control acting as row
+    // data source, so it can hook to events.
+    helper_base::$javascript .= <<<JS
 $('#$options[id]').idcRecordDetailsPane();
 
 JS;
+    helper_base::$late_javascript .= <<<JS
+$('#$options[id]').idcRecordDetailsPane('bindControls');
+
+JS;
     $r = <<<HTML
-<div class="record-details-container" id="$options[id]" data-idc-config="$dataOptions">
+<div class="idc-control idc-recordDetails" data-idc-class="idcRecordDetails" id="$options[id]" data-idc-config="$dataOptions">
   <div class="empty-message alert alert-info"><span class="fas fa-info-circle fa-2x"></span>Select a row to view details</div>
   <div class="tabs" style="display: none">
     <ul>
@@ -1434,12 +1482,14 @@ HTML;
       'taxon_list_id' => hostsite_get_config_value('iform', 'master_checklist_id'),
       'viewPath' => helper_base::getRootFolder(TRUE) . $options['viewPath'],
       'redeterminerNameAttributeHandling' => 'overwriteOnRedet',
+      'verificationTemplates' => FALSE,
     ], $options);
     $dataOptions = helper_base::getOptionsForJs($options, [
       'editPath',
       'keyboardNavigation',
       'showSelectedRow',
       'uploadButtonContainerElement',
+      'verificationTemplates',
       'viewPath',
     ], TRUE);
     $userId = hostsite_get_user_field('indicia_user_id');
@@ -1476,12 +1526,16 @@ HTML;
       'applyRedetermination' => lang::get('Apply redetermination'),
       'cancel' => lang::get('Cancel'),
       'contactExpert' => lang::get('Contact an expert'),
+      'edit' => lang::get('Edit'),
+      'help' => lang::get('Help'),
       'notAccepted' => lang::get('Not accepted'),
       'notAcceptedIncorrect' => lang::get('Not accepted :: incorrect'),
       'notAcceptedUnableToVerify' => lang::get('Not accepted :: unable to verify'),
       'plausible' => lang::get('Plausible'),
       'raiseQuery' => lang::get('Raise a query with the recorder'),
+      'saveTemplate' => lang::get('Save template'),
       'selected' => lang::get('selected'),
+      'showPreview' => lang::get('Preview'),
       'upload' => lang::get('Upload'),
       'uploadVerificationDecisions' => lang::get('Upload a file of verification decisions'),
     ];
@@ -1520,6 +1574,7 @@ HTML;
       'saveQueryToComments' => 'Save query to comments log',
       'sendQueryAsEmail' => 'Send query as email',
       'uploadError' => 'An error occurred whilst uploading your spreadsheet.',
+      'DT' => 'redetermined',
     ]);
     if (empty($options['taxon_list_id'])) {
       throw new Exception('[verificationButtons] requires a @taxon_list_id option, or the Indicia setting Master Checklist ID to be set. This ' .
@@ -1563,7 +1618,9 @@ HTML;
     }
     $commentInput = data_entry_helper::textarea([
       'label' => lang::get('Explanation comment'),
+      'labelClass' => 'auto',
       'helpText' => lang::get('Please give reasons why you are changing this record.'),
+      'helpTextClass' => 'helpTextLeft',
       'fieldname' => 'redet-comment',
       'wrapClasses' => ['not-full-width-lg'],
     ]);
@@ -1571,33 +1628,48 @@ HTML;
     $uploadButton = empty($options['includeUploadButton']) ? '' : <<<HTML
       <button class="upload-decisions $btnClass" title="$lang[uploadVerificationDecisions]"><span class="fas fa-file-upload"></span>$lang[upload]</button>
 HTML;
+    if ($options['verificationTemplates']) {
+      $loadTemplateDropdown = data_entry_helper::select([
+        'label' => lang::get('Or, load the following comment template'),
+        'fieldname' => 'redet-template',
+        'lookupValues' => [],
+        'blankText' => lang::get('- select template to load -'),
+      ]);
+      $saveTemplateTool = "<button type=\"button\" class=\"comment-save-template $indicia_templates[buttonDefaultClass] $indicia_templates[buttonSmallClass]\">$lang[saveTemplate]</button>";
+    }
+    else {
+      $loadTemplateDropdown = '';
+      $saveTemplateTool = '';
+    }
     $r = <<<HTML
-<div id="$options[id]" class="idc-verification-buttons" style="display: none;" data-idc-config="$dataOptions">
-  <div class="selection-buttons-placeholder">
-    <div class="all-selected-buttons idc-verification-buttons-row">
-      Actions:
-      <span class="fas fa-toggle-on toggle fa-2x" title="Toggle additional status levels"></span>
-      <button class="verify l1 $btnClass" data-status="V" title="$lang[accepted]"><span class="far fa-check-circle status-V"></span></button>
-      <button class="verify l2 $btnClass" data-status="V1" title="$lang[acceptedCorrect]"><span class="fas fa-check-double status-V1"></span></button>
-      <button class="verify l2 $btnClass" data-status="V2" title="$lang[acceptedConsideredCorrect]"><span class="fas fa-check status-V2"></span></button>
-      <button class="verify $btnClass" data-status="C3" title="$lang[plausible]"><span class="fas fa-check-square status-C3"></span></button>
-      <button class="verify l1 $btnClass" data-status="R" title="$lang[notAccepted]"><span class="far fa-times-circle status-R"></span></button>
-      <button class="verify l2 $btnClass" data-status="R4" title="$lang[notAcceptedUnableToVerify]"><span class="fas fa-times status-R4"></span></button>
-      <button class="verify l2 $btnClass" data-status="R5" title="$lang[notAcceptedIncorrect]"><span class="fas fa-times status-R5"></span></button>
-      <div class="multi-only apply-to">
-        <span>$lang[applyDecisionTo]:</span>
-        <button class="multi-mode-selected active $btnClass">$lang[selected]</button>
-        |
-        <button class="multi-mode-table $btnClass">$lang[all]</button>
+<div id="$options[id]" class="idc-control idc-verificationButtons" data-idc-class="idcVerificationButtons" style="display: none;" data-idc-config="$dataOptions">
+  <div class="verification-buttons-cntr">
+    <div class="selection-buttons-placeholder">
+      <div class="all-selected-buttons idc-verificationButtons-row">
+        Actions:
+        <span class="fas fa-toggle-on toggle fa-2x" title="Toggle additional status levels"></span>
+        <button class="verify l1 $btnClass" data-status="V" title="$lang[accepted]"><span class="far fa-check-circle status-V"></span></button>
+        <button class="verify l2 $btnClass" data-status="V1" title="$lang[acceptedCorrect]"><span class="fas fa-check-double status-V1"></span></button>
+        <button class="verify l2 $btnClass" data-status="V2" title="$lang[acceptedConsideredCorrect]"><span class="fas fa-check status-V2"></span></button>
+        <button class="verify $btnClass" data-status="C3" title="$lang[plausible]"><span class="fas fa-check-square status-C3"></span></button>
+        <button class="verify l1 $btnClass" data-status="R" title="$lang[notAccepted]"><span class="far fa-times-circle status-R"></span></button>
+        <button class="verify l2 $btnClass" data-status="R4" title="$lang[notAcceptedUnableToVerify]"><span class="fas fa-times status-R4"></span></button>
+        <button class="verify l2 $btnClass" data-status="R5" title="$lang[notAcceptedIncorrect]"><span class="fas fa-times status-R5"></span></button>
+        <div class="multi-only apply-to">
+          <span>$lang[applyDecisionTo]:</span>
+          <button class="multi-mode-selected active $btnClass">$lang[selected]</button>
+          |
+          <button class="multi-mode-table $btnClass">$lang[all]</button>
+        </div>
+        <span class="sep"></span>
+        <button class="query $btnClass" data-query="Q" title="$lang[raiseQuery]"><span class="fas fa-question-circle query-Q"></span></button>
+        <button class="email-expert $btnClass" title="$lang[contactExpert]"><span class="fas fa-chalkboard-teacher"></span></button>
+        $uploadButton
       </div>
-      <span class="sep"></span>
-      <button class="query $btnClass" data-query="Q" title="$lang[raiseQuery]"><span class="fas fa-question-circle query-Q"></span></button>
-      <button class="email-expert $btnClass" title="$lang[contactExpert]"><span class="fas fa-chalkboard-teacher"></span></button>
-      $uploadButton
     </div>
-  </div>
-  <div class="single-record-buttons idc-verification-buttons-row">
-    $optionalLinks
+    <div class="single-record-buttons idc-verificationButtons-row">
+      $optionalLinks
+    </div>
   </div>
 </div>
 <div id="redet-panel-wrap" style="display: none">
@@ -1606,9 +1678,19 @@ HTML;
     $speciesInput
     $altListCheckbox
     $redetNameBehaviourOption
-    $commentInput
-    <button type="submit" class="btn btn-primary" id="apply-redet">$lang[applyRedetermination]</button>
-    <button type="button" class="btn btn-danger" id="cancel-redet">$lang[cancel]</button>
+    <div class="comment-cntr">
+      $commentInput
+      <div class="comment-tools">
+        <button type="button" class="comment-show-preview $indicia_templates[buttonDefaultClass] $indicia_templates[buttonSmallClass]">$lang[showPreview]</button>
+        <button type="button" class="comment-edit $indicia_templates[buttonDefaultClass] $indicia_templates[buttonSmallClass]" style="display: none">$lang[edit]</button>
+        $saveTemplateTool
+        <button type="button" class="comment-help $indicia_templates[buttonDefaultClass] $indicia_templates[buttonSmallClass]">$lang[help]</button>
+      </div>
+      <div class="comment-preview" style="display: none"></div>
+    </div>
+    $loadTemplateDropdown
+    <button type="submit" class="$btnClass" id="apply-redet">$lang[applyRedetermination]</button>
+    <button type="button" class="$btnClass" id="cancel-redet">$lang[cancel]</button>
   </form>
 </div>
 HTML;
@@ -1937,7 +2019,7 @@ $('#$options[id]').$initFn({});
 
 JS;
     return <<<HTML
-<div id="$options[id]" class="idc-output idc-output-$controlName" data-idc-config="$dataOptions">
+<div id="$options[id]" class="idc-control idc-$controlName" data-idc-class="$initFn" data-idc-config="$dataOptions">
   $content
 </div>
 

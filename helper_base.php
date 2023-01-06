@@ -51,7 +51,8 @@ $indicia_templates = [
   'buttonDefaultClass' => 'indicia-button',
   'buttonHighlightedClass' => 'indicia-button',
   'buttonWarningClass' => 'indicia-button',
-    // Classes applied to <a> when styled like a button
+  'buttonSmallClass' => 'btn-xs',
+  // Classes applied to <a> when styled like a button
   'anchorButtonClass' => 'indicia-button',
   'submitButton' => '<input id="{id}" type="submit"{class} name="{name}" value="{caption}" />',
   // Message boxes
@@ -1128,7 +1129,7 @@ class helper_base {
           'javascript' => [self::$js_path . 'drivers/sref/osie.js'],
         ],
         'font_awesome' => [
-          'stylesheets' => ['https://use.fontawesome.com/releases/v5.7.2/css/all.css']
+          'stylesheets' => ['https://use.fontawesome.com/releases/v5.15.4/css/all.css']
         ],
         'leaflet' => [
           'stylesheets' => ['https://unpkg.com/leaflet@1.4.0/dist/leaflet.css'],
@@ -3055,7 +3056,7 @@ if (typeof validator!=='undefined') {
    *         Use helper_base::expireCacheEntry() rather than setting this
    *         option directly.
    *   * **cachePerUser** - if the data are not specific to the logged in user,
-   *     then set to True so that a single cached response can be shared by
+   *     then set to false so that a single cached response can be shared by
    *     multiple users.
    *   * **sharing** - Optional. Set to verification, reporting, peer_review,
    *     moderation, data_flow or editing to request data sharing with other
