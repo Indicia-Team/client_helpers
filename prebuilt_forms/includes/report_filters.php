@@ -184,6 +184,7 @@ class filter_what extends FilterBase {
         'orderby' => 'sort_order',
         'sortdir' => 'DESC',
       ],
+      'cachePerUser' => FALSE,
     ]);
     $r .= '<select id="taxon_rank_sort_order_combined" name="taxon_rank_sort_order_combined"><option value="">&lt;' . lang::get('Please select') . '&gt;</option>';
     foreach ($ranks as $rank) {
@@ -443,6 +444,7 @@ class filter_where extends FilterBase {
         'cache',
         'query' => json_encode(['in' => ['id' => $locTypes]]),
       ],
+      'cachePerUser' => FALSE,
     ]);
     foreach ($locTypes as $locType) {
       $sitesLevel1[$locType['id']] = $locType['term'] . '...';
@@ -1580,10 +1582,14 @@ JS;
 /**
  * Gets the report data for the list of existing filters this user can access.
  *
- * $param bool $caching
+ * @param array $readAuth
+ *   Read authentication tokens.
+ * @param string $sharing
+ *   Sharing mode.
+ * @param bool $caching
  *   Pass TRUE to enable caching for faster responses.
  */
-function report_filters_load_existing($readAuth, $sharing, $caching = FALSE) {
+function report_filters_load_existing(array $readAuth, $sharing, $caching = FALSE) {
   if (function_exists('hostsite_get_user_field')) {
     $userId = hostsite_get_user_field('indicia_user_id');
     if ($userId === NULL) {
