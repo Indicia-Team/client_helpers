@@ -643,7 +643,7 @@ TXT;
         [
           'name' => 'verification_info_columns',
           'caption' => 'Verification Information Columns',
-          'description' => 'Include columns to show verified by and verified on ' . 
+          'description' => 'Include columns to show verified by and verified on ' .
             'information in the species grid',
           'type' => 'boolean',
           'required' => FALSE,
@@ -3436,7 +3436,7 @@ TXT;
  */
 function indicia_define_remembered_fields() {
   global $remembered;
-  $remembered = trim($remembered);
+  $remembered = trim($remembered ?? '');
   if (!empty($remembered)) {
     data_entry_helper::setRememberedFields(helper_base::explode_lines($remembered));
   }
