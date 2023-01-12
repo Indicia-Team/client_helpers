@@ -408,7 +408,7 @@ class iform_dynamic_report_explorer extends iform_dynamic {
 
   protected static function get_control_reportgrid($auth, $args, $tabalias, $options) {
     iform_load_helpers(array('report_helper'));
-    $columnLists = json_decode($args['columns_config_list']);
+    $columnLists = json_decode($args['columns_config_list'] ?? '[]');
     if (self::$reportCount < count($columnLists)) {
       $args['columns_config'] = json_encode($columnLists[self::$reportCount]);
     }

@@ -270,8 +270,8 @@ class iform_dynamic_sample_occurrence_splash extends iform_dynamic_sample_occurr
    * A clonable row is still present allowing the user to still fill in free text occurrences.
    *
    */
-  public static function create_splash_subsample_occurrence_structure($arr, $include_if_any_data=false,
-          $zero_attrs, $zero_values=array('0','None','Absent'), $args) {
+  public static function create_splash_subsample_occurrence_structure($arr, $include_if_any_data,
+          $zero_attrs, $zero_values, $args) {
 
     if (array_key_exists('website_id', $arr)){
       $website_id = $arr['website_id'];
