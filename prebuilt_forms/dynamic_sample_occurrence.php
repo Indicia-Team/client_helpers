@@ -630,10 +630,8 @@ TXT;
         ],
         [
           'name' => 'species_include_id_diff',
-          'caption' => 'Include identification_difficulty icons in species
-            autocomplete and added rows',
-          'description' => 'Use data cleaner identification difficulty rules to
-            generate icons indicating when ' .
+          'caption' => 'Include identification_difficulty icons in species autocomplete and added rows',
+          'description' => 'Use data cleaner identification difficulty rules to generate icons indicating when ' .
           'hard to ID taxa have been selected.',
           'type' => 'boolean',
           'required' => FALSE,
@@ -643,8 +641,7 @@ TXT;
         [
           'name' => 'verification_info_columns',
           'caption' => 'Verification Information Columns',
-          'description' => 'Include columns to show verified by and verified on ' .
-            'information in the species grid',
+          'description' => 'Include columns to show verified by and verified on information in the species grid',
           'type' => 'boolean',
           'required' => FALSE,
           'default' => FALSE,
