@@ -34,10 +34,12 @@ jQuery(document).ready(function ($) {
   function dashTrim(str) {
     let start = 0;
     let end = str.length;
-    while(start < end && str[start] === '-')
+    while (start < end && str[start] === '-') {
       ++start;
-    while(end > start && str[end - 1] === '-')
+    }
+    while (end > start && str[end - 1] === '-') {
       --end;
+    }
     return (start > 0 || end < str.length) ? str.substring(start, end) : str;
   }
 
