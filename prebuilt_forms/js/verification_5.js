@@ -840,6 +840,12 @@ indiciaData.rowIdToReselect = false;
     return false;
   }
 
+  /**
+   * Loads templates from the database for a status.
+   *
+   * @param string status
+   *   Status code to load templates for.
+   */
   function loadVerificationTemplates(status) {
     var getTemplatesReport;
     var getTemplatesReportParameters;
