@@ -373,6 +373,8 @@ class ElasticsearchReportHelper {
       ]
     );
     helper_base::addLanguageStringsToJs('cardGallery', [
+      'collapseCard' => 'Return card to normal size (C or +)',
+      'expandCard' => 'Expand this card (C or +)',
       'fullScreenToolHint' => 'Click to view grid in full screen mode',
       'noHeading' => 'no heading',
       'clickToSort' => 'Click on the data value to sort by:',
