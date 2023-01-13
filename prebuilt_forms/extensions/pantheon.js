@@ -30,6 +30,19 @@ jQuery(document).ready(function ($) {
     $(this).attr('href', href);
   });
 
+  // Trim function for dashes.
+  function dashTrim(str) {
+    let start = 0;
+    let end = str.length;
+    while (start < end && str[start] === '-') {
+      ++start;
+    }
+    while (end > start && str[end - 1] === '-') {
+      --end;
+    }
+    return (start > 0 || end < str.length) ? str.substring(start, end) : str;
+  }
+
   indiciaFns.applyLexicon = function () {
     var termAlias;
     // apply the Lexicon
@@ -39,9 +52,9 @@ jQuery(document).ready(function ($) {
         summary = indiciaData.lexicon[$(this).html().replace(/&amp;/g, '&')];
         $(this).attr('title', summary);
         $(this).addClass('lexicon-term');
-        termAlias = $(this).html().replace(/&amp;/g, '&')
+        termAlias = dashTrim($(this).html().replace(/&amp;/g, '&')
           .replace(/[^a-zA-Z0-9]+/g, '-')
-          .toLowerCase();
+          .toLowerCase());
         $(this).after('<a class="lexicon-info skip-text" target="_blank" title="' + summary + '" ' +
             'href="/lexicon/' + termAlias + '">i</a>');
         $(this).addClass('processed');

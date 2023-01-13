@@ -401,13 +401,15 @@ function iform_report_get_gallery_item($entity, array $medium, $imageSize = 'thu
   }
   $captionAttr = count($captionItems) > 0 ? ' title="' . htmlspecialchars(implode(' | ', $captionItems)) . '"' : '';
   if ($medium['media_type'] === 'Image:Local') {
+    $fullPath = substr($medium['path'], 0, 4) === 'http' ? $medium['path'] : "$imageFolder$medium[path]";
+    $thumbPath = substr($medium['path'], 0, 4) === 'http' ? $medium['path'] : "$imageFolder$imageSize-$medium[path]";
     // Standard link to Indicia image.
     return <<<HTML
 <li class="gallery-item">
   <a $mediaAttr$captionAttr
-      href="$imageFolder$medium[path]"
+      href="$fullPath"
       data-fancybox="gallery" class="single">
-    <img src="$imageFolder$imageSize-$medium[path]" />
+    <img src="$thumbPath" />
   </a>
 HTML;
   }

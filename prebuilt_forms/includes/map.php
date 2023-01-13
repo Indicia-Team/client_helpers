@@ -410,12 +410,12 @@ if (typeof mapInitialisationHooks !== 'undefined') {
   mapInitialisationHooks.push(function(mapdiv) {
     var parser;
     var feature;
-    var features=[];
-    var loclayer = new OpenLayers.Layer.Vector(
+    var features = [];
+    var geoms = $geomJson;
+    mapdiv.map.boundaryLayer = new OpenLayers.Layer.Vector(
       '$name',
       {'sphericalMercator': true, displayInLayerSwitcher: true}
     );
-    var geoms = $geomJson;
     parser = new OpenLayers.Format.WKT();
     $.each(geoms, function(idx, geom) {
       feature = parser.read(geom);
@@ -432,12 +432,11 @@ if (typeof mapInitialisationHooks !== 'undefined') {
         feature.geometry.transform(mapdiv.indiciaProjection, mapdiv.map.projection);
       }
     });
-    loclayer.addFeatures(features);
-    var bounds=loclayer.getDataExtent();
+    mapdiv.map.boundaryLayer.addFeatures(features);
+    indiciaData.initialBounds = mapdiv.map.boundaryLayer.getDataExtent();
     mapdiv.map.updateSize();
-    indiciaData.initialBounds = bounds;
-    mapdiv.map.addLayer(loclayer);
-    indiciaFns.zoomToBounds(mapdiv, bounds);
+    mapdiv.map.addLayer(mapdiv.map.boundaryLayer);
+    indiciaFns.zoomToBounds(mapdiv, indiciaData.initialBounds);
   });
 }
 

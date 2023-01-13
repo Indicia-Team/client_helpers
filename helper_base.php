@@ -1,6 +1,9 @@
 <?php
 
 /**
+ * @file
+ * Base class for client helper classes.
+ *
  * Indicia, the OPAL Online Recording Toolkit.
  *
  * This program is free software: you can redistribute it and/or modify
@@ -19,7 +22,7 @@
  * @link https://github.com/Indicia-Team/client_helpers
  */
 
- if (file_exists(dirname(__FILE__) . '/helper_config.php')) {
+if (file_exists(dirname(__FILE__) . '/helper_config.php')) {
   require_once 'helper_config.php';
 }
 require_once 'lang.php';
@@ -41,7 +44,7 @@ $indicia_templates = [
   'label' => '<label for="{id}"{labelClass}>{label}:</label>',
   // Use if label ends with another punctuation mark.
   'labelNoColon' => '<label for="{id}"{labelClass}>{label}</label>',
-  'labelAfter' => '<label for="{id}"{labelClass}>{label}</label>', // no colon
+  'labelAfter' => '<label for="{id}"{labelClass}>{label}</label>',
   'toplabel' => '<label data-for="{id}"{labelClass}>{label}:</label>',
   'toplabelNoColon' => '<label data-for="{id}"{labelClass}>{label}</label>',
   'suffix' => "\n",
@@ -52,22 +55,21 @@ $indicia_templates = [
   'buttonHighlightedClass' => 'indicia-button',
   'buttonWarningClass' => 'indicia-button',
   'buttonSmallClass' => 'btn-xs',
-  // Classes applied to <a> when styled like a button
+  // Classes applied to <a> when styled like a button.
   'anchorButtonClass' => 'indicia-button',
   'submitButton' => '<input id="{id}" type="submit"{class} name="{name}" value="{caption}" />',
-  // Message boxes
+  // Message boxes.
   'messageBox' => '<div class="page-notice ui-state-default ui-corner-all">{message}</div>',
   'warningBox' => '<div class="page-notice ui-state-highlight ui-corner-all"><span class="fas fa-exclamation-triangle"></span>{message}</div>',
   // Lock icons.
   'lock_icon' => '<span id="{id}_lock" class="unset-lock">&nbsp;</span>',
   'lock_javascript' => "indicia.locks.initControls (
-      \"".lang::get('locked tool-tip')."\",
-      \"".lang::get('unlocked tool-tip')."\",
+      \"" . lang::get('locked tool-tip') . "\",
+      \"" . lang::get('unlocked tool-tip') . "\",
       \"{lock_form_mode}\"
       );\n",
-  'validation_message' => '<p class="{class}">{error}</p>'."\n",
-  'validation_icon' => '<span class="ui-state-error ui-corner-all validation-icon">'.
-      '<span class="ui-icon ui-icon-alert"></span></span>',
+  'validation_message' => "<p class=\"{class}\">{error}</p>\n",
+  'validation_icon' => '<span class="ui-state-error ui-corner-all validation-icon"><span class="ui-icon ui-icon-alert"></span></span>',
   'error_class' => 'inline-error',
   'invalid_handler_javascript' => "function(form, validator) {
           var tabselected=false;
@@ -85,8 +87,8 @@ $indicia_templates = [
             ctrl.parents('.fieldset-wrapper').show();
           });
         }",
-  'image_upload' => '<input type="file" id="{id}" name="{fieldname}" accept="png|jpg|gif|jpeg|mp3|wav" {title}/>'."\n".
-      '<input type="hidden" id="{pathFieldName}" name="{pathFieldName}" value="{pathFieldValue}"/>'."\n",
+  'image_upload' => "<input type=\"file\" id=\"{id}\" name=\"\{fieldname}\" accept=\"png|jpg|gif|jpeg|mp3|wav\" {title}/>\n" .
+      "<input type=\"hidden\" id=\"{pathFieldName}\" name=\"{pathFieldName}\" value=\"{pathFieldValue}\"/>\n",
   'text_input' => '<input {attribute_list} id="{id}" name="{fieldname}"{class} {disabled} {readonly} value="{default|escape}" {title} {maxlength} />'."\n",
   'hidden_text' => '<input type="hidden" id="{id}" name="{fieldname}" {disabled} value="{default}" />',
   'password_input' => '<input type="password" id="{id}" name="{fieldname}"{class} {disabled} value="{default}" {title} />'."\n",
@@ -442,7 +444,7 @@ class helper_base {
   public static $onload_javascript = '';
 
   /**
-   * Setting to completely disable loading from the cache
+   * Setting to completely disable loading from the cache.
    *
    * @var bool
    */
@@ -552,7 +554,9 @@ class helper_base {
   ];
 
   /**
-   * @var array List of messages defined to pass to the validation plugin.
+   * List of messages defined to pass to the validation plugin.
+   *
+   * @var array
    */
   public static $validation_messages = [];
 
@@ -589,8 +593,13 @@ class helper_base {
   public static $cache_chance_purge = 500;
 
   /**
-   * @var int Number of recent files allowed in the cache which the cache will not bother clearing during a deletion operation.
-   * They will be refreshed occasionally when requested anyway.
+   * Number of recent files allowed in the cache.
+   *
+   * Number of recent files allowed in the cache which the cache will not
+   * bother clearing during a deletion operation. They will be refreshed
+   * occasionally when requested anyway.
+   *
+   * @var int
    */
   public static $cache_allowed_file_count = 50;
 
@@ -661,6 +670,7 @@ class helper_base {
    * Returns the URL to access the warehouse by, respecting proxy settings.
    *
    * @return string
+   *   URL.
    */
   public static function getProxiedBaseUrl() {
     return empty(self::$warehouse_proxy) ? self::$base_url : self::$warehouse_proxy;
@@ -1337,7 +1347,7 @@ class helper_base {
     // Check for an error, or check if the http response was not OK.
     if ($curlErrno || $httpCode != 200) {
       if ($output_errors) {
-        echo '<div class="error">cUrl POST request failed. Please check cUrl is installed on the server and the $base_url setting is correct.<br/>URL:'.$url.'<br/>';
+        echo '<div class="error">cUrl POST request failed. Please check cUrl is installed on the server and the $base_url setting is correct.<br/>URL:' . $url . '<br/>';
         if ($curlErrno) {
           echo 'Error number: ' . $curlErrno . '<br/>';
           echo 'Error message: ' . curl_error($session) . '<br/>';
@@ -1377,7 +1387,7 @@ class helper_base {
    * Returns the client helper folder path, relative to the root folder.
    */
   public static function client_helper_path() {
-    // allow integration modules to control path handling, e.g. Drupal).
+    // Allow integration modules to control path handling, e.g. Drupal).
     if (function_exists('iform_client_helpers_path'))
       return iform_client_helpers_path();
     else {
@@ -1393,18 +1403,19 @@ class helper_base {
    * Calculates the relative path to the client_helpers folder from wherever the current PHP script is.
    */
   public static function relative_client_helper_path() {
-    // get the paths to the client helper folder and php file folder as an array of tokens
+    // Get the paths to the client helper folder and php file folder as an
+    // array of tokens.
     $clientHelperFolder = explode(DIRECTORY_SEPARATOR, dirname(realpath(__FILE__)));
     $currentPhpFileFolder = explode(DIRECTORY_SEPARATOR, dirname(realpath($_SERVER['SCRIPT_FILENAME'])));
-    // Find the first part of the paths that is not the same
-    for($i = 0; $i<min(count($currentPhpFileFolder), count($clientHelperFolder)); $i++) {
+    // Find the first part of the paths that is not the same.
+    for ($i = 0; $i<min(count($currentPhpFileFolder), count($clientHelperFolder)); $i++) {
       if ($clientHelperFolder[$i] != $currentPhpFileFolder[$i]) {
         break;
       }
     }
-    // step back up the path to the point where the 2 paths differ
-    $path = str_repeat('../', count($currentPhpFileFolder)-$i);
-    // add back in the different part of the path to the client helper folder
+    // Step back up the path to the point where the 2 paths differ.
+    $path = str_repeat('../', count($currentPhpFileFolder) - $i);
+    // Add back in the different part of the path to the client helper folder.
     for ($j = $i; $j < count($clientHelperFolder); $j++) {
       $path .= $clientHelperFolder[$j] . '/';
     }
@@ -1424,15 +1435,15 @@ class helper_base {
     // Get the paths to the client helper folder and php file folder as an array of tokens.
     $clientHelperFolder = explode(DIRECTORY_SEPARATOR, dirname(realpath(__FILE__)));
     $imageFolder = explode(DIRECTORY_SEPARATOR, realpath(self::getInterimImageFolder('fullpath')));
-    // Find the first part of the paths that is not the same
+    // Find the first part of the paths that is not the same.
     for ($i = 0; $i < min(count($clientHelperFolder), count($imageFolder)); $i++) {
       if ($imageFolder[$i] !== $clientHelperFolder[$i]) {
         break;
       }
     }
-    // step back up the path to the point where the 2 paths differ
+    // Step back up the path to the point where the 2 paths differ.
     $path = str_repeat('../', count($clientHelperFolder) - $i);
-    // add back in the different part of the path to the client helper folder
+    // Add back in the different part of the path to the client helper folder.
     for ($j = $i; $j < count($imageFolder); $j++) {
       $path .= $imageFolder[$j] . '/';
     }
@@ -1542,7 +1553,7 @@ HTML;
         }
         $r .= '<input type="hidden" name="' . $fieldname . '" id="hidden-wkt" value="'.
             (isset($_POST[$fieldname]) ? $_POST[$fieldname] : '') . '"/>';
-        if (isset($info['allow_buffer']) && $info['allow_buffer']=='true') {
+        if (isset($info['allow_buffer']) && $info['allow_buffer'] === 'true') {
           $bufferInput = data_entry_helper::text_input(array(
             'label' => 'Buffer (m)',
             'fieldname' => 'geom_buffer',
@@ -1551,14 +1562,15 @@ HTML;
             'class' => 'control-width-1',
             'default' => isset($_POST['geom_buffer']) ? $_POST['geom_buffer'] : 0
           ));
-          if ($options['inlineMapTools'])
+          if ($options['inlineMapTools']) {
             $r .= $bufferInput;
+          }
           else {
             $bufferInput = str_replace(array('<br/>',"\n"), '', $bufferInput);
             $javascript .= "$.fn.indiciaMapPanel.defaults.toolbarSuffix+='$bufferInput';\n";
           }
-          // keep a copy of the unbuffered polygons in this input, so that when the page reloads both versions
-          // are available
+          // Keep a copy of the unbuffered polygons in this input, so that when
+          // the page reloads both versions are available.
           $r .= '<input type="hidden" name="orig-wkt" id="orig-wkt" '.
               'value="' . (isset($_POST['orig-wkt']) ? $_POST['orig-wkt'] : '')."\" />\n";
         }
@@ -1601,82 +1613,105 @@ HTML;
           $javascript .= "}\n";
       }
     }
-    // closure for the map initialisation hooks.
-    if (isset($options['paramsInMapToolbar']) && $options['paramsInMapToolbar'])
+    // Closure for the map initialisation hooks.
+    if (isset($options['paramsInMapToolbar']) && $options['paramsInMapToolbar']) {
       self::$javascript .= "});";
+    }
     self::$javascript .= $javascript;
     return $r;
   }
 
   /**
-   * Internal method to safely find the value of a preset parameter. Returns empty string if not defined.
-   * @param array $options The options array, containing a extraParams entry that the parameter should be
-   * found in.
-   * @param string $name The key identifying the preset parameter to look for.
-   * @return string Value of preset parameter or empty string.
+   * Internal method to safely find the value of a preset parameter.
+   *
+   * Returns empty string if not defined.
+   *
+   * @param array $options
+   *   The options array, containing a extraParams entry that the parameter
+   *   should be found in.
+   * @param string $name
+   *   The key identifying the preset parameter to look for.
+   *
+   * @return string
+   *   Value of preset parameter or empty string.
    */
   private static function get_preset_param($options, $name) {
-    if (!isset($options['extraParams']))
+    if (!isset($options['extraParams'])) {
       return '';
-    else if (!isset($options['extraParams'][$name]))
+    }
+    elseif (!isset($options['extraParams'][$name])) {
       return '';
-    else
-      return $options['extraParams'][$name];
+    }
+    return $options['extraParams'][$name];
   }
 
   /**
    * Returns a control to insert onto a parameters form.
-   * @param string $key The unique identifier of this control.
-   * @param array $info Configuration options for the parameter as defined in the report, including the
-   * description, display (label), default and datatype.
-   * @param array $options Control options array
-   * @param array $tools Any tools to be embedded in the map toolbar are returned in this
-   * parameter rather than as the return result of the function.
-   * @return string The HTML for the form parameter.
+   *
+   * @param string $key
+   *   The unique identifier of this control.
+   * @param array $info
+   *   Configuration options for the parameter as defined in the report,
+   *   including the description, display (label), default and datatype.
+   * @param array $options
+   *   Control options array.
+   * @param array $tools
+   *   Any tools to be embedded in the map toolbar are returned in this
+   *   parameter rather than as the return result of the function.
+   *
+   * @return string
+   *   The HTML for the form parameter.
    */
   protected static function getParamsFormControl($key, $info, $options, &$tools) {
     $r = '';
-
-    $fieldPrefix=(isset($options['fieldNamePrefix']) ? $options['fieldNamePrefix'].'-' : '');
-    $ctrlOptions = array(
+    $fieldPrefix = (isset($options['fieldNamePrefix']) ? $options['fieldNamePrefix'].'-' : '');
+    $ctrlOptions = [
       'label' => lang::get($info['display']),
-      'helpText' => $options['helpText'] ? $info['description'] : '', // note we can't fit help text in the toolbar versions of a params form
+      // Note we can't fit help text in the toolbar versions of a params form.
+      'helpText' => $options['helpText'] ? $info['description'] : '',
       'fieldname' => $fieldPrefix.$key,
       'nocache' => isset($options['nocache']) && $options['nocache']
-    );
-    // If this parameter is in the URL or post data, put it in the control instead of the original default
-    if (isset($options['defaults'][$key]))
+    ];
+    // If this parameter is in the URL or post data, put it in the control
+    // instead of the original default.
+    if (isset($options['defaults'][$key])) {
       $ctrlOptions['default'] = $options['defaults'][$key];
-    elseif (isset($info['default']))
+    }
+    elseif (isset($info['default'])) {
       $ctrlOptions['default'] = $info['default'];
+    }
     if ($info['datatype']=='idlist') {
-      // idlists are not for human input so use a hidden.
-      $r .= "<input type=\"hidden\" name=\"$fieldPrefix$key\" value=\"".self::get_preset_param($options, $key)."\" class=\"".$fieldPrefix."idlist-param\" />\n";
-    } elseif (isset($options['extraParams']) && array_key_exists($key, $options['extraParams'])) {
-      $r .= "<input type=\"hidden\" name=\"$fieldPrefix$key\" value=\"".self::get_preset_param($options, $key)."\" />\n";
-      //if the report parameter is a lookup and its population_call is set to species_autocomplete
-      //Options such as @speciesIncludeBothNames can be included as a [params] control form structure
-      //option
-    } elseif ($info['datatype']=='lookup' && (isset($info['population_call']) && $info['population_call']=='autocomplete:species')) {
-      $ctrlOptions['extraParams']=$options['readAuth'];
+      // Idlists are not for human input so use a hidden.
+      $r .= "<input type=\"hidden\" name=\"$fieldPrefix$key\" value=\"" . self::get_preset_param($options, $key) . "\" class=\"{$fieldPrefix}idlist-param\" />\n";
+    }
+    elseif (isset($options['extraParams']) && array_key_exists($key, $options['extraParams'])) {
+      $r .= "<input type=\"hidden\" name=\"$fieldPrefix$key\" value=\"" . self::get_preset_param($options, $key) . "\" />\n";
+      // If the report parameter is a lookup and its population_call is set to species_autocomplete
+      // Options such as @speciesIncludeBothNames can be included as a [params] control form structure
+      // option
+    }
+    elseif ($info['datatype']=='lookup' && (isset($info['population_call']) && $info['population_call']=='autocomplete:species')) {
+      $ctrlOptions['extraParams'] = $options['readAuth'];
       if (!empty($options['speciesTaxonListId'])) {
-        $ctrlOptions['extraParams']['taxon_list_id']=$options['speciesTaxonListId'];
+        $ctrlOptions['extraParams']['taxon_list_id'] = $options['speciesTaxonListId'];
       }
-      if (!empty($options['speciesIncludeBothNames'])&&$options['speciesIncludeBothNames'] == TRUE) {
+      if (!empty($options['speciesIncludeBothNames']) && $options['speciesIncludeBothNames'] == TRUE) {
         $ctrlOptions['speciesIncludeBothNames'] = TRUE;
       }
-      if (!empty($options['speciesIncludeTaxonGroup'])&&$options['speciesIncludeTaxonGroup'] == TRUE) {
+      if (!empty($options['speciesIncludeTaxonGroup']) && $options['speciesIncludeTaxonGroup'] == TRUE) {
         $ctrlOptions['speciesIncludeTaxonGroup'] = TRUE;
       }
       $r .= data_entry_helper::species_autocomplete($ctrlOptions);
-    } elseif ($info['datatype']=='lookup' && isset($info['population_call'])) {
-      // population call is colon separated, of the form direct|report:table|view|report:idField:captionField:params(key=value,key=value,...)
+    }
+    elseif ($info['datatype'] == 'lookup' && isset($info['population_call'])) {
+      // Population call is colon separated, of the form
+      // direct|report:table|view|report:idField:captionField:params(key=value,key=value,...).
       $popOpts = explode(':', $info['population_call']);
       $extras = [];
       // If there are any extra parameters on the report lookup call, apply
       // them.
       if (count($popOpts) >= 5) {
-        // because any extra params might contain colons, any colons from item 5 onwards are considered part of the extra params. So we
+        // Because any extra params might contain colons, any colons from item 5 onwards are considered part of the extra params. So we
         // have to take the remaining items and re-implode them, then split them by commas instead. E.g. population call could be set to
         // direct:term:id:term:term=a:b - in this case option 5 (term=a:b) is not to be split by colons.
         $extraItems = explode(',', implode(':', array_slice($popOpts, 4)));
@@ -1686,11 +1721,11 @@ HTML;
           $extras[$extraItem[0]] = $extraItem[1];
         }
       }
-      // allow local page configuration to apply extra restrictions on the return values: e.g. only return some location_types from the termlist
+      // Allow local page configuration to apply extra restrictions on the return values: e.g. only return some location_types from the termlist
       if (isset($options['param_lookup_extras']) && isset($options['param_lookup_extras'][$key])) {
-        foreach($options['param_lookup_extras'][$key] as $param => $value) {
+        foreach ($options['param_lookup_extras'][$key] as $param => $value) {
           // direct table access can handle 'in' statements, reports can't.
-          $extras[$param] = ($popOpts[0]=='direct' ? $value : (is_array($value) ? implode(',',$value) : $value));
+          $extras[$param] = ($popOpts[0] == 'direct' ? $value : (is_array($value) ? implode(',',$value) : $value));
           // $extras[$param] = $value;
         }
       }
@@ -1830,7 +1865,7 @@ HTML;
    */
   public static function array_to_query_string($array, $encodeValues=FALSE) {
     $params = [];
-    if(is_array($array)) {
+    if (is_array($array)) {
       arsort($array);
       foreach ($array as $a => $b)
       {
@@ -2187,9 +2222,12 @@ HTML;
   public static function getIndiciaData() {
     require_once 'prebuilt_forms/includes/language_utils.php';
     global $indicia_templates;
-    self::$indiciaData['btnClasses'] = [
-      'default' => $indicia_templates['buttonDefaultClass'],
-      'highlighted' => $indicia_templates['buttonHighlightedClass'],
+    // Add some useful templates.
+    self::$indiciaData['templates'] = [
+      'warningBox' => $indicia_templates['warningBox'],
+      'buttonDefaultClass' => $indicia_templates['buttonDefaultClass'],
+      'buttonHighlightedClass' => $indicia_templates['buttonHighlightedClass'],
+      'buttonSmallClass' => 'btn-xs',
     ];
     self::$indiciaData['formControlClass'] = $indicia_templates['formControlClass'];
     self::$indiciaData['inlineErrorClass'] = $indicia_templates['error_class'];
@@ -2251,7 +2289,7 @@ HTML;
           if (isset($resourceList[$resource]['javascript'])) {
             foreach ($resourceList[$resource]['javascript'] as $j) {
               // look out for a condition that this script is IE only.
-              if (substr($j, 0, 4)=='[IE]'){
+              if (substr($j, 0, 4)=='[IE]') {
               	$libraries .= "<!--[if IE]><script type=\"text/javascript\" src=\"".substr($j, 4)."\"></script><![endif]-->\n";
               }
               else {
@@ -2438,7 +2476,7 @@ var validator = $('#".self::$validated_form_id."').validate({
     if (inputGroup.length) {
       element = inputGroup;
     } else {
-      if(element.is(':radio')||element.is(':checkbox')){
+      if (element.is(':radio')||element.is(':checkbox')) {
         jqBox = element.parents('.control-box');
         element=jqBox.length === 0 ? element : jqBox;
       }
@@ -2490,7 +2528,7 @@ if (typeof validator!=='undefined') {
     // Add a hint to the control if there is an error and this option is set, or a hint option
     if (($error && in_array('hint', $options['validation_mode'])) || isset($options['hint'])) {
       $hint = ($error && in_array('hint', $options['validation_mode'])) ? array($error) : [];
-      if(isset($options['hint'])) $hint[] = $options['hint'];
+      if (isset($options['hint'])) $hint[] = $options['hint'];
       $options['title'] = 'title="'.implode(' : ',$hint).'"';
     } else {
       $options['title'] = '';
@@ -2651,13 +2689,13 @@ if (typeof validator!=='undefined') {
     if (lang::get('validation_min') != 'validation_min') {
       self::$late_javascript .= "$.validator.messages.min = $.validator.format(\"".lang::get('validation_min')."\");\n";
     }
-    if(lang::get('validation_number') != 'validation_number') {
+    if (lang::get('validation_number') != 'validation_number') {
       self::$late_javascript .= "$.validator.messages.number = $.validator.format(\"".lang::get('validation_number')."\");\n";
     }
-    if(lang::get('validation_digits') != 'validation_digits') {
+    if (lang::get('validation_digits') != 'validation_digits') {
       self::$late_javascript .= "$.validator.messages.digits = $.validator.format(\"".lang::get('validation_digits')."\");\n";
     }
-    if(lang::get('validation_integer') != 'validation_integer') {
+    if (lang::get('validation_integer') != 'validation_integer') {
       self::$late_javascript .= "$.validator.messages.integer = $.validator.format(\"".lang::get('validation_integer')."\");\n";
     }
   }
@@ -3084,7 +3122,7 @@ if (typeof validator!=='undefined') {
       // For data services calls to entities (i.e. not taxa_search), array
       // parameters need to be modified into a query parameter.
       if ($useQueryParam) {
-        foreach($params as $param=>$value) {
+        foreach ($params as $param=>$value) {
           if (is_array($value))
             $filterToEncode['in'] = array($param, $value);
           elseif ($param=='orderby' || $param=='sortdir' || $param=='auth_token' || $param=='nonce' || $param=='view')
@@ -3243,13 +3281,13 @@ if (typeof validator!=='undefined') {
           'wantCount',
           'wantParameters',
           'knownCount',];
-        foreach($fieldsToCopyUp as $field) {
-          if(isset($postArgs['params'][$field])) {
+        foreach ($fieldsToCopyUp as $field) {
+          if (isset($postArgs['params'][$field])) {
             $postArgs[$field] = $postArgs['params'][$field];
             unset($postArgs['params'][$field]);
           }
         }
-        if(isset($postArgs['params']['user_id'])) {
+        if (isset($postArgs['params']['user_id'])) {
           // user_id is different as this is used in an explicit _REQUEST in the service_base but
           // also can be proper param to the report - so don't unset.
           $postArgs['user_id'] = $postArgs['params']['user_id'];
@@ -3386,7 +3424,7 @@ if (typeof validator!=='undefined') {
     /* If timeout is not set, we're not caching */
     if (!$timeout)
       return FALSE;
-    if(!is_dir($path) || !is_writeable($path))
+    if (!is_dir($path) || !is_writeable($path))
       return FALSE;
 
     $cacheFileName = $path.'cache_'.self::$website_id.'_';
@@ -3465,11 +3503,11 @@ if (typeof validator!=='undefined') {
    */
   public static function clear_cache() {
     $cacheFolder = self::$cache_folder ? self::$cache_folder : self::relative_client_helper_path() . 'cache/';
-    if(!$dh = @opendir($cacheFolder)) {
+    if (!$dh = @opendir($cacheFolder)) {
       return;
     }
     while (FALSE !== ($obj = readdir($dh))) {
-      if($obj != '.' && $obj != '..')
+      if ($obj != '.' && $obj != '..')
         @unlink($cacheFolder . '/' . $obj);
     }
     closedir($dh);
@@ -3603,14 +3641,14 @@ if (typeof validator!=='undefined') {
 /**
  * For PHP 5.2, declare the get_called_class method which allows us to use subclasses of this form.
  */
-if(!function_exists('get_called_class')) {
+if (!function_exists('get_called_class')) {
   function get_called_class() {
     $matches=[];
     $bt = debug_backtrace();
     $l = 0;
     do {
         $l++;
-        if(isset($bt[$l]['class']) AND !empty($bt[$l]['class'])) {
+        if (isset($bt[$l]['class']) AND !empty($bt[$l]['class'])) {
             return $bt[$l]['class'];
         }
         $lines = file($bt[$l]['file']);

@@ -341,7 +341,6 @@ class import_helper extends helper_base {
    *   Options array passed to the import control.
    */
   private static function uploadMappingsForm(array $options) {
-    ini_set('auto_detect_line_endings', 1);
     $t = self::getTranslations([
       'Because you are looking up existing records to import into, required field validation will only be applied when the new data are merged into the existing data during import.',
       'Column in import File',

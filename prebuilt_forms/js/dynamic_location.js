@@ -1,22 +1,22 @@
 (function ($) {
-  // If there is a parent location selected we would like to 
+  // If there is a parent location selected we would like to
   //  a. Show its boundary,
   //  b. Zoom to its extents,
   //  c. Ensure the child location is within the parent location.
-  
+
   function parentChange(div, locationID) {
-    // Function to handle the parent change event. 
-    
+    // Function to handle the parent change event.
+
     // Empty info layer on map which holds the parent location.
     div.map.infoLayer.destroyFeatures();
-    
+
     if (locationID != ''){
       // Put the new parent location on the map.
 
       // Indicate to user we are thinking.
       $('#location\\:parent_id').addClass('loading');
       // Construct request to warehouse services.
-      var request = indiciaData.read.url + 'index.php/services/data/location/' + 
+      var request = indiciaData.read.url + 'index.php/services/data/location/' +
         locationID +
         '?mode=json&view=detail' +
         '&auth_token=' + indiciaData.read.auth_token +
@@ -35,12 +35,12 @@
           // Reproject parent location if map projection is not the same as
           // default projection.
           if (
-            div.map.infoLayer.projection.projCode != 'EPSG:900913' && 
+            div.map.infoLayer.projection.projCode != 'EPSG:900913' &&
             div.map.infoLayer.projection.projCode != 'EPSG:3857'
-          ) { 
+          ) {
             var cloned = features.geometry.clone();
             features.geometry = cloned.transform(
-              new OpenLayers.Projection('EPSG:3857'), 
+              new OpenLayers.Projection('EPSG:3857'),
               div.map.infoLayer.projection.projCode
             );
           }
@@ -55,7 +55,7 @@
           $('<p>' + indiciaData.langLocationOutsideNewParent + '</p>').dialog({
             title: indiciaData.langLocationOutsideParent,
             buttons: [
-              { 
+              {
                 'text': indiciaData.langOK,
                 'click' : function() { $(this).dialog('close'); }
               }
@@ -63,7 +63,7 @@
             classes: {"ui-dialog": "above-map"}
           });
         }
-        
+
         // Remove indication to user we were thinking.
         $('#location\\:parent_id').removeClass('loading');
 
@@ -78,7 +78,7 @@
             // Else return to default centre and zoom.
             div.map.setCenter(div.map.defaultLayers.centre, div.map.defaultLayers.zoom, false, true);
           }
-        } 
+        }
       });
     }
   }
@@ -99,7 +99,7 @@
       $('<p>' + indiciaData.langNewLocationOutsideParent + '</p>').dialog({
         title: indiciaData.langLocationOutsideParent,
         buttons: [
-          { 
+          {
             'text': indiciaData.langOK,
             'click' : function() { $(this).dialog('close'); }
           }
@@ -132,35 +132,37 @@
     return intersects;
   }
 
-  // Push function to be executed when map is initialised.
-  mapInitialisationHooks.push(function(div) {
-    // Initialise layer for showing a parent location.
-    div.map.infoLayer = new OpenLayers.Layer.Vector(
-      indiciaData.langParentLayerTitle,
-      {
-        style: {
-          fillOpacity : 0,
-          strokeOpacity : 0.5,
-          strokeColor : '#ee0000',
-          strokeDashstyle : 'dash',
-          strokeWidth : 2
-        },
-        sphericalMercator: true,
-        displayInLayerSwitcher: true
-      }
-    );
-    div.map.addLayer(div.map.infoLayer);
+  // Code for handling parents - can skip if parent control not on form.
+  if (typeof indiciaData.langParentLayerTitle !== 'undefined') {
+    // Push function to be executed when map is initialised.
+    mapInitialisationHooks.push(function(div) {
+      // Initialise layer for showing a parent location.
+      div.map.infoLayer = new OpenLayers.Layer.Vector(
+        indiciaData.langParentLayerTitle,
+        {
+          style: {
+            fillOpacity : 0,
+            strokeOpacity : 0.5,
+            strokeColor : '#ee0000',
+            strokeDashstyle : 'dash',
+            strokeWidth : 2
+          },
+          sphericalMercator: true,
+          displayInLayerSwitcher: true
+        }
+      );
+      div.map.addLayer(div.map.infoLayer);
 
-    // Detect the feature-added event and call the locationAdded function.
-    div.map.editLayer.events.on({'featureadded': locationAdded}); 
+      // Detect the feature-added event and call the locationAdded function.
+      div.map.editLayer.events.on({'featureadded': locationAdded});
 
-    // Detect parent-location change event and call the parentChange function.
-    $('#location\\:parent_id').change(function() {
-      var locationID = $(this).val();
-      parentChange(div, locationID)
+      // Detect parent-location change event and call the parentChange function.
+      $('#location\\:parent_id').change(function() {
+        var locationID = $(this).val();
+        parentChange(div, locationID)
+      });
+
     });
-
-  });
-
+  }
 
 })(jQuery);

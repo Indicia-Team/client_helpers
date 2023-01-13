@@ -494,11 +494,13 @@ class iform_species_details_2 extends BaseDynamicDetails {
    *   Page HTML.
    */
   public static function get_form($args, $nid) {
-    iform_load_helpers(['ElasticsearchReportHelper']);
-    ElasticsearchReportHelper::enableElasticsearchProxy($nid);
-    $r = parent::get_form($args, $nid);
-    return $r;
-  }
+    $enabled = ElasticsearchReportHelper::enableElasticsearchProxy($nid);
+    if ($enabled) {
+      return parent::get_form($args, $nid);
+    }
+    global $indicia_templates;
+    return str_replace('{message}', lang::get('This page cannot be accessed due to the server being unavailable.'), $indicia_templates['warningBox']);
+ }
 
   /**
    * Override the get_form_html function.
@@ -506,11 +508,11 @@ class iform_species_details_2 extends BaseDynamicDetails {
    * Vary the display of the page based on the interface type.
    */
   protected static function get_form_html($args, $auth, $attributes) {
-    
+
     // Set global flag if no taxon is specified in URL or form.
-    if (empty($_GET['taxa_taxon_list_id']) && 
-      empty($_GET['taxon_meaning_id']) && 
-      empty($_GET['external_key']) && 
+    if (empty($_GET['taxa_taxon_list_id']) &&
+      empty($_GET['taxon_meaning_id']) &&
+      empty($_GET['external_key']) &&
       empty($_GET['occurrence:taxa_taxon_list_id']) ) {
       self::$notaxon = TRUE;
     } else {
@@ -537,7 +539,7 @@ class iform_species_details_2 extends BaseDynamicDetails {
       $repArray = ['<em>', '</em>'];
       hostsite_set_page_title(lang::get('Summary details for {1}', str_replace($repArray, '', self::$preferred)));
 
-      // Make the preferred and default common name available via 
+      // Make the preferred and default common name available via
       // hidden controls.
       $taxonNames = '<input type="hidden" id="species-details-preferred-name" value="' . self::$preferred . '"/>';
       if (isset(self::$defaultCommonName)) {

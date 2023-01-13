@@ -550,7 +550,7 @@ Record ID',
     self::load_record($auth, $args);
     $settings = [
       'type' => 'parentsample',
-      'table' => 'sample_image',
+      'table' => 'sample_medium',
       'key' => 'sample_id',
       'value' => self::$record['parent_sample_id'],
     ];

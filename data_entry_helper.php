@@ -2675,6 +2675,11 @@ JS;
    *     input.
    *   * disallowManualSrefUpdate - set to true to prevent the user from
    *     setting the value of the sref control (it must then be set by code).
+   *   * outsideBoundsBehaviour - set to "warn" to show a warning if trying to
+   *     add a record outside the boundary shown on the map, or "block" to
+   *     prevent record submission in this case. The boundary might be a group
+   *     boundary, or the location identified by the "Location boundary to
+   *     draw" setting.
    *
    * @return string
    *   HTML to insert into the page for the spatial reference control.
@@ -2696,6 +2701,7 @@ JS;
       'findMeButton' => TRUE,
       'isFormControl' => TRUE,
       'disallowManualSrefUpdate' => FALSE,
+      'outsideBoundsBehaviour' => NULL,
     ], $options);
     $rules = [];
     if (!empty($options['validation'])) {
@@ -2758,6 +2764,12 @@ mapSettingsHooks.push(function(settings) {
 $('#$options[id]').attr('readonly', true);
 
 JS;
+    }
+    self::$indiciaData['outsideBoundsBehaviour'] = $options['outsideBoundsBehaviour'];
+    if ($options['outsideBoundsBehaviour']) {
+      self::addLanguageStringsToJs('sref_textbox', [
+        'outsideBoundsWarning' => 'The location you have selected is not in the area being recorded.',
+      ]);
     }
     return $r;
   }
@@ -3914,6 +3926,7 @@ HTML;
         $row .= self::speciesChecklistSpatialRefCell($options, $colIdx, $txIdx, $existingRecordId, $sampleId);
         $row .= self::speciesChecklistSpatialRefPrecisionCell($options, $colIdx, $txIdx, $existingRecordId, $sampleId);
         $row .= self::speciesChecklistSubSampleAttrCells($options, $colIdx, $txIdx, $existingRecordId, $sampleId);
+        $row .= self::speciesChecklistVerificationInfoCells($options, $colIdx, $txIdx, $loadedTxIdx, $existingRecordId);
         $row .= self::speciesChecklistCommentCell($options, $colIdx, $txIdx, $loadedTxIdx, $existingRecordId);
         $row .= self::speciesChecklistSensitivityCell($options, $colIdx, $txIdx, $existingRecordId);
 
@@ -3965,6 +3978,7 @@ HTML;
           $totalCols = ($options['lookupListId'] ? 2 : 1) + 1 /*checkboxCol*/ + count($occAttrControls) +
             ($options['spatialRefPerRow'] ? 1 : 0) + ($options['spatialRefPrecisionAttrId'] ? 1 : 0) +
             ($options['datePerRow'] ? 1 : 0) + count($options['subSampleAttrs']) +
+            ($options['verificationInfoColumns'] ? 2 : 0) +
             ($options['occurrenceComment'] ? 1 : 0) + ($options['occurrenceSensitivity'] ? 1 : 0) +
             (count($options['mediaTypes']) ? 1 : 0);
           $rows[$rowIdx] = "<td colspan=\"$totalCols\">" . data_entry_helper::file_box([
@@ -4603,6 +4617,8 @@ JS;
           self::$entity_to_load["sc:$idx:$occurrence[id]:present"] = $occurrence['taxa_taxon_list_id'];
           self::$entity_to_load["sc:$idx:$occurrence[id]:zero_abundance"] = $occurrence['zero_abundance'];
           self::$entity_to_load["sc:$idx:$occurrence[id]:record_status"] = $occurrence['record_status'];
+          self::$entity_to_load["sc:$idx:$occurrence[id]:occurrence:verified_by"] = $occurrence['verified_by'];
+          self::$entity_to_load["sc:$idx:$occurrence[id]:occurrence:verified_on"] = $occurrence['verified_on'];
           self::$entity_to_load["sc:$idx:$occurrence[id]:occurrence:comment"] = $occurrence['comment'];
           self::$entity_to_load["sc:$idx:$occurrence[id]:occurrence:sensitivity_precision"] = $occurrence['sensitivity_precision'];
           // Warning. I observe that, in cases where more than one occurrence is loaded, the following entries in
@@ -4809,6 +4825,14 @@ JS;
               lang::get($options['subSampleAttrInfo'][$subSampleAttrId]['caption']),
               $visibleColIdx, $options['colWidths'], $attrs);
           }
+        }
+        if ($options['verificationInfoColumns']) {
+          $attrs = self::getSpeciesChecklistColResponsive($options, 'verified_by');
+          $r .= self::get_species_checklist_col_header(
+            "$options[id]-verified-by-$i", lang::get('Verified By'), $visibleColIdx, $options['colWidths'], $attrs);
+          $attrs = self::getSpeciesChecklistColResponsive($options, 'verified_on');
+          $r .= self::get_species_checklist_col_header(
+            "$options[id]-verified-on-$i", lang::get('Verified On'), $visibleColIdx, $options['colWidths'], $attrs);
         }
         if ($options['occurrenceComment']) {
           $attrs = self::getSpeciesChecklistColResponsive($options, 'comment');
@@ -5400,6 +5424,14 @@ HTML;
     $r .= self::speciesChecklistSpatialRefCell($options, 0, '-idx-', NULL);
     $r .= self::speciesChecklistSpatialRefPrecisionCell($options, 0, '-idx-', NULL);
     $r .= self::speciesChecklistSubSampleAttrCells($options, 0, '-idx-', NULL);
+    if ($options['verificationInfoColumns']) {
+      $r .= <<<HTML
+<td class="ui-widget-content scVerificationInfoCell" headers="$options[id]-verified_by-0">
+</td>
+<td class="ui-widget-content scVerificationInfoCell" headers="$options[id]-verified_on-0">
+</td>
+HTML;
+    }
     if ($options['occurrenceComment']) {
       $r .= <<<HTML
 <td class="ui-widget-content scCommentCell" headers="$options[id]-comment-0">
@@ -5766,6 +5798,7 @@ HTML;
       'controlWrapTemplate' => 'justControl'
     ], self::check_options($options));
     unset($options['label']);
+    unset($options['helpText']);
     return self::apply_template('hidden_text', $options);
   }
 
@@ -7758,6 +7791,48 @@ HTML;
 </td>
 HTML;
       }
+    }
+    return $r;
+  }
+
+  /**
+   * Return the HTML for the td elements which show the verification information
+   * for each row in a species checklist grid.
+   *
+   * @param array $options
+   *   Options passed to the control.
+   * @param int $colIdx
+   *   Index of the column position allowing the td to be linked to its header.
+   * @param int $rowIdx
+   *   Index of the grid row.
+   * @param int $loadedTxIdx
+   * @param int $existingRecordId
+   *   If an existing occurrence record, pass the ID.
+   *
+   * @return string
+   *   HTML to insert into the grid.
+   */
+  private static function speciesChecklistVerificationInfoCells($options, $colIdx, $rowIdx, $loadedTxIdx, $existingRecordId) {
+    $r = '';
+    if ($options['verificationInfoColumns']) {
+      $r .= "\n<td class=\"ui-widget-content scVerificationInfoCell\" headers=\"$options[id]-verified_by-$colIdx\">";
+      $verifiedByFieldname = "sc:$options[id]-$rowIdx:$existingRecordId:occurrence:verified_by";
+      $verifiedByValue = isset(self::$entity_to_load["sc:$loadedTxIdx:$existingRecordId:occurrence:verified_by"]) ?
+        self::$entity_to_load["sc:$loadedTxIdx:$existingRecordId:occurrence:verified_by"] : '';
+      $verifiedByValue = htmlspecialchars($verifiedByValue);
+      $r .= "<label class=\"scVerificationInfoCell\" type=\"text\" name=\"$verifiedByFieldname\" id=\"$verifiedByFieldname\" value=\"$verifiedByValue\" >$verifiedByValue</label>";
+      $r .= "</td>";
+
+      $r .= "\n<td class=\"ui-widget-content scVerificationInfoCell\" headers=\"$options[id]-verified_on-$colIdx\">";
+      $verifiedOnFieldname = "sc:$options[id]-$rowIdx:$existingRecordId:occurrence:verified_on";
+      $verifiedOnValue = isset(self::$entity_to_load["sc:$loadedTxIdx:$existingRecordId:occurrence:verified_on"]) ?
+        self::$entity_to_load["sc:$loadedTxIdx:$existingRecordId:occurrence:verified_on"] : '';
+      if (!empty(helper_base::$date_format)) {
+        $verifiedOnValue = (new \DateTime($verifiedOnValue))->format(helper_base::$date_format);
+      }
+      $verifiedOnValue = htmlspecialchars($verifiedOnValue);
+      $r .= "<label id=\"$verifiedOnFieldname\" name=\"$verifiedOnFieldname\" class=\"scVerificationInfoCell\" type=\"text\"  >$verifiedOnValue</label>";
+      $r .= "</td>";
     }
     return $r;
   }

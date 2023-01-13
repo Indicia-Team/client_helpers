@@ -116,25 +116,40 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
   public static function get_parameters() {
     $defaultFormStructure = <<<TXT
 =Species=
+
 ?Please enter the species you saw and any other information about them.?
+
 [species]
+
 @resizeWidth=1500
 @resizeHeight=1500
+
 [species attributes]
+
 [*]
+
 =Place=
-?Please provide the spatial reference of the record. You can enter
-the reference directly, or search for a place then click on the map
-to set it.?
+
+?Please provide the spatial reference of the record. You can enter the reference directly, or search for a place then click on the map to set it.?
+
 [spatial reference]
+
 [place search]
+
 [map]
+
 [*]
+
 =Other Information=
+
 ?Please provide the following additional information.?
+
 [date]
+
 [sample comment]
+
 [*]
+
 =*=
 TXT;
     $formStructureDescription = <<<TXT
@@ -412,6 +427,36 @@ TXT;
           'required' => FALSE,
         ],
         [
+          'name' => 'add_new_sample_from_existing_sample_mode',
+          'caption' => 'Allow adding new sample from existing sample?',
+          'description' => 'Allow adding of a new sample from an existing sample with the following options:<br>' .
+          "\"Filtered\": only copy fields supplied in the filter configuration.<br>" .
+          "\"Copy all sample fields\": all sample related fields are copied to the new sample being added. " .
+          "Note this functionality only works when an existing sample_id (not occurrence_id) is supplied " .
+          "to the page, and a \"sample_addition_template\" URL parameter is supplied as true.",
+          'type' => 'select',
+          'options' => [
+            'filtered' => 'Limit with filter',
+            'all' => 'Copy all sample fields',
+          ],
+          'group' => 'User Interface',
+          'default' => FALSE,
+          'required' => FALSE,
+        ],
+        [
+          'name' => 'sample_addition_template_fields',
+          'caption' => 'Filter fields',
+          'description' => "List of fields to be copied when a new sample is created from an existing one. " .
+          "Only used when the \"Allow adding new sample from existing sample?\" option is set to \"Filtered\". " .
+          "Fields should be referred to by the internal name the Indicia system uses for the field. This can usually be seen in the field's " .
+          "html \"name\" attribute. There are some exceptions to this for more complex fields, such as the Date field for a sample, " .
+          "which can be referred to as sample:date.",
+          'type' => 'textarea',
+          'group' => 'User Interface',
+          'default' => FALSE,
+          'required' => FALSE,
+        ],
+        [
           'name' => 'users_manage_own_sites',
           'caption' => 'Users can save sites',
           'description' => 'Allow users to save named sites for recall when they
@@ -446,7 +491,7 @@ TXT;
         ],
         [
           'fieldname' => 'list_id',
-          'label' => 'Species List ',
+          'label' => 'Species list',
           'helpText' => 'The species list that species can be selected from.
             This list is pre-populated into the grid when doing grid based data
             entry, or provides the list which a species can be picked from when
@@ -461,7 +506,7 @@ TXT;
         ],
         [
           'fieldname' => 'extra_list_id',
-          'label' => 'Extra Species List',
+          'label' => 'List of species that can be added to the grid',
           'helpText' => 'The second species list that species can be selected
             from. This list is available for additional taxa being added to the
             grid when doing grid based data entry. When using the single record
@@ -585,14 +630,21 @@ TXT;
         ],
         [
           'name' => 'species_include_id_diff',
-          'caption' => 'Include identification_difficulty icons in species
-            autocomplete and added rows',
-          'description' => 'Use data cleaner identification difficulty rules to
-            generate icons indicating when ' .
+          'caption' => 'Include identification_difficulty icons in species autocomplete and added rows',
+          'description' => 'Use data cleaner identification difficulty rules to generate icons indicating when ' .
           'hard to ID taxa have been selected.',
           'type' => 'boolean',
           'required' => FALSE,
           'default'  => TRUE,
+          'group' => 'Species',
+        ],
+        [
+          'name' => 'verification_info_columns',
+          'caption' => 'Verification Information Columns',
+          'description' => 'Include columns to show verified by and verified on information in the species grid',
+          'type' => 'boolean',
+          'required' => FALSE,
+          'default' => FALSE,
           'group' => 'Species',
         ],
         [
@@ -782,13 +834,12 @@ TXT;
           'name' => 'defaults',
           'caption' => 'Default Values',
           'description' => 'Supply default values for each field as required. On
-            each line, enter fieldname=value. For custom attributes, the
-            fieldname is the untranslated caption. For other fields, it is the
-            model and fieldname, e.g. occurrence.record_status. For date fields,
-            use today to dynamically default to today\'s date. NOTE, currently
-            only supports occurrence:record_status and sample:date but will be
-            extended in future.',
+            each line, enter fieldname=value. For date fields, use the value "today"
+            to dynamically default to today\'s date. NOTE, only supports
+            occurrence:record_status, occurrence:release_status, occurrence:licence_id
+            and sample:date.',
           'type' => 'textarea',
+          'required' => FALSE,
           'default' => 'occurrence:record_status=C',
         ],
         [
@@ -854,6 +905,7 @@ TXT;
    * to make it available to a hook function which exists outside the form.
    */
   protected static function get_form_html($args, $auth, $attributes) {
+    self::addNewSampleFromExistingSampleEntityToLoadRemover($args);
     group_authorise_form($args, $auth['read']);
     // We always want an autocomplete formatter function for species lookups.
     // The form implementation can specify its own if required.
@@ -1188,8 +1240,10 @@ TXT;
    *   List of attribute definitions.
    */
   protected static function getAttributes(array $args, array $auth) {
-    return self::getAttributesForEntity('sample', $args, $auth['read'],
-        isset(data_entry_helper::$entity_to_load['sample:id']) ? data_entry_helper::$entity_to_load['sample:id'] : '');
+    $attributesList = self::getAttributesForEntity('sample', $args, $auth['read'],
+    isset(data_entry_helper::$entity_to_load['sample:id']) ? data_entry_helper::$entity_to_load['sample:id'] : '');
+    $attributesList = self::addNewSampleFromExistingSampleAttributeRemover($args, $attributesList);
+    return $attributesList;
   }
 
   /**
@@ -1324,7 +1378,93 @@ TXT;
     unset(data_entry_helper::$entity_to_load['occurrence:id']);
   }
 
+  /**
+   * Are we adding a new sample from an existing one?
+   *
+   * @param array $args
+   *   List of page argument options available to the extension.
+   *
+   * @return bool
+   *   Returns TRUE if we are adding a new sample from an existing one.
+   */
+  private static function detectAddingSampleFromExisting(array $args) {
+    if ((!empty($_GET['sample_addition_template']) && ($_GET['sample_addition_template'] == 1 || strtolower($_GET['sample_addition_template']) === 'true'))
+        && !empty($args['add_new_sample_from_existing_sample_mode'])
+        && ($args['add_new_sample_from_existing_sample_mode'] === 'filtered' || $args['add_new_sample_from_existing_sample_mode'] === 'all')
+        && !empty($_GET['sample_id'])) {
+      $addFromExistingSample = TRUE;
+    }
+    else {
+      $addFromExistingSample = FALSE;
+    }
+    return $addFromExistingSample;
+  }
+
+  /**
+   * If copying an existing sample to new sample, prepare entity_to_load.
+   *
+   * Remove all fields we don't want to copy over to the new sample.
+   *
+   * @param array $args
+   *   List of page argument options available to the extension.
+   */
+  private static function addNewSampleFromExistingSampleEntityToLoadRemover(array $args) {
+    $addFromExistingSample = self::detectAddingSampleFromExisting($args);
+    if ($addFromExistingSample == TRUE) {
+      /* Must remove the sample ID to create a new sample instead of editing the old one. */
+      unset(data_entry_helper::$entity_to_load['sample:id']);
+      if (!empty($args['sample_addition_template_fields'])) {
+        $templateFields = helper_base::explode_lines($args['sample_addition_template_fields']);
+      }
+      /* In filtered mode, remove all fields unless the user has chosen to keep them from the existing sample */
+      foreach (data_entry_helper::$entity_to_load as $fieldKey => $fieldValue) {
+        if (!in_array($fieldKey, $templateFields) && $args['add_new_sample_from_existing_sample_mode'] === 'filtered') {
+          unset(data_entry_helper::$entity_to_load[$fieldKey]);
+        }
+      }
+    }
+  }
+
+  /**
+   * If copying an existing sample to new sample, prepare attributes.
+   *
+   * Remove all attribute values we don't want to copy over to the new sample.
+   *
+   * @param array $args
+   *   List of page argument options available to the extension.
+   * @param array $attributesList
+   *   Array of attributes to process.
+   *
+   * @return array
+   *   Array of attrs where vals are cleared which are not used on new sample.
+   */
+  protected static function addNewSampleFromExistingSampleAttributeRemover(array $args, array $attributesList) {
+    $addFromExistingSample = self::detectAddingSampleFromExisting($args);
+    if ($addFromExistingSample == TRUE) {
+      if (!empty($args['sample_addition_template_fields'])) {
+        $templateFields = helper_base::explode_lines($args['sample_addition_template_fields']);
+      }
+      foreach ($attributesList as $idx => $arrayOfFieldAttrs) {
+        /* Must strip the attribute_value id from the field name, failing to do
+        so will cause data from the original sample to be overwritten */
+        if (!empty($attributesList[$idx]['fieldname']) && !empty($attributesList[$idx]['id'])) {
+          $attributesList[$idx]['fieldname'] = $attributesList[$idx]['id'];
+        }
+        /* In filtered mode, clear all attribute values unless the user has chosen to keep them from the existing sample */
+        if (!in_array($arrayOfFieldAttrs['id'], $templateFields) && $args['add_new_sample_from_existing_sample_mode'] === 'filtered') {
+          foreach ($arrayOfFieldAttrs as $fieldAttrName => $fieldAttrValue) {
+            if (strpos($fieldAttrName, 'default') !== FALSE) {
+              $attributesList[$idx][$fieldAttrName] = '';
+            }
+          }
+        }
+      }
+    }
+    return $attributesList;
+  }
+
   protected static function getFormHiddenInputs($args, $auth, &$attributes) {
+    $addFromExistingSample = self::detectAddingSampleFromExisting($args);
     // Get authorisation tokens to update the Warehouse, plus any other hidden
     // data.
     $r = <<<HTML
@@ -1336,7 +1476,7 @@ HTML;
     if (!empty($args['sample_method_id'])) {
       $r .= '<input type="hidden" name="sample:sample_method_id" value="' . $args['sample_method_id'] . '"/>' . PHP_EOL;
     }
-    if (isset(data_entry_helper::$entity_to_load['sample:id'])) {
+    if (isset(data_entry_helper::$entity_to_load['sample:id']) && $addFromExistingSample == FALSE) {
       $r .= '<input type="hidden" id="sample:id" name="sample:id" value="' . data_entry_helper::$entity_to_load['sample:id'] . '" />' . PHP_EOL;
     }
     $gridMode = call_user_func([self::$called_class, 'getGridMode'], $args);
@@ -1595,6 +1735,7 @@ HTML;
       'occAttrOptions' => $attrOptions['occ'],
       'smpAttrOptions' => $attrOptions['smp'],
       'systems' => $args['spatial_systems'],
+      'verificationInfoColumns' => $args['verification_info_columns'],
       'occurrenceComment' => $args['occurrence_comment'],
       'occurrenceSensitivity' => (isset($args['occurrence_sensitivity']) ? $args['occurrence_sensitivity'] : FALSE),
       'occurrenceImages' => $args['occurrence_images'],
@@ -1824,6 +1965,7 @@ HTML;
       'columns' => 1,
       'extraParams' => $extraParams,
       'survey_id' => $args['survey_id'],
+      'verificationInfoColumns' => $args['verification_info_columns'],
       'occurrenceComment' => $args['occurrence_comment'],
       'occurrenceSensitivity' => (isset($args['occurrence_sensitivity']) ? $args['occurrence_sensitivity'] : FALSE),
       'occurrenceImages' => $args['occurrence_images'],
@@ -1846,6 +1988,9 @@ HTML;
     }
     if ($args['extra_list_id'] && !isset($options['lookupListId'])) {
       $species_ctrl_opts['lookupListId'] = $args['extra_list_id'];
+    }
+    if ($args['verification_info_columns'] && !isset($options['verification_info_columns'])) {
+      $species_ctrl_opts['verificationInfoColumns'] = $args['verification_info_columns'];
     }
     // We only do the work to setup the filter if the user has specified a
     // filter in the box.
@@ -2150,6 +2295,25 @@ HTML;
       $attrSpecificOptions = [];
       self::parseForAttrSpecificOptions($options, $ctrlOptions, $attrSpecificOptions);
       $r = '';
+      if ($args['verification_info_columns'] && (!empty($_GET['sample_id']) || !empty($_GET['occurrence_id']))) {
+        $verifiedByValue = data_entry_helper::$entity_to_load['occurrence:verified_by'];
+        if (!empty($verifiedByValue)) {
+          $r .= '<div id="ctrl-wrap-occurrence-verified_by" class="form-row ctrl-wrap">';
+          $r .= '<label for="occurrence:verified_by">' . lang::get('Verified by:') . '</label>';
+          $r .= '<label type="text" id="occurrence:verified_by" name="occurrence:verified_by" >' . $verifiedByValue . '</label>';
+          $r .= '</div>';
+        }
+        $verifiedOnValue = data_entry_helper::$entity_to_load['occurrence:verified_on'];
+        if (!empty(helper_base::$date_format)) {
+          $verifiedOnValue = (new \DateTime($verifiedOnValue))->format(helper_base::$date_format);
+        }
+        if (!empty($verifiedOnValue)) {
+          $r .= '<div id="ctrl-wrap-occurrence-verified_on" class="form-row ctrl-wrap">';
+          $r .= '<label for="occurrence:verified_on">' . lang::get('Verified on:') . '</label>';
+          $r .= '<label type="text" id="occurrence:verified_on" name="occurrence:verified_on" >' . $verifiedOnValue . '</label>';
+          $r .= '</div>';
+        }
+      }
       if ($args['occurrence_sensitivity']) {
         $sensitivity_controls = get_attribute_html(self::$occAttrs, $args, $ctrlOptions, 'sensitivity', $attrSpecificOptions);
         $r .= data_entry_helper::sensitivity_input([
@@ -3072,23 +3236,45 @@ JS;
     if (!isset($args['structure']) || empty($args['structure'])) {
       $args['structure'] = <<<TXT
 =Species=
+
 ?Please enter the species you saw and any other information about them.?
+
 [species]
+
+@resizeWidth=1500
+@resizeHeight=1500
+
 [species attributes]
+
 [*]
+
 =Place=
-?Please provide the spatial reference of the record. You can enter the reference directly, or search for a place then click on the map.?
-"[place search]
+
+?Please provide the spatial reference of the record. You can enter the reference directly, or search for a place then click on the map to set it.?
+
 [spatial reference]
+
+[place search]
+
 [map]
+
 [*]
+
 =Other Information=
+
 ?Please provide the following additional information.?
+
 [date]
+
 [sample comment]
+
 [*]
+
 =*=
 TXT;
+    }
+    if (!isset($args['verification_info_columns'])) {
+      $args['verification_info_columns'] = FALSE;
     }
     if (!isset($args['occurrence_comment'])) {
       $args['occurrence_comment'] = FALSE;
@@ -3206,6 +3392,7 @@ TXT;
   protected static function getSubmitButtons($args) {
     global $indicia_templates;
     $r = '';
+    $addFromExistingSample = self::detectAddingSampleFromExisting($args);
     if (self::$mode === self::MODE_EXISTING_RO) {
       // Don't allow users to submit if in read only mode.
       return $r;
@@ -3215,22 +3402,25 @@ TXT;
       // Use a button here, not input, as Chrome does not post the input value.
       $formType = $args['multiple_occurrence_mode'] === 'single' ? lang::get('record') : lang::get('list of records');
       $btnLabel = lang::get('Delete {1}', $formType);
-      $r .= <<<HTML
-<button type="submit" class="$indicia_templates[buttonWarningClass]" id="delete-button" name="delete-button" value="delete" >
-  $btnLabel
-</button>
+      /* Don't include delete button when we are adding a sample using an existing one as a template */
+      if ($addFromExistingSample === FALSE) {
+        $r .= <<<HTML
+  <button type="submit" class="$indicia_templates[buttonWarningClass]" id="delete-button" name="delete-button" value="delete" >
+    $btnLabel
+  </button>
 
-HTML;
-      $msg = str_replace("'", "\'", lang::get('Are you sure you want to delete this {1}?', $formType));
-      data_entry_helper::$javascript .= <<<JS
-$('#delete-button').click(function(e) {
-  if (!confirm('$msg')) {
-    e.preventDefault();
-    return false;
-  }
-});
+  HTML;
+        $msg = str_replace("'", "\'", lang::get('Are you sure you want to delete this {1}?', $formType));
+        data_entry_helper::$javascript .= <<<JS
+  $('#delete-button').click(function(e) {
+    if (!confirm('$msg')) {
+      e.preventDefault();
+      return false;
+    }
+  });
 
-JS;
+  JS;
+      }
     }
     return $r;
   }
@@ -3243,7 +3433,7 @@ JS;
  */
 function indicia_define_remembered_fields() {
   global $remembered;
-  $remembered = trim($remembered);
+  $remembered = trim($remembered ?? '');
   if (!empty($remembered)) {
     data_entry_helper::setRememberedFields(helper_base::explode_lines($remembered));
   }

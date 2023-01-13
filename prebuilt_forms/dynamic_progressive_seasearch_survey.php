@@ -1874,10 +1874,10 @@ if ($('#$options[id]').parents('.ui-tabs-panel').length) {
    * Again, this is an altered copy of the one found in data_entry_helper, includes support for third level samples
    * May contain coded that is not needed and can be removed if possible
    */
-  private static function preload_species_checklist_occurrences($sampleId, $readAuth, $loadMedia, $extraParams, &$subSamples, $useSubSamples, $subSampleMethodID='',$gridId, $useThirdLevelSamples=false) {
+  private static function preload_species_checklist_occurrences($sampleId, $readAuth, $loadMedia, $extraParams, &$subSamples, $useSubSamples, $subSampleMethodID='', $gridId, $useThirdLevelSamples = FALSE) {
     //Obviously this would need to not be hardcoded
-    $occurrenceIds = []
-    $taxonCounter = []
+    $occurrenceIds = [];
+    $taxonCounter = [];
     // don't load from the db if there are validation errors, since the $_POST will already contain all the
     // data we need.
     if (is_null(data_entry_helper::$validation_errors)) {

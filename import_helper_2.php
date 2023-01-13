@@ -51,7 +51,7 @@ class import_helper_2 extends helper_base {
    * * globalValuesFormIntro
    * * mappingsFormIntro
    * * lookupMatchingFormIntro
-   * * validationFormIntro
+   * * preprocessPageIntro
    * * summaryPageIntro
    * * doImportPageIntro
    * * requiredFieldsIntro
@@ -68,6 +68,8 @@ class import_helper_2 extends helper_base {
    *   call import_helper_2::loadChunkToTempTable for a complete implementation.
    * * getRequiredFieldsUrl - path to a function that returns the list of
    *   required fields for the dataset being imported into.
+   * * preprocessUrl - path to a script that performs processing
+   *   that can be done after the file is loaded and mappings done.
    * * processLookupMatchingUrl - path to a script that performs steps in the
    *   process of identifying lookup destination fields that need their values
    *   to be matched to obtain an ID.
@@ -80,6 +82,10 @@ class import_helper_2 extends helper_base {
    * * readAuth - read authorisation tokens.
    * * writeAuth - write authorisation tokens.
    * * fixedValues - array of fixed key/value pairs that apply to all rows.
+   * * allowUpdates - set to true to enable updating existing rows based on an
+   *   ID or external key field mapping. Only affects the user's own data.
+   * * allowDeletes = set to true to enable mapping to a deleted flag for the
+   *   user's own data. Requires the allowUpdates option to be set.
    */
   public static function importer($options) {
     if (empty($options['entity'])) {
@@ -101,6 +107,7 @@ class import_helper_2 extends helper_base {
     self::$indiciaData['initServerConfigUrl'] = $options['initServerConfigUrl'];
     self::$indiciaData['loadChunkToTempTableUrl'] = $options['loadChunkToTempTableUrl'];
     self::$indiciaData['getRequiredFieldsUrl'] = $options['getRequiredFieldsUrl'];
+    self::$indiciaData['preprocessUrl'] = $options['preprocessUrl'];
     self::$indiciaData['processLookupMatchingUrl'] = $options['processLookupMatchingUrl'];
     self::$indiciaData['saveLookupMatchesGroupUrl'] = $options['saveLookupMatchesGroupUrl'];
     self::$indiciaData['importChunkUrl'] = $options['importChunkUrl'];
@@ -121,8 +128,8 @@ class import_helper_2 extends helper_base {
       case 'lookupMatchingForm':
         return self::lookupMatchingForm($options);
 
-      case 'validationForm':
-        return self::validationForm($options);
+      case 'preprocessPage':
+        return self::preprocessPage($options);
 
       case 'summaryPage':
         return self::summaryPage($options);
@@ -335,6 +342,33 @@ class import_helper_2 extends helper_base {
   }
 
   /**
+   * Perform processing that can be done before the actual import.
+   *
+   * Includes global validation and linking to existing records.
+   *
+   * @param string $fileName
+   *   Name of the file to process.
+   * @param int $index
+   *   Index of the request - start at 0 then increment by one for each request
+   *   to perform each processing step in turn.
+   * @param array $writeAuth
+   *   Write authorisation tokens.
+   */
+  public static function preprocess($fileName, $index, array $writeAuth) {
+    $serviceUrl = self ::$base_url . 'index.php/services/import_2/preprocess';
+    $data = $writeAuth + [
+      'data-file' => $fileName,
+      'index' => $index,
+    ];
+    $response = self::http_post($serviceUrl, $data, FALSE);
+    $output = json_decode($response['output'], TRUE);
+    if (!$response['result']) {
+      \Drupal::logger('iform')->notice('Error in preprocess: ' . var_export($response, TRUE));
+    }
+    return $output;
+  }
+
+  /**
    * Import the next chunk of records to the main database.
    *
    * @param string $fileName
@@ -439,7 +473,7 @@ class import_helper_2 extends helper_base {
       $templatePickerHtml = data_entry_helper::select([
         'fieldname' => 'import_template_id',
         'label' => lang::get('Template'),
-        'helpText' => lang::get('If you would like to import similar data to a previuos import, choose one of the templates you saved previously to re-use the settings'),
+        'helpText' => lang::get('If you would like to import similar data to a previous import, choose one of the templates you saved previously to re-use the settings'),
         'lookupValues' => $templateOptions,
         'blankText' => lang::get('-no template selected-'),
       ]);
@@ -530,10 +564,8 @@ HTML;
     else {
       $response = json_decode($response, TRUE);
     }
-    if (!empty($response['output'])) {
-      $formArray = json_decode($response['output'], TRUE);
-      $form = self::globalValuesFormControls($formArray, $options);
-    }
+    $formArray = !empty($response['output']) ? json_decode($response['output'], TRUE) : [];
+    $form = self::globalValuesFormControls($formArray, $options);
     self::$indiciaData['processUploadedInterimFile'] = $_POST['interim-file'];
     return <<<HTML
 <h3>$lang[title]</h3>
@@ -589,6 +621,11 @@ HTML;
       $r .= self::getParamsFormControl($key, $info, $options, $tools);
       $visibleControlsFound = TRUE;
     }
+    $updateOrDeleteOptions = self::updateOrDeleteOptions($options);
+    $r .= $updateOrDeleteOptions['html'];
+    if ($updateOrDeleteOptions['visibleControls']) {
+      $visibleControlsFound = TRUE;
+    }
     if (!$visibleControlsFound) {
       // All controls had a fixed value provided in config or the loaded
       // template, so show a message instead of the form.
@@ -598,12 +635,54 @@ HTML;
   }
 
   /**
+   * Adds controls allowing the user to enable updates or deletes.
+   *
+   * @param array $options
+   *   Configuration options.
+   *
+   * @return array
+   *   Entry containing the control HTML (html) and a boolean flag set to true
+   *   if any of the controls are visible, as this affects the UI behaviour.
+   */
+  private static function updateOrDeleteOptions(array $options) {
+    $html = '';
+    if (!empty($options['allowUpdates'])) {
+      $ctrlType = isset($options['fixedValues']['config:allowUpdates']) ? 'hidden_text' : 'checkbox';
+      $html .= data_entry_helper::$ctrlType([
+        'fieldname' => 'config:allowUpdates',
+        'label' => lang::get('Import file contains updates for existing data'),
+        'helpText' => lang::get('Tick this box if your import file contains updates for existing data.'),
+        'default' => isset($options['fixedValues']['config:allowUpdates']) ? $options['fixedValues']['config:allowUpdates'] : 0,
+      ]);
+      if (!empty($options['allowDeletes'])) {
+        $ctrlType = isset($options['fixedValues']['config:allowDeletes']) ? 'hidden_text' : 'checkbox';
+        $html .= data_entry_helper::$ctrlType([
+          'fieldname' => 'config:allowDeletes',
+          'label' => lang::get('Import file contains a flag for deleting existing data'),
+          'helpText' => lang::get('Tick this box if your import file contains a flag for deleting existing data.'),
+          'default' => isset($options['fixedValues']['config:allowDeletes']) ? $options['fixedValues']['config:allowDeletes'] : 0,
+        ]);
+        if (!isset($options['fixedValues']['config:allowDeletes'])) {
+          // If not set by the template, the UI should only enable the deletes
+          // control when updates are enabled.
+          data_entry_helper::$indiciaData['enableControlIf']['config:allowDeletes'] = ['config:allowUpdates' => ['1']];
+        }
+      }
+    }
+    return [
+      'html' => $html,
+      'visibleControls' => !isset($options['fixedValues']['config:allowUpdates']) || !isset($options['fixedValues']['config:allowDeletes']),
+    ];
+  }
+
+  /**
    * Processes a lookup_values string to only include those for provided keys.
    *
    * @param string $lookupValues
    *   A lookup values string, in format key:value,key:value.
    * @param array $restrictToKeys
-   *   A list of keys to include in the returned lookup values string.
+   *   A list of keys to include in the returned lookup values string. Keys can
+   *   have the label specified if a colon appended.
    *
    * @return string
    *   Lookup values string which only includes entries whose keys are in the
@@ -618,7 +697,12 @@ HTML;
     }
     $newLookupList = [];
     foreach ($restrictToKeys as $key) {
-      $newLookupList[] = "$key:" . $originalLookupsAssoc[$key];
+      if (strpos(':', $key) === FALSE) {
+        $newLookupList[] = "$key:" . $originalLookupsAssoc[$key];
+      }
+      else {
+        $newLookupList[] = $key;
+      }
     }
     return implode(',', $newLookupList);
   }
@@ -663,13 +747,27 @@ HTML;
     // Only include required fields that are available for selection. Others
     // get populated by some other means.
     $requiredFields = array_intersect_key($requiredFields, $availableFields);
-    self::$indiciaData['requiredFields'] = $requiredFields;
     if (!empty($config['columns'])) {
       // Save column info data for JS to use.
       self::$indiciaData['columns'] = $config['columns'];
     }
-
+    if (!empty($config['importTemplateId'])) {
+      // Inform JS if a template is being used, so it disables auto-column
+      // name matching.
+      self::$indiciaData['import_template_id'] = $config['importTemplateId'];
+    }
     $htmlList = [];
+    if ($globalValues['config:allowUpdates']) {
+      unset($options['blockedFields'][array_search('id', $options['blockedFields'])]);
+      $options['blockedFields'][] = 'sample:id';
+      $requiredFields['occurrence:id|occurrence:external_key'] = 'Occurrence ID or external key';
+      if ($globalValues['config:allowDeletes']) {
+        unset($options['blockedFields'][array_search('deleted', $options['blockedFields'])]);
+        $options['blockedFields'][] = 'sample:deleted';
+        $requiredFields['occurrence:deleted'] = 'Occurrence deleted';
+      }
+    }
+    self::$indiciaData['requiredFields'] = $requiredFields;
     $dbFieldOptions = self::getAvailableDbFieldsAsOptions($options, $availableFields);
     foreach ($config['columns'] as $columnLabel => $info) {
       $select = "<select class=\"form-control mapped-field\" name=\"$info[tempDbField]\">$dbFieldOptions</select>";
@@ -892,7 +990,7 @@ HTML;
       'next' => lang::get('Next step'),
       'title' => lang::get('Value matching'),
     ];
-    self::$indiciaData['processLookupMatchingForFile'] = $_POST['data-file'];
+    self::$indiciaData['dataFile'] = $_POST['data-file'];
     return <<<HTML
 <h3>$lang[title]</h3>
 <p id="instructions">$lang[instructions]</p>
@@ -907,20 +1005,48 @@ HTML;
     <div id="background-extra" class="panel-body panel-collapse collapse"></div>
   </div>
   <input type="submit" class="btn btn-primary" id="next-step" value="$lang[next]" disabled />
-  <input type="hidden" name="next-import-step" value="validationForm" />
+  <input type="hidden" name="next-import-step" value="preprocessPage" />
   <input type="hidden" name="data-file" id="data-file" value="{$_POST['data-file']}" />
 </form>
 HTML;
   }
 
   /**
-   * Returns a page for validation information.
+   * Returns a page for preprocessing the uploaded information.
    *
    * Not implemented yet so skips to the next page.
    */
-  private static function validationForm($options) {
-    // @todo Validate the data before attempting the import.
-    return self::summaryPage($options);
+  private static function preprocessPage($options) {
+    self::addLanguageStringsToJs('import_helper_2', [
+      'importCannotProceed' => 'The import cannot proceed due to problems found in the data:',
+      'preprocessingError' => 'Preprocessing error',
+      'preprocessingErrorInfo' => 'An error occurred on the server whilst preprocessing your data:',
+      'preprocessingImport' => 'Preparing to import',
+    ]);
+    $lang = [
+      'backgroundProcessing' => lang::get('Background processing'),
+      'instructions' => lang::get($options['preprocessPageIntro']),
+      'moreInfo' => lang::get('More info...'),
+      'next' => lang::get('Next step'),
+      'title' => lang::get('Preparing to import'),
+    ];
+    self::$indiciaData['dataFile'] = $_POST['data-file'];
+    return <<<HTML
+<h3>$lang[title]</h3>
+<p id="instructions">$lang[instructions]</p>
+<form method="POST" id="preprocessing-form">
+  <div class="panel panel-info background-processing">
+    <div class="panel-heading">
+      <span>$lang[backgroundProcessing]</span>
+      <br/><a data-toggle="collapse" class="small" href="#background-extra">$lang[moreInfo]</a>
+    </div>
+    <div id="background-extra" class="panel-body panel-collapse collapse"></div>
+  </div>
+  <input type="submit" class="btn btn-primary" id="next-step" value="$lang[next]" style="display: none" />
+  <input type="hidden" name="next-import-step" value="summaryPage" />
+  <input type="hidden" name="data-file" id="data-file" value="{$_POST['data-file']}" />
+</form>
+HTML;
   }
 
   /**
@@ -994,9 +1120,15 @@ HTML;
     $lang = [
       'columnMappings' => lang::get('Column mappings'),
       'databaseField' => lang::get('Database field'),
+      'deletionExplanation' => lang::get('Existing records will be deleted if the Deleted field is set to "1", "true" or "t".'),
+      'existingRecords' => lang::get('Existing records'),
+      'fileType' => lang::get('File type'),
       'globalValues' => lang::get('Fixed values that apply to all rows'),
+      'importTemplate' => 'Import template',
       'instructions' => lang::get($options['summaryPageIntro']),
       'importColumn' => lang::get('Import column'),
+      'numberOfRecords' => lang::get('Number of records'),
+      'recordDeletion' => lang::get('Record deletion'),
       'startImport' => lang::get('Start importing records'),
       'title' => lang::get('Import summary'),
       'value' => lang::get('Value'),
@@ -1011,10 +1143,14 @@ HTML;
     $ext = pathinfo($config['fileName'], PATHINFO_EXTENSION);
     $availableFields = self::getAvailableDbFields($options, $config['global-values']);
     $mappingRows = [];
+    $existingMatchFields = [];
     foreach ($config['columns'] as $columnLabel => $info) {
       $arrow = self::getSummaryColumnArrow($info);
       $warehouseFieldLabel = self::getWarehouseFieldLabel($info, $availableFields);
       $mappingRows[] = "<tr><th scope=\"row\">$columnLabel</th><td>$arrow</td><td>$warehouseFieldLabel</td></tr>";
+      if (preg_match('/:(id|external_key)$/', $info['warehouseField'])) {
+        $existingMatchFields[] = $warehouseFieldLabel;
+      }
       // @todo Correct mapping to stage attribute display
     }
     $mappings = implode('', $mappingRows);
@@ -1024,16 +1160,27 @@ HTML;
       // @todo Would be nice to replace value with readable label from the
       // original lookup.
       // Foreign key filters were used during matching, not actually for import.
-      if (strpos($field, 'fkFilter') === FALSE) {
+      // Also exclude settings such as allowUpdates/deletes.
+      if (strpos($field, 'fkFilter') === FALSE && strpos($field, 'config:') !== 0) {
         $field = $availableFields[$field] ?? $field;
         $globalRows[] = "<tr><th scope=\"row\">$value</th><td>$arrow</td><td>$field</td></tr>";
       }
     }
     $globals = implode('', $globalRows);
     $infoRows = [
-      "<dt>File type</dt><dd>$ext</dd>",
-      "<dt>Number of records</dt><dd>$config[totalRows]</dd>",
+      "<dt>$lang[fileType]</dt><dd>$ext</dd>",
+      "<dt>$lang[numberOfRecords]</dt><dd>$config[totalRows]</dd>",
     ];
+    if (!empty($config['importTemplateTitle'])) {
+      $infoRows[] = "<dt>$lang[importTemplate]</dt><dd>$config[importTemplateTitle]</dd>";
+    }
+    if ($config['global-values']['config:allowUpdates']) {
+      $matchFieldExplanation = lang::get('Existing records will be updated if there is a match on {1}.', implode('; ', $existingMatchFields));
+      $infoRows[] = "<dt>$lang[existingRecords]</dt><dd class=\"alert alert-warning\">$matchFieldExplanation</dd>";
+      if ($config['global-values']['config:allowDeletes']) {
+        $infoRows[] = "<dt>$lang[recordDeletion]</dt><dd class=\"alert alert-warning\">$lang[deletionExplanation]</dd>";
+      }
+    }
     $info = '<dl>' . implode("\n", $infoRows) . '</dl>';
     $importFieldTableContent = <<<HTML
 <tbody>
@@ -1169,7 +1316,7 @@ HTML;
       'globalValuesFormIntro' => lang::get('import2globalValuesFormIntro'),
       'mappingsFormIntro' => lang::get('import2mappingsFormIntro'),
       'lookupMatchingFormIntro' => lang::get('lookupMatchingFormIntro'),
-      'validationFormIntro' => lang::get('import2validationFormIntro'),
+      'preprocessPageIntro' => lang::get('import2preprocessPageIntro'),
       'summaryPageIntro' => lang::get('summaryPageIntro'),
       'doImportPageIntro' => lang::get('import2doImportPageIntro'),
       'requiredFieldsIntro' => lang::get('import2requiredFieldsIntro'),
@@ -1201,6 +1348,8 @@ HTML;
         'fk_website',
         'training',
       ],
+      'allowUpdates' => FALSE,
+      'allowDeletes' => FALSE,
     ];
     $options = array_merge($defaults, $options);
     $requiredOptions = [
@@ -1209,6 +1358,7 @@ HTML;
       'initServerConfigUrl',
       'loadChunkToTempTableUrl',
       'getRequiredFieldsUrl',
+      'preprocessUrl',
       'processLookupMatchingUrl',
       'saveLookupMatchesGroupUrl',
       'importChunkUrl',
@@ -1270,7 +1420,7 @@ HTML;
     ]);
     // Apply i18n.
     if ($r) {
-      foreach ($r as $key => &$caption) {
+      foreach ($r as &$caption) {
         $caption = lang::get($caption);
       }
     }
@@ -1292,6 +1442,7 @@ HTML;
       'extraParams' => $options['readAuth'] + [
         'entity' => $options['entity'],
         'created_by_id' => hostsite_get_user_field('indicia_user_id'),
+        'orderby' => 'title',
       ],
     ]);
   }

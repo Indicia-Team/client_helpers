@@ -49,7 +49,14 @@ class ElasticsearchReportHelper {
    * @var bool
    *   Set to true when done to prevent double-initialisation.
    */
-  private static $proxyEnabled = false;
+  private static $proxyEnabled = FALSE;
+
+  /**
+   * Remember if an attempt made to enable which failed.
+   *
+   * @var bool
+   */
+  private static $proxyEnableFailed = FALSE;
 
   /**
    * List of ES fields with caption and description for each.
@@ -257,6 +264,18 @@ class ElasticsearchReportHelper {
       'caption' => 'Display spatial reference',
       'description' => 'Spatial reference in the recommended local grid system.',
     ],
+    'location.output_sref_system' => [
+      'caption' => 'Display spatial reference_system',
+      'description' => 'System used for the spatial reference in the recommended local grid system.',
+    ],
+    'location.input_sref' => [
+      'caption' => 'Input spatial reference',
+      'description' => 'Spatial reference as input by the recorder.',
+    ],
+    'location.input_sref_system' => [
+      'caption' => 'Input spatial reference system',
+      'description' => 'System used for the spatial reference as input by the recorder.',
+    ],
     'location.coordinate_uncertainty_in_meters' => [
       'caption' => 'Coordinate uncertainty in metres',
       'description' => 'Uncertainty of a provided GPS point.',
@@ -299,22 +318,39 @@ class ElasticsearchReportHelper {
    *
    * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-enableElasticsearchProxy
    */
+  /**
+   * Prepares the page for interacting with the Elasticsearch proxy.
+   *
+   * @param int $nid
+   *   Node ID or NULL if not on a node.
+   *
+   * @return bool
+   *   True if enabled, false if there was an error and it failed to enable.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-enableElasticsearchProxy
+   */
   public static function enableElasticsearchProxy($nid = NULL) {
-    if (!self::$proxyEnabled) {
-      helper_base::add_resource('datacomponents');
+    if (!self::$proxyEnabled && !self::$proxyEnableFailed) {
       // Retrieve the Elasticsearch mappings.
-      self::getMappings($nid);
-      // Prepare the stuff we need to pass to the JavaScript.
-      $mappings = self::$esMappings;
-      $esProxyAjaxUrl = hostsite_get_url('iform/esproxy');
-      helper_base::$indiciaData['esProxyAjaxUrl'] = $esProxyAjaxUrl;
-      helper_base::$indiciaData['esSources'] = [];
-      helper_base::$indiciaData['esMappings'] = $mappings;
-      helper_base::$indiciaData['gridMappingFields'] = self::MAPPING_FIELDS;
-      $config = hostsite_get_es_config($nid);
-      helper_base::$indiciaData['esVersion'] = (int) $config['es']['version'];
-      self::$proxyEnabled = TRUE;
+      try {
+        self::getMappings($nid);
+        helper_base::add_resource('datacomponents');
+        // Prepare the stuff we need to pass to the JavaScript.
+        $mappings = self::$esMappings;
+        $esProxyAjaxUrl = hostsite_get_url('iform/esproxy');
+        helper_base::$indiciaData['esProxyAjaxUrl'] = $esProxyAjaxUrl;
+        helper_base::$indiciaData['esSources'] = [];
+        helper_base::$indiciaData['esMappings'] = $mappings;
+        helper_base::$indiciaData['gridMappingFields'] = self::MAPPING_FIELDS;
+        $config = hostsite_get_es_config($nid);
+        helper_base::$indiciaData['esVersion'] = (int) $config['es']['version'];
+        self::$proxyEnabled = TRUE;
+      }
+      catch (Exception $e) {
+        self::$proxyEnableFailed = TRUE;
+      }
     }
+    return self::$proxyEnabled;
   }
 
   /**
@@ -337,6 +373,8 @@ class ElasticsearchReportHelper {
       ]
     );
     helper_base::addLanguageStringsToJs('cardGallery', [
+      'collapseCard' => 'Return card to normal size (C or +)',
+      'expandCard' => 'Expand this card (C or +)',
       'fullScreenToolHint' => 'Click to view grid in full screen mode',
       'noHeading' => 'no heading',
       'clickToSort' => 'Click on the data value to sort by:',
@@ -1501,6 +1539,7 @@ HTML;
       'applyDecisionTo' => lang::get('Apply decision to'),
       'applyRedetermination' => lang::get('Apply redetermination'),
       'cancel' => lang::get('Cancel'),
+      'cancelSaveTemplate' => lang::get('Cancel saving the template'),
       'contactExpert' => lang::get('Contact an expert'),
       'edit' => lang::get('Edit'),
       'help' => lang::get('Help'),
@@ -1509,17 +1548,46 @@ HTML;
       'notAcceptedUnableToVerify' => lang::get('Not accepted :: unable to verify'),
       'plausible' => lang::get('Plausible'),
       'raiseQuery' => lang::get('Raise a query with the recorder'),
+      'save' => lang::get('Save'),
       'saveTemplate' => lang::get('Save template'),
       'selected' => lang::get('selected'),
       'showPreview' => lang::get('Preview'),
+      'templateHelpIntro1' => lang::get('You can create and save templates for your verification comments which can be used to provide the comment for future verification actions. ' .
+        'To do this, enter the comment in the box as normal, then click the "Save template" button. You will then need to provide a name for your ' .
+        'template and click the Save button in the controls that appear.'),
+      'templateHelpIntro2' => lang::get('Note that templates saved when accepting records will only be available to select when accepting other records, likewise rejections, ' .
+        'queries and redeterminations each have their own set of templates.'),
+      'templateHelpIntro3' => lang::get('You can insert tokens into the text which will be replaced by details about the current record, making your templates more flexible. Use ' .
+        'the preview to check the behaviour of your template tokens before saving the comment. Available replacement tokens are as follows:'),
+      'templateHelpTitle' => lang::get('Using templates for your comments'),
+      'templateHelpTokenAction' => lang::get('will be replaced by the action you are taking, e.g. "queried" or "accepted as correct".'),
+      'templateHelpTokenCommonName' => lang::get('will be replaced by the preferred common name for the organism, or the accepted scientific name if there is no common name available.'),
+      'templateHelpTokenDate' => lang::get('will be replaced by the date of the original record.'),
+      'templateHelpExample' => lang::get('Thanks! That\'s a great record of {{ taxon full name }} which has been {{ action }}.'),
+      'templateHelpTokenFullTaxonName' => lang::get('will be replaced by the accepted scientific name for the organism, with the common name appended in brackets if it is available.'),
+      'templateHelpIntroExample' => lang::get('An example template might look like the following:'),
+      'templateHelpTokenLocationName' => lang::get('will be replaced by the location name of the record.'),
+      'templateHelpTokenNewCommonName' => lang::get('for redeterminations only, will be replaced by the new preferred common name for the organism, or the accepted scientific name if there is no common name available.'),
+      'templateHelpTokenNewFullTaxonName' => lang::get('for redeterminations only, will be replaced by the new accepted scientific name for the organism, with the common name appended in brackets if it is available.'),
+      'templateHelpTokenNewPreferredName' => lang::get('for redeterminations only, will be replaced by the new accepted scientific name for the organism.'),
+      'templateHelpTokenNewTaxon' => lang::get('for redeterminations only, will be replaced by the new identification name given to the record as entered.'),
+      'templateHelpTokenPreferredName' => lang::get('will be replaced by the accepted scientific name for the organism.'),
+      'templateHelpTokenRank' => lang::get('will be replaced by the rank of the name given to the organism, e.g. species.'),
+      'templateHelpTokenSref' => lang::get('will be replaced by the standardised output map reference of the record.'),
+      'templateHelpTokenTaxon' => lang::get('will be replaced by the identification name given to the record as originally entered.'),
+      'templateHelpClose' => lang::get('Close help'),
+      'updatingMultiple' => lang::get('You are updating multiple records!'),
       'upload' => lang::get('Upload'),
       'uploadVerificationDecisions' => lang::get('Upload a file of verification decisions'),
     ];
+
     helper_base::addLanguageStringsToJs('verificationButtons', [
       'commentTabTitle' => 'Comment on the record',
       'elasticsearchUpdateError' => 'An error occurred whilst updating the reporting index. It may not reflect your changes temporarily but will be updated automatically later.',
+      'close' => 'Close',
       'commentReplyInstruct' => 'Click here to add a publicly visible comment to the record on iRecord.',
       'csvDisallowedMessage' => 'Uploading verification decisions is only allowed when there is a filter that defines the scope of the records you can verify.',
+      'duplicateTemplateMsg' => 'A template with that name already exists. Please specify a unique name for your template then save it again, or click Overwrite to update the existing template details.',
       'emailExpertBodyHeader' => 'The following record requires your assistance. Please could you reply to this email ' .
         'with your opininion on whether the record is correct or not. You can reply to this message and it will be ' .
         'forwarded direct to the verifier.',
@@ -1536,6 +1604,8 @@ HTML;
       'emailTabTitle' => 'Email record details',
       'enterEmailAddress' => 'Enter the email address to send the record to',
       'nothingSelected' => 'There are no selected records. Either select some rows using the checkboxes in the leftmost column or set the "Apply decision to" mode to "all".',
+      'overwrite' => 'Overwrite',
+      'pleaseSupplyATemplateNameAndText' => 'Please supply a name and comment text for your template then click the Save button again.',
       'queryEmailTabAnonWithEmail' => 'This record was posted by a recorder who was not logged in but provided their email address so email is the best method of contact.',
       'queryEmailTabAnonWithoutEmail' => 'As this record does not have an email address for the recorder, the query is best added as a comment to the record unless you know the recorder and have their email address and permission to use it. There is no guarantee that the recorder will check their notifications.',
       'queryEmailTabUserIsNotified' => 'Although you can email this recorder directly, they check their notifications so adding a comment should be sufficient.',
@@ -1549,6 +1619,9 @@ HTML;
       'requestManualEmail' => 'The webserver is not correctly configured to send emails. Please send the following email usual your email client:',
       'saveQueryToComments' => 'Save query to comments log',
       'sendQueryAsEmail' => 'Send query as email',
+      'saveTemplateError' => 'Save template error',
+      'saveTemplateErrorMsg' => 'An error occurred when saving your template to the database. Please try later.',
+      'templateNameTextRequired' => 'Template details required',
       'uploadError' => 'An error occurred whilst uploading your spreadsheet.',
       'DT' => 'redetermined',
     ]);
@@ -1556,9 +1629,10 @@ HTML;
       throw new Exception('[verificationButtons] requires a @taxon_list_id option, or the Indicia setting Master Checklist ID to be set. This ' .
         'is required to provide a list to select the redetermination from.');
     }
-    $redetUrl = iform_ajaxproxy_url(NULL, 'occurrence');
     $userId = hostsite_get_user_field('indicia_user_id');
-    helper_base::$indiciaData['ajaxFormPostRedet'] = "$redetUrl&user_id=$userId&sharing=editing";
+    helper_base::$indiciaData['ajaxFormPostRedet'] = iform_ajaxproxy_url(NULL, 'occurrence') . "&user_id=$userId&sharing=editing";
+    helper_base::$indiciaData['ajaxFormPostVerificationTemplate'] = iform_ajaxproxy_url(NULL, 'verification_template') . "&user_id=$userId";
+
     $speciesInput = data_entry_helper::species_autocomplete([
       'label' => lang::get('Redetermine to'),
       'helpText' => lang::get('Select the new taxon name.'),
@@ -1582,6 +1656,12 @@ HTML;
     ]);
     // Remember which is the master list.
     helper_base::$indiciaData['mainTaxonListId'] = $options['taxon_list_id'];
+    $verificationCommentInput = data_entry_helper::textarea([
+      'label' => lang::get('Add the following comment'),
+      'labelClass' => 'auto',
+      'class' => 'comment-textarea',
+      'wrapClasses' => ['not-full-width-lg'],
+    ]);
     // Option to allow verified to control if determiner name updated after
     // redet.
     $redetNameBehaviourOption = '';
@@ -1592,12 +1672,12 @@ HTML;
         'fieldname' => 'no-update-determiner',
       ]);
     }
-    $commentInput = data_entry_helper::textarea([
+    $redetCommentInput = data_entry_helper::textarea([
       'label' => lang::get('Explanation comment'),
       'labelClass' => 'auto',
       'helpText' => lang::get('Please give reasons why you are changing this record.'),
       'helpTextClass' => 'helpTextLeft',
-      'fieldname' => 'redet-comment',
+      'class' => 'comment-textarea',
       'wrapClasses' => ['not-full-width-lg'],
     ]);
     $btnClass = $indicia_templates['buttonHighlightedClass'];
@@ -1605,17 +1685,46 @@ HTML;
       <button class="upload-decisions $btnClass" title="$lang[uploadVerificationDecisions]"><span class="fas fa-file-upload"></span>$lang[upload]</button>
 HTML;
     if ($options['verificationTemplates']) {
-      $loadTemplateDropdown = data_entry_helper::select([
+      $loadVerifyTemplateDropdown = data_entry_helper::select([
         'label' => lang::get('Or, load the following comment template'),
-        'fieldname' => 'redet-template',
+        'fieldname' => 'verify-template',
+        'class' => 'comment-template',
         'lookupValues' => [],
         'blankText' => lang::get('- select template to load -'),
       ]);
-      $saveTemplateTool = "<button type=\"button\" class=\"comment-save-template $indicia_templates[buttonDefaultClass] $indicia_templates[buttonSmallClass]\">$lang[saveTemplate]</button>";
+      $loadRedetTemplateDropdown = data_entry_helper::select([
+        'label' => lang::get('Or, load the following comment template'),
+        'fieldname' => 'redet-template',
+        'class' => 'comment-template',
+        'lookupValues' => [],
+        'blankText' => lang::get('- select template to load -'),
+      ]);
+      $saveTemplateButtons = <<<HTML
+<button type="button" class="save-template $indicia_templates[buttonDefaultClass]"><i class="fas fa-save" title="$lang[saveTemplate]"></i></button>
+<button type="button" class="cancel-save-template $indicia_templates[buttonDefaultClass]" title="$lang[cancelSaveTemplate]"><i class="fas fa-window-close"></i></button>
+HTML;
+      $templateSaveFilenameInput = data_entry_helper::text_input([
+        'label' => lang::get('Enter a name for your template'),
+        'fieldname' => 'template-name',
+        'wrapClasses' => ['not-full-width-md'],
+        'afterControl' => $saveTemplateButtons,
+      ]);
+      $commentTools = <<<HTML
+<div class="comment-tools">
+  <button type="button" class="comment-show-preview $indicia_templates[buttonDefaultClass] $indicia_templates[buttonSmallClass]">$lang[showPreview]</button>
+  <button type="button" class="comment-edit $indicia_templates[buttonDefaultClass] $indicia_templates[buttonSmallClass]" style="display: none">$lang[edit]</button>
+  <button type="button" class="comment-save-template $indicia_templates[buttonDefaultClass] $indicia_templates[buttonSmallClass]">$lang[saveTemplate]</button>
+  <button type="button" class="comment-help $indicia_templates[buttonDefaultClass] $indicia_templates[buttonSmallClass]">$lang[help]</button>
+</div>
+<div class="template-save-cntr" style="display: none">
+  $templateSaveFilenameInput
+</div>
+<div class="comment-preview" style="display: none"></div>
+HTML;
     }
     else {
-      $loadTemplateDropdown = '';
-      $saveTemplateTool = '';
+      $loadRedetTemplateDropdown = '';
+      $commentTools = '';
     }
     $r = <<<HTML
 <div id="$options[id]" class="idc-control idc-verificationButtons" data-idc-class="idcVerificationButtons" style="display: none;" data-idc-config="$dataOptions">
@@ -1648,25 +1757,69 @@ HTML;
     </div>
   </div>
 </div>
+
+<div id="verification-panel-wrap" style="display: none">
+  <form id="verification-form" class="verification-popup comment-popup">
+    <fieldset>
+      <legend><span></span><span></span></legend>
+      <p class="alert alert-warning multiple-warning">$lang[updatingMultiple]</p>
+      <p class="alert alert-info"></p>
+      <div class="comment-cntr form-group">
+        $verificationCommentInput
+        $commentTools
+      </div>
+      $loadVerifyTemplateDropdown
+      <div class="form-buttons">
+        <button type="button" class="$btnClass" id="apply-verification">$lang[save]</button>
+        <button type="button" class="$btnClass" id="cancel-verification">$lang[cancel]</button>
+      </div>
+    </fieldset>
+  </form>
+</div>
+
+<div id="template-help-cntr" style="display: none">
+  <article>
+    <h3>$lang[templateHelpTitle]</h3>
+    <p>$lang[templateHelpIntro1]</p>
+    <p>$lang[templateHelpIntro2]</p>
+    <p>$lang[templateHelpIntro3]</p>
+    </p>
+    <ul>
+      <li><code>{{ date }}</code> $lang[templateHelpTokenDate]</li>
+      <li><code>{{ sref }}</code> $lang[templateHelpTokenSref]</li>
+      <li><code>{{ taxon }}</code> $lang[templateHelpTokenTaxon]</li>
+      <li><code>{{ common name }}</code> $lang[templateHelpTokenCommonName]</li>
+      <li><code>{{ preferred name }}</code> $lang[templateHelpTokenPreferredName]</li>
+      <li><code>{{ full taxon name }}</code> $lang[templateHelpTokenFullTaxonName]</li>
+      <li><code>{{ rank }}</code> $lang[templateHelpTokenRank]</li>
+      <li><code>{{ action }}</code> $lang[templateHelpTokenAction]</li>
+      <li><code>{{ location name }}</code> $lang[templateHelpTokenLocationName]</li>
+      <li><code>{{ new taxon }}</code> $lang[templateHelpTokenNewTaxon]</li>
+      <li><code>{{ new common name }}</code> $lang[templateHelpTokenNewCommonName]</li>
+      <li><code>{{ new preferred name }}</code> $lang[templateHelpTokenNewPreferredName]</li>
+      <li><code>{{ new full taxon name }}</code> $lang[templateHelpTokenNewFullTaxonName]</li>
+    </ul>
+    <p>$lang[templateHelpIntroExample]</p>
+    <code>$lang[templateHelpExample]</code>
+  </article>
+  <button type="button" class="help-close $btnClass $indicia_templates[buttonSmallClass]">$lang[templateHelpClose]</button>
+</div>
+
 <div id="redet-panel-wrap" style="display: none">
-  <form id="redet-form" class="verification-popup">
+  <form id="redet-form" class="verification-popup" data-status="DT">
     <div class="alt-taxon-list-controls alt-taxon-list-message">$indicia_templates[messageBox]</div>
     $speciesInput
     $altListCheckbox
     $redetNameBehaviourOption
-    <div class="comment-cntr">
-      $commentInput
-      <div class="comment-tools">
-        <button type="button" class="comment-show-preview $indicia_templates[buttonDefaultClass] $indicia_templates[buttonSmallClass]">$lang[showPreview]</button>
-        <button type="button" class="comment-edit $indicia_templates[buttonDefaultClass] $indicia_templates[buttonSmallClass]" style="display: none">$lang[edit]</button>
-        $saveTemplateTool
-        <button type="button" class="comment-help $indicia_templates[buttonDefaultClass] $indicia_templates[buttonSmallClass]">$lang[help]</button>
-      </div>
-      <div class="comment-preview" style="display: none"></div>
+    <div class="comment-cntr form-group">
+      $redetCommentInput
+      $commentTools
     </div>
-    $loadTemplateDropdown
-    <button type="submit" class="$btnClass" id="apply-redet">$lang[applyRedetermination]</button>
-    <button type="button" class="$btnClass" id="cancel-redet">$lang[cancel]</button>
+    $loadRedetTemplateDropdown
+    <div class="form-buttons">
+      <button type="button" class="$btnClass" id="apply-redet">$lang[applyRedetermination]</button>
+      <button type="button" class="$btnClass" id="cancel-redet">$lang[cancel]</button>
+    </div>
   </form>
 </div>
 HTML;
