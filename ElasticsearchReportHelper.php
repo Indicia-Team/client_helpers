@@ -1807,6 +1807,7 @@ HTML;
 
 <div id="redet-panel-wrap" style="display: none">
   <form id="redet-form" class="verification-popup" data-status="DT">
+    <p class="alert alert-warning multiple-warning">$lang[updatingMultipleWarning]</p>
     <div class="alt-taxon-list-controls alt-taxon-list-message">$indicia_templates[messageBox]</div>
     $speciesInput
     $altListCheckbox
