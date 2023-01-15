@@ -1524,7 +1524,6 @@ HTML;
     if (!empty($options['editPath'])) {
       $optionalLinkArray[] = '<a class="edit" title="Edit this record" target="_blank"><span class="fas fa-edit"></span></a>';
     }
-    $optionalLinkArray[] = '<button class="redet" title="Redetermine this record"><span class="fas fa-tag"></span></button>';
     if (!empty($options['viewPath'])) {
       $optionalLinkArray[] = '<a class="view" target="_blank" title="View this record\'s details page" target="_blank"><span class="fas fa-file-invoice"></span></a>';
     }
@@ -1536,7 +1535,7 @@ HTML;
       'acceptedConsideredCorrect' => lang::get('Accepted :: considered correct'),
       'acceptedCorrect' => lang::get('Accepted :: correct'),
       'all' => lang::get('all'),
-      'applyDecisionTo' => lang::get('Apply decision to'),
+      'applyTo' => lang::get('Apply to'),
       'applyRedetermination' => lang::get('Apply redetermination'),
       'cancel' => lang::get('Cancel'),
       'cancelSaveTemplate' => lang::get('Cancel saving the template'),
@@ -1576,7 +1575,7 @@ HTML;
       'templateHelpTokenSref' => lang::get('will be replaced by the standardised output map reference of the record.'),
       'templateHelpTokenTaxon' => lang::get('will be replaced by the identification name given to the record as originally entered.'),
       'templateHelpClose' => lang::get('Close help'),
-      'updatingMultiple' => lang::get('You are updating multiple records!'),
+      'updatingMultipleWarning' => lang::get('You are updating multiple records!'),
       'upload' => lang::get('Upload'),
       'uploadVerificationDecisions' => lang::get('Upload a file of verification decisions'),
     ];
@@ -1740,20 +1739,21 @@ HTML;
         <button class="verify l1 $btnClass" data-status="R" title="$lang[notAccepted]"><span class="far fa-times-circle status-R"></span></button>
         <button class="verify l2 $btnClass" data-status="R4" title="$lang[notAcceptedUnableToVerify]"><span class="fas fa-times status-R4"></span></button>
         <button class="verify l2 $btnClass" data-status="R5" title="$lang[notAcceptedIncorrect]"><span class="fas fa-times status-R5"></span></button>
+        <span class="sep"></span>
+        <button class="redet" title="Redetermine this record"><span class="fas fa-tag"></span></button>
+        <button class="query $btnClass" data-query="Q" title="$lang[raiseQuery]"><span class="fas fa-question-circle query-Q"></span></button>
         <div class="multi-only apply-to">
-          <span>$lang[applyDecisionTo]:</span>
+          <span>$lang[applyTo]:</span>
           <button class="multi-mode-selected active $btnClass">$lang[selected]</button>
           |
           <button class="multi-mode-table $btnClass">$lang[all]</button>
         </div>
-        <span class="sep"></span>
-        <button class="query $btnClass" data-query="Q" title="$lang[raiseQuery]"><span class="fas fa-question-circle query-Q"></span></button>
-        <button class="email-expert $btnClass" title="$lang[contactExpert]"><span class="fas fa-chalkboard-teacher"></span></button>
-        $uploadButton
       </div>
     </div>
     <div class="single-record-buttons idc-verificationButtons-row">
+      <button class="email-expert $btnClass" title="$lang[contactExpert]"><span class="fas fa-chalkboard-teacher"></span></button>
       $optionalLinks
+      $uploadButton
     </div>
   </div>
 </div>
@@ -1762,7 +1762,7 @@ HTML;
   <form id="verification-form" class="verification-popup comment-popup">
     <fieldset>
       <legend><span></span><span></span></legend>
-      <p class="alert alert-warning multiple-warning">$lang[updatingMultiple]</p>
+      <p class="alert alert-warning multiple-warning">$lang[updatingMultipleWarning]</p>
       <p class="alert alert-info"></p>
       <div class="comment-cntr form-group">
         $verificationCommentInput
