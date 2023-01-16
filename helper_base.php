@@ -915,19 +915,56 @@ class helper_base {
           'deps' => ['openlayers'],
           'javascript' => [self::$js_path . 'clearLayer.js'],
         ],
-        'hoverControl' => array('deps' =>array('openlayers'), 'javascript' => array(self::$js_path . 'hoverControl.js')),
-        'addrowtogrid' => array('deps' => array('validation'), 'javascript' => array(self::$js_path . "addRowToGrid.js")),
-        'speciesFilterPopup' => array('deps' => array('addrowtogrid'), 'javascript' => array(self::$js_path . "speciesFilterPopup.js")),
-        'indiciaMapPanel' => array('deps' => array('jquery', 'openlayers', 'jquery_ui', 'jquery_cookie', 'hoverControl'), 'javascript' => array(self::$js_path . "jquery.indiciaMapPanel.js")),
-        'indiciaMapEdit' => array('deps' => array('indiciaMap'), 'javascript' => array(self::$js_path . "jquery.indiciaMap.edit.js")),
-        'postcode_search' => array('javascript' => array(self::$js_path."postcode_search.js")),
-        'locationFinder' => array('deps' => array('indiciaMapEdit'), 'javascript' => array(self::$js_path . "jquery.indiciaMap.edit.locationFinder.js")),
-        'createPersonalSites' => array('deps' => array('jquery'), 'javascript' => array(self::$js_path . "createPersonalSites.js")),
-        'autocomplete' => array('deps' => array('jquery'), 'stylesheets' => array(self::$css_path . "jquery.autocomplete.css"), 'javascript' => array(self::$js_path."jquery.autocomplete.js")),
-        'addNewTaxon' => array('javascript' => array(self::$js_path."addNewTaxon.js")),
-        'import' => array('javascript' => array(self::$js_path . "import.js")),
-        'indicia_locks' => array('deps' =>array('jquery_cookie', 'json'), 'javascript' => array(self::$js_path."indicia.locks.js")),
-        'jquery_cookie' => array('deps' =>array('jquery'), 'javascript' => array(self::$js_path."jquery.cookie.js")),
+        'hoverControl' => [
+          'deps' => ['openlayers'],
+          'javascript' => [self::$js_path . 'hoverControl.js'],
+        ],
+        'addrowtogrid' => [
+          'deps' => ['validation'],
+          'javascript' => [self::$js_path . "addRowToGrid.js"],
+        ],
+        'speciesFilterPopup' => [
+          'deps' => ['addrowtogrid'],
+          'javascript' => [self::$js_path . "speciesFilterPopup.js"],
+        ],
+        'indiciaMapPanel' => [
+          'deps' => ['jquery', 'openlayers', 'jquery_ui', 'jquery_cookie', 'hoverControl'],
+          'javascript' => [self::$js_path . "jquery.indiciaMapPanel.js"],
+        ],
+        'indiciaMapEdit' => [
+          'deps' => ['indiciaMap'],
+          'javascript' => [self::$js_path . "jquery.indiciaMap.edit.js"],
+        ],
+        'postcode_search' => [
+          'javascript' => [self::$js_path . "postcode_search.js"],
+        ],
+        'locationFinder' => [
+          'deps' => ['indiciaMapEdit'],
+          'javascript' => [self::$js_path . "jquery.indiciaMap.edit.locationFinder.js"],
+        ],
+        'createPersonalSites' => [
+          'deps' => ['jquery'],
+          'javascript' => [self::$js_path . "createPersonalSites.js"],
+        ],
+        'autocomplete' => [
+          'deps' => ['jquery'],
+          'stylesheets' => [self::$css_path . "jquery.autocomplete.css"],
+          'javascript' => [self::$js_path . "jquery.autocomplete.js"],
+        ],
+        'addNewTaxon' => [
+          'javascript' => [self::$js_path . "addNewTaxon.js"],
+        ],
+        'import' => [
+          'javascript' => [self::$js_path . "import.js"],
+        ],
+        'indicia_locks' => [
+          'deps' => ['jquery_cookie', 'json'],
+          'javascript' => [self::$js_path . "indicia.locks.js"],
+        ],
+        'jquery_cookie' => [
+          'deps' => ['jquery'],
+          'javascript' => [self::$js_path . "jquery.cookie.js"],
+        ],
         'jquery_ui' => [
           'deps' => ['jquery'],
           'stylesheets' => [
@@ -951,8 +988,8 @@ class helper_base {
           'deps' => ['treeview', 'fancybox'],
           'javascript' => [self::$js_path . "reportPicker.js"],
         ],
-        'treeview' => array('deps' => array('jquery'), 'stylesheets' => array(self::$css_path."jquery.treeview.css"), 'javascript' => array(self::$js_path."jquery.treeview.js")),
-        'treeview_async' => array('deps' => array('treeview'), 'javascript' => array(self::$js_path."jquery.treeview.async.js", self::$js_path."jquery.treeview.edit.js")),
+        'treeview' => ['deps' => ['jquery'], 'stylesheets' => [self::$css_path."jquery.treeview.css"], 'javascript' => [self::$js_path."jquery.treeview.js"]],
+        'treeview_async' => ['deps' => ['treeview'], 'javascript' => [self::$js_path."jquery.treeview.async.js", self::$js_path."jquery.treeview.edit.js"]],
         'googlemaps' => [
           'javascript' => ["https://maps.google.com/maps/api/js?v=3" . (empty(self::$google_maps_api_key) ? '' : '&key=' . self::$google_maps_api_key)],
         ],
@@ -1388,8 +1425,9 @@ class helper_base {
    */
   public static function client_helper_path() {
     // Allow integration modules to control path handling, e.g. Drupal).
-    if (function_exists('iform_client_helpers_path'))
+    if (function_exists('iform_client_helpers_path')) {
       return iform_client_helpers_path();
+    }
     else {
       $fullpath = str_replace('\\', '/', realpath(__FILE__));
       $root = $_SERVER['DOCUMENT_ROOT'] . self::getRootFolder();
@@ -1408,7 +1446,7 @@ class helper_base {
     $clientHelperFolder = explode(DIRECTORY_SEPARATOR, dirname(realpath(__FILE__)));
     $currentPhpFileFolder = explode(DIRECTORY_SEPARATOR, dirname(realpath($_SERVER['SCRIPT_FILENAME'])));
     // Find the first part of the paths that is not the same.
-    for ($i = 0; $i<min(count($currentPhpFileFolder), count($clientHelperFolder)); $i++) {
+    for ($i = 0; $i < min(count($currentPhpFileFolder), count($clientHelperFolder)); $i++) {
       if ($clientHelperFolder[$i] != $currentPhpFileFolder[$i]) {
         break;
       }
@@ -2270,16 +2308,16 @@ HTML;
   /**
    * Internal implementation of the dump_javascript method which takes the javascript and resources list
    * as flexible parameters, rather that using the globals.
-   * @param array $resources List of resources to include.
-   * @access private
+   *
+   * @param array $resources
+   *   List of resources to include.
    */
   protected static function internal_dump_resources($resources) {
     $libraries = '';
     $stylesheets = '';
     if (isset($resources)) {
       $resourceList = self::get_resources();
-      foreach ($resources as $resource)
-      {
+      foreach ($resources as $resource) {
         if (!in_array($resource, self::$dumped_resources)) {
           if (isset($resourceList[$resource]['stylesheets'])) {
             foreach ($resourceList[$resource]['stylesheets'] as $s) {
@@ -2288,9 +2326,9 @@ HTML;
           }
           if (isset($resourceList[$resource]['javascript'])) {
             foreach ($resourceList[$resource]['javascript'] as $j) {
-              // look out for a condition that this script is IE only.
-              if (substr($j, 0, 4)=='[IE]') {
-              	$libraries .= "<!--[if IE]><script type=\"text/javascript\" src=\"".substr($j, 4)."\"></script><![endif]-->\n";
+              // Look out for a condition that this script is IE only.
+              if (substr($j, 0, 4) === '[IE]') {
+              	$libraries .= "<!--[if IE]><script type=\"text/javascript\" src=\"" . substr($j, 4) . "\"></script><![endif]-->\n";
               }
               else {
                 $libraries .= "<script type=\"text/javascript\" src=\"$j\"></script>\n";
@@ -2302,17 +2340,32 @@ HTML;
         }
       }
     }
-    return $stylesheets.$libraries;
+    return $stylesheets . $libraries;
   }
 
   /**
-   * A utility function for building the inline script content which should be inserted into a page from the javaascript,
-   * late javascript and onload javascript. Can optionally include the script tags wrapper around the script generated.
-   * @param string $javascript JavaScript to run when the page is ready, i.e. in $(document).ready.
-   * @param string $late_javascript JavaScript to run at the end of $(document).ready.
-   * @param string $onload_javascript JavaScript to run in the window.onLoad handler which comes later in the page load process.
-   * @param bool $includeWrapper If true then includes script tags around the script.
-   * @param bool $closure Set to true to close the JS with a function to ensure $ will refer to jQuery.
+   * Retrieve inline JavaScript to add to the page.
+   *
+   * A utility function for building the inline script content which should be
+   * inserted into a page from the javaascript, late javascript and onload
+   * javascript. Can optionally include the script tags wrapper around the
+   * script generated.
+   *
+   * @param string $javascript
+   *   JavaScript to run when the page is ready, i.e. in $(document).ready.
+   * @param string $late_javascript
+   *   JavaScript to run at the end of $(document).ready.
+   * @param string $onload_javascript
+   *   JavaScript to run in the window.onLoad handler which comes later in the
+   *   page load process.
+   * @param bool $includeWrapper
+   *   If true then includes script tags around the script.
+   * @param bool $closure
+   *   Set to true to close the JS with a function to ensure $ will refer to
+   *   jQuery.
+   *
+   * @return string
+   *   The JavaScript.
    */
   public static function get_scripts($javascript, $late_javascript, $onload_javascript, $includeWrapper=FALSE, $closure=FALSE) {
     if (!empty($javascript) || !empty($late_javascript) || !empty($onload_javascript)) {
@@ -2328,7 +2381,7 @@ indiciaData.protocol='$protocol';
 indiciaData.jQuery = jQuery; //saving the current version of jQuery
 ";
       if (!empty(self::$website_id)) {
-        // not on warehouse
+        // Not on warehouse.
         $script .= "indiciaData.website_id = " . self::$website_id . ";\n";
         if (function_exists('hostsite_get_user_field')) {
           $userId = hostsite_get_user_field('indicia_user_id');
@@ -2340,7 +2393,7 @@ indiciaData.jQuery = jQuery; //saving the current version of jQuery
 
       if (self::$js_read_tokens) {
         self::$js_read_tokens['url'] = self::getProxiedBaseUrl();
-        $script .= "indiciaData.read = ".json_encode(self::$js_read_tokens).";\n";
+        $script .= "indiciaData.read = " . json_encode(self::$js_read_tokens) . ";\n";
       }
       if (!empty($javascript) || !empty($late_javascript)) {
         if (!self::$is_ajax) {
@@ -2375,13 +2428,18 @@ JS;
         }
       }
       if (!empty($onload_javascript)) {
-        if (self::$is_ajax) // ajax requests are simple - page has already loaded so just return the javascript
+        if (self::$is_ajax) {
+          // Ajax requests are simple - page has already loaded so just return
+          // the javascript.
           $script .= "$onload_javascript\n";
+        }
         else {
-          // If no code running on docReady, can proceed with onload without testing.
+          // If no code running on docReady, can proceed with onload without
+          // testing.
           $documentReadyDone = empty($javascript) && empty($late_javascript) ? "indiciaData.documentReady = 'done';" : '';
-          // create a function that can be called from window.onLoad. Don't put it directly in the onload
-          // in case another form is added to the same page which overwrites onload.
+          // Create a function that can be called from window.onLoad. Don't put
+          // it directly in the onload in case another form is added to the
+          // same page which overwrites onload.
           $script .= <<<JS
 $documentReadyDone
 indiciaData.onloadFns.push(function() {
@@ -2389,7 +2447,7 @@ indiciaData.onloadFns.push(function() {
 });
 window.onload = function() {
   indiciaData.windowLoad = 'started';
-  // ensure this is only run after document.ready
+  // Ensure this is only run after document.ready.
   if (indiciaData.documentReady === 'done') {
     $.each(indiciaData.onloadFns, function(idx, fn) {
       fn();
@@ -2403,8 +2461,9 @@ JS;
       }
       $script .= $closure ? "})(jQuery);\n" : "";
       $script .= $includeWrapper ? "/* ]]> */</script>\n" : "";
-    } else {
-      $script='';
+    }
+    else {
+      $script = '';
     }
     return $script;
   }
@@ -2426,7 +2485,7 @@ indiciaData.controlWrapErrorClass = '$indicia_templates[controlWrapErrorClass]';
 var validator = $('#".self::$validated_form_id."').validate({
   ignore: \":hidden:not(.date-text),.inactive\",
   errorClass: \"$indicia_templates[error_class]\",
-  ". (in_array('inline', self::$validation_mode) ? "" : "errorElement: 'p',") ."
+  " . (in_array('inline', self::$validation_mode) ? "" : "errorElement: 'p',") ."
   highlight: function(el, errorClass) {
     var controlWrap = $(el).closest('.ctrl-wrap');
     if (controlWrap.length > 0) {
@@ -2462,7 +2521,7 @@ var validator = $('#".self::$validated_form_id."').validate({
     }
   },
   invalidHandler: $indicia_templates[invalid_handler_javascript],
-  messages: ".json_encode(self::$validation_messages).",".
+  messages: " . json_encode(self::$validation_messages) . ",".
   // Do not place errors if 'message' not in validation_mode
   // if it is present, put radio button messages at start of list:
   // radio and checkbox elements come before their labels, so putting the error after the invalid element
