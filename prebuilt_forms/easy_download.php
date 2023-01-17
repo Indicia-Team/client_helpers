@@ -517,9 +517,9 @@ class iform_easy_download {
    *   Form configuration.
    * @param array $readAuth
    *   Read authorisation tokens.
-   * @param $format
+   * @param string $format
    *   File format being requested, e.g. csv.
-   * @param $useStandardParams
+   * @param bool $useStandardParams
    *   True if the download report supports the standard parameters for
    *   occurrence reporting.
    *
@@ -530,16 +530,17 @@ class iform_easy_download {
     require_once 'includes/user.php';
     $filterToApply = $_POST['user-filter'];
     $availableFilters = self::get_filters($args, $readAuth);
-    if (!array_key_exists($filterToApply, $availableFilters))
+    if (!array_key_exists($filterToApply, $availableFilters)) {
       throw new exception('Selected filter type not authorised');
-    if ($filterToAppl y=== 'expert') {
+    }
+    if ($filterToAppl === 'expert') {
       require_once 'includes/user.php';
       $location_expertise = hostsite_get_user_field('location_expertise');
       $taxon_groups_expertise = hostsite_get_user_field('taxon_groups_expertise', [], TRUE);
       $surveys_expertise = hostsite_get_user_field('surveys_expertise', [], TRUE);
     }
     else {
-      // Default is no filter by survey, locality, taxon group
+      // Default is no filter by survey, locality, taxon group.
       $location_expertise = '';
       $taxon_groups_expertise = [];
       $surveys_expertise = [];
@@ -548,30 +549,34 @@ class iform_easy_download {
     // user can see. The field name used will depend on which of the survey selects were active -
     // either we are selecting from a list of surveys the user is an expert for, or a list of
     // all surveys.
-    $surveyFieldName='survey_id_'.(preg_match('/^expert/', $filterToApply) ? 'expert' : 'all');
+    $surveyFieldName = 'survey_id_' . (preg_match('/^expert/', $filterToApply) ? 'expert' : 'all');
     if (empty($args['survey_id'])) {
       $surveys = empty($_POST[$surveyFieldName]) ? implode(',', $surveys_expertise) : $_POST[$surveyFieldName];
-    } else
-      // survey to load is preconfigured for the form
+    }
+    else {
+      // Srvey to load is preconfigured for the form.
       $surveys = $args['survey_id'];
-    $ownData=$filterToApply==='mine' ? 1 : 0;
-    // depending on if we are using the old explore report format or the new filterable format, the filter field names differ
+    }
+
+    $ownData = $filterToApply === 'mine' ? 1 : 0;
+    // Depending on if we are using the old explore report format or the new
+    // filterable format, the filter field names differ.
     $userIdField = $useStandardParams ? 'user_id' : 'currentUser';
     $myRecordsField = $useStandardParams ? 'my_records' : 'ownData';
     $locationIdField = $useStandardParams ? 'indexed_location_list' : 'location_list';
     $surveysListField = $useStandardParams ? 'survey_list' : 'surveys';
     $taxonGroupListField = $useStandardParams ? 'taxon_group_list' : 'taxon_groups';
     $filters = array_merge(
-      array(
-        $userIdField=>hostsite_get_user_field('indicia_user_id'),
-        $myRecordsField=>$ownData,
-        $locationIdField=>$location_expertise,
-        'ownLocality'=>!empty($location_expertise) && $filterToApply==='expert' ? 1 : 0,
-        $taxonGroupListField=>!empty($taxon_groups_expertise) ? implode(',', $taxon_groups_expertise) : '',
-        'ownGroups'=>!empty($taxon_groups_expertise) && $taxon_groups_expertise && $filterToApply==='expert' ? 1 : 0,
-        $surveysListField=>$surveys,
-        'ownSurveys'=>empty($surveys) ? 0 : 1
-      ), get_options_array_with_user_data($args["report_params_$format"])
+      [
+        $userIdField => hostsite_get_user_field('indicia_user_id'),
+        $myRecordsField => $ownData,
+        $locationIdField => $location_expertise,
+        'ownLocality' => !empty($location_expertise) && $filterToApply === 'expert' ? 1 : 0,
+        $taxonGroupListField => !empty($taxon_groups_expertise) ? implode(',', $taxon_groups_expertise) : '',
+        'ownGroups' => !empty($taxon_groups_expertise) && $taxon_groups_expertise && $filterToApply === 'expert' ? 1 : 0,
+        $surveysListField => $surveys,
+        'ownSurveys' => empty($surveys) ? 0 : 1,
+      ], get_options_array_with_user_data($args["report_params_$format"])
     );
     // some of these filter fields are not required for standard params
     if ($useStandardParams) {
@@ -579,15 +584,19 @@ class iform_easy_download {
       unset($filters['ownGroups']);
       unset($filters['ownSurveys']);
     }
-    if (!empty($_POST['date_from']) && $_POST['date_from']!==lang::get('Click here'))
-      $filters['date_from']=$_POST['date_from'];
-    else if (!$useStandardParams)
-      $filters['date_from']='';
-    if (!empty($_POST['date_to']) && $_POST['date_to']!==lang::get('Click here'))
-      $filters['date_to']=$_POST['date_to'];
-    else if (!$useStandardParams)
-      $filters['date_to']='';
-    // now, if they have a verification context filter in force, then apply it
+    if (!empty($_POST['date_from']) && $_POST['date_from'] !== lang::get('Click here')) {
+      $filters['date_from'] = $_POST['date_from'];
+    }
+    elseif (!$useStandardParams) {
+      $filters['date_from'] = '';
+    }
+    if (!empty($_POST['date_to']) && $_POST['date_to'] !== lang::get('Click here')) {
+      $filters['date_to'] = $_POST['date_to'];
+    }
+    elseif (!$useStandardParams) {
+      $filters['date_to'] = '';
+    }
+    // Now, if they have a verification context filter in force, then apply it.
     $filters = array_merge(
       self::get_filter_verification_context($filterToApply, $readAuth),
       $filters
@@ -599,21 +608,26 @@ class iform_easy_download {
    * If filtering by a verification context, then load the filter and return the array of
    * filter data ready to use as a permissions context.
    *
-   * @param string $filterToApply Identifier for the filter we are appliying. A filter with ID expert-id-n
-   * means that filter ID n will be loaded and returned.
-   * @param $readAuth Read authorisation tokens
-   * @return array List of filters
+   * @param string $filterToApply
+   *   Identifier for the filter we are applying. A filter with ID expert-id-n
+   *   means that filter ID n will be loaded and returned.
+   * @param array $readAuth
+   *   Read authorisation tokens.
+   *
+   * @return array
+   *   List of filters.
    */
   private static function get_filter_verification_context($filterToApply, $readAuth) {
     $filters = [];
     if (preg_match('/^expert-id-(\d+)/', $filterToApply, $matches)) {
       $filterData = report_filters_load_existing($readAuth, 'V');
       foreach ($filterData as $filterDef) {
-        if ($filterDef['id']===$matches[1]) {
+        if ($filterDef['id'] === $matches[1]) {
           $contextFilter = json_decode($filterDef['definition'], TRUE);
-          foreach ($contextFilter as $field=>$value) {
-            // to enforce this as the overall context, defining the maximum limit of the query results, append _context to the field names
-            $filters["{$field}_context"]=$value;
+          foreach ($contextFilter as $field => $value) {
+            // To enforce this as the overall context, defining the maximum
+            // limit of the query results, append _context to the field names.
+            $filters["{$field}_context"] = $value;
           }
           break;
         }
