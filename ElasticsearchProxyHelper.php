@@ -130,6 +130,14 @@ class ElasticsearchProxyHelper {
         self::proxyVerificationQueryEmail();
         break;
 
+      case 'redetall':
+        self::proxyRedetAll($nid);
+        break;
+
+      case 'redetids':
+        self::proxyRedetIds();
+        break;
+
       default:
         header("HTTP/1.1 404 Not found");
         echo json_encode(['error' => 'Method not found']);
@@ -365,18 +373,24 @@ class ElasticsearchProxyHelper {
       echo json_encode(['error' => 'Method not allowed as server configuration incomplete']);
       throw new ElasticsearchProxyAbort('Configuration incomplete');
     }
-    $statuses = isset($_POST['doc']['identification']) ? $_POST['doc']['identification'] : [];
-    echo self::internalVerifyIds($_POST['ids'], $statuses,
+    $statuses = $_POST['doc']['identification'] ?? [];
+    echo self::internalVerifyListOnES($_POST['ids'], $statuses,
       isset($_POST['doc']['metadata']['website']['id']) ? $_POST['doc']['metadata']['website']['id'] : NULL);
   }
 
   /**
-   * Proxy method to apply verification change to entire results set.
+   * Apply verification or redet action to all records in the current filter.
    *
-   * Uses a filter definition passed in the post to retrieve the records from
-   * ES then applies the decision to all aof them.
+   * @param int $nid
+   *   Node ID.
+   * @param array $statuses
+   *   Record status data to update.
+   * @param int $websiteIdToModify
+   *   Set to 0 if clearing the website ID as a temporary measure to disable
+   *   records after redetermination, until Logstash fills in the taxonomy
+   *   again.
    */
-  private static function proxyVerifyAll($nid) {
+  private static function processWholeEsFilter($nid, array $statuses, $websiteIdToModify = NULL) {
     if (empty(self::$config['es']['warehouse_prefix'])) {
       header("HTTP/1.1 405 Method not allowed");
       echo json_encode(['error' => 'Method not allowed as server configuration incomplete']);
@@ -397,16 +411,14 @@ class ElasticsearchProxyHelper {
     $_GET['filter_path'] = 'hits.hits._source.id';
     // Maximum 10000.
     $query['size'] = 10000;
-    $esResponse = json_decode(self::curlPost($url, $query));
+    $r = self::curlPost($url, $query);
+    unset($_GET['filter_path']);
+    $esResponse = json_decode($r);
     $ids = [];
     foreach ($esResponse->hits->hits as $item) {
       $ids[] = $item->_source->id;
     }
-    $statuses = [
-      'verification_status' => $_POST['occurrence:record_status'],
-      'verification_substatus' => empty($_POST['occurrence:record_substatus']) ? 0 : $_POST['occurrence:record_substatus'],
-    ];
-    self::internalVerifyIds($ids, $statuses, NULL);
+    self::internalVerifyListOnES($ids, $statuses, $websiteIdToModify);
     try {
       self::updateWarehouseVerificationAction($ids, $nid);
     }
@@ -418,6 +430,20 @@ class ElasticsearchProxyHelper {
     echo json_encode([
       'updated' => count($ids),
     ]);
+  }
+
+  /**
+   * Proxy method to apply verification change to entire results set.
+   *
+   * Uses a filter definition passed in the post to retrieve the records from
+   * ES then applies the decision to all aof them.
+   */
+  private static function proxyVerifyAll($nid) {
+    $statuses = [
+      'verification_status' => $_POST['occurrence:record_status'],
+      'verification_substatus' => empty($_POST['occurrence:record_substatus']) ? 0 : $_POST['occurrence:record_substatus'],
+    ];
+    self::processWholeEsFilter($nid, $statuses);
   }
 
   /**
@@ -459,6 +485,32 @@ class ElasticsearchProxyHelper {
       throw new ElasticsearchProxyAbort('Missing decisions file or fileId parameter');
     }
     echo self::curlPost($url, $payload, [], TRUE);
+  }
+
+  /**
+   * Proxy method that receives a list of IDs to redet in Elastic.
+   *
+   * Used by the verification system when in checklist mode to allow setting a
+   * redetermination on multiple records in one go.
+   */
+  private static function proxyRedetIds() {
+    if (empty(self::$config['es']['warehouse_prefix'])) {
+      header("HTTP/1.1 405 Method not allowed");
+      echo json_encode(['error' => 'Method not allowed as server configuration incomplete']);
+      throw new ElasticsearchProxyAbort('Configuration incomplete');
+    }
+    // Set website ID to 0, basically disabling the ES copy of the record until
+    // a proper update with correct taxonomy information comes through.
+    echo self::internalVerifyListOnES($_POST['ids'], [], 0);
+  }
+
+  /**
+   * Proxy method that redetermines all records in the current filter.
+   */
+  private static function proxyRedetAll($nid) {
+    // Set website ID to 0, basically disabling the ES copy of the record until
+    // a proper update with correct taxonomy information comes through.
+    self::processWholeEsFilter($nid, [], 0);
   }
 
   /**
@@ -508,7 +560,7 @@ class ElasticsearchProxyHelper {
   }
 
   /**
-   * Apply verification result to a list of IDs.
+   * Apply verification result to a list of occurrences on ES.
    *
    * Used by both update for multi-select checkboxes and the entire data table.
    *
@@ -524,7 +576,7 @@ class ElasticsearchProxyHelper {
    * @return string
    *   Result of the POST to ES.
    */
-  private static function internalVerifyIds(array $ids, array $statuses, $websiteIdToModify) {
+  private static function internalVerifyListOnES(array $ids, array $statuses, $websiteIdToModify) {
     $url = self::getEsUrl() . "/_update_by_query";
     $scripts = [];
     if (!empty($statuses['verification_status'])) {
@@ -587,19 +639,29 @@ class ElasticsearchProxyHelper {
     $data = [
       'website_id' => $_POST['website_id'],
       'user_id' => $_POST['user_id'],
-      'occurrence:record_decision_source' => 'H',
-      'occurrence:record_status' => $_POST['occurrence:record_status'],
       'occurrence:ids' => implode(',', $ids),
     ];
     if (!empty($_POST['occurrence_comment:comment'])) {
       $data['occurrence_comment:comment'] = $_POST['occurrence_comment:comment'];
     }
+    if (!empty($_POST['occurrence:record_status'])) {
+      $data['occurrence:record_decision_source'] = 'H';
+      $data['occurrence:record_status'] = $_POST['occurrence:record_status'];
+    }
     if (!empty($_POST['occurrence:record_substatus'])) {
       $data['occurrence:record_substatus'] = $_POST['occurrence:record_substatus'];
     }
+    if (!empty($_POST['occurrence:taxa_taxon_list_id'])) {
+      $data['occurrence:taxa_taxon_list_id'] = $_POST['occurrence:taxa_taxon_list_id'];
+      // Switch endpoint if redetermining.
+      $action = 'list_redet';
+    }
+    else {
+      $action = 'list_verify';
+    }
     $conn = iform_get_connection_details($nid);
     $auth = helper_base::get_read_write_auth($conn['website_id'], $conn['password']);
-    $request = helper_base::$base_url . "index.php/services/data_utils/list_verify";
+    $request = helper_base::$base_url . "index.php/services/data_utils/$action";
     $postargs = helper_base::array_to_query_string(array_merge($data, $auth['write_tokens']), TRUE);
     $response = helper_base::http_post($request, $postargs);
     if ($response['output'] !== 'OK') {

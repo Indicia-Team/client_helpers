@@ -1509,10 +1509,13 @@ HTML;
     $userId = hostsite_get_user_field('indicia_user_id');
     $verifyUrl = iform_ajaxproxy_url($options['nid'], 'list_verify');
     $commentUrl = iform_ajaxproxy_url($options['nid'], 'occ-comment');
+    $redetUrl = iform_ajaxproxy_url($options['nid'], 'list_redet');
     $quickReplyPageAuthUrl = iform_ajaxproxy_url($options['nid'], 'comment_quick_reply_page_auth');
     $siteEmail = hostsite_get_config_value('site', 'mail', '');
-    helper_base::$indiciaData['ajaxFormPostSingleVerify'] = "$verifyUrl&user_id=$userId&sharing=verification";
+    helper_base::$indiciaData['ajaxFormPostVerify'] = "$verifyUrl&user_id=$userId&sharing=verification";
     helper_base::$indiciaData['ajaxFormPostComment'] = "$commentUrl&user_id=$userId&sharing=verification";
+    helper_base::$indiciaData['ajaxFormPostRedet'] = "$redetUrl&user_id=$userId&sharing=verification";
+    helper_base::$indiciaData['ajaxFormPostVerificationTemplate'] = iform_ajaxproxy_url(NULL, 'verification_template') . "&user_id=$userId";
     helper_base::$indiciaData['ajaxFormPostQuickReplyPageAuth'] = $quickReplyPageAuthUrl;
     helper_base::$indiciaData['siteEmail'] = $siteEmail;
     helper_base::$javascript .= "$('#$options[id]').idcVerificationButtons({});\n";
@@ -1628,10 +1631,6 @@ HTML;
       throw new Exception('[verificationButtons] requires a @taxon_list_id option, or the Indicia setting Master Checklist ID to be set. This ' .
         'is required to provide a list to select the redetermination from.');
     }
-    $userId = hostsite_get_user_field('indicia_user_id');
-    helper_base::$indiciaData['ajaxFormPostRedet'] = iform_ajaxproxy_url(NULL, 'occurrence') . "&user_id=$userId&sharing=editing";
-    helper_base::$indiciaData['ajaxFormPostVerificationTemplate'] = iform_ajaxproxy_url(NULL, 'verification_template') . "&user_id=$userId";
-
     $speciesInput = data_entry_helper::species_autocomplete([
       'label' => lang::get('Redetermine to'),
       'helpText' => lang::get('Select the new taxon name.'),
@@ -1722,6 +1721,7 @@ HTML;
 HTML;
     }
     else {
+      $loadVerifyTemplateDropdown = '';
       $loadRedetTemplateDropdown = '';
       $commentTools = '';
     }
