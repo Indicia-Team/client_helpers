@@ -29,67 +29,81 @@ class iform_group_send_invites {
 
   /**
    * Return the form metadata.
-   * @return array The definition of the form.
+   *
+   * @return array
+   *   The definition of the form.
    */
   public static function get_group_send_invites_definition() {
-    return array(
+    return [
       'title' => 'Send invites to a group',
       'category' => 'Recording groups',
       'description' => 'A form for emailing out invites to recording groups.',
-      'recommended' => true
-    );
+      'recommended' => TRUE,
+    ];
   }
 
   /**
    * Get the list of parameters for this form.
-   * @return array List of parameters that this form requires.
-   * @todo: Implement this method
+   *
+   * @return array
+   *   List of parameters that this form requires.
    */
   public static function get_parameters() {
-    return array(array(
-      'name' => 'accept_invite_path',
-      'caption' => 'Accept Invite Path',
-      'description' => 'Path to the Drupal page which invitation acceptances should be routed to.',
-      'type' => 'text_input'
-    ));
+    return [
+      [
+        'name' => 'accept_invite_path',
+        'caption' => 'Accept Invite Path',
+        'description' => 'Path to the Drupal page which invitation acceptances should be routed to.',
+        'type' => 'text_input',
+      ],
+    ];
   }
 
   /**
    * Return the generated form output.
-   * @param array $args List of parameter values passed through to the form depending on how the form has been configured.
-   * This array always contains a value for language.
-   * @param object $nid The Drupal node object's ID.
-   * @param array $response When this form is reloading after saving a submission, contains the response from the service call.
-   * Note this does not apply when redirecting (in this case the details of the saved object are in the $_GET data).
-   * @return Form HTML.
+   *
+   * @param array $args
+   *   List of parameter values passed through to the form depending on how the
+   *   form has been configured. This array always contains a value for
+   *   language.
+   * @param object $nid
+   *   The Drupal node object's ID.
+   * @param array $response
+   *   When this form is reloading after saving a submission, contains the
+   *   response from the service call. Note this does not apply when
+   *   redirecting (in this case the details of the saved object are in the
+   *   $_GET data).
+   *
+   * @return string
+   *   Form HTML.
    */
-  public static function get_form($args, $nid, $response=null) {
+  public static function get_form($args, $nid, $response = NULL) {
     global $indicia_templates;
     $reloadPath = self::getReloadPath();
-    data_entry_helper::$website_id=$args['website_id'];
+    data_entry_helper::$website_id = $args['website_id'];
     $auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
     $group = self::loadGroup($auth);
     if (!empty($_POST['invitee_emails'])) {
       self::sendInvites($args, $auth);
     }
     $r = "<form method=\"post\" id=\"entry_form\" action=\"$reloadPath\">\n";
-    $r .= data_entry_helper::textarea(array(
+    $r .= data_entry_helper::textarea([
       'label' => lang::get('Send invites to'),
       'helpText' => 'Enter email addresses for the people you want to invite, one per line',
       'fieldname' => 'invitee_emails',
-      'validation'=>array('required')
-    ));
-    $r .= data_entry_helper::textarea(array(
+      'validation' => ['required'],
+    ]);
+    $r .= data_entry_helper::textarea([
       'label' => lang::get('Invitation message'),
       'helpText' => 'What message would you like to send to your invitees?',
       'fieldname' => 'invite_message',
-      'validation'=>array('required'),
-      'default' => lang::get('Would you like to join the {1}?', $group['title'])
-    ));
+      'validation' => ['required'],
+      'default' => lang::get('Would you like to join the {1}?', $group['title']),
+    ]);
     $r .= '<button type="submit" class="' . $indicia_templates['buttonDefaultClass'] . '" id="save-button">' .
-      lang::get('Send Invites')."</button>\n";
+      lang::get('Send Invites') . "</button>\n";
     $r .= '<button type="button" class="' . $indicia_templates['buttonDefaultClass'] . '" id="not-now-button" ' .
-        'onclick="window.location.href=\'' . hostsite_get_url($args['redirect_on_success']) . '\'">'.lang::get('Not Now')."</button>\n";
+        'onclick="window.location.href=\'' . hostsite_get_url($args['redirect_on_success']) . '\'">' . lang::get('Not Now') . "</button>\n";
     $r .= '</form>';
     data_entry_helper::enable_validation('entry_form');
     return $r;
@@ -155,9 +169,9 @@ class iform_group_send_invites {
    * Performs the sending of invitation emails.
    *
    * @param array $args
-   *   Form configuration arguments
+   *   Form configuration arguments.
    * @param array $auth
-   *   Authorisation tokens
+   *   Authorisation tokens.
    *
    * @todo Integrate with notifications for logged in users.
    */
