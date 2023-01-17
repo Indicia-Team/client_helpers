@@ -353,7 +353,8 @@ class iform_easy_download {
         $surveysFilter = ['query' => json_encode(['in' => ['id' => $surveys_expertise]])];
       }
       else {
-        // No filter as there are no specific surveys this user is an expert for.
+        // No filter as there are no specific surveys this user is an expert
+        // for.
         $surveysFilter = [];
       }
       $r .= '<div id="survey_expertise">';
@@ -458,7 +459,9 @@ class iform_easy_download {
   }
 
   /**
-   * Handles a request for download. Works out which type of request it is and calls the appropriate function.
+   * Handles a request for download.
+   *
+   * Works out which type of request it is and calls the appropriate function.
    *
    * @param array $args
    *   Form configuration arguments.
@@ -511,7 +514,7 @@ class iform_easy_download {
   }
 
   /**
-   * Builds the filter to send in the extraParams of a report services request for the download data.
+   * Builds a filter to send in the request extraParams for the download data.
    *
    * @param array $args
    *   Form configuration.
@@ -533,7 +536,7 @@ class iform_easy_download {
     if (!array_key_exists($filterToApply, $availableFilters)) {
       throw new exception('Selected filter type not authorised');
     }
-    if ($filterToAppl === 'expert') {
+    if ($filterToApply === 'expert') {
       require_once 'includes/user.php';
       $location_expertise = hostsite_get_user_field('location_expertise');
       $taxon_groups_expertise = hostsite_get_user_field('taxon_groups_expertise', [], TRUE);
@@ -545,10 +548,10 @@ class iform_easy_download {
       $taxon_groups_expertise = [];
       $surveys_expertise = [];
     }
-    // We are downloading either a configured survey, a selected single survey, or the surveys the
-    // user can see. The field name used will depend on which of the survey selects were active -
-    // either we are selecting from a list of surveys the user is an expert for, or a list of
-    // all surveys.
+    // We are downloading either a configured survey, a selected single survey,
+    // or the surveys the user can see. The field name used will depend on
+    // which of the survey selects were active - either we are selecting from a
+    // list of surveys the user is an expert for, or a list of all surveys.
     $surveyFieldName = 'survey_id_' . (preg_match('/^expert/', $filterToApply) ? 'expert' : 'all');
     if (empty($args['survey_id'])) {
       $surveys = empty($_POST[$surveyFieldName]) ? implode(',', $surveys_expertise) : $_POST[$surveyFieldName];
