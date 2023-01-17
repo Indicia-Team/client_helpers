@@ -1793,7 +1793,8 @@ HTML;
                 array('in' => array($info['linked_filter_field'] => array($options['extraParams'][$info['linked_to']], NULL)))
             )))
           ));
-        } else {
+        }
+        else {
           // otherwise link the 2 controls
           $ctrlOptions = array_merge($ctrlOptions, [
             'parentControlId' => $fieldPrefix . $info['linked_to'],
@@ -1836,7 +1837,8 @@ HTML;
       if (method_exists('data_entry_helper', $info['datatype'])) {
         $ctrl = $info['datatype'];
         $r .= data_entry_helper::$ctrl($ctrlOptions);
-      } else {
+      }
+      else {
         $r .= data_entry_helper::text_input($ctrlOptions);
       }
     }
@@ -2005,19 +2007,21 @@ HTML;
     if ($persist_auth) {
       $postargs['persist_auth'] = 'true';
     }
-    $file_to_upload = ['media_upload' => '@' . realpath($interimPath.$path)];
+    $file_to_upload = ['media_upload' => '@' . realpath($interimPath . $path)];
     $response = self::http_post($serviceUrl, $file_to_upload + $postargs, FALSE);
     $output = json_decode($response['output'], TRUE);
     // Default is success.
     $r = TRUE;
     if (is_array($output)) {
-      //an array signals an error
+      // An array signals an error.
       if (array_key_exists('error', $output)) {
-        // return the most detailed bit of error information
-        if (isset($output['errors']['media_upload']))
+        // Return the most detailed bit of error information.
+        if (isset($output['errors']['media_upload'])) {
           $r = $output['errors']['media_upload'];
-        else
+        }
+        else {
           $r = $output['error'];
+        }
       }
     }
     if ($removeLocalCopy) {
@@ -2156,19 +2160,24 @@ HTML;
 
   /**
    * Retrieves read and write nonce tokens from the warehouse.
-   * @param string $website_id Indicia ID for the website.
-   * @param string $password Indicia password for the website.
-   * @return array Returns an array containing:
-   * 'read' => the read authorisation array,
-   * 'write' => the write authorisation input controls to insert into your form.
-   * 'write_tokens' => the write authorisation array, if needed as separate tokens rather than just placing in form.
+   *
+   * @param string $website_id
+   *   Indicia ID for the website.
+   * @param string $password
+   *   Indicia password for the website.
+   *
+   * @return array
+   *   Returns an array containing:
+   *   'read' => the read authorisation array,
+   *   'write' => the write authorisation input controls to insert into your form.
+   *   'write_tokens' => the write authorisation array, if needed as separate tokens rather than just placing in form.
    */
   public static function get_read_write_auth($website_id, $password) {
     self::$website_id = $website_id; /* Store this for use with data caching */
     // Include user ID if logged in.
     $authTokenUserId = self::getAuthTokenUserId();
     $postargs = "website_id=$website_id";
-    $response = self::http_post(self::$base_url.'index.php/services/security/get_read_write_nonces', $postargs);
+    $response = self::http_post(self::$base_url . 'index.php/services/security/get_read_write_nonces', $postargs);
     if (array_key_exists('status', $response)) {
       if ($response['status'] === 404) {
         throw new Exception(lang::get('The warehouse URL {1} was not found. Either the warehouse is down or the ' .
@@ -2186,18 +2195,18 @@ HTML;
 <input id="nonce" name="nonce" type="hidden" class="hidden" value="$nonces[write]" />
 
 HTML;
-    self::$js_read_tokens = array(
+    self::$js_read_tokens = [
       'auth_token' => $readAuthToken,
-      'nonce' => $nonces['read']
-    );
-    return array(
+      'nonce' => $nonces['read'],
+    ];
+    return [
       'write' => $write,
       'read' => self::$js_read_tokens,
-      'write_tokens' => array(
+      'write_tokens' => [
         'auth_token' => $writeAuthToken,
-        'nonce' => $nonces['write']
-      ),
-    );
+        'nonce' => $nonces['write'],
+      ],
+    ];
   }
 
   /**
@@ -2206,31 +2215,42 @@ HTML;
    * The advantage of dump_javascript is that it intelligently builds the required links
    * depending on what is on your form. dump_header is not intelligent because the form is not
    * built yet, but placing links in the header leads to cleaner code which validates better.
-   * @param array $resources List of resources to include in the header. The available options are described
-   * in the documentation for the add_resource method. The default for this is jquery_ui and defaultStylesheet.
    *
-   * @return string Text to place in the head section of the html file.
+   * @param array $resources
+   *   List of resources to include in the header. The available options are
+   *   described in the documentation for the add_resource method. The default
+   *   for this is jquery_ui and defaultStylesheet.
+   *
+   * @return string
+   *   Text to place in the head section of the html file.
    */
   public static function dump_header($resources = NULL) {
     if (!$resources) {
-      $resources = array('jquery_ui',  'defaultStylesheet');
+      $resources = ['jquery_ui',  'defaultStylesheet'];
     }
     foreach ($resources as $resource) {
       self::add_resource($resource);
     }
-    // place a css class on the body if JavaScript enabled. And output the resources
+    // Place a css class on the body if JavaScript enabled. And output the
+    // resources.
     return self::internal_dump_resources(self::$required_resources) .
         self::get_scripts('$("body").addClass("js");', '', '', TRUE);
   }
 
   /**
-  * Helper function to collect javascript code in a single location. Should be called at the end of each HTML
-  * page which uses the data entry helper so output all JavaScript required by previous calls.
-  * @param boolean $closure Set to true to close the JS with a function to ensure $ will refer to jQuery.
-  * @return string JavaScript to insert into the page for all the controls added to the page so far.
-  *
-  * @link https://github.com/Indicia-Team/client_helperswiki/TutorialBuildingBasicPage#Build_a_data_entry_page
-  */
+   * Helper function to collect javascript code in a single location. Should be called at the end of each HTML
+   * page which uses the data entry helper so output all JavaScript required by previous calls.
+   *
+   * @param bool $closure
+   *   Set to true to close the JS with a function to ensure $ will refer to
+   *   jQuery.
+   *
+   * @return string
+   *   JavaScript to insert into the page for all the controls added to the
+   *   page so far.
+   *
+   * @link https://github.com/Indicia-Team/client_helperswiki/TutorialBuildingBasicPage#Build_a_data_entry_page
+   */
   public static function dump_javascript($closure=FALSE) {
     // Add the default stylesheet to the end of the list, so it has highest CSS priority
     if (self::$default_styles) {
@@ -2285,14 +2305,18 @@ HTML;
     foreach (self::$indiciaData as $key => $data) {
       if (is_array($data)) {
         $value = json_encode($data);
-      } elseif (is_string($data)) {
+      }
+      elseif (is_string($data)) {
         $data = str_replace("'", "\\'", $data);
         $value = "'$data'";
-      } elseif (is_bool($data)) {
+      }
+      elseif (is_bool($data)) {
         $value = $data ? 'true' : 'false';
-      } elseif (is_null($data)) {
+      }
+      elseif (is_null($data)) {
         $value = 'null';
-      } else {
+      }
+      else {
         $value = $data;
       }
       if (strpos($key, '-') !== FALSE) {
@@ -2586,22 +2610,24 @@ if (typeof validator!=='undefined') {
     }
     // Add a hint to the control if there is an error and this option is set, or a hint option
     if (($error && in_array('hint', $options['validation_mode'])) || isset($options['hint'])) {
-      $hint = ($error && in_array('hint', $options['validation_mode'])) ? array($error) : [];
+      $hint = ($error && in_array('hint', $options['validation_mode'])) ? [$error] : [];
       if (isset($options['hint'])) $hint[] = $options['hint'];
       $options['title'] = 'title="'.implode(' : ',$hint).'"';
-    } else {
+    }
+    else {
       $options['title'] = '';
     }
-    $options = array_merge(array(
+    $options = array_merge([
       'class' => '',
       'disabled' => '',
       'readonly' => '',
       'wrapClasses' => [],
-    ), $options);
+    ], $options);
     $options['wrapClasses'] = empty($options['wrapClasses']) ? '' : ' ' . implode(' ', $options['wrapClasses']);
     if (array_key_exists('maxlength', $options)) {
       $options['maxlength']='maxlength="'.$options['maxlength'].'"';
-    } else {
+    }
+    else {
       $options['maxlength']='';
     }
     // Add an error class to colour the control if there is an error and this option is set
@@ -2609,7 +2635,8 @@ if (typeof validator!=='undefined') {
       $options['class'] .= ' ui-state-error';
       if (array_key_exists('outerClass', $options)) {
         $options['outerClass'] .= ' ui-state-error';
-      } else {
+      }
+      else {
         $options['outerClass'] = 'ui-state-error';
       }
     }
@@ -2641,12 +2668,12 @@ if (typeof validator!=='undefined') {
       $labelTemplate = isset($options['labelTemplate']) ? $indicia_templates[$options['labelTemplate']] :
       	(substr($options['label'], -1) == '?' ? $indicia_templates['labelNoColon'] : $indicia_templates['label']);
       $label = str_replace(
-          array('{label}', '{id}', '{labelClass}'),
-          array(
-              $options['label'],
-              array_key_exists('inputId', $options) ? $options['inputId'] : $options['id'],
-              array_key_exists('labelClass', $options) ? ' class="'.$options['labelClass'].'"' : '',
-          ),
+          ['{label}', '{id}', '{labelClass}'],
+          [
+            $options['label'],
+            $options['inputId'] ?? $options['id'] ?? '',
+            array_key_exists('labelClass', $options) ? ' class="'.$options['labelClass'].'"' : '',
+          ],
           $labelTemplate
       );
     }
@@ -2681,11 +2708,12 @@ if (typeof validator!=='undefined') {
     // If addons are going to be placed after the control, give the template a chance to wrap them together with the
     // main control in an element.
     if ($addons) {
-      $r .= self::apply_replacements_to_template($indicia_templates['controlAddonsWrap'], array(
+      $r .= self::apply_replacements_to_template($indicia_templates['controlAddonsWrap'], [
         'control' => $control,
         'addons' => $addons,
-      ));
-    } else {
+      ]);
+    }
+    else {
       $r .= $control;
     }
     // Label can sometimes be placed after the control.
@@ -2782,7 +2810,8 @@ if (typeof validator!=='undefined') {
     $pairs[2] = array_map('trim', $pairs[2]);
     if (count($pairs[1]) == count($pairs[2]) && count($pairs[1]) != 0) {
       return array_combine($pairs[1], $pairs[2]);
-    } else {
+    }
+    else {
       return [];
     }
   }
@@ -2962,8 +2991,10 @@ if (typeof validator!=='undefined') {
     if (array_key_exists('helpText', $options) && !empty($options['helpText']) && self::$helpTextPos == $pos) {
       $options['helpText'] = lang::get($options['helpText']);
       return str_replace('{helpText}', $options['helpText'], self::apply_static_template('helpText', $options));
-    } else
+    }
+    else {
       return '';
+    }
   }
 
   /**
@@ -3044,7 +3075,8 @@ if (typeof validator!=='undefined') {
     }
     if (count($converted) === 0) {
       return '';
-    } else {
+    }
+    else {
       return '{'. implode(', ', $converted) .'}';
     }
   }
@@ -3071,7 +3103,8 @@ if (typeof validator!=='undefined') {
       else
         $template = $indicia_templates[$name] .
         '<span class="ui-state-error">Code error: suffix template '.$options[$key].' not in list of known templates.</span>';
-    } else {
+    }
+    else {
       //no template specified
       $template = $indicia_templates[$name];
     }
@@ -3452,13 +3485,15 @@ if (typeof validator!=='undefined') {
   private static function getCacheTimeOut($options) {
     if (is_numeric(self::$cache_timeout) && self::$cache_timeout > 0) {
       $ret_value = self::$cache_timeout;
-    } else {
+    }
+    else {
       $ret_value = FALSE;
     }
     if (isset($options['cachetimeout'])) {
       if (is_numeric($options['cachetimeout']) && $options['cachetimeout'] > 0) {
         $ret_value = $options['cachetimeout'];
-      } else {
+      }
+      else {
         $ret_value = FALSE;
       }
     }
@@ -3516,7 +3551,8 @@ if (typeof validator!=='undefined') {
     $fresh = $haveFile && filemtime($file) >= (time() - $timeout);
     if ($haveFile && filemtime($file) < (time() - $timeout * 3)) {
       $randomSurvival = FALSE;
-    } else {
+    }
+    else {
       $randomSurvival = $random && (rand(1, self::$cache_chance_refresh_file) !== 1);
     }
     if ($wantToCache && $haveFile && ($fresh || $randomSurvival)) {
