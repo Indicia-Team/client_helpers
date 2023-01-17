@@ -96,106 +96,126 @@ class iform_group_send_invites {
   }
 
   /**
-   * Loads the group record from the database. Also checks that the user is an admin of the group.
-   * @param array $auth Authorisation tokens
-   * @return array Group record loaded from the db
+   * Loads the group record from the database.
+   *
+   * Also checks that the user is an admin of the group.
+   *
+   * @param array $auth
+   *   Authorisation tokens.
+   *
+   * @return array
+   *   Group record loaded from the db
    */
-  private static function loadGroup($auth) {
-    if (empty($_GET['group_id']) && !empty($_GET['id']))
-      $_GET['group_id']=$_GET['id'];
-    if (empty($_GET['group_id']))
+  private static function loadGroup(array $auth) {
+    if (empty($_GET['group_id']) && !empty($_GET['id'])) {
+      $_GET['group_id'] = $_GET['id'];
+    }
+    if (empty($_GET['group_id'])) {
       throw new exception('Form must be called with an group_id parameter for the group.');
-    // check the logged in user is admin of this group
-    $response = data_entry_helper::get_population_data(array(
+    }
+    // Check the logged in user is admin of this group.
+    $response = data_entry_helper::get_population_data([
       'table' => 'groups_user',
-      'extraParams' => $auth['read'] + array('group_id' => $_GET['group_id'], 'user_id'=>hostsite_get_user_field('indicia_user_id')),
-      'nocache'=>true
-    ));
-    if (count($response)===0 || $response[0]['administrator']==='f')
+      'extraParams' => $auth['read'] + [
+        'group_id' => $_GET['group_id'],
+        'user_id' => hostsite_get_user_field('indicia_user_id'),
+      ],
+      'nocache' => TRUE,
+    ]);
+    if (count($response) === 0 || $response[0]['administrator'] === 'f') {
       throw new exception('Attempt to send invites for a group you are not administrator of.');
-    $response = data_entry_helper::get_population_data(array(
+    }
+    $response = data_entry_helper::get_population_data([
       'table' => 'group',
-      'extraParams' => $auth['read'] + array('id' => $_GET['group_id']),
-      'nocache'=>true
-    ));
+      'extraParams' => $auth['read'] + ['id' => $_GET['group_id']],
+      'nocache' => TRUE,
+    ]);
     return $response[0];
   }
 
   /**
    * Retrieve the path to the current page, so the form can submit to itself.
+   *
    * @return string
    */
   private static function getReloadPath () {
     $reload = data_entry_helper::get_reload_link_parts();
     $reloadPath = $reload['path'];
-    if(count($reload['params'])) {
-      // decode params prior to encoding to prevent double encoding.
+    if (count($reload['params'])) {
+      // Decode params prior to encoding to prevent double encoding.
       foreach ($reload['params'] as $key => $param) {
         $reload['params'][$key] = urldecode($param);
       }
-      $reloadPath .= '?'.http_build_query($reload['params']);
+      $reloadPath .= '?' . http_build_query($reload['params']);
     }
     return $reloadPath;
   }
 
   /**
    * Performs the sending of invitation emails.
-   * @param array $args Form configuration arguments
-   * @param array $auth Authorisation tokens
+   *
+   * @param array $args
+   *   Form configuration arguments
+   * @param array $auth
+   *   Authorisation tokens
+   *
    * @todo Integrate with notifications for logged in users.
    */
-  private static function sendInvites($args, $auth) {
+  private static function sendInvites(array $args, array $auth) {
     global $user;
     $emails = helper_base::explode_lines($_POST['invitee_emails']);
-    // first task is to populate the groups_invitations table
+    // First task is to populate the groups_invitations table.
     $base = uniqid();
-    $success = true;
-    $failedRecipients = []
+    $success = TRUE;
+    $failedRecipients = [];
     foreach ($emails as $idx => $email) {
-      if (!empty($email))
-        $trimmedEmail=trim($email);
+      if (!empty($email)) {
+        $trimmedEmail = trim($email);
+      }
       if (!empty($trimmedEmail)) {
-        $values = array(
-          'group_invitation:group_id'=>$_GET['group_id'],
-          'group_invitation:email' => $email,
-          'group_invitation:token' => $base.$idx,
-          'website_id' => $args['website_id']
-        );
-        $s = submission_builder::build_submission($values, array('model' => 'group_invitation'));
-        $auth['write_tokens']['persist_auth'] = $idx < count($emails)-1;
+        $values = [
+          'group_invitation:group_id' => $_GET['group_id'],
+          'group_invitation:email' => $trimmedEmail,
+          'group_invitation:token' => $base . $idx,
+          'website_id' => $args['website_id'],
+        ];
+        $s = submission_builder::build_submission($values, ['model' => 'group_invitation']);
+        $auth['write_tokens']['persist_auth'] = $idx < count($emails) - 1;
         data_entry_helper::forward_post_to('group_invitation', $s, $auth['write_tokens']);
-        $rootFolder = data_entry_helper::getRootFolder(true);
+        $rootFolder = data_entry_helper::getRootFolder(TRUE);
         $protocol = ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off') || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
-        $clean = strpos($rootFolder, '?') === false;
+        $clean = strpos($rootFolder, '?') === FALSE;
         $acceptUrl = $protocol . $_SERVER['HTTP_HOST'] . $rootFolder . $args['accept_invite_path'] . ($clean ? '?' : '&') . 'token=' . $base . $idx;
         $body = $_POST['invite_message'] . "<br/><br/>" .
             '<a href="' . $acceptUrl . '">' . lang::get('Accept this invitation') . '</a>';
         $headers = [];
         $headers[] = 'MIME-Version: 1.0';
         $headers[] = 'Content-type: text/html; charset=UTF-8;';
-        $headers[] = 'From: '. hostsite_get_config_value('site', 'mail');
-        $headers[] = 'Reply-To: '. $user->mail;
-        $headers[] = 'Return-Path: '. hostsite_get_config_value('site', 'mail');
+        $headers[] = 'From: ' . hostsite_get_config_value('site', 'mail');
+        $headers[] = 'Reply-To: ' . $user->mail;
+        $headers[] = 'Return-Path: ' . hostsite_get_config_value('site', 'mail');
         $headers = implode("\r\n", $headers) . PHP_EOL;
-        // Send email. Depends upon settings in php.ini being correct
+        // Send email. Depends upon settings in php.ini being correct.
         $thismailsuccess = mail(
-          trim($email),
+          $trimmedEmail,
           lang::get('Invitation to join a recording group'),
           wordwrap($body, 80),
           $headers
         );
-        if (!$thismailsuccess)
-          $failedRecipients[$message['to']]=$acceptUrl;
+        if (!$thismailsuccess) {
+          $failedRecipients[$trimmedEmail] = $acceptUrl;
+        }
         $success = $success && $thismailsuccess;
       }
     }
-    if ($success)
+    if ($success) {
       hostsite_show_message(lang::get('Invitation emails sent'));
+    }
     else {
       hostsite_show_message(lang::get('The emails could not be sent due to a server configuration issue. Please contact the site admin. ' .
           'The list below gives the emails and the links you need to send to each invitee which they need to click on in order to join the group.'), 'warning');
-      $list=[];
-      foreach($failedRecipients as $email => $link) {
+      $list = [];
+      foreach ($failedRecipients as $email => $link) {
         $list[] = lang::get("Send link {1} to {2}.", $link, $email);
       }
       hostsite_show_message(implode('<br/>', $list), 'warning');
