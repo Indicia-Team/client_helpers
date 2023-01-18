@@ -1700,15 +1700,15 @@ HTML;
    * @return string
    *   The HTML for the form parameter.
    */
-  protected static function getParamsFormControl($key, $info, $options, &$tools) {
+  protected static function getParamsFormControl($key, array $info, array $options, array &$tools) {
     $r = '';
-    $fieldPrefix = (isset($options['fieldNamePrefix']) ? $options['fieldNamePrefix'].'-' : '');
+    $fieldPrefix = (isset($options['fieldNamePrefix']) ? $options['fieldNamePrefix'] . '-' : '');
     $ctrlOptions = [
       'label' => lang::get($info['display']),
       // Note we can't fit help text in the toolbar versions of a params form.
       'helpText' => $options['helpText'] ? $info['description'] : '',
-      'fieldname' => $fieldPrefix.$key,
-      'nocache' => isset($options['nocache']) && $options['nocache']
+      'fieldname' => $fieldPrefix . $key,
+      'nocache' => isset($options['nocache']) && $options['nocache'],
     ];
     // If this parameter is in the URL or post data, put it in the control
     // instead of the original default.
@@ -1718,17 +1718,17 @@ HTML;
     elseif (isset($info['default'])) {
       $ctrlOptions['default'] = $info['default'];
     }
-    if ($info['datatype']=='idlist') {
+    if ($info['datatype'] === 'idlist') {
       // Idlists are not for human input so use a hidden.
       $r .= "<input type=\"hidden\" name=\"$fieldPrefix$key\" value=\"" . self::get_preset_param($options, $key) . "\" class=\"{$fieldPrefix}idlist-param\" />\n";
     }
     elseif (isset($options['extraParams']) && array_key_exists($key, $options['extraParams'])) {
       $r .= "<input type=\"hidden\" name=\"$fieldPrefix$key\" value=\"" . self::get_preset_param($options, $key) . "\" />\n";
-      // If the report parameter is a lookup and its population_call is set to species_autocomplete
-      // Options such as @speciesIncludeBothNames can be included as a [params] control form structure
-      // option
+      // If the report parameter is a lookup and its population_call is set to
+      // species_autocomplete. Options such as @speciesIncludeBothNames can be
+      // included as a [params] control form structure option.
     }
-    elseif ($info['datatype']=='lookup' && (isset($info['population_call']) && $info['population_call']=='autocomplete:species')) {
+    elseif ($info['datatype'] === 'lookup' && (isset($info['population_call']) && $info['population_call'] === 'autocomplete:species')) {
       $ctrlOptions['extraParams'] = $options['readAuth'];
       if (!empty($options['speciesTaxonListId'])) {
         $ctrlOptions['extraParams']['taxon_list_id'] = $options['speciesTaxonListId'];
@@ -1749,9 +1749,12 @@ HTML;
       // If there are any extra parameters on the report lookup call, apply
       // them.
       if (count($popOpts) >= 5) {
-        // Because any extra params might contain colons, any colons from item 5 onwards are considered part of the extra params. So we
-        // have to take the remaining items and re-implode them, then split them by commas instead. E.g. population call could be set to
-        // direct:term:id:term:term=a:b - in this case option 5 (term=a:b) is not to be split by colons.
+        // Because any extra params might contain colons, any colons from item
+        // 5 onwards are considered part of the extra params. So we have to
+        // take the remaining items and re-implode them, then split them by
+        // commas instead. E.g. population call could be set to
+        // direct:term:id:term:term=a:b - in this case option 5 (term=a:b) is
+        // not to be split by colons.
         $extraItems = explode(',', implode(':', array_slice($popOpts, 4)));
         foreach ($extraItems as $extraItem) {
           $extraItem = explode('=', $extraItem);
@@ -1759,23 +1762,23 @@ HTML;
           $extras[$extraItem[0]] = $extraItem[1];
         }
       }
-      // Allow local page configuration to apply extra restrictions on the return values: e.g. only return some location_types from the termlist
+      // Allow local page configuration to apply extra restrictions on the
+      // return values: e.g. only return some location_types from the termlist.
       if (isset($options['param_lookup_extras']) && isset($options['param_lookup_extras'][$key])) {
         foreach ($options['param_lookup_extras'][$key] as $param => $value) {
-          // direct table access can handle 'in' statements, reports can't.
-          $extras[$param] = ($popOpts[0] == 'direct' ? $value : (is_array($value) ? implode(',',$value) : $value));
-          // $extras[$param] = $value;
+          // Direct table access can handle 'in' statements, reports can't.
+          $extras[$param] = ($popOpts[0] == 'direct' ? $value : (is_array($value) ? implode(',', $value) : $value));
         }
       }
       if (!isset($extras['orderby'])) {
         $extras['orderby'] = $popOpts[3];
       }
-      $ctrlOptions = array_merge($ctrlOptions, array(
+      $ctrlOptions = array_merge($ctrlOptions, [
         'valueField' => $popOpts[2],
         'captionField' => $popOpts[3],
         'blankText' => '<please select>',
-        'extraParams' => $options['readAuth'] + $extras
-      ));
+        'extraParams' => $options['readAuth'] + $extras,
+      ]);
       if ($popOpts[0] == 'direct') {
         $ctrlOptions['table'] = $popOpts[1];
       }
@@ -1783,28 +1786,37 @@ HTML;
         $ctrlOptions['report'] = $popOpts[1];
       }
       if (isset($info['linked_to']) && isset($info['linked_filter_field'])) {
-        $ctrlOptions['filterIncludesNulls'] = (isset($info['filterIncludesNulls']) ? $info['filterIncludesNulls'] : FALSE); //exclude null entries from filter field by default
-
+        // Exclude null entries from filter field by default.
+        $ctrlOptions['filterIncludesNulls'] = (isset($info['filterIncludesNulls']) ? $info['filterIncludesNulls'] : FALSE);
         if (isset($options['extraParams']) && array_key_exists($info['linked_to'], $options['extraParams'])) {
-          // if the control this is linked to is hidden because it has a preset value, just use that value as a filter on the
-          // population call for this control
-          $ctrlOptions = array_merge($ctrlOptions, array(
-            'extraParams' => array_merge($ctrlOptions['extraParams'], array('query' => json_encode(
-                array('in' => array($info['linked_filter_field'] => array($options['extraParams'][$info['linked_to']], NULL)))
-            )))
-          ));
+          // If the control this is linked to is hidden because it has a preset
+          // value, just use that value as a filter on the population call for
+          // this control.
+          $ctrlOptions = array_merge($ctrlOptions, [
+            'extraParams' => array_merge($ctrlOptions['extraParams'], [
+              'query' => json_encode([
+                'in' => [
+                  $info['linked_filter_field'] => [
+                    $options['extraParams'][$info['linked_to']],
+                    NULL,
+                  ],
+                ],
+              ]),
+            ]),
+          ]);
         }
         else {
-          // otherwise link the 2 controls
+          // Otherwise link the 2 controls.
           $ctrlOptions = array_merge($ctrlOptions, [
             'parentControlId' => $fieldPrefix . $info['linked_to'],
             'filterField' => $info['linked_filter_field'],
-            'parentControlLabel' => $options['form'][$info['linked_to']]['display']
+            'parentControlLabel' => $options['form'][$info['linked_to']]['display'],
           ]);
         }
       }
       $r .= data_entry_helper::select($ctrlOptions);
-    } elseif ($info['datatype'] == 'lookup' && isset($info['lookup_values'])) {
+    }
+    elseif ($info['datatype'] == 'lookup' && isset($info['lookup_values'])) {
       // Convert the lookup values into an associative array.
       $lookups = explode(',', $info['lookup_values']);
       $lookupsAssoc = [];
@@ -1814,7 +1826,7 @@ HTML;
       }
       $ctrlOptions = array_merge($ctrlOptions, [
         'blankText' => '<' . lang::get('please select') . '>',
-        'lookupValues' => $lookupsAssoc
+        'lookupValues' => $lookupsAssoc,
       ]);
       $r .= data_entry_helper::select($ctrlOptions);
     }
