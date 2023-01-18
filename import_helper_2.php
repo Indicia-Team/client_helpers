@@ -526,7 +526,7 @@ HTML;
       'errorUploadingFile' => 'An error occurred on the server whilst uploading the file',
       'fileExtracted' => 'Data extracted from Zip file.',
       'fileUploaded' => 'File uploaded to the server.',
-      'loadingRecords' => 'Loading records.',
+      'loadingRecords' => 'Loading records into temporary processing area.',
       'loaded' => 'Records loaded ready for matching.',
       'preparingToLoadRecords' => 'Preparing to load records.',
       'uploadError' => 'Upload error',
