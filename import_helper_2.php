@@ -533,7 +533,7 @@ HTML;
       'uploadingFile' => 'Uploading the file to the server.',
     ]);
     $lang = [
-      'backgroundProcessing' => lang::get('Background processing'),
+      'backgroundProcessing' => lang::get('Background processing in progress...'),
       'instructions' => lang::get($options['globalValuesFormIntro']),
       'moreInfo' => lang::get('More info...'),
       'next' => lang::get('Next step'),
@@ -1003,7 +1003,7 @@ HTML;
       'typeSpeciesNameToSearch' => 'Type the start of a species or taxon name to search',
     ]);
     $lang = [
-      'backgroundProcessing' => lang::get('Background processing'),
+      'backgroundProcessing' => lang::get('Background processing in progress...'),
       'instructions' => lang::get($options['lookupMatchingFormIntro']),
       'moreInfo' => lang::get('More info...'),
       'next' => lang::get('Next step'),
@@ -1043,7 +1043,7 @@ HTML;
       'preprocessingImport' => 'Preparing to import',
     ]);
     $lang = [
-      'backgroundProcessing' => lang::get('Background processing'),
+      'backgroundProcessing' => lang::get('Background processing in progress...'),
       'instructions' => lang::get($options['preprocessPageIntro']),
       'moreInfo' => lang::get('More info...'),
       'next' => lang::get('Next step'),
