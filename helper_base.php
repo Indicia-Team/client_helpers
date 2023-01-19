@@ -1700,7 +1700,7 @@ HTML;
    * @return string
    *   The HTML for the form parameter.
    */
-  protected static function getParamsFormControl($key, array $info, array $options, array &$tools) {
+  protected static function getParamsFormControl($key, array $info, array $options, &$tools) {
     $r = '';
     $fieldPrefix = (isset($options['fieldNamePrefix']) ? $options['fieldNamePrefix'] . '-' : '');
     $ctrlOptions = [
@@ -1869,9 +1869,9 @@ HTML;
    * @param $extraParams
    *   Associative array of params and values provided to main report.
    * @param $extraItem array
-   *  Single item array containing the population_call param we are working on
-   *  and its value replacement tag. The value will be modified if a matching
-   *  report parameter is available.
+   *   Single item array containing the population_call param we are working on
+   *   and its value replacement tag. The value will be modified if a matching
+   *   report parameter is available.
    *
    * @return array
    *   Single item array containing the population_call param we are working on
@@ -1890,58 +1890,76 @@ HTML;
    */
   public static function get_reload_link_parts() {
     $split = strpos($_SERVER['REQUEST_URI'], '?');
-    // convert the query parameters into an array
-    $gets = ($split!==FALSE && strlen($_SERVER['REQUEST_URI']) > $split+1) ?
-        explode('&', substr($_SERVER['REQUEST_URI'], $split+1)) :
+    // Convert the query parameters into an array.
+    $gets = ($split !== FALSE && strlen($_SERVER['REQUEST_URI']) > $split + 1) ?
+        explode('&', substr($_SERVER['REQUEST_URI'], $split + 1)) :
         [];
     $getsAssoc = [];
     foreach ($gets as $get) {
       $tokens = explode('=', $get);
-      // ensure a key without value in the URL gets an empty value
-      if (count($tokens)===1) $tokens[] = '';
+      // Ensure a key without value in the URL gets an empty value.
+      if (count($tokens) === 1) {
+        $tokens[] = '';
+      }
       $getsAssoc[$tokens[0]] = $tokens[1];
     }
-    $path = $split!==FALSE ? substr($_SERVER['REQUEST_URI'], 0, $split) : $_SERVER['REQUEST_URI'];
+    $path = $split !== FALSE ? substr($_SERVER['REQUEST_URI'], 0, $split) : $_SERVER['REQUEST_URI'];
     return array(
       'path' => $path,
-      'params' => $getsAssoc
+      'params' => $getsAssoc,
     );
   }
 
   /**
    * Takes an associative array and converts it to a list of params for a query string. This is like
    * http_build_query but it does not url encode the & separator, and gives control over urlencoding the array values.
-   * @param array $array Associative array to convert.
-   * @param boolean $encodeValues Default false. Set to true to URL encode the values being added to the string.
-   * @return string The query string.
+   *
+   * @param array $array
+   *   Associative array to convert.
+   * @param bool $encodeValues
+   *   Default false. Set to true to URL encode the values being added to the
+   *   string.
+   *
+   * @return string
+   *   The query string.
    */
-  public static function array_to_query_string($array, $encodeValues=FALSE) {
+  public static function array_to_query_string($array, $encodeValues = FALSE) {
     $params = [];
     if (is_array($array)) {
       arsort($array);
-      foreach ($array as $a => $b)
-      {
-        if ($encodeValues) $b=urlencode($b);
+      foreach ($array as $a => $b) {
+        if ($encodeValues) {
+          $b = urlencode($b);
+        }
         $params[] = "$a=$b";
       }
     }
     return implode('&', $params);
   }
 
-    /**
+  /**
    * Applies a output template to an array. This is used to build the output for each item in a list,
    * such as a species checklist grid or a radio group.
    *
-   * @param array $params Array holding the parameters to merge into the template.
-   * @param string $template Name of the template to use, or actual template text if
-   * $useTemplateAsIs is set to true.
-   * @param boolean $useTemplateAsIs If true then the template parameter contains the actual
-   * template text, otherwise it is the name of a template in the $indicia_templates array. Default false.
-   * @param boolean $allowHtml If true then HTML is emitted as is from the parameter values inserted into the template,
-   * otherwise they are escaped.
-   * @param boolean $allowEscapeQuotes If true then parameter names can be suffixes -esape-quote, -escape-dblquote,
-   * -escape-htmlquote or -escape-htmldblquote to insert backslashes or html entities into the replacements for string escaping.
-   * @return string HTML for the item label
+   * @param array $params
+   *   Array holding the parameters to merge into the template.
+   * @param string $template
+   *   Name of the template to use, or actual template text if $useTemplateAsIs
+   *   is set to true.
+   * @param bool $useTemplateAsIs
+   *   If true then the template parameter contains the actual template text,
+   *   otherwise it is the name of a template in the $indicia_templates array.
+   *   Default false.
+   * @param bool $allowHtml
+   *   If true then HTML is emitted as is from the parameter values inserted
+   *   into the template, otherwise they are escaped.
+   * @param bool $allowEscapeQuotes
+   *   If true then parameter names can be suffixes -esape-quote,
+   *   -escape-dblquote, * -escape-htmlquote or -escape-htmldblquote to insert
+   *   backslashes or html entities into the replacements for string escaping.
+   *
+   * @return string
+   *   HTML for the item label.
    */
   public static function mergeParamsIntoTemplate($params, $template, $useTemplateAsIs=FALSE, $allowHtml=FALSE, $allowEscapeQuotes=FALSE) {
     global $indicia_templates;
