@@ -1509,10 +1509,13 @@ HTML;
     $userId = hostsite_get_user_field('indicia_user_id');
     $verifyUrl = iform_ajaxproxy_url($options['nid'], 'list_verify');
     $commentUrl = iform_ajaxproxy_url($options['nid'], 'occ-comment');
+    $redetUrl = iform_ajaxproxy_url($options['nid'], 'list_redet');
     $quickReplyPageAuthUrl = iform_ajaxproxy_url($options['nid'], 'comment_quick_reply_page_auth');
     $siteEmail = hostsite_get_config_value('site', 'mail', '');
-    helper_base::$indiciaData['ajaxFormPostSingleVerify'] = "$verifyUrl&user_id=$userId&sharing=verification";
+    helper_base::$indiciaData['ajaxFormPostVerify'] = "$verifyUrl&user_id=$userId&sharing=verification";
     helper_base::$indiciaData['ajaxFormPostComment'] = "$commentUrl&user_id=$userId&sharing=verification";
+    helper_base::$indiciaData['ajaxFormPostRedet'] = "$redetUrl&user_id=$userId&sharing=verification";
+    helper_base::$indiciaData['ajaxFormPostVerificationTemplate'] = iform_ajaxproxy_url(NULL, 'verification_template') . "&user_id=$userId";
     helper_base::$indiciaData['ajaxFormPostQuickReplyPageAuth'] = $quickReplyPageAuthUrl;
     helper_base::$indiciaData['siteEmail'] = $siteEmail;
     helper_base::$javascript .= "$('#$options[id]').idcVerificationButtons({});\n";
@@ -1524,7 +1527,6 @@ HTML;
     if (!empty($options['editPath'])) {
       $optionalLinkArray[] = '<a class="edit" title="Edit this record" target="_blank"><span class="fas fa-edit"></span></a>';
     }
-    $optionalLinkArray[] = '<button class="redet" title="Redetermine this record"><span class="fas fa-tag"></span></button>';
     if (!empty($options['viewPath'])) {
       $optionalLinkArray[] = '<a class="view" target="_blank" title="View this record\'s details page" target="_blank"><span class="fas fa-file-invoice"></span></a>';
     }
@@ -1536,7 +1538,7 @@ HTML;
       'acceptedConsideredCorrect' => lang::get('Accepted :: considered correct'),
       'acceptedCorrect' => lang::get('Accepted :: correct'),
       'all' => lang::get('all'),
-      'applyDecisionTo' => lang::get('Apply decision to'),
+      'applyTo' => lang::get('Apply to'),
       'applyRedetermination' => lang::get('Apply redetermination'),
       'cancel' => lang::get('Cancel'),
       'cancelSaveTemplate' => lang::get('Cancel saving the template'),
@@ -1576,7 +1578,7 @@ HTML;
       'templateHelpTokenSref' => lang::get('will be replaced by the standardised output map reference of the record.'),
       'templateHelpTokenTaxon' => lang::get('will be replaced by the identification name given to the record as originally entered.'),
       'templateHelpClose' => lang::get('Close help'),
-      'updatingMultiple' => lang::get('You are updating multiple records!'),
+      'updatingMultipleWarning' => lang::get('You are updating multiple records!'),
       'upload' => lang::get('Upload'),
       'uploadVerificationDecisions' => lang::get('Upload a file of verification decisions'),
     ];
@@ -1629,10 +1631,6 @@ HTML;
       throw new Exception('[verificationButtons] requires a @taxon_list_id option, or the Indicia setting Master Checklist ID to be set. This ' .
         'is required to provide a list to select the redetermination from.');
     }
-    $userId = hostsite_get_user_field('indicia_user_id');
-    helper_base::$indiciaData['ajaxFormPostRedet'] = iform_ajaxproxy_url(NULL, 'occurrence') . "&user_id=$userId&sharing=editing";
-    helper_base::$indiciaData['ajaxFormPostVerificationTemplate'] = iform_ajaxproxy_url(NULL, 'verification_template') . "&user_id=$userId";
-
     $speciesInput = data_entry_helper::species_autocomplete([
       'label' => lang::get('Redetermine to'),
       'helpText' => lang::get('Select the new taxon name.'),
@@ -1723,6 +1721,7 @@ HTML;
 HTML;
     }
     else {
+      $loadVerifyTemplateDropdown = '';
       $loadRedetTemplateDropdown = '';
       $commentTools = '';
     }
@@ -1740,20 +1739,21 @@ HTML;
         <button class="verify l1 $btnClass" data-status="R" title="$lang[notAccepted]"><span class="far fa-times-circle status-R"></span></button>
         <button class="verify l2 $btnClass" data-status="R4" title="$lang[notAcceptedUnableToVerify]"><span class="fas fa-times status-R4"></span></button>
         <button class="verify l2 $btnClass" data-status="R5" title="$lang[notAcceptedIncorrect]"><span class="fas fa-times status-R5"></span></button>
+        <span class="sep"></span>
+        <button class="redet" title="Redetermine this record"><span class="fas fa-tag"></span></button>
+        <button class="query $btnClass" data-query="Q" title="$lang[raiseQuery]"><span class="fas fa-question-circle query-Q"></span></button>
         <div class="multi-only apply-to">
-          <span>$lang[applyDecisionTo]:</span>
+          <span>$lang[applyTo]:</span>
           <button class="multi-mode-selected active $btnClass">$lang[selected]</button>
           |
           <button class="multi-mode-table $btnClass">$lang[all]</button>
         </div>
-        <span class="sep"></span>
-        <button class="query $btnClass" data-query="Q" title="$lang[raiseQuery]"><span class="fas fa-question-circle query-Q"></span></button>
-        <button class="email-expert $btnClass" title="$lang[contactExpert]"><span class="fas fa-chalkboard-teacher"></span></button>
-        $uploadButton
       </div>
     </div>
     <div class="single-record-buttons idc-verificationButtons-row">
+      <button class="email-expert $btnClass" title="$lang[contactExpert]"><span class="fas fa-chalkboard-teacher"></span></button>
       $optionalLinks
+      $uploadButton
     </div>
   </div>
 </div>
@@ -1762,7 +1762,7 @@ HTML;
   <form id="verification-form" class="verification-popup comment-popup">
     <fieldset>
       <legend><span></span><span></span></legend>
-      <p class="alert alert-warning multiple-warning">$lang[updatingMultiple]</p>
+      <p class="alert alert-warning multiple-warning">$lang[updatingMultipleWarning]</p>
       <p class="alert alert-info"></p>
       <div class="comment-cntr form-group">
         $verificationCommentInput
@@ -1807,6 +1807,7 @@ HTML;
 
 <div id="redet-panel-wrap" style="display: none">
   <form id="redet-form" class="verification-popup" data-status="DT">
+    <p class="alert alert-warning multiple-warning">$lang[updatingMultipleWarning]</p>
     <div class="alt-taxon-list-controls alt-taxon-list-message">$indicia_templates[messageBox]</div>
     $speciesInput
     $altListCheckbox

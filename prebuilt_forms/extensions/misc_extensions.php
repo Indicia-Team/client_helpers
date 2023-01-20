@@ -416,11 +416,25 @@ class extension_misc_extensions {
    *
    * Provide the function name in the @control option. Other options are passed
    * through.
+   * Also allows a user to supply an extraParam inside # characters to
+   * get that param from the URL instead of directly.
+   * Example use that takes the location_id directly from a URL param
+   * [misc_extensions.report_helper_control]
+   * @control=report_grid
+   * @dataSource=<report_path>
+   * @extraParams={"location_id":"#location_id#"}
    */
   public static function report_helper_control($auth, $args, $tabalias, $options, $path) {
     iform_load_helpers(['report_helper']);
     $ctrl = $options['control'];
     $options['readAuth'] = $auth['read'];
+    if (isset($options['extraParams'])) {
+      foreach ($_GET as $key => $value) {
+        if (in_array("#$key#", $options['extraParams'])) {
+          $options['extraParams'][$key] = $value;
+        }
+      }
+    }
     return report_helper::$ctrl($options);
   }
 

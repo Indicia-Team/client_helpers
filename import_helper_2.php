@@ -82,6 +82,8 @@ class import_helper_2 extends helper_base {
    * * readAuth - read authorisation tokens.
    * * writeAuth - write authorisation tokens.
    * * fixedValues - array of fixed key/value pairs that apply to all rows.
+   * * fixedValueDefaults - default values for fixedValues that present a list
+   *   of options to the user.
    * * allowUpdates - set to true to enable updating existing rows based on an
    *   ID or external key field mapping. Only affects the user's own data.
    * * allowDeletes = set to true to enable mapping to a deleted flag for the
@@ -524,14 +526,14 @@ HTML;
       'errorUploadingFile' => 'An error occurred on the server whilst uploading the file',
       'fileExtracted' => 'Data extracted from Zip file.',
       'fileUploaded' => 'File uploaded to the server.',
-      'loadingRecords' => 'Loading records.',
+      'loadingRecords' => 'Loading records into temporary processing area.',
       'loaded' => 'Records loaded ready for matching.',
       'preparingToLoadRecords' => 'Preparing to load records.',
       'uploadError' => 'Upload error',
       'uploadingFile' => 'Uploading the file to the server.',
     ]);
     $lang = [
-      'backgroundProcessing' => lang::get('Background processing'),
+      'backgroundProcessing' => lang::get('Background processing in progress...'),
       'instructions' => lang::get($options['globalValuesFormIntro']),
       'moreInfo' => lang::get('More info...'),
       'next' => lang::get('Next step'),
@@ -598,19 +600,40 @@ HTML;
     $options['form'] = $formArray;
     $options['param_lookup_extras'] = [];
     $visibleControlsFound = FALSE;
-
+    $tools = [];
+    global $indicia_templates;
     foreach ($formArray as $key => $info) {
+      $unrestrictedControl = NULL;
+      if (isset($options['fixedValueDefaults'][$key])) {
+        $info['default'] = $options['fixedValueDefaults'][$key];
+      }
       if (!empty($options['fixedValues'][$key])) {
         $optionList = explode(';', $options['fixedValues'][$key]);
+        // * indicates user needs option to select from full list.
+        if (in_array('*', $optionList)) {
+          unset($optionList[array_search('*', $optionList)]);
+          $origDisplayLabel = $info['display'];
+          $info['display'] .= ' (' . lang::get('unrestricted') . ')';
+          $unrestrictedControl = self::getParamsFormControl("$key-unrestricted", $info, $options, $tools);
+          $info['display'] = $origDisplayLabel;
+          $info['description'] .= ' ' . lang::get('Currently only showing preferred options.') . ' ' .
+            "<button type=\"button\" class=\"show-unrestricted $indicia_templates[buttonDefaultClass] $indicia_templates[buttonSmallClass]\">" . lang::get('Show all options') . '</button>';
+        }
         if (isset($info['lookup_values'])) {
           $info['lookup_values'] = self::getRestrictedLookupValues($info['lookup_values'], $optionList);
         }
         elseif (isset($info['population_call'])) {
           $tokens = explode(':', $info['population_call']);
           // 3rd part of population call is the ID field ($tokens[2]).
-          $options['param_lookup_extras'][$key] = ['query' => json_encode(['in' => [$tokens[2] => $optionList]])];
+          if ($tokens[0] === 'direct') {
+            $options['param_lookup_extras'][$key] = ['query' => json_encode(['in' => [$tokens[2] => $optionList]])];
+          }
+          elseif ($tokens[0] === 'report') {
+            $options['param_lookup_extras'][$key] = [$tokens[2] => implode(',', $optionList)];
+          }
+          $options['param_lookup_extras'][$key]['sharing'] = 'editing';
         }
-        if (count($optionList) === 1) {
+        if (count($optionList) === 1 && !$unrestrictedControl) {
           $r .= data_entry_helper::hidden_text([
             'fieldname' => $key,
             'default' => $optionList[0],
@@ -619,6 +642,9 @@ HTML;
         }
       }
       $r .= self::getParamsFormControl($key, $info, $options, $tools);
+      if ($unrestrictedControl) {
+        $r .= "<div class=\"unrestricted-cntr form-group\" style=\"display: none\">$unrestrictedControl</div>";
+      }
       $visibleControlsFound = TRUE;
     }
     $updateOrDeleteOptions = self::updateOrDeleteOptions($options);
@@ -984,7 +1010,7 @@ HTML;
       'typeSpeciesNameToSearch' => 'Type the start of a species or taxon name to search',
     ]);
     $lang = [
-      'backgroundProcessing' => lang::get('Background processing'),
+      'backgroundProcessing' => lang::get('Background processing in progress...'),
       'instructions' => lang::get($options['lookupMatchingFormIntro']),
       'moreInfo' => lang::get('More info...'),
       'next' => lang::get('Next step'),
@@ -1024,7 +1050,7 @@ HTML;
       'preprocessingImport' => 'Preparing to import',
     ]);
     $lang = [
-      'backgroundProcessing' => lang::get('Background processing'),
+      'backgroundProcessing' => lang::get('Background processing in progress...'),
       'instructions' => lang::get($options['preprocessPageIntro']),
       'moreInfo' => lang::get('More info...'),
       'next' => lang::get('Next step'),

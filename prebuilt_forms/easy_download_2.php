@@ -449,31 +449,39 @@ class iform_easy_download_2 {
   }
 
   /**
-   * Works out the list of download type options available to the user. This is the list
-   * of sharing modes they have permission for, combined with any filters defined for the user
-   * which define their permissions for that sharing type.
-   * @param array $args Form parameters
-   * @return array Associative array of download types
+   * Works out the list of download type options available to the user.
+   *
+   * This is the list of sharing modes they have permission for, combined with
+   * any filters defined for the user which define their permissions for that
+   * sharing type.
+   *
+   * @param array $args
+   *   Form parameters.
+   *
+   * @return array
+   *   Associative array of download types.
    */
   private static function get_download_types($args) {
-    $r = []
-    // we'll store any standard params filters that are user optional ones into js data, so the UI can allow
-    // selection as appropriate.
-    data_entry_helper::$javascript.="indiciaData.optionalFilters={};\n";
-    // if loaded via group link, don't load up the other download types
+    $r = [];
+    // We'll store any standard params filters that are user optional ones into
+    // js data, so the UI can allow selection as appropriate.
+    data_entry_helper::$javascript .= "indiciaData.optionalFilters={};\n";
+    // If loaded via group link, don't load up the other download types.
     if (empty($_GET['group_id'])) {
       foreach ($args as $arg => $value) {
         if ($value && preg_match('/^([a-z_]+)_type_permission$/', $arg, $matches) && hostsite_user_has_permission($value)) {
-          // download type available. What they can actually download might be limited by a context filter...
+          // Download type available. What they can actually download might be
+          // limited by a context filter...
           $sharingType = ucwords(str_replace('_', ' ', $matches[1]));
           $sharingTypeCode = substr($sharingType, 0, 1);
           $gotPermissionsFilterForThisType = FALSE;
-          // a place to store optional filters of this type in the js data
+          // A place to store optional filters of this type in the js data.
           data_entry_helper::$javascript .= "indiciaData.optionalFilters.$sharingTypeCode={};\n";
-          // load their filters
+          // Load their filters.
           $filters = self::load_filter_set($sharingTypeCode);
           foreach ($filters as $filter) {
-            // the filter either defines their permissions, or is a user defined filter which they can optionally apply
+            // The filter either defines their permissions, or is a user defined
+            // filter which they can optionally apply.
             if ($filter['defines_permissions'] === 't') {
               $r["$sharingTypeCode filter $filter[id]"] = "$sharingType - $filter[title]";
               $gotPermissionsFilterForThisType = TRUE;
@@ -483,27 +491,31 @@ class iform_easy_download_2 {
             }
           }
           if ($sharingTypeCode === 'R') {
-            if ($args['download_my_records'])
+            if ($args['download_my_records']) {
               $r['R my'] = lang::get('My records for reporting');
+            }
             if (hostsite_user_has_permission($args['download_all_users_reporting'])) {
               $r['R'] = lang::get('All records for reporting');
             }
           }
           elseif ($sharingTypeCode === 'V') {
-            // load their profile settings for verification
+            // Load their profile settings for verification.
             $location_id = hostsite_get_user_field('location_expertise');
             $taxon_group_ids = hostsite_get_user_field('taxon_groups_expertise');
-            if ($taxon_group_ids)
+            if ($taxon_group_ids) {
               $taxon_group_ids = unserialize($taxon_group_ids);
+            }
             $survey_ids = hostsite_get_user_field('surveys_expertise');
-            if ($survey_ids)
+            if ($survey_ids) {
               $survey_ids = unserialize($survey_ids);
+            }
             if ($location_id || !empty($taxon_group_ids) || !empty($survey_ids)) {
               $r['V profile'] = lang::get('Verification - my verification records');
             }
           }
-          elseif (!$gotPermissionsFilterForThisType) // If no permissions defined for this sharing type for this user, then allow an all-access download
-          {
+          elseif (!$gotPermissionsFilterForThisType) {
+            // If no permissions defined for this sharing type for this user,
+            // then allow an all-access download.
             $r[$sharingTypeCode] = $sharingType;
           }
         }
@@ -513,33 +525,36 @@ class iform_easy_download_2 {
         && hostsite_user_has_permission($args['download_administered_groups']);
     $canDownloadMemberGroups = !empty($args['download_member_groups'])
       && hostsite_user_has_permission($args['download_member_groups']);
-    $params = array(
-      'user_id'=>hostsite_get_user_field('indicia_user_id'),
-      'view' => 'detail'
-    );
+    $params = [
+      'user_id' => hostsite_get_user_field('indicia_user_id'),
+      'view' => 'detail',
+    ];
     if ($params['user_id']) {
       // Group page integration if user linked to warehouse.
-      if (!empty($_GET['group_id']))
-        $params['group_id']=$_GET['group_id'];
+      if (!empty($_GET['group_id'])) {
+        $params['group_id'] = $_GET['group_id'];
+      }
       if (!empty($args['download_group_types'])) {
-        $params['query'] = json_encode(array('in'=>array(
-          'group_type_id'=>explode(',', $args['download_group_types'])
-        )));
+        $params['query'] = json_encode([
+          'in' => [
+            'group_type_id' => explode(',', $args['download_group_types']),
+          ],
+        ]);
       }
       // User has access to a download records from the groups they administer.
-      $groups = data_entry_helper::get_population_data(array(
+      $groups = data_entry_helper::get_population_data([
         'table' => 'groups_user',
-        'extraParams'=>data_entry_helper::$js_read_tokens + $params
-      ));
+        'extraParams' => data_entry_helper::$js_read_tokens + $params,
+      ]);
       foreach ($groups as $group) {
         $title = $group['group_title'] .
             (isset($group['group_expired']) && $group['group_expired'] === 't' ? ' (' . lang::get('finished') . ')' : '');
-        if (($canDownloadAdministeredGroups && $group['administrator']==='t') || $canDownloadMemberGroups)
-          $r["R group $group[group_id]"] = lang::get(
-              'All records added using a recording form for {1}', $title);
-        if ($args['download_my_records'])
-          $r["R group my $group[group_id]"] = lang::get(
-              'My records added using a recording form for {1}', $title);
+        if (($canDownloadAdministeredGroups && $group['administrator'] === 't') || $canDownloadMemberGroups) {
+          $r["R group $group[group_id]"] = lang::get('All records added using a recording form for {1}', $title);
+        }
+        if ($args['download_my_records']) {
+          $r["R group my $group[group_id]"] = lang::get('My records added using a recording form for {1}', $title);
+        }
       }
     }
     return $r;

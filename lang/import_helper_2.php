@@ -36,11 +36,14 @@ TXT;
 
 $default_terms['import2lookupMatchingFormIntro'] = <<<TXT
 For data values that need to be mapped to an exact term (e.g. a species name, or a term from a list
-of options), please ensure the values are correctly matched using the controls below. Data values
-found in your import file which don't exactly match one of the available options in the database,
-or values that match multiple potential options in the database, are listed in the column on the
-left and the terms you can select from for each value are in the column on the right. You must
-match all the values and save them before proceeding with the import.
+of options), the importer will automatically match the imported term to the equivalent in the
+database where possible. If an exact match cannot be found, then once the background processing is
+complete a form will appear below which will allow you to search for or select the correct value to
+use from the database for each unmatched term or species name. Data values found in your import
+file which don't exactly match one of the available options in the database, or values that match
+multiple potential options in the database, are listed in the column on the left and the terms you
+can select from for each value are in the column on the right. You must match all the values and
+save them before proceeding with the import.
 TXT;
 
 $default_terms['import2validationFormIntro'] = <<<TXT

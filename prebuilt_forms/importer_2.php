@@ -71,27 +71,38 @@ class iform_importer_2 {
     require_once dirname(dirname(__FILE__)) . '/lang/import_helper_2.php';
     global $default_terms;
     $fixedValuesDescription = <<<TXT
-Provide a list of fixed values which the user does not need to specify in the import, one on each line in the form
+<p>Provide a list of fixed values which the user does not need to specify in the import, one on each line in the form
 key=value, where the key is a field name. The fixed values key field names should be chosen from those available for
-input on the Global values page of the import wizard, depending on the table you are inputting data for. If a single
-value is provided for a field key, then that field is removed from the Global values form and the value will be applied
-to all rows created by the import. If multiple values are provided as a semi-colon separated list, then the user will
-be able to choose the value to apply from a drop-down with a restricted range of options. Each entry in the list should
-be the raw value to store in the database (e.g. a termlists_term_id rather than the term) and you can override the
-label shown for the item by adding a colon followed by the required term. For example, to limit the default list and
-further extend the available mapping systems with a custom projection you can specify the following, which includes
-only 4326 (GPS lat long) from the default list, but adds an extra system for local use.<br/>
-<code>sample:entered_sref_system=4326;32730:WGS84 UTM30S</code><br/>
-It is also possible to specify single fixed values for the field names available for selection on the mappings
-form.<br/>
-You can use the following replacement tokens in the values: {user_id}, {username}, {email} or {profile_*} (i.e. any
-field in the user profile data).
+input on the Import settings page of the import wizard or the fields available on the Mappings page. </p>
+<p>Fields on the Import settings page behave as follows. If a single value is provided for a field key, then that field
+is removed from the Import settings form and the value will be applied to all rows created by the import. If multiple
+values are provided as a semi-colon separated list, then the user will be able to choose the value to apply from a
+drop-down with a restricted range of options. Each entry in the list should be the raw value to store in the database
+(e.g. a termlists_term_id rather than the term) and you can override the label shown for the item by adding a colon
+followed by the required term. A further possibility is to specify an asterisk '*' as a special value, if present in
+the list for a control then the user is given the option to remove the restrictions and select from any possible value
+for the control. For example, to limit the default list and further extend the available mapping systems with a custom
+projection you can specify the following, which includes only 4326 (GPS lat long) from the default list, but adds an
+extra system for local use. The * at the end gives the user an option to show the whole list of available reference
+systems:</p>
+<code>sample:entered_sref_system=4326;32730:WGS84 UTM30S;*</code><br/>
+<p>If the field keys are from the Import mappings page, then a single value can be provided which sets the value for
+every imported record.</p>
+<p>You can use the following replacement tokens in the values: {user_id}, {username}, {email} or {profile_*} (i.e. any
+field in the user profile data).</p>
 TXT;
     return [
       [
         'name' => 'fixedValues',
         'caption' => 'Fixed values',
         'description' => $fixedValuesDescription,
+        'type' => 'textarea',
+        'required' => FALSE,
+      ],
+      [
+        'name' => 'fixedValueDefaults',
+        'caption' => 'Fixed value defaults',
+        'description' => 'Specify default values for any item in the Fixed values list above where the key is a control from the Import Settings page that has a list of available options.',
         'type' => 'textarea',
         'required' => FALSE,
       ],
@@ -219,6 +230,9 @@ TXT;
       'fixedValues' => self::getDefaultFixedValues($auth),
     ], $args);
     $options['fixedValues'] = get_options_array_with_user_data($options['fixedValues']);
+    if (!empty($options['fixedValueDefaults'])) {
+      $options['fixedValueDefaults'] = get_options_array_with_user_data($options['fixedValueDefaults']);
+    }
     return import_helper_2::importer($options);
   }
 
