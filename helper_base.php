@@ -2631,9 +2631,13 @@ if (typeof validator!=='undefined') {
    * prefix template, a label (if in the options), a control, the control's errors and a
    * suffix template.
    *
-   * @param string $template Name of the control template, from the global $indicia_templates variable.
-   * @param array $options Options array containing the control replacement values for the templates.
-   * Options can contain a setting for prefixTemplate or suffixTemplate to override the standard templates.
+   * @param string $template
+   *   Name of the control template, from the global $indicia_templates
+   *   variable.
+   * @param array $options
+   *   Options array containing the control replacement values for the
+   *   templates. Options can contain a setting for prefixTemplate or
+   *   suffixTemplate to override the standard templates.
    */
   public static function apply_template($template, $options) {
     global $indicia_templates;
@@ -2645,7 +2649,7 @@ if (typeof validator!=='undefined') {
     }
     // Decide if the main control has an error. If so, highlight with the error
     // class and set it's title.
-    $error = ''
+    $error = '';
     if (self::$validation_errors !== NULL) {
       if (array_key_exists('fieldname', $options)) {
         $error = self::check_errors($options['fieldname'], TRUE);
@@ -2671,7 +2675,7 @@ if (typeof validator!=='undefined') {
     ], $options);
     $options['wrapClasses'] = empty($options['wrapClasses']) ? '' : ' ' . implode(' ', $options['wrapClasses']);
     if (array_key_exists('maxlength', $options)) {
-      $options['maxlength']='maxlength="' . $options['maxlength'].'"';
+      $options['maxlength'] = "maxlength=\"$options[maxlength]\"";
     }
     else {
       $options['maxlength'] = '';
@@ -2691,13 +2695,15 @@ if (typeof validator!=='undefined') {
     if (isset($options['isFormControl'])) {
       $options['class'] .= " $indicia_templates[formControlClass]";
     }
-    // add validation metadata to the control if specified, as long as control has a fieldname
+    // Add validation metadata to the control if specified, as long as control
+    // has a fieldname.
     if (array_key_exists('fieldname', $options)) {
       $validationClasses = self::build_validation_class($options);
       $options['class'] .= " $validationClasses";
     }
 
-    // replace html attributes with their wrapped versions, e.g. a class becomes class="..."
+    // Replace html attributes with their wrapped versions, e.g. a class
+    // becomes class="...".
     foreach (self::$html_attributes as $name => $attr) {
       if (!empty($options[$name])) {
         $options[$name] = ' ' . $attr . '="' . $options[$name] . '"';
@@ -2955,6 +2961,7 @@ if (typeof validator!=='undefined') {
    *   String to have tokens replaced.
    * @param array $readAuth
    *   Read authorisation tokens.
+   *
    * @return string
    *   String with tokens replaced.
    */
@@ -2964,7 +2971,7 @@ if (typeof validator!=='undefined') {
     // Amend currentUrl path if we have Drupal 7 dirty URLs so javascript will
     // work properly.
     if (isset($currentUrl['params']['q']) && strpos($currentUrl['path'], '?') === FALSE) {
-      $currentUrl['path'] = $currentUrl['path'].'?q='.$currentUrl['params']['q'];
+      $currentUrl['path'] = $currentUrl['path'] . '?q=' . $currentUrl['params']['q'];
     }
     // Do translations.
     if (preg_match_all('/{t:([^}]+)}/', $string, $matches)) {
@@ -3162,15 +3169,19 @@ if (typeof validator!=='undefined') {
     return self::apply_replacements_to_template($template, $options);
   }
 
- /**
-  * Returns a string where characters have been escaped for use in jQuery selectors
-  * @param string $name The string to be escaped.
-  * @return string escaped name.
-  */
+  /**
+   * Returns a string escaped for use in jQuery selectors.
+   *
+   * @param string $name
+   *   The string to be escaped.
+   *
+   * @return string
+   *   Escaped name.
+   */
   protected static function jq_esc($name) {
-    // not complete, only escapes :[], add other characters as needed.
-    $from = array(':','[',']');
-    $to = array('\\\\:','\\\\[','\\\\]');
+    // Not complete, only escapes :[], add other characters as needed.
+    $from = [':', '[', ']'];
+    $to = ['\\\\:', '\\\\[', '\\\\]'];
     return $name ? str_replace($from, $to, $name) : $name;
   }
 
