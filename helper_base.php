@@ -1744,20 +1744,15 @@ HTML;
     elseif ($info['datatype'] == 'lookup' && isset($info['population_call'])) {
       // Population call is colon separated, of the form
       // direct|report:table|view|report:idField:captionField:params(key=value,key=value,...).
-      $popOpts = explode(':', $info['population_call']);
+      $popOpts = explode(':', $info['population_call'], 5);
       $extras = [];
       // If there are any extra parameters on the report lookup call, apply
       // them.
-      if (count($popOpts) >= 5) {
-        // Because any extra params might contain colons, any colons from item
-        // 5 onwards are considered part of the extra params. So we have to
-        // take the remaining items and re-implode them, then split them by
-        // commas instead. E.g. population call could be set to
-        // direct:term:id:term:term=a:b - in this case option 5 (term=a:b) is
-        // not to be split by colons.
-        $extraItems = explode(',', implode(':', array_slice($popOpts, 4)));
+      if (count($popOpts) > 4) {
+        // 5th item is a list of parameters.
+        $extraItems = explode(',', $popOpts[4]);
         foreach ($extraItems as $extraItem) {
-          $extraItem = explode('=', $extraItem);
+          $extraItem = explode('=', $extraItem, 2);
           self::replacePopulationCallParamValueTags($options['extraParams'], $extraItem);
           $extras[$extraItem[0]] = $extraItem[1];
         }
