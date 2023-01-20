@@ -600,6 +600,7 @@ HTML;
     $options['form'] = $formArray;
     $options['param_lookup_extras'] = [];
     $visibleControlsFound = FALSE;
+    $tools = [];
     global $indicia_templates;
     foreach ($formArray as $key => $info) {
       $unrestrictedControl = NULL;
@@ -624,7 +625,13 @@ HTML;
         elseif (isset($info['population_call'])) {
           $tokens = explode(':', $info['population_call']);
           // 3rd part of population call is the ID field ($tokens[2]).
-          $options['param_lookup_extras'][$key] = ['query' => json_encode(['in' => [$tokens[2] => $optionList]])];
+          if ($tokens[0] === 'direct') {
+            $options['param_lookup_extras'][$key] = ['query' => json_encode(['in' => [$tokens[2] => $optionList]])];
+          }
+          elseif ($tokens[0] === 'report') {
+            $options['param_lookup_extras'][$key] = [$tokens[2] => implode(',', $optionList)];
+          }
+          $options['param_lookup_extras'][$key]['sharing'] = 'editing';
         }
         if (count($optionList) === 1 && !$unrestrictedControl) {
           $r .= data_entry_helper::hidden_text([
