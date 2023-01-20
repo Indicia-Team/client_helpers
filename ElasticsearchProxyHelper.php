@@ -412,8 +412,8 @@ class ElasticsearchProxyHelper {
     // Maximum 10000.
     $query['size'] = 10000;
     $r = self::curlPost($url, $query);
-    unset($_GET['filter_path']);
     $esResponse = json_decode($r);
+    unset($_GET['filter_path']);
     $ids = [];
     foreach ($esResponse->hits->hits as $item) {
       $ids[] = $item->_source->id;

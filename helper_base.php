@@ -1970,11 +1970,12 @@ HTML;
           array_push($replaceTags, '{' . $param . '-escape-htmlquote}');
           array_push($replaceTags, '{' . $param . '-escape-htmldblquote}');
         }
-        // allow sep to have <br/>
+        // Allow sep to have <br/>.
         $value = ($param == 'sep' || $allowHtml) ? $value : htmlspecialchars($value, ENT_QUOTES, "UTF-8");
-        // HTML attributes get automatically wrapped
-        if (in_array($param, self::$html_attributes) && !empty($value))
+        // HTML attributes get automatically wrapped.
+        if (in_array($param, self::$html_attributes) && !empty($value)) {
           $value = " $param=\"$value\"";
+        }
         array_push($replaceValues, $value);
         if ($allowEscapeQuotes) {
           array_push($replaceValues, str_replace("'", "\'", $value));
@@ -1999,30 +2000,32 @@ HTML;
    * @param string $path
    *   Path to the file to upload, relative to the interim  image path folder
    *   (normally the client_helpers/upload folder.
-   * @param boolean $persist_auth
+   * @param bool $persist_auth
    *   Allows the write nonce to be preserved after sending the file, useful
    *   when several files are being uploaded.
    * @param array $writeAuth
    *   Write authorisation tokens, if not supplied then the $_POST array should
    *   contain them.
-   * @param string $service Path to the service URL used. Default is
-   *   data/handle_media, but could be import/upload_csv.
+   * @param string $service
+   *   Path to the service URL used. Default is data/handle_media, but could be
+   *   import/upload_csv.
    *
    * @return string
    *   Error message, or true if successful.
    */
-  public static function send_file_to_warehouse($path, $persist_auth=FALSE, $writeAuth = NULL, $service='data/handle_media', $removeLocalCopy = TRUE) {
+  public static function send_file_to_warehouse($path, $persist_auth = FALSE, $writeAuth = NULL, $service = 'data/handle_media', $removeLocalCopy = TRUE) {
     if ($writeAuth == NULL) {
       $writeAuth = $_POST;
     }
     $interimPath = self::getInterimImageFolder('fullpath');
-    if (!file_exists($interimPath.$path)) {
+    if (!file_exists($interimPath . $path)) {
       return "The file $path does not exist and cannot be uploaded to the Warehouse.";
     }
     $serviceUrl = self ::$base_url . "index.php/services/$service";
-    // This is used by the file box control which renames uploaded files using a guid system, so disable renaming on the server.
-    $postargs = array('name_is_guid' => 'true');
-    // attach authentication details
+    // This is used by the file box control which renames uploaded files using
+    // a guid system, so disable renaming on the server.
+    $postargs = ['name_is_guid' => 'true'];
+    // Attach authentication details.
     if (array_key_exists('auth_token', $writeAuth)) {
       $postargs['auth_token'] = $writeAuth['auth_token'];
     }
@@ -2055,20 +2058,25 @@ HTML;
     return $r;
   }
 
- /**
-  * Internal function to find the path to the root of the site, including the trailing slash.
-  * @param boolean $allowForDirtyUrls Set to true to allow for the content management system's
-  * approach to dirty URLs
-  *
-  */
+  /**
+   * Internal function to find the path to the root of the site.
+   *
+   * Includes the trailing slash.
+   *
+   * @param bool $allowForDirtyUrls
+   *   Set to true to allow for the content management system's approach to
+   *   dirty URLs.
+   */
   public static function getRootFolder($allowForDirtyUrls = FALSE) {
     // $_SERVER['SCRIPT_NAME'] can, in contrast to $_SERVER['PHP_SELF'], not
     // be modified by a visitor.
-    if ($dir = trim(dirname($_SERVER['SCRIPT_NAME']), '\,/'))
+    if ($dir = trim(dirname($_SERVER['SCRIPT_NAME']), '\,/')) {
       $r = "/$dir/";
-    else
+    }
+    else {
       $r = '/';
-    $pathParam = ($allowForDirtyUrls && function_exists('variable_get') && variable_get('clean_url', 0)=='0') ? 'q' : '';
+    }
+    $pathParam = ($allowForDirtyUrls && function_exists('variable_get') && variable_get('clean_url', 0) == '0') ? 'q' : '';
     $r .= empty($pathParam) ? '' : "?$pathParam=";
     return $r;
   }
@@ -2100,8 +2108,10 @@ HTML;
    * Retrieves a token and inserts it into a data entry form which authenticates that the
    * form was submitted by this website.
    *
-   * @param string $website_id Indicia ID for the website.
-   * @param string $password Indicia password for the website.
+   * @param string $website_id
+   *   Indicia ID for the website.
+   * @param string $password
+   *   Indicia password for the website.
    */
   public static function get_auth($website_id, $password) {
     self::$website_id = $website_id;
@@ -2132,10 +2142,13 @@ HTML;
    * Retrieves a read token and passes it back as an array suitable to drop into the
    * 'extraParams' options for an Ajax call.
    *
-   * @param string $website_id Indicia ID for the website.
-   * @param string $password Indicia password for the website.
-   * @return array Read authorisation tokens array.
-   * @throws Exception
+   * @param string $website_id
+   *   Indicia ID for the website.
+   * @param string $password
+   *   Indicia password for the website.
+   *
+   * @return array
+   *   Read authorisation tokens array.
    */
   public static function get_read_auth($website_id, $password) {
     // Store this for use with data caching.
@@ -2150,7 +2163,7 @@ HTML;
         throw new Exception(lang::get('Indicia configuration is incorrect. Warehouse URL is not configured.'));
       }
       $postargs = "website_id=$website_id";
-      $response = self::http_post(self::$base_url.'index.php/services/security/get_read_nonce', $postargs, FALSE);
+      $response = self::http_post(self::$base_url . 'index.php/services/security/get_read_nonce', $postargs, FALSE);
       if (isset($response['status'])) {
         if ($response['status'] === 404) {
           throw new Exception(lang::get('The warehouse URL {1} was not found. Either the warehouse is down or the ' .
@@ -2161,15 +2174,17 @@ HTML;
         }
       }
       $nonce = $response['output'];
-      if (substr($nonce, 0, 9) === '<!DOCTYPE')
+      if (substr($nonce, 0, 9) === '<!DOCTYPE') {
         throw new Exception(lang::get('Could not authenticate against the warehouse. Is the server down?'));
+      }
       $r = [
         'nonce' => $nonce,
       ];
       self::cache_set($cacheKey, json_encode($r));
     }
-    else
+    else {
       $r = json_decode($r, TRUE);
+    }
     if (function_exists('hostsite_get_user_field')) {
       // Include user ID if logged in.
       $authTokenUserId = self::getAuthTokenUserId();
@@ -2251,7 +2266,7 @@ HTML;
    */
   public static function dump_header($resources = NULL) {
     if (!$resources) {
-      $resources = ['jquery_ui',  'defaultStylesheet'];
+      $resources = ['jquery_ui', 'defaultStylesheet'];
     }
     foreach ($resources as $resource) {
       self::add_resource($resource);
@@ -2276,17 +2291,19 @@ HTML;
    *
    * @link https://github.com/Indicia-Team/client_helperswiki/TutorialBuildingBasicPage#Build_a_data_entry_page
    */
-  public static function dump_javascript($closure=FALSE) {
-    // Add the default stylesheet to the end of the list, so it has highest CSS priority
+  public static function dump_javascript($closure = FALSE) {
+    // Add the default stylesheet to the end of the list, so it has highest CSS
+    // priority.
     if (self::$default_styles) {
       self::add_resource('defaultStylesheet');
     }
-    // Jquery validation js has to be added at this late stage, because only then do we know all the messages required.
+    // Jquery validation js has to be added at this late stage, because only
+    // then do we know all the messages required.
     self::setup_jquery_validation_js();
     $dump = self::internal_dump_resources(self::$required_resources);
     $dump .= "<script type='text/javascript'>/* <![CDATA[ */\n" . self::getIndiciaData() . "\n/* ]]> */</script>\n";
     $dump .= self::get_scripts(self::$javascript, self::$late_javascript, self::$onload_javascript, TRUE, $closure);
-    // ensure scripted JS does not output again if recalled.
+    // Ensure scripted JS does not output again if recalled.
     self::$javascript = "";
     self::$late_javascript = "";
     self::$onload_javascript = "";
@@ -2419,7 +2436,7 @@ HTML;
   public static function get_scripts($javascript, $late_javascript, $onload_javascript, $includeWrapper=FALSE, $closure=FALSE) {
     if (!empty($javascript) || !empty($late_javascript) || !empty($onload_javascript)) {
       $proxyUrl = self::getRootFolder() . self::relative_client_helper_path() . 'proxy.php';
-      $protocol = empty($_SERVER['HTTPS']) || $_SERVER['HTTPS']==='off' ? 'http' : 'https';
+      $protocol = empty($_SERVER['HTTPS']) || $_SERVER['HTTPS'] === 'off' ? 'http' : 'https';
       $script = $includeWrapper ? "<script type='text/javascript'>/* <![CDATA[ */\n" : "";
       $script .= $closure ? "(function ($) {\n" : "";
       $script .= "
@@ -2531,7 +2548,7 @@ JS;
       global $indicia_templates;
       self::$javascript .= "
 indiciaData.controlWrapErrorClass = '$indicia_templates[controlWrapErrorClass]';
-var validator = $('#".self::$validated_form_id."').validate({
+var validator = $('#" . self::$validated_form_id . "').validate({
   ignore: \":hidden:not(.date-text),.inactive\",
   errorClass: \"$indicia_templates[error_class]\",
   " . (in_array('inline', self::$validation_mode) ? "" : "errorElement: 'p',") ."
@@ -2622,22 +2639,26 @@ if (typeof validator!=='undefined') {
     global $indicia_templates;
     // Don't need the extraParams - they are just for service communication.
     $options['extraParams'] = NULL;
-    // Set default validation error output mode
+    // Set default validation error output mode.
     if (!array_key_exists('validation_mode', $options)) {
-      $options['validation_mode']=self::$validation_mode;
+      $options['validation_mode'] = self::$validation_mode;
     }
-    // Decide if the main control has an error. If so, highlight with the error class and set it's title.
-    $error="";
+    // Decide if the main control has an error. If so, highlight with the error
+    // class and set it's title.
+    $error = ''
     if (self::$validation_errors !== NULL) {
       if (array_key_exists('fieldname', $options)) {
         $error = self::check_errors($options['fieldname'], TRUE);
       }
     }
-    // Add a hint to the control if there is an error and this option is set, or a hint option
+    // Add a hint to the control if there is an error and this option is set,
+    // or a hint option.
     if (($error && in_array('hint', $options['validation_mode'])) || isset($options['hint'])) {
       $hint = ($error && in_array('hint', $options['validation_mode'])) ? [$error] : [];
-      if (isset($options['hint'])) $hint[] = $options['hint'];
-      $options['title'] = 'title="'.implode(' : ',$hint).'"';
+      if (isset($options['hint'])) {
+        $hint[] = $options['hint'];
+      }
+      $options['title'] = 'title="' . implode(' : ', $hint) . '"';
     }
     else {
       $options['title'] = '';
@@ -2650,12 +2671,13 @@ if (typeof validator!=='undefined') {
     ], $options);
     $options['wrapClasses'] = empty($options['wrapClasses']) ? '' : ' ' . implode(' ', $options['wrapClasses']);
     if (array_key_exists('maxlength', $options)) {
-      $options['maxlength']='maxlength="'.$options['maxlength'].'"';
+      $options['maxlength']='maxlength="' . $options['maxlength'].'"';
     }
     else {
-      $options['maxlength']='';
+      $options['maxlength'] = '';
     }
-    // Add an error class to colour the control if there is an error and this option is set
+    // Add an error class to colour the control if there is an error and this
+    // option is set.
     if ($error && in_array('colour', $options['validation_mode'])) {
       $options['class'] .= ' ui-state-error';
       if (array_key_exists('outerClass', $options)) {
@@ -2678,17 +2700,19 @@ if (typeof validator!=='undefined') {
     // replace html attributes with their wrapped versions, e.g. a class becomes class="..."
     foreach (self::$html_attributes as $name => $attr) {
       if (!empty($options[$name])) {
-        $options[$name]=' '.$attr.'="'.$options[$name].'"';
+        $options[$name] = ' ' . $attr . '="' . $options[$name] . '"';
       }
     }
 
-    // If options contain a help text, output it at the end if that is the preferred position
+    // If options contain a help text, output it at the end if that is the
+    // preferred position.
     $r = self::get_help_text($options, 'before');
-    //Add prefix
+    // Add prefix.
     $r .= self::apply_static_template('prefix', $options);
 
-    // Add a label only if specified in the options array. Link the label to the inputId if available,
-    // otherwise the fieldname (as the fieldname control could be a hidden control).
+    // Add a label only if specified in the options array. Link the label to
+    // the inputId if available, otherwise the fieldname (as the fieldname
+    // control could be a hidden control).
     if (!empty($options['label'])) {
       $labelTemplate = isset($options['labelTemplate']) ? $indicia_templates[$options['labelTemplate']] :
       	(substr($options['label'], -1) == '?' ? $indicia_templates['labelNoColon'] : $indicia_templates['label']);
@@ -2697,28 +2721,29 @@ if (typeof validator!=='undefined') {
           [
             $options['label'],
             $options['inputId'] ?? $options['id'] ?? '',
-            array_key_exists('labelClass', $options) ? ' class="'.$options['labelClass'].'"' : '',
+            array_key_exists('labelClass', $options) ? " class=\"$options[labelClass]\"" : '',
           ],
           $labelTemplate
       );
     }
     if (!empty($options['label']) && (!isset($options['labelPosition']) || $options['labelPosition'] != 'after')) {
-    	$r .= $label;
+      $r .= $label;
     }
-    // Output the main control
+    // Output the main control.
     $control = self::apply_replacements_to_template($indicia_templates[$template], $options);
     $addons = '';
 
     if (isset($options['afterControl'])) {
       $addons .= $options['afterControl'];
     }
-    // Add a lock icon to the control if the lockable option is set to true
+    // Add a lock icon to the control if the lockable option is set to true.
     if (array_key_exists('lockable', $options) && $options['lockable'] === TRUE) {
       $addons .= self::apply_replacements_to_template($indicia_templates['lock_icon'], $options);
       if (!self::$using_locking) {
         self::$using_locking = TRUE;
         $options['lock_form_mode'] = self::$form_mode ? self::$form_mode : 'NEW';
-        // write lock javascript at the start of the late javascript so after control setup but before any other late javascript
+        // Write lock javascript at the start of the late javascript so after
+        // control setup but before any other late javascript.
         self::$late_javascript = self::apply_replacements_to_template($indicia_templates['lock_javascript'], $options).self::$late_javascript;
         self::add_resource('indicia_locks');
       }
@@ -2726,12 +2751,13 @@ if (typeof validator!=='undefined') {
     if (isset($validationClasses) && !empty($validationClasses) && strpos($validationClasses, 'required')!==FALSE) {
       $addons .= self::apply_static_template('requiredsuffix', $options);
     }
-    // Add an error icon to the control if there is an error and this option is set
+    // Add an error icon to the control if there is an error and this option
+    // set.
     if ($error && in_array('icon', $options['validation_mode'])) {
       $addons .= $indicia_templates['validation_icon'];
     }
-    // If addons are going to be placed after the control, give the template a chance to wrap them together with the
-    // main control in an element.
+    // If addons are going to be placed after the control, give the template a
+    // chance to wrap them together with the main control in an element.
     if ($addons) {
       $r .= self::apply_replacements_to_template($indicia_templates['controlAddonsWrap'], [
         'control' => $control,
