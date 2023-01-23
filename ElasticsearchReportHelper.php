@@ -1790,14 +1790,14 @@ HTML;
       <li><code>{{ taxon }}</code> $lang[templateHelpTokenTaxon]</li>
       <li><code>{{ common name }}</code> $lang[templateHelpTokenCommonName]</li>
       <li><code>{{ preferred name }}</code> $lang[templateHelpTokenPreferredName]</li>
-      <li><code>{{ full taxon name }}</code> $lang[templateHelpTokenFullTaxonName]</li>
+      <li><code>{{ taxon full name }}</code> $lang[templateHelpTokenFullTaxonName]</li>
       <li><code>{{ rank }}</code> $lang[templateHelpTokenRank]</li>
       <li><code>{{ action }}</code> $lang[templateHelpTokenAction]</li>
       <li><code>{{ location name }}</code> $lang[templateHelpTokenLocationName]</li>
       <li><code>{{ new taxon }}</code> $lang[templateHelpTokenNewTaxon]</li>
       <li><code>{{ new common name }}</code> $lang[templateHelpTokenNewCommonName]</li>
       <li><code>{{ new preferred name }}</code> $lang[templateHelpTokenNewPreferredName]</li>
-      <li><code>{{ new full taxon name }}</code> $lang[templateHelpTokenNewFullTaxonName]</li>
+      <li><code>{{ new taxon full name }}</code> $lang[templateHelpTokenNewFullTaxonName]</li>
     </ul>
     <p>$lang[templateHelpIntroExample]</p>
     <code>$lang[templateHelpExample]</code>
