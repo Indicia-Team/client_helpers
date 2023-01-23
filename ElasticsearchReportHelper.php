@@ -1213,6 +1213,41 @@ HTML;
   }
 
   /**
+   * A button that allows records to be moved from one website to another.
+   *
+   * @return string
+   *   Panel container HTML.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-recordsMover
+   */
+  public static function recordsMover(array $options) {
+    self::checkOptions(
+      'recordsMover',
+      $options,
+      ['datasetMappings', 'source'],
+      ['datasetMappings'],
+    );
+    $dataOptions = helper_base::getOptionsForJs($options, [
+      'datasetMappings',
+      'source',
+    ], TRUE);
+    helper_base::addLanguageStringsToJs('recordsMover', [
+      'cancel' => 'Cancel',
+      'move' => 'Move the records',
+      'recordsMoverDialogMessage' => 'Warning message goes here.',
+      'recordsMoverDialogTitle' => 'Move records',
+    ]);
+    $lang = [
+      'moveRecords' => lang::get('Move records'),
+    ];
+    global $indicia_templates;
+    $html = <<<HTML
+<button type="button" class="move-records-btn $indicia_templates[buttonHighlightedClass]">$lang[moveRecords]</button>
+HTML;
+    return self::getControlContainer('recordsMover', $options, $dataOptions, $html);
+  }
+
+  /**
    * Initialises the JavaScript required for an Elasticsearch data source.
    *
    * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-source
