@@ -116,6 +116,10 @@ class ElasticsearchReportHelper {
       'caption' => 'Group title',
       'description' => 'Title of the recording group the record was submitted to.',
     ],
+    'metadata.import_guid' => [
+      'caption' => 'Import GUID',
+      'description' => 'Unique identifier for the import that this records was added by, if relevant.',
+    ],
     '#event_date#' => [
       'caption' => 'Date',
       'description' => 'Date of the record.',

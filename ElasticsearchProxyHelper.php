@@ -1244,6 +1244,7 @@ class ElasticsearchProxyHelper {
     self::applyUserFiltersHasPhotos($readAuth, $definition, ['has_photos'], $bool);
     self::applyUserFiltersWebsiteList($definition, $bool);
     self::applyUserFiltersSurveyList($definition, $bool);
+    self::applyUserFiltersImportGuidList($definition, $bool);
     self::applyUserFiltersInputFormList($definition, $bool);
     self::applyUserFiltersGroupId($definition, $bool);
     self::applyUserFiltersAccessRestrictions($definition, $bool);
@@ -1939,6 +1940,26 @@ class ElasticsearchProxyHelper {
       $boolClause = !empty($filter['op']) && $filter['op'] === 'not in' ? 'must_not' : 'must';
       $bool[$boolClause][] = [
         'terms' => ['metadata.survey.id' => explode(',', $filter['value'])],
+      ];
+    }
+  }
+
+  /**
+   * Converts an Indicia filter definition import_guid_list to an ES query.
+   *
+   * @param array $definition
+   *   Definition loaded for the Indicia filter.
+   * @param array $bool
+   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   */
+  private static function applyUserFiltersImportGuidList(array $definition, array &$bool) {
+    $filter = self::getDefinitionFilter($definition, ['import_guid_list']);
+    if (!empty($filter)) {
+      $boolClause = !empty($filter['op']) && $filter['op'] === 'not in' ? 'must_not' : 'must';
+      $bool[$boolClause][] = [
+        'terms' => [
+          'metadata.import_guid' => explode(',', str_replace("'", '', $filter['value'])),
+        ],
       ];
     }
   }
