@@ -1589,18 +1589,19 @@ HTML;
       'saveTemplate' => lang::get('Save template'),
       'selected' => lang::get('selected'),
       'showPreview' => lang::get('Preview'),
+      'templateHelpIntroAvailableTokens' => lang::get('Available replacement tokens are as follows:'),
       'templateHelpIntro1' => lang::get('You can create and save templates for your verification comments which can be used to provide the comment for future verification actions. ' .
         'To do this, enter the comment in the box as normal, then click the "Save template" button. You will then need to provide a name for your ' .
         'template and click the Save button in the controls that appear.'),
       'templateHelpIntro2' => lang::get('Note that templates saved when accepting records will only be available to select when accepting other records, likewise rejections, ' .
         'queries and redeterminations each have their own set of templates.'),
       'templateHelpIntro3' => lang::get('You can insert tokens into the text which will be replaced by details about the current record, making your templates more flexible. Use ' .
-        'the preview to check the behaviour of your template tokens before saving the comment. Available replacement tokens are as follows:'),
+        'the preview to check the behaviour of your template tokens before saving the comment.'),
       'templateHelpTitle' => lang::get('Using templates for your comments'),
       'templateHelpTokenAction' => lang::get('will be replaced by the action you are taking, e.g. "queried" or "accepted as correct".'),
       'templateHelpTokenCommonName' => lang::get('will be replaced by the preferred common name for the organism, or the accepted scientific name if there is no common name available.'),
       'templateHelpTokenDate' => lang::get('will be replaced by the date of the original record.'),
-      'templateHelpExample' => lang::get('Thanks! That\'s a great record of {{ taxon full name }} which has been {{ action }}.'),
+      'templateHelpExample' => lang::get('Thanks for your record of {{ taxon full name }} which has been {{ action }}.'),
       'templateHelpTokenFullTaxonName' => lang::get('will be replaced by the accepted scientific name for the organism, with the common name appended in brackets if it is available.'),
       'templateHelpIntroExample' => lang::get('An example template might look like the following:'),
       'templateHelpTokenLocationName' => lang::get('will be replaced by the location name of the record.'),
@@ -1660,6 +1661,7 @@ HTML;
       'saveTemplateErrorMsg' => 'An error occurred when saving your template to the database. Please try later.',
       'templateNameTextRequired' => 'Template details required',
       'uploadError' => 'An error occurred whilst uploading your spreadsheet.',
+      'C3' => 'marked as plausible',
       'DT' => 'redetermined',
     ]);
     if (empty($options['taxon_list_id'])) {
@@ -1800,8 +1802,8 @@ HTML;
       <p class="alert alert-warning multiple-warning">$lang[updatingMultipleWarning]</p>
       <p class="alert alert-info"></p>
       <div class="comment-cntr form-group">
-        $verificationCommentInput
         $commentTools
+        $verificationCommentInput
       </div>
       $loadVerifyTemplateDropdown
       <div class="form-buttons">
@@ -1818,6 +1820,9 @@ HTML;
     <p>$lang[templateHelpIntro1]</p>
     <p>$lang[templateHelpIntro2]</p>
     <p>$lang[templateHelpIntro3]</p>
+    <p>$lang[templateHelpIntroExample]</p>
+    <code>$lang[templateHelpExample]</code>
+    <p>$lang[templateHelpIntroAvailableTokens]</p>
     </p>
     <ul>
       <li><code>{{ date }}</code> $lang[templateHelpTokenDate]</li>
@@ -1834,8 +1839,6 @@ HTML;
       <li><code>{{ new preferred name }}</code> $lang[templateHelpTokenNewPreferredName]</li>
       <li><code>{{ new taxon full name }}</code> $lang[templateHelpTokenNewFullTaxonName]</li>
     </ul>
-    <p>$lang[templateHelpIntroExample]</p>
-    <code>$lang[templateHelpExample]</code>
   </article>
   <button type="button" class="help-close $btnClass $indicia_templates[buttonSmallClass]">$lang[templateHelpClose]</button>
 </div>
@@ -1848,8 +1851,8 @@ HTML;
     $altListCheckbox
     $redetNameBehaviourOption
     <div class="comment-cntr form-group">
-      $redetCommentInput
       $commentTools
+      $redetCommentInput
     </div>
     $loadRedetTemplateDropdown
     <div class="form-buttons">
