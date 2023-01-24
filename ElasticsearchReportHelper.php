@@ -1767,8 +1767,8 @@ HTML;
       <p class="alert alert-warning multiple-warning">$lang[updatingMultipleWarning]</p>
       <p class="alert alert-info"></p>
       <div class="comment-cntr form-group">
-        $verificationCommentInput
         $commentTools
+        $verificationCommentInput
       </div>
       $loadVerifyTemplateDropdown
       <div class="form-buttons">
@@ -1816,8 +1816,8 @@ HTML;
     $altListCheckbox
     $redetNameBehaviourOption
     <div class="comment-cntr form-group">
-      $redetCommentInput
       $commentTools
+      $redetCommentInput
     </div>
     $loadRedetTemplateDropdown
     <div class="form-buttons">
