@@ -919,6 +919,8 @@ class filter_source extends FilterBase {
       'readAuth' => $readAuth,
       'caching' => TRUE,
       'cachePerUser' => FALSE,
+      // Set a long cache timeout as slow.
+      'cachetimeout' => 24 * 60 * 60,
       'extraParams' => ['sharing' => $options['sharing'] === 'me' ? 'reporting' : $options['sharing']],
     ];
     // If in the warehouse then we are only interested in the website for the milestone we are editing.
