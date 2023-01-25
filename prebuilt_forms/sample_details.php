@@ -337,7 +337,7 @@ Sample ID',
         'sample_id' => $_GET['sample_id'],
       ],
       'caching' => TRUE,
-      'cacheTimeout' => 60,
+      'cachetimeout' => 60,
       'cachePerUser' => FALSE,
       'columns' => $columns,
     ]);
@@ -362,7 +362,7 @@ Sample ID',
         'sample_id' => $_GET['sample_id'],
       ],
       'caching' => TRUE,
-      'cacheTimeout' => 60,
+      'cachetimeout' => 60,
       'cachePerUser' => FALSE,
     ]);
 
