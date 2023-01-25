@@ -4152,7 +4152,7 @@ JS;
         'table' => 'language',
         'extraParams' => $options['readAuth'] + ['iso' => 'lat'],
         'cachePerUser' => FALSE,
-        'cacheTimeout' => 24 * 3600 * 7,
+        'cachetimeout' => 24 * 3600 * 7,
       ]);
       self::$indiciaData['latinLanguageId'] = (int) $languages[0]['id'];
       $taxonGroupData = self::get_population_data([

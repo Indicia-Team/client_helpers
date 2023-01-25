@@ -1415,6 +1415,8 @@ TXT;
       unset(data_entry_helper::$entity_to_load['sample:id']);
       if (!empty($args['sample_addition_template_fields'])) {
         $templateFields = helper_base::explode_lines($args['sample_addition_template_fields']);
+      } else {
+        $templateFields = [];
       }
       /* In filtered mode, remove all fields unless the user has chosen to keep them from the existing sample */
       foreach (data_entry_helper::$entity_to_load as $fieldKey => $fieldValue) {
@@ -1443,6 +1445,8 @@ TXT;
     if ($addFromExistingSample == TRUE) {
       if (!empty($args['sample_addition_template_fields'])) {
         $templateFields = helper_base::explode_lines($args['sample_addition_template_fields']);
+      } else {
+        $templateFields = [];
       }
       foreach ($attributesList as $idx => $arrayOfFieldAttrs) {
         /* Must strip the attribute_value id from the field name, failing to do
