@@ -494,13 +494,14 @@ class iform_species_details_2 extends BaseDynamicDetails {
    *   Page HTML.
    */
   public static function get_form($args, $nid) {
+    iform_load_helpers(['ElasticsearchReportHelper']);
     $enabled = ElasticsearchReportHelper::enableElasticsearchProxy($nid);
     if ($enabled) {
       return parent::get_form($args, $nid);
     }
     global $indicia_templates;
     return str_replace('{message}', lang::get('This page cannot be accessed due to the server being unavailable.'), $indicia_templates['warningBox']);
- }
+  }
 
   /**
    * Override the get_form_html function.
@@ -1176,6 +1177,9 @@ class iform_species_details_2 extends BaseDynamicDetails {
   }
 
   protected static function get_hectadmap_html($auth, $args, $tabalias, $options) {
+    if (self::$notaxon) {
+      return '';
+    }
     $defaultThresh1 = 2010;
     $defaultThresh2 = date('Y') - 1;
     $options = array_merge([
