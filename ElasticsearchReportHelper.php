@@ -337,7 +337,8 @@ class ElasticsearchReportHelper {
     if (!self::$proxyEnabled && !self::$proxyEnableFailed) {
       // Retrieve the Elasticsearch mappings.
       try {
-        self::getMappings($nid);
+        $config = hostsite_get_es_config($nid);
+        self::getMappings($config);
         helper_base::add_resource('datacomponents');
         // Prepare the stuff we need to pass to the JavaScript.
         $mappings = self::$esMappings;
@@ -346,8 +347,8 @@ class ElasticsearchReportHelper {
         helper_base::$indiciaData['esSources'] = [];
         helper_base::$indiciaData['esMappings'] = $mappings;
         helper_base::$indiciaData['gridMappingFields'] = self::MAPPING_FIELDS;
-        $config = hostsite_get_es_config($nid);
         helper_base::$indiciaData['esVersion'] = (int) $config['es']['version'];
+        helper_base::$indiciaData['esScope'] = $config['es']['scope'];
         self::$proxyEnabled = TRUE;
       }
       catch (Exception $e) {
@@ -531,18 +532,16 @@ JS;
    * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-download
    */
   public static function download(array $options) {
+    // Compatibility with legacy config.
+    if (!empty($options['linkToDataGrid'])) {
+      $options['linkToDataControl'] = $options['linkToDataGrid'];
+    }
     self::checkOptions('esDownload', $options,
-      [],
+      [['source', 'linkToDataControl']],
       ['addColumns', 'removeColumns']
     );
-    if (empty($options['source']) && empty($options['linkToDataGrid'])) {
-      throw new Exception('Download control requires a value for either the @source or @linkToDataGrid option.');
-    }
-    if (!empty($options['source']) && !empty($options['linkToDataGrid'])) {
-      throw new Exception('Download control requires only one of the @source or @linkToDataGrid options to be specified.');
-    }
     if (empty($options['source']) && !empty($options['columnsTemplate'])) {
-      throw new Exception('Download control @source option must be specified if @columnsTemplate option is used (cannot be used with @linkToDataGrid).');
+      throw new Exception('Download control @source option must be specified if @columnsTemplate option is used (cannot be used with @linkToDataControl).');
     }
 
     $options = array_merge([
@@ -628,7 +627,7 @@ HTML;
       'buttonContainerElement',
       'columnsTemplate',
       'columnsSurveyId',
-      'linkToDataGrid',
+      'linkToDataControl',
       'removeColumns',
       'source',
     ], TRUE);
@@ -1228,25 +1227,56 @@ HTML;
     self::checkOptions(
       'recordsMover',
       $options,
-      ['datasetMappings', 'source'],
+      ['datasetMappings', 'linkToDataControl'],
       ['datasetMappings'],
     );
+    $options = array_merge([
+      'restrictToOwnData' => TRUE,
+    ], $options);
     $dataOptions = helper_base::getOptionsForJs($options, [
       'datasetMappings',
-      'source',
+      'linkToDataControl',
+      'restrictToOwnData',
     ], TRUE);
     helper_base::addLanguageStringsToJs('recordsMover', [
-      'cancel' => 'Cancel',
-      'move' => 'Move the records',
-      'recordsMoverDialogMessage' => 'Warning message goes here.',
-      'recordsMoverDialogTitle' => 'Move records',
+      'cannotProceed' => 'Cannot proceed',
+      'done' => 'Records successfully moved.',
+      'error' => 'An error occurred whilst trying to move the records.',
+      'errorNotFilteredToCurrentUser' => 'The records cannot be moved because the current page is not filtered to limit the records to only your data.',
+      'moving' => 'Moving the records...',
+      'preparing' => 'Preparing to move the records...',
+      'recordsMoverDialogMessageSelected' => 'You are about to move {1} selected records.',
+      'recordsMoverDialogMessageAll' => 'You are about to move the entire list of {1} records.',
+      'warningNothingToDo' => 'There are no selected records to move.',
     ]);
     $lang = [
+      'cancel' => lang::get('Cancel'),
+      'close' => lang::get('Close'),
       'moveRecords' => lang::get('Move records'),
+      'proceed' => lang::get('Proceed'),
     ];
+    helper_base::add_resource('fancybox');
     global $indicia_templates;
     $html = <<<HTML
 <button type="button" class="move-records-btn $indicia_templates[buttonHighlightedClass]">$lang[moveRecords]</button>
+<div id="records-mover-dlg-wrap" style="display: none">
+  <div id="records-mover-dlg">
+    <div id="pre-move-info">
+      <h2>$lang[moveRecords]</h2>
+      <p class="message"></p>
+      <div class="form-buttons">
+        <button type="button" class="$indicia_templates[buttonHighlightedClass]" id="proceed-move">$lang[proceed]</button>
+        <button type="button" class="$indicia_templates[buttonHighlightedClass]" id="cancel-move">$lang[cancel]</button>
+      </div>
+    </div>
+    <div id="post-move-info">
+      <div class="output"></div>
+      <div class="form-buttons">
+        <button type="button" class="$indicia_templates[buttonHighlightedClass]" id="close-move">$lang[close]</button>
+      </div>
+    </div>
+  </div>
+</div>
 HTML;
     return self::getControlContainer('recordsMover', $options, $dataOptions, $html);
   }
@@ -1545,8 +1575,8 @@ HTML;
       'verificationTemplates',
       'viewPath',
     ], TRUE);
-    $userId = hostsite_get_user_field('indicia_user_id');
     $verifyUrl = iform_ajaxproxy_url($options['nid'], 'list_verify');
+    $userId = hostsite_get_user_field('indicia_user_id');
     $commentUrl = iform_ajaxproxy_url($options['nid'], 'occ-comment');
     $redetUrl = iform_ajaxproxy_url($options['nid'], 'list_redet');
     $quickReplyPageAuthUrl = iform_ajaxproxy_url($options['nid'], 'comment_quick_reply_page_auth');
@@ -2085,7 +2115,8 @@ AGG;
    *   Options passed to the control (key and value associative array). Will be
    *   modified.
    * @param array $requiredOptions
-   *   Array of option names which must have a value.
+   *   Array of option names which must have a value. Items can also be an
+   *   array of option names if only one of several must be specified.
    * @param array $jsonOptions
    *   Array of option names which must contain JSON.
    */
@@ -2101,9 +2132,20 @@ AGG;
     }
 
     self::$controlIds[] = $options['id'];
-    foreach ($requiredOptions as $option) {
-      if (!isset($options[$option]) || $options[$option] === '') {
-        throw new Exception("Control [$controlName] requires a parameter called @$option");
+    foreach ($requiredOptions as $requiredOption) {
+      if (is_array($requiredOption)) {
+        $count = 0;
+        foreach ($requiredOption as $item) {
+          if (!empty($options[$item])) {
+            $count++;
+          }
+        }
+        if ($count !== 1) {
+          throw new Exception("Control [$controlName] requires exactly one of the following parameters: " . implode(', ', $requiredOption));
+        }
+      }
+      else if (!isset($options[$requiredOption]) || $options[$requiredOption] === '') {
+        throw new Exception("Control [$controlName] requires a parameter called @$requiredOption");
       }
     }
     foreach ($jsonOptions as $option) {
@@ -2242,12 +2284,11 @@ HTML;
    *
    * A list of mapped fields is stored in self::$esMappings.
    *
-   * @param int $nid
-   *   Node ID, used to retrieve the node parameters which contain ES settings.
+   * @param array $config
+   *   Elasticsearch configuration.
    */
-  private static function getMappings($nid) {
+  private static function getMappings(array $config) {
     require_once 'ElasticsearchProxyHelper.php';
-    $config = hostsite_get_es_config($nid);
     if (empty($config['es']['endpoint'])) {
       throw new Exception(lang::get('Elasticsearch configuration incomplete - endpoint not specified in Indicia settings.'));
     }

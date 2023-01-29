@@ -138,6 +138,14 @@ class ElasticsearchProxyHelper {
         self::proxyRedetIds();
         break;
 
+      case 'bulkmoveall':
+        self::proxyBulkMoveAll($nid);
+        break;
+
+      case 'bulkmoveids':
+        self::proxyBulkMoveIds($nid);
+        break;
+
       default:
         header("HTTP/1.1 404 Not found");
         echo json_encode(['error' => 'Method not found']);
@@ -374,8 +382,36 @@ class ElasticsearchProxyHelper {
       throw new ElasticsearchProxyAbort('Configuration incomplete');
     }
     $statuses = $_POST['doc']['identification'] ?? [];
-    echo self::internalVerifyListOnES($_POST['ids'], $statuses,
+    echo self::internalModifyListOnES($_POST['ids'], $statuses,
       isset($_POST['doc']['metadata']['website']['id']) ? $_POST['doc']['metadata']['website']['id'] : NULL);
+  }
+
+  /**
+   * Retrieve the list of occurrence IDs for an ES filter.
+   *
+   * @return array
+   *   List of occurrence IDs.
+   */
+  private static function getOccurrenceIdsFromFilter($nid, $filter) {
+    iform_load_helpers(['helper_base']);
+    $conn = iform_get_connection_details($nid);
+    $readAuth = helper_base::get_read_auth($conn['website_id'], $conn['password']);
+    self::checkPermissionsFilter($filter, $readAuth, $nid);
+    $url = self::getEsUrl() . '/_search';
+    $query = self::buildEsQueryFromRequest($filter);
+    \Drupal::logger('iform')->notice('Es query: ' . var_export($query, TRUE));
+    // Limit response for efficiency.
+    $_GET['filter_path'] = 'hits.hits._source.id';
+    // Maximum 10000.
+    $query['size'] = 10000;
+    $r = self::curlPost($url, $query);
+    $esResponse = json_decode($r);
+    unset($_GET['filter_path']);
+    $ids = [];
+    foreach ($esResponse->hits->hits as $item) {
+      $ids[] = $item->_source->id;
+    }
+    return $ids;
   }
 
   /**
@@ -401,24 +437,9 @@ class ElasticsearchProxyHelper {
       echo json_encode(['error' => 'Missing website_id parameter']);
       throw new ElasticsearchProxyAbort('Parameter missing');
     }
-    iform_load_helpers(['helper_base']);
-    $conn = iform_get_connection_details($nid);
-    $readAuth = helper_base::get_read_auth($conn['website_id'], $conn['password']);
-    self::checkPermissionsFilter($_POST['occurrence:idsFromElasticFilter'], $readAuth, $nid);
-    $url = self::getEsUrl() . '/_search';
-    $query = self::buildEsQueryFromRequest($_POST['occurrence:idsFromElasticFilter']);
-    // Limit response for efficiency.
-    $_GET['filter_path'] = 'hits.hits._source.id';
-    // Maximum 10000.
-    $query['size'] = 10000;
-    $r = self::curlPost($url, $query);
-    $esResponse = json_decode($r);
-    unset($_GET['filter_path']);
-    $ids = [];
-    foreach ($esResponse->hits->hits as $item) {
-      $ids[] = $item->_source->id;
-    }
-    self::internalVerifyListOnES($ids, $statuses, $websiteIdToModify);
+    $ids = self::getOccurrenceIdsFromFilter($nid, $_POST['occurrence:idsFromElasticFilter']);
+
+    self::internalModifyListOnES($ids, $statuses, $websiteIdToModify);
     try {
       self::updateWarehouseVerificationAction($ids, $nid);
     }
@@ -501,7 +522,7 @@ class ElasticsearchProxyHelper {
     }
     // Set website ID to 0, basically disabling the ES copy of the record until
     // a proper update with correct taxonomy information comes through.
-    echo self::internalVerifyListOnES($_POST['ids'], [], 0);
+    echo self::internalModifyListOnES($_POST['ids'], [], 0);
   }
 
   /**
@@ -576,7 +597,7 @@ class ElasticsearchProxyHelper {
    * @return string
    *   Result of the POST to ES.
    */
-  private static function internalVerifyListOnES(array $ids, array $statuses, $websiteIdToModify) {
+  private static function internalModifyListOnES(array $ids, array $statuses, $websiteIdToModify) {
     $url = self::getEsUrl() . "/_update_by_query";
     $scripts = [];
     if (!empty($statuses['verification_status'])) {
@@ -2157,6 +2178,49 @@ class ElasticsearchProxyHelper {
       }
     }
     return [];
+  }
+
+  /**
+   * Receives a list of IDs to move between websites/datasets.
+   *
+   * Used by the recordsMover button.
+   */
+  private static function bulkMoveIds($nid, array $ids, $datasetMappings, $precheck) {
+    // Set website ID to 0, basically disabling the ES copy of the record until
+    // a proper update with correct taxonomy information comes through.
+    self::internalModifyListOnES($ids, [], 0);
+    // Now do the move on the warehouse.
+    $request = helper_base::$base_url . "index.php/services/data_utils/bulk_move";
+    $conn = iform_get_connection_details($nid);
+    $auth = helper_base::get_read_write_auth($conn['website_id'], $conn['password']);
+    $postargs = helper_base::array_to_query_string(array_merge([
+      'occurrence:ids' => implode(',', $ids),
+      'datasetMappings' => $datasetMappings,
+      'precheck' => $precheck ? 't' : 'f',
+    ], $auth['write_tokens']), TRUE);
+    $response = helper_base::http_post($request, $postargs, FALSE);
+    // The response should be in JSON.
+    header('Content-type: application/json');
+    echo $response['output'];
+  }
+
+  /**
+   * Receives a filter defining records to move between websites/datasets.
+   *
+   * Used by the recordsMover button.
+   */
+  private static function proxyBulkMoveAll($nid) {
+    $ids = self::getOccurrenceIdsFromFilter($nid, $_POST['occurrence:idsFromElasticFilter']);
+    self::bulkMoveIds($nid, $ids, $_POST['datasetMappings'], !empty($_POST['precheck']));
+  }
+
+  /**
+   * Receives a list of IDs to move between websites/datasets.
+   *
+   * Used by the recordsMover button.
+   */
+  private static function proxyBulkMoveIds($nid) {
+    self::bulkMoveIds($nid, explode(',', $_POST['occurrence:ids']), $_POST['datasetMappings'], !empty($_POST['precheck']));
   }
 
 }
