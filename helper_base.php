@@ -1962,7 +1962,7 @@ HTML;
     $replaceTags = [];
     $replaceValues = [];
     foreach ($params as $param => $value) {
-      if (!is_array($value) && !is_object($value) && !is_null($value)) {
+      if (!is_array($value) && !is_object($value)) {
         array_push($replaceTags, '{' . $param . '}');
         if ($allowEscapeQuotes) {
           array_push($replaceTags, '{' . $param . '-escape-quote}');
@@ -1971,7 +1971,7 @@ HTML;
           array_push($replaceTags, '{' . $param . '-escape-htmldblquote}');
         }
         // Allow sep to have <br/>.
-        $value = ($param == 'sep' || $allowHtml) ? $value : htmlspecialchars($value, ENT_QUOTES, "UTF-8");
+        $value = ($param == 'sep' || $allowHtml) ? $value : htmlspecialchars($value ?? '', ENT_QUOTES, "UTF-8");
         // HTML attributes get automatically wrapped.
         if (in_array($param, self::$html_attributes) && !empty($value)) {
           $value = " $param=\"$value\"";
