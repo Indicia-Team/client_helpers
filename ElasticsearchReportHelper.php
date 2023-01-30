@@ -1552,6 +1552,7 @@ HTML;
       'raiseQuery' => lang::get('Raise a query with the recorder'),
       'save' => lang::get('Save'),
       'saveTemplate' => lang::get('Save template'),
+      'saveTemplateAs' => lang::get('Save as'),
       'selected' => lang::get('selected'),
       'showPreview' => lang::get('Preview'),
       'templateHelpIntroAvailableTokens' => lang::get('Available replacement tokens are as follows:'),
@@ -1713,7 +1714,7 @@ HTML;
 <div class="comment-tools">
   <button type="button" class="comment-show-preview $indicia_templates[buttonDefaultClass] $indicia_templates[buttonSmallClass]">$lang[showPreview]</button>
   <button type="button" class="comment-edit $indicia_templates[buttonDefaultClass] $indicia_templates[buttonSmallClass]" style="display: none">$lang[edit]</button>
-  <button type="button" class="comment-save-template $indicia_templates[buttonDefaultClass] $indicia_templates[buttonSmallClass]">$lang[saveTemplate]</button>
+  <button type="button" class="comment-save-template $indicia_templates[buttonDefaultClass] $indicia_templates[buttonSmallClass]">$lang[saveTemplateAs]</button>
   <button type="button" class="comment-help $indicia_templates[buttonDefaultClass] $indicia_templates[buttonSmallClass]">$lang[help]</button>
 </div>
 <div class="template-save-cntr" style="display: none">
