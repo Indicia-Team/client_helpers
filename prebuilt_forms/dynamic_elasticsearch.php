@@ -344,6 +344,16 @@ TXT;
   }
 
   /**
+   * A control for managing layout, e.g. for verification pages.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-controllayout
+   */
+  protected static function get_control_controlLayout($auth, $args, $tabalias, $options) {
+    ElasticsearchReportHelper::controlLayout($options);
+    return '';
+  }
+
+  /**
    * A control for flexibly outputting data formatted using a JS function.
    *
    * @return string
