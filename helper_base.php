@@ -1203,6 +1203,7 @@ class helper_base {
           ],
           'javascript' => [
             self::$js_path . 'indicia.datacomponents/idc.core.js',
+            self::$js_path . 'indicia.datacomponents/idc.controlLayout.js',
             self::$js_path . 'indicia.datacomponents/idc.esDataSource.js',
             self::$js_path . 'indicia.datacomponents/idc.pager.js',
             self::$js_path . 'indicia.datacomponents/jquery.idc.customScript.js',

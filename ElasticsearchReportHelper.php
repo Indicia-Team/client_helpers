@@ -320,18 +320,10 @@ class ElasticsearchReportHelper {
    * @param int $nid
    *   Node ID or NULL if not on a node.
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-enableElasticsearchProxy
-   */
-  /**
-   * Prepares the page for interacting with the Elasticsearch proxy.
-   *
-   * @param int $nid
-   *   Node ID or NULL if not on a node.
-   *
    * @return bool
    *   True if enabled, false if there was an error and it failed to enable.
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-enableElasticsearchProxy
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-enableelasticsearchproxy
    */
   public static function enableElasticsearchProxy($nid = NULL) {
     if (!self::$proxyEnabled && !self::$proxyEnableFailed) {
@@ -418,6 +410,38 @@ JS;
   </div>
 </div>
 HTML;
+  }
+
+  /**
+   * A control for managing layout, e.g. for verification pages.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-controllayout
+   */
+  public static function controlLayout(array $options) {
+    self::checkOptions(
+      'controlLayout',
+      $options,
+      ['setOriginY'],
+      [
+        'alignTop',
+        'alignBottom',
+        'setHeightPercent',
+      ]
+    );
+    $options = array_merge([
+      'breakpoint' => 992,
+      'alignTop' => [],
+      'alignBottom' => [],
+      'setHeightPercent' => [],
+    ], $options);
+    $options = array_intersect_key($options, [
+      'alignTop' => NULL,
+      'alignBottom' => NULL,
+      'breakpoint' => NULL,
+      'setHeightPercent' => NULL,
+      'setOriginY' => NULL,
+    ]);
+    helper_base::$indiciaData['esControlLayout'] = $options;
   }
 
   /**
@@ -829,7 +853,7 @@ JS;
    * @return string
    *   Control HTML.
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-higherGeopgraphySelect
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-highergeopgraphyselect
    */
   public static function higherGeographySelect(array $options) {
     $options = array_merge([
@@ -845,7 +869,7 @@ JS;
    * @return string
    *   Control HTML.
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-locationSelect
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-locationselect
    */
   public static function locationSelect(array $options) {
     $options = array_merge([
@@ -861,7 +885,7 @@ JS;
    * @return string
    *   Map container HTML.
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-leafletMap
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-leafletmap
    */
   public static function leafletMap(array $options) {
     self::checkOptions('leafletMap', $options,
@@ -905,7 +929,7 @@ JS;
    * @return string
    *   Select HTML.
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-surveyFilter
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-surveyfilter
    */
   public static function surveyFilter(array $options) {
 
@@ -1045,7 +1069,7 @@ JS;
    * @return string
    *   Select HTML.
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-permissionFilters
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-permissionfilters
    */
   public static function permissionFilters(array $options) {
     $wrapperOptions = array_merge([
@@ -1088,7 +1112,7 @@ HTML;
    * @return string
    *   HTML summary text.
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-filterSummary
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-filtersummary
    */
   public static function filterSummary(array $options) {
 
@@ -1127,7 +1151,7 @@ JS;
    * @return string
    *   Select HTML.
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-statusFilters
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-statusfilters
    */
   public static function statusFilters(array $options) {
     require_once 'prebuilt_forms/includes/report_filters.php';
@@ -1145,7 +1169,7 @@ JS;
    * @return string
    *   Panel container HTML.
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-recordDetails
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-recorddetails
    */
   public static function recordDetails(array $options) {
     $options = array_merge([
@@ -1354,7 +1378,7 @@ HTML;
   /**
    * A standard parameters filter toolbar for use on Elasticsearch pages.
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-standardParams
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-standardparams
    */
   public static function standardParams(array $options) {
     require_once 'prebuilt_forms/includes/report_filters.php';
@@ -1382,7 +1406,7 @@ HTML;
   /**
    * A control for flexibly outputting data formatted using HTML templates.
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-templatedOutput
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-templatedoutput
    */
   public static function templatedOutput(array $options) {
     self::checkOptions('templatedOutput', $options, ['source', 'content'], []);
@@ -1399,7 +1423,7 @@ HTML;
   /**
    * Retrieve parameters from the URL and add to the ES requests.
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-urlParams
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-urlparams
    *
    * @return string
    *   Hidden input HTML which defines the appropriate filters.
@@ -1490,7 +1514,7 @@ HTML;
   /**
    * Output a selector for a user's registered filters.
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-userFilters
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-userfilters
    */
   public static function userFilters(array $options) {
     require_once 'prebuilt_forms/includes/report_filters.php';
@@ -1542,7 +1566,7 @@ HTML;
   /**
    * A panel containing buttons for record verification actions.
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-verificationButtons
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-verificationbuttons
    *
    * @return string
    *   Panel HTML;
@@ -1621,6 +1645,7 @@ HTML;
       'raiseQuery' => lang::get('Raise a query with the recorder'),
       'save' => lang::get('Save'),
       'saveTemplate' => lang::get('Save template'),
+      'saveTemplateAs' => lang::get('Save as'),
       'selected' => lang::get('selected'),
       'showPreview' => lang::get('Preview'),
       'templateHelpIntroAvailableTokens' => lang::get('Available replacement tokens are as follows:'),
@@ -1782,7 +1807,7 @@ HTML;
 <div class="comment-tools">
   <button type="button" class="comment-show-preview $indicia_templates[buttonDefaultClass] $indicia_templates[buttonSmallClass]">$lang[showPreview]</button>
   <button type="button" class="comment-edit $indicia_templates[buttonDefaultClass] $indicia_templates[buttonSmallClass]" style="display: none">$lang[edit]</button>
-  <button type="button" class="comment-save-template $indicia_templates[buttonDefaultClass] $indicia_templates[buttonSmallClass]">$lang[saveTemplate]</button>
+  <button type="button" class="comment-save-template $indicia_templates[buttonDefaultClass] $indicia_templates[buttonSmallClass]">$lang[saveTemplateAs]</button>
   <button type="button" class="comment-help $indicia_templates[buttonDefaultClass] $indicia_templates[buttonSmallClass]">$lang[help]</button>
 </div>
 <div class="template-save-cntr" style="display: none">
