@@ -1610,9 +1610,11 @@ HTML;
     ];
 
     helper_base::addLanguageStringsToJs('verificationButtons', [
+      'addComment' => 'Add comment',
+      'cancel' => 'Cancel',
+      'close' => 'Close',
       'commentTabTitle' => 'Comment on the record',
       'elasticsearchUpdateError' => 'An error occurred whilst updating the reporting index. It may not reflect your changes temporarily but will be updated automatically later.',
-      'close' => 'Close',
       'commentReplyInstruct' => 'Click here to add a publicly visible comment to the record on iRecord.',
       'csvDisallowedMessage' => 'Uploading verification decisions is only allowed when there is a filter that defines the scope of the records you can verify.',
       'duplicateTemplateMsg' => 'A template with that name already exists. Please specify a unique name for your template then save it again, or click Overwrite to update the existing template details.',
@@ -1706,6 +1708,7 @@ HTML;
       'wrapClasses' => ['not-full-width-lg'],
     ]);
     $btnClass = $indicia_templates['buttonHighlightedClass'];
+    $btnClassDefault = $indicia_templates['buttonDefaultClass'];
     $uploadButton = empty($options['includeUploadButton']) ? '' : <<<HTML
       <button class="upload-decisions $btnClass" title="$lang[uploadVerificationDecisions]"><span class="fas fa-file-upload"></span>$lang[upload]</button>
 HTML;
@@ -1797,8 +1800,8 @@ HTML;
       </div>
       $loadVerifyTemplateDropdown
       <div class="form-buttons">
-        <button type="button" class="$btnClass" id="apply-verification">$lang[save]</button>
-        <button type="button" class="$btnClass" id="cancel-verification">$lang[cancel]</button>
+        <button type="button" class="$btnClass save">$lang[save]</button>
+        <button type="button" class="$btnClassDefault cancel">$lang[cancel]</button>
       </div>
     </fieldset>
   </form>
@@ -1847,7 +1850,7 @@ HTML;
     $loadRedetTemplateDropdown
     <div class="form-buttons">
       <button type="button" class="$btnClass" id="apply-redet">$lang[applyRedetermination]</button>
-      <button type="button" class="$btnClass" id="cancel-redet">$lang[cancel]</button>
+      <button type="button" class="$btnClass cancel">$lang[cancel]</button>
     </div>
   </form>
 </div>
