@@ -1516,19 +1516,18 @@ HTML;
       helper_base::$indiciaData['warehouseName'] = $options['warehouseName'];
     }
     $options = array_merge([
-      'editPath' => helper_base::getRootFolder(TRUE) . $options['editPath'],
-      'taxon_list_id' => hostsite_get_config_value('iform', 'master_checklist_id'),
-      'viewPath' => helper_base::getRootFolder(TRUE) . $options['viewPath'],
       'redeterminerNameAttributeHandling' => 'overwriteOnRedet',
+      'taxon_list_id' => hostsite_get_config_value('iform', 'master_checklist_id'),
       'verificationTemplates' => FALSE,
     ], $options);
     $dataOptions = helper_base::getOptionsForJs($options, [
       'editPath',
       'keyboardNavigation',
       'showSelectedRow',
+      'speciesPath',
       'uploadButtonContainerElement',
-      'verificationTemplates',
       'viewPath',
+      'verificationTemplates',
     ], TRUE);
     $userId = hostsite_get_user_field('indicia_user_id');
     $verifyUrl = iform_ajaxproxy_url($options['nid'], 'list_verify');
@@ -1547,14 +1546,6 @@ HTML;
       iform_load_helpers(['VerificationHelper']);
       VerificationHelper::fetchTaxaWithLoggedCommunications($options['readAuth']);
     }
-    $optionalLinkArray = [];
-    if (!empty($options['editPath'])) {
-      $optionalLinkArray[] = '<a class="edit" title="Edit this record" target="_blank"><span class="fas fa-edit"></span></a>';
-    }
-    if (!empty($options['viewPath'])) {
-      $optionalLinkArray[] = '<a class="view" target="_blank" title="View this record\'s details page" target="_blank"><span class="fas fa-file-invoice"></span></a>';
-    }
-    $optionalLinks = implode("\n  ", $optionalLinkArray);
     helper_base::add_resource('fancybox');
     helper_base::add_resource('validation');
     $lang = [
@@ -1610,12 +1601,15 @@ HTML;
     ];
 
     helper_base::addLanguageStringsToJs('verificationButtons', [
+      'addComment' => 'Add comment',
+      'cancel' => 'Cancel',
+      'close' => 'Close',
       'commentTabTitle' => 'Comment on the record',
       'elasticsearchUpdateError' => 'An error occurred whilst updating the reporting index. It may not reflect your changes temporarily but will be updated automatically later.',
-      'close' => 'Close',
       'commentReplyInstruct' => 'Click here to add a publicly visible comment to the record on iRecord.',
       'csvDisallowedMessage' => 'Uploading verification decisions is only allowed when there is a filter that defines the scope of the records you can verify.',
       'duplicateTemplateMsg' => 'A template with that name already exists. Please specify a unique name for your template then save it again, or click Overwrite to update the existing template details.',
+      'editThisRecord'=> 'Edit this record',
       'emailExpertBodyHeader' => 'The following record requires your assistance. Please could you reply to this email ' .
         'with your opininion on whether the record is correct or not. You can reply to this message and it will be ' .
         'forwarded direct to the verifier.',
@@ -1651,6 +1645,8 @@ HTML;
       'saveTemplateErrorMsg' => 'An error occurred when saving your template to the database. Please try later.',
       'templateNameTextRequired' => 'Template details required',
       'uploadError' => 'An error occurred whilst uploading your spreadsheet.',
+      'viewRecordDetails' => "View this record's details page",
+      'viewSpeciesPage' => 'View species page',
       'C3' => 'marked as plausible',
       'DT' => 'redetermined',
     ]);
@@ -1658,6 +1654,19 @@ HTML;
       throw new Exception('[verificationButtons] requires a @taxon_list_id option, or the Indicia setting Master Checklist ID to be set. This ' .
         'is required to provide a list to select the redetermination from.');
     }
+    // Work out any extra buttons we need for provided links.
+    $optionalLinkArray = [];
+    if (!empty($options['editPath'])) {
+      $optionalLinkArray[] = "<a class=\"edit\" title=\"$lang[editThisRecord]\" target=\"_blank\"><span class=\"fas fa-edit\"></span></a>";
+    }
+    if (!empty($options['viewPath'])) {
+      $optionalLinkArray[] = "<a class=\"view\" target=\"_blank\" title=\"$lang[viewRecordDetails]\" target=\"_blank\"><span class=\"fas fa-file-invoice\"></span></a>";
+    }
+    if (!empty($options['speciesPath'])) {
+      $optionalLinkArray[] = "<a class=\"species\" target=\"_blank\" title=\"$lang[viewSpeciesPage]\" target=\"_blank\"><span class=\"fas fa-file\"></span></a>";
+    }
+    $optionalLinks = implode("\n  ", $optionalLinkArray);
+    // Build some controls for the various forms.
     $speciesInput = data_entry_helper::species_autocomplete([
       'label' => lang::get('Redetermine to'),
       'helpText' => lang::get('Select the new taxon name.'),
@@ -1706,6 +1715,7 @@ HTML;
       'wrapClasses' => ['not-full-width-lg'],
     ]);
     $btnClass = $indicia_templates['buttonHighlightedClass'];
+    $btnClassDefault = $indicia_templates['buttonDefaultClass'];
     $uploadButton = empty($options['includeUploadButton']) ? '' : <<<HTML
       <button class="upload-decisions $btnClass" title="$lang[uploadVerificationDecisions]"><span class="fas fa-file-upload"></span>$lang[upload]</button>
 HTML;
@@ -1797,8 +1807,8 @@ HTML;
       </div>
       $loadVerifyTemplateDropdown
       <div class="form-buttons">
-        <button type="button" class="$btnClass" id="apply-verification">$lang[save]</button>
-        <button type="button" class="$btnClass" id="cancel-verification">$lang[cancel]</button>
+        <button type="button" class="$btnClass save">$lang[save]</button>
+        <button type="button" class="$btnClassDefault cancel">$lang[cancel]</button>
       </div>
     </fieldset>
   </form>
@@ -1847,7 +1857,7 @@ HTML;
     $loadRedetTemplateDropdown
     <div class="form-buttons">
       <button type="button" class="$btnClass" id="apply-redet">$lang[applyRedetermination]</button>
-      <button type="button" class="$btnClass" id="cancel-redet">$lang[cancel]</button>
+      <button type="button" class="$btnClass cancel">$lang[cancel]</button>
     </div>
   </form>
 </div>
