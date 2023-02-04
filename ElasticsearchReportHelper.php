@@ -1259,6 +1259,7 @@ HTML;
     ], $options);
     $dataOptions = helper_base::getOptionsForJs($options, [
       'datasetMappings',
+      'id',
       'linkToDataControl',
       'restrictToOwnData',
     ], TRUE);
@@ -1277,26 +1278,28 @@ HTML;
       'cancel' => lang::get('Cancel'),
       'close' => lang::get('Close'),
       'moveRecords' => lang::get('Move records'),
+      'movingRecords' => lang::get('Moving the records'),
       'proceed' => lang::get('Proceed'),
     ];
     helper_base::add_resource('fancybox');
     global $indicia_templates;
     $html = <<<HTML
 <button type="button" class="move-records-btn $indicia_templates[buttonHighlightedClass]">$lang[moveRecords]</button>
-<div id="records-mover-dlg-wrap" style="display: none">
-  <div id="records-mover-dlg">
-    <div id="pre-move-info">
+<div style="display: none">
+  <div id="$options[id]-dlg">
+    <div class="pre-move-info">
       <h2>$lang[moveRecords]</h2>
       <p class="message"></p>
       <div class="form-buttons">
-        <button type="button" class="$indicia_templates[buttonHighlightedClass]" id="proceed-move">$lang[proceed]</button>
-        <button type="button" class="$indicia_templates[buttonHighlightedClass]" id="cancel-move">$lang[cancel]</button>
+        <button type="button" class="$indicia_templates[buttonHighlightedClass] proceed-move">$lang[proceed]</button>
+        <button type="button" class="$indicia_templates[buttonHighlightedClass] close-move-dlg">$lang[cancel]</button>
       </div>
     </div>
-    <div id="post-move-info">
+    <div class="post-move-info">
+      <h2>$lang[movingRecords]</h2>
       <div class="output"></div>
       <div class="form-buttons">
-        <button type="button" class="$indicia_templates[buttonHighlightedClass]" id="close-move">$lang[close]</button>
+        <button type="button" class="$indicia_templates[buttonHighlightedClass] close-move-dlg">$lang[close]</button>
       </div>
     </div>
   </div>

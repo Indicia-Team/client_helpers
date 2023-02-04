@@ -399,7 +399,6 @@ class ElasticsearchProxyHelper {
     self::checkPermissionsFilter($filter, $readAuth, $nid);
     $url = self::getEsUrl() . '/_search';
     $query = self::buildEsQueryFromRequest($filter);
-    \Drupal::logger('iform')->notice('Es query: ' . var_export($query, TRUE));
     // Limit response for efficiency.
     $_GET['filter_path'] = 'hits.hits._source.id';
     // Maximum 10000.
@@ -2186,9 +2185,6 @@ class ElasticsearchProxyHelper {
    * Used by the recordsMover button.
    */
   private static function bulkMoveIds($nid, array $ids, $datasetMappings, $precheck) {
-    // Set website ID to 0, basically disabling the ES copy of the record until
-    // a proper update with correct taxonomy information comes through.
-    self::internalModifyListOnES($ids, [], 0);
     // Now do the move on the warehouse.
     $request = helper_base::$base_url . "index.php/services/data_utils/bulk_move";
     $conn = iform_get_connection_details($nid);
@@ -2202,6 +2198,12 @@ class ElasticsearchProxyHelper {
     // The response should be in JSON.
     header('Content-type: application/json');
     echo $response['output'];
+    $output = json_decode($response['output']);
+    if ($output->code === 200) {
+      // Set website ID to 0, basically disabling the ES copy of the record
+      // until a proper update with correct taxonomy information comes through.
+      self::internalModifyListOnES($ids, [], 0);
+    }
   }
 
   /**
