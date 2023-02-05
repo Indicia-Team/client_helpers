@@ -1255,6 +1255,7 @@ HTML;
       ['datasetMappings'],
     );
     $options = array_merge([
+      'caption' => 'Move records',
       'restrictToOwnData' => TRUE,
     ], $options);
     $dataOptions = helper_base::getOptionsForJs($options, [
@@ -1265,7 +1266,7 @@ HTML;
     ], TRUE);
     helper_base::addLanguageStringsToJs('recordsMover', [
       'cannotProceed' => 'Cannot proceed',
-      'done' => 'Records successfully moved.',
+      'done' => 'Records successfully moved. They will be processed so they are available in their new location shortly.',
       'error' => 'An error occurred whilst trying to move the records.',
       'errorNotFilteredToCurrentUser' => 'The records cannot be moved because the current page is not filtered to limit the records to only your data.',
       'moving' => 'Moving the records...',
@@ -1277,7 +1278,7 @@ HTML;
     $lang = [
       'cancel' => lang::get('Cancel'),
       'close' => lang::get('Close'),
-      'moveRecords' => lang::get('Move records'),
+      'moveRecords' => lang::get($options['caption']),
       'movingRecords' => lang::get('Moving the records'),
       'proceed' => lang::get('Proceed'),
     ];
