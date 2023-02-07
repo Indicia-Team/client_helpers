@@ -1211,6 +1211,7 @@ class helper_base {
             self::$js_path . 'indicia.datacomponents/jquery.idc.dataGrid.js',
             self::$js_path . 'indicia.datacomponents/jquery.idc.esDownload.js',
             self::$js_path . 'indicia.datacomponents/jquery.idc.leafletMap.js',
+            self::$js_path . 'indicia.datacomponents/jquery.idc.recordsMover.js',
             self::$js_path . 'indicia.datacomponents/jquery.idc.recordDetailsPane.js',
             self::$js_path . 'indicia.datacomponents/jquery.idc.templatedOutput.js',
             self::$js_path . 'indicia.datacomponents/jquery.idc.verificationButtons.js',

@@ -472,6 +472,18 @@ TXT;
   }
 
   /**
+   * A button for moving records from one website to another.
+   *
+   * @return string
+   *   Panel container HTML.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-recordsMover
+   */
+  protected static function get_control_recordsMover($auth, $args, $tabalias, $options) {
+    return ElasticsearchReportHelper::recordsMover($options);
+  }
+
+  /**
    * A standard parameters filter toolbar for use on Elasticsearch pages.
    *
    * @return string
