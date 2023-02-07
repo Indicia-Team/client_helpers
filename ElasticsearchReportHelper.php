@@ -1522,12 +1522,13 @@ HTML;
     ], $options);
     $dataOptions = helper_base::getOptionsForJs($options, [
       'editPath',
+      'id',
       'keyboardNavigation',
       'showSelectedRow',
       'speciesPath',
       'uploadButtonContainerElement',
-      'viewPath',
       'verificationTemplates',
+      'viewPath',
     ], TRUE);
     $userId = hostsite_get_user_field('indicia_user_id');
     $verifyUrl = iform_ajaxproxy_url($options['nid'], 'list_verify');
@@ -1764,7 +1765,7 @@ HTML;
     }
     $r = <<<HTML
 <div id="$options[id]" class="idc-control idc-verificationButtons" data-idc-class="idcVerificationButtons" style="display: none;" data-idc-config="$dataOptions">
-  <div class="verification-buttons-cntr">
+  <div id="$options[id]-buttons" class="verification-buttons-cntr">
     <div class="selection-buttons-placeholder">
       <div class="all-selected-buttons idc-verificationButtons-row">
         Actions:
