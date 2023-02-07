@@ -414,6 +414,75 @@ class ElasticsearchProxyHelper {
   }
 
   /**
+   * Retrieve a page of occurrence IDs for an ES filter.
+   *
+   * Similar to getOccurrenceIdsFromFilter but retrieves a smaller batch of
+   * record IDs, with search_after information that can be used in the next
+   * request in order to paginate through the data. Ensures each batch of
+   * records is divided on a sample ID (event.event_id) boundary so that
+   * checks for complete samples don't fail.
+   *
+   * @param int $nid
+   *   Node ID.
+   * @param array $filter
+   *   Filted definition.
+   * @param array $searchAfter
+   *   Values to pass to the search_after option on ES, in order to request the
+   *   next page of data, or NULL for the first page.
+   *
+   * @return array
+   *   Associative array containing a search_after property to be used in the
+   *   next request and and ids property containing a list of occurrence IDs.
+   */
+  private static function getOccurrenceIdPageFromFilter($nid, $filter, $searchAfter) {
+    iform_load_helpers(['helper_base']);
+    $conn = iform_get_connection_details($nid);
+    $readAuth = helper_base::get_read_auth($conn['website_id'], $conn['password']);
+    self::checkPermissionsFilter($filter, $readAuth, $nid);
+    $url = self::getEsUrl() . '/_search';
+    $query = self::buildEsQueryFromRequest($filter);
+    $query['sort'] = [
+      ['event.event_id' => 'asc'],
+      ['id' => 'asc'],
+    ];
+    if ($searchAfter) {
+      $query['search_after'] = $searchAfter;
+    }
+    // Limit response for efficiency.
+    $_GET['filter_path'] = 'hits.hits._source.id,hits.hits._source.event.event_id';
+    // Maximum 1000 - should be more than the max size of a sample.
+    $query['size'] = 20;
+    $r = self::curlPost($url, $query);
+    $esResponse = json_decode($r);
+    unset($_GET['filter_path']);
+    if (empty($esResponse->hits) || empty($esResponse->hits->hits)) {
+      return ['ids' => []];
+    }
+    if (count($esResponse->hits->hits) >= $query['size']) {
+      // Find the last event_id as we need to skip records for this sample, in
+      // case there is a paging split within the sample.
+      $lastEventId = $esResponse->hits->hits[count($esResponse->hits->hits) - 1]->_source->event->event_id;
+    }
+    else {
+      // Set dummy value to disable event ID filter, as all remaining records
+      // have been found.
+      $lastEventId = -1;
+    }
+    $ids = [];
+    $searchAfter = [];
+    foreach ($esResponse->hits->hits as $item) {
+      if ($item->_source->event->event_id !== $lastEventId) {
+        $ids[] = $item->_source->id;
+        $searchAfter = [$item->_source->event->event_id, $item->_source->id];
+      }
+    }
+    return [
+      'ids' => $ids,
+      'search_after' => $searchAfter,
+    ];
+  }
+
+  /**
    * Apply verification or redet action to all records in the current filter.
    *
    * @param int $nid
@@ -2186,6 +2255,7 @@ class ElasticsearchProxyHelper {
    */
   private static function bulkMoveIds($nid, array $ids, $datasetMappings, $precheck) {
     // Now do the move on the warehouse.
+    iform_load_helpers(['helper_base']);
     $request = helper_base::$base_url . "index.php/services/data_utils/bulk_move";
     $conn = iform_get_connection_details($nid);
     $auth = helper_base::get_read_write_auth($conn['website_id'], $conn['password']);
@@ -2197,13 +2267,13 @@ class ElasticsearchProxyHelper {
     $response = helper_base::http_post($request, $postargs, FALSE);
     // The response should be in JSON.
     header('Content-type: application/json');
-    echo $response['output'];
     $output = json_decode($response['output']);
-    if ($output->code === 200) {
+    if (!$precheck && $output->code === 200) {
       // Set website ID to 0, basically disabling the ES copy of the record
       // until a proper update with correct taxonomy information comes through.
       self::internalModifyListOnES($ids, [], 0);
     }
+    return $response['output'];
   }
 
   /**
@@ -2212,8 +2282,27 @@ class ElasticsearchProxyHelper {
    * Used by the recordsMover button.
    */
   private static function proxyBulkMoveAll($nid) {
-    $ids = self::getOccurrenceIdsFromFilter($nid, $_POST['occurrence:idsFromElasticFilter']);
-    self::bulkMoveIds($nid, $ids, $_POST['datasetMappings'], !empty($_POST['precheck']));
+    $batchInfo = self::getOccurrenceIdPageFromFilter(
+      $nid,
+      $_POST['occurrence:idsFromElasticFilter'],
+      $_POST['search_after'] ?? NULL,
+    );
+    if (empty($batchInfo['ids'])) {
+      echo json_encode([
+        'code' => 204,
+        'message' => 'No Content',
+      ]);
+      return;
+    }
+    $response = self::bulkMoveIds($nid, $batchInfo['ids'], $_POST['datasetMappings'], !empty($_POST['precheck']));
+    // Attach the search_after pagination info to the response.
+    $responseArr = json_decode($response, TRUE);
+    if (!empty($batchInfo['search_after'])) {
+      // Set pagination info, but not if empty array returned (which implies
+      // all done).
+      $responseArr['search_after'] = $batchInfo['search_after'];
+    }
+    echo json_encode($responseArr);
   }
 
   /**
@@ -2222,7 +2311,7 @@ class ElasticsearchProxyHelper {
    * Used by the recordsMover button.
    */
   private static function proxyBulkMoveIds($nid) {
-    self::bulkMoveIds($nid, explode(',', $_POST['occurrence:ids']), $_POST['datasetMappings'], !empty($_POST['precheck']));
+    echo self::bulkMoveIds($nid, explode(',', $_POST['occurrence:ids']), $_POST['datasetMappings'], !empty($_POST['precheck']));
   }
 
 }

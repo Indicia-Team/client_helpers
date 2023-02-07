@@ -1269,7 +1269,9 @@ HTML;
       'done' => 'Records successfully moved. They will be processed so they are available in their new location shortly.',
       'error' => 'An error occurred whilst trying to move the records.',
       'errorNotFilteredToCurrentUser' => 'The records cannot be moved because the current page is not filtered to limit the records to only your data.',
+      'moveProgress' => 'Moved {samples} samples and {occurrences} occurrences.',
       'moving' => 'Moving the records...',
+      'precheckProgress' => 'Checked {samples} samples and {occurrences} occurrences.',
       'preparing' => 'Preparing to move the records...',
       'recordsMoverDialogMessageSelected' => 'You are about to move {1} selected records.',
       'recordsMoverDialogMessageAll' => 'You are about to move the entire list of {1} records.',
@@ -1300,7 +1302,7 @@ HTML;
       <h2>$lang[movingRecords]</h2>
       <div class="output"></div>
       <div class="form-buttons">
-        <button type="button" class="$indicia_templates[buttonHighlightedClass] close-move-dlg">$lang[close]</button>
+        <button type="button" class="$indicia_templates[buttonHighlightedClass] close-move-dlg" disabled="disabled">$lang[close]</button>
       </div>
     </div>
   </div>
@@ -2363,3 +2365,4 @@ HTML;
   }
 
 }
+
