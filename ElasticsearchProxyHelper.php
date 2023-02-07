@@ -451,7 +451,7 @@ class ElasticsearchProxyHelper {
     // Limit response for efficiency.
     $_GET['filter_path'] = 'hits.hits._source.id,hits.hits._source.event.event_id';
     // Maximum 1000 - should be more than the max size of a sample.
-    $query['size'] = 20;
+    $query['size'] = 1000;
     $r = self::curlPost($url, $query);
     $esResponse = json_decode($r);
     unset($_GET['filter_path']);
