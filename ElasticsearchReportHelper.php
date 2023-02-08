@@ -1597,12 +1597,13 @@ HTML;
     ], $options);
     $dataOptions = helper_base::getOptionsForJs($options, [
       'editPath',
+      'id',
       'keyboardNavigation',
       'showSelectedRow',
       'speciesPath',
       'uploadButtonContainerElement',
-      'viewPath',
       'verificationTemplates',
+      'viewPath',
     ], TRUE);
     $verifyUrl = iform_ajaxproxy_url($options['nid'], 'list_verify');
     $userId = hostsite_get_user_field('indicia_user_id');
@@ -1645,14 +1646,14 @@ HTML;
       'saveTemplateAs' => lang::get('Save as'),
       'selected' => lang::get('selected'),
       'showPreview' => lang::get('Preview'),
-      'templateHelpIntroAvailableTokens' => lang::get('Available replacement tokens are as follows:'),
+      'templateHelpIntroAvailableTokens' => lang::get('Available placeholders as follows:'),
       'templateHelpIntro1' => lang::get('You can create and save templates for your verification comments which can be used to provide the comment for future verification actions. ' .
         'To do this, enter the comment in the box as normal, then click the "Save template" button. You will then need to provide a name for your ' .
         'template and click the Save button in the controls that appear.'),
       'templateHelpIntro2' => lang::get('Note that templates saved when accepting records will only be available to select when accepting other records, likewise rejections, ' .
         'queries and redeterminations each have their own set of templates.'),
-      'templateHelpIntro3' => lang::get('You can insert tokens into the text which will be replaced by details about the current record, making your templates more flexible. Use ' .
-        'the preview to check the behaviour of your template tokens before saving the comment.'),
+      'templateHelpIntro3' => lang::get('You can insert placeholders into the text which will be replaced by details about the current record, making your templates more flexible. Use ' .
+        'the preview to check the behaviour of your template placeholders before saving the comment.'),
       'templateHelpTitle' => lang::get('Using templates for your comments'),
       'templateHelpTokenAction' => lang::get('will be replaced by the action you are taking, e.g. "queried" or "accepted as correct".'),
       'templateHelpTokenCommonName' => lang::get('will be replaced by the preferred common name for the organism, or the accepted scientific name if there is no common name available.'),
@@ -1839,7 +1840,7 @@ HTML;
     }
     $r = <<<HTML
 <div id="$options[id]" class="idc-control idc-verificationButtons" data-idc-class="idcVerificationButtons" style="display: none;" data-idc-config="$dataOptions">
-  <div class="verification-buttons-cntr">
+  <div id="$options[id]-buttons" class="verification-buttons-cntr">
     <div class="selection-buttons-placeholder">
       <div class="all-selected-buttons idc-verificationButtons-row">
         Actions:
