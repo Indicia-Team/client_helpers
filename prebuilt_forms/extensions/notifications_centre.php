@@ -84,7 +84,8 @@ class extension_notifications_centre {
    * drop-down that the user can select from.
    *
    * Set @manage_members_page_path to specify the path to a page for managing
-   * activity/group members.
+   * activity/group members, which will be used for notifications to group
+   * admins when there is a pending membership request.
    *
    * Use the @dataSource option to override the default report used to display
    * the grid
@@ -99,7 +100,7 @@ class extension_notifications_centre {
     }
     self::initialise($auth, $args, $tabalias, $options, $path, $indicia_user_id);
     if ($indicia_user_id) {
-      return self::notifications_grid($auth, $options, $args['website_id'], $indicia_user_id); // system
+      return self::notifications_grid($auth, $options, $args['website_id'], $indicia_user_id);
     }
     else {
       return '<p>' . lang::get('The notifications system will be enabled when you fill in at least your surname on your account.') . '</p>';
@@ -120,12 +121,12 @@ class extension_notifications_centre {
         // The url used for direct access to data services.
         self::$dataServicesUrl = data_entry_helper::getProxiedBaseUrl() . "index.php/services/data";
         report_helper::$javascript .= "indiciaData.data_services_url = '" . self::$dataServicesUrl . "';\n";
-        // If the user clicks the Remove Notifications submit button, then a
-        // hidden field called remove-notifications is set. We can check for
+        // If the user clicks the Acknowlegde Notifications submit button, then a
+        // hidden field called acknowledge-notifications is set. We can check for
         // this when the page reloads and then call the remove notifications
         // code.
-        if (!empty($_POST['remove-notifications']) && $_POST['remove-notifications'] == 1) {
-          self::build_notifications_removal_submission($user_id, $args, $options);
+        if (!empty($_POST['acknowledge-notifications']) && $_POST['acknowledge-notifications'] == 1) {
+          self::acknowledgeNotificationsInGrid($user_id, $args, $options);
         }
       }
 
@@ -158,31 +159,24 @@ class extension_notifications_centre {
     // There can be more than one sourcetype, this is supplied as a comma-
     // seperated list and needs putting into an array.
     $sourceType = empty($options['sourceType']) ? [] : explode(',', $options['sourceType']);
-    if (!empty($sourceType)) {
-      report_helper::$javascript .= "indiciaData.preloaded_source_types = '$options[sourceType]';\n";
-    }
     // Reload path to current page.
     $reloadPath = self::getReloadPath();
-    $r = '';
-    $r .= self::get_notifications_html($auth, $sourceType, $website_id, $user_id, $options);
+    $r = self::getNotificationsHtml($auth, $sourceType, $website_id, $user_id, $options);
     $r .= "<form method = \"POST\" action=\"$reloadPath\">\n";
     // Hidden field is set when Remove Notifications for user notifications is
     // clicked, when the page reloads this is then checked for.
-    $r .= '<input type="hidden" name="remove-notifications" class="remove-notifications"/>';
-    // We need to store a list of source types on the grid, so we know what to
-    // clean up when the remove all button is clicked.
-    $r .= '<input style="display:none" name="source-types" value="' . implode($sourceType) . '">';
-    if (!empty($_POST['notifications-' . $options['id'] . '-source_filter'])) {
-      $r .= '<input style="display:none" name="source-filter" value="' . $_POST['notifications-' . $options['id'] . '-source_filter'] . '">';
-    }
-    $r .= self::remove_all_button($options);
+    $r .= '<input type="hidden" name="acknowledge-notifications" class="acknowledge-notifications"/>';
+    // A hidden input to pass the current source type filter through.
+    $r .= '<input type="hidden" name="source-filter"/>';
+    // Plus a hidden input to pass the current filter row values through.
+    $r .= '<input type="hidden" name="filter-row-data"/>';
+    $r .= self::acknowledgeButton($options);
     $r .= "</form>";
-    return $r;
+    return "<div class=\"notifications-cntr\">$r</div>";
   }
 
   /**
-   *
-   * Build a submission that includes the notifications we want to remove.
+   * Acknowledges the notifications that were visible in the grid.
    *
    * @param int $user_id
    *   User's warehouse ID.
@@ -191,7 +185,7 @@ class extension_notifications_centre {
    * @param array $options
    *   Control options.
    */
-  private static function build_notifications_removal_submission($user_id, array $args, array $options) {
+  private static function acknowledgeNotificationsInGrid($user_id, array $args, array $options) {
     // Rebuild the auth token since this is a reporting page but we need to
     // submit data.
     $auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
@@ -210,32 +204,25 @@ class extension_notifications_centre {
     // If the page is using a filter drop-down option, then collect the type of
     // notification to remove from the filter drop-down.
     $extraParams['source_filter'] = empty($_POST['source-filter']) ? 'all' : $_POST['source-filter'];
-    // Get the source types to remove from a hidden field if the user has
-    // configured the page to use a user specified option to specify exactly
-    // what kind of notifications to display.
+    // If the page has a list of source types in the config, also apply that
+    // filter.
     if (!empty($options['sourceType'])) {
       $sourceTypesToClearFromConfig = explode(',', $options['sourceType']);
-    }
-    // Place quotes around the source type letters for the report to accept as
-    // strings.
-    if (!empty($sourceTypesToClearFromConfig)) {
-      if (array_key_exists(0, $sourceTypesToClearFromConfig) && !empty($sourceTypesToClearFromConfig[0])) {
-        foreach ($sourceTypesToClearFromConfig as &$type) {
-          $type = "'$type'";
-        }
-        $extraParams['source_types'] = implode(',', $sourceTypesToClearFromConfig);
+      foreach ($sourceTypesToClearFromConfig as &$type) {
+        $type = "'$type'";
       }
-    }
-    // If the user has supplied some config options for the different source
-    // types.
-    if (!empty($options['sourceTypes'])) {
-      // This disables the param for picking a single source type.
-      $extraParams['source_filter'] = 'all';
+      $extraParams['source_types'] = implode(',', $sourceTypesToClearFromConfig);
     }
     // Only include notifications associated with a set of recording group ids
     // if option is supplied.
     if (!empty($options['groupIds'])) {
       $extraParams['group_ids'] = $options['groupIds'];
+    }
+    if (!empty($_POST['filter-row-data'])) {
+      $filterRowData = json_decode($_POST['filter-row-data'], TRUE);
+      foreach ($filterRowData as $col => $value) {
+        $extraParams[$col] = $value;
+      }
     }
     $notifications = report_helper::get_report_data([
       'dataSource' => $options['dataSource'],
@@ -268,19 +255,24 @@ class extension_notifications_centre {
   }
 
   /*
-   * Draw the remove all notifications button.
+   * Build HTML for the remove notifications button.
    */
-  private static function remove_all_button($options) {
+  private static function acknowledgeButton($options) {
     global $indicia_templates;
-    $title = empty($options['title']) ? lang::get('shown') : lang::get($options['title']);
-    return "<input id=\"remove-all\" onclick=\"return acknowledge_all_notifications('$options[id]')\" type=\"submit\" " .
-        "class=\"$indicia_templates[buttonDefaultClass]\" value=\"" . lang::get('Acknowledge all {1} notifications', $title) . "\"/>\n";
+    $lang = [
+      'buttonCaption' => lang::get('Acknowledge this list of notifications'),
+    ];
+    return <<<HTML
+<input id="remove-all" type="submit"
+       class="$indicia_templates[buttonDefaultClass]" value="$lang[buttonCaption]"
+       onclick="return indiciaFns.acknowledgeNotificationsList('$options[id]')" />
+HTML;
   }
 
   /*
    * Draw the notifications grid.
    */
-  private static function get_notifications_html($auth, $sourceType, $website_id, $user_id, $options) {
+  private static function getNotificationsHtml($auth, $sourceType, $website_id, $user_id, $options) {
     iform_load_helpers(['report_helper']);
     $imgPath = empty(data_entry_helper::$images_path) ? data_entry_helper::relative_client_helper_path() . "../media/images/" : data_entry_helper::$images_path;
     $sendReply = $imgPath . 'nuvola/mail_send-22px.png';
