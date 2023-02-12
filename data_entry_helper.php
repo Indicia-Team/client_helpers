@@ -5129,6 +5129,7 @@ JS;
       'mediaLicenceId' => NULL,
       'responsive' => FALSE,
       'allowAdditionalTaxa' => !empty($options['lookupListId']),
+      'verificationInfoColumns' => FALSE,
     ], $options);
     // SubSamplesPerRow can't be set without speciesControlToUseSubSamples
     $options['subSamplePerRow'] = $options['subSamplePerRow'] && $options['speciesControlToUseSubSamples'];
