@@ -186,6 +186,20 @@ class iform_ebms_sectioned_transects_edit_transect extends iform_sectioned_trans
     $retVal = array_merge(
       parent::get_parameters(),
       	array(
+          [
+            'name' => 'attribute_termlist_language_filter',
+            'caption' => 'Internationalise lookups mode',
+            'description' => 'In lookup custom attribute controls, how should term translation be handled?',
+            'type' => 'select',
+            'lookupValues' => [
+              '0' => 'Show all terms in the termlist',
+              '1' => 'Show only terms in selected language',
+              'clientI18n' => 'Show only preferred terms but enable localisation
+              (e.g. Drupal or Indicia translation)',
+            ],
+            'default' => '0',
+            'group' => 'User Interface',
+          ],
       		array(
       				'name' => 'country_configuration',
       				'caption' => 'Country specific configuration',
@@ -620,7 +634,7 @@ class iform_ebms_sectioned_transects_edit_transect extends iform_sectioned_trans
     $r .= '</div>'; // controls
     data_entry_helper::enable_validation('input-form');
     if (function_exists('drupal_set_breadcrumb')) {
-      $breadcrumb = []
+      $breadcrumb = [];
       $breadcrumb[] = l(lang::get('Home'), '<front>');
       $breadcrumb[] = l(lang::get('Sites'), $args['sites_list_path']);
       if ($settings['locationId'])
@@ -849,13 +863,17 @@ class iform_ebms_sectioned_transects_edit_transect extends iform_sectioned_trans
     $bottom = '';
     $bottomBlocks = explode("\n", isset($args['bottom_blocks']) ? $args['bottom_blocks'] : '');
     foreach ($bottomBlocks as $block) {
-      $bottom .= get_attribute_html($settings['attributes'], $args, array('extraParams'=>$auth['read'], 'disabled' => $settings['canEditBody'] ? '' : ' disabled="disabled" '), $block, $blockOptions);
+      $ctrlOptions = array('extraParams'=>$auth['read'], 'disabled' => $settings['canEditBody'] ? '' : ' disabled="disabled" ');
+      $ctrlOptions = self::get_attribute_html_termlist_lang_options($ctrlOptions, $args['attribute_termlist_language_filter'], $args['language']);
+      $bottom .= get_attribute_html($settings['attributes'], $args, $ctrlOptions, $block, $blockOptions);
     }
     // other blocks to go at the top, next to the map
     if(isset($args['site_help']) && $args['site_help'] != ''){
       $r .= '<p class="ui-state-highlight page-notice ui-corner-all">'.t($args['site_help']).'</p>';
     }
-    $r .= get_attribute_html($settings['attributes'], $args, array('extraParams'=>$auth['read']), null, $blockOptions);
+    $ctrlOptions2 = array('extraParams'=>$auth['read']);
+    $ctrlOptions2 = self::get_attribute_html_termlist_lang_options($ctrlOptions2, $args['attribute_termlist_language_filter'], $args['language']);
+    $r .= get_attribute_html($settings['attributes'], $args, $ctrlOptions2, null, $blockOptions);
     $r .= '</fieldset>';
     $r .= "</div>"; // left
     $r .= '<div class="right" style="width: 44%">';
@@ -962,8 +980,9 @@ $('#delete-transect').click(deleteSurvey);
                   $blockOptions[$tokens[0]][$optvalue[0]] = $optvalue[1];
               }
           }
-
-          $r .= get_attribute_html($settings['section_attributes'], $args, array('extraParams'=>$auth['read'], 'disabled' => $settings['canEditBody'] ? '' : ' disabled="disabled" '), null, $blockOptions);
+          $ctrlOptions = array('extraParams'=>$auth['read'], 'disabled' => $settings['canEditBody'] ? '' : ' disabled="disabled" ');
+          $ctrlOptions = self::get_attribute_html_termlist_lang_options($ctrlOptions, $args['attribute_termlist_language_filter'], $args['language']);
+          $r .= get_attribute_html($settings['section_attributes'], $args, $ctrlOptions, null, $blockOptions);
           if ($settings['canEditBody']) {
               if (lang::get('LANG_DATA_PERMISSION') !== 'LANG_DATA_PERMISSION') {
                   $r .= '<p>' . lang::get('LANG_DATA_PERMISSION') . '</p>';
@@ -973,6 +992,27 @@ $('#delete-transect').click(deleteSurvey);
           $r .= '</fieldset></form>';
           $r .= '</div>';
           return $r;
+  }
+
+  /**
+   * Provide the correct control options depending on the method we want to use to display the termlist's language.
+   * 
+   * @param array $ctrlOptions Array of options for the control.
+   * @param array $attributeTermlistLanguageFilter String indicates the mode to use for the termlist 
+   * 
+   * @return array Altered version of the control options.
+   */
+  protected static function get_attribute_html_termlist_lang_options($ctrlOptions, $attributeTermlistLanguageFilter, $language) {
+    if (isset($attributeTermlistLanguageFilter)) {
+      if ($attributeTermlistLanguageFilter === '1') {
+        $ctrlOptions['language'] = iform_lang_iso_639_2($language);
+      }
+      elseif ($attributeTermlistLanguageFilter === 'clientI18n') {
+        $ctrlOptions['extraParams']['preferred'] = 't';
+        $ctrlOptions['translate'] = 't';
+      }
+    }
+    return $ctrlOptions;
   }
 
   protected static function get_your_route_tab($auth, $args, $settings) {
