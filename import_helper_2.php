@@ -404,12 +404,12 @@ class import_helper_2 extends helper_base {
     $data = $writeAuth + [
       'data-file' => $fileName,
     ];
-    if (!empty(trim($params['description']))) {
+    if (!empty(trim($params['description'] ?? ''))) {
       $data['save-import-record'] = json_encode([
         'description' => trim($params['description']),
       ]);
     }
-    if (!empty(trim($params['importTemplateTitle']))) {
+    if (!empty(trim($params['importTemplateTitle'] ?? ''))) {
       $data['save-import-template'] = json_encode([
         'title' => trim($params['importTemplateTitle']),
         'forceTemplateOverwrite' => $params['forceTemplateOverwrite'],
@@ -429,12 +429,12 @@ class import_helper_2 extends helper_base {
         return [
           'status' => 'conflict',
           'msg' => $output['msg'],
-          'title' => trim($params['importTemplateTitle']),
+          'title' => trim($params['importTemplateTitle'] ?? ''),
         ];
       }
       else {
         \Drupal::logger('iform')->notice('Error in importChunk: ' . var_export($response, TRUE));
-        throw new exception(isset($output['msg']) ? $output['msg'] : $response['output']);
+        throw new exception($output['msg'] ?? $response['output']);
       }
     }
     return $output;
@@ -1424,17 +1424,17 @@ HTML;
     }
     if ($options['entity'] === 'sample'
         && isset($globalValues['sample:sample_method_id'])
-        && trim($globalValues['sample:sample_method_id']) !== '') {
+        && trim($globalValues['sample:sample_method_id'] ?? '') !== '') {
       $get['sample_method_id'] = trim($globalValues['sample:sample_method_id']);
     }
     elseif ($options['entity'] === 'location'
         && isset($globalValues['location:location_type_id'])
-        && trim($globalValues['location:location_type_id']) !== '') {
+        && trim($globalValues['location:location_type_id'] ?? '') !== '') {
       $get['location_type_id'] = trim($globalValues['location:location_type_id']);
     }
     elseif ($options['entity'] === 'taxa_taxon_list'
         && isset($globalValues['taxa_taxon_list:taxon_list_id'])
-        && trim($globalValues['taxa_taxon_list:taxon_list_id']) !== '') {
+        && trim($globalValues['taxa_taxon_list:taxon_list_id'] ?? '') !== '') {
       $get['taxon_list_id'] = trim($globalValues['taxa_taxon_list:taxon_list_id']);
     }
     if ($requiredOnly) {
