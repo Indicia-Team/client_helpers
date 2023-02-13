@@ -1146,6 +1146,7 @@ HTML;
     $lang = [
       'columnMappings' => lang::get('Column mappings'),
       'databaseField' => lang::get('Database field'),
+      'dataValuesCopied' => lang::get('This value is copied to this field for all records created.'),
       'deletionExplanation' => lang::get('Existing records will be deleted if the Deleted field is set to "1", "true" or "t".'),
       'existingRecords' => lang::get('Existing records'),
       'fileType' => lang::get('File type'),
