@@ -226,10 +226,13 @@ TXT;
       'getErrorFileUrl' => helper_base::$base_url . 'index.php/services/import_2/get_errors_file',
       'readAuth' => $auth['read'],
       'writeAuth' => $auth['write_tokens'],
+      'fixedValues' => [],
       'entity' => 'occurrence',
-      'fixedValues' => self::getDefaultFixedValues($auth),
     ], $args);
-    $options['fixedValues'] = get_options_array_with_user_data($options['fixedValues']);
+    if (!empty($options['fixedValues'])) {
+      $options['fixedValues'] = get_options_array_with_user_data($options['fixedValues']);
+    }
+    $options['fixedValues'] = array_merge($options['fixedValues'], self::getAdditionalFixedValues($auth, $options['entity']));
     if (!empty($options['fixedValueDefaults'])) {
       $options['fixedValueDefaults'] = get_options_array_with_user_data($options['fixedValueDefaults']);
     }
@@ -366,9 +369,10 @@ TXT;
   }
 
   /**
-   * Retrieve any default fixed values.
+   * Retrieve any additional fixed values.
    *
-   * Values that apply to all rows, e.g. group_id for group linked forms.
+   * Values that apply to all rows, e.g. group_id for group linked forms, or
+   * training mode values.
    *
    * @param array $auth
    *   Authorisation tokens.
@@ -376,8 +380,13 @@ TXT;
    * @return array
    *   Key/value pairs of fixed values.
    */
-  private static function getDefaultFixedValues($auth) {
+  private static function getAdditionalFixedValues(array $auth, $model) {
     $fixedValues = [];
+    // If in training mode, set the flag on the imported records.
+    if (function_exists('hostsite_get_user_field') && hostsite_get_user_field('training')) {
+      $fixedValues['sample:training'] = 't';
+      $fixedValues['occurrence:training'] = 't';
+    }
     if (!empty($_GET['group_id'])) {
       // Loading data into a recording group.
       $group = data_entry_helper::get_population_data([
@@ -389,10 +398,10 @@ TXT;
       ]);
       $group = $group[0];
       if (!empty($model) && $model === 'groups_location') {
-        $presets['groups_location:group_id'] = $_GET['group_id'];
+        $fixedValues['groups_location:group_id'] = $_GET['group_id'];
       }
       else {
-        $presets['sample:group_id'] = $_GET['group_id'];
+        $fixedValues['sample:group_id'] = $_GET['group_id'];
       }
       hostsite_set_page_title(lang::get('Import data into the {1} group', $group['title']));
       // If a single survey specified for this group, then force the data into
@@ -401,7 +410,7 @@ TXT;
       if (!empty($filterdef['survey_list_op']) && $filterdef['survey_list_op'] === 'in' && !empty($filterdef['survey_list'])) {
         $surveys = explode(',', $filterdef['survey_list']);
         if (count($surveys) === 1) {
-          $presets['survey_id'] = $surveys[0];
+          $fixedValues['survey_id'] = $surveys[0];
         }
       }
     }
