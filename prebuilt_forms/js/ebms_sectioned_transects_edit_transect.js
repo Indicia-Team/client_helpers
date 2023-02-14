@@ -541,17 +541,23 @@ MyMousePositionControl=OpenLayers.Class(
   var insert_section_click_handler = function(evt) {
     var current = $('#section-select-route li.selected').html();
     var urlSep = indiciaData.ajaxUrl.indexOf('?') === -1 ? '?' : '&';
+    var dialog1;
     var dialog2 = '<p>Please wait whilst the subsequent sections are renumbered, ' +
         'and the number of sections counter on the Transect changed. ' +
-        'The page will reload automatically when complete.</p>';
+        'The page will reload automatically when complete. ' +
+        '<span class="waiting"></span></p>';
     // TODO reformat for i18n.
     var buttons = {};
     buttons[indiciaData.langStrings.Before] = function() {
-        $('.insert-section').addClass('waiting-button');
-        $(dialog2).dialog({ title: "Please Wait",
-                      buttons: {"OK": function() { $(this).dialog('close');}},
-                      classes: {"ui-dialog": "above-map"},
-            });
+        $(dialog1).dialog('close');
+        // dialog2 prevents user doing anything while we wait.
+        $(dialog2).dialog({
+          title: "Please Wait",
+          modal: true,
+          closeOnEscape: false,
+          open: function () { $(this).parent().find(".ui-dialog-titlebar-close").hide(); },
+          classes: {"ui-dialog": "above-map"},
+        });
         $.ajax({
             url: indiciaData.ajaxUrl + '/insertSection/' + indiciaData.nid + urlSep + 'section=' + current +
                     '&before=true&parent_id=' + $('#location-id').val() +
@@ -564,12 +570,16 @@ MyMousePositionControl=OpenLayers.Class(
           });
       };
     buttons[indiciaData.langStrings.After] =  function() {
-          $('.insert-section').addClass('waiting-button');
-          $(dialog2).dialog({ title: "Please Wait",
-                        buttons: {"OK": function() { $(this).dialog('close');}},
-                        classes: {"ui-dialog": "above-map"},
-              });
-          $.ajax({
+        $(dialog1).dialog('close');
+        // dialog2 prevents user doing anything while we wait.
+        $(dialog2).dialog({
+          title: "Please Wait",
+          modal: true,
+          closeOnEscape: false,
+          open: function () { $(this).parent().find(".ui-dialog-titlebar-close").hide(); },
+          classes: {"ui-dialog": "above-map"},
+        });
+        $.ajax({
               url: indiciaData.ajaxUrl + '/insertSection/' + indiciaData.nid + urlSep + 'section=' + current +
                       '&after=true&parent_id=' + $('#location-id').val() +
                       '&parent_location_type_id=' +  $('#location_type_id').val(),
@@ -583,7 +593,7 @@ MyMousePositionControl=OpenLayers.Class(
     buttons[indiciaData.langStrings.Cancel] = function() {
         $(this).dialog('close');
       };
-    var dialog = $('<p>Do you wish it insert the new route before or after the currently selected section?</p>')
+    dialog1 = $('<p>Do you wish it insert the new route before or after the currently selected section?</p>')
         .dialog({ title: "Insert route",
             classes: {"ui-dialog": "above-map"},
             buttons: buttons,
@@ -647,16 +657,20 @@ MyMousePositionControl=OpenLayers.Class(
     var urlSep = indiciaData.ajaxUrl.indexOf('?') === -1 ? '?' : '&';
     // reformat for i18n, including buttons.
     if(confirm(indiciaData.sectionDeleteConfirm + ' ' + current + '?')) {
+        // Dialog prevents user doing anything while we wait.
         $('<p>Please wait whilst the section and its walk data are removed, ' +
                 'the subsequent sections are renumbered, ' +
                 'the number of sections counter on the Transect changed, ' +
                 'and the transect length is recalculated. ' +
-                'The page will reload automatically when complete.</p>')
-            .dialog({ title: "Please Wait",
-                      buttons: {"OK": function() { $(this).dialog('close');}},
-                      classes: {"ui-dialog": "above-map"},
+                'The page will reload automatically when complete.' +
+                '<span class="waiting"></span></p>')
+            .dialog({
+              title: "Please Wait",
+              modal: true,
+              closeOnEscape: false,
+              open: function () { $(this).parent().find(".ui-dialog-titlebar-close").hide(); },
+              classes: {"ui-dialog": "above-map"},
             });
-        $('.remove-section').addClass('waiting-button');
 
         $.ajax({
             url: indiciaData.ajaxUrl + '/deleteSection/' + indiciaData.nid + urlSep + 'section=' + current +
