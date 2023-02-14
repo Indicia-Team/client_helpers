@@ -77,11 +77,21 @@ class import_helper_2 extends helper_base {
    *   matching data value/matched termlist term ID pairs for a lookup custom
    *   attribute.
    * * importChunkUrl - path to a script that imports the next chunk of records
-   * * getErrorFileUrl - location of the end-point that fetches the errors data file.
-   *   from the temp table into the database.
+   * * getErrorFileUrl - location of the end-point that fetches the errors data
+   *   file.
    * * readAuth - read authorisation tokens.
    * * writeAuth - write authorisation tokens.
-   * * fixedValues - array of fixed key/value pairs that apply to all rows.
+   * * fixedValues - array of fixed key/value pairs that apply to all rows. Can
+   *   also be used to filter the available lookups, by specifying a key/value
+   *   pair where the key is of form
+   *   `<table>:fkFilter:<lookupTable>:<lookupTableFieldToFilter>` and the
+   *   provided value will be applied as a filter. For example, to limit the
+   *   available taxon lists when importing into the locations to list ID 1,
+   *   use `occurrence:fkFilter:taxa_taxon_list:taxon_list_id=1`. To filter the
+   *   location types looked up against when importing samples that link to
+   *   locations, specify `sample:fkFilter:location:location_type_id=n` where
+   *   n is the location type to filter to.
+   *   @todo Document how to get the fixed value field names.
    * * fixedValueDefaults - default values for fixedValues that present a list
    *   of options to the user.
    * * allowUpdates - set to true to enable updating existing rows based on an
@@ -996,6 +1006,7 @@ HTML;
       'findLookupFieldsDone' => 'Finding lookup fields done.',
       'lookupFieldFound' => 'Lookup field found: {1}',
       'lookupMatchingFormNothingToDo' => 'All data values that need to be mapped to an exact term in the database have been successfully automatically matched. Please click Next to continue.',
+      'matchesToLocation' => 'Matches to location',
       'matchesToTaxon' => 'Matches to species or taxon name',
       'matchesToTerm' => 'Matches to term',
       'matchingPanelFor' => 'List of values to match for {1}',
@@ -1006,6 +1017,7 @@ HTML;
       'savedMatches' => 'Matches saved',
       'severalMatches' => 'Several possible matches were found for {1}. Click on the panel below to select the correct match, or search for a match using the search box above.',
       'synOf' => 'Syn. of',
+      'typeLocationNameToSearch' => 'Type the start of a location name to search',
       'typeSpeciesNameToSearch' => 'Type the start of a species or taxon name to search',
     ]);
     $lang = [
