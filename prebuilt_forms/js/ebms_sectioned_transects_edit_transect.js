@@ -566,6 +566,12 @@ MyMousePositionControl=OpenLayers.Class(
             success: function (response) {
                 window.onbeforeunload = null;
                 setTimeout(function() { window.location.href = window.location.href; });
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+              alert('Sorry, something went wrong. Click OK and the page' +
+              'will reload.');
+              window.onbeforeunload = null;
+              setTimeout(function() { window.location.href = window.location.href; });
             }
           });
       };
@@ -587,6 +593,12 @@ MyMousePositionControl=OpenLayers.Class(
               success: function (response) {
                   window.onbeforeunload = null;
                   setTimeout(function() { window.location.href = window.location.href; });
+              },
+              error: function(jqXHR, textStatus, errorThrown) {
+                alert('Sorry, something went wrong. Click OK and the page' +
+                'will reload.');
+                window.onbeforeunload = null;
+                setTimeout(function() { window.location.href = window.location.href; });
               }
             });
       };
@@ -680,6 +692,12 @@ MyMousePositionControl=OpenLayers.Class(
             success: function (response) {
                 window.onbeforeunload = null;
                 setTimeout(function() { window.location.href = window.location.href; });
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+              alert('Sorry, something went wrong. Click OK and the page' +
+              'will reload.');
+              window.onbeforeunload = null;
+              setTimeout(function() { window.location.href = window.location.href; });
             }
         });
     }
