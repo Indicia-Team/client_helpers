@@ -1629,6 +1629,9 @@ HTML;
       'acceptedConsideredCorrect' => lang::get('Accepted :: considered correct'),
       'acceptedCorrect' => lang::get('Accepted :: correct'),
       'all' => lang::get('all'),
+      'applyThisDecisionToParentSample' => lang::get(
+        'Only available for records that are part of a parent sample, such as a transect or timed count on a single date. Click to activate the button then verification ' .
+        'decisions will apply to all unverified records of the same taxon within the parent sample.'),
       'applyTo' => lang::get('Apply to'),
       'applyRedetermination' => lang::get('Apply redetermination'),
       'cancel' => lang::get('Cancel'),
@@ -1672,6 +1675,7 @@ HTML;
       'templateHelpTokenTaxon' => lang::get('will be replaced by the identification name given to the record as originally entered.'),
       'templateHelpClose' => lang::get('Close help'),
       'updatingMultipleWarning' => lang::get('You are updating multiple records!'),
+      'updatingMultipleInParentSampleWarning' => lang::get('This verification decision will also be applied to other records of the same taxon within the parent sample (e.g. within the transect or timed count)!'),
       'upload' => lang::get('Upload'),
       'uploadVerificationDecisions' => lang::get('Upload a file of verification decisions'),
     ];
@@ -1731,16 +1735,18 @@ HTML;
       throw new Exception('[verificationButtons] requires a @taxon_list_id option, or the Indicia setting Master Checklist ID to be set. This ' .
         'is required to provide a list to select the redetermination from.');
     }
+    $btnClass = $indicia_templates['buttonHighlightedClass'];
+    $btnClassDefault = $indicia_templates['buttonDefaultClass'];
     // Work out any extra buttons we need for provided links.
     $optionalLinkArray = [];
     if (!empty($options['editPath'])) {
-      $optionalLinkArray[] = "<a class=\"edit\" title=\"$lang[editThisRecord]\" target=\"_blank\"><span class=\"fas fa-edit\"></span></a>";
+      $optionalLinkArray[] = "<a class=\"edit $btnClass\" title=\"$lang[editThisRecord]\" target=\"_blank\"><span class=\"fas fa-edit\"></span></a>";
     }
     if (!empty($options['viewPath'])) {
-      $optionalLinkArray[] = "<a class=\"view\" target=\"_blank\" title=\"$lang[viewRecordDetails]\" target=\"_blank\"><span class=\"fas fa-file-invoice\"></span></a>";
+      $optionalLinkArray[] = "<a class=\"view $btnClass\" target=\"_blank\" title=\"$lang[viewRecordDetails]\" target=\"_blank\"><span class=\"fas fa-file-invoice\"></span></a>";
     }
     if (!empty($options['speciesPath'])) {
-      $optionalLinkArray[] = "<a class=\"species\" target=\"_blank\" title=\"$lang[viewSpeciesPage]\" target=\"_blank\"><span class=\"fas fa-file\"></span></a>";
+      $optionalLinkArray[] = "<a class=\"species $btnClass\" target=\"_blank\" title=\"$lang[viewSpeciesPage]\" target=\"_blank\"><span class=\"fas fa-file\"></span></a>";
     }
     $optionalLinks = implode("\n  ", $optionalLinkArray);
     // Build some controls for the various forms.
@@ -1791,8 +1797,6 @@ HTML;
       'class' => 'comment-textarea',
       'wrapClasses' => ['not-full-width-lg'],
     ]);
-    $btnClass = $indicia_templates['buttonHighlightedClass'];
-    $btnClassDefault = $indicia_templates['buttonDefaultClass'];
     $uploadButton = empty($options['includeUploadButton']) ? '' : <<<HTML
       <button class="upload-decisions $btnClass" title="$lang[uploadVerificationDecisions]"><span class="fas fa-file-upload"></span>$lang[upload]</button>
 HTML;
@@ -1846,15 +1850,16 @@ HTML;
       <div class="all-selected-buttons idc-verificationButtons-row">
         Actions:
         <span class="fas fa-toggle-on toggle fa-2x" title="Toggle additional status levels"></span>
-        <button class="verify l1 $btnClass" data-status="V" title="$lang[accepted]"><span class="far fa-check-circle status-V"></span></button>
+        <button class="verify l1 $btnClass btn-sm" data-status="V" title="$lang[accepted]"><span class="far fa-check-circle status-V"></span></button>
         <button class="verify l2 $btnClass" data-status="V1" title="$lang[acceptedCorrect]"><span class="fas fa-check-double status-V1"></span></button>
         <button class="verify l2 $btnClass" data-status="V2" title="$lang[acceptedConsideredCorrect]"><span class="fas fa-check status-V2"></span></button>
         <button class="verify $btnClass" data-status="C3" title="$lang[plausible]"><span class="fas fa-check-square status-C3"></span></button>
         <button class="verify l1 $btnClass" data-status="R" title="$lang[notAccepted]"><span class="far fa-times-circle status-R"></span></button>
         <button class="verify l2 $btnClass" data-status="R4" title="$lang[notAcceptedUnableToVerify]"><span class="fas fa-times status-R4"></span></button>
         <button class="verify l2 $btnClass" data-status="R5" title="$lang[notAcceptedIncorrect]"><span class="fas fa-times status-R5"></span></button>
+        <button class="apply-to-parent-sample-contents single-only $btnClass" title="$lang[applyThisDecisionToParentSample]" disabled="disabled"><span class="fas fa-sitemap"></span></button>
         <span class="sep"></span>
-        <button class="redet" title="Redetermine this record"><span class="fas fa-tag"></span></button>
+        <button class="redet $btnClass" title="Redetermine this record"><span class="fas fa-tag"></span></button>
         <button class="query $btnClass" data-query="Q" title="$lang[raiseQuery]"><span class="fas fa-question-circle query-Q"></span></button>
         <div class="multi-only apply-to">
           <span>$lang[applyTo]:</span>
@@ -1877,6 +1882,7 @@ HTML;
     <fieldset>
       <legend><span></span><span></span></legend>
       <p class="alert alert-warning multiple-warning">$lang[updatingMultipleWarning]</p>
+      <p class="alert alert-warning multiple-in-parent-sample-warning">$lang[updatingMultipleInParentSampleWarning]</p>
       <p class="alert alert-info"></p>
       <div class="comment-cntr form-group">
         $commentTools
