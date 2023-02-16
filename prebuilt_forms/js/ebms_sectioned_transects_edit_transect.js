@@ -565,13 +565,13 @@ MyMousePositionControl=OpenLayers.Class(
             dataType: 'json',
             success: function (response) {
                 window.onbeforeunload = null;
-                setTimeout(function() { window.location.href = window.location.href; });
+                setTimeout(function() { window.location.reload(); });
             },
             error: function(jqXHR, textStatus, errorThrown) {
               alert('Sorry, something went wrong. Click OK and the page' +
               'will reload.');
               window.onbeforeunload = null;
-              setTimeout(function() { window.location.href = window.location.href; });
+              setTimeout(function() { window.location.reload(); });
             }
           });
       };
@@ -592,13 +592,13 @@ MyMousePositionControl=OpenLayers.Class(
               dataType: 'json',
               success: function (response) {
                   window.onbeforeunload = null;
-                  setTimeout(function() { window.location.href = window.location.href; });
+                  setTimeout(function() { window.location.reload(); });
               },
               error: function(jqXHR, textStatus, errorThrown) {
                 alert('Sorry, something went wrong. Click OK and the page' +
                 'will reload.');
                 window.onbeforeunload = null;
-                setTimeout(function() { window.location.href = window.location.href; });
+                setTimeout(function() { window.location.reload(); });
               }
             });
       };
@@ -691,13 +691,13 @@ MyMousePositionControl=OpenLayers.Class(
             dataType: 'json',
             success: function (response) {
                 window.onbeforeunload = null;
-                setTimeout(function() { window.location.href = window.location.href; });
+                setTimeout(function() { window.location.reload(); });
             },
             error: function(jqXHR, textStatus, errorThrown) {
               alert('Sorry, something went wrong. Click OK and the page' +
               'will reload.');
               window.onbeforeunload = null;
-              setTimeout(function() { window.location.href = window.location.href; });
+              setTimeout(function() { window.location.reload(); });
             }
         });
     }
