@@ -92,6 +92,8 @@ class DynamicAttrsProxyHelper {
               'label' => '',
               'extraParams' => $readAuth + $extraParams,
               'translate' => $translate,
+              'blankText' => !empty($attr['validation_rules']) && strpos($attr['validation_rules'], 'required') !== FALSE
+                ? lang::get('- please select -') : NULL,
             ]),
           ];
         }
