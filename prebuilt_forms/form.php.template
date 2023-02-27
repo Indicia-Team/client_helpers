@@ -51,12 +51,12 @@ class iform_form_name {
    * @todo rename this method.
    */
   public static function get_<form_name>_definition() {
-    return array(
+    return [
       'title' => '<form title>',
       'category' => '<category title>',
       'helpLink' => '<optional help URL>',
       'description' => '<description>',
-    );
+    ];
   }
 
   /**
@@ -103,10 +103,9 @@ class iform_form_name {
    * via a form post. For example, the following represents a submission
    * structure for a simple sample and 1 occurrence submission.
    * `return data_entry_helper::build_sample_occurrence_submission($values);`
-   * `
+   *
    * @param array $values
    *   Associative array of form data values.
-   *
    * @param array $args
    *   IForm parameters.
    *
