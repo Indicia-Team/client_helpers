@@ -789,6 +789,7 @@ class helper_base {
    *   * defaultStylesheet
    *   * validation
    *   * plupload
+   *   * dmUploader
    *   * uploader
    *   * jqplot
    *   * jqplot_bar
@@ -1026,12 +1027,16 @@ class helper_base {
           ]
         ],
         'uploader' => [
-          'deps' => ['jquery'],
+          'deps' => ['jquery', 'dmUploader'],
+          'javascript' => [
+            self::$js_path . 'uploader.js',
+          ],
+        ],
+        'dmUploader' => [
           'stylesheets' => [
             self::$js_path . 'uploader/dist/css/jquery.dm-uploader.min.css',
           ],
           'javascript' => [
-            self::$js_path . 'uploader.js',
             self::$js_path . 'uploader/dist/js/jquery.dm-uploader.min.js',
           ]
         ],
@@ -1207,6 +1212,7 @@ class helper_base {
             self::$js_path . 'indicia.datacomponents/idc.esDataSource.js',
             self::$js_path . 'indicia.datacomponents/idc.pager.js',
             self::$js_path . 'indicia.datacomponents/jquery.idc.customScript.js',
+            self::$js_path . 'indicia.datacomponents/jquery.idc.runCustomVerificationRulesets.js',
             self::$js_path . 'indicia.datacomponents/jquery.idc.cardGallery.js',
             self::$js_path . 'indicia.datacomponents/jquery.idc.dataGrid.js',
             self::$js_path . 'indicia.datacomponents/jquery.idc.esDownload.js',
