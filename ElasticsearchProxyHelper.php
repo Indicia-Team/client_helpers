@@ -146,9 +146,31 @@ class ElasticsearchProxyHelper {
         self::proxyBulkMoveIds($nid);
         break;
 
+      case 'runcustomruleset':
+        self::proxyRunCustomRuleset($nid);
+        break;
+
       default:
         header("HTTP/1.1 404 Not found");
         echo json_encode(['error' => 'Method not found']);
+    }
+  }
+
+  /**
+   * Retrieve the Elasticsearch endpoint to use.
+   *
+   * @return string
+   *   The endpoint name (e.g. es-occurrences).
+   */
+  private static function getEsEndpoint() {
+    // Request can modify the endpoint, but only if on a list of allowed
+    // endpoints.
+    if (!empty($_GET['endpoint']) && !empty(self::$config['es']['alternative_endpoints'])
+        && in_array($_GET['endpoint'], helper_base::explode_lines(self::$config['es']['alternative_endpoints']))) {
+      return $_GET['endpoint'];
+    }
+    else {
+      return self::$config['es']['endpoint'];
     }
   }
 
@@ -159,15 +181,7 @@ class ElasticsearchProxyHelper {
    *   URL.
    */
   private static function getEsUrl() {
-    // Request can modify the endpoint, but only if on a list of allowed
-    // endpoints.
-    if (!empty($_GET['endpoint']) && !empty(self::$config['es']['alternative_endpoints'])
-        && in_array($_GET['endpoint'], helper_base::explode_lines(self::$config['es']['alternative_endpoints']))) {
-      $endpoint = $_GET['endpoint'];
-    }
-    else {
-      $endpoint = self::$config['es']['endpoint'];
-    }
+    $endpoint = self::getEsEndpoint();
     return self::$config['indicia']['base_url'] . "index.php/services/rest/$endpoint";
   }
 
@@ -2312,6 +2326,24 @@ class ElasticsearchProxyHelper {
    */
   private static function proxyBulkMoveIds($nid) {
     echo self::bulkMoveIds($nid, explode(',', $_POST['occurrence:ids']), $_POST['datasetMappings'], !empty($_POST['precheck']));
+  }
+
+  /**
+   * Proxy method which runs a custom verification ruleset.
+   *
+   * Used by the runCustomVerificationRulesets control.
+   */
+  private static function proxyRunCustomRuleset($nid) {
+    iform_load_helpers(['helper_base']);
+    $alias = self::getEsEndpoint();
+    $rulesetId = $_GET['ruleset_id'];
+    $endpoint = self::getEsEndpoint();
+    $conn = iform_get_connection_details($nid);
+    $readAuth = helper_base::get_read_auth($conn['website_id'], $conn['password']);
+    self::checkPermissionsFilter($_POST, $readAuth, $nid);
+    $url = self::$config['indicia']['base_url'] . "index.php/services/rest/custom_verification_rulesets/$rulesetId/run_request?alias=$alias";
+    $query = self::buildEsQueryFromRequest($_POST);
+    echo self::curlPost($url, $query);
   }
 
 }
