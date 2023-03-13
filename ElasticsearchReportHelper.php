@@ -1312,6 +1312,70 @@ HTML;
   }
 
   /**
+   * A control for running custom verification rulesets.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-runCustomVerificationRulesets
+   */
+  public static function runCustomVerificationRulesets(array $options) {
+    global $indicia_templates;
+    self::checkOptions('runCustomVerificationRulesets', $options, ['source'], []);
+    $dataOptions = helper_base::getOptionsForJs($options, [
+      'id',
+      'source',
+    ], TRUE);
+    $lang = [
+      'customVerificationRulesetIntro' => lang::get('Select the custom verification ruleset to run from the list below. Rules will be applied to all <span class="msg-count"></span> records in the current filter.'),
+      'manageRulesets' => lang::get('Manage rulesets'),
+      'noRulesetsMessage' => lang::get('You have not created any verification rulesets. Click Manage rulesets to get started.'),
+      'runCustomVerificationRuleset' => lang::get('Run a custom verification ruleset'),
+      'runSelectedRuleset' => lang::get('Run selected ruleset'),
+    ];
+    $rules = data_entry_helper::get_population_data([
+      'table' => 'custom_verification_ruleset',
+      'extraParams' => $options['readAuth'] + [
+        'created_by_id' => hostsite_get_user_field('indicia_user_id'),
+        'orderby' => 'title',
+      ],
+    ]);
+    if (empty($rules)) {
+      $rulesSelectUi = "<p>$lang[noRulesetsMessage]</p>";
+    }
+    else {
+      $rulesSelectUi = "<p>$lang[customVerificationRulesetIntro]</p>";
+      $rulesOptions = [];
+      foreach ($rules as $rule) {
+        $rulesOptions[$rule['id']] = $rule['title'];
+      }
+      $rulesSelectUi .= data_entry_helper::radio_group([
+        'fieldname' => 'ruleset-list',
+        'lookupValues' => $rulesOptions,
+      ]);
+    }
+    if (!empty($options['manageRulesetsPagePath'])) {
+      $manageUrl = hostsite_get_url($options['manageRulesetsPagePath']);
+      $manageLink = empty($options['manageRulesetsPagePath'])
+        ? ''
+        : "<a href=\"$manageUrl\" target=\"_blank\" class=\"axaxa $indicia_templates[buttonDefaultClass] manage-rulesets\">$lang[manageRulesets]</a>";
+    }
+    else {
+      $manageLink = '';
+    }
+    $html = <<<HTML
+<button class="btn btn-warning custom-rule-popup-btn">Custom rules...</button>
+<div style="display: none">
+  <div id="$options[id]-dlg-cntr">
+    <h3>$lang[runCustomVerificationRuleset]</h3>
+    $rulesSelectUi
+    <button type="button" class="$indicia_templates[buttonHighlightedClass] run-custom-verification-ruleset" disabled="disabled">$lang[runSelectedRuleset]</button>
+    $manageLink
+  </div>
+</div>
+HTML;
+
+    return self::getControlContainer('runCustomVerificationRulesets', $options, $dataOptions, $html);
+  }
+
+  /**
    * Initialises the JavaScript required for an Elasticsearch data source.
    *
    * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-source
@@ -1638,6 +1702,7 @@ HTML;
       'cancelSaveTemplate' => lang::get('Cancel saving the template'),
       'contactExpert' => lang::get('Contact an expert'),
       'edit' => lang::get('Edit'),
+      'editThisRecord' => 'Edit this record',
       'help' => lang::get('Help'),
       'notAccepted' => lang::get('Not accepted'),
       'notAcceptedIncorrect' => lang::get('Not accepted :: incorrect'),
@@ -1678,6 +1743,8 @@ HTML;
       'updatingMultipleInParentSampleWarning' => lang::get('This verification decision will also be applied to other records of the same taxon within the parent sample (e.g. within the transect or timed count)!'),
       'upload' => lang::get('Upload'),
       'uploadVerificationDecisions' => lang::get('Upload a file of verification decisions'),
+      'viewRecordDetails' => "View this record's details page",
+      'viewSpeciesPage' => 'View species page',
     ];
 
     helper_base::addLanguageStringsToJs('verificationButtons', [
@@ -1689,7 +1756,6 @@ HTML;
       'commentReplyInstruct' => 'Click here to add a publicly visible comment to the record on iRecord.',
       'csvDisallowedMessage' => 'Uploading verification decisions is only allowed when there is a filter that defines the scope of the records you can verify.',
       'duplicateTemplateMsg' => 'A template with that name already exists. Please specify a unique name for your template then save it again, or click Overwrite to update the existing template details.',
-      'editThisRecord'=> 'Edit this record',
       'emailExpertBodyHeader' => 'The following record requires your assistance. Please could you reply to this email ' .
         'with your opininion on whether the record is correct or not. You can reply to this message and it will be ' .
         'forwarded direct to the verifier.',
@@ -1726,8 +1792,6 @@ HTML;
       'saveTemplateErrorMsg' => 'An error occurred when saving your template to the database. Please try later.',
       'templateNameTextRequired' => 'Template details required',
       'uploadError' => 'An error occurred whilst uploading your spreadsheet.',
-      'viewRecordDetails' => "View this record's details page",
-      'viewSpeciesPage' => 'View species page',
       'C3' => 'marked as plausible',
       'DT' => 'redetermined',
     ]);
