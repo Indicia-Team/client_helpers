@@ -1434,7 +1434,7 @@ HTML;
     if (!empty($globalValues['survey_id'])) {
       $get['survey_id'] = trim($globalValues['survey_id']);
     }
-    if ($options['entity'] === 'sample'
+    if (($options['entity'] === 'sample' || $options['entity'] === 'occurrence')
         && isset($globalValues['sample:sample_method_id'])
         && trim($globalValues['sample:sample_method_id'] ?? '') !== '') {
       $get['sample_method_id'] = trim($globalValues['sample:sample_method_id']);

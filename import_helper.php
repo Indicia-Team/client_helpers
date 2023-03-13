@@ -370,7 +370,7 @@ class import_helper extends helper_base {
     if (!empty($settings['useAssociations']) && $settings['useAssociations']) {
       $request .= '&use_associations=true';
     }
-    if ($options['model'] === 'sample'
+    if (($options['model'] === 'sample' || $options['model'] === 'occurrence')
         && isset($settings['sample:sample_method_id'])
         && trim($settings['sample:sample_method_id']) !== '') {
       $request .= '&sample_method_id=' . trim($settings['sample:sample_method_id']);
