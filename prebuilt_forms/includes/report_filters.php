@@ -721,14 +721,19 @@ class filter_quality extends FilterBase {
       ]);
     }
     if (in_array('auto', $ctls)) {
+      $checkOptions = [
+        '' => lang::get('Not filtered'),
+        'P' => lang::get('Only include records that pass all automated checks'),
+        'F' => lang::get('Only include records that fail at least one automated check'),
+      ];
+      if (!empty($options['customRuleCheckFilters'])) {
+        $checkOptions['PC'] = lang::get('Only include records that have not been flagged by one of your custom rules.');
+        $checkOptions['FC'] = lang::get('Only include records that have been flagged by one of your custom rules.');
+      }
       $r .= data_entry_helper::select([
-        'label' => lang::get('Automated checks'),
+        'label' => empty($options['customRuleCheckFilters']) ? lang::get('Automated checks') : lang::get('Automated or custom rule checks'),
         'fieldname' => 'autochecks',
-        'lookupValues' => [
-          '' => lang::get('Not filtered'),
-          'P' => lang::get('Only include records that pass all automated checks'),
-          'F' => lang::get('Only include records that fail at least one automated check'),
-        ],
+        'lookupValues' => $checkOptions,
       ]);
       if (!empty($options['autocheck_rules'])) {
         $ruleOptions = ['' => lang::get('Not filtered')];
@@ -1024,6 +1029,10 @@ JS;
  *     information.
  *   * elasticsearch - set to TRUE to disable search options which are not
  *     compatible with data in elasticsearch.
+ *   * customRuleCheckFilters - set to TRUE if using Elasticsearch and custom
+ *     verification rule tools are available for the user to apply their own
+ *     data checks. Enables options for filtering on the outcome of custom
+ *     rule checks.
  * @param int $website_id
  *   The current website's warehouse ID.
  * @param string $hiddenStuff
@@ -1072,6 +1081,7 @@ function report_filter_panel(array $readAuth, $options, $website_id, &$hiddenStu
     ],
     'entity' => 'occurrence',
     'elasticsearch' => FALSE,
+    'customRuleCheckFilters' => FALSE,
     'autocheck_rules' => [
       'identification_difficulty',
       'period',
