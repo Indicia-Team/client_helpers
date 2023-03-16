@@ -239,36 +239,25 @@ HTML;
    *
    * @param array $r
    *   Warehouse response.
-   * @param string $nextStep
-   *   Next step name to return if the response indicates success.
+   * @param string $nextState
+   *   Next step state name to return if the response indicates success.
    */
-  private static function echoProxyResponse(array $r, $nextStep) {
-    if (!isset($r['result']) || $r['result'] === FALSE) {
-      if (isset($r['output'])) {
-        $output = json_decode($r['output']);
-        // If something broken and not JSON in response, still return something.
-        if (!$output) {
-          $output = [
-            'status' => 'error',
-            'error' => $output,
-          ];
-        }
+  private static function echoProxyResponse(array $r, $nextState) {
+    if (isset($r['output'])) {
+      $output = json_decode($r['output'], TRUE);
+      if ($output) {
+        $output['nextState'] = $nextState;
       }
-      else {
-        // Something really broken - no response output.
-        $output = [
-          'status' => 'error',
-          'error' => 'An error occurred during validation of the spreadsheet contents.',
-        ];
-      }
-      echo json_encode($output);
     }
-    else {
-      echo json_encode([
-        'status' => 'ok',
-        'nextState' => $nextStep,
-      ]);
+    if (empty($output)) {
+      // Something really broken - no response output.
+      $output = [
+        'status' => 'error',
+        'error' => 'An error occurred during validation of the spreadsheet contents.',
+        'response' => $r,
+      ];
     }
+    echo json_encode($output);
   }
 
   /**
