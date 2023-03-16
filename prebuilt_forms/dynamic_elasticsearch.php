@@ -489,7 +489,7 @@ TXT;
    * @return string
    *   HTML for the container element.
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-runCustomVerificationRulesets
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-runcustomverificationrulesets
    */
   protected static function get_control_runCustomVerificationRulesets($auth, $args, $tabalias, $options) {
     return ElasticsearchReportHelper::runCustomVerificationRulesets(array_merge($options, [
