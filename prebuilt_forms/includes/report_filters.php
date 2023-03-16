@@ -1684,8 +1684,10 @@ function report_filters_full_term_to_sharing_code($term) {
  */
 function report_filters_set_parser_language_strings() {
   report_helper::addLanguageStringsToJs('reportFilterParser', [
-    'AutochecksFailed' => 'Automated checks failed',
-    'AutochecksPassed' => 'Automated checks passed',
+    'AutochecksF' => 'Automated checks failed',
+    'AutochecksP' => 'Automated checks passed',
+    'AutochecksFC' => 'Flagged by a custom verification rule',
+    'AutochecksPC' => 'Not flagged by a custom verification rule',
     'IdentificationDifficulty' => 'Identification difficulty',
     'HasPhotos' => 'Only include records which have photos',
     'HasNoPhotos' => 'Exclude records which have photos',
