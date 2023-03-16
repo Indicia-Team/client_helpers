@@ -1323,7 +1323,12 @@ HTML;
       'id',
       'source',
     ], TRUE);
+    helper_base::addLanguageStringsToJs('runCustomVerificationRulesets', [
+      'areYouSureClear' => 'Are you sure you wish to proceed? This will clear all your custom verification rule flags from the currently loaded set of records. It will not affect flags added by other users.',
+    ]);
     $lang = [
+      'clearResults' => lang::get('Clear previous results'),
+      'clearResultsDescription' => lang::get('Clear the results of any previous ruleset runs.'),
       'customVerificationRulesetIntro' => lang::get('Select the custom verification ruleset to run from the list below. Rules will be applied to all <span class="msg-count"></span> records in the current filter.'),
       'manageRulesets' => lang::get('Manage rulesets'),
       'noRulesetsMessage' => lang::get('You have not created any verification rulesets. Click Manage rulesets to get started.'),
@@ -1368,6 +1373,7 @@ HTML;
     $rulesSelectUi
     <button type="button" class="$indicia_templates[buttonHighlightedClass] run-custom-verification-ruleset" disabled="disabled">$lang[runSelectedRuleset]</button>
     $manageLink
+    <button type="button" class="$indicia_templates[floatRightClass] $indicia_templates[buttonWarningClass] clear-results" title="$lang[clearResultsDescription]">$lang[clearResults]</button>
   </div>
 </div>
 HTML;
@@ -2425,6 +2431,7 @@ HTML;
       throw new Exception(lang::get('An error occurred whilst connecting to Elasticsearch. {1}', $msg));
     }
     curl_close($session);
+    var_export($response);
     $mappingData = json_decode($response, TRUE);
     $mappingData = array_pop($mappingData);
     $mappings = [];
@@ -2437,4 +2444,3 @@ HTML;
   }
 
 }
-

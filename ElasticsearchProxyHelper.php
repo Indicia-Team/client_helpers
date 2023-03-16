@@ -146,6 +146,10 @@ class ElasticsearchProxyHelper {
         self::proxyBulkMoveIds($nid);
         break;
 
+      case 'clearcustomresults':
+        self::proxyClearCustomResults($nid);
+        break;
+
       case 'runcustomruleset':
         self::proxyRunCustomRuleset($nid);
         break;
@@ -2345,6 +2349,17 @@ class ElasticsearchProxyHelper {
     echo self::bulkMoveIds($nid, explode(',', $_POST['occurrence:ids']), $_POST['datasetMappings'], !empty($_POST['precheck']));
   }
 
+  private static function proxyClearCustomResults($nid) {
+    iform_load_helpers(['helper_base']);
+    $alias = self::getEsEndpoint();
+    $conn = iform_get_connection_details($nid);
+    $readAuth = helper_base::get_read_auth($conn['website_id'], $conn['password']);
+    self::checkPermissionsFilter($_POST, $readAuth, $nid);
+    $url = self::$config['indicia']['base_url'] . "index.php/services/rest/custom_verification_rulesets/clear_flags?alias=$alias";
+    $query = self::buildEsQueryFromRequest($_POST);
+    echo self::curlPost($url, $query);
+  }
+
   /**
    * Proxy method which runs a custom verification ruleset.
    *
@@ -2354,7 +2369,6 @@ class ElasticsearchProxyHelper {
     iform_load_helpers(['helper_base']);
     $alias = self::getEsEndpoint();
     $rulesetId = $_GET['ruleset_id'];
-    $endpoint = self::getEsEndpoint();
     $conn = iform_get_connection_details($nid);
     $readAuth = helper_base::get_read_auth($conn['website_id'], $conn['password']);
     self::checkPermissionsFilter($_POST, $readAuth, $nid);
