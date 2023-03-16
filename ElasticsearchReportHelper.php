@@ -1325,6 +1325,10 @@ HTML;
     ], TRUE);
     helper_base::addLanguageStringsToJs('runCustomVerificationRulesets', [
       'areYouSureClear' => 'Are you sure you wish to proceed? This will clear all your custom verification rule flags from the currently loaded set of records. It will not affect flags added by other users.',
+      'clearResults' => 'Clear existing results',
+      'clearResultsDoneMessage' => '{1} records had their flags removed.',
+      'processComplete' => 'Processing complete',
+      'processCompleteMessage' => 'The custom verification rules have been applied. {1} records were checked.',
     ]);
     $lang = [
       'clearResults' => lang::get('Clear previous results'),
@@ -1332,6 +1336,7 @@ HTML;
       'customVerificationRulesetIntro' => lang::get('Select the custom verification ruleset to run from the list below. Rules will be applied to all <span class="msg-count"></span> records in the current filter.'),
       'manageRulesets' => lang::get('Manage rulesets'),
       'noRulesetsMessage' => lang::get('You have not created any verification rulesets. Click Manage rulesets to get started.'),
+      'processing' => lang::get('Processing'),
       'runCustomVerificationRuleset' => lang::get('Run a custom verification ruleset'),
       'runSelectedRuleset' => lang::get('Run selected ruleset'),
     ];
@@ -1374,6 +1379,12 @@ HTML;
     <button type="button" class="$indicia_templates[buttonHighlightedClass] run-custom-verification-ruleset" disabled="disabled">$lang[runSelectedRuleset]</button>
     $manageLink
     <button type="button" class="$indicia_templates[floatRightClass] $indicia_templates[buttonWarningClass] clear-results" title="$lang[clearResultsDescription]">$lang[clearResults]</button>
+    <div class="progress-cntr" style="display: none">
+      $lang[processing]
+      <div class="unknown-time-progressbar">
+        <div></div>
+      </div>
+    </div>
   </div>
 </div>
 HTML;
