@@ -1,4 +1,8 @@
 jQuery(document).ready(($) => {
+
+  // Track the grid refs on the map.
+  indiciaData.gridRefsOnMap = [];
+
   // Configure Font Awesome icons on the selection drop-down options.
   $('#custom_verification_ruleset\\:fail_icon, #custom_verification_ruleset\\:fail_icon option').addClass('fa');
   const iconClasses = {
@@ -28,6 +32,11 @@ jQuery(document).ready(($) => {
 
   // Create a control for dragging a bounding box.
   mapInitialisationHooks.push(function(div) {
+    indiciaData.displayLayer = new OpenLayers.Layer.Vector('Ruleset geography limits', {
+      style: { strokeColor: 'blue', strokeWidth: 2, fillColor: 'blue', fillOpacity: 0.3 },
+      sphericalMercator: true
+    });
+    div.map.addLayer(indiciaData.displayLayer);
     indiciaData.bboxCtrl = new OpenLayers.Control({
       displayClass: 'todo',
       title: 'Define limit by bounding box',
@@ -49,16 +58,18 @@ jQuery(document).ready(($) => {
                   );
                   const geom = bounds.toGeometry();
                   indiciaData.bboxFeature = new OpenLayers.Feature.Vector(geom);
-                  div.map.editLayer.removeAllFeatures();
-                  div.map.editLayer.addFeatures([indiciaData.bboxFeature]);
+                  indiciaData.displayLayer.removeAllFeatures();
+                  indiciaData.displayLayer.addFeatures([indiciaData.bboxFeature]);
                   bounds.transform(div.map.projection, 'epsg:4326')
                   $('#geography\\:min_lng').val(bounds.left.toFixed(5));
                   $('#geography\\:min_lat').val(bounds.bottom.toFixed(5));
                   $('#geography\\:max_lng').val(bounds.right.toFixed(5));
                   $('#geography\\:max_lat').val(bounds.top.toFixed(5));
+                  $('#invalid-bbox-message').hide();
+                  $('#save-button').removeAttr('disabled');
                   // Clear the other types of geo limits.
                   $('#geography\\:grid_refs').val('');
-                  // @todo higher geography.
+                  $('#geography\\:location_list\\:sublist *').remove();
                 }
               },
             )
@@ -77,20 +88,89 @@ jQuery(document).ready(($) => {
     if ($("#latlng-collapse").hasClass('in')) {
       indiciaData.bboxCtrl.activate();
     }
-
+    // On startup, draw any grid refs.
+    if ($('#geography\\:grid_refs').val() !== '') {
+      $('#geography\\:grid_refs').change();
+    }
   });
 
   /**
-   * If grid refs input, clear the other entered data.
+   * Handle when grid ref(s) input into the list box.
    */
   $('#geography\\:grid_refs').change(function() {
+    const gridRefs = $('#geography\\:grid_refs').val().toUpperCase().split(/\n/);
+    // Clear other types of geography limit so we only have one.
     $('.lat-lng-input').val('');
+    $('#invalid-bbox-message').hide();
+    $('#save-button').removeAttr('disabled');
     if (indiciaData.bboxFeature) {
-      indiciaData.mapdiv.map.editLayer.removeFeatures([indiciaData.bboxFeature]);
+      indiciaData.displayLayer.removeFeatures([indiciaData.bboxFeature]);
       delete indiciaData.bboxFeature;
     }
-    // @todo also clear higher geography
+    $('#geography\\:location_list\\:sublist *').remove();
+    // Remove deleted grid refs from the map. Walk backwards so we can safely
+    // remove items.
+    for (let i = indiciaData.gridRefsOnMap.length - 1; i >= 0; i--) {
+      const gridRef = indiciaData.gridRefsOnMap[i];
+      if (gridRefs.indexOf(gridRef) === -1) {
+        indiciaData.mapdiv.removeAllFeatures(indiciaData.displayLayer, 'gridRef:' + gridRef);
+        var index = indiciaData.gridRefsOnMap.indexOf(gridRef);
+        if (index > -1) {
+          indiciaData.gridRefsOnMap.splice(index, 1);
+        }
+      }
+    }
+    // Add new grid refs to the map.
+    $.each(gridRefs, function(idx, gridRef) {
+      if (gridRef.trim() !== '' && indiciaData.gridRefsOnMap.indexOf(gridRef) === -1) {
+        $.ajax({
+          dataType: 'jsonp',
+          url: indiciaData.warehouseUrl + 'index.php/services/spatial/sref_to_wkt',
+          data: 'sref=' + gridRef +
+            '&system=' + $('#imp-sref-system').val() +
+            '&mapsystem=' + indiciaFns.projectionToSystem(indiciaData.mapdiv.map.projection, false)
+        })
+        .done((data) => {
+          const parser = new OpenLayers.Format.WKT();
+          const feature = parser.read(data.mapwkt);
+          feature.attributes.type = 'gridRef:' + gridRef;
+          indiciaData.displayLayer.addFeatures([feature]);
+          indiciaData.gridRefsOnMap.push(gridRef);
+        });
+      }
+    });
   });
+
+  /**
+   * Returns true if there is a fully specified bounding box.
+   */
+  function hasValidBoundingBox() {
+    const minLng = $('#geography\\:min_lng').val().trim();
+    const minLat = $('#geography\\:min_lat').val().trim();
+    const maxLng = $('#geography\\:max_lng').val().trim();
+    const maxLat = $('#geography\\:max_lat').val().trim();
+    const hasBbox = minLng !== '' && minLat !== '' && maxLng !== '' && maxLat !== '';
+    let isValid = true;
+    isValid = isValid && (minLng === '' || !isNaN(minLng));
+    isValid = isValid && (minLat === '' || !isNaN(minLat));
+    isValid = isValid && (maxLng === '' || !isNaN(maxLng));
+    isValid = isValid && (maxLat === '' || !isNaN(maxLat));
+    isValid = isValid && (minLng === '' || parseFloat(minLng) >= -180);
+    isValid = isValid && (maxLng === '' || parseFloat(maxLng) <= 180);
+    isValid = isValid && (minLat === '' || parseFloat(minLat) >= -90);
+    isValid = isValid && (maxLat === '' || parseFloat(maxLat) <= 90);
+    isValid = isValid && (minLng === '' || maxLng === '' || parseFloat(minLng) < parseFloat(maxLng));
+    isValid = isValid && (minLat === '' || maxLat === '' || parseFloat(minLat) < parseFloat(maxLat));
+    if (isValid) {
+      // Hide the validation message.
+      $('#invalid-bbox-message').hide();
+      $('#save-button').removeAttr('disabled');
+    } else {
+      $('#invalid-bbox-message').show();
+      $('#save-button').attr('disabled', true);
+    }
+    return hasBbox && isValid;
+  }
 
   /**
    * Lat long data entered for the limits.
@@ -98,14 +178,12 @@ jQuery(document).ready(($) => {
    * Clears other data. Draws a bounding box if all values available.
    */
   $('.lat-lng-input').change(function() {
-    indiciaData.mapdiv.map.editLayer.removeAllFeatures();
+    indiciaData.displayLayer.removeAllFeatures();
+    // Clear other types of geography limit so we only have one.
     $('#geography\\:grid_refs').val('');
-    // @todo also clear higher geography
+    $('#geography\\:location_list\\:sublist *').remove();
     // Draw a bounding box if we have a complete one to draw.
-    if ($('#geography\\:min_lng').val().trim() !== '' &&
-        $('#geography\\:min_lat').val().trim() !== '' &&
-        $('#geography\\:max_lng').val().trim() !== '' &&
-        $('#geography\\:max_lat').val().trim()) {
+    if (hasValidBoundingBox()) {
       let bounds = new OpenLayers.Bounds(
         $('#geography\\:min_lng').val().trim(),
         $('#geography\\:min_lat').val().trim(),
@@ -114,7 +192,7 @@ jQuery(document).ready(($) => {
       );
       bounds.transform('epsg:4326', indiciaData.mapdiv.map.projection);
       indiciaData.bboxFeature = new OpenLayers.Feature.Vector(bounds.toGeometry());
-      indiciaData.mapdiv.map.editLayer.addFeatures([indiciaData.bboxFeature]);
+      indiciaData.displayLayer.addFeatures([indiciaData.bboxFeature]);
     }
   });
 
@@ -135,9 +213,18 @@ jQuery(document).ready(($) => {
     });
   });
 
+  // Addition of a location for a higher geography limit on the rule.
+  $('#geography\\:location_list\\:add').click(() => {
+    // Clear other types of geography limit so we only have one.
+    $('#geography\\:grid_refs').val('');
+    $('.lat-lng-input').val('');
+    $('#invalid-bbox-message').hide();
+    $('#save-button').removeAttr('disabled');
+  });
+
   // Delete button prompt.
   $('#delete-button').click(function(e) {
-    if (!confirm("Are you sure you want to delete this location?")) {
+    if (!confirm(indiciaData.lang.customVerificationRulesetEdit.areYouSureDelete)) {
       e.preventDefault();
       return false;
     }

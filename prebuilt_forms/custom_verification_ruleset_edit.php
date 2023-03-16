@@ -95,6 +95,9 @@ class iform_custom_verification_ruleset_edit {
     if (!empty($_GET['custom_verification_ruleset_id'])) {
       self::loadExistingRuleset($_GET['custom_verification_ruleset_id'], $auth);
     }
+    helper_base::addLanguageStringsToJs('customVerificationRulesetEdit', [
+      'areYouSureDelete' => 'Are you sure you want to delete this ruleset?',
+    ]);
     $hiddenValues = <<<HTML
   $auth[write]
   <input type="hidden" name="website_id" value="$args[website_id]" />
@@ -177,7 +180,7 @@ HTML;
       }
       $systemCntrl = data_entry_helper::sref_system_select([
         'fieldname' => 'geography:grid_ref_system',
-        'id' => 'imp-sref',
+        'id' => 'imp-sref-system',
         'label' => lang::get('Grid reference system'),
         'systems' => $systems,
       ]);
@@ -282,7 +285,7 @@ HTML;
     $mapCol = map_helper::map_panel([
       'readAuth' => $auth['read'],
       'presetLayers' => ['osm'],
-      'editLayer' => TRUE,
+      'editLayer' => FALSE,
       'layers' => [],
       'initial_lat' => $config->get('map_centroid_lat'),
       'initial_long' => $config->get('map_centroid_long'),
@@ -324,12 +327,13 @@ HTML;
   private static function getSubmitButtons(array $args) {
     global $indicia_templates;
     $lang = [
+      'delete' => lang::get('Delete'),
       'save' => lang::get('Save'),
     ];
     $r = "<input type=\"submit\" class=\"$indicia_templates[buttonDefaultClass]\" id=\"save-button\" value=\"$lang[save]\" />\n";
-    if (!empty(data_entry_helper::$entity_to_load['custom_verificaton_ruleset:id'])) {
+    if (!empty(data_entry_helper::$entity_to_load['custom_verification_ruleset:id'])) {
       // Use a button here, not input, as Chrome does not post the input value.
-      $r .= "<button type=\"submit\" class=\"$indicia_templates[buttonWarningClass] id=\"delete-button\" name=\"delete-button\" value=\"delete\" >$lang[delete]</button>\n";
+      $r .= "<button type=\"submit\" class=\"$indicia_templates[buttonWarningClass]\" id=\"delete-button\" name=\"delete-button\" value=\"delete\" >$lang[delete]</button>\n";
     }
     return $r;
   }
@@ -456,6 +460,7 @@ HTML;
       ],
     ]);
     $lang = [
+      'bboxInvalid' => lang::get('The entered coordinates are invalid.'),
       'instruct' => lang::get('Enter coordinates or drag a box on the map'),
     ];
     return <<<HTML
@@ -473,6 +478,7 @@ HTML;
   <div class="col-md-4"></div>
   <div class="col-md-4">$minLatInput</div>
 </div>
+<p id="invalid-bbox-message" class="alert alert-danger" style="display: none">$lang[bboxInvalid]</p>
 HTML;
   }
 
