@@ -58,6 +58,9 @@ $indicia_templates = [
   // Classes applied to <a> when styled like a button.
   'anchorButtonClass' => 'indicia-button',
   'submitButton' => '<input id="{id}" type="submit"{class} name="{name}" value="{caption}" />',
+  // Floats.
+  'floatLeftClass' => 'left',
+  'floatRightClass' => 'right',
   // Message boxes.
   'messageBox' => '<div class="page-notice ui-state-default ui-corner-all">{message}</div>',
   'warningBox' => '<div class="page-notice ui-state-highlight ui-corner-all"><span class="fas fa-exclamation-triangle"></span>{message}</div>',

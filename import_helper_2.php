@@ -1273,6 +1273,7 @@ HTML;
    * Outputs the page that shows import progress.
    */
   private static function doImportPage($options) {
+    global $indicia_templates;
     self::addLanguageStringsToJs('import_helper_2', [
       'cancel' => 'Cancel',
       'completeMessage' => 'The import is complete',
@@ -1324,7 +1325,7 @@ HTML;
   </div>
 </div>
 <div class="alert alert-danger clearfix" id="error-info" style="display: none">
-  <i class="fas fa-exclamation-triangle fa-2x pull-right"></i>
+  <i class="fas fa-exclamation-triangle fa-2x $indicia_templates[floatRightClass]"></i>
 </div>
 <div style="display: none">
   <div id="template-title-form">
