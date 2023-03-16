@@ -476,7 +476,7 @@ class iform_pollenator_gallery {
 	$svcUrl = data_entry_helper::$base_url.'/index.php/services';
     $language = iform_lang_iso_639_2($args['language']);
 
-	drupal_add_js(drupal_get_path('module', 'iform') .'/media/js/jquery.form.js', 'module');
+	drupal_add_js(\Drupal::service('extension.path.resolver')->getPath('module', 'iform') .'/media/js/jquery.form.js', 'module');
 	data_entry_helper::link_default_stylesheet();
 	data_entry_helper::add_resource('jquery_ui');
 	if($args['language'] != 'en')
@@ -2023,7 +2023,7 @@ addCollection = function(index, attributes, geom, first){
   												case 'I':
   												case 'U':
 													background=src;
-													src = '".drupal_get_path('module', 'iform')."/client_helpers/prebuilt_forms/images/boundary-doubtful.png';
+													src = '".\Drupal::service('extension.path.resolver')->getPath('module', 'iform')."/client_helpers/prebuilt_forms/images/boundary-doubtful.png';
 												case 'A':
 												case 'C':
 												case 'R':
@@ -2051,13 +2051,13 @@ addCollection = function(index, attributes, geom, first){
 										container.empty().removeClass('loading').data('image',imageData[j]);
 										var img = new Image();
 										var background = '".(data_entry_helper::$base_url).(data_entry_helper::$indicia_upload_path)."thumb-'+imageData[j].path;
-  										var src = '".drupal_get_path('module', 'iform')."/client_helpers/prebuilt_forms/images/boundary-unknown.png';
+  										var src = '".\Drupal::service('extension.path.resolver')->getPath('module', 'iform')."/client_helpers/prebuilt_forms/images/boundary-unknown.png';
   										if(container.data('determination')!==false){
 											switch(container.data('determination').determination_type){
 												case 'B':
   												case 'I':
   												case 'U':
-													src = '".drupal_get_path('module', 'iform')."/client_helpers/prebuilt_forms/images/boundary-doubtful.png';
+													src = '".\Drupal::service('extension.path.resolver')->getPath('module', 'iform')."/client_helpers/prebuilt_forms/images/boundary-doubtful.png';
 													break;
 												case 'A':
 												case 'C':
@@ -2106,7 +2106,7 @@ addCollection = function(index, attributes, geom, first){
 								string = (string == '' ? '' : string + ' ') + '('+htmlspecialchars(detData[i].taxon_extra_info)+')';
 							}
 							if(detData[i].determination_type == 'B' || detData[i].determination_type == 'I' || detData[i].determination_type == 'U'){
-								string='<span class=\"flower-dubious\"><img src=\"".$base.drupal_get_path('module', 'iform')."/client_helpers/prebuilt_forms/images/occ_doubtful.png\" style=\"vertical-align: middle;\"></span>'+string;
+								string='<span class=\"flower-dubious\"><img src=\"".$base.\Drupal::service('extension.path.resolver')->getPath('module', 'iform')."/client_helpers/prebuilt_forms/images/occ_doubtful.png\" style=\"vertical-align: middle;\"></span>'+string;
 							} else if(detData[i].determination_type == 'C'){
 								string=string+'<span class=\"flower-valid\"><img src=\"/misc/watchdog-ok.png\" style=\"vertical-align: middle;\"></span>';
 							} else string=string+'<span class=\"flower-ok\"></span>';
@@ -3039,7 +3039,7 @@ runSearch = function(forCollections){
 		  filter: new OpenLayers.Filter.Logical({type: OpenLayers.Filter.Logical.AND, filters: filters})
 	});
 	if(forCollections) {
-		jQuery('#results-collections-results').empty().append('<div class=\"collection-loading-panel\" ><img src=\"".$base.drupal_get_path('module', 'iform')."/media/images/ajax-loader2.gif\" />".lang::get('loading')."...</div>');
+		jQuery('#results-collections-results').empty().append('<div class=\"collection-loading-panel\" ><img src=\"".$base.\Drupal::service('extension.path.resolver')->getPath('module', 'iform')."/media/images/ajax-loader2.gif\" />".lang::get('loading')."...</div>');
 		searchResultsLayer.events.register('featuresadded', {}, function(a1){
 			searchResultsLayer.events.remove('featuresadded');
 			searchResults = clusterStrategy;
@@ -3053,7 +3053,7 @@ runSearch = function(forCollections){
 			}
 		});
 	} else {
-		jQuery('#results-insects-results').empty().append('<div class=\"insect-loading-panel\" ><img src=\"".$base.drupal_get_path('module', 'iform')."/media/images/ajax-loader2.gif\" />".lang::get('loading')."...</div>');
+		jQuery('#results-insects-results').empty().append('<div class=\"insect-loading-panel\" ><img src=\"".$base.\Drupal::service('extension.path.resolver')->getPath('module', 'iform')."/media/images/ajax-loader2.gif\" />".lang::get('loading')."...</div>');
 		searchResultsLayer.events.register('featuresadded', {}, function(a1){
 			searchResultsLayer.events.remove('featuresadded');
 			searchResults = clusterStrategy;

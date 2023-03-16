@@ -711,7 +711,7 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
       }
     data_entry_helper::$javascript.="
     });";
-    drupal_add_js(drupal_get_path('module', 'iform') .'/media/js/jquery.form.js', 'module');
+    drupal_add_js(\Drupal::service('extension.path.resolver')->getPath('module', 'iform') .'/media/js/jquery.form.js', 'module');
     data_entry_helper::add_resource('jquery_form');
     $r .= parent::get_form($args, $nid);
     return $r;

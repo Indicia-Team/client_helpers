@@ -148,7 +148,7 @@ class extension_pantheon {
    *   HTML to include on the page.
    */
   public static function button_links($auth, $args, $tabalias, $options, $path) {
-    drupal_add_js(str_replace('modules/iform', 'libraries/jsPlumb', drupal_get_path('module', 'iform')) . '/jsPlumb.js');
+    drupal_add_js(str_replace('modules/iform', 'libraries/jsPlumb', \Drupal::service('extension.path.resolver')->getPath('module', 'iform')) . '/jsPlumb.js');
     $r = '';
     if (!empty($options['extras'])) {
       $r .= '<ul class="button-links extras">';

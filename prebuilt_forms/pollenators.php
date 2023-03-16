@@ -472,7 +472,7 @@ jQuery('#".$id."').click(function(){
     $readAuth = data_entry_helper::get_read_auth($args['website_id'], $args['password']);
 	$svcUrl = data_entry_helper::$base_url.'/index.php/services';
 
-	drupal_add_js(drupal_get_path('module', 'iform') .'/media/js/jquery.form.js', 'module');
+	drupal_add_js(\Drupal::service('extension.path.resolver')->getPath('module', 'iform') .'/media/js/jquery.form.js', 'module');
 	data_entry_helper::link_default_stylesheet();
 	data_entry_helper::add_resource('jquery_ui');
 	data_entry_helper::add_resource('autocomplete');
@@ -545,7 +545,7 @@ jQuery('#".$id."').click(function(){
     if(substr($base, -1)!='/') $base.='/';
 	$r .= '<script type="text/javascript">
 /* <![CDATA[ */
-document.write("<div class=\"ui-widget ui-widget-content ui-corner-all loading-panel\" ><img src=\"'.$base.drupal_get_path('module', 'iform').'/media/images/ajax-loader2.gif\" />'.lang::get('loading').'...<span class=\"poll-loading-extras\">0</span></div>");
+document.write("<div class=\"ui-widget ui-widget-content ui-corner-all loading-panel\" ><img src=\"'.$base.\Drupal::service('extension.path.resolver')->getPath('module', 'iform').'/media/images/ajax-loader2.gif\" />'.lang::get('loading').'...<span class=\"poll-loading-extras\">0</span></div>");
 document.write("<div class=\"poll-loading-hide\" style=\"display:none;\">");
 /* ]]> */</script>
 ';
@@ -645,7 +645,7 @@ document.write("<div class=\"poll-loading-hide\" style=\"display:none;\">");
     </div>
   </div>
   <div id="cc-1-trailer" class="poll-section-trailer">
-    <div id="cc-1-trailer-image" ><img src="'.$base.drupal_get_path('module', 'iform').'/media/images/exclamation.jpg" /></div>
+    <div id="cc-1-trailer-image" ><img src="'.$base.\Drupal::service('extension.path.resolver')->getPath('module', 'iform').'/media/images/exclamation.jpg" /></div>
     <p>'.lang::get('LANG_Collection_Trailer_Point_1').'</p>
     <p>'.lang::get('LANG_Collection_Trailer_Point_2').'</p>
   </div>
@@ -2382,7 +2382,7 @@ prepPhotoReelForNew = function(notID, id){
 		container = jQuery('[occId='+id+']').empty();
 	if(notID){
 		var img = new Image();
-		var src = '".$base.drupal_get_path('module', 'iform')."/client_helpers/prebuilt_forms/images/boundary-unknown.png';
+		var src = '".$base.\Drupal::service('extension.path.resolver')->getPath('module', 'iform')."/client_helpers/prebuilt_forms/images/boundary-unknown.png';
 		img = jQuery(img).attr('src', src).attr('width', container.width()).attr('height', container.height()).addClass('thumb-image').addClass('unidentified').appendTo(container);
 	}
 }
@@ -2456,7 +2456,7 @@ addExistingToPhotoReel = function(occId){
 					} else if (imageData.length>0) {
 						var img = new Image();
 						var container = jQuery('[occId='+imageData[0].occurrence_id+']');
-						var src = '".$base.drupal_get_path('module', 'iform')."/client_helpers/prebuilt_forms/images/boundary-unknown.png';
+						var src = '".$base.\Drupal::service('extension.path.resolver')->getPath('module', 'iform')."/client_helpers/prebuilt_forms/images/boundary-unknown.png';
 						var background = '".(data_entry_helper::$base_url).(data_entry_helper::$indicia_upload_path)."thumb-'+imageData[0].path;
 						img = jQuery(img).attr('src', src).attr('width', container.width()).attr('height', container.height()).addClass('thumb-image').addClass('unidentified').appendTo(container);
 						img.css('background', 'url('+background+')').css('background-size','100% 100%');
@@ -2617,7 +2617,7 @@ $('#cc-4-valid-photo-button').click(function(){
    </div>
   </div>
   <div id="cc-5-body2" class="ui-accordion-content ui-helper-reset ui-widget-content ui-accordion-content-active poll-section-body">
-    <p><img src="'.$base.drupal_get_path('module', 'iform').'/media/images/exclamation.jpg" /> '.lang::get('LANG_Trailer_Head').' :</p>
+    <p><img src="'.$base.\Drupal::service('extension.path.resolver')->getPath('module', 'iform').'/media/images/exclamation.jpg" /> '.lang::get('LANG_Trailer_Head').' :</p>
     <ul>
       <li>'.lang::get('LANG_Trailer_Point_1').'</li>
       <li>'.lang::get('LANG_Trailer_Point_2').'</li>
