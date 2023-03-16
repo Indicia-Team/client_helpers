@@ -43,7 +43,7 @@ class iform_custom_verification_rules_upload {
   public static function get_custom_verification_rules_upload_definition() {
     return [
       'title' => 'Custom verification rules upload tool',
-      'category' => 'General Purpose Data Entry Forms',
+      'category' => 'Utilities',
       'description' => 'A tool for uploading spreadsheets of verification rules.',
     ];
   }
