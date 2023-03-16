@@ -674,11 +674,11 @@ HTML;
     ], $options);
     if (isset($options['group_id'])) {
       $group_id = $options['group_id'];
-      $implicit = isset($options['implicit']) ? $options['implicit'] : FALSE;
+      $implicit = $options['implicit'] ?? FALSE;
     }
     elseif (!empty($_GET['group_id'])) {
       $group_id = $_GET['group_id'];
-      $implicit = isset($_GET['implicit']) ? $_GET['implicit'] : 'f';
+      $implicit = $_GET['implicit'] ?? 'f';
     }
     if (empty($group_id) && $options['missingGroupIdBehaviour'] !== 'showAll') {
       hostsite_show_message(lang::get('The link you have followed is invalid.'), 'warning', TRUE);
@@ -695,13 +695,13 @@ HTML;
       }
       helper_base::$indiciaData['filter_group_implicit'] = $implicit;
       if ($options['showGroupSummary'] || $options['showGroupPages']) {
-        $groups = data_entry_helper::get_population_data(array(
+        $groups = data_entry_helper::get_population_data([
           'table' => 'group',
           'extraParams' => $options['readAuth'] + [
             'view' => 'detail',
             'id' => $group_id,
           ]
-        ));
+        ]);
         if (!count($groups)) {
           hostsite_show_message(lang::get('The link you have followed is invalid.'), 'warning', TRUE);
           hostsite_goto_page('<front>');
@@ -2274,7 +2274,7 @@ AGG;
           throw new Exception("Control [$controlName] requires exactly one of the following parameters: " . implode(', ', $requiredOption));
         }
       }
-      else if (!isset($options[$requiredOption]) || $options[$requiredOption] === '') {
+      elseif (!isset($options[$requiredOption]) || $options[$requiredOption] === '') {
         throw new Exception("Control [$controlName] requires a parameter called @$requiredOption");
       }
     }
@@ -2442,7 +2442,6 @@ HTML;
       throw new Exception(lang::get('An error occurred whilst connecting to Elasticsearch. {1}', $msg));
     }
     curl_close($session);
-    var_export($response);
     $mappingData = json_decode($response, TRUE);
     $mappingData = array_pop($mappingData);
     $mappings = [];
