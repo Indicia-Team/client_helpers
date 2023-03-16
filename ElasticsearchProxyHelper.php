@@ -2355,7 +2355,7 @@ class ElasticsearchProxyHelper {
     $conn = iform_get_connection_details($nid);
     $readAuth = helper_base::get_read_auth($conn['website_id'], $conn['password']);
     self::checkPermissionsFilter($_POST, $readAuth, $nid);
-    $url = self::$config['indicia']['base_url'] . "index.php/services/rest/custom_verification_rulesets/clear_flags?alias=$alias";
+    $url = self::$config['indicia']['base_url'] . "index.php/services/rest/custom_verification_rulesets/clear-flags?alias=$alias";
     $query = self::buildEsQueryFromRequest($_POST);
     echo self::curlPost($url, $query);
   }
@@ -2372,7 +2372,7 @@ class ElasticsearchProxyHelper {
     $conn = iform_get_connection_details($nid);
     $readAuth = helper_base::get_read_auth($conn['website_id'], $conn['password']);
     self::checkPermissionsFilter($_POST, $readAuth, $nid);
-    $url = self::$config['indicia']['base_url'] . "index.php/services/rest/custom_verification_rulesets/$rulesetId/run_request?alias=$alias";
+    $url = self::$config['indicia']['base_url'] . "index.php/services/rest/custom_verification_rulesets/$rulesetId/run-request?alias=$alias";
     $query = self::buildEsQueryFromRequest($_POST);
     echo self::curlPost($url, $query);
   }
