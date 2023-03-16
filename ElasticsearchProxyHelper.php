@@ -365,11 +365,8 @@ class ElasticsearchProxyHelper {
    * Proxy method to retrieve media and comments for emails.
    *
    * When an email is sent to query a record, the comments and media are
-   * injected into the HTML. Returns an array with a media entry and a comments
+   * injected into the HTML. Echoes an array with a media entry and a comments
    * entry, both containing the required HTML.
-   *
-   * @return array
-   *   Media and comments information.
    */
   private static function proxyMediaAndComments($nid) {
     iform_load_helpers(['VerificationHelper']);
@@ -377,10 +374,10 @@ class ElasticsearchProxyHelper {
     $readAuth = helper_base::get_read_auth($conn['website_id'], $conn['password']);
     $params = array_merge(['sharing' => 'verification'], hostsite_get_node_field_value($nid, 'params'));
     header('Content-type: application/json');
-    echo json_encode(array(
+    echo json_encode([
       'media' => VerificationHelper::getMedia($readAuth, $params, $_GET['occurrence_id'], $_GET['sample_id']),
       'comments' => VerificationHelper::getComments($readAuth, $params, $_GET['occurrence_id'], TRUE),
-    ));
+    ]);
   }
 
   /**
@@ -1342,7 +1339,7 @@ class ElasticsearchProxyHelper {
     self::applyUserFiltersSmpId($definition, $bool);
     self::applyUserFiltersQuality($definition, $bool);
     self::applyUserFiltersIdentificationDifficulty($definition, $bool);
-    self::applyUserFiltersAutoChecks($definition, $bool);
+    self::applyUserFiltersRuleChecks($definition, $bool);
     self::applyUserFiltersAutoCheckRule($definition, $bool);
     self::applyUserFiltersHasPhotos($readAuth, $definition, ['has_photos'], $bool);
     self::applyUserFiltersWebsiteList($definition, $bool);
@@ -1963,24 +1960,44 @@ class ElasticsearchProxyHelper {
   }
 
   /**
-   * Converts an Indicia filter definition auto checks filter to an ES query.
+   * Converts an Indicia filter definition rule checks filter to an ES query.
+   *
+   * Handles both automatic checks and a user's custom verification rule flags.
    *
    * @param array $definition
    *   Definition loaded for the Indicia filter.
    * @param array $bool
    *   Bool clauses that filters can be added to (e.g. $bool['must']).
    */
-  private static function applyUserFiltersAutoChecks(array $definition, array &$bool) {
+  private static function applyUserFiltersRuleChecks(array $definition, array &$bool) {
     $filter = self::getDefinitionFilter($definition, ['autochecks']);
-    if (!empty($filter) && in_array($filter['value'], ['P', 'F'])) {
-      $bool['must'][] = [
-        'match' => [
-          'identification.auto_checks.result' => $filter['value'] === 'P',
-        ],
-      ];
-      if ($filter['value'] === 'P') {
+    if (!empty($filter)) {
+      if (in_array($filter['value'], ['P', 'F'])) {
+        // Pass or Fail options are auto-checks from the Data Cleaner module.
         $bool['must'][] = [
-          'query_string' => ['query' => '_exists_:identification.auto_checks.verification_rule_types_applied'],
+          'match' => [
+            'identification.auto_checks.result' => $filter['value'] === 'P',
+          ],
+        ];
+        if ($filter['value'] === 'P') {
+          $bool['must'][] = [
+            'query_string' => ['query' => '_exists_:identification.auto_checks.verification_rule_types_applied'],
+          ];
+        }
+      }
+      elseif (in_array($filter['value'], ['PC', 'FC'])) {
+        // Pass Custom or Fail Custom options are for custom verification rule
+        // checks.
+        $test = $filter['value'] === 'PC' ? 'must_not' : 'must';
+        $bool[$test][] = [
+          'nested' => [
+            'path' => 'identification.custom_verification_rule_flags',
+            'query' => [
+              'term' => [
+                'identification.custom_verification_rule_flags.created_by_id' => hostsite_get_user_field('indicia_user_id'),
+              ],
+            ],
+          ],
         ];
       }
     }
