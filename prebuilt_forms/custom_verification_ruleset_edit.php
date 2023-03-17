@@ -35,6 +35,7 @@ class iform_custom_verification_ruleset_edit {
       'title' => 'Custom verification ruleset edit form',
       'category' => 'General Purpose Data Entry Forms',
       'description' => 'A form for editing a custom verification ruleset.',
+      'helpLink' => 'https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/custom-verification-rulesets-edit.html',
     ];
   }
 

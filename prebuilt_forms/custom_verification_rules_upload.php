@@ -45,6 +45,7 @@ class iform_custom_verification_rules_upload {
       'title' => 'Custom verification rules upload tool',
       'category' => 'Utilities',
       'description' => 'A tool for uploading spreadsheets of verification rules.',
+      'helpLink' => 'https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/custom-verification-rules-upload.html',
     ];
   }
 
