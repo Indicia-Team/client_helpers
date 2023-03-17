@@ -2349,6 +2349,12 @@ class ElasticsearchProxyHelper {
     echo self::bulkMoveIds($nid, explode(',', $_POST['occurrence:ids']), $_POST['datasetMappings'], !empty($_POST['precheck']));
   }
 
+  /**
+   * Proxy method that receives a filter and clears the user's custom flags.
+   *
+   * All custom verification rule flags created by the user within the records
+   * identified by the current filter will be cleared.
+   */
   private static function proxyClearCustomResults($nid) {
     iform_load_helpers(['helper_base']);
     $alias = self::getEsEndpoint();
