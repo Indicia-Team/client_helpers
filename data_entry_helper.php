@@ -139,44 +139,64 @@ class data_entry_helper extends helper_base {
    *
    * @param array $options
    *   Options array with the following possibilities:
-   *   * fieldname - Required. The name of the database field this control is bound to.
-   *   * inputId - The ID and name given to the visible input (as opposed to the hidden input which receives
-   *     the looked up ID. Defaults to fieldname:captionFieldInEntity.
-   *   * id - Optional. The id to assign to the HTML control. This should be left to its default value for
-   *     integration with other mapping controls to work correctly.
-   *   * default - Optional. The default value to assign to the control. This is overridden when reloading a
-   *     record with existing data for this control.
-   *   * defaultCaption - Optional. The default caption to assign to the control. This is overridden when reloading a
-   *     record with existing data for this control.
+   *   * attributes - JSON object where the properties will be output as HTML
+   *     attribute names on the input and the values will be the HTML escaped
+   *     attribute values.
+   *   * fieldname - Required. The name of the database field this control is
+   *     bound to.
+   *   * inputId - The ID and name given to the visible input (as opposed to
+   *     the hidden input which receives the looked up ID. Defaults to
+   *     fieldname:captionFieldInEntity.
+   *   * id - Optional. The id to assign to the HTML control. This should be
+   *     left to its default value for integration with other mapping controls
+   *     to work correctly.
+   *   * default - Optional. The default value to assign to the control. This
+   *     is overridden when reloading a record with existing data for this
+   *     control.
+   *   * defaultCaption - Optional. The default caption to assign to the
+   *     control. This is overridden when reloading a record with existing data
+   *     for this control.
    *   * class - Optional. CSS class names to add to the control.
-   *   * table - Optional. Table name to get data from for the autocomplete options.
-   *   * report - Optional. Report name to get data from for the autocomplete options. If specified then the table
-   *     option is ignored.
-   *   * captionField - Required. Field to draw values to show in the control from.
-   *   * captionFieldInEntity - Optional. Field to use in the loaded entity to display the caption, when reloading an
-   *     existing record. Defaults
-   *     to the captionField.
-   *   * valueField - Optional. Field to draw values to return from the control from. Defaults
-   *     to the value of captionField.
-   *   * extraParams - Optional. Associative array of items to pass via the query string to the service. This
-   *     should at least contain the read authorisation array.
-   *   * template - Optional. Name of the template entry used to build the HTML for the control. Defaults to
-   *     autocomplete.
-   *   * numValues - Optional. Number of returned values in the drop down list. Defaults to 20.
-   *   * duplicateCheckFields - Optional. Provide an array of field names from the dataset returned from the warehouse.
-   *     Any duplicate values from this list of fields will not be added to the output.
-   *   * simplify - Set to true to simplify the search term by removing punctuation and spaces. Use when the field
-   *     being searched against is also simplified. Deprecated, use taxa_search service instead.
-   *   * warnIfNoMatch - Should the autocomplete control warn the user if they leave the control whilst searching
-   *     and then nothing is matched? Default true.
-   *   * continueOnBlur - Should the autocomplete control continue trying to load values when the user blurs out of the
-   *     control? If true then tabbing out of the control will select the first match. Set to false if you intend to
-   *     allow the user to enter free text which is not matched to a term in the database. Default true.
-   *   * selectMode - Should the autocomplete simulate a select drop down control by adding a drop down arrow after the
-   *     input box which, when clicked, populates the drop down list with all search results to a maximum of numValues.
-   *     This is similar to typing * into the box. Default false.
-   *   * matchContains - If true, then the search looks for matches which contain the search characters. Otherwise, the
-   *     search looks for matches which start with the search characters. Default false.
+   *   * table - Optional. Table name to get data from for the autocomplete
+   *     options.
+   *   * report - Optional. Report name to get data from for the autocomplete
+   *     options. If specified then the table option is ignored.
+   *   * captionField - Required. Field to draw values to show in the control
+   *     from.
+   *   * captionFieldInEntity - Optional. Field to use in the loaded entity to
+   *     display the caption, when reloading an existing record. Defaults to
+   *     the captionField.
+   *   * valueField - Optional. Field to draw values to return from the control
+   *     from. Defaults to the value of captionField.
+   *   * extraParams - Optional. Associative array of items to pass via the
+   *     query string to the service. This should at least contain the read
+   *     authorisation array.
+   *   * template - Optional. Name of the template entry used to build the HTML
+   *     for the control. Defaults to autocomplete.
+   *   * numValues - Optional. Number of returned values in the drop down list.
+   *     Defaults to 20.
+   *   * duplicateCheckFields - Optional. Provide an array of field names from
+   *     the dataset returned from the warehouse. Any duplicate values from
+   *     this list of fields will not be added to the output.
+   *   * simplify - Set to true to simplify the search term by removing
+   *     punctuation and spaces. Use when the field being searched against is
+   *     also simplified. Deprecated, use taxa_search service instead.
+   *   * warnIfNoMatch - Should the autocomplete control warn the user if they
+   *     leave the control whilst searching and then nothing is matched?
+   *     Default true.
+   *   * continueOnBlur - Should the autocomplete control continue trying to
+   *     load values when the user blurs out of the control? If true then
+   *     tabbing out of the control will select the first match. Set to false
+   *     if you intend to allow the user to enter free text which is not
+   *     matched to a term in the database. Default true.
+   *   * selectMode - Should the autocomplete simulate a select drop down
+   *     control by adding a drop down arrow after the input box which, when
+   *     clicked, populates the drop down list with all search results to a
+   *     maximum of numValues. This is similar to typing * into the box.
+   *     Default false.
+   *   * matchContains - If true, then the search looks for matches which
+   *     contain the search characters. Otherwise, the search looks for matches
+   *     which start with the search characters. Default false.
    *
    * @return string
    *   HTML to insert into the page for the autocomplete control.
@@ -205,7 +225,8 @@ class data_entry_helper extends helper_base {
     elseif (!isset($options['defaultCaption'])) {
       $options['defaultCaption'] = '';
     }
-    $options = array_merge(array(
+    $options = array_merge([
+      'attributes' => [],
       'template' => 'autocomplete',
       'url' => parent::getProxiedBaseUrl() . 'index.php/services/' .
         (isset($options['report']) ? 'report/requestReport' : "data/$options[table]"),
@@ -221,7 +242,7 @@ class data_entry_helper extends helper_base {
       'default' => '',
       'matchContains' => FALSE,
       'isFormControl' => TRUE
-    ), $options);
+    ], $options);
     if (isset($options['report'])) {
       $options['extraParams']['report'] = $options['report'] . '.xml';
       $options['extraParams']['reportSource'] = 'local';
@@ -231,8 +252,6 @@ class data_entry_helper extends helper_base {
     $options['selectMode'] = $options['selectMode'] ? 'true' : 'false';
     $options['matchContains'] = $options['matchContains'] ? 'true' : 'false';
     self::add_resource('autocomplete');
-    // Escape the id for jQuery selectors.
-    $escaped_id = self::jq_esc($options['id']);
     // Do stuff with extraParams.
     $sParams = '';
     foreach ($options['extraParams'] as $a => $b) {
@@ -254,6 +273,13 @@ class data_entry_helper extends helper_base {
       $options['duplicateCheck'] = 'true';
       $options['storeDuplicates'] = '';
     }
+    // Handle any custom HTML attributes.
+    $attrArray = [];
+    foreach ($options['attributes'] as $attrName => $attrValue) {
+      $escaped = htmlspecialchars($attrValue);
+      $attrArray[] = "$attrName=\"$escaped\"";
+    }
+    $options['attribute_list'] = implode(' ', $attrArray);
     self::$javascript .= self::apply_replacements_to_template($indicia_templates['autocomplete_javascript'], $options);
     $r = self::apply_template($options['template'], $options);
     return $r;
@@ -5129,6 +5155,7 @@ JS;
       'mediaLicenceId' => NULL,
       'responsive' => FALSE,
       'allowAdditionalTaxa' => !empty($options['lookupListId']),
+      'verificationInfoColumns' => FALSE,
     ], $options);
     // SubSamplesPerRow can't be set without speciesControlToUseSubSamples
     $options['subSamplePerRow'] = $options['subSamplePerRow'] && $options['speciesControlToUseSubSamples'];

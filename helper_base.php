@@ -58,6 +58,9 @@ $indicia_templates = [
   // Classes applied to <a> when styled like a button.
   'anchorButtonClass' => 'indicia-button',
   'submitButton' => '<input id="{id}" type="submit"{class} name="{name}" value="{caption}" />',
+  // Floats.
+  'floatLeftClass' => 'left',
+  'floatRightClass' => 'right',
   // Message boxes.
   'messageBox' => '<div class="page-notice ui-state-default ui-corner-all">{message}</div>',
   'warningBox' => '<div class="page-notice ui-state-highlight ui-corner-all"><span class="fas fa-exclamation-triangle"></span>{message}</div>',
@@ -123,7 +126,7 @@ $indicia_templates = [
   'tree_browser' => '<div{outerClass} id="{divId}"></div><input type="hidden" name="{fieldname}" id="{id}" value="{default}"{class}/>',
   'tree_browser_node' => '<span>{caption}</span>',
   'autocomplete' => '<input type="hidden" class="hidden" id="{id}" name="{fieldname}" value="{default}" />' .
-      '<input id="{inputId}" name="{inputId}" type="text" value="{defaultCaption}" {class} {disabled} {title}/>' . "\n",
+      '<input id="{inputId}" name="{inputId}" type="text" value="{defaultCaption}" {class} {disabled} {title} {attribute_list}/>' . "\n",
   'autocomplete_javascript' => "
 $('input#{escaped_input_id}').change(function() {
   if ($('input#{escaped_id}').data('set-for') !== $('input#{escaped_input_id}').val()) {
@@ -789,6 +792,7 @@ class helper_base {
    *   * defaultStylesheet
    *   * validation
    *   * plupload
+   *   * dmUploader
    *   * uploader
    *   * jqplot
    *   * jqplot_bar
@@ -1026,12 +1030,16 @@ class helper_base {
           ]
         ],
         'uploader' => [
-          'deps' => ['jquery'],
+          'deps' => ['jquery', 'dmUploader'],
+          'javascript' => [
+            self::$js_path . 'uploader.js',
+          ],
+        ],
+        'dmUploader' => [
           'stylesheets' => [
             self::$js_path . 'uploader/dist/css/jquery.dm-uploader.min.css',
           ],
           'javascript' => [
-            self::$js_path . 'uploader.js',
             self::$js_path . 'uploader/dist/js/jquery.dm-uploader.min.js',
           ]
         ],
@@ -1207,10 +1215,12 @@ class helper_base {
             self::$js_path . 'indicia.datacomponents/idc.esDataSource.js',
             self::$js_path . 'indicia.datacomponents/idc.pager.js',
             self::$js_path . 'indicia.datacomponents/jquery.idc.customScript.js',
+            self::$js_path . 'indicia.datacomponents/jquery.idc.runCustomVerificationRulesets.js',
             self::$js_path . 'indicia.datacomponents/jquery.idc.cardGallery.js',
             self::$js_path . 'indicia.datacomponents/jquery.idc.dataGrid.js',
             self::$js_path . 'indicia.datacomponents/jquery.idc.esDownload.js',
             self::$js_path . 'indicia.datacomponents/jquery.idc.leafletMap.js',
+            self::$js_path . 'indicia.datacomponents/jquery.idc.recordsMover.js',
             self::$js_path . 'indicia.datacomponents/jquery.idc.recordDetailsPane.js',
             self::$js_path . 'indicia.datacomponents/jquery.idc.templatedOutput.js',
             self::$js_path . 'indicia.datacomponents/jquery.idc.verificationButtons.js',

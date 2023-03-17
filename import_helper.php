@@ -370,7 +370,7 @@ class import_helper extends helper_base {
     if (!empty($settings['useAssociations']) && $settings['useAssociations']) {
       $request .= '&use_associations=true';
     }
-    if ($options['model'] === 'sample'
+    if (($options['model'] === 'sample' || $options['model'] === 'occurrence')
         && isset($settings['sample:sample_method_id'])
         && trim($settings['sample:sample_method_id']) !== '') {
       $request .= '&sample_method_id=' . trim($settings['sample:sample_method_id']);
@@ -517,7 +517,7 @@ HTML;
     $r .= '</tr></thead><tbody>';
     $importableColCount = 0;
     foreach ($columns as $column) {
-      $column = trim($column);
+      $column = trim($column ?? '');
       if (!empty($column)) {
         if (!in_array($column, ['Number of problems', 'Problem description', 'Row no.', 'Import ID'])) {
           $importableColCount++;
@@ -1120,8 +1120,8 @@ JS;
    */
   private static function columnMachineName($caption) {
     // Just in case first column in a CSV file with BOM, remove it.
-    $bom = pack('H*','EFBBBF');
-    $caption = preg_replace("/^$bom/", '', $caption);
+    $bom = pack('H*', 'EFBBBF');
+    $caption = preg_replace("/^$bom/", '', $caption ?? '');
     return preg_replace('/[^A-Za-z0-9]/', '_', trim($caption));
   }
 
@@ -1145,6 +1145,8 @@ JS;
    *   The name of the column from the CSV file currently being worked on.
    * @param array $autoFieldMappings
    *   An array containing the automatic field mappings for the page.
+   * @param array $fieldMap
+   *   Mappings to captions for this survey dataset.
    * @param bool $includeLookups
    *   Should information on which columns are used for lookup be shown.
    * @param bool $allowDataDeletions
@@ -1187,7 +1189,7 @@ JS;
          * $labelListHeading is an array where the keys are each column we work with concatenated to the heading of the caption we
          * are currently working on.
          */
-        $strippedScreenCaption = str_replace(" (from controlled termlist)","",self::translate_field($field, $caption, $fieldMap));
+        $strippedScreenCaption = str_replace(" (from controlled termlist)", "", self::translate_field($field, $caption, $fieldMap));
         $labelList[$labelListIndex] = strtolower($strippedScreenCaption);
         $labelListIndex++;
         if (isset($labelListHeading[$column . $prefix])) {

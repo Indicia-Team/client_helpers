@@ -3127,7 +3127,7 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue, removeparam) {
     while($consider_date->format('Y') <= $options["year"] && ($weeknumberfilter[1]=='' || $consider_date->format('N')!=$weekstart[1] || $weekno < $weeknumberfilter[1])){
       if($consider_date->format('N')==$weekstart[1]) {
         $weekno++;
-        $r .= "<tr class=\"datarow\">".($options['includeWeekNumber'] ? "<td class=\"weeknum\">".$weekno."</td>" : "")."<td class\"month\">".utf8_encode(date('M', $consider_date->getTimestamp()))."</td>";
+        $r .= "<tr class=\"datarow\">".($options['includeWeekNumber'] ? "<td class=\"weeknum\">".$weekno."</td>" : "")."<td class\"month\">" . t(utf8_encode(date('M', $consider_date->getTimestamp()))) . "</td>";
       }
       $cellContents=$consider_date->format('j');  // day in month.
       $cellclass="";

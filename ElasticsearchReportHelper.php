@@ -116,6 +116,10 @@ class ElasticsearchReportHelper {
       'caption' => 'Group title',
       'description' => 'Title of the recording group the record was submitted to.',
     ],
+    'metadata.import_guid' => [
+      'caption' => 'Import GUID',
+      'description' => 'Unique identifier for the import that this records was added by, if relevant.',
+    ],
     '#event_date#' => [
       'caption' => 'Date',
       'description' => 'Date of the record.',
@@ -325,7 +329,8 @@ class ElasticsearchReportHelper {
     if (!self::$proxyEnabled && !self::$proxyEnableFailed) {
       // Retrieve the Elasticsearch mappings.
       try {
-        self::getMappings($nid);
+        $config = hostsite_get_es_config($nid);
+        self::getMappings($config);
         helper_base::add_resource('datacomponents');
         // Prepare the stuff we need to pass to the JavaScript.
         $mappings = self::$esMappings;
@@ -334,8 +339,8 @@ class ElasticsearchReportHelper {
         helper_base::$indiciaData['esSources'] = [];
         helper_base::$indiciaData['esMappings'] = $mappings;
         helper_base::$indiciaData['gridMappingFields'] = self::MAPPING_FIELDS;
-        $config = hostsite_get_es_config($nid);
         helper_base::$indiciaData['esVersion'] = (int) $config['es']['version'];
+        helper_base::$indiciaData['esScope'] = $config['es']['scope'];
         self::$proxyEnabled = TRUE;
       }
       catch (Exception $e) {
@@ -551,18 +556,16 @@ JS;
    * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-download
    */
   public static function download(array $options) {
+    // Compatibility with legacy config.
+    if (!empty($options['linkToDataGrid'])) {
+      $options['linkToDataControl'] = $options['linkToDataGrid'];
+    }
     self::checkOptions('esDownload', $options,
-      [],
+      [['source', 'linkToDataControl']],
       ['addColumns', 'removeColumns']
     );
-    if (empty($options['source']) && empty($options['linkToDataGrid'])) {
-      throw new Exception('Download control requires a value for either the @source or @linkToDataGrid option.');
-    }
-    if (!empty($options['source']) && !empty($options['linkToDataGrid'])) {
-      throw new Exception('Download control requires only one of the @source or @linkToDataGrid options to be specified.');
-    }
     if (empty($options['source']) && !empty($options['columnsTemplate'])) {
-      throw new Exception('Download control @source option must be specified if @columnsTemplate option is used (cannot be used with @linkToDataGrid).');
+      throw new Exception('Download control @source option must be specified if @columnsTemplate option is used (cannot be used with @linkToDataControl).');
     }
 
     $options = array_merge([
@@ -648,7 +651,7 @@ HTML;
       'buttonContainerElement',
       'columnsTemplate',
       'columnsSurveyId',
-      'linkToDataGrid',
+      'linkToDataControl',
       'removeColumns',
       'source',
     ], TRUE);
@@ -671,11 +674,11 @@ HTML;
     ], $options);
     if (isset($options['group_id'])) {
       $group_id = $options['group_id'];
-      $implicit = isset($options['implicit']) ? $options['implicit'] : FALSE;
+      $implicit = $options['implicit'] ?? FALSE;
     }
     elseif (!empty($_GET['group_id'])) {
       $group_id = $_GET['group_id'];
-      $implicit = isset($_GET['implicit']) ? $_GET['implicit'] : 'f';
+      $implicit = $_GET['implicit'] ?? 'f';
     }
     if (empty($group_id) && $options['missingGroupIdBehaviour'] !== 'showAll') {
       hostsite_show_message(lang::get('The link you have followed is invalid.'), 'warning', TRUE);
@@ -692,13 +695,13 @@ HTML;
       }
       helper_base::$indiciaData['filter_group_implicit'] = $implicit;
       if ($options['showGroupSummary'] || $options['showGroupPages']) {
-        $groups = data_entry_helper::get_population_data(array(
+        $groups = data_entry_helper::get_population_data([
           'table' => 'group',
           'extraParams' => $options['readAuth'] + [
             'view' => 'detail',
             'id' => $group_id,
           ]
-        ));
+        ]);
         if (!count($groups)) {
           hostsite_show_message(lang::get('The link you have followed is invalid.'), 'warning', TRUE);
           hostsite_goto_page('<front>');
@@ -1237,6 +1240,159 @@ HTML;
   }
 
   /**
+   * A button that allows records to be moved from one website to another.
+   *
+   * @return string
+   *   Panel container HTML.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-recordsMover
+   */
+  public static function recordsMover(array $options) {
+    self::checkOptions(
+      'recordsMover',
+      $options,
+      ['datasetMappings', 'linkToDataControl'],
+      ['datasetMappings'],
+    );
+    $options = array_merge([
+      'caption' => 'Move records',
+      'restrictToOwnData' => TRUE,
+    ], $options);
+    $dataOptions = helper_base::getOptionsForJs($options, [
+      'datasetMappings',
+      'id',
+      'linkToDataControl',
+      'restrictToOwnData',
+    ], TRUE);
+    helper_base::addLanguageStringsToJs('recordsMover', [
+      'cannotProceed' => 'Cannot proceed',
+      'done' => 'Records successfully moved. They will be processed so they are available in their new location shortly.',
+      'error' => 'An error occurred whilst trying to move the records.',
+      'errorNotFilteredToCurrentUser' => 'The records cannot be moved because the current page is not filtered to limit the records to only your data.',
+      'moveProgress' => 'Moved {samples} samples and {occurrences} occurrences.',
+      'moving' => 'Moving the records...',
+      'precheckProgress' => 'Checked {samples} samples and {occurrences} occurrences.',
+      'preparing' => 'Preparing to move the records...',
+      'recordsMoverDialogMessageSelected' => 'You are about to move {1} selected records.',
+      'recordsMoverDialogMessageAll' => 'You are about to move the entire list of {1} records.',
+      'warningNothingToDo' => 'There are no selected records to move.',
+    ]);
+    $lang = [
+      'cancel' => lang::get('Cancel'),
+      'close' => lang::get('Close'),
+      'moveRecords' => lang::get($options['caption']),
+      'movingRecords' => lang::get('Moving the records'),
+      'proceed' => lang::get('Proceed'),
+    ];
+    helper_base::add_resource('fancybox');
+    global $indicia_templates;
+    $html = <<<HTML
+<button type="button" class="move-records-btn $indicia_templates[buttonHighlightedClass]">$lang[moveRecords]</button>
+<div style="display: none">
+  <div id="$options[id]-dlg">
+    <div class="pre-move-info">
+      <h2>$lang[moveRecords]</h2>
+      <p class="message"></p>
+      <div class="form-buttons">
+        <button type="button" class="$indicia_templates[buttonHighlightedClass] proceed-move">$lang[proceed]</button>
+        <button type="button" class="$indicia_templates[buttonHighlightedClass] close-move-dlg">$lang[cancel]</button>
+      </div>
+    </div>
+    <div class="post-move-info">
+      <h2>$lang[movingRecords]</h2>
+      <div class="output"></div>
+      <div class="form-buttons">
+        <button type="button" class="$indicia_templates[buttonHighlightedClass] close-move-dlg" disabled="disabled">$lang[close]</button>
+      </div>
+    </div>
+  </div>
+</div>
+HTML;
+    return self::getControlContainer('recordsMover', $options, $dataOptions, $html);
+  }
+
+  /**
+   * A control for running custom verification rulesets.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-runcustomverificationrulesets
+   */
+  public static function runCustomVerificationRulesets(array $options) {
+    global $indicia_templates;
+    self::checkOptions('runCustomVerificationRulesets', $options, ['source'], []);
+    $dataOptions = helper_base::getOptionsForJs($options, [
+      'id',
+      'source',
+    ], TRUE);
+    helper_base::addLanguageStringsToJs('runCustomVerificationRulesets', [
+      'areYouSureClear' => 'Are you sure you wish to proceed? This will clear all your custom verification rule flags from the currently loaded set of records. It will not affect flags added by other users.',
+      'clearResults' => 'Clear existing results',
+      'clearResultsDoneMessage' => '{1} records had their flags removed.',
+      'processComplete' => 'Processing complete',
+      'processCompleteMessage' => 'The custom verification rules have been applied. {1} records were checked.',
+    ]);
+    $lang = [
+      'clearResults' => lang::get('Clear previous results'),
+      'clearResultsDescription' => lang::get('Clear the results of any previous ruleset runs.'),
+      'customVerificationRulesetIntro' => lang::get('Select the custom verification ruleset to run from the list below. Rules will be applied to all <span class="msg-count"></span> records in the current filter.'),
+      'manageRulesets' => lang::get('Manage rulesets'),
+      'noRulesetsMessage' => lang::get('You have not created any verification rulesets. Click Manage rulesets to get started.'),
+      'processing' => lang::get('Processing'),
+      'runCustomVerificationRuleset' => lang::get('Run a custom verification ruleset'),
+      'runSelectedRuleset' => lang::get('Run selected ruleset'),
+    ];
+    $rules = data_entry_helper::get_population_data([
+      'table' => 'custom_verification_ruleset',
+      'extraParams' => $options['readAuth'] + [
+        'created_by_id' => hostsite_get_user_field('indicia_user_id'),
+        'orderby' => 'title',
+      ],
+    ]);
+    if (empty($rules)) {
+      $rulesSelectUi = "<p>$lang[noRulesetsMessage]</p>";
+    }
+    else {
+      $rulesSelectUi = "<p>$lang[customVerificationRulesetIntro]</p>";
+      $rulesOptions = [];
+      foreach ($rules as $rule) {
+        $rulesOptions[$rule['id']] = $rule['title'];
+      }
+      $rulesSelectUi .= data_entry_helper::radio_group([
+        'fieldname' => 'ruleset-list',
+        'lookupValues' => $rulesOptions,
+      ]);
+    }
+    if (!empty($options['manageRulesetsPagePath'])) {
+      $manageUrl = hostsite_get_url($options['manageRulesetsPagePath']);
+      $manageLink = empty($options['manageRulesetsPagePath'])
+        ? ''
+        : "<a href=\"$manageUrl\" target=\"_blank\" class=\"axaxa $indicia_templates[buttonDefaultClass] manage-rulesets\">$lang[manageRulesets]</a>";
+    }
+    else {
+      $manageLink = '';
+    }
+    $html = <<<HTML
+<button class="btn btn-warning custom-rule-popup-btn">Custom rules...</button>
+<div style="display: none">
+  <div id="$options[id]-dlg-cntr">
+    <h3>$lang[runCustomVerificationRuleset]</h3>
+    $rulesSelectUi
+    <button type="button" class="$indicia_templates[buttonHighlightedClass] run-custom-verification-ruleset" disabled="disabled">$lang[runSelectedRuleset]</button>
+    $manageLink
+    <button type="button" class="$indicia_templates[floatRightClass] $indicia_templates[buttonWarningClass] clear-results" title="$lang[clearResultsDescription]">$lang[clearResults]</button>
+    <div class="progress-cntr" style="display: none">
+      $lang[processing]
+      <div class="unknown-time-progressbar">
+        <div></div>
+      </div>
+    </div>
+  </div>
+</div>
+HTML;
+
+    return self::getControlContainer('runCustomVerificationRulesets', $options, $dataOptions, $html);
+  }
+
+  /**
    * Initialises the JavaScript required for an Elasticsearch data source.
    *
    * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-source
@@ -1530,8 +1686,8 @@ HTML;
       'verificationTemplates',
       'viewPath',
     ], TRUE);
-    $userId = hostsite_get_user_field('indicia_user_id');
     $verifyUrl = iform_ajaxproxy_url($options['nid'], 'list_verify');
+    $userId = hostsite_get_user_field('indicia_user_id');
     $commentUrl = iform_ajaxproxy_url($options['nid'], 'occ-comment');
     $redetUrl = iform_ajaxproxy_url($options['nid'], 'list_redet');
     $quickReplyPageAuthUrl = iform_ajaxproxy_url($options['nid'], 'comment_quick_reply_page_auth');
@@ -1554,12 +1710,16 @@ HTML;
       'acceptedConsideredCorrect' => lang::get('Accepted :: considered correct'),
       'acceptedCorrect' => lang::get('Accepted :: correct'),
       'all' => lang::get('all'),
+      'applyThisDecisionToParentSample' => lang::get(
+        'Only available for records that are part of a parent sample, such as a transect or timed count on a single date. Click to activate the button then verification ' .
+        'decisions will apply to all unverified records of the same taxon within the parent sample.'),
       'applyTo' => lang::get('Apply to'),
       'applyRedetermination' => lang::get('Apply redetermination'),
       'cancel' => lang::get('Cancel'),
       'cancelSaveTemplate' => lang::get('Cancel saving the template'),
       'contactExpert' => lang::get('Contact an expert'),
       'edit' => lang::get('Edit'),
+      'editThisRecord' => 'Edit this record',
       'help' => lang::get('Help'),
       'notAccepted' => lang::get('Not accepted'),
       'notAcceptedIncorrect' => lang::get('Not accepted :: incorrect'),
@@ -1597,8 +1757,11 @@ HTML;
       'templateHelpTokenTaxon' => lang::get('will be replaced by the identification name given to the record as originally entered.'),
       'templateHelpClose' => lang::get('Close help'),
       'updatingMultipleWarning' => lang::get('You are updating multiple records!'),
+      'updatingMultipleInParentSampleWarning' => lang::get('This verification decision will also be applied to other records of the same taxon within the parent sample (e.g. within the transect or timed count)!'),
       'upload' => lang::get('Upload'),
       'uploadVerificationDecisions' => lang::get('Upload a file of verification decisions'),
+      'viewRecordDetails' => "View this record's details page",
+      'viewSpeciesPage' => 'View species page',
     ];
 
     helper_base::addLanguageStringsToJs('verificationButtons', [
@@ -1610,7 +1773,6 @@ HTML;
       'commentReplyInstruct' => 'Click here to add a publicly visible comment to the record on iRecord.',
       'csvDisallowedMessage' => 'Uploading verification decisions is only allowed when there is a filter that defines the scope of the records you can verify.',
       'duplicateTemplateMsg' => 'A template with that name already exists. Please specify a unique name for your template then save it again, or click Overwrite to update the existing template details.',
-      'editThisRecord'=> 'Edit this record',
       'emailExpertBodyHeader' => 'The following record requires your assistance. Please could you reply to this email ' .
         'with your opininion on whether the record is correct or not. You can reply to this message and it will be ' .
         'forwarded direct to the verifier.',
@@ -1638,6 +1800,7 @@ HTML;
       'queryCommentTabUserIsNotified' => 'Adding your query as a comment should be OK as this recorder normally checks their notifications.',
       'queryCommentTabUserIsNotNotified' => 'Although you can add a comment, sending the query as an email is preferred as the recorder does not check their notifications.',
       'queryInMultiselectMode' => 'As you are in multi-select mode, email facilities cannot be used and queries can only be added as comments to the record.',
+      'recordRedetermined' => 'This record has been redetermined.',
       'redetPartialListInfo' => 'This record was originally input using a taxon checklist which may not be a complete list of all species. If you cannot find the species you wish to redetermine it to using the search box below, then please tick the "Search all species" checkbox and try again.',
       'requestManualEmail' => 'The webserver is not correctly configured to send emails. Please send the following email usual your email client:',
       'saveQueryToComments' => 'Save query to comments log',
@@ -1646,8 +1809,6 @@ HTML;
       'saveTemplateErrorMsg' => 'An error occurred when saving your template to the database. Please try later.',
       'templateNameTextRequired' => 'Template details required',
       'uploadError' => 'An error occurred whilst uploading your spreadsheet.',
-      'viewRecordDetails' => "View this record's details page",
-      'viewSpeciesPage' => 'View species page',
       'C3' => 'marked as plausible',
       'DT' => 'redetermined',
     ]);
@@ -1655,16 +1816,18 @@ HTML;
       throw new Exception('[verificationButtons] requires a @taxon_list_id option, or the Indicia setting Master Checklist ID to be set. This ' .
         'is required to provide a list to select the redetermination from.');
     }
+    $btnClass = $indicia_templates['buttonHighlightedClass'];
+    $btnClassDefault = $indicia_templates['buttonDefaultClass'];
     // Work out any extra buttons we need for provided links.
     $optionalLinkArray = [];
     if (!empty($options['editPath'])) {
-      $optionalLinkArray[] = "<a class=\"edit\" title=\"$lang[editThisRecord]\" target=\"_blank\"><span class=\"fas fa-edit\"></span></a>";
+      $optionalLinkArray[] = "<a class=\"edit $btnClass\" title=\"$lang[editThisRecord]\" target=\"_blank\"><span class=\"fas fa-edit\"></span></a>";
     }
     if (!empty($options['viewPath'])) {
-      $optionalLinkArray[] = "<a class=\"view\" target=\"_blank\" title=\"$lang[viewRecordDetails]\" target=\"_blank\"><span class=\"fas fa-file-invoice\"></span></a>";
+      $optionalLinkArray[] = "<a class=\"view $btnClass\" target=\"_blank\" title=\"$lang[viewRecordDetails]\" target=\"_blank\"><span class=\"fas fa-file-invoice\"></span></a>";
     }
     if (!empty($options['speciesPath'])) {
-      $optionalLinkArray[] = "<a class=\"species\" target=\"_blank\" title=\"$lang[viewSpeciesPage]\" target=\"_blank\"><span class=\"fas fa-file\"></span></a>";
+      $optionalLinkArray[] = "<a class=\"species $btnClass\" target=\"_blank\" title=\"$lang[viewSpeciesPage]\" target=\"_blank\"><span class=\"fas fa-file\"></span></a>";
     }
     $optionalLinks = implode("\n  ", $optionalLinkArray);
     // Build some controls for the various forms.
@@ -1715,8 +1878,6 @@ HTML;
       'class' => 'comment-textarea',
       'wrapClasses' => ['not-full-width-lg'],
     ]);
-    $btnClass = $indicia_templates['buttonHighlightedClass'];
-    $btnClassDefault = $indicia_templates['buttonDefaultClass'];
     $uploadButton = empty($options['includeUploadButton']) ? '' : <<<HTML
       <button class="upload-decisions $btnClass" title="$lang[uploadVerificationDecisions]"><span class="fas fa-file-upload"></span>$lang[upload]</button>
 HTML;
@@ -1770,15 +1931,16 @@ HTML;
       <div class="all-selected-buttons idc-verificationButtons-row">
         Actions:
         <span class="fas fa-toggle-on toggle fa-2x" title="Toggle additional status levels"></span>
-        <button class="verify l1 $btnClass" data-status="V" title="$lang[accepted]"><span class="far fa-check-circle status-V"></span></button>
+        <button class="verify l1 $btnClass btn-sm" data-status="V" title="$lang[accepted]"><span class="far fa-check-circle status-V"></span></button>
         <button class="verify l2 $btnClass" data-status="V1" title="$lang[acceptedCorrect]"><span class="fas fa-check-double status-V1"></span></button>
         <button class="verify l2 $btnClass" data-status="V2" title="$lang[acceptedConsideredCorrect]"><span class="fas fa-check status-V2"></span></button>
         <button class="verify $btnClass" data-status="C3" title="$lang[plausible]"><span class="fas fa-check-square status-C3"></span></button>
         <button class="verify l1 $btnClass" data-status="R" title="$lang[notAccepted]"><span class="far fa-times-circle status-R"></span></button>
         <button class="verify l2 $btnClass" data-status="R4" title="$lang[notAcceptedUnableToVerify]"><span class="fas fa-times status-R4"></span></button>
         <button class="verify l2 $btnClass" data-status="R5" title="$lang[notAcceptedIncorrect]"><span class="fas fa-times status-R5"></span></button>
+        <button class="apply-to-parent-sample-contents single-only $btnClass" title="$lang[applyThisDecisionToParentSample]" disabled="disabled"><span class="fas fa-sitemap"></span></button>
         <span class="sep"></span>
-        <button class="redet" title="Redetermine this record"><span class="fas fa-tag"></span></button>
+        <button class="redet $btnClass" title="Redetermine this record"><span class="fas fa-tag"></span></button>
         <button class="query $btnClass" data-query="Q" title="$lang[raiseQuery]"><span class="fas fa-question-circle query-Q"></span></button>
         <div class="multi-only apply-to">
           <span>$lang[applyTo]:</span>
@@ -1801,10 +1963,11 @@ HTML;
     <fieldset>
       <legend><span></span><span></span></legend>
       <p class="alert alert-warning multiple-warning">$lang[updatingMultipleWarning]</p>
+      <p class="alert alert-warning multiple-in-parent-sample-warning">$lang[updatingMultipleInParentSampleWarning]</p>
       <p class="alert alert-info"></p>
       <div class="comment-cntr form-group">
-        $verificationCommentInput
         $commentTools
+        $verificationCommentInput
       </div>
       $loadVerifyTemplateDropdown
       <div class="form-buttons">
@@ -1852,8 +2015,8 @@ HTML;
     $altListCheckbox
     $redetNameBehaviourOption
     <div class="comment-cntr form-group">
-      $redetCommentInput
       $commentTools
+      $redetCommentInput
     </div>
     $loadRedetTemplateDropdown
     <div class="form-buttons">
@@ -2082,7 +2245,8 @@ AGG;
    *   Options passed to the control (key and value associative array). Will be
    *   modified.
    * @param array $requiredOptions
-   *   Array of option names which must have a value.
+   *   Array of option names which must have a value. Items can also be an
+   *   array of option names if only one of several must be specified.
    * @param array $jsonOptions
    *   Array of option names which must contain JSON.
    */
@@ -2098,9 +2262,20 @@ AGG;
     }
 
     self::$controlIds[] = $options['id'];
-    foreach ($requiredOptions as $option) {
-      if (!isset($options[$option]) || $options[$option] === '') {
-        throw new Exception("Control [$controlName] requires a parameter called @$option");
+    foreach ($requiredOptions as $requiredOption) {
+      if (is_array($requiredOption)) {
+        $count = 0;
+        foreach ($requiredOption as $item) {
+          if (!empty($options[$item])) {
+            $count++;
+          }
+        }
+        if ($count !== 1) {
+          throw new Exception("Control [$controlName] requires exactly one of the following parameters: " . implode(', ', $requiredOption));
+        }
+      }
+      elseif (!isset($options[$requiredOption]) || $options[$requiredOption] === '') {
+        throw new Exception("Control [$controlName] requires a parameter called @$requiredOption");
       }
     }
     foreach ($jsonOptions as $option) {
@@ -2239,12 +2414,11 @@ HTML;
    *
    * A list of mapped fields is stored in self::$esMappings.
    *
-   * @param int $nid
-   *   Node ID, used to retrieve the node parameters which contain ES settings.
+   * @param array $config
+   *   Elasticsearch configuration.
    */
-  private static function getMappings($nid) {
+  private static function getMappings(array $config) {
     require_once 'ElasticsearchProxyHelper.php';
-    $config = hostsite_get_es_config($nid);
     if (empty($config['es']['endpoint'])) {
       throw new Exception(lang::get('Elasticsearch configuration incomplete - endpoint not specified in Indicia settings.'));
     }

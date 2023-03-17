@@ -217,7 +217,7 @@ class iform_mnhnl_bird_transect_walks {
     $readAuth = $auth['read'];
     $svcUrl = data_entry_helper::$base_url . '/index.php/services';
 
-    drupal_add_js(drupal_get_path('module', 'iform') . '/media/js/jquery.form.js', 'module');
+    drupal_add_js(\Drupal::service('extension.path.resolver')->getPath('module', 'iform') . '/media/js/jquery.form.js', 'module');
     data_entry_helper::link_default_stylesheet();
     data_entry_helper::add_resource('jquery_ui');
     $language = iform_lang_iso_639_2($args['language']);
@@ -371,8 +371,8 @@ class iform_mnhnl_bird_transect_walks {
     if($locations != 'all'){
         data_entry_helper::$javascript .= "var locationList = [".implode(',', $locations)."];\n";
     }
-    drupal_add_js(drupal_get_path('module', 'iform') .'/media/js/hasharray.js', 'module');
-    drupal_add_js(drupal_get_path('module', 'iform') .'/media/js/jquery.datagrid.js', 'module');
+    drupal_add_js(\Drupal::service('extension.path.resolver')->getPath('module', 'iform') .'/media/js/hasharray.js', 'module');
+    drupal_add_js(\Drupal::service('extension.path.resolver')->getPath('module', 'iform') .'/media/js/jquery.datagrid.js', 'module');
     if (method_exists(get_called_class(), 'getHeaderHTML')) $r .= call_user_func(array(get_called_class(), 'getHeaderHTML'), $args);
     ///////////////////////////////////////////////////////////////////
     // default mode 0 : display a page with tabs for survey selector,
@@ -1519,8 +1519,8 @@ $('div#occ_grid').indiciaDataGrid('rpt:reports_for_prebuilt_forms/MNHNL/mnhnl_bt
     if(substr($base, -1)!='/') $base.='/';
     $r = '<div id="iform-header">
     <div id="iform-logo-left"><a href="http://www.environnement.public.lu" target="_blank"><img border="0" class="government-logo" alt="'.lang::get('Gouvernement').'" src="'.$base.'sites/all/files/gouv.png"></a></div>
-    <div id="iform-logo-right"><a href="http://www.crpgl.lu" target="_blank"><img border="0" class="gabriel-lippmann-logo" alt="'.lang::get('Gabriel Lippmann').'" src="'.$base.drupal_get_path('module', 'iform').'/client_helpers/prebuilt_forms/images/mnhnl-gabriel-lippmann-logo.jpg"></a></div>
-    <div id="iform-logo-centre"><a href="http://www.naturemwelt.lu" target="_blank"><img border="0" class="naturemwelt-logo" alt="'.lang::get('naturemwelt').'" src="'.$base.drupal_get_path('module', 'iform').'/client_helpers/prebuilt_forms/images/mnhnl-naturemwelt-logo.png"></a></div>
+    <div id="iform-logo-right"><a href="http://www.crpgl.lu" target="_blank"><img border="0" class="gabriel-lippmann-logo" alt="'.lang::get('Gabriel Lippmann').'" src="'.$base.\Drupal::service('extension.path.resolver')->getPath('module', 'iform').'/client_helpers/prebuilt_forms/images/mnhnl-gabriel-lippmann-logo.jpg"></a></div>
+    <div id="iform-logo-centre"><a href="http://www.naturemwelt.lu" target="_blank"><img border="0" class="naturemwelt-logo" alt="'.lang::get('naturemwelt').'" src="'.$base.\Drupal::service('extension.path.resolver')->getPath('module', 'iform').'/client_helpers/prebuilt_forms/images/mnhnl-naturemwelt-logo.png"></a></div>
     </div>';
     return $r;
   }

@@ -22,7 +22,7 @@
 require_once 'includes/user.php';
 
 /**
- * 2nd generation import data tool.
+ * Second generation import data tool.
  */
 class iform_importer_2 {
 

@@ -115,7 +115,7 @@ class iform_pollenator_reidentify {
    */
   public static function get_form($args, $nid) {
 	$r = '';
-	drupal_add_js(drupal_get_path('module', 'iform') .'/media/js/jquery.form.js', 'module');
+	drupal_add_js(\Drupal::service('extension.path.resolver')->getPath('module', 'iform') .'/media/js/jquery.form.js', 'module');
 	data_entry_helper::link_default_stylesheet();
 	data_entry_helper::add_resource('jquery_ui');
 	data_entry_helper::add_resource('openlayers');
@@ -495,7 +495,7 @@ runSearch = function(){
                   jQuery('#results-insects-results').append('<p>".lang::get('No species records returned')."</p>');
               }
 		  });
-    jQuery('#results-insects-results').empty().append('<div class=\"insect-loading-panel\" ><img src=\"".$base.drupal_get_path('module', 'iform')."/media/images/ajax-loader2.gif\" />".lang::get('Loading')."...</div>');
+    jQuery('#results-insects-results').empty().append('<div class=\"insect-loading-panel\" ><img src=\"".$base.\Drupal::service('extension.path.resolver')->getPath('module', 'iform')."/media/images/ajax-loader2.gif\" />".lang::get('Loading')."...</div>');
     protocol.read({filter: new OpenLayers.Filter.Logical({type: OpenLayers.Filter.Logical.AND, filters: filters})});
 };
 

@@ -138,9 +138,43 @@ class ElasticsearchProxyHelper {
         self::proxyRedetIds();
         break;
 
+      case 'bulkmoveall':
+        self::proxyBulkMoveAll($nid);
+        break;
+
+      case 'bulkmoveids':
+        self::proxyBulkMoveIds($nid);
+        break;
+
+      case 'clearcustomresults':
+        self::proxyClearCustomResults($nid);
+        break;
+
+      case 'runcustomruleset':
+        self::proxyRunCustomRuleset($nid);
+        break;
+
       default:
         header("HTTP/1.1 404 Not found");
         echo json_encode(['error' => 'Method not found']);
+    }
+  }
+
+  /**
+   * Retrieve the Elasticsearch endpoint to use.
+   *
+   * @return string
+   *   The endpoint name (e.g. es-occurrences).
+   */
+  private static function getEsEndpoint() {
+    // Request can modify the endpoint, but only if on a list of allowed
+    // endpoints.
+    if (!empty($_GET['endpoint']) && !empty(self::$config['es']['alternative_endpoints'])
+        && in_array($_GET['endpoint'], helper_base::explode_lines(self::$config['es']['alternative_endpoints']))) {
+      return $_GET['endpoint'];
+    }
+    else {
+      return self::$config['es']['endpoint'];
     }
   }
 
@@ -151,15 +185,7 @@ class ElasticsearchProxyHelper {
    *   URL.
    */
   private static function getEsUrl() {
-    // Request can modify the endpoint, but only if on a list of allowed
-    // endpoints.
-    if (!empty($_GET['endpoint']) && !empty(self::$config['es']['alternative_endpoints'])
-        && in_array($_GET['endpoint'], helper_base::explode_lines(self::$config['es']['alternative_endpoints']))) {
-      $endpoint = $_GET['endpoint'];
-    }
-    else {
-      $endpoint = self::$config['es']['endpoint'];
-    }
+    $endpoint = self::getEsEndpoint();
     return self::$config['indicia']['base_url'] . "index.php/services/rest/$endpoint";
   }
 
@@ -343,11 +369,8 @@ class ElasticsearchProxyHelper {
    * Proxy method to retrieve media and comments for emails.
    *
    * When an email is sent to query a record, the comments and media are
-   * injected into the HTML. Returns an array with a media entry and a comments
+   * injected into the HTML. Echoes an array with a media entry and a comments
    * entry, both containing the required HTML.
-   *
-   * @return array
-   *   Media and comments information.
    */
   private static function proxyMediaAndComments($nid) {
     iform_load_helpers(['VerificationHelper']);
@@ -355,10 +378,10 @@ class ElasticsearchProxyHelper {
     $readAuth = helper_base::get_read_auth($conn['website_id'], $conn['password']);
     $params = array_merge(['sharing' => 'verification'], hostsite_get_node_field_value($nid, 'params'));
     header('Content-type: application/json');
-    echo json_encode(array(
+    echo json_encode([
       'media' => VerificationHelper::getMedia($readAuth, $params, $_GET['occurrence_id'], $_GET['sample_id']),
       'comments' => VerificationHelper::getComments($readAuth, $params, $_GET['occurrence_id'], TRUE),
-    ));
+    ]);
   }
 
   /**
@@ -374,8 +397,104 @@ class ElasticsearchProxyHelper {
       throw new ElasticsearchProxyAbort('Configuration incomplete');
     }
     $statuses = $_POST['doc']['identification'] ?? [];
-    echo self::internalVerifyListOnES($_POST['ids'], $statuses,
+    echo self::internalModifyListOnES($_POST['ids'], $statuses,
       isset($_POST['doc']['metadata']['website']['id']) ? $_POST['doc']['metadata']['website']['id'] : NULL);
+  }
+
+  /**
+   * Retrieve the list of occurrence IDs for an ES filter.
+   *
+   * @return array
+   *   List of occurrence IDs.
+   */
+  private static function getOccurrenceIdsFromFilter($nid, $filter) {
+    iform_load_helpers(['helper_base']);
+    $conn = iform_get_connection_details($nid);
+    $readAuth = helper_base::get_read_auth($conn['website_id'], $conn['password']);
+    self::checkPermissionsFilter($filter, $readAuth, $nid);
+    $url = self::getEsUrl() . '/_search';
+    $query = self::buildEsQueryFromRequest($filter);
+    // Limit response for efficiency.
+    $_GET['filter_path'] = 'hits.hits._source.id';
+    // Maximum 10000.
+    $query['size'] = 10000;
+    $r = self::curlPost($url, $query);
+    $esResponse = json_decode($r);
+    unset($_GET['filter_path']);
+    $ids = [];
+    foreach ($esResponse->hits->hits as $item) {
+      $ids[] = $item->_source->id;
+    }
+    return $ids;
+  }
+
+  /**
+   * Retrieve a page of occurrence IDs for an ES filter.
+   *
+   * Similar to getOccurrenceIdsFromFilter but retrieves a smaller batch of
+   * record IDs, with search_after information that can be used in the next
+   * request in order to paginate through the data. Ensures each batch of
+   * records is divided on a sample ID (event.event_id) boundary so that
+   * checks for complete samples don't fail.
+   *
+   * @param int $nid
+   *   Node ID.
+   * @param array $filter
+   *   Filted definition.
+   * @param array $searchAfter
+   *   Values to pass to the search_after option on ES, in order to request the
+   *   next page of data, or NULL for the first page.
+   *
+   * @return array
+   *   Associative array containing a search_after property to be used in the
+   *   next request and and ids property containing a list of occurrence IDs.
+   */
+  private static function getOccurrenceIdPageFromFilter($nid, $filter, $searchAfter) {
+    iform_load_helpers(['helper_base']);
+    $conn = iform_get_connection_details($nid);
+    $readAuth = helper_base::get_read_auth($conn['website_id'], $conn['password']);
+    self::checkPermissionsFilter($filter, $readAuth, $nid);
+    $url = self::getEsUrl() . '/_search';
+    $query = self::buildEsQueryFromRequest($filter);
+    $query['sort'] = [
+      ['event.event_id' => 'asc'],
+      ['id' => 'asc'],
+    ];
+    if ($searchAfter) {
+      $query['search_after'] = $searchAfter;
+    }
+    // Limit response for efficiency.
+    $_GET['filter_path'] = 'hits.hits._source.id,hits.hits._source.event.event_id';
+    // Maximum 1000 - should be more than the max size of a sample.
+    $query['size'] = 1000;
+    $r = self::curlPost($url, $query);
+    $esResponse = json_decode($r);
+    unset($_GET['filter_path']);
+    if (empty($esResponse->hits) || empty($esResponse->hits->hits)) {
+      return ['ids' => []];
+    }
+    if (count($esResponse->hits->hits) >= $query['size']) {
+      // Find the last event_id as we need to skip records for this sample, in
+      // case there is a paging split within the sample.
+      $lastEventId = $esResponse->hits->hits[count($esResponse->hits->hits) - 1]->_source->event->event_id;
+    }
+    else {
+      // Set dummy value to disable event ID filter, as all remaining records
+      // have been found.
+      $lastEventId = -1;
+    }
+    $ids = [];
+    $searchAfter = [];
+    foreach ($esResponse->hits->hits as $item) {
+      if ($item->_source->event->event_id !== $lastEventId) {
+        $ids[] = $item->_source->id;
+        $searchAfter = [$item->_source->event->event_id, $item->_source->id];
+      }
+    }
+    return [
+      'ids' => $ids,
+      'search_after' => $searchAfter,
+    ];
   }
 
   /**
@@ -401,24 +520,9 @@ class ElasticsearchProxyHelper {
       echo json_encode(['error' => 'Missing website_id parameter']);
       throw new ElasticsearchProxyAbort('Parameter missing');
     }
-    iform_load_helpers(['helper_base']);
-    $conn = iform_get_connection_details($nid);
-    $readAuth = helper_base::get_read_auth($conn['website_id'], $conn['password']);
-    self::checkPermissionsFilter($_POST['occurrence:idsFromElasticFilter'], $readAuth, $nid);
-    $url = self::getEsUrl() . '/_search';
-    $query = self::buildEsQueryFromRequest($_POST['occurrence:idsFromElasticFilter']);
-    // Limit response for efficiency.
-    $_GET['filter_path'] = 'hits.hits._source.id';
-    // Maximum 10000.
-    $query['size'] = 10000;
-    $r = self::curlPost($url, $query);
-    $esResponse = json_decode($r);
-    unset($_GET['filter_path']);
-    $ids = [];
-    foreach ($esResponse->hits->hits as $item) {
-      $ids[] = $item->_source->id;
-    }
-    self::internalVerifyListOnES($ids, $statuses, $websiteIdToModify);
+    $ids = self::getOccurrenceIdsFromFilter($nid, $_POST['occurrence:idsFromElasticFilter']);
+
+    self::internalModifyListOnES($ids, $statuses, $websiteIdToModify);
     try {
       self::updateWarehouseVerificationAction($ids, $nid);
     }
@@ -501,7 +605,7 @@ class ElasticsearchProxyHelper {
     }
     // Set website ID to 0, basically disabling the ES copy of the record until
     // a proper update with correct taxonomy information comes through.
-    echo self::internalVerifyListOnES($_POST['ids'], [], 0);
+    echo self::internalModifyListOnES($_POST['ids'], [], 0);
   }
 
   /**
@@ -576,7 +680,7 @@ class ElasticsearchProxyHelper {
    * @return string
    *   Result of the POST to ES.
    */
-  private static function internalVerifyListOnES(array $ids, array $statuses, $websiteIdToModify) {
+  private static function internalModifyListOnES(array $ids, array $statuses, $websiteIdToModify) {
     $url = self::getEsUrl() . "/_update_by_query";
     $scripts = [];
     if (!empty($statuses['verification_status'])) {
@@ -1239,11 +1343,12 @@ class ElasticsearchProxyHelper {
     self::applyUserFiltersSmpId($definition, $bool);
     self::applyUserFiltersQuality($definition, $bool);
     self::applyUserFiltersIdentificationDifficulty($definition, $bool);
-    self::applyUserFiltersAutoChecks($definition, $bool);
+    self::applyUserFiltersRuleChecks($definition, $bool);
     self::applyUserFiltersAutoCheckRule($definition, $bool);
     self::applyUserFiltersHasPhotos($readAuth, $definition, ['has_photos'], $bool);
     self::applyUserFiltersWebsiteList($definition, $bool);
     self::applyUserFiltersSurveyList($definition, $bool);
+    self::applyUserFiltersImportGuidList($definition, $bool);
     self::applyUserFiltersInputFormList($definition, $bool);
     self::applyUserFiltersGroupId($definition, $bool);
     self::applyUserFiltersAccessRestrictions($definition, $bool);
@@ -1859,24 +1964,44 @@ class ElasticsearchProxyHelper {
   }
 
   /**
-   * Converts an Indicia filter definition auto checks filter to an ES query.
+   * Converts an Indicia filter definition rule checks filter to an ES query.
+   *
+   * Handles both automatic checks and a user's custom verification rule flags.
    *
    * @param array $definition
    *   Definition loaded for the Indicia filter.
    * @param array $bool
    *   Bool clauses that filters can be added to (e.g. $bool['must']).
    */
-  private static function applyUserFiltersAutoChecks(array $definition, array &$bool) {
+  private static function applyUserFiltersRuleChecks(array $definition, array &$bool) {
     $filter = self::getDefinitionFilter($definition, ['autochecks']);
-    if (!empty($filter) && in_array($filter['value'], ['P', 'F'])) {
-      $bool['must'][] = [
-        'match' => [
-          'identification.auto_checks.result' => $filter['value'] === 'P',
-        ],
-      ];
-      if ($filter['value'] === 'P') {
+    if (!empty($filter)) {
+      if (in_array($filter['value'], ['P', 'F'])) {
+        // Pass or Fail options are auto-checks from the Data Cleaner module.
         $bool['must'][] = [
-          'query_string' => ['query' => '_exists_:identification.auto_checks.verification_rule_types_applied'],
+          'match' => [
+            'identification.auto_checks.result' => $filter['value'] === 'P',
+          ],
+        ];
+        if ($filter['value'] === 'P') {
+          $bool['must'][] = [
+            'query_string' => ['query' => '_exists_:identification.auto_checks.verification_rule_types_applied'],
+          ];
+        }
+      }
+      elseif (in_array($filter['value'], ['PC', 'FC'])) {
+        // Pass Custom or Fail Custom options are for custom verification rule
+        // checks.
+        $test = $filter['value'] === 'PC' ? 'must_not' : 'must';
+        $bool[$test][] = [
+          'nested' => [
+            'path' => 'identification.custom_verification_rule_flags',
+            'query' => [
+              'term' => [
+                'identification.custom_verification_rule_flags.created_by_id' => hostsite_get_user_field('indicia_user_id'),
+              ],
+            ],
+          ],
         ];
       }
     }
@@ -1939,6 +2064,26 @@ class ElasticsearchProxyHelper {
       $boolClause = !empty($filter['op']) && $filter['op'] === 'not in' ? 'must_not' : 'must';
       $bool[$boolClause][] = [
         'terms' => ['metadata.survey.id' => explode(',', $filter['value'])],
+      ];
+    }
+  }
+
+  /**
+   * Converts an Indicia filter definition import_guid_list to an ES query.
+   *
+   * @param array $definition
+   *   Definition loaded for the Indicia filter.
+   * @param array $bool
+   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   */
+  private static function applyUserFiltersImportGuidList(array $definition, array &$bool) {
+    $filter = self::getDefinitionFilter($definition, ['import_guid_list']);
+    if (!empty($filter)) {
+      $boolClause = !empty($filter['op']) && $filter['op'] === 'not in' ? 'must_not' : 'must';
+      $bool[$boolClause][] = [
+        'terms' => [
+          'metadata.import_guid' => explode(',', str_replace("'", '', $filter['value'])),
+        ],
       ];
     }
   }
@@ -2136,6 +2281,106 @@ class ElasticsearchProxyHelper {
       }
     }
     return [];
+  }
+
+  /**
+   * Receives a list of IDs to move between websites/datasets.
+   *
+   * Used by the recordsMover button.
+   */
+  private static function bulkMoveIds($nid, array $ids, $datasetMappings, $precheck) {
+    // Now do the move on the warehouse.
+    iform_load_helpers(['helper_base']);
+    $request = helper_base::$base_url . "index.php/services/data_utils/bulk_move";
+    $conn = iform_get_connection_details($nid);
+    $auth = helper_base::get_read_write_auth($conn['website_id'], $conn['password']);
+    $postargs = helper_base::array_to_query_string(array_merge([
+      'occurrence:ids' => implode(',', $ids),
+      'datasetMappings' => $datasetMappings,
+      'precheck' => $precheck ? 't' : 'f',
+    ], $auth['write_tokens']), TRUE);
+    $response = helper_base::http_post($request, $postargs, FALSE);
+    // The response should be in JSON.
+    header('Content-type: application/json');
+    $output = json_decode($response['output']);
+    if (!$precheck && $output->code === 200) {
+      // Set website ID to 0, basically disabling the ES copy of the record
+      // until a proper update with correct taxonomy information comes through.
+      self::internalModifyListOnES($ids, [], 0);
+    }
+    return $response['output'];
+  }
+
+  /**
+   * Receives a filter defining records to move between websites/datasets.
+   *
+   * Used by the recordsMover button.
+   */
+  private static function proxyBulkMoveAll($nid) {
+    $batchInfo = self::getOccurrenceIdPageFromFilter(
+      $nid,
+      $_POST['occurrence:idsFromElasticFilter'],
+      $_POST['search_after'] ?? NULL,
+    );
+    if (empty($batchInfo['ids'])) {
+      echo json_encode([
+        'code' => 204,
+        'message' => 'No Content',
+      ]);
+      return;
+    }
+    $response = self::bulkMoveIds($nid, $batchInfo['ids'], $_POST['datasetMappings'], !empty($_POST['precheck']));
+    // Attach the search_after pagination info to the response.
+    $responseArr = json_decode($response, TRUE);
+    if (!empty($batchInfo['search_after'])) {
+      // Set pagination info, but not if empty array returned (which implies
+      // all done).
+      $responseArr['search_after'] = $batchInfo['search_after'];
+    }
+    echo json_encode($responseArr);
+  }
+
+  /**
+   * Receives a list of IDs to move between websites/datasets.
+   *
+   * Used by the recordsMover button.
+   */
+  private static function proxyBulkMoveIds($nid) {
+    echo self::bulkMoveIds($nid, explode(',', $_POST['occurrence:ids']), $_POST['datasetMappings'], !empty($_POST['precheck']));
+  }
+
+  /**
+   * Proxy method that receives a filter and clears the user's custom flags.
+   *
+   * All custom verification rule flags created by the user within the records
+   * identified by the current filter will be cleared.
+   */
+  private static function proxyClearCustomResults($nid) {
+    iform_load_helpers(['helper_base']);
+    $alias = self::getEsEndpoint();
+    $conn = iform_get_connection_details($nid);
+    $readAuth = helper_base::get_read_auth($conn['website_id'], $conn['password']);
+    self::checkPermissionsFilter($_POST, $readAuth, $nid);
+    $url = self::$config['indicia']['base_url'] . "index.php/services/rest/custom_verification_rulesets/clear-flags?alias=$alias";
+    $query = self::buildEsQueryFromRequest($_POST);
+    echo self::curlPost($url, $query);
+  }
+
+  /**
+   * Proxy method which runs a custom verification ruleset.
+   *
+   * Used by the runCustomVerificationRulesets control.
+   */
+  private static function proxyRunCustomRuleset($nid) {
+    iform_load_helpers(['helper_base']);
+    $alias = self::getEsEndpoint();
+    $rulesetId = $_GET['ruleset_id'];
+    $conn = iform_get_connection_details($nid);
+    $readAuth = helper_base::get_read_auth($conn['website_id'], $conn['password']);
+    self::checkPermissionsFilter($_POST, $readAuth, $nid);
+    $url = self::$config['indicia']['base_url'] . "index.php/services/rest/custom_verification_rulesets/$rulesetId/run-request?alias=$alias";
+    $query = self::buildEsQueryFromRequest($_POST);
+    echo self::curlPost($url, $query);
   }
 
 }

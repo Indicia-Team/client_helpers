@@ -58,6 +58,13 @@ class iform_group_edit {
   public static function get_parameters() {
     return [
       [
+        'name' => 'group_deletion_help_text',
+        'caption' => 'Group deletion help text',
+        'description' => 'Text to display below delete button which informs user that it may be more appropriate ' .
+        'to set an end date rather than delete the group',
+        'type' => 'text_input',
+      ],
+      [
         'name' => 'group_type',
         'caption' => 'Group type',
         'description' => 'Type of group this form will be used to create or edit. Leave blank to let the group creator choose.',
@@ -506,6 +513,7 @@ class iform_group_edit {
         (empty(data_entry_helper::$entity_to_load['group:id']) ?
         lang::get('Create {1}', self::$groupType) : lang::get('Update {1} settings', self::$groupType))
         . "\" />\n";
+    $r .= self::getDeleteButton($args, $indicia_templates['buttonWarningClass']);
     $r .= '</form>';
     $r .= $hiddenPopupDivs;
 
@@ -524,6 +532,44 @@ $('#entry_form').submit(function() {
         hostsite_get_user_field('indicia_user_id') . "]').closest('li').children('span').remove();\n";
     }
     data_entry_helper::$javascript .= 'indiciaData.ajaxUrl="' . hostsite_get_url('iform/ajax/group_edit') . "\";\n";
+    return $r;
+  }
+
+  /**
+   * HTMl and javascript needed for delete button.
+   *
+   * @param array $args
+   *   List of parameter values passed through to the form depending on how the
+   *   form has been configured.
+   * @param string $buttonWarningClass
+   *   Class from $indicia_templates.
+   *
+   * @return string
+   *   HTML for delete button.
+   */
+  protected static function getDeleteButton(array $args, $buttonWarningClass) {
+    $r = '';
+    if (!empty($args['group_deletion_help_text'])) {
+      $groupDeletionHelpText = $args['group_deletion_help_text'];
+    }
+    else {
+      $groupDeletionHelpText = 'Please note that groups can have an end date set, which may
+      be more appropriate than deletion.';
+    }
+    if (!empty(data_entry_helper::$entity_to_load['group:id'])) {
+      // Use a button here, not input, as Chrome does not post the input value.
+      $r .= '<button type="submit" class="' . $buttonWarningClass . '" ' .
+        'id="delete-button" name="delete-button" value="delete" >' .
+        lang::get('Delete') .
+      "</button>\n";
+      $r .= "<p><em><small>" . $groupDeletionHelpText . "</small></em></p>\n";
+      data_entry_helper::$javascript .= "$('#delete-button').click(function(e) {
+        if (!confirm(\"Are you sure you want to delete this group?\")) {
+          e.preventDefault();
+          return false;
+        }
+      });\n";
+    }
     return $r;
   }
 

@@ -197,3 +197,10 @@ select.working1, select.working2 {
   padding-right: 5px;
   padding-left: 5px;
 }
+
+.waiting {
+  display: inline-block;
+  background: url(../../../media/images/ajax-loader.gif);
+  width: 16px;
+  height: 16px;
+}

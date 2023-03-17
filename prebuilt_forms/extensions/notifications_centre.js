@@ -13,68 +13,39 @@
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  */
 
-var acknowledge_all_notifications;
 var store_notification_ids;
 var remove_message;
 var reply;
 var createNotifications;
 
 (function ($) {
-  var currentFilter = '';
-  
-  function setCurrentFilter() {
-    var label='Acknowledge all your notifications';
-    currentFilter = $('#notifications-notifications-grid-source_filter').val();
-    //Only need to deal with the label when the filter drop-down is displayed.
-    //If the user has provided a source type to preload the notifications grid with 
-    //then we don't change the button label based on the drop-down selection.
-    if (currentFilter) {
-      if (currentFilter!=='all' && currentFilter!=='') {
-        label += ' for '
-        if (currentFilter==='record_cleaner') {
-          label += 'Record Cleaner';
-        } else {
-          label += $('#notifications-notifications-grid-source_filter option:selected').html().toLowerCase();
-        }
-      }
-    }
-    $('#remove-all').val(label);
-  }
-  
-  $(document).ready(function() {
-      setCurrentFilter();
-  });
-  
-  $('#run-report').click(function() {
-    setCurrentFilter();
-  });
-  
-  //Setup confirmation for Remove Notifications buttons.
-  //If user elects to continue, set the hidden field that indicates
-  //they want to continue with the removal.
-  acknowledge_all_notifications = function(id) { 
+  // Setup confirmation for Remove Notifications buttons.
+  // If user elects to continue, set the hidden field that indicates
+  // they want to continue with the removal.
+  indiciaFns.acknowledgeNotificationsList = function(id) {
     var visibleCount = $('#notifications-' + id + ' tbody tr').length,
-        recordCount = indiciaData.reports.notifications_notifications_grid.grid_notifications_notifications_grid[0].settings.recordCount;
-    if ((currentFilter!==''||indiciaData.preloaded_source_types!=='') && visibleCount>0) {
-      var msg='Are you sure you want to acknowledge all your notifications';
-      //Only change the confirmation message depending on the user's filter drop-down selection
-      //if that drop-down is actually displayed (it isn't displayed if the grid has been setup
-      //to preload particular source types)
-      if (currentFilter!=='all' && currentFilter!==''&&!indiciaData.preloaded_source_types) {
+        recordCount = indiciaData.reports['notifications_' + id]['grid_notifications_' + id][0].settings.recordCount;
+    const currentFilter = $('#notifications_' + id + '-source_filter').val();
+    if (visibleCount > 0) {
+      var msg='Are you sure you want to acknowledge this list of ' + recordCount + ' notifications';
+      // Only change the confirmation message depending on the user's filter drop-down selection
+      // if that drop-down is actually displayed (it isn't displayed if the grid has been setup
+      // to preload particular source types).
+      if (currentFilter !== 'all' && currentFilter !== '' && !indiciaData.preloaded_source_types) {
         msg += ' for ';
-        if (currentFilter==='record_cleaner') {
+        if (currentFilter === 'record_cleaner') {
           msg += 'Record Cleaner';
         } else {
-          msg += $('#notifications_notifications_grid-source_filter option:selected').html().toLowerCase();
+          msg += $('#notifications_' + id + '-source_filter option:selected').html().toLowerCase();
         }
       }
       msg += '?';
       if (recordCount > visibleCount) {
-        msg += ' This will affect all pages of the notifications list, not just the visible page.';
+        msg += ' Note that all pages of the list of notifications will be acknowledged, not just the visible page.';
       }
       var confirmation = confirm(msg);
-      if (confirmation) { 
-        $('.remove-notifications').val(1); 
+      if (confirmation) {
+        $('.acknowledge-notifications').val(1);
       } else {
         return false;
       }
@@ -136,11 +107,39 @@ var createNotifications;
           alert(JSON.stringify(response));
         } else {
           alert('Your comment has been saved');
-        }            
+        }
       },
       'json'
     );
     $('#reply-row-'+occurrence_id).remove();
     $('tr#row'+notification_id+' .action-button').show();
   }
+
+  $.each($('.notifications-cntr'), function() {
+    const cntr = this;
+    const gridId = $(cntr).find('.report-grid-container').attr('id');
+
+    // Clone the source filter to a hidden input within the form, so the
+    // acknowledge button can use the same filter.
+    // Note replacing - with _ matches how report_helper creates the report
+    // group name.
+    $('#' + gridId.replace('-', '_') + '-source_filter').change(function() {
+      $(cntr).find('form [name="source-filter"]').val($(this).val());
+    });
+
+    // Also store any grid column filters so the acknowledge button can use the
+    // same filter.
+    let endRegex = new RegExp('-' + gridId + '$');
+    $(cntr).find('.col-filter').change(function() {
+      let data = {};
+      $.each($(cntr).find('.col-filter'), function() {
+        if ($(this).val()) {
+          let colName = $(this).attr('id').replace(/^col-filter-/, '').replace(endRegex, '')
+          data[colName] = $(this).val();
+        }
+      });
+      $(cntr).find('form [name="filter-row-data"]').val(JSON.stringify(data));
+    });
+  });
+
 }) (jQuery);
