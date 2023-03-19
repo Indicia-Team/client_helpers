@@ -55,7 +55,8 @@ class extension_pantheon {
       $title = hostsite_get_page_title($nid);
     }
     else {
-      $title = drupal_get_title();
+      $route = \Drupal::routeMatch()->getCurrentRouteMatch()->getRouteObject();
+      $title = $route->getDefault('_title');
     }
     if (!empty($_GET['dynamic-sample_id'])) {
       $title = str_replace('{sample_id}', $_GET['dynamic-sample_id'], $title);
@@ -84,7 +85,7 @@ class extension_pantheon {
         if (count($ids) <= 3) {
           $samples = data_entry_helper::get_population_data(array(
             'report' => 'library/samples/filterable_explore_list',
-            'extraParams' => $auth['read'] + array('sample_id' => $_GET['dynamic-sample_id']),
+            'extraParams' => $auth['read'] + ['sample_id' => $_GET['dynamic-sample_id']],
           ));
           if (!isset($samples['error']) && count($samples) > 0) {
             $titles = [];
@@ -108,21 +109,26 @@ class extension_pantheon {
       $title = str_replace('{sample_name}', $name, $title);
     }
     if (preg_match('/{term:(?P<param>.+)}/', $title, $matches) && !empty($_GET[$matches['param']])) {
-      $terms = data_entry_helper::get_population_data(array(
+      $terms = data_entry_helper::get_population_data([
         'table' => 'termlists_term',
-        'extraParams' => $auth['read'] + array('id' => $_GET[$matches['param']], 'view' => 'cache'),
+        'extraParams' => $auth['read'] + [
+          'id' => $_GET[$matches['param']],
+          'view' => 'cache',
+        ],
         'columns' => 'term',
-      ));
+      ]);
       if (count($terms)) {
         $title = str_replace('{term:' . $matches['param'] . '}', $terms[0]['term'], $title);
       }
     }
     if (preg_match('/{attr:(?P<param>.+)}/', $title, $matches) && !empty($_GET[$matches['param']])) {
-      $attrs = data_entry_helper::get_population_data(array(
+      $attrs = data_entry_helper::get_population_data([
         'table' => 'taxa_taxon_list_attribute',
-        'extraParams' => $auth['read'] + array('id' => $_GET[$matches['param']]),
+        'extraParams' => $auth['read'] + [
+          'id' => $_GET[$matches['param']],
+        ],
         'columns' => 'caption',
-      ));
+      ]);
       if (count($attrs)) {
         $title = str_replace('{attr:' . $matches['param'] . '}', $attrs[0]['caption'], $title);
       }
@@ -176,18 +182,15 @@ class extension_pantheon {
    * Links spans on the page to the Pantheon Lexicon.
    */
   public static function lexicon($auth, $args, $tabalias, $options, $path) {
-    iform_load_helpers(array('report_helper'));
-    $query = new EntityFieldQuery();
-    $query
-      ->entityCondition('entity_type', 'node')
-      ->entityCondition('bundle', 'lexicon')
-      ->propertyCondition('status', 1);
-    $result = $query->execute();
-    $nids = array_keys($result['node']);
-    $nodes = node_load_multiple($nids);
+    iform_load_helpers(['report_helper']);
+    $query = \Drupal::entityQuery('node')
+      ->condition('type', 'lexicon')
+      ->condition('status', 1);
+    $node_storage = \Drupal::entityTypeManager()->getStorage('node');
+    $nodes = $node_storage->loadMultiple($query->execute());
     $list = [];
     foreach ($nodes as $node) {
-      $list[$node->title] = $node->field_summary[LANGUAGE_NONE][0]['value'];
+      $list[$node->title] = $node->field_summary->value;
     }
     report_helper::$javascript .= "indiciaData.lexicon = " . json_encode($list) . ";\n";
     report_helper::$javascript .= "indiciaFns.applyLexicon();\n";
@@ -208,12 +211,12 @@ class extension_pantheon {
    *   * analysisPath - path to the analysis page.
    */
   public static function quick_analysis_scratchpad_group($auth, $args, $tabalias, $options, $path) {
-    iform_load_helpers(array('report_helper'));
+    iform_load_helpers(['report_helper']);
     $imgPath = empty(report_helper::$images_path)
       ? report_helper::relative_client_helper_path() . "../media/images/"
       : report_helper::$images_path;
-    $userId = hostsite_get_user_field('indicia_user_id');
-    $auth = report_helper::get_read_write_auth(variable_get('indicia_website_id'), variable_get('indicia_password'));
+    $conn = iform_get_connection_details(NULL);
+    $auth = report_helper::get_read_write_auth($conn('website_id'), $conn('password'));
     $write = json_encode($auth['write_tokens']);
     report_helper::$javascript .= <<<JS
 indiciaData.imagesPath = '$imgPath';
