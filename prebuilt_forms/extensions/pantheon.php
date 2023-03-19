@@ -216,7 +216,7 @@ class extension_pantheon {
       ? report_helper::relative_client_helper_path() . "../media/images/"
       : report_helper::$images_path;
     $conn = iform_get_connection_details(NULL);
-    $auth = report_helper::get_read_write_auth($conn('website_id'), $conn('password'));
+    $auth = report_helper::get_read_write_auth($conn['website_id'], $conn['password']);
     $write = json_encode($auth['write_tokens']);
     report_helper::$javascript .= <<<JS
 indiciaData.imagesPath = '$imgPath';
