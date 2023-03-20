@@ -50,8 +50,9 @@ class extension_pantheon {
    *   Empty string as no control output HTML required.
    */
   public static function set_dynamic_page_title($auth, $args, $tabalias, $options, $path) {
-    if (arg(0) == 'node' && is_numeric(arg(1))) {
-      $nid = arg(1);
+    $current_path = \Drupal::service('path.current')->getPath();
+    if ($current_path[0] == 'node' && is_numeric($current_path[1])) {
+      $nid = $current_path[1];
       $title = hostsite_get_page_title($nid);
     }
     else {
