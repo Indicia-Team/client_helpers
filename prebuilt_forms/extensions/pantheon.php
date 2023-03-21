@@ -168,14 +168,23 @@ class extension_pantheon {
     if (!empty($options['back'])) {
       $r .= "<li><a id=\"summary-link\" class=\"$indicia_templates[buttonHighlightedClass]\" href=\"" . hostsite_get_url('summary') . '">Back to Summary</a></li>';
     }
+    $urls = [
+      'speciesForSample' => hostsite_get_url('species-for-sample'),
+      'ecologicalGuilds' => hostsite_get_url('ecological-guilds'),
+      'habitatsResources' => hostsite_get_url('habitats-resources'),
+      'assemblages' => hostsite_get_url('habitats-resources/isis-assemblages'),
+      'scores' => hostsite_get_url('horus/quality-scores-overview'),
+      'associations' => hostsite_get_url('associations'),
+      'combinedSummary' => hostsite_get_url('combined-summary'),
+    ];
     $r .= <<<HTML
-<li><a id="species-link" class="$indicia_templates[buttonHighlightedClass]" href="' . hostsite_get_url('species-for-sample') . '">Species list</a></li>
-<li><a id="guilds-link" class="$indicia_templates[buttonHighlightedClass]" href="' . hostsite_get_url('ecological-guilds') . '">Feeding guilds</a></li>
-<li><a id="habitats-resources-link" class="$indicia_templates[buttonHighlightedClass]" href="' . hostsite_get_url('habitats-resources') . '">Habitats &amp; resources</a></li>
-<li><a id="habitats-resources-link" class="$indicia_templates[buttonHighlightedClass]" href="' . hostsite_get_url('habitats-resources/isis-assemblages') . '">Assemblages</a></li>
-<li><a id="horus-link" class="$indicia_templates[buttonHighlightedClass]" href="' . hostsite_get_url('horus/quality-scores-overview') . '">Habitat scores</a></li>
-<li><a id="associations-link" class="$indicia_templates[buttonHighlightedClass]" href="' . hostsite_get_url('associations') . '">Associations</a></li>
-<li><a id="combined-summary" class="$indicia_templates[buttonHighlightedClass]" href="' . hostsite_get_url('combined-summary') . '">Combined summary</a></li>
+<li><a id="species-link" class="$indicia_templates[buttonHighlightedClass]" href="$urls[speciesForSample]">Species list</a></li>
+<li><a id="guilds-link" class="$indicia_templates[buttonHighlightedClass]" href="$urls[ecologicalGuilds]">Feeding guilds</a></li>
+<li><a id="habitats-resources-link" class="$indicia_templates[buttonHighlightedClass]" href="$urls[habitatsResources]">Habitats &amp; resources</a></li>
+<li><a id="habitats-resources-link" class="$indicia_templates[buttonHighlightedClass]" href="$urls[assemblages]">Assemblages</a></li>
+<li><a id="horus-link" class="$indicia_templates[buttonHighlightedClass]" href="$urls[scores]">Habitat scores</a></li>
+<li><a id="associations-link" class="$indicia_templates[buttonHighlightedClass]" href="$urls[associations]">Associations</a></li>
+<li><a id="combined-summary" class="$indicia_templates[buttonHighlightedClass]" href="$urls[combinedSummary]">Combined summary</a></li>
 </ul>
 HTML;
     return $r;
@@ -238,12 +247,12 @@ JS;
 </table>
 <div id="qa-group-actions">
   <button disabled="disabled" class="$indicia_templates[buttonHighlightedClass]" onclick="indiciaFns.analyseQuickAnalysisGroup('$options[analysisPath]', 'scratchpad')">Analyse all lists in group</button>
-  <button disabled="disabled" onclick="indiciaFns.clearQuickAnalysisGroup()">Clear group</button>
+  <button disabled="disabled" class="$indicia_templates[buttonWarningClass]" onclick="indiciaFns.clearQuickAnalysisGroup()">Clear group</button>
   <label class="auto">
     Convert group to a new list named:
     <input disabled="disabled" type="text" id="new-list-name" placeholder="Enter a list name" />
   </label>
-  <button disabled="disabled" onclick="indiciaFns.saveQuickAnalysisScratchpadGroup()">Convert</button>
+  <button disabled="disabled" lass="$indicia_templates[buttonDefaultClass]" onclick="indiciaFns.saveQuickAnalysisScratchpadGroup()">Convert</button>
 </div>
 
 HTML;
