@@ -3746,6 +3746,44 @@ RIJS;
         self::$javascript .= "file_box_uploaded_imageTemplate = '" . str_replace('"', '\"', $indicia_templates['file_box_uploaded_image']) . "';\n";
       }
     }
+
+    if ($options['classifierEnable']) {
+      // Load javascript to activate classifier.
+      self::add_resource('file_classifier');
+
+      // Ensure required options have values.
+      if (
+        empty($options['classifierUrl']) ||
+        empty($options['classifierTaxonListId']) ||
+        empty($options['classifierUnknownMeaningId'])
+      ) {
+        throw new Exception('A classifierUrl, a classifierTaxonListId, and
+        a classifierUnknowMeaningId must be provided for an image classifier.');
+      }
+
+      // Extract all options prefixed by 'classifier'.
+      $classifier_options = [];
+      foreach ($options as $key => $value) {
+        if (str_starts_with($key, 'classifier')) {
+          $subkey = lcfirst(substr($key, 10));
+          $classifier_options[$subkey] = $value;
+        }
+      }
+      // Add in defaults for a single-species mode classifier.
+      $classifier_options = array_merge($classifier_options, [
+        'classifyBtnTitle' => lang::get('Send all images to classifier.'),
+        'mode' => 'single-embedded',
+      ]);
+
+      // Add in remaining default options.
+      $classifier_options = self::get_file_classifier_options(
+        $classifier_options, $options['readAuth']
+      );
+
+      // Store some values that we need later when creating classifiers.
+      self::$indiciaData['classifySettings'] = $classifier_options;
+    }
+
     $occAttrControls = [];
     $occAttrs = [];
     $occAttrControlsExisting = [];
@@ -5658,11 +5696,46 @@ HTML;
           $onlyImages = FALSE;
         }
       }
-      $label = $onlyImages ? 'Add images' : 'Add media';
-      $class = 'sc' . $onlyImages ? 'Image' : 'Media' . 'Link';
-      $r .= '<td class="ui-widget-content scAddMediaCell" headers="' . $options['id'] . '-images-0">' .
-          '<a href="" class="add-media-link button ' . $class . '" style="display: none" id="add-media:' . $options['id'] . '--idx-:">' .
-          lang::get($label) . '</a><span class="species-checklist-select-species">' . lang::get('Select a species first') . '</span></td>';
+
+      // Html for a media link.
+      $label = lang::get($onlyImages ? 'Add images' : 'Add media');
+      $class = 'add-media-link button ';
+      $class .= 'sc' . $onlyImages ? 'Image' : 'Media' . 'Link';
+      $id = 'add-media:' . $options['id'] . '--idx-:';
+      $addMediaLink = <<<HTML
+        <a href="" class="$class" style="display: none" id="$id">$label</a>
+        HTML;
+
+      // Html for a classify link.
+      $label = lang::get('Identify');
+      $id = 'add-media:' . $options['id'] . '--idx-:';
+      $classifyLink = <<<HTML
+        <a href="" class="add-classifer-link button" id="$id">$label</a>
+        HTML;
+  
+      // Html for a select species span
+      $label = lang::get('Select a species first');
+      $selectSpan = <<<HTML
+        <span class="species-checklist-select-species">$label</span>
+        HTML;
+
+      // Choose between classify link or select species span.
+      if ($options['classifierEnable'] == TRUE) {
+        $classifyOrSelect = $classifyLink;
+      }
+      else {
+        $classifyOrSelect = $selectSpan;
+      }
+
+      // Add html for table data to output.
+      $class = 'ui-widget-content scAddMediaCell';
+      $headers = $options['id'] . '-images-0';
+      $r .= <<<HTML
+        <td class="$class" headers="$headers">
+          $addMediaLink
+          $classifyOrSelect
+        </td>
+        HTML;
 
       // Extra columnn for photos in responsive mode.
       if ($options['responsive']) {
