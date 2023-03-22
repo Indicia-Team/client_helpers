@@ -1255,6 +1255,187 @@ JS;
   }
 
   /**
+   * Outputs a file classifier to identify species and add them to a list.
+   *
+   * The idea is that you upload a whole bunch of files to the control and then
+   * they are sent one at a time to the classifier. Rows are added to a
+   * species_checklist for each new identified species. If the same species is
+   * identified again, the count of the record is incremented. The attribute to
+   * increment is determined by it having the system function for
+   * sex-stagge-count set in the warehouse. A classification result is created
+   * for each file and the file is added to the occurrence. Where a file is not
+   * identified, a record of the unknown taxon is created.
+   *
+   * The user interface is provided by a file_box control so it shares many
+   * of the same options.
+   *
+   *
+   * @param array $options
+   *   Options array with the following possibilities, in addition to those for
+   *   a file_box:
+   *   * url - Required. Location of the service which will do the image
+   *     classification. Take a look at
+   *     https://github.com/Indicia-Team/drupal-8-modules-indicia-ai
+   *     for a proxy to classifiers designed to work with this control.
+   *   * taxonListId - Required. The list to match the classifier results
+   *     against.
+   *   * taxonControlId - Required. TODO. The control to update with the
+   *     result of the image classification.
+   *   * unknowMeaningId - Required. The taxon_meaning_id to use when adding rows
+   *     to the species grid for images the classifier could not identify.
+   *   * languageIso - The language to use with the control. Defaults to English
+   *     if not specified. If specified but not available, defaults to preferred
+   *     name.
+   *   * readAuth - Read authentication array with nonce and token.
+   */
+  public static function file_classifier(array $options) {
+    // Ensure some settings have required values.
+    if (empty($options['taxonControlId'])) {
+      throw new Exception('A taxonControlId must be provided for an image classifier.');
+    }
+
+    // Obtain default options.
+    $classifier_options = self::get_file_classifier_options($options, $options['readAuth']);
+    // Merge additional classifier options.
+    $options = array_merge(
+      [
+        'id' => 'file_classifier',
+        'table' => 'occurrence_medium',
+        'maxFileCount' => 9999,
+      ],
+      $options,
+      $classifier_options
+    );
+
+    // Load javascript for the classifier.
+    self::add_resource('file_classifier');
+    // We need to call the initialisation function.
+    $containerId = 'container-' .
+      ($options['table'] ?? 'occurrence_medium') . '-' .
+      ($options['id'] ?? 'default');
+    $containerId = str_replace(':', '\\\\:', $containerId);
+    $javascript = "$('#$containerId').classifier({});\n";
+
+    // To circumvent problems in some browsers with setting up a hidden control,
+    // we juggle with javascript when the control is placed on a tab.
+    if (isset($options['tabDiv'])) {
+      // Get only html for filebox.
+      $options['codeGenerated'] = 'php';
+      $r = self::file_box($options);
+      // Prepend javascript for filebox.
+      $options['codeGenerated'] = 'js';
+      $javascript = self::file_box($options) . $javascript;
+      // Wrap the script in an event handler so we only execute it when
+      // the tab is displayed.
+      $javascript =
+        "var uploaderTabHandler = function(event, ui) { \n" .
+        "  panel = typeof ui.newPanel === 'undefined' ? ui.panel : ui.newPanel[0];\n" .
+        "  if ($(panel).attr('id') === '{$options['tabDiv']}') {\n    " .
+        $javascript .
+        "    indiciaFns.unbindTabsActivate($('#{$options['tabDiv']}').parent(), uploaderTabHandler);\n" .
+        "  }\n};\n" .
+        "indiciaFns.bindTabsActivate($('#{$options['tabDiv']}').parent(), uploaderTabHandler);\n";
+      // Insert this script at the beginning, because it must be done before
+      // the tabs are initialised or the first tab cannot fire the event.
+      self::$javascript = $javascript . self::$javascript;
+    }
+    else {
+      // Get html and add javascript for a filebox.
+      $r = self::file_box($options);
+      // Append javascript for classifier.
+      self::$javascript .= $javascript;
+    }
+
+    return $r;
+  }
+
+  /**
+   * Internal method to prepare the options for a file_classifier control.
+   *
+   * This is broken out in to a function so that it is available to the
+   * stand-alone file_classifier and the species_checklist.
+   *
+   * @param array $options
+   *   Options array passed to the control.
+   * @param array $readAuth
+   *   Read authorisation array.
+   *
+   * @return array
+   *   The options array received, augmented by any missing values that will be
+   *   needed.
+   */
+  public static function get_file_classifier_options(array $options, array $readAuth) {
+    // Required values.
+    $requirements = [
+      'fileClassifier' => TRUE,
+    ];
+
+    // Provide default settings for other options which can be overwritten.
+    $defaults = [
+      'caption' => lang::get('Image classifier'),
+      'helpText' => lang::get('Add a photo here, click the classify button, ' .
+        'and we will attempt to automatically identify the species and add ' .
+        'it to the grid. Close-cropped photos with plain backgrounds will be ' .
+        'most successful.'),
+      'dialogTitle' => lang::get('Requesting classification'),
+      'dialogStart' => lang::get('Your photo is being sent to an image ' .
+        'classification service which will try to identify the species.'),
+      'dialogNew' => lang::get('The photo has been identified as ' .
+        '<em>{1}</em> with a probability of {2}%. ' .
+        'It is added to the grid as a new row.'),
+      'dialogUnmatched' => lang::get('Sorry, your photo could not be matched ' .
+        'to a species in the survey list. It is added to the grid as Unknown.'),
+      'dialogUnknown' => lang::get('Sorry, your photo could not be ' .
+        'confidently identified. It is added to the grid as Unknown.'),
+      'dialogFail' => lang::get('Sorry, an error meant your photo could not ' .
+        'be identified. It is added to the grid as Unknown.'),
+      'dialogBtnOk' => lang::get('Okay'),
+      'classifyBtnCaption' => lang::get('Classify'),
+      'classifyBtnTitle' => lang::get('Start classifying images one by one.'),
+      'buttonTemplate' =>
+      '<button id="{id}" type="button" class="{class}" title="{title}">' .
+        '{caption}' .
+      '</button>',
+      'mode' => 'multi:checklist:append',
+    ];
+    $classifier_options = array_merge($defaults, $options, $requirements);
+
+    // Obtain taxon information for unknown species in current language.
+    $items = self::get_population_data([
+      'table' => 'taxa_taxon_list',
+      'extraParams' => [
+        'view' => 'detail',
+        'taxon_meaning_id' => $options['unknownMeaningId'],
+        'language_iso' => $options['languageIso'] ?? 'eng',
+      ] + $readAuth,
+    ]);
+    if (count($items) == 0) {
+      // The requested language is not represented in the taxon list
+      // so default to the preferred name.
+      $items = self::get_population_data([
+        'table' => 'taxa_taxon_list',
+        'extraParams' => [
+          'view' => 'detail',
+          'taxon_meaning_id' => $options['unknownMeaningId'],
+          'preferred' => 't',
+        ] + $readAuth,
+      ]);
+      if (count($items) == 0) {
+        // Something is wrong with the configuration.
+        throw new Exception('Cannot find a taxon with taxon_meaning_id = ' .
+        $options['unknownMeaningId']);
+      }
+    }
+    $classifier_options['unknownTaxon'] = [
+      'taxa_taxon_list_id' => $items[0]['id'],
+      'taxon' => $items[0]['taxon'],
+      'language_iso' => $items[0]['language_iso'],
+    ];
+
+    return $classifier_options;
+  }
+
+  /**
    * Search for place name control.
    *
    * Generates a text input control with a search button that looks up an
@@ -7305,6 +7486,7 @@ if (errors$uniq.length>0) {
         $srefPrecision = self::extractValueFromArray($record, 'occurrence:spatialrefprecision');
         $sampleAttrKeys = preg_grep('/^occurrence:smpAttr:/', array_keys($record));
         $occ = submission_builder::wrap($record, 'occurrence');
+        self::attachClassificationToModel($occ, $record);
         self::attachOccurrenceMediaToModel($occ, $record);
         self::attachAssociationsToModel($id, $occ, $assocData, $arr);
         // If we have subSample date, sref or attrs in the grid row, then must
@@ -8049,6 +8231,81 @@ HTML;
           'fields' => $data
         )
       );
+    }
+  }
+
+  /**
+   * When wrapping a species checklist submission, scan the contents of the data
+   * for a single grid row to look for a classification event (which could
+   * consist of many classification results). If found it is attached to the
+   * occurrence model as a super-model (with sub-models).
+   * @param array $occ Occurrence submission structure.
+   * @param array $record Record information from the form post, which may
+   * contain classification results.
+   */
+  public static function attachClassificationToModel(&$occ, $record) {
+    $results = [];
+    foreach ($record as $key => $value) {
+      // We are interested in keys like 
+      //   classification_result:<index>
+      if (substr($key, 0, 22) === 'classification_result:') {
+        $results[] = json_decode($value, TRUE);
+      }
+    }
+
+    // Were any classifications performed for this record?
+    if ($results) {
+      // Start a classification event.
+      $classificationEvent = [
+        'id' => 'classification_event',
+        'fields' => [
+          'created_by_id' => hostsite_get_user_field('indicia_user_id')
+        ],
+        'subModels' => [],
+      ];
+      
+
+      // Add classification results as sub-models.
+      foreach ($results as $result) {
+      // Each $result is an array containing elements
+      //  - fields, an array of the classification_result fields,
+      //  - media, an array of the the media paths used in the classification,
+      //  - suggestions, an array of suggestions, each containing an array 
+      //    of the fields in the suggestion.
+        $classificationResult = [
+          'fkId' => 'classification_event_id',
+          'model' => [
+            'id' => 'classification_result',
+            'fields' => $result['fields'],
+            'subModels' => [],
+            'metaFields' => [
+              'mediaPaths' => $result['media'],         
+            ],
+          ],
+        ];
+
+        // Add classification suggestions as sub-models
+        foreach ($result['suggestions'] as $suggestion) {
+          $classificationResult['model']['subModels'][] = [
+            'fkId' => 'classification_result_id',
+            'model' => [
+              'id' => 'classification_suggestion',
+              'fields' => $suggestion,
+            ]
+          ];
+        }
+
+        $classificationEvent['subModels'][] = $classificationResult;
+      }
+
+      // Add the classification_event to the occurrence as a super-model.
+      if (!isset($occ['superModels'])) {
+        $occ['superModels'] = [];
+      }
+      $occ['superModels'][] = [
+        'fkId' => 'classification_event_id',
+        'model' => $classificationEvent,
+      ];
     }
   }
 
