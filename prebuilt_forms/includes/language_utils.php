@@ -27,10 +27,17 @@
  */
 
 /**
- * Get the iso 639 code for the user's selected language.
+ * Get an ISO 639-2 three-character language code.
  *
- * @return array
- *   3 character language code.
+ * Either returns the code of the language in use on the host site or converts
+ * from a supplied ISO 639-1 two-character code.
+ *
+ * @param string $lang
+ *   An ISO 639-1 two-character code or NULL.
+ *   If NULL, the code of the language in use on the host site is returned.
+ *
+ * @return string
+ *   The three-character language code corresponding to the Slang parameter.
  *
  * @todo Complete the list.
  */
