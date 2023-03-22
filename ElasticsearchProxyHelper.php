@@ -2354,14 +2354,18 @@ class ElasticsearchProxyHelper {
    *
    * All custom verification rule flags created by the user within the records
    * identified by the current filter will be cleared.
+   *
+   * @param int $nid
+   *   Node ID for accessing config.
    */
   private static function proxyClearCustomResults($nid) {
     iform_load_helpers(['helper_base']);
     $alias = self::getEsEndpoint();
+    $userId = hostsite_get_user_field('indicia_user_id');
     $conn = iform_get_connection_details($nid);
     $readAuth = helper_base::get_read_auth($conn['website_id'], $conn['password']);
     self::checkPermissionsFilter($_POST, $readAuth, $nid);
-    $url = self::$config['indicia']['base_url'] . "index.php/services/rest/custom_verification_rulesets/clear-flags?alias=$alias";
+    $url = self::$config['indicia']['base_url'] . "index.php/services/rest/custom_verification_rulesets/clear-flags?alias=$alias&user_id=$userId";
     $query = self::buildEsQueryFromRequest($_POST);
     echo self::curlPost($url, $query);
   }
@@ -2370,15 +2374,19 @@ class ElasticsearchProxyHelper {
    * Proxy method which runs a custom verification ruleset.
    *
    * Used by the runCustomVerificationRulesets control.
+   *
+   * @param int $nid
+   *   Node ID for accessing config.
    */
   private static function proxyRunCustomRuleset($nid) {
     iform_load_helpers(['helper_base']);
     $alias = self::getEsEndpoint();
+    $userId = hostsite_get_user_field('indicia_user_id');
     $rulesetId = $_GET['ruleset_id'];
     $conn = iform_get_connection_details($nid);
     $readAuth = helper_base::get_read_auth($conn['website_id'], $conn['password']);
     self::checkPermissionsFilter($_POST, $readAuth, $nid);
-    $url = self::$config['indicia']['base_url'] . "index.php/services/rest/custom_verification_rulesets/$rulesetId/run-request?alias=$alias";
+    $url = self::$config['indicia']['base_url'] . "index.php/services/rest/custom_verification_rulesets/$rulesetId/run-request?alias=$alias&user_id=$userId";
     $query = self::buildEsQueryFromRequest($_POST);
     echo self::curlPost($url, $query);
   }
