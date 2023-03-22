@@ -50,8 +50,9 @@ class extension_pantheon {
    *   Empty string as no control output HTML required.
    */
   public static function set_dynamic_page_title($auth, $args, $tabalias, $options, $path) {
-    if (arg(0) == 'node' && is_numeric(arg(1))) {
-      $nid = arg(1);
+    $current_path = \Drupal::service('path.current')->getPath();
+    if ($current_path[0] == 'node' && is_numeric($current_path[1])) {
+      $nid = $current_path[1];
       $title = hostsite_get_page_title($nid);
     }
     else {
@@ -154,27 +155,38 @@ class extension_pantheon {
    *   HTML to include on the page.
    */
   public static function button_links($auth, $args, $tabalias, $options, $path) {
-    drupal_add_js(str_replace('modules/iform', 'libraries/jsPlumb', \Drupal::service('extension.path.resolver')->getPath('module', 'iform')) . '/jsPlumb.js');
+    global $indicia_templates;
     $r = '';
     if (!empty($options['extras'])) {
       $r .= '<ul class="button-links extras">';
       foreach ($options['extras'] as $extra) {
-        $r .= '<li><a id="isis-link" class="button" href="' . hostsite_get_url($extra['link']) . '">' . $extra['label'] . '</a></li>';
+        $r .= "<li><a id=\"isis-link\" class=\"$indicia_templates[buttonHighlightedClass]\" href=\"" . hostsite_get_url($extra['link']) . '">' . $extra['label'] . '</a></li>';
       }
       $r .= '</ul>';
     }
     $r .= '<ul class="button-links">';
     if (!empty($options['back'])) {
-      $r .= '<li><a id="summary-link" class="button" href="' . hostsite_get_url('summary') . '">Back to Summary</a></li>';
+      $r .= "<li><a id=\"summary-link\" class=\"$indicia_templates[buttonHighlightedClass]\" href=\"" . hostsite_get_url('summary') . '">Back to Summary</a></li>';
     }
-    $r .= '<li><a id="species-link" class="button" href="' . hostsite_get_url('species-for-sample') . '">Species list</a></li>
-<li><a id="guilds-link" class="button" href="' . hostsite_get_url('ecological-guilds') . '">Feeding guilds</a></li>
-<li><a id="habitats-resources-link" class="button" href="' . hostsite_get_url('habitats-resources') . '">Habitats &amp; resources</a></li>
-<li><a id="habitats-resources-link" class="button" href="' . hostsite_get_url('habitats-resources/isis-assemblages') . '">Assemblages</a></li>
-<li><a id="horus-link" class="button" href="' . hostsite_get_url('horus/quality-scores-overview') . '">Habitat scores</a></li>
-<li><a id="associations-link" class="button" href="' . hostsite_get_url('associations') . '">Associations</a></li>
-<li><a id="combined-summary" class="button" href="' . hostsite_get_url('combined-summary') . '">Combined summary</a></li>
-</ul>';
+    $urls = [
+      'speciesForSample' => hostsite_get_url('species-for-sample'),
+      'ecologicalGuilds' => hostsite_get_url('ecological-guilds'),
+      'habitatsResources' => hostsite_get_url('habitats-resources'),
+      'assemblages' => hostsite_get_url('habitats-resources/isis-assemblages'),
+      'scores' => hostsite_get_url('horus/quality-scores-overview'),
+      'associations' => hostsite_get_url('associations'),
+      'combinedSummary' => hostsite_get_url('combined-summary'),
+    ];
+    $r .= <<<HTML
+<li><a id="species-link" class="$indicia_templates[buttonHighlightedClass]" href="$urls[speciesForSample]">Species list</a></li>
+<li><a id="guilds-link" class="$indicia_templates[buttonHighlightedClass]" href="$urls[ecologicalGuilds]">Feeding guilds</a></li>
+<li><a id="habitats-resources-link" class="$indicia_templates[buttonHighlightedClass]" href="$urls[habitatsResources]">Habitats &amp; resources</a></li>
+<li><a id="habitats-resources-link" class="$indicia_templates[buttonHighlightedClass]" href="$urls[assemblages]">Assemblages</a></li>
+<li><a id="horus-link" class="$indicia_templates[buttonHighlightedClass]" href="$urls[scores]">Habitat scores</a></li>
+<li><a id="associations-link" class="$indicia_templates[buttonHighlightedClass]" href="$urls[associations]">Associations</a></li>
+<li><a id="combined-summary" class="$indicia_templates[buttonHighlightedClass]" href="$urls[combinedSummary]">Combined summary</a></li>
+</ul>
+HTML;
     return $r;
   }
 
@@ -212,11 +224,12 @@ class extension_pantheon {
    */
   public static function quick_analysis_scratchpad_group($auth, $args, $tabalias, $options, $path) {
     iform_load_helpers(['report_helper']);
+    global $indicia_templates;
     $imgPath = empty(report_helper::$images_path)
       ? report_helper::relative_client_helper_path() . "../media/images/"
       : report_helper::$images_path;
     $conn = iform_get_connection_details(NULL);
-    $auth = report_helper::get_read_write_auth($conn('website_id'), $conn('password'));
+    $auth = report_helper::get_read_write_auth($conn['website_id'], $conn['password']);
     $write = json_encode($auth['write_tokens']);
     report_helper::$javascript .= <<<JS
 indiciaData.imagesPath = '$imgPath';
@@ -224,8 +237,8 @@ indiciaData.write = $write;
 
 JS;
     return <<<HTML
-<table id="quick-analysis-group" class="ui-widget ui-widget-content">
-  <thead class="ui-widget-header">
+<table id="quick-analysis-group" class="table">
+  <thead>
     <th>List</th>
     <th>Actions</th>
   </thead>
@@ -233,13 +246,13 @@ JS;
   </tbody>
 </table>
 <div id="qa-group-actions">
-  <button disabled="disabled" onclick="indiciaFns.analyseQuickAnalysisGroup('$options[analysisPath]', 'scratchpad')">Analyse all lists in group</button>
-  <button disabled="disabled" onclick="indiciaFns.clearQuickAnalysisGroup()">Clear group</button>
+  <button disabled="disabled" class="$indicia_templates[buttonHighlightedClass]" onclick="indiciaFns.analyseQuickAnalysisGroup('$options[analysisPath]', 'scratchpad')">Analyse all lists in group</button>
+  <button disabled="disabled" class="$indicia_templates[buttonWarningClass]" onclick="indiciaFns.clearQuickAnalysisGroup()">Clear group</button>
   <label class="auto">
     Convert group to a new list named:
     <input disabled="disabled" type="text" id="new-list-name" placeholder="Enter a list name" />
   </label>
-  <button disabled="disabled" onclick="indiciaFns.saveQuickAnalysisScratchpadGroup()">Convert</button>
+  <button disabled="disabled" lass="$indicia_templates[buttonDefaultClass]" onclick="indiciaFns.saveQuickAnalysisScratchpadGroup()">Convert</button>
 </div>
 
 HTML;
