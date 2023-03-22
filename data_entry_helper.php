@@ -7396,9 +7396,17 @@ if (errors$uniq.length>0) {
     // or
     // sc:<grid_id>-<rowIndex>:[<occurrence_id>]:occurrence:comment
     // or
-    // sc:<grid_id>-<rowIndex>:[<occurrence_id>]:occurrence_medium:fieldname:uniqueImageId
+    // sc:<grid_id>-<rowIndex>:[<occurrence_id>]:occurrence_medium:<fieldname>:<uniqueImageId>
     $records = [];
-    // $records will be an array containing an entry for every row in every grid on the page
+    // $records will be a 2D array containing a value for every input in every
+    // grid on the page.
+    // The first dimension is <grid_id>-<rowIndex>
+    // The second dimension is either (using the examples above)
+    //   - present, 
+    //   - occAttr:<occurrence_attribute_id>[:<occurrence_attribute_value_id>]
+    //   - occurrence:comment
+    //   - occurrence_medium:<fieldname>:<uniqueImageId>
+    //   - id
     $allRowInclusionCheck = [];
     // $allRowInclusionCheck will be an array containing an entry for every
     // grid that specified a value of hasData.
