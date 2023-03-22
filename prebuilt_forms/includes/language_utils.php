@@ -47,12 +47,12 @@ function iform_lang_iso_639_2($lang = NULL) {
   $lang = explode('-', $lang);
   $lang = $lang[0];
   $list = [
-    'en' => 'eng',
-    'de' => 'deu',
-    'cs' => 'cze',
-    'lb' => 'ltz',
-    'fr' => 'fra',
-    'cy' => 'cym'
+    'cs' => 'cze', // Czech.
+    'en' => 'eng', // English.
+    'fr' => 'fra', // French.
+    'de' => 'deu', // German.
+    'lb' => 'ltz', // Luxembourgish.
+    'cy' => 'cym', // Welsh.
   ];
   return $list[$lang];
 }
