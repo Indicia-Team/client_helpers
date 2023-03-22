@@ -824,6 +824,7 @@ class helper_base {
    *   * font_awesome
    *   * leaflet
    *   * leaflet_google
+   *   * file_classifier
    *   * brc_atlas
    *   * brc_charts
    *   * bigr
@@ -1227,6 +1228,15 @@ class helper_base {
             self::$js_path . 'indicia.datacomponents/jquery.idc.filterSummary.js',
             self::$js_path . 'indicia.datacomponents/jquery.idc.permissionFilters.js',
             'https://unpkg.com/@ungap/url-search-params',
+          ],
+        ],
+        'file_classifier' => [
+          'deps' => [
+            'plupload',
+            'jquery_ui',
+          ],
+          'javascript' => [
+            self::$js_path . 'jquery.fileClassifier.js',
           ],
         ],
         'brc_atlas' => [
