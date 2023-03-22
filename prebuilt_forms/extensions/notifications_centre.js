@@ -23,9 +23,11 @@ var createNotifications;
   // If user elects to continue, set the hidden field that indicates
   // they want to continue with the removal.
   indiciaFns.acknowledgeNotificationsList = function(id) {
+    // Version of the ID which matches how some controls or data values are named.
+    const idWithUnderscores = id.replace(/[^a-z0-9]+/, '_');
     var visibleCount = $('#notifications-' + id + ' tbody tr').length,
-        recordCount = indiciaData.reports['notifications_' + id]['grid_notifications_' + id][0].settings.recordCount;
-    const currentFilter = $('#notifications_' + id + '-source_filter').val();
+        recordCount = indiciaData.reports['notifications_' + idWithUnderscores]['grid_notifications_' + idWithUnderscores][0].settings.recordCount;
+    const currentFilter = $('#notifications_' + idWithUnderscores + '-source_filter').val();
     if (visibleCount > 0) {
       var msg='Are you sure you want to acknowledge this list of ' + recordCount + ' notifications';
       // Only change the confirmation message depending on the user's filter drop-down selection
@@ -36,7 +38,7 @@ var createNotifications;
         if (currentFilter === 'record_cleaner') {
           msg += 'Record Cleaner';
         } else {
-          msg += $('#notifications_' + id + '-source_filter option:selected').html().toLowerCase();
+          msg += $('#notifications_' + idWithUnderscores + '-source_filter option:selected').html().toLowerCase();
         }
       }
       msg += '?';
@@ -118,14 +120,6 @@ var createNotifications;
   $.each($('.notifications-cntr'), function() {
     const cntr = this;
     const gridId = $(cntr).find('.report-grid-container').attr('id');
-
-    // Clone the source filter to a hidden input within the form, so the
-    // acknowledge button can use the same filter.
-    // Note replacing - with _ matches how report_helper creates the report
-    // group name.
-    $('#' + gridId.replace('-', '_') + '-source_filter').change(function() {
-      $(cntr).find('form [name="source-filter"]').val($(this).val());
-    });
 
     // Also store any grid column filters so the acknowledge button can use the
     // same filter.
