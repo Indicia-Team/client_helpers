@@ -1304,7 +1304,13 @@ JS;
         'maxFileCount' => 9999,
       ],
       $options,
-      $classifier_options
+      $classifier_options,
+      [
+        'helpText' => lang::get('Add files here, click the classify button, ' .
+        'and we will attempt to automatically identify the species in each ' .
+        'file and add them to the grid. Files featuring the specimen with ' .
+        'minimal background will be most successful.'),
+      ]
     );
 
     // Load javascript for the classifier.
@@ -1373,25 +1379,27 @@ JS;
     // Provide default settings for other options which can be overwritten.
     $defaults = [
       'caption' => lang::get('Image classifier'),
-      'helpText' => lang::get('Add a photo here, click the classify button, ' .
+      'helpText' => lang::get('Add a file here, click the classify button, ' .
         'and we will attempt to automatically identify the species and add ' .
-        'it to the grid. Close-cropped photos with plain backgrounds will be ' .
-        'most successful.'),
+        'it to the grid. Files featuring the specimen with minimal ' .
+        'background will be most successful.'),
       'dialogTitle' => lang::get('Requesting classification'),
-      'dialogStart' => lang::get('Your photo is being sent to an image ' .
+      'dialogStart' => lang::get('Your files are being sent to a ' .
         'classification service which will try to identify the species.'),
-      'dialogNew' => lang::get('The photo has been identified as ' .
+      'dialogEnd' => lang::get('Your files have been processed. ' .
+        'Review the identifications and check the abundances.'),
+      'dialogNew' => lang::get('The file has been identified as ' .
         '<em>{1}</em> with a probability of {2}%. ' .
         'It is added to the grid as a new row.'),
-      'dialogUnmatched' => lang::get('Sorry, your photo could not be matched ' .
+      'dialogUnmatched' => lang::get('Sorry, your file could not be matched ' .
         'to a species in the survey list. It is added to the grid as Unknown.'),
-      'dialogUnknown' => lang::get('Sorry, your photo could not be ' .
+      'dialogUnknown' => lang::get('Sorry, your file could not be ' .
         'confidently identified. It is added to the grid as Unknown.'),
-      'dialogFail' => lang::get('Sorry, an error meant your photo could not ' .
+      'dialogFail' => lang::get('Sorry, an error meant your file could not ' .
         'be identified. It is added to the grid as Unknown.'),
       'dialogBtnOk' => lang::get('Okay'),
       'classifyBtnCaption' => lang::get('Classify'),
-      'classifyBtnTitle' => lang::get('Start classifying images one by one.'),
+      'classifyBtnTitle' => lang::get('Start classifying files.'),
       'buttonTemplate' =>
       '<button id="{id}" type="button" class="{class}" title="{title}">' .
         '{caption}' .
