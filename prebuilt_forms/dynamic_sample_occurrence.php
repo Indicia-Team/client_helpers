@@ -30,6 +30,7 @@
 
 require_once 'includes/dynamic.php';
 require_once 'includes/groups.php';
+require_once 'includes/language_utils.php';
 
 /**
  * Store remembered field settings.
@@ -200,6 +201,8 @@ form.<br/>
   containing either sample or occurrence to limit the block of attributes to those associated at
   the sample or occurrence level only.</li>
   <li><strong>[date]</strong> - date picker control. A sample must always have a date.</li>
+  <li><strong>[file classifier]</strong> - use when in grid mode to provide a control for
+  uploading files which can be sent to an AI classifer to identify the species.</li>
   <li><strong>[map]</strong> - a map that links to the spatial reference and location
   select/autocomplete controls</li>
   <li><strong>[spatial reference]</strong> - spatial reference input text box. A sample must always
@@ -2851,6 +2854,30 @@ JS;
     }
     else {
       return "[photos] control cannot be included in form when in grid entry mode, since photos are automatically included in the grid.";
+    }
+  }
+
+  /**
+   * Get the file classifier control.
+   */
+  protected static function get_control_fileclassifier($auth, $args, $tabAlias, $options) {
+    if ($args['multiple_occurrence_mode'] === 'single') {
+      return "[file classifier] control cannot be included in form unless in 
+      grid entry mode, since records are automatically added to the grid.";
+    }
+    else {
+      $opts = [
+        'readAuth' => $auth['read'],
+        'resizeWidth' => 1600,
+        'resizeHeight' => 1600,
+        'languageIso' => iform_lang_iso_639_2(),
+      ];
+      if ($tabAlias) {
+        $opts['tabDiv'] = $tabAlias;
+      }
+      $options = array_merge($opts, $options);
+
+      return data_entry_helper::file_classifier($options);
     }
   }
 
