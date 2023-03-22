@@ -167,7 +167,8 @@ class extension_notifications_centre {
     // clicked, when the page reloads this is then checked for.
     $r .= '<input type="hidden" name="acknowledge-notifications" class="acknowledge-notifications"/>';
     // A hidden input to pass the current source type filter through.
-    $r .= '<input type="hidden" name="source-filter"/>';
+    $sourceFilter = $_POST['notifications_' . preg_replace('/[^a-z0-9]+/', '_', $options['id']) . '-source_filter'] ?? 'all';
+    $r .= "<input type=\"hidden\" name=\"source-filter\" value=\"$sourceFilter\" />";
     // Plus a hidden input to pass the current filter row values through.
     $r .= '<input type="hidden" name="filter-row-data"/>';
     $r .= self::acknowledgeButton($options);
