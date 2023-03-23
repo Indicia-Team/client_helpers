@@ -462,7 +462,6 @@ class import_helper_2 extends helper_base {
     self::addLanguageStringsToJs('import_helper_2', [
       'invalidType' => 'The chosen file was not a type of file that can be imported.',
       'removeUploadedFileHint' => 'Remove the uploaded file',
-      'selectedFile' => 'Selected {1} file',
       'uploadFailedWithError' => 'The file upload failed. The error message was:<br/>{1}.',
     ]);
     $lang = [
