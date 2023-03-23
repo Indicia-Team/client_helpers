@@ -95,6 +95,16 @@ jQuery(document).ready(($) => {
   });
 
   /**
+   * Removes a grid ref or location boundary identified by ID.
+   */
+  function removeDisplayFeature(id) {
+    let feature = indiciaData.displayLayer.getFeatureById(id);
+    if (feature) {
+      indiciaData.displayLayer.removeFeatures([feature]);
+    }
+  }
+
+  /**
    * Handle when grid ref(s) input into the list box.
    */
   $('#geography\\:grid_refs').change(function() {
@@ -108,12 +118,13 @@ jQuery(document).ready(($) => {
       delete indiciaData.bboxFeature;
     }
     $('#geography\\:location_list\\:sublist *').remove();
+    indiciaData.mapdiv.removeAllFeatures(indiciaData.displayLayer, 'higherGeo');
     // Remove deleted grid refs from the map. Walk backwards so we can safely
     // remove items.
     for (let i = indiciaData.gridRefsOnMap.length - 1; i >= 0; i--) {
       const gridRef = indiciaData.gridRefsOnMap[i];
       if (gridRefs.indexOf(gridRef) === -1) {
-        indiciaData.mapdiv.removeAllFeatures(indiciaData.displayLayer, 'gridRef:' + gridRef);
+        removeDisplayFeature('gridRef:' + gridRef);
         var index = indiciaData.gridRefsOnMap.indexOf(gridRef);
         if (index > -1) {
           indiciaData.gridRefsOnMap.splice(index, 1);
@@ -133,7 +144,8 @@ jQuery(document).ready(($) => {
         .done((data) => {
           const parser = new OpenLayers.Format.WKT();
           const feature = parser.read(data.mapwkt);
-          feature.attributes.type = 'gridRef:' + gridRef;
+          feature.id = 'gridRef:' + gridRef;
+          feature.attributes.type = 'gridRef';
           indiciaData.displayLayer.addFeatures([feature]);
           indiciaData.gridRefsOnMap.push(gridRef);
         });
@@ -217,10 +229,47 @@ jQuery(document).ready(($) => {
   $('#geography\\:location_list\\:add').click(() => {
     // Clear other types of geography limit so we only have one.
     $('#geography\\:grid_refs').val('');
+    indiciaData.mapdiv.removeAllFeatures(indiciaData.displayLayer, 'gridRef');
     $('.lat-lng-input').val('');
     $('#invalid-bbox-message').hide();
     $('#save-button').removeAttr('disabled');
+    // Draw the location on the map.
+    const locationId = $('#geography\\:location_list\\:search').val();
+    let found = false;
+    $.each(indiciaData.displayLayer.features, function() {
+      if (this.id === 'higherGeo:' + locationId) {
+        found = true;
+        return false;
+      }
+    });
+    if (locationId && !found) {
+      $.getJSON(indiciaData.read.url + 'index.php/services/data/location/' + locationId +
+              '?mode=json&view=detail&auth_token=' + indiciaData.read.auth_token + '&nonce=' + indiciaData.read.nonce + '&callback=?')
+        .done(function (data) {
+          if (data.length > 0) {
+            const parser = new OpenLayers.Format.WKT();
+            const geomwkt = data[0].boundary_geom || data[0].centroid_geom;
+            const feature = parser.read(geomwkt);
+            feature.id = 'higherGeo:' + locationId;
+            feature.attributes.type = 'higherGeo';
+            if (indiciaData.mapdiv.indiciaProjection.getCode() !== indiciaData.mapdiv.map.projection.getCode()) {
+              feature.geometry.transform(indiciaData.mapdiv.indiciaProjection, indiciaData.mapdiv.map.projection);
+            }
+            indiciaData.displayLayer.addFeatures([feature]);
+          }
+        });
+    }
   });
+
+  /**
+   * Delete a higher geography location also removes the boundary.
+   */
+  indiciaFns.on('click', '#geography\\:location_list\\:sublist .ind-delete-icon', {}, function() {
+    const locationId = $(this).closest('li').find('input').val();
+    removeDisplayFeature('higherGeo:' + locationId);
+  });
+
+  // @todo Remove a higher geo
 
   // Delete button prompt.
   $('#delete-button').click(function(e) {
