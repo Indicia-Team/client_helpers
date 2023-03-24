@@ -1598,34 +1598,33 @@ class helper_base {
 </div>
 
 HTML;
-          $r .= str_replace(array('{control}', '{id}', '{wrapClasses}'), [$ctrl, 'map-toolbar', ''], $indicia_templates['controlWrap']);
+          $r .= str_replace(['{control}', '{id}', '{wrapClasses}'], [$ctrl, 'map-toolbar', ''], $indicia_templates['controlWrap']);
         }
-        $r .= '<input type="hidden" name="' . $fieldname . '" id="hidden-wkt" value="'.
+        $r .= '<input type="hidden" name="' . $fieldname . '" id="hidden-wkt" value="' .
             (isset($_POST[$fieldname]) ? $_POST[$fieldname] : '') . '"/>';
         if (isset($info['allow_buffer']) && $info['allow_buffer'] === 'true') {
-          $bufferInput = data_entry_helper::text_input(array(
+          $bufferInput = data_entry_helper::text_input([
             'label' => 'Buffer (m)',
             'fieldname' => 'geom_buffer',
             'prefixTemplate' => 'blank', // revert to default
             'suffixTemplate' => 'blank', // revert to default
             'class' => 'control-width-1',
-            'default' => isset($_POST['geom_buffer']) ? $_POST['geom_buffer'] : 0
-          ));
+            'default' => $_POST['geom_buffer'] ?? 0
+          ]);
           if ($options['inlineMapTools']) {
             $r .= $bufferInput;
           }
           else {
-            $bufferInput = str_replace(array('<br/>',"\n"), '', $bufferInput);
+            $bufferInput = str_replace(['<br/>', "\n"], '', $bufferInput);
             $javascript .= "$.fn.indiciaMapPanel.defaults.toolbarSuffix+='$bufferInput';\n";
           }
           // Keep a copy of the unbuffered polygons in this input, so that when
           // the page reloads both versions are available.
-          $r .= '<input type="hidden" name="orig-wkt" id="orig-wkt" '.
-              'value="' . (isset($_POST['orig-wkt']) ? $_POST['orig-wkt'] : '')."\" />\n";
+          $r .= '<input type="hidden" name="orig-wkt" id="orig-wkt" value="' . ($_POST['orig-wkt'] ?? '') . "\" />\n";
         }
-        // Output some JavaScript to setup a toolbar for the map drawing tools. Also JS
-        // to handle getting the polygons from the edit layer into the report parameter
-        // when run report is clicked.
+        // Output some JavaScript to setup a toolbar for the map drawing tools.
+        // Also JS to handle getting the polygons from the edit layer into the
+        // report parameter when run report is clicked.
         $toolbarDiv = $options['inlineMapTools'] ? 'map-toolbar' : 'top';
         $javascript .= "
   $.fn.indiciaMapPanel.defaults.toolbarDiv='$toolbarDiv';
@@ -1793,7 +1792,7 @@ HTML;
       }
       if (isset($info['linked_to']) && isset($info['linked_filter_field'])) {
         // Exclude null entries from filter field by default.
-        $ctrlOptions['filterIncludesNulls'] = (isset($info['filterIncludesNulls']) ? $info['filterIncludesNulls'] : FALSE);
+        $ctrlOptions['filterIncludesNulls'] = $info['filterIncludesNulls'] ?? FALSE;
         if (isset($options['extraParams']) && array_key_exists($info['linked_to'], $options['extraParams'])) {
           // If the control this is linked to is hidden because it has a preset
           // value, just use that value as a filter on the population call for

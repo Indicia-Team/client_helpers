@@ -120,7 +120,6 @@ class iform_custom_verification_rules_upload {
       'invalidType' => 'The chosen file was not a type of file that can be imported.',
       'problemsFound' => 'The following problems were found in the rules upload file during validation checks. Please rectify them before attempting the upload again.',
       'removeUploadedFileHint' => 'Remove the uploaded file',
-      'selectedFile' => 'Selected {1} file',
       'uploadFailedWithError' => 'The file upload failed. The error message was:<br/>{1}.',
       'uploadingFile' => 'Uploading rules file...',
       'validateContents' => 'Validating the rules...',
@@ -202,6 +201,7 @@ HTML;
     echo json_encode([
       'status' => 'ok',
       'interimFile' => $fileName,
+      'originalName' => $_FILES['file']['name'],
     ]);
   }
 
