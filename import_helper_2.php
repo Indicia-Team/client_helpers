@@ -562,19 +562,7 @@ HTML;
     }
     // Find the controls that we can accept global values for, depending on the
     // entity we are importing into.
-    $response = self::cache_get(['entityImportSettings' => $options['entity']]);
-    if ($response === FALSE) {
-      $request = parent::$base_url . "index.php/services/import_2/get_globalvalues_form/" . $options['entity'];
-      $request .= '?' . self::array_to_query_string($options['readAuth']);
-      $response = self::http_post($request, []);
-      if (!isset($response['error'])) {
-        self::cache_set(['entityImportSettings' => $options['entity']], json_encode($response));
-      }
-    }
-    else {
-      $response = json_decode($response, TRUE);
-    }
-    $formArray = !empty($response['output']) ? json_decode($response['output'], TRUE) : [];
+    $formArray = self::getGlobalValuesFormControlArray($options);
     $form = self::globalValuesFormControls($formArray, $options);
     self::$indiciaData['processUploadedInterimFile'] = $_POST['interim-file'];
     return <<<HTML
@@ -595,6 +583,33 @@ HTML;
   <input type="hidden" name="data-file" id="data-file" value="" />
 </form>
 HTML;
+  }
+
+  /**
+   * Retreives the array of control definitions for the global values form.
+   *
+   * Fetches the information from the warehouse model.
+   *
+   * @param array $options
+   *   Importer options array.
+   *
+   * @return array
+   *   List of control info.
+   */
+  private static function getGlobalValuesFormControlArray($options) {
+    $response = self::cache_get(['entityImportSettings' => $options['entity']]);
+    if ($response === FALSE) {
+      $request = parent::$base_url . "index.php/services/import_2/get_globalvalues_form/" . $options['entity'];
+      $request .= '?' . self::array_to_query_string($options['readAuth']);
+      $response = self::http_post($request, []);
+      if (!isset($response['error'])) {
+        self::cache_set(['entityImportSettings' => $options['entity']], json_encode($response));
+      }
+    }
+    else {
+      $response = json_decode($response, TRUE);
+    }
+    return !empty($response['output']) ? json_decode($response['output'], TRUE) : [];
   }
 
   /**
@@ -621,10 +636,13 @@ HTML;
         if (in_array('*', $optionList)) {
           unset($optionList[array_search('*', $optionList)]);
           $origDisplayLabel = $info['display'];
+          $origDescription = $info['description'];
           $info['display'] .= ' (' . lang::get('unrestricted') . ')';
+          $info['description'] .= ' ' . lang::get('Showing all available options.') . ' ' .
+            "<button type=\"button\" class=\"show-restricted $indicia_templates[buttonDefaultClass] $indicia_templates[buttonSmallClass]\">" . lang::get('Show preferred options') . '</button>';
           $unrestrictedControl = self::getParamsFormControl("$key-unrestricted", $info, $options, $tools);
           $info['display'] = $origDisplayLabel;
-          $info['description'] .= ' ' . lang::get('Currently only showing preferred options.') . ' ' .
+          $info['description'] = $origDescription . ' ' . lang::get('Currently only showing preferred options.') . ' ' .
             "<button type=\"button\" class=\"show-unrestricted $indicia_templates[buttonDefaultClass] $indicia_templates[buttonSmallClass]\">" . lang::get('Show all options') . '</button>';
         }
         if (isset($info['lookup_values'])) {
@@ -649,9 +667,9 @@ HTML;
           continue;
         }
       }
-      $r .= self::getParamsFormControl($key, $info, $options, $tools);
+      $r .= '<div class="restricted ctrl-cntr" >' . self::getParamsFormControl($key, $info, $options, $tools) . '</div>';
       if ($unrestrictedControl) {
-        $r .= "<div class=\"unrestricted-cntr form-group\" style=\"display: none\">$unrestrictedControl</div>";
+        $r .= "<div class=\"unrestricted ctrl-cntr\" style=\"display: none\">$unrestrictedControl</div>";
       }
       $visibleControlsFound = TRUE;
     }
@@ -731,7 +749,7 @@ HTML;
     }
     $newLookupList = [];
     foreach ($restrictToKeys as $key) {
-      if (strpos(':', $key) === FALSE) {
+      if (strpos($key, ':') === FALSE) {
         $newLookupList[] = "$key:" . $originalLookupsAssoc[$key];
       }
       else {
@@ -890,7 +908,11 @@ HTML;
           break;
 
         case 'sample:location_name':
-          $alt = ' data-alt="sitename"';
+          $alt = ' data-alt="location,site,sitename"';
+          break;
+
+        case 'sample:recorder_names':
+          $alt = ' data-alt="recorder,recordername,recordernames"';
           break;
 
         case 'occurrence:fk_taxa_taxon_list':
@@ -900,7 +922,18 @@ HTML;
         default:
           $alt = '';
       }
-      $colsByGroup[$optGroup][] = "<option value=\"$field\"$alt>$caption</option>";
+      // Also use caption to pick up custom attributes.
+      if (substr($field, 3, 5) === 'Attr:') {
+        switch (preg_replace('/[^a-z]/', '', strtolower($caption))) {
+          case 'recorder':
+          case 'recordername':
+          case 'recordernames':
+            $alt = ' data-alt="recorder,recordername,recordernames"';
+            break;
+        }
+      }
+      $translatedCaption = lang::get($caption);
+      $colsByGroup[$optGroup][] = "<option value=\"$field\" data-untranslated=\"$caption\"$alt>$translatedCaption</option>";
     }
     $optGroupHtmlList = ["<option value=\"\">- $lang[notImported] -</option>"];
     foreach ($colsByGroup as $thisColOptionGroup => $optionsList) {
@@ -1156,8 +1189,9 @@ HTML;
     $lang = [
       'columnMappings' => lang::get('Column mappings'),
       'databaseField' => lang::get('Database field'),
-      'dataValuesCopied' => lang::get('This value is copied to this field for all records created.'),
       'deletionExplanation' => lang::get('Existing records will be deleted if the Deleted field is set to "1", "true" or "t".'),
+      'descriptionOfImport' => lang::get('Description of your import'),
+      'descriptionOfImportHelp' => lang::get('Please describe the data you are about to import. This will be kept in a log of your imports for future reference.'),
       'existingRecords' => lang::get('Existing records'),
       'fileType' => lang::get('File type'),
       'globalValues' => lang::get('Fixed values that apply to all rows'),
@@ -1166,6 +1200,8 @@ HTML;
       'importColumn' => lang::get('Import column'),
       'numberOfRecords' => lang::get('Number of records'),
       'recordDeletion' => lang::get('Record deletion'),
+      'saveImportTemplate' => lang::get('Save import template'),
+      'saveImportTemplateHelp' => lang::get('If you would like to save the column mappings and fixed values so they can be re-used when importing other files in future, please provide a descriptive name for your settings here.'),
       'startImport' => lang::get('Start importing records'),
       'title' => lang::get('Import summary'),
       'value' => lang::get('Value'),
@@ -1191,19 +1227,7 @@ HTML;
       // @todo Correct mapping to stage attribute display
     }
     $mappings = implode('', $mappingRows);
-    $globalRows = [];
-    $arrow = "<i class=\"fas fa-play\" title=\"$lang[dataValuesCopied]\"></i>";
-    foreach ($config['global-values'] as $field => $value) {
-      // @todo Would be nice to replace value with readable label from the
-      // original lookup.
-      // Foreign key filters were used during matching, not actually for import.
-      // Also exclude settings such as allowUpdates/deletes.
-      if (strpos($field, 'fkFilter') === FALSE && strpos($field, 'config:') !== 0) {
-        $field = $availableFields[$field] ?? $field;
-        $globalRows[] = "<tr><th scope=\"row\">$value</th><td>$arrow</td><td>$field</td></tr>";
-      }
-    }
-    $globals = implode('', $globalRows);
+    $globalRows = self::globalValuesAsTableRows($config, $options['readAuth']);
     $infoRows = [
       "<dt>$lang[fileType]</dt><dd>$ext</dd>",
       "<dt>$lang[numberOfRecords]</dt><dd>$config[totalRows]</dd>",
@@ -1231,6 +1255,7 @@ HTML;
 </tbody>
 HTML;
     if (count($globalRows) > 0) {
+      $globalRowsJoined = implode('', $globalRows);
       $importFieldTableContent .= <<<HTML
 <tbody>
   <tr>
@@ -1239,7 +1264,7 @@ HTML;
   <tr>
     <th>$lang[value]</th><th></th><th>$lang[databaseField]</th>
   </tr>
-  $globals
+  $globalRowsJoined
 </tbody>
 HTML;
     }
@@ -1252,20 +1277,81 @@ HTML;
     $info
   </div>
   <div class="form-group">
-    <label for="description">Description of your import:</label>
+    <label for="description">$lang[descriptionOfImport]:</label>
     <textarea class="form-control" rows="5" name="description"></textarea>
-    <p class="helpText">Please describe the data you are about to import.</p>
+    <p class="helpText">$lang[descriptionOfImportHelp]</p>
   </div>
   <div class="form-group">
-    <label for="template_title">Save import template:</label>
+    <label for="template_title">$lang[saveImportTemplate]:</label>
     <input type="text" class="form-control" name="template_title" />
-    <p class="helpText">If you would like to save the column mappings and fixed values so they can be re-used when importing other files in future, please provide a descriptive name for your settings here.</p>
+    <p class="helpText">$lang[saveImportTemplateHelp]</p>
   </div>
   <input type="submit" class="btn btn-primary" id="next-step" value="$lang[startImport]" />
   <input type="hidden" name="next-import-step" value="doImportPage" />
   <input type="hidden" name="data-file" id="data-file" value="{$_POST['data-file']}" />
 </form>
 HTML;
+  }
+
+  /**
+   * Retrieves an array of trs to explain the global values being applied.
+   *
+   * @param array $config
+   *   Upload config.
+   * @param array $readAuth
+   *   Read authorisation.
+   *
+   * @return array
+   *   Each entry is the HTML for a <tr> to show on the summary page,
+   *   explaining one of the global values being applied to the import.
+   */
+  private static function globalValuesAsTableRows(array $config, array $readAuth) {
+    $globalRows = [];
+    $lang = [
+      'dataValuesCopied' => lang::get('This value is copied to this field for all records created.'),
+    ];
+    $arrow = "<i class=\"fas fa-play\" title=\"$lang[dataValuesCopied]\"></i>";
+    $formArray = self::getGlobalValuesFormControlArray($config);
+    foreach ($config['global-values'] as $field => $value) {
+      // Default to use value as label, but preferably use the global values
+      // control lookup info to get a better one.
+      $displayLabel = $value;
+      if (isset($formArray[$field]) && $formArray[$field]['datatype'] === 'lookup') {
+        if (!empty($formArray[$field]['lookup_values'])) {
+          // Convert the lookup values into an associative array.
+          $lookups = explode(',', $formArray[$field]['lookup_values']);
+          $lookupsAssoc = [];
+          foreach ($lookups as $lookup) {
+            $lookup = explode(':', $lookup);
+            $lookupsAssoc[$lookup[0]] = $lookup[1];
+          }
+          $displayLabel = $lookupsAssoc[$value] ?? $value;
+        }
+        elseif (!empty($formArray[$field]['population_call'])) {
+          $populationOptions = explode(':', $formArray[$field]['population_call']);
+          // Only support direct at this point (not report population).
+          if (count($populationOptions) >= 4 && $populationOptions[0] === 'direct') {
+            $lookupData = self::get_population_data([
+              'table' => $populationOptions[1],
+              'extraParams' => $readAuth + [
+                $populationOptions[2] => $value,
+              ],
+            ]);
+            if (count($lookupData) === 1) {
+              $displayLabel = $lookupData[0][$populationOptions[3]] . " ($populationOptions[2] = $value)";
+            }
+          }
+        }
+      }
+      // Foreign key filters were used during matching, not actually for import.
+      // Also exclude settings such as allowUpdates/deletes.
+
+      if (strpos($field, 'fkFilter') === FALSE && strpos($field, 'config:') !== 0) {
+        $field = $availableFields[$field] ?? $field;
+        $globalRows[] = "<tr><th scope=\"row\">$displayLabel</th><td>$arrow</td><td>$field</td></tr>";
+      }
+    }
+    return $globalRows;
   }
 
   /**
@@ -1456,12 +1542,6 @@ HTML;
       'caching' => TRUE,
       'cachePerUser' => FALSE,
     ]);
-    // Apply i18n.
-    if ($r) {
-      foreach ($r as &$caption) {
-        $caption = lang::get($caption);
-      }
-    }
     return $r;
   }
 
