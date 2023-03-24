@@ -55,20 +55,18 @@ jQuery(document).ready(function($) {
       });
     },
     onUploadSuccess: function(id, data) {
-      var ext;
       $('#file-progress').val(100);
       // IForm proxy code doesn't set header correctly.
       if (typeof data === 'string') {
         data = JSON.parse(data);
       }
-      ext = data.interimFile.split('.').pop().toUpperCase();
       indiciaData.upload = {
         interimFile: data.interimFile
       };
       // Show an icon indicating the file has been uploaded.
       $('#uploaded-files').append($('<i class="far fa-file-alt fa-7x"></i>'));
       $('#uploaded-files').append($('<i class="far fa-trash-alt remove-file" title="' + indiciaData.lang.custom_verification_rules_upload.removeUploadedFileHint + '"></i>'));
-      $('#uploaded-files').append($('<p>' + indiciaData.lang.custom_verification_rules_upload.selectedFile.replace('{1}', ext) + '</p>'));
+      $('#uploaded-files').append($('<p>' + data.originalName + '</p>'));
       $('#upload-rules').removeAttr('disabled');
       // Hide any previous progress info as we are starting afresh.
       $('#progress-output-cntr').hide();

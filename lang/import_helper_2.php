@@ -27,7 +27,7 @@ step.
 TXT;
 
 $default_terms['import2globalValuesFormIntro'] = <<<TXT
-Provide a list of global field values which apply to every row in the import file.
+Select options for importing records. These options will be applied to all records in the import file.
 TXT;
 
 $default_terms['import2mappingsFormIntro'] = <<<TXT
