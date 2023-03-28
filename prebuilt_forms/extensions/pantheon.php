@@ -195,19 +195,20 @@ HTML;
    */
   public static function lexicon($auth, $args, $tabalias, $options, $path) {
     iform_load_helpers(['report_helper']);
-    $query = \Drupal::entityQuery('node')
+    $nids = \Drupal::entityQuery('node')
       ->condition('type', 'lexicon')
-      ->condition('status', 1);
+      ->condition('status', 1)
+      ->execute();
     $node_storage = \Drupal::entityTypeManager()->getStorage('node');
-    $nodes = $node_storage->loadMultiple($query->execute());
+    $nodes = $node_storage->loadMultiple($nids);
     $list = [];
     foreach ($nodes as $node) {
-      $list[$node->title] = $node->field_summary->value;
+      $list[$node->getTitle()] = $node->field_summary->value;
     }
     report_helper::$javascript .= "indiciaData.lexicon = " . json_encode($list) . ";\n";
     report_helper::$javascript .= "indiciaFns.applyLexicon();\n";
   }
-
+  
   /**
    * Outputs a table and controls associated with combining lists together.
    *
