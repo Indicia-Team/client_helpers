@@ -873,7 +873,7 @@ $('.update-input').focus(function(evt) {
       // Add responsive behaviour to table if specified in options.
       // The table is made responsive with the footables plugin based on the
       // data-hide attributes added to the <th> elements
-      if (isset($options['responsiveOpts'])) {
+      if (!empty($options['responsiveOpts'])) {
         // Add the javascript plugins.
         self::add_resource('indiciaFootableReport');
         // Add inline javascript to invoke the plugins on this grid.
