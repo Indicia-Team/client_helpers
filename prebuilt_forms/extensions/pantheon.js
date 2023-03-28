@@ -1,34 +1,38 @@
-window.formatConservation = function () {
-  $.each($('.conservation-status.unprocessed'), function () {
-    var list = $(this).html().split('|');
-    var countup = {};
-    var output = [];
-    var display;
-    var countLink;
-    $.each(list, function () {
-      if (this.length) {
-        if (typeof countup[this] === 'undefined') {
-          countup[this] = 0;
+(function ($) {
+
+  window.formatConservation = function () {
+    $.each($('.conservation-status.unprocessed'), function () {
+      var list = $(this).html().split('|');
+      var countup = {};
+      var output = [];
+      var display;
+      var countLink;
+      $.each(list, function () {
+        if (this.length) {
+          if (typeof countup[this] === 'undefined') {
+            countup[this] = 0;
+          }
+          countup[this]++;
         }
-        countup[this]++;
+      });
+      $.each(countup, function (status, count) {
+        output.push(count + ' <span>' + status + '</span>');
+      });
+      display = output.join('; ');
+      countLink = $(this).closest('tr').find('td.col-count a');
+      if (countLink.length) {
+        display = '<a href="' + countLink.attr('href') + '&dynamic-has_any_designation=t">' + display + '</a>';
       }
+      $(this).html(display);
+      $(this).removeClass('unprocessed');
     });
-    $.each(countup, function (status, count) {
-      output.push(count + ' <span>' + status + '</span>');
-    });
-    display = output.join('; ');
-    countLink = $(this).closest('tr').find('td.col-count a');
-    if (countLink.length) {
-      display = '<a href="' + countLink.attr('href') + '&dynamic-has_any_designation=t">' + display + '</a>';
+    if (typeof indiciaFns.applyLexicon !== 'undefined') {
+      indiciaFns.applyLexicon();
     }
-    $(this).html(display);
-    $(this).removeClass('unprocessed');
-  });
-  if (typeof indiciaFns.applyLexicon !== 'undefined') {
-    indiciaFns.applyLexicon();
-  }
-  formatSqiWarning();
-};
+    formatSqiWarning();
+  };
+
+}(jQuery));
 
 jQuery(document).ready(function ($) {
   var typeParam;
