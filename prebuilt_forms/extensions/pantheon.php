@@ -50,15 +50,11 @@ class extension_pantheon {
    *   Empty string as no control output HTML required.
    */
   public static function set_dynamic_page_title($auth, $args, $tabalias, $options, $path) {
-    $current_path = \Drupal::service('path.current')->getPath();
-    if ($current_path[0] == 'node' && is_numeric($current_path[1])) {
-      $nid = $current_path[1];
-      $title = hostsite_get_page_title($nid);
+    $route = \Drupal::routeMatch()->getRouteObject();
+    if (!$route) {
+      return '';
     }
-    else {
-      $route = \Drupal::routeMatch()->getCurrentRouteMatch()->getRouteObject();
-      $title = $route->getDefault('_title');
-    }
+    $title = \Drupal::service('title_resolver')->getTitle(\Drupal::request(), $route);
     if (!empty($_GET['dynamic-sample_id'])) {
       $title = str_replace('{sample_id}', $_GET['dynamic-sample_id'], $title);
       $ids = explode(',', $_GET['dynamic-sample_id']);
@@ -84,10 +80,10 @@ class extension_pantheon {
       else {
         $name = 'Sample ' . $_GET['dynamic-sample_id'];
         if (count($ids) <= 3) {
-          $samples = data_entry_helper::get_population_data(array(
+          $samples = data_entry_helper::get_population_data([
             'report' => 'library/samples/filterable_explore_list',
             'extraParams' => $auth['read'] + ['sample_id' => $_GET['dynamic-sample_id']],
-          ));
+          ]);
           if (!isset($samples['error']) && count($samples) > 0) {
             $titles = [];
             foreach ($samples as $sample) {
@@ -208,7 +204,7 @@ HTML;
     report_helper::$javascript .= "indiciaData.lexicon = " . json_encode($list) . ";\n";
     report_helper::$javascript .= "indiciaFns.applyLexicon();\n";
   }
-  
+
   /**
    * Outputs a table and controls associated with combining lists together.
    *
