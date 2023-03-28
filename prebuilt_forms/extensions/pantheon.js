@@ -133,7 +133,7 @@ jQuery(document).ready(function ($) {
       if ($(this).closest('tr').find('.col-count').text() < 15) {
         $(this).prepend(
           '<img title="Warning, this index was calculated from less than 15 species so may not be reliable." ' +
-          'alt="Warning icon" src="/sites/www.brc.ac.uk.pantheon/modules/iform/media/images/warning.png"/>'
+          'alt="Warning icon" src="/modules/custom/iform/media/images/warning.png"/>'
         );
       }
       $(this).addClass('processed');
@@ -252,4 +252,14 @@ jQuery(document).ready(function ($) {
       }
     });
   };
+
+  /**
+   * Tables can request additional pager in header with a class.
+   */
+  $.each($('table.double-pager'), function() {
+    let cloned = $(this).find('tfoot tr').clone();
+    cloned.addClass('ui-widget-content')
+    cloned.appendTo($(this).find('thead'))
+    cloned.find('div.pager').show();
+  });
 });
