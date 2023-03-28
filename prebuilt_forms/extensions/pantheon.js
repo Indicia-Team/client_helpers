@@ -32,6 +32,54 @@
     formatSqiWarning();
   };
 
+  window.formatOsirisResources = function () {
+    $.each($('td.col-resource'), function () {
+      if ($(this).html().trim === '' || $(this).html().substr(0, 1) !== '[') {
+        return;
+      }
+      var flat = JSON.parse($(this).html());
+      var n;
+      var i;
+      var lookupListById = {};
+      var allParentIds = [];
+      var leafList = [];
+      var html = '<ul>';
+
+      // Convert the list of nodes in the report output to lists we can easily lookup against
+      for (i = 0; i < flat.length; i++) {
+        n = {
+          id: flat[i][0],
+          name: flat[i][2],
+          parent_id: (flat[i][1] === 0) ? null : flat[i][1],
+          children: []
+        };
+        lookupListById[n.id] = n;
+        // Need a list of all parents so we can easily detect leaf nodes
+        if (n.parent_id !== null) {
+          allParentIds.push(n.parent_id);
+        }
+      }
+      // Find the leaf nodes
+      $.each(lookupListById, function () {
+        if ($.inArray(this.id, allParentIds) === -1) {
+          leafList.push(this);
+        }
+      });
+      // output each leaf and its chain of parents
+      $.each(leafList, function () {
+        html += '<li>';
+        html += recurseNodes(this, lookupListById);
+        html += '<span>' + this.name + '</span>';
+        html += '</li>';
+      });
+      html += '</ul>';
+      $(this).html(html);
+    });
+    if (typeof indiciaFns.applyLexicon !== 'undefined') {
+      indiciaFns.applyLexicon();
+    }
+  };
+
 }(jQuery));
 
 jQuery(document).ready(function ($) {
@@ -116,53 +164,7 @@ jQuery(document).ready(function ($) {
     return html;
   }
 
-  window.formatOsirisResources = function () {
-    $.each($('td.col-resource'), function () {
-      if ($(this).html().trim === '' || $(this).html().substr(0, 1) !== '[') {
-        return;
-      }
-      var flat = JSON.parse($(this).html());
-      var n;
-      var i;
-      var lookupListById = {};
-      var allParentIds = [];
-      var leafList = [];
-      var html = '<ul>';
 
-      // Convert the list of nodes in the report output to lists we can easily lookup against
-      for (i = 0; i < flat.length; i++) {
-        n = {
-          id: flat[i][0],
-          name: flat[i][2],
-          parent_id: (flat[i][1] === 0) ? null : flat[i][1],
-          children: []
-        };
-        lookupListById[n.id] = n;
-        // Need a list of all parents so we can easily detect leaf nodes
-        if (n.parent_id !== null) {
-          allParentIds.push(n.parent_id);
-        }
-      }
-      // Find the leaf nodes
-      $.each(lookupListById, function () {
-        if ($.inArray(this.id, allParentIds) === -1) {
-          leafList.push(this);
-        }
-      });
-      // output each leaf and its chain of parents
-      $.each(leafList, function () {
-        html += '<li>';
-        html += recurseNodes(this, lookupListById);
-        html += '<span>' + this.name + '</span>';
-        html += '</li>';
-      });
-      html += '</ul>';
-      $(this).html(html);
-    });
-    if (typeof indiciaFns.applyLexicon !== 'undefined') {
-      indiciaFns.applyLexicon();
-    }
-  };
 
   function formatSqiWarning() {
     $.each($('tbody .col-sqi').not('.processed,:empty'), function () {
