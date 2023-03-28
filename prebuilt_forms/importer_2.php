@@ -248,6 +248,7 @@ TXT;
     echo json_encode([
       'status' => 'ok',
       'interimFile' => import_helper_2::uploadInterimFile(),
+      'originalName' => $_FILES['file']['name'],
     ]);
   }
 

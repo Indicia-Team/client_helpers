@@ -27,10 +27,17 @@
  */
 
 /**
- * Get the iso 639 code for the user's selected language.
+ * Get an ISO 639-2 three-character language code.
  *
- * @return array
- *   3 character language code.
+ * Either returns the code of the language in use on the host site or converts
+ * from a supplied ISO 639-1 two-character code.
+ *
+ * @param string $lang
+ *   An ISO 639-1 two-character code or NULL.
+ *   If NULL, the code of the language in use on the host site is returned.
+ *
+ * @return string
+ *   The three-character language code corresponding to the Slang parameter.
  *
  * @todo Complete the list.
  */
@@ -47,12 +54,29 @@ function iform_lang_iso_639_2($lang = NULL) {
   $lang = explode('-', $lang);
   $lang = $lang[0];
   $list = [
-    'en' => 'eng',
-    'de' => 'deu',
-    'cs' => 'cze',
-    'lb' => 'ltz',
-    'fr' => 'fra',
-    'cy' => 'cym'
+    'bg' => 'bul', // Bulgarian.
+    'ca' => 'cat', // Catalan.
+    'hr' => 'hrv', // Croatian.
+    'cs' => 'ces', // Czech Republic.
+    'da' => 'dan', // Danish.
+    'nl' => 'nld', // Dutch.
+    'en' => 'eng', // English.
+    'fi' => 'fin', // Finnish.
+    'fr' => 'fra', // French.
+    'gd' => 'gla', // Gaelic.
+    'de' => 'deu', // German.
+    'hu' => 'hun', // Hugarian.
+    'ga' => 'gle', // Irish.
+    'ja' => 'jpn', // Japanese.
+    'la' => 'lat', // Latin.
+    'lt' => 'lit', // Lithuanian.
+    'lb' => 'ltz', // Luxembourgish.
+    'pl' => 'pol', // Polish.
+    'ru' => 'rus', // Russian.
+    'sl' => 'slv', // Slovenian.
+    'es' => 'spa', // Spanish.
+    'sv' => 'swe', // Swedish.
+    'cy' => 'cym', // Welsh.
   ];
   return $list[$lang];
 }
