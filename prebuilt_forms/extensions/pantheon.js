@@ -1,5 +1,17 @@
 (function ($) {
 
+  function formatSqiWarning() {
+    $.each($('tbody .col-sqi').not('.processed,:empty'), function () {
+      if ($(this).closest('tr').find('.col-count').text() < 15) {
+        $(this).prepend(
+          '<img title="Warning, this index was calculated from less than 15 species so may not be reliable." ' +
+          'alt="Warning icon" src="/modules/custom/iform/media/images/warning.png"/>'
+        );
+      }
+      $(this).addClass('processed');
+    });
+  }
+
   window.formatConservation = function () {
     $.each($('.conservation-status.unprocessed'), function () {
       var list = $(this).html().split('|');
@@ -162,20 +174,6 @@ jQuery(document).ready(function ($) {
       html += '<span>' + parent.name + '</span> &gt;&gt; ';
     }
     return html;
-  }
-
-
-
-  function formatSqiWarning() {
-    $.each($('tbody .col-sqi').not('.processed,:empty'), function () {
-      if ($(this).closest('tr').find('.col-count').text() < 15) {
-        $(this).prepend(
-          '<img title="Warning, this index was calculated from less than 15 species so may not be reliable." ' +
-          'alt="Warning icon" src="/modules/custom/iform/media/images/warning.png"/>'
-        );
-      }
-      $(this).addClass('processed');
-    });
   }
 
   /**
