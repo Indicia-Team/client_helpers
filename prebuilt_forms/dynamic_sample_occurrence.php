@@ -708,6 +708,7 @@ TXT;
             'taxa_taxon_list_id' => 'Taxa Taxon List ID',
             'taxon_group' => 'Taxon group title',
             'external_key' => 'Taxon external key',
+            'organism_key' => 'Taxon organism key',
             'id' => 'Taxon ID',
           ],
           'required' => FALSE,
