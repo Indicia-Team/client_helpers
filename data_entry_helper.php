@@ -3386,9 +3386,9 @@ RIJS;
   *   * **taxonFilterField** - If the list of species to be made available for
   *     recording is to be limited (either by species or taxon group), allows
   *     selection of the field to filter against. Options are none (default),
-  *     preferred_name, taxon_meaning_id, taxa_taxon_list_id, taxon_group. If
-  *     filtering for a large list of taxa then taxon_meaning_id or
-  *     taxa_taxon_list_id is more efficient.
+  *     preferred_name, taxon_meaning_id, taxa_taxon_list_id, external_key,
+  *     organism_key, taxon_group. If filtering for a large list of taxa then
+  *     taxon_meaning_id or taxa_taxon_list_id is more efficient.
   *   * **taxonFilter** - If taxonFilterField is not set to none, then pass an
   *     array of values to filter against, i.e. an array of taxon preferred
   *     names, taxon meaning ids or taxon group titles.
@@ -4651,7 +4651,7 @@ JS;
       if ($options['taxonFilterField'] === 'preferred_name') {
         $options['taxonFilterField'] = 'preferred_taxon';
       }
-      // filter the taxa available to record
+      // Filter the taxa available to record.
       $filterFields[$options['taxonFilterField']] = json_encode($options['taxonFilter']);
     }
     return $filterFields;
@@ -4702,11 +4702,11 @@ JS;
     $filtersJson = json_encode($nameFilter);
     if ($options['userControlsTaxonFilter'] && !empty($options['lookupListId'])) {
       if ($options['taxonFilterField'] === 'none') {
-        $defaultOptionLabel=lang::get('Input any species from the list available for this form');
+        $defaultOptionLabel = lang::get('Input any species from the list available for this form');
       }
       else {
         $type = $options['taxonFilterField'] == 'taxon_group' ? 'species groups' : 'species';
-        $defaultOptionLabel=lang::get("Input species from the form's default {1}.", lang::get($type));
+        $defaultOptionLabel = lang::get("Input species from the form's default {1}.", lang::get($type));
       }
       $defaultOptionLabel = str_replace("'", "\'", $defaultOptionLabel);
       if (!empty($options['usersPreferredGroups'])) {
@@ -5193,7 +5193,7 @@ JS;
     if (!empty($options['preloadTaxa'])) {
       $options['extraParams']['taxa_taxon_list_id'] = json_encode($options['preloadTaxa']);
     }
-    elseif (preg_match('/^(preferred_name|preferred_taxon|taxon_meaning_id|taxa_taxon_list_id|taxon_group|external_key|id)$/', $options['taxonFilterField']))  {
+    elseif (preg_match('/^(preferred_name|preferred_taxon|taxon_meaning_id|taxa_taxon_list_id|taxon_group|external_key|organism_key|id)$/', $options['taxonFilterField']))  {
       if ($options['taxonFilterField'] === 'preferred_name') {
         $options['taxonFilterField'] = 'preferred_taxon';
       }
