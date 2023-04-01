@@ -3088,7 +3088,7 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue, removeparam) {
     setlocale (LC_TIME, $lang);
 
     for($i=0; $i<7; $i++){
-      $r .= "<td class=\"day\">".utf8_encode(date('D', $header_date->getTimestamp()))."</td>"; // i8n
+      $r .= "<td class=\"day\">" . lang::get(utf8_encode(date('D', $header_date->getTimestamp()))) . "</td>"; // i8n
       $header_date->modify('+1 day');
     }
     $r .= "</tr>";
