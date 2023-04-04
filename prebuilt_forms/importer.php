@@ -414,7 +414,7 @@ class iform_importer {
       hostsite_set_page_title(lang::get('Import data into the {1} group', $group['title']));
       // If a single survey specified for this group, then force the data into
       // the correct survey.
-      $filterdef = json_decode($group['filter_definition'], TRUE);
+      $filterdef = json_decode($group['filter_definition'] ?? '', TRUE);
       if (!empty($filterdef['survey_list_op']) && $filterdef['survey_list_op'] === 'in' && !empty($filterdef['survey_list'])) {
         $surveys = explode(',', $filterdef['survey_list']);
         if (count($surveys) === 1) {

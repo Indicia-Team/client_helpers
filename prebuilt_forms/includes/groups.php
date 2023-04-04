@@ -113,7 +113,7 @@ function group_apply_report_limits(array &$args, $readAuth, $nid, $isMember) {
   ]);
   $group = $group[0];
   hostsite_set_page_title("$group[title]: " . hostsite_get_page_title($nid));
-  $def = json_decode($group['filter_definition'], TRUE);
+  $def = json_decode($group['filter_definition'] ?? '', TRUE);
   $defstring = '';
   // Reconstruct this as a string to feed into dynamic report explorer.
   foreach ($def as $key => $value) {

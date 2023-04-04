@@ -1998,10 +1998,10 @@ HTML;
         }
         array_push($replaceValues, $value);
         if ($allowEscapeQuotes) {
-          array_push($replaceValues, str_replace("'", "\'", $value));
-          array_push($replaceValues, str_replace('"', '\"', $value));
-          array_push($replaceValues, str_replace("'", "&#39;", $value));
-          array_push($replaceValues, str_replace('"', '&quot;', $value));
+          array_push($replaceValues, str_replace("'", "\'", $value ?? ''));
+          array_push($replaceValues, str_replace('"', '\"', $value ?? ''));
+          array_push($replaceValues, str_replace("'", "&#39;", $value ?? ''));
+          array_push($replaceValues, str_replace('"', '&quot;', $value ?? ''));
         }
       }
     }
