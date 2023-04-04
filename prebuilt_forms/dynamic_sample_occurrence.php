@@ -937,7 +937,7 @@ TXT;
         ],
       ]);
       self::$group = self::$group[0];
-      $filterDef = json_decode(self::$group['filter_definition']);
+      $filterDef = json_decode(self::$group['filter_definition'] ?? '');
       if (empty($args['location_boundary_id'])) {
         // Does the group filter define a site or boundary for the recording? If
         // so and the form is not locked to a boundary, we need to show it and
