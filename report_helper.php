@@ -2469,9 +2469,10 @@ mapSettingsHooks.push(function(opts) { $setLocationJs
       $request .= "&query=".urlencode(json_encode($query));
     }
     foreach ($options['extraParams'] as $key => $value) {
-	  // Must urlencode the keys and parameters, as things like spaces cause curl
-    // to hang.
-		$request .= '&' . urlencode($key) . '=' . urlencode($value ?? '');
+      // Must urlencode the keys and parameters, as things like spaces cause curl
+      // to hang.
+      $request .= '&' . urlencode($key) . '=' . urlencode($value ?? '');
+    }
 	  // Pass through the type of data sharing.
     if (isset($options['sharing']))
       $request .= '&sharing='.$options['sharing'];
