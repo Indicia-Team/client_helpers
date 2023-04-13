@@ -113,30 +113,32 @@ function group_apply_report_limits(array &$args, $readAuth, $nid, $isMember) {
   ]);
   $group = $group[0];
   hostsite_set_page_title("$group[title]: " . hostsite_get_page_title($nid));
-  $def = json_decode($group['filter_definition'], TRUE);
+  $def = json_decode($group['filter_definition'] ?? '', TRUE);
   $defstring = '';
   // Reconstruct this as a string to feed into dynamic report explorer.
-  foreach ($def as $key => $value) {
-    if ($key) {
-      $value = is_array($value) ? json_encode($value) : $value;
-      $defstring .= "{$key}_context=$value\n";
-      if (!empty($value) && in_array($key, [
-        'indexed_location_id',
-        'indexed_location_list',
-        'location_id',
-        'location_list',
-      ])) {
-        $args['location_boundary_id'] = $value;
-      }
-      elseif (!empty($value) && $key === 'searchArea') {
-        // A search area needs to be added to the map.
-        require_once 'map.php';
-        iform_map_zoom_to_geom($value, lang::get('Boundary'));
-      }
-      elseif (($key === 'taxon_group_id' || $key === 'taxon_group_list') && !empty($value) && strpos($value, ',') === FALSE) {
-        // If the report is locked to a single taxon group, then we don't
-        // need taxonomy columns.
-        $args['skipped_report_columns'] = array('taxon_group', 'taxonomy');
+  if (!empty($def)) {
+    foreach ($def as $key => $value) {
+      if ($key) {
+        $value = is_array($value) ? json_encode($value) : $value;
+        $defstring .= "{$key}_context=$value\n";
+        if (!empty($value) && in_array($key, [
+          'indexed_location_id',
+          'indexed_location_list',
+          'location_id',
+          'location_list',
+        ])) {
+          $args['location_boundary_id'] = $value;
+        }
+        elseif (!empty($value) && $key === 'searchArea') {
+          // A search area needs to be added to the map.
+          require_once 'map.php';
+          iform_map_zoom_to_geom($value, lang::get('Boundary'));
+        }
+        elseif (($key === 'taxon_group_id' || $key === 'taxon_group_list') && !empty($value) && strpos($value, ',') === FALSE) {
+          // If the report is locked to a single taxon group, then we don't
+          // need taxonomy columns.
+          $args['skipped_report_columns'] = array('taxon_group', 'taxonomy');
+        }
       }
     }
   }
