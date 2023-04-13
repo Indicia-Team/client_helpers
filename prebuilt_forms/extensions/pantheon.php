@@ -194,6 +194,7 @@ HTML;
     $nids = \Drupal::entityQuery('node')
       ->condition('type', 'lexicon')
       ->condition('status', 1)
+      ->accessCheck(FALSE)
       ->execute();
     $node_storage = \Drupal::entityTypeManager()->getStorage('node');
     $nodes = $node_storage->loadMultiple($nids);
