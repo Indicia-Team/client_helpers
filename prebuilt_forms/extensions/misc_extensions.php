@@ -457,11 +457,16 @@ class extension_misc_extensions {
    * Adds a Drupal breadcrumb to the page.
    *
    * The $options array can contain the following parameters:
-   * * path - an associative array of paths and captions. The paths can contain replacements
-   *   wrapped in # characters which will be replaced by the $_GET parameter of the same name.
-   * * includeCurrentPage - set to false to disable addition of the current page title to the end
-   *   of the breadcrumb. If using the Bootstrap theme disable the theme setting to add the
-   *   current page to the breadcrumb.
+   * * path - an associative array of paths and captions. The paths can contain
+   *   replacements wrapped in # characters which will be replaced by the $_GET
+   *   parameter of the same name.
+   * * includeCurrentPage - set to false to disable addition of the current
+   *   page title to the end of the breadcrumb. If using the Bootstrap theme
+   *   disable the theme setting to add the current page to the breadcrumb.
+   * * force - By default, breadcrumbs are only set on iform node pages. If
+   *   using a block or some form of node list (e.g. a view) then
+   *   [misc_extensions.breadcrumb] will do nothing unless the $force parameter
+   *   is set to true.
    */
   public static function breadcrumb($auth, $args, $tabalias, $options, $path) {
     if (!isset($options['path'])) {
@@ -469,8 +474,9 @@ class extension_misc_extensions {
     }
     $options = array_merge([
       'includeCurrentPage' => TRUE,
+      'force' => FALSE,
     ], $options);
-    hostsite_set_breadcrumb($options['path'], $options['includeCurrentPage']);
+    hostsite_set_breadcrumb($options['path'], $options['includeCurrentPage'], $options['force']);
   }
 
   /*

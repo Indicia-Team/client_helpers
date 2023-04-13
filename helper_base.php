@@ -324,6 +324,13 @@ class helper_base {
   public static $breadcrumb = NULL;
 
   /**
+   * Force breadcrumb to display even on non-node based pages.
+   *
+   * @var array
+   */
+  public static $force_breadcrumb = FALSE;
+
+  /**
    * Setting which allows the host site (e.g. Drupal) handle translation.
    *
    * For example, when TRUE, a call to lang::get() is delegated to Drupal's t()
