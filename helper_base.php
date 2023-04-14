@@ -2119,7 +2119,7 @@ HTML;
    */
   private static function getAuthTokenUserId() {
     global $_iform_warehouse_override;
-    if ($_iform_warehouse_override) {
+    if ($_iform_warehouse_override || !function_exists('hostsite_get_user_field')) {
       // If linking to a different warehouse, don't do user authentication as
       // it causes an infinite loop.
       return '';
