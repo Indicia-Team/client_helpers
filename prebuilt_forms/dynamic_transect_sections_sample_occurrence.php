@@ -76,28 +76,29 @@ class iform_dynamic_transect_sections_sample_occurrence extends iform_dynamic_sa
     // we need a place to store the subsites, to save loading from the db on submission
     $r = '<input type="hidden" name="subsites" id="subsites" value="" />';
     // plus hiddens to store the main sample's sref info
-    $r .= data_entry_helper::hidden_text(array(
+    $r .= data_entry_helper::hidden_text([
       'fieldname' => 'sample:entered_sref',
       'id' => 'imp-sref'
-    ));
-    $r .= data_entry_helper::hidden_text(array(
+    ]);
+    $r .= data_entry_helper::hidden_text([
       'fieldname' => 'sample:entered_sref_system',
       'id' => 'imp-sref-system'
-    ));
-    $r .= data_entry_helper::hidden_text(array(
+    ]);
+    $r .= data_entry_helper::hidden_text([
       'fieldname' => 'sample:geom',
       'id' => 'imp-geom'
-    ));
-    // plus the sample method ids
+    ]);
+    // Plus the sample method ids.
     $sampleMethods = helper_base::get_termlist_terms($auth, 'indicia:sample_methods', array('Transect', 'Transect Section'));
-    $r .= '<input type="hidden" name="sample:sample_method_id" value="'.$sampleMethods[0]['id'].'" />';
-    $r .= '<input type="hidden" name="subsample:sample_method_id" value="'.$sampleMethods[1]['id'].'" />';
-    // This option forces the grid to load all child sample occurrences, though we will ignore the hidden SampleIDX column and instead
-    // use the section column to bind to samples
-    $options['speciesControlToUseSubSamples']=true;
+    $r .= '<input type="hidden" name="sample:sample_method_id" value="' . $sampleMethods[0]['id'] . '" />';
+    $r .= '<input type="hidden" name="subsample:sample_method_id" value="' . $sampleMethods[1]['id'] . '" />';
+    // This option forces the grid to load all child sample occurrences, though
+    // we will ignore the hidden SampleIDX column and instead use the section
+    // column to bind to samples.
+    $options['speciesControlToUseSubSamples'] = TRUE;
     $r .= parent::get_control_species($auth, $args, $tabAlias, $options);
-    // build an array of existing sub sample IDs, keyed by subsite location Id.
-    $subSampleIds = []
+    // Build an array of existing sub sample IDs, keyed by subsite location Id.
+    $subSampleIds = [];
     if (isset(data_entry_helper::$entity_to_load)) {
       foreach (data_entry_helper::$entity_to_load as $key => $value) {
         if (preg_match('/^sc:(\d+):(\d+):sample:id$/', $key, $matches)) {

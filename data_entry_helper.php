@@ -4479,8 +4479,9 @@ JS;
     if ($options['mediaTypes'] && !$onlyLocal && !$doneAddLinkPopup) {
       $doneAddLinkPopup = TRUE;
       $readableTypes = array_pop($linkMediaTypes);
-      if (count($linkMediaTypes) > 0)
+      if (count($linkMediaTypes) > 0) {
         $readableTypes = implode(', ', $linkMediaTypes) . ' ' . lang::get('or') . ' ' . $readableTypes;
+      }
       return '<div style="display: none"><div id="add-link-form" title="Add a link to a remote file">' .
         '<p class="validateTips">' . lang::get('Paste in the web address of a resource on {1}', $readableTypes) . '.</p>' .
         self::text_input(['label' => lang::get('URL'), 'fieldname' => 'link_url', 'class' => 'form-control']) .
@@ -4609,8 +4610,9 @@ JS;
     // Get a list of the species parent IDs.
     $ids = [];
     foreach ($taxalist as $taxon) {
-      if (!empty($taxon['parent_id']))
+      if (!empty($taxon['parent_id'])) {
         $ids[] = $taxon['parent_id'];
+      }
     }
     if (!empty($ids)) {
       // Load each parent from the db in one go.
@@ -4619,8 +4621,8 @@ JS;
         'extraParams' => $options['readAuth'] + ['id' => $ids],
       );
       $parents = data_entry_helper::get_population_data($loadOpts);
-      // assign the parents back into the relevent places in $taxalist. Not sure if there is a better
-      // way than a double loop?
+      // Assign the parents back into the relevent places in $taxalist. Not
+      // sure if there is a better way than a double loop?
       foreach ($parents as $parent) {
         foreach ($taxalist as &$taxon) {
           if ($taxon['parent_id'] === $parent['id']) {
@@ -4643,8 +4645,9 @@ JS;
     }
     if (isset($options['extraParams'])) {
       foreach ($options['extraParams'] as $key => $value) {
-        if ($key !== 'nonce' && $key !== 'auth_token')
+        if ($key !== 'nonce' && $key !== 'auth_token') {
           $filterFields[$key] = $value;
+        }
       }
     }
     if (!empty($options['taxonFilterField']) && $options['taxonFilterField'] !== 'none' && !empty($options['taxonFilter'])) {
@@ -4668,9 +4671,9 @@ JS;
     $filterFields = [];
     if (isset($options['speciesNameFilterMode'])) {
       switch($options['speciesNameFilterMode']) {
-        case 'preferred' :
-          $filterFields['preferred'] = 'true';
+        case 'preferred''preferred'] = 'true';
           break;
+
         case 'currentLanguage' :
           if (isset($options['language'])) {
             $filterFields['language'] = $options['language'];
@@ -4681,6 +4684,7 @@ JS;
             $filterFields['language'] = iform_lang_iso_639_2(hostsite_get_user_field('language'));
           }
           break;
+
         case 'excludeSynonyms':
           $filterFields['synonyms'] = 'false';
           break;
@@ -5720,7 +5724,7 @@ HTML;
       $classifyLink = <<<HTML
         <a href="" class="add-classifer-link button" id="$id">$label</a>
         HTML;
-  
+
       // Html for a select species span
       $label = lang::get('Select a species first');
       $selectSpan = <<<HTML
@@ -7483,7 +7487,7 @@ if (errors$uniq.length>0) {
     // grid on the page.
     // The first dimension is <grid_id>-<rowIndex>
     // The second dimension is either (using the examples above)
-    //   - present, 
+    //   - present,
     //   - occAttr:<occurrence_attribute_id>[:<occurrence_attribute_value_id>]
     //   - occurrence:comment
     //   - occurrence_medium:<fieldname>:<uniqueImageId>
@@ -8335,7 +8339,7 @@ HTML;
   public static function attachClassificationToModel(&$occ, $record) {
     $results = [];
     foreach ($record as $key => $value) {
-      // We are interested in keys like 
+      // We are interested in keys like
       //   classification_result:<index>
       if (substr($key, 0, 22) === 'classification_result:') {
         $results[] = json_decode($value, TRUE);
@@ -8352,14 +8356,14 @@ HTML;
         ],
         'subModels' => [],
       ];
-      
+
 
       // Add classification results as sub-models.
       foreach ($results as $result) {
       // Each $result is an array containing elements
       //  - fields, an array of the classification_result fields,
       //  - media, an array of the the media paths used in the classification,
-      //  - suggestions, an array of suggestions, each containing an array 
+      //  - suggestions, an array of suggestions, each containing an array
       //    of the fields in the suggestion.
         $classificationResult = [
           'fkId' => 'classification_event_id',
@@ -8368,7 +8372,7 @@ HTML;
             'fields' => $result['fields'],
             'subModels' => [],
             'metaFields' => [
-              'mediaPaths' => $result['media'],         
+              'mediaPaths' => $result['media'],
             ],
           ],
         ];
@@ -8526,7 +8530,7 @@ HTML;
   }
 
   /**
-   * Work out a suitable success message to displaty after saving.
+   * Work out a suitable success message to display after saving.
    *
    * @param array $response
    *   Response data from the save operation.
@@ -8573,13 +8577,10 @@ HTML;
    * @param bool $inline Set to true if the errors are to be placed
    *   alongside the controls rather than at the top of the page. Default is
    *   true.
-   * @param bool $update
-   *   True if updating existing data, otherwise false. Alters the success
-   *   message.
    *
    * @see forward_post_to()
    */
-  public static function dump_errors($response, $inline = TRUE, $update = TRUE) {
+  public static function dump_errors($response, $inline = TRUE) {
     $r = "";
     if (is_array($response)) {
       // set form mode

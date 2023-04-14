@@ -398,7 +398,7 @@ class iform_easy_download_2 {
         'class' => 'control-width-5'
       ));
     } else
-      $r .= '<input type="hidden" name="survey_id" value="'.$args['survey_id'].'"/>';
+      $r .= '<input type="hidden" name="survey_id" value="' . $args['survey_id'] . '"/>';
     // Let the user pick the date range to download.
     $r .= data_entry_helper::select(array(
       'label'=>lang::get('Date field'),
@@ -406,45 +406,45 @@ class iform_easy_download_2 {
       'lookupValues' => array('recorded'=>lang::get('Field record date'),'input'=>lang::get('Input date'),
             'edited' => lang::get('Last changed date'), 'verified' => 'Verification status change date'),
       'helpText' => lang::get('If filtering on date, which date field would you ' .
-          'like to filter on?')
+          'like to filter on?'),
     ));
     $r .= data_entry_helper::date_picker(array(
       'fieldname' => 'date_from',
       'label' => lang::get('Start Date'),
       'helpText' => lang::get('Leave blank for no start date filter'),
-      'class' => 'control-width-4'
+      'class' => 'control-width-4',
     ));
     $r .= data_entry_helper::date_picker(array(
       'fieldname' => 'date_to',
       'label' => lang::get('End Date'),
       'helpText' => lang::get('Leave blank for no end date filter'),
-      'class' => 'control-width-4'
+      'class' => 'control-width-4',
     ));
     $r .= '</fieldset>';
     if (!empty($args['custom_formats'])) {
-      $customFormats = json_decode($args['custom_formats'], true);
-      foreach ($customFormats as $idx=>$format) {
+      $customFormats = json_decode($args['custom_formats'], TRUE);
+      foreach ($customFormats as $idx => $format) {
         if (empty($format['permission']) || hostsite_user_has_permission($format['permission']))
           $formats["custom-$idx"] = lang::get(isset($format['title']) ? $format['title'] : 'Untitled format');
       }
     }
-    if (count($formats)>1) {
-      $r .= '<fieldset><legend>'.lang::get('Select a format to download').'</legend>';
+    if (count($formats) > 1) {
+      $r .= '<fieldset><legend>' . lang::get('Select a format to download') . '</legend>';
       $keys = array_keys($formats);
       $r .= data_entry_helper::radio_group(array(
         'fieldname' => 'format',
         'lookupValues' => $formats,
-        'default' => $keys[0]
+        'default' => $keys[0],
       ));
       $r .= '</fieldset>';
     } else {
-      // only allowed 1 format, so no need for a selection control
+      // Only allowed 1 format, so no need for a selection control.
       $keys = array_keys($formats);
-      $r .= '<input type="hidden" name="format" value="'.array_pop($keys).'"/>';
+      $r .= '<input type="hidden" name="format" value="' . array_pop($keys) . '"/>';
     }
-    $r .= '<input type="submit" value="'.lang::get('Download').'"/></form>';
-    data_entry_helper::$javascript .= 'indiciaData.ajaxUrl="'.hostsite_get_url('iform/ajax/easy_download_2')."\";\n";
-    data_entry_helper::$javascript.="setAvailableDownloadFilters();\n";
+    $r .= '<input type="submit" value="' . lang::get('Download') . '"/></form>';
+    data_entry_helper::$javascript .= 'indiciaData.ajaxUrl="' . hostsite_get_url('iform/ajax/easy_download_2') . "\";\n";
+    data_entry_helper::$javascript .= "setAvailableDownloadFilters();\n";
     return $r;
   }
 
