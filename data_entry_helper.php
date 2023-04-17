@@ -4661,25 +4661,33 @@ JS;
   }
 
   /**
-   * Private utility function to extract the fields which need filtering against, plus any complex
-   * SQL where clauses, required to do a species name filter according to the current mode (e.g.
-   * preferred names only, all names etc).
-   * @param array $options Species_checklist options array.
-   * @return array Will be populated with the keys and values of any fields than need to be filtered.
+   * Get species name filtering information.
+   *
+   * Utility function to extract the fields which need filtering against, plus
+   * any complex SQL where clauses, required to do a species name filter
+   * according to the current mode (e.g. preferred names only, all names etc).
+   *
+   * @param array $options
+   *   Species_checklist options array.
+   *
+   * @return array
+   *   Will be populated with the keys and values of any fields than need to be
+   *   filtered.
    */
-  private static function parseSpeciesNameFilterMode($options) {
+  private static function parseSpeciesNameFilterMode(array $options) {
     $filterFields = [];
     if (isset($options['speciesNameFilterMode'])) {
-      switch($options['speciesNameFilterMode']) {
-        case 'preferred''preferred'] = 'true';
+      switch ($options['speciesNameFilterMode']) {
+        case 'preferred':
+          $filterFields['preferred'] = 'true';
           break;
 
-        case 'currentLanguage' :
+        case 'currentLanguage':
           if (isset($options['language'])) {
             $filterFields['language'] = $options['language'];
           }
           elseif (function_exists('hostsite_get_user_field')) {
-            // if in Drupal we can use the user's language
+            // If in Drupal we can use the user's language.
             require_once 'prebuilt_forms/includes/language_utils.php';
             $filterFields['language'] = iform_lang_iso_639_2(hostsite_get_user_field('language'));
           }
@@ -5898,8 +5906,9 @@ HTML;
     $attrOptions = [];
     foreach ($options as $option => $value) {
       if (preg_match('/^(?P<controlname>[a-z][a-z][a-z]Attr:[0-9]*)\|(?P<option>.*)$/', $option, $matches)) {
-        if (!isset($attrOptions[$matches['controlname']]))
+        if (!isset($attrOptions[$matches['controlname']])) {
           $attrOptions[$matches['controlname']] = [];
+        }
         $attrOptions[$matches['controlname']][$matches['option']] = $value;
       }
     }
@@ -5942,24 +5951,24 @@ HTML;
       'No' => 'No',
       'SRefLabel' => 'Spatial ref',
     ]);
-    // make sure we load the JS.
+    // Make sure we load the JS.
     data_entry_helper::add_resource('control_speciesmap_controls');
     data_entry_helper::$javascript .= "control_speciesmap_addcontrols(" . json_encode($options) . ");\n";
     $blocks = "";
     if (isset(data_entry_helper::$entity_to_load)) {
       foreach (data_entry_helper::$entity_to_load as $key => $value) {
         $a = explode(':', $key, 4);
-        if(count($a) === 4  && $a[0] === 'sc' && $a[3] == 'sample:entered_sref') {
+        if (count($a) === 4  && $a[0] === 'sc' && $a[3] == 'sample:entered_sref') {
           $sampleId = $a[2];
           $geomKey = "$a[0]:$a[1]:$sampleId:sample:geom";
           $idKey = "$a[0]:$a[1]:$sampleId:sample:id";
           $deletedKey = "$a[0]:$a[1]:$sampleId:sample:deleted";
-          $blocks .= '<div id="scm-' . $a[1] . '-block" class="scm-block">'.
-                    '<label>'.lang::get('Spatial ref').':</label> '.
-                    '<input type="text" value="'.$value.'" readonly="readonly" name="'.$key.'">'.
-                    '<input type="hidden" value="' . data_entry_helper::$entity_to_load[$geomKey] . '" name="' . $geomKey . '">'.
-                    '<input type="hidden" value="'.(isset(data_entry_helper::$entity_to_load[$deletedKey]) ? data_entry_helper::$entity_to_load[$deletedKey] : 'f').'" name="'.$deletedKey.'">'.
-                    (isset(data_entry_helper::$entity_to_load[$idKey]) ? '<input type="hidden" value="'.data_entry_helper::$entity_to_load[$idKey] . '" name="'.$idKey.'">' : '');
+          $blocks .= '<div id="scm-' . $a[1] . '-block" class="scm-block">' .
+                    '<label>' . lang::get('Spatial ref') . ':</label> ' .
+                    '<input type="text" value="' . $value . '" readonly="readonly" name="' . $key . '">' .
+                    '<input type="hidden" value="' . data_entry_helper::$entity_to_load[$geomKey] . '" name="' . $geomKey . '">' .
+                    '<input type="hidden" value="' . (data_entry_helper::$entity_to_load[$deletedKey] ?? 'f') . '" name="' . $deletedKey . '">' .
+                    (isset(data_entry_helper::$entity_to_load[$idKey]) ? '<input type="hidden" value="' . data_entry_helper::$entity_to_load[$idKey] . '" name="' . $idKey . '">' : '');
 
           if (!empty($options['sample_method_id'])) {
             $sampleAttrs = self::getMultiplePlacesSpeciesChecklistSubsampleAttrs($options, empty($sampleId) ? NULL : $sampleId);
@@ -5968,7 +5977,7 @@ HTML;
               $attr['id'] = "sc:$a[1]:$a[2]:$attr[id]";
             }
             $attrOptions = self::getAttrSpecificOptions($options);
-            $sampleCtrls = get_attribute_html($sampleAttrs, [], array('extraParams' =>  $options['readAuth']), NULL, $attrOptions);
+            $sampleCtrls = get_attribute_html($sampleAttrs, [], ['extraParams' => $options['readAuth']], NULL, $attrOptions);
             $blocks .= <<<HTML
 <div id="scm-$a[1]-subsample-ctrls">
   $sampleCtrls
@@ -6007,12 +6016,12 @@ HTML;
    * @return string
    *   HTML to insert into the page for the textarea control.
    */
-  public static function textarea($options) {
-    $options = array_merge(array(
+  public static function textarea(array $options) {
+    $options = array_merge([
       'cols' => '80',
       'rows' => '4',
       'isFormControl' => TRUE,
-    ), self::check_options($options));
+    ], self::check_options($options));
     return self::apply_template('textarea', $options);
   }
 
@@ -6022,7 +6031,12 @@ HTML;
    * This includes re-loading of existing values and displaying of validation
    * error messages.
    *
-   * @param array $options Options array with the following possibilities:
+   * The output of this control can be configured using the following
+   * templates:
+   * * text_input - HTML template used to generate the input element.
+   *
+   * @param array $options
+   *   Options array with the following possibilities:
    *   * fieldname - Required. The name of the database field this control is
    *     bound to.
    *   * id - Optional. The id to assign to the HTML control. If not assigned
@@ -6036,14 +6050,10 @@ HTML;
    *   * attributes - Optional. Additional HTML attribute to attach, e.g.
    *     ["type": "number", "step": "any", "min": "4"].
    *
-   * The output of this control can be configured using the following
-   * templates:
-   * * text_input - HTML template used to generate the input element.
-   *
    * @return string
    *   HTML to insert into the page for the text input control.
    */
-  public static function text_input($options) {
+  public static function text_input(array $options) {
     $options = array_merge([
       'default' => '',
       'isFormControl' => TRUE,
