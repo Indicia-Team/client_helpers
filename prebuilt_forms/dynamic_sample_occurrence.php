@@ -460,6 +460,15 @@ TXT;
           'required' => FALSE,
         ],
         [
+          'name' => 'includeDraftButton',
+          'caption' => 'Include a Save Draft button',
+          'description' => 'Tick to provide a button to allow the user to save a draft of the data entry form. The records will be flagged as release_status=U (unreleased).',
+          'type' => 'boolean',
+          'default' => FALSE,
+          'required' => FALSE,
+          'group' => 'User Interface',
+        ],
+        [
           'name' => 'users_manage_own_sites',
           'caption' => 'Users can save sites',
           'description' => 'Allow users to save named sites for recall when they
@@ -997,6 +1006,10 @@ TXT;
           'important, otherwise the records will need to be rechecked.';
       }
       hostsite_show_message(lang::get($msg));
+    }
+    if (data_entry_helper::$unreleasedRecordsCount > 0 && !empty($args['includeDraftButton'])) {
+      hostsite_show_message(lang::get('You are editing a sample containing records which are not published. ' .
+        'Use the "Save and publish" button to publish them when you are ready for them to be released.'));
     }
     return $r;
   }
@@ -2863,7 +2876,7 @@ JS;
    */
   protected static function get_control_fileclassifier($auth, $args, $tabAlias, $options) {
     if ($args['multiple_occurrence_mode'] === 'single') {
-      return "[file classifier] control cannot be included in form unless in 
+      return "[file classifier] control cannot be included in form unless in
       grid entry mode, since records are automatically added to the grid.";
     }
     else {
@@ -3429,7 +3442,15 @@ TXT;
       // Don't allow users to submit if in read only mode.
       return $r;
     }
-    $r .= '<input type="submit" class="' . $indicia_templates['buttonHighlightedClass'] . '" id="save-button" value="' . lang::get('Submit') . "\" />\n";
+    $lang = [
+      'captionSave' => empty($args['includeDraftButton']) ? lang::get('Save') : lang::get('Save and publish'),
+      'captionDraft' => lang::get('Save draft'),
+    ];
+    if (!empty($args['includeDraftButton'])) {
+      $r .= "<input type=\"submit\" class=\"$indicia_templates[buttonHighlightedClass]\" id=\"draft-button\" name=\"draft-button\" value=\"$lang[captionDraft]\" />\n";
+    }
+    $submitName = empty($args['includeDraftButton']) ? 'save-button' : 'publish-button';
+    $r .= "<input type=\"submit\" class=\"$indicia_templates[buttonHighlightedClass]\" id=\"save-button\" name=\"$submitName\" value=\"$lang[captionSave]\" />\n";
     if (!empty(self::$loadedSampleId)) {
       // Use a button here, not input, as Chrome does not post the input value.
       $formType = $args['multiple_occurrence_mode'] === 'single' ? lang::get('record') : lang::get('list of records');

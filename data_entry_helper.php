@@ -109,6 +109,13 @@ class data_entry_helper extends helper_base {
    */
   public static $uncheckedRecordsCount = 0;
 
+  /**
+   * Track need to warn user if on a form that has unpublished records.
+   *
+   * @var int
+   */
+  public static $unreleasedRecordsCount = 0;
+
   /**********************************/
   /* Start of main controls section */
   /**********************************/
@@ -1711,8 +1718,6 @@ JS;
     $options['class'] = 'hierarchy-select';
     $r = self::select($options);
     $indicia_templates['select'] = $oldTemplate;
-    // jQuery safe version of the Id.
-    $safeId = preg_replace('/[:]/', '\\\\\\:', $options['id']);
     // Output a hidden input that contains the value to post.
     $hiddenOptions = [
       'id' => 'fld-' . $options['id'],
@@ -1723,78 +1728,81 @@ JS;
       $hiddenOptions['default'] = $options['default'];
     }
     $r .= self::hidden_text($hiddenOptions);
+    // jQuery safe version of the Id.
+    $safeId = preg_replace('/[:]/', '\\\\\\:', $options['id']);
     $options['blankText'] = htmlspecialchars(lang::get($options['blankText']));
     $selectClass = "hierarchy-select  $indicia_templates[formControlClass]";
     // Now output JavaScript that creates and populates child selects as each option is selected. There is also code for
     // reloading existing values.
-    self::$javascript .= "
-  // enclosure needed in case there are multiple on the page
-  (function () {
-    function pickHierarchySelectNode(select,fromOnChange) {
-      select.nextAll().remove();
-      if (typeof indiciaData.selectData$id [select.val()] !== 'undefined') {
-        var html='<select class=\"$selectClass\"><option>$options[blankText]</option>', obj;
-        $.each(indiciaData.selectData$id [select.val()], function(idx, item) {
-          //If option is set then if there is only a single child item, auto select it in the list
-          //Don't do this if we are initially loading the page (fromOnChange is false) as we only want to do this when the user actually changes the value.
-          //We don't want to auto-select the child on page load, if that hasn't actually been saved to the database yet.
-          if (indiciaData.selectData$id [select.val()].length ===1 && indiciaData.autoSelectSingularChildItem===true && fromOnChange===true) {
-            html += '<option value=\"'+item.id+'\" selected>' + item.caption + '</option>';
-            //Need to set the hidden value for submission, so correct value is actually saved to the database, not just shown visually on screen.
-            //Make sure we escape the colon for jQuery selector also.
-            $('#$hiddenOptions[id]'.replace(':','\\\\:')).val(item.id);
-          } else {
-            html += '<option value=\"'+item.id+'\">' + item.caption + '</option>';
-          }
-        });
-        html += '</select>';
-        obj=$(html);
-        obj.change(function(evt) {
-          $('#fld-$safeId').val($(evt.target).val());
-          pickHierarchySelectNode($(evt.target),true);
-        });
-        select.after(obj);
-      }
-    }
-
-    $('#$safeId').change(function(evt) {
-      $('#fld-$safeId').val($(evt.target).val());
-      pickHierarchySelectNode($(evt.target),true);
-    });
-
-    pickHierarchySelectNode($('#$safeId'),false);
-
-    // Code from here on is to reload existing values.
-    function findItemParent(idToFind) {
-      var found=false;
-      $.each(indiciaData.selectData$id, function(parentId, items) {
-        $.each(items, function(idx, item) {
-          if (item.id===idToFind) {
-            found=parentId;
-          }
-        });
+    self::$javascript .= <<<JS
+// enclosure needed in case there are multiple on the page
+(function () {
+  function pickHierarchySelectNode(select,fromOnChange) {
+    select.nextAll().remove();
+    if (typeof indiciaData.selectData$id [select.val()] !== 'undefined') {
+      var html='<select class="$selectClass"><option>$options[blankText]</option>', obj;
+      $.each(indiciaData.selectData$id [select.val()], function(idx, item) {
+        //If option is set then if there is only a single child item, auto select it in the list
+        //Don't do this if we are initially loading the page (fromOnChange is false) as we only want to do this when the user actually changes the value.
+        //We don't want to auto-select the child on page load, if that hasn't actually been saved to the database yet.
+        if (indiciaData.selectData$id [select.val()].length ===1 && indiciaData.autoSelectSingularChildItem===true && fromOnChange===true) {
+          html += '<option value="'+item.id+'" selected>' + item.caption + '</option>';
+          //Need to set the hidden value for submission, so correct value is actually saved to the database, not just shown visually on screen.
+          //Make sure we escape the colon for jQuery selector also.
+          $('#$hiddenOptions[id]'.replace(':','\\\\:')).val(item.id);
+        } else {
+          html += '<option value="'+item.id+'">' + item.caption + '</option>';
+        }
       });
-      return found;
+      html += '</select>';
+      obj=$(html);
+      obj.change(function(evt) {
+        $(evt.target).closest('.hierarchical-select-cntr').find('input[type="hidden"]').val($(evt.target).val());
+        pickHierarchySelectNode($(evt.target),true);
+      });
+      select.after(obj);
     }
-    var found=true, last=$('#fld-$safeId').val(), tree=[last], toselect, thisselect;
-    while (last!=='' && found) {
-      found=findItemParent(last);
-      if (found) {
-        tree.push(found);
-        last=found;
-      }
-    }
+  }
 
-    // now we have the tree, work backwards to select each item
-    thisselect = $('#$safeId');
-    while (tree.length>0) {
-      toselect = tree.pop();
-      thisselect.val(toselect).change();
-      thisselect = thisselect.next();
+  $('#$safeId').change(function(evt) {
+    $(evt.target).closest('.hierarchical-select-cntr').find('input[type="hidden"]').val($(evt.target).val());
+    pickHierarchySelectNode($(evt.target),true);
+  });
+
+  pickHierarchySelectNode($('#$safeId'), false);
+
+  // Code from here on is to reload existing values.
+  function findItemParent(idToFind) {
+    var found=false;
+    $.each(indiciaData.selectData$id, function(parentId, items) {
+      $.each(items, function(idx, item) {
+        if (item.id===idToFind) {
+          found=parentId;
+        }
+      });
+    });
+    return found;
+  }
+  var found=true, last=$('#fld-$safeId').val(), tree=[last], toselect, thisselect;
+  while (last!=='' && found) {
+    found=findItemParent(last);
+    if (found) {
+      tree.push(found);
+      last=found;
     }
-  }) ();
-    ";
-    return $r;
+  }
+
+  // now we have the tree, work backwards to select each item
+  thisselect = $('#$safeId');
+  while (tree.length>0) {
+    toselect = tree.pop();
+    thisselect.val(toselect).change();
+    thisselect = thisselect.next();
+  }
+}) ();
+
+JS;
+    return "<div class=\"hierarchical-select-cntr\">$r</div>";
   }
 
   /**
@@ -3144,6 +3152,9 @@ JS;
       else {
         self::$uncheckedRecordsCount++;
       }
+      if (!empty(data_entry_helper::$entity_to_load['occurrence:release_status']) && data_entry_helper::$entity_to_load['occurrence:release_status'] === 'U') {
+        self::$unreleasedRecordsCount++;
+      }
     }
     $options['readAuth'] = [
       'auth_token' => $options['extraParams']['auth_token'],
@@ -3966,11 +3977,14 @@ RIJS;
               $title = lang::get('This record has been {1}. Changing it will mean that it will need to be rechecked by an expert.', $label);
               $firstCell .= "<img class=\"record-status-set\" alt=\"$label\" title=\"$title\" src=\"{$imgPath}nuvola/$img-16px.png\">";
             }
-            data_entry_helper::$checkedRecordsCount++;
+            self::$checkedRecordsCount++;
           }
           else {
-            data_entry_helper::$uncheckedRecordsCount++;
+            self::$uncheckedRecordsCount++;
           }
+        }
+        if (isset(self::$entity_to_load["sc:$loadedTxIdx:$existingRecordId:occurrence:release_status"]) && self::$entity_to_load["sc:$loadedTxIdx:$existingRecordId:occurrence:release_status"] === 'U') {
+          self::$unreleasedRecordsCount++;
         }
         $row .= str_replace(
           ['{content}', '{colspan}', '{editClass}', '{tableId}', '{idx}'],
@@ -4886,6 +4900,7 @@ JS;
           self::$entity_to_load["sc:$idx:$occurrence[id]:occurrence:verified_on"] = $occurrence['verified_on'];
           self::$entity_to_load["sc:$idx:$occurrence[id]:occurrence:comment"] = $occurrence['comment'];
           self::$entity_to_load["sc:$idx:$occurrence[id]:occurrence:sensitivity_precision"] = $occurrence['sensitivity_precision'];
+          self::$entity_to_load["sc:$idx:$occurrence[id]:occurrence:release_status"] = $occurrence['release_status'];
           // Warning. I observe that, in cases where more than one occurrence is loaded, the following entries in
           // $entity_to_load will just take the value of the last loaded occurrence.
           self::$entity_to_load['occurrence:record_status'] = $occurrence['record_status'];
@@ -4894,7 +4909,7 @@ JS;
           // Keep a list of all Ids.
           $occurrenceIds[$occurrence['id']] = $idx;
         }
-        if(count($occurrenceIds)>0) {
+        if (count($occurrenceIds) > 0) {
           // Load the attribute values into the entity to load as well.
           $attrValues = self::get_population_data(array(
             'table' => 'occurrence_attribute_value',
@@ -6537,6 +6552,8 @@ $('div#$escaped_divId').indiciaTreeBrowser({
       'captionPrev' => 'Prev step',
       'captionSave' => 'Save',
       'captionDelete'=> 'Delete',
+      'captionDraft' => 'Save draft',
+      'captionPublish' => 'Save and publish',
       'buttonClass' => "$indicia_templates[buttonDefaultClass] inline-control",
       'saveButtonClass' => "$indicia_templates[buttonHighlightedClass] inline-control",
       'deleteButtonClass' => "$indicia_templates[buttonWarningClass] inline-control",
@@ -6544,6 +6561,7 @@ $('div#$escaped_divId').indiciaTreeBrowser({
       'page'        => 'middle',
       'includeVerifyButton' => FALSE,
       'includeSubmitButton' => TRUE,
+      'includeDraftButton' => FALSE,
       'includeDeleteButton' => FALSE,
       'controlWrapTemplate' => 'justControl'
     ), $options);
@@ -6574,18 +6592,28 @@ $('div#$escaped_divId').indiciaTreeBrowser({
       }
       else {
         if ($options['includeSubmitButton']) {
-          $options['class'] = "$options[saveButtonClass] tab-submit";
-          $options['id'] = 'tab-submit';
-          $options['caption'] = lang::get($options['captionSave']);
-          $options['name'] = 'action-submit';
-          $r .= self::apply_template('submitButton', $options);
+          $r .= self::apply_template('submitButton', [
+            'caption' => $options['includeDraftButton'] ? lang::get($options['captionPublish']) : lang::get($options['captionSave']),
+            'class' => "$options[saveButtonClass] tab-submit",
+            'id' => 'tab-submit',
+            'name' => $options['includeDraftButton'] ? 'publish-button' : 'action-submit',
+          ]);
+        }
+        if ($options['includeDraftButton']) {
+          $r .= self::apply_template('submitButton', [
+            'caption' => lang::get($options['captionDraft']),
+            'class' => "$options[saveButtonClass] tab-draft",
+            'id' => 'tab-draft',
+            'name' => 'draft-button',
+          ]);
         }
         if ($options['includeDeleteButton']) {
-          $options['class'] = "$options[deleteButtonClass] tab-delete";
-          $options['id'] = 'tab-delete';
-          $options['caption'] = lang::get($options['captionDelete']);
-          $options['name'] = 'delete-button';
-          $r .= self::apply_template('submitButton', $options);
+          $r .= self::apply_template('submitButton', [
+            'caption' => lang::get($options['captionDelete']),
+            'class' => "$options[deleteButtonClass] tab-delete",
+            'id' => 'tab-delete',
+            'name' => 'delete-button',
+          ]);
           $msg = lang::get('Are you sure you want to delete this form?');
           self::$javascript .= <<<JS
 $('#tab-delete').click(function(e) {
@@ -7582,7 +7610,7 @@ if (errors$uniq.length>0) {
           $record['zero_abundance']=$present ? 'f' : 't';
         $record['taxa_taxon_list_id'] = $record['ttlId'];
         $record['website_id'] = $website_id;
-        self::speciesChecklistApplyFieldDefaults($fieldDefaults, $record);
+        self::speciesChecklistApplyFieldDefaults($fieldDefaults, $record, $arr);
         // Handle subSamples indicated by row specific sample values.
         $date = self::extractValueFromArray($record, 'occurrence:date');
         $sref = self::extractValueFromArray($record, 'occurrence:spatialref');
@@ -7744,7 +7772,7 @@ if (errors$uniq.length>0) {
           $record['zero_abundance']=$present ? 'f' : 't';
         $record['taxa_taxon_list_id'] = $record['present'];
         $record['website_id'] = $website_id;
-        self::speciesChecklistApplyFieldDefaults($fieldDefaults, $record);
+        self::speciesChecklistApplyFieldDefaults($fieldDefaults, $record, $arr);
         $occ = submission_builder::wrap($record, 'occurrence');
         self::attachOccurrenceMediaToModel($occ, $record);
         $sampleRecords[$sampleIDX]['occurrences'][] = array('fkId' => 'sample_id','model' => $occ);
@@ -7891,11 +7919,18 @@ if (errors$uniq.length>0) {
     return $fieldDefaults;
   }
 
-  private static function speciesChecklistApplyFieldDefaults($fieldDefaults, &$record) {
+  private static function speciesChecklistApplyFieldDefaults($fieldDefaults, &$record, array $values) {
     // Apply default field values but don't overwrite settings for existing records.
     if (empty($record['id'])) {
       foreach ($fieldDefaults as $field => $value)
         $record[$field] = $value;
+    }
+    // Form may have draft and publish buttons which affect release status.
+    if (!empty($values['draft-button'])) {
+      $record['release_status'] = 'U';
+    }
+    if (!empty($values['publish-button'])) {
+      $record['release_status'] = 'R';
     }
   }
 
@@ -8455,6 +8490,16 @@ HTML;
         $values['occurrence:zero_abundance'] = 't';
       }
     }
+    // Form may have draft and publish buttons which affect release status and
+    // sample record status.
+    if (!empty($values['draft-button'])) {
+      $values['occurrence:release_status'] = 'U';
+      $values['sample:record_status'] = 'I';
+    }
+    elseif (!empty($values['publish-button'])) {
+      $values['occurrence:release_status'] = 'R';
+      $values['sample:record_status'] = 'C';
+    }
     return submission_builder::build_submission($values, $structure);
   }
 
@@ -8482,6 +8527,14 @@ HTML;
    */
   public static function build_sample_occurrences_list_submission($values, $include_if_any_data = FALSE,
       $zeroAttrs = TRUE, array $zeroValues=['0','none','absent','not seen']) {
+    // Form may have draft and publish buttons which affect sample record
+    // status.
+    if (!empty($values['draft-button'])) {
+      $values['sample:record_status'] = 'I';
+    }
+    elseif (!empty($values['publish-button'])) {
+      $values['sample:record_status'] = 'C';
+    }
     // We're mainly submitting to the sample model
     $sampleMod = submission_builder::wrap_with_images($values, 'sample');
     $occurrences = data_entry_helper::wrap_species_checklist($values, $include_if_any_data,
@@ -8521,9 +8574,16 @@ HTML;
    *   Sample submission array
    */
   public static function build_sample_subsamples_occurrences_submission($values, $include_if_any_data = FALSE,
-      $zeroAttrs = TRUE, $zeroValues=['0','none','absent','not seen'])
-  {
-    // We're mainly submitting to the sample model
+      $zeroAttrs = TRUE, $zeroValues=['0','none','absent','not seen']) {
+    // Form may have draft and publish buttons which affect release status and
+    // sample record status.
+    if (!empty($values['draft-button'])) {
+      $values['sample:record_status'] = 'I';
+    }
+    elseif (!empty($values['publish-button'])) {
+      $values['sample:record_status'] = 'C';
+    }
+    // We're mainly submitting to the sample model.
     $sampleMod = submission_builder::wrap_with_images($values, 'sample');
     $subModels = data_entry_helper::wrap_species_checklist_with_subsamples($values, $include_if_any_data,
       $zeroAttrs, $zeroValues);
@@ -8555,25 +8615,34 @@ HTML;
     if ($op === 'D') {
       return lang::get("The $what has been deleted.");
     }
-    if ($op === 'U') {
-      return lang::get("The $what has been updated.");
+    if ($op === 'U' ) {
+      $msg = lang::get("The $what has been updated.");
     }
-    if ($response['success'] === 'multiple records' && $response['outer_table'] === 'sample' && isset($response['struct']['children'])) {
-      $count = 0;
-      foreach ($response['struct']['children'] as $child) {
-        if ($child['model'] === 'occurrence') {
-          $count ++;
+    else {
+      if ($response['success'] === 'multiple records' && $response['outer_table'] === 'sample' && isset($response['struct']['children'])) {
+        $count = 0;
+        foreach ($response['struct']['children'] as $child) {
+          if ($child['model'] === 'occurrence') {
+            $count ++;
+          }
+        }
+        if ($count > 0) {
+          $what = $count === 1 ? 'record' : 'records';
         }
       }
-      if ($count > 0) {
-        $what = $count === 1 ? 'record' : 'records';
+      $siteName = 'this website';
+      if (function_exists('hostsite_get_config_value')) {
+        $siteName = hostsite_get_config_value('site', 'name');
       }
+      $msg = lang::get('Thank you for submitting your {1} to {2}.', lang::get($what), lang::get($siteName));
     }
-    $siteName = 'this website';
-    if (function_exists('hostsite_get_config_value')) {
-      $siteName = hostsite_get_config_value('site', 'name');
+    if (!empty($_POST['publish-button'])) {
+      $msg .= ' ' . lang::get('The records have been published.');
     }
-    return lang::get('Thank you for submitting your {1} to {2}.', lang::get($what), lang::get($siteName));
+    elseif (!empty($_POST['draft-button'])) {
+      $msg .= ' ' . lang::get('The records have been saved as a draft.');
+    }
+    return $msg;
   }
 
   /**
