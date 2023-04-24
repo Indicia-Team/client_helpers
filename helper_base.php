@@ -2180,7 +2180,8 @@ HTML;
   public static function get_read_auth($website_id, $password) {
     // Store this for use with data caching.
     self::$website_id = $website_id;
-    // Keep a non-random cache for 10 minutes. It MUST be shorter than the normal cache lifetime so this expires more frequently.
+    // Keep a non-random cache for 10 minutes. It MUST be shorter than the
+    // normal cache lifetime so this expires more frequently.
     $cacheKey = [
       'readauth-wid' => $website_id,
     ];
@@ -2235,9 +2236,11 @@ HTML;
    *
    * @return array
    *   Returns an array containing:
-   *   'read' => the read authorisation array,
-   *   'write' => the write authorisation input controls to insert into your form.
-   *   'write_tokens' => the write authorisation array, if needed as separate tokens rather than just placing in form.
+   *   * 'read' => the read authorisation array,
+   *   * 'write' => the write authorisation input controls to insert into your
+   *     form.
+   *   * 'write_tokens' => the write authorisation array, if needed as separate
+   *     tokens rather than just placing in form.
    */
   public static function get_read_write_auth($website_id, $password) {
     self::$website_id = $website_id; /* Store this for use with data caching */
@@ -2277,11 +2280,15 @@ HTML;
   }
 
   /**
-   * This method allows JavaScript and CSS links to be created and placed in the <head> of the
-   * HTML file rather than using dump_javascript which must be called after the form is built.
-   * The advantage of dump_javascript is that it intelligently builds the required links
-   * depending on what is on your form. dump_header is not intelligent because the form is not
-   * built yet, but placing links in the header leads to cleaner code which validates better.
+   * Returns JS and CSS links that can be placed into the page header.
+   *
+   * This method allows JavaScript and CSS links to be created and placed in
+   * the <head> of the HTML file rather than using dump_javascript which must
+   * be called after the form is built. The advantage of dump_javascript is
+   * that it intelligently builds the required links depending on what is on
+   * your form. dump_header is not intelligent because the form is not built
+   * yet, but placing links in the header leads to cleaner code which validates
+   * better.
    *
    * @param array $resources
    *   List of resources to include in the header. The available options are
@@ -2305,8 +2312,11 @@ HTML;
   }
 
   /**
-   * Helper function to collect javascript code in a single location. Should be called at the end of each HTML
-   * page which uses the data entry helper so output all JavaScript required by previous calls.
+   * Collects all inline JavaScript.
+   *
+   * Helper function to collect javascript code in a single location. Should be
+   * called at the end of each HTML page which uses the data entry helper so
+   * output all JavaScript required by previous calls.
    *
    * @param bool $closure
    *   Set to true to close the JS with a function to ensure $ will refer to
@@ -2341,7 +2351,7 @@ HTML;
    * Retreives JavaScript required to initialise indiciaData.
    *
    * Builds JavaScript to initialise an object containing any data added to
-   * self::$indiciaData
+   * self::$indiciaData.
    *
    * @return string
    *   JavaScript.
@@ -2399,8 +2409,10 @@ HTML;
   }
 
   /**
-   * Internal implementation of the dump_javascript method which takes the javascript and resources list
-   * as flexible parameters, rather that using the globals.
+   * Internal implementation of the dump_javascript method.
+   *
+   * Takes the javascript and resources list as flexible parameters, rather
+   * than using the globals.
    *
    * @param array $resources
    *   List of resources to include.
@@ -2460,7 +2472,7 @@ HTML;
    * @return string
    *   The JavaScript.
    */
-  public static function get_scripts($javascript, $late_javascript, $onload_javascript, $includeWrapper=FALSE, $closure=FALSE) {
+  public static function get_scripts($javascript, $late_javascript, $onload_javascript, $includeWrapper = FALSE, $closure = FALSE) {
     if (!empty($javascript) || !empty($late_javascript) || !empty($onload_javascript)) {
       $proxyUrl = self::getRootFolder() . self::relative_client_helper_path() . 'proxy.php';
       $protocol = empty($_SERVER['HTTPS']) || $_SERVER['HTTPS'] === 'off' ? 'http' : 'https';
@@ -2654,9 +2666,11 @@ if (typeof validator!=='undefined') {
   }
 
   /**
-   * Internal method to build a control from its options array and its template. Outputs the
-   * prefix template, a label (if in the options), a control, the control's errors and a
-   * suffix template.
+   * Apply options to a templaet.
+   *
+   * Internal method to build a control from its options array and its
+   * template. Outputs the prefix template, a label (if in the options),
+   * a control, the control's errors and a suffix template.
    *
    * @param string $template
    *   Name of the control template, from the global $indicia_templates
@@ -2777,11 +2791,11 @@ if (typeof validator!=='undefined') {
         $options['lock_form_mode'] = self::$form_mode ? self::$form_mode : 'NEW';
         // Write lock javascript at the start of the late javascript so after
         // control setup but before any other late javascript.
-        self::$late_javascript = self::apply_replacements_to_template($indicia_templates['lock_javascript'], $options).self::$late_javascript;
+        self::$late_javascript = self::apply_replacements_to_template($indicia_templates['lock_javascript'], $options) . self::$late_javascript;
         self::add_resource('indicia_locks');
       }
     }
-    if (isset($validationClasses) && !empty($validationClasses) && strpos($validationClasses, 'required')!==FALSE) {
+    if (isset($validationClasses) && !empty($validationClasses) && strpos($validationClasses, 'required') !== FALSE) {
       $addons .= self::apply_static_template('requiredsuffix', $options);
     }
     // Add an error icon to the control if there is an error and this option
@@ -2802,21 +2816,31 @@ if (typeof validator!=='undefined') {
     }
     // Label can sometimes be placed after the control.
     if (!empty($options['label']) && isset($options['labelPosition']) && $options['labelPosition'] == 'after') {
-    	$r .= $label;
+      $r .= $label;
     }
-    // Add a message to the control if there is an error and this option is set
+    // Add a message to the control if there is an error and this option is
+    // set.
     if ($error && in_array('message', $options['validation_mode'])) {
-      $r .=  self::apply_error_template($error, $options['fieldname']);
+      $r .= self::apply_error_template($error, $options['fieldname']);
     }
-
+.
     // Add suffix
     $r .= self::apply_static_template('suffix', $options);
 
-    // If options contain a help text, output it at the end if that is the preferred position
+    // If options contain a help text, output it at the end if that is the
+    // preferred position.
     $r .= self::get_help_text($options, 'after');
-    if (isset($options['id']) ) {
+    if (isset($options['id'])) {
       $wrap = empty($options['controlWrapTemplate']) ? $indicia_templates['controlWrap'] : $indicia_templates[$options['controlWrapTemplate']];
-      $r = str_replace(array('{control}', '{id}', '{wrapClasses}'), array("\n$r", str_replace(':', '-', $options['id']), $options['wrapClasses']), $wrap);
+      $r = str_replace([
+        '{control}',
+        '{id}',
+        '{wrapClasses}'.
+      ], [
+        "\n$r",
+        str_replace(':', '-', $options['id']),
+        $options['wrapClasses'],
+      ], $wrap);
     }
     if (!empty($options['tooltip'])) {
       // preliminary support for
@@ -2827,18 +2851,23 @@ if (typeof validator!=='undefined') {
     return $r;
   }
 
- /**
-  * Call the enable_validation method to turn on client-side validation for any controls with
-  * validation rules defined.
-  * To specify validation on each control, set the control's options array
-  * to contain a 'validation' entry. This must be set to an array of validation rules in Indicia
-  * validation format. For example, 'validation' => array('required', 'email').
-  * @param string @form_id Id of the form the validation is being attached to.
-  */
+  /**
+   * Enable browser validation for forms.
+   *
+   * Call the enable_validation method to turn on client-side validation for
+   * any controls with validation rules defined.
+   * To specify validation on each control, set the control's options array
+   * to contain a 'validation' entry. This must be set to an array of
+   * validation rules in Indicia validation format. For example,
+   * `'validation' => array('required', 'email')`.
+   *
+   * @param string $form_id
+   *   @form_id Id of the form the validation is being attached to.
+   */
   public static function enable_validation($form_id) {
     self::$validated_form_id = $form_id;
     self::$javascript .= "indiciaData.validatedFormId = '" . self::$validated_form_id . "';\n";
-    // prevent double submission of the form
+    // Prevent double submission of the form.
     self::$javascript .= "$('#$form_id').submit(function(e) {
   if (typeof $('#$form_id').valid === 'undefined' || $('#$form_id').valid()) {
     if (typeof indiciaData.formSubmitted==='undefined' || !indiciaData.formSubmitted) {
@@ -2850,24 +2879,24 @@ if (typeof validator!=='undefined') {
   }
 });\n";
     self::add_resource('validation');
-    // Allow i18n on validation messages
+    // Allow i18n on validation messages.
     if (lang::get('validation_required') != 'validation_required') {
-      self::$late_javascript .= "$.validator.messages.required = \"".lang::get('validation_required')."\";\n";
+      self::$late_javascript .= "$.validator.messages.required = \"" . lang::get('validation_required') . "\";\n";
     }
     if (lang::get('validation_max') != 'validation_max') {
-      self::$late_javascript .= "$.validator.messages.max = $.validator.format(\"".lang::get('validation_max')."\");\n";
+      self::$late_javascript .= "$.validator.messages.max = $.validator.format(\"" . lang::get('validation_max') . "\");\n";
     }
     if (lang::get('validation_min') != 'validation_min') {
-      self::$late_javascript .= "$.validator.messages.min = $.validator.format(\"".lang::get('validation_min')."\");\n";
+      self::$late_javascript .= "$.validator.messages.min = $.validator.format(\"" . lang::get('validation_min') . "\");\n";
     }
     if (lang::get('validation_number') != 'validation_number') {
-      self::$late_javascript .= "$.validator.messages.number = $.validator.format(\"".lang::get('validation_number')."\");\n";
+      self::$late_javascript .= "$.validator.messages.number = $.validator.format(\"" . lang::get('validation_number') . "\");\n";
     }
     if (lang::get('validation_digits') != 'validation_digits') {
-      self::$late_javascript .= "$.validator.messages.digits = $.validator.format(\"".lang::get('validation_digits')."\");\n";
+      self::$late_javascript .= "$.validator.messages.digits = $.validator.format(\"" . lang::get('validation_digits') . "\");\n";
     }
     if (lang::get('validation_integer') != 'validation_integer') {
-      self::$late_javascript .= "$.validator.messages.integer = $.validator.format(\"".lang::get('validation_integer')."\");\n";
+      self::$late_javascript .= "$.validator.messages.integer = $.validator.format(\"" . lang::get('validation_integer') . "\");\n";
     }
   }
 
