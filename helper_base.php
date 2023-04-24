@@ -2823,7 +2823,7 @@ if (typeof validator!=='undefined') {
     if ($error && in_array('message', $options['validation_mode'])) {
       $r .= self::apply_error_template($error, $options['fieldname']);
     }
-.
+
     // Add suffix
     $r .= self::apply_static_template('suffix', $options);
 
