@@ -2835,7 +2835,7 @@ if (typeof validator!=='undefined') {
       $r = str_replace([
         '{control}',
         '{id}',
-        '{wrapClasses}'.
+        '{wrapClasses}',
       ], [
         "\n$r",
         str_replace(':', '-', $options['id']),
