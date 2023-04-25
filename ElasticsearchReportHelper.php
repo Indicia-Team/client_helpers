@@ -269,7 +269,7 @@ class ElasticsearchReportHelper {
       'description' => 'Spatial reference in the recommended local grid system.',
     ],
     'location.output_sref_system' => [
-      'caption' => 'Display spatial reference_system',
+      'caption' => 'Display spatial reference system',
       'description' => 'System used for the spatial reference in the recommended local grid system.',
     ],
     'location.input_sref' => [
