@@ -5410,6 +5410,7 @@ JS;
       'responsive' => FALSE,
       'allowAdditionalTaxa' => !empty($options['lookupListId']),
       'verificationInfoColumns' => FALSE,
+      'classifierEnable' => FALSE,
     ], $options);
     // SubSamplesPerRow can't be set without speciesControlToUseSubSamples
     $options['subSamplePerRow'] = $options['subSamplePerRow'] && $options['speciesControlToUseSubSamples'];
