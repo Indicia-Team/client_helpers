@@ -121,7 +121,6 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
 ?Please enter the species you saw and any other information about them.?
 
 [species]
-
 @resizeWidth=1500
 @resizeHeight=1500
 
@@ -2863,7 +2862,7 @@ JS;
    */
   protected static function get_control_fileclassifier($auth, $args, $tabAlias, $options) {
     if ($args['multiple_occurrence_mode'] === 'single') {
-      return "[file classifier] control cannot be included in form unless in 
+      return "[file classifier] control cannot be included in form unless in
       grid entry mode, since records are automatically added to the grid.";
     }
     else {
