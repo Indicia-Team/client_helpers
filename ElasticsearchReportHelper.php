@@ -1718,6 +1718,7 @@ HTML;
       'cancel' => lang::get('Cancel'),
       'cancelSaveTemplate' => lang::get('Cancel saving the template'),
       'contactExpert' => lang::get('Contact an expert'),
+      'deleteTemplate' => lang::get('Delete the selected template'),
       'edit' => lang::get('Edit'),
       'editThisRecord' => 'Edit this record',
       'help' => lang::get('Help'),
@@ -1769,6 +1770,11 @@ HTML;
       'close' => 'Close',
       'commentTabTitle' => 'Comment on the record',
       'copyPlaceholder' => 'Copy &quot;{{ placeholder }}&quot; to the clipboard.',
+      'deleteTemplateConfirm' => 'Delete template',
+      'deleteTemplateMsg' => 'Are you sure you want to delete the "{{ title }}" template?',
+      'delete' => 'Delete',
+      'deleteTemplateError' => 'Delete template error',
+      'deleteTemplateErrorMsg' => 'An error occurred when deleting your template from the database. Please try later.',
       'elasticsearchUpdateError' => 'An error occurred whilst updating the reporting index. It may not reflect your changes temporarily but will be updated automatically later.',
       'commentReplyInstruct' => 'Click here to add a publicly visible comment to the record on iRecord.',
       'csvDisallowedMessage' => 'Uploading verification decisions is only allowed when there is a filter that defines the scope of the records you can verify.',
@@ -1888,6 +1894,7 @@ HTML;
         'class' => 'comment-template',
         'lookupValues' => [],
         'blankText' => lang::get('- select template to load -'),
+        'afterControl' => "<i class=\"fas fa-trash-alt delete-template disabled\" title=\"$lang[deleteTemplate]\"></i>",
       ]);
       $loadRedetTemplateDropdown = data_entry_helper::select([
         'label' => lang::get('Or, load the following comment template'),
