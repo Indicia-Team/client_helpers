@@ -269,7 +269,7 @@ class ElasticsearchReportHelper {
       'description' => 'Spatial reference in the recommended local grid system.',
     ],
     'location.output_sref_system' => [
-      'caption' => 'Display spatial reference_system',
+      'caption' => 'Display spatial reference system',
       'description' => 'System used for the spatial reference in the recommended local grid system.',
     ],
     'location.input_sref' => [
@@ -1718,6 +1718,7 @@ HTML;
       'cancel' => lang::get('Cancel'),
       'cancelSaveTemplate' => lang::get('Cancel saving the template'),
       'contactExpert' => lang::get('Contact an expert'),
+      'deleteTemplate' => lang::get('Delete the selected template'),
       'edit' => lang::get('Edit'),
       'editThisRecord' => 'Edit this record',
       'help' => lang::get('Help'),
@@ -1726,12 +1727,11 @@ HTML;
       'notAcceptedUnableToVerify' => lang::get('Not accepted :: unable to verify'),
       'plausible' => lang::get('Plausible'),
       'raiseQuery' => lang::get('Raise a query with the recorder'),
-      'save' => lang::get('Save'),
+      'saveStatus' => lang::get('Save status'),
       'saveTemplate' => lang::get('Save template'),
-      'saveTemplateAs' => lang::get('Save as'),
       'selected' => lang::get('selected'),
       'showPreview' => lang::get('Preview'),
-      'templateHelpIntroAvailableTokens' => lang::get('Available placeholders as follows:'),
+      'templateHelpIntroAvailableTokens' => lang::get('Available placeholders as follows - use the copy buttons (<i class="far fa-copy"></i>) to copy the placeholder to the clipboard so you can paste it into your comment:'),
       'templateHelpIntro1' => lang::get('You can create and save templates for your verification comments which can be used to provide the comment for future verification actions. ' .
         'To do this, enter the comment in the box as normal, then click the "Save template" button. You will then need to provide a name for your ' .
         'template and click the Save button in the controls that appear.'),
@@ -1769,6 +1769,12 @@ HTML;
       'cancel' => 'Cancel',
       'close' => 'Close',
       'commentTabTitle' => 'Comment on the record',
+      'copyPlaceholder' => 'Copy &quot;{{ placeholder }}&quot; to the clipboard.',
+      'deleteTemplateConfirm' => 'Delete template',
+      'deleteTemplateMsg' => 'Are you sure you want to delete the "{{ title }}" template?',
+      'delete' => 'Delete',
+      'deleteTemplateError' => 'Delete template error',
+      'deleteTemplateErrorMsg' => 'An error occurred when deleting your template from the database. Please try later.',
       'elasticsearchUpdateError' => 'An error occurred whilst updating the reporting index. It may not reflect your changes temporarily but will be updated automatically later.',
       'commentReplyInstruct' => 'Click here to add a publicly visible comment to the record on iRecord.',
       'csvDisallowedMessage' => 'Uploading verification decisions is only allowed when there is a filter that defines the scope of the records you can verify.',
@@ -1888,6 +1894,7 @@ HTML;
         'class' => 'comment-template',
         'lookupValues' => [],
         'blankText' => lang::get('- select template to load -'),
+        'afterControl' => "<i class=\"fas fa-trash-alt delete-template disabled\" title=\"$lang[deleteTemplate]\"></i>",
       ]);
       $loadRedetTemplateDropdown = data_entry_helper::select([
         'label' => lang::get('Or, load the following comment template'),
@@ -1910,7 +1917,7 @@ HTML;
 <div class="comment-tools">
   <button type="button" class="comment-show-preview $indicia_templates[buttonDefaultClass] $indicia_templates[buttonSmallClass]">$lang[showPreview]</button>
   <button type="button" class="comment-edit $indicia_templates[buttonDefaultClass] $indicia_templates[buttonSmallClass]" style="display: none">$lang[edit]</button>
-  <button type="button" class="comment-save-template $indicia_templates[buttonDefaultClass] $indicia_templates[buttonSmallClass]">$lang[saveTemplateAs]</button>
+  <button type="button" class="comment-save-template $indicia_templates[buttonDefaultClass] $indicia_templates[buttonSmallClass]">$lang[saveTemplate]</button>
   <button type="button" class="comment-help $indicia_templates[buttonDefaultClass] $indicia_templates[buttonSmallClass]">$lang[help]</button>
 </div>
 <div class="template-save-cntr" style="display: none">
@@ -1971,7 +1978,7 @@ HTML;
       </div>
       $loadVerifyTemplateDropdown
       <div class="form-buttons">
-        <button type="button" class="$btnClass save">$lang[save]</button>
+        <button type="button" class="$btnClass save">$lang[saveStatus]</button>
         <button type="button" class="$btnClassDefault cancel">$lang[cancel]</button>
       </div>
     </fieldset>

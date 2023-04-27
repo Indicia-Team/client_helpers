@@ -2254,6 +2254,7 @@ class iform_ukbms_sectioned_transects_input_sample_2
       $style = ($formOptions['format'] === 'simple' || $section['code'] === 'S1' ? '' : 'style="display: none;"');
       $row .= '<th class="section-' . $section['code'] . ' label-cell" ' . $style .
         ' colspan=' . (count($settings['occurrence_attributes']) + (!empty($settings['occurrence_images']) ? 1 : 0) + (!empty($settings['occurrence_comments']))) .
+        ' title="' . $section['name'] . '"' .
         '>' . $section['code'] . '</th>';
     }
 	  $totals = 0;

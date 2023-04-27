@@ -466,6 +466,7 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
           'includeVerifyButton' => isset($args['verification_panel']) && $args['verification_panel'] && ($pageIdx === count($tabHtml) - 1),
           'includeSubmitButton' => (self::$mode !== self::MODE_EXISTING_RO),
           'includeDeleteButton' => (self::$mode === self::MODE_EXISTING),
+          'includeDraftButton' => !empty($args['includeDraftButton']),
         ]);
       }
       elseif ($pageIdx === count($tabHtml) - 1) {

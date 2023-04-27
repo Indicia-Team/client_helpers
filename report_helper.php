@@ -873,7 +873,7 @@ $('.update-input').focus(function(evt) {
       // Add responsive behaviour to table if specified in options.
       // The table is made responsive with the footables plugin based on the
       // data-hide attributes added to the <th> elements
-      if (isset($options['responsiveOpts'])) {
+      if (!empty($options['responsiveOpts'])) {
         // Add the javascript plugins.
         self::add_resource('indiciaFootableReport');
         // Add inline javascript to invoke the plugins on this grid.
@@ -2469,10 +2469,11 @@ mapSettingsHooks.push(function(opts) { $setLocationJs
       $request .= "&query=".urlencode(json_encode($query));
     }
     foreach ($options['extraParams'] as $key => $value) {
-      // Must urlencode the keys and parameters, as things like spaces cause curl to hang.
-      $request .= '&' . urlencode($key) . '=' . urlencode($value);
+      // Must urlencode the keys and parameters, as things like spaces cause curl
+      // to hang.
+      $request .= '&' . urlencode($key) . '=' . urlencode($value ?? '');
     }
-    // Pass through the type of data sharing
+	  // Pass through the type of data sharing.
     if (isset($options['sharing']))
       $request .= '&sharing='.$options['sharing'];
     if (isset($options['userId']))
@@ -3088,7 +3089,7 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue, removeparam) {
     setlocale (LC_TIME, $lang);
 
     for($i=0; $i<7; $i++){
-      $r .= "<td class=\"day\">".utf8_encode(date('D', $header_date->getTimestamp()))."</td>"; // i8n
+      $r .= "<td class=\"day\">" . lang::get(utf8_encode(date('D', $header_date->getTimestamp()))) . "</td>"; // i8n
       $header_date->modify('+1 day');
     }
     $r .= "</tr>";

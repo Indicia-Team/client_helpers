@@ -50,13 +50,11 @@ class extension_pantheon {
    *   Empty string as no control output HTML required.
    */
   public static function set_dynamic_page_title($auth, $args, $tabalias, $options, $path) {
-    if (arg(0) == 'node' && is_numeric(arg(1))) {
-      $nid = arg(1);
-      $title = hostsite_get_page_title($nid);
+    $route = \Drupal::routeMatch()->getRouteObject();
+    if (!$route) {
+      return '';
     }
-    else {
-      $title = drupal_get_title();
-    }
+    $title = \Drupal::service('title_resolver')->getTitle(\Drupal::request(), $route);
     if (!empty($_GET['dynamic-sample_id'])) {
       $title = str_replace('{sample_id}', $_GET['dynamic-sample_id'], $title);
       $ids = explode(',', $_GET['dynamic-sample_id']);
@@ -82,10 +80,10 @@ class extension_pantheon {
       else {
         $name = 'Sample ' . $_GET['dynamic-sample_id'];
         if (count($ids) <= 3) {
-          $samples = data_entry_helper::get_population_data(array(
+          $samples = data_entry_helper::get_population_data([
             'report' => 'library/samples/filterable_explore_list',
-            'extraParams' => $auth['read'] + array('sample_id' => $_GET['dynamic-sample_id']),
-          ));
+            'extraParams' => $auth['read'] + ['sample_id' => $_GET['dynamic-sample_id']],
+          ]);
           if (!isset($samples['error']) && count($samples) > 0) {
             $titles = [];
             foreach ($samples as $sample) {
@@ -108,21 +106,26 @@ class extension_pantheon {
       $title = str_replace('{sample_name}', $name, $title);
     }
     if (preg_match('/{term:(?P<param>.+)}/', $title, $matches) && !empty($_GET[$matches['param']])) {
-      $terms = data_entry_helper::get_population_data(array(
+      $terms = data_entry_helper::get_population_data([
         'table' => 'termlists_term',
-        'extraParams' => $auth['read'] + array('id' => $_GET[$matches['param']], 'view' => 'cache'),
+        'extraParams' => $auth['read'] + [
+          'id' => $_GET[$matches['param']],
+          'view' => 'cache',
+        ],
         'columns' => 'term',
-      ));
+      ]);
       if (count($terms)) {
         $title = str_replace('{term:' . $matches['param'] . '}', $terms[0]['term'], $title);
       }
     }
     if (preg_match('/{attr:(?P<param>.+)}/', $title, $matches) && !empty($_GET[$matches['param']])) {
-      $attrs = data_entry_helper::get_population_data(array(
+      $attrs = data_entry_helper::get_population_data([
         'table' => 'taxa_taxon_list_attribute',
-        'extraParams' => $auth['read'] + array('id' => $_GET[$matches['param']]),
+        'extraParams' => $auth['read'] + [
+          'id' => $_GET[$matches['param']],
+        ],
         'columns' => 'caption',
-      ));
+      ]);
       if (count($attrs)) {
         $title = str_replace('{attr:' . $matches['param'] . '}', $attrs[0]['caption'], $title);
       }
@@ -148,27 +151,38 @@ class extension_pantheon {
    *   HTML to include on the page.
    */
   public static function button_links($auth, $args, $tabalias, $options, $path) {
-    drupal_add_js(str_replace('modules/iform', 'libraries/jsPlumb', \Drupal::service('extension.path.resolver')->getPath('module', 'iform')) . '/jsPlumb.js');
+    global $indicia_templates;
     $r = '';
     if (!empty($options['extras'])) {
       $r .= '<ul class="button-links extras">';
       foreach ($options['extras'] as $extra) {
-        $r .= '<li><a id="isis-link" class="button" href="' . hostsite_get_url($extra['link']) . '">' . $extra['label'] . '</a></li>';
+        $r .= "<li><a id=\"isis-link\" class=\"$indicia_templates[buttonHighlightedClass]\" href=\"" . hostsite_get_url($extra['link']) . '">' . $extra['label'] . '</a></li>';
       }
       $r .= '</ul>';
     }
     $r .= '<ul class="button-links">';
     if (!empty($options['back'])) {
-      $r .= '<li><a id="summary-link" class="button" href="' . hostsite_get_url('summary') . '">Back to Summary</a></li>';
+      $r .= "<li><a id=\"summary-link\" class=\"$indicia_templates[buttonHighlightedClass]\" href=\"" . hostsite_get_url('summary') . '">Back to Summary</a></li>';
     }
-    $r .= '<li><a id="species-link" class="button" href="' . hostsite_get_url('species-for-sample') . '">Species list</a></li>
-<li><a id="guilds-link" class="button" href="' . hostsite_get_url('ecological-guilds') . '">Feeding guilds</a></li>
-<li><a id="habitats-resources-link" class="button" href="' . hostsite_get_url('habitats-resources') . '">Habitats &amp; resources</a></li>
-<li><a id="habitats-resources-link" class="button" href="' . hostsite_get_url('habitats-resources/isis-assemblages') . '">Assemblages</a></li>
-<li><a id="horus-link" class="button" href="' . hostsite_get_url('horus/quality-scores-overview') . '">Habitat scores</a></li>
-<li><a id="associations-link" class="button" href="' . hostsite_get_url('associations') . '">Associations</a></li>
-<li><a id="combined-summary" class="button" href="' . hostsite_get_url('combined-summary') . '">Combined summary</a></li>
-</ul>';
+    $urls = [
+      'speciesForSample' => hostsite_get_url('species-for-sample'),
+      'ecologicalGuilds' => hostsite_get_url('ecological-guilds'),
+      'habitatsResources' => hostsite_get_url('habitats-resources'),
+      'assemblages' => hostsite_get_url('habitats-resources/isis-assemblages'),
+      'scores' => hostsite_get_url('horus/quality-scores-overview'),
+      'associations' => hostsite_get_url('associations'),
+      'combinedSummary' => hostsite_get_url('combined-summary'),
+    ];
+    $r .= <<<HTML
+<li><a id="species-link" class="$indicia_templates[buttonHighlightedClass]" href="$urls[speciesForSample]">Species list</a></li>
+<li><a id="guilds-link" class="$indicia_templates[buttonHighlightedClass]" href="$urls[ecologicalGuilds]">Feeding guilds</a></li>
+<li><a id="habitats-resources-link" class="$indicia_templates[buttonHighlightedClass]" href="$urls[habitatsResources]">Habitats &amp; resources</a></li>
+<li><a id="habitats-resources-link" class="$indicia_templates[buttonHighlightedClass]" href="$urls[assemblages]">Assemblages</a></li>
+<li><a id="horus-link" class="$indicia_templates[buttonHighlightedClass]" href="$urls[scores]">Habitat scores</a></li>
+<li><a id="associations-link" class="$indicia_templates[buttonHighlightedClass]" href="$urls[associations]">Associations</a></li>
+<li><a id="combined-summary" class="$indicia_templates[buttonHighlightedClass]" href="$urls[combinedSummary]">Combined summary</a></li>
+</ul>
+HTML;
     return $r;
   }
 
@@ -176,18 +190,17 @@ class extension_pantheon {
    * Links spans on the page to the Pantheon Lexicon.
    */
   public static function lexicon($auth, $args, $tabalias, $options, $path) {
-    iform_load_helpers(array('report_helper'));
-    $query = new EntityFieldQuery();
-    $query
-      ->entityCondition('entity_type', 'node')
-      ->entityCondition('bundle', 'lexicon')
-      ->propertyCondition('status', 1);
-    $result = $query->execute();
-    $nids = array_keys($result['node']);
-    $nodes = node_load_multiple($nids);
+    iform_load_helpers(['report_helper']);
+    $nids = \Drupal::entityQuery('node')
+      ->condition('type', 'lexicon')
+      ->condition('status', 1)
+      ->accessCheck(FALSE)
+      ->execute();
+    $node_storage = \Drupal::entityTypeManager()->getStorage('node');
+    $nodes = $node_storage->loadMultiple($nids);
     $list = [];
     foreach ($nodes as $node) {
-      $list[$node->title] = $node->field_summary[LANGUAGE_NONE][0]['value'];
+      $list[$node->getTitle()] = $node->field_summary->value;
     }
     report_helper::$javascript .= "indiciaData.lexicon = " . json_encode($list) . ";\n";
     report_helper::$javascript .= "indiciaFns.applyLexicon();\n";
@@ -208,12 +221,13 @@ class extension_pantheon {
    *   * analysisPath - path to the analysis page.
    */
   public static function quick_analysis_scratchpad_group($auth, $args, $tabalias, $options, $path) {
-    iform_load_helpers(array('report_helper'));
+    iform_load_helpers(['report_helper']);
+    global $indicia_templates;
     $imgPath = empty(report_helper::$images_path)
       ? report_helper::relative_client_helper_path() . "../media/images/"
       : report_helper::$images_path;
-    $userId = hostsite_get_user_field('indicia_user_id');
-    $auth = report_helper::get_read_write_auth(variable_get('indicia_website_id'), variable_get('indicia_password'));
+    $conn = iform_get_connection_details(NULL);
+    $auth = report_helper::get_read_write_auth($conn['website_id'], $conn['password']);
     $write = json_encode($auth['write_tokens']);
     report_helper::$javascript .= <<<JS
 indiciaData.imagesPath = '$imgPath';
@@ -221,8 +235,8 @@ indiciaData.write = $write;
 
 JS;
     return <<<HTML
-<table id="quick-analysis-group" class="ui-widget ui-widget-content">
-  <thead class="ui-widget-header">
+<table id="quick-analysis-group" class="table">
+  <thead>
     <th>List</th>
     <th>Actions</th>
   </thead>
@@ -230,13 +244,13 @@ JS;
   </tbody>
 </table>
 <div id="qa-group-actions">
-  <button disabled="disabled" onclick="indiciaFns.analyseQuickAnalysisGroup('$options[analysisPath]', 'scratchpad')">Analyse all lists in group</button>
-  <button disabled="disabled" onclick="indiciaFns.clearQuickAnalysisGroup()">Clear group</button>
+  <button disabled="disabled" class="$indicia_templates[buttonHighlightedClass]" onclick="indiciaFns.analyseQuickAnalysisGroup('$options[analysisPath]', 'scratchpad')">Analyse all lists in group</button>
+  <button disabled="disabled" class="$indicia_templates[buttonWarningClass]" onclick="indiciaFns.clearQuickAnalysisGroup()">Clear group</button>
   <label class="auto">
     Convert group to a new list named:
     <input disabled="disabled" type="text" id="new-list-name" placeholder="Enter a list name" />
   </label>
-  <button disabled="disabled" onclick="indiciaFns.saveQuickAnalysisScratchpadGroup()">Convert</button>
+  <button disabled="disabled" lass="$indicia_templates[buttonDefaultClass]" onclick="indiciaFns.saveQuickAnalysisScratchpadGroup()">Convert</button>
 </div>
 
 HTML;

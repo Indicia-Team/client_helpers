@@ -109,6 +109,13 @@ class data_entry_helper extends helper_base {
    */
   public static $uncheckedRecordsCount = 0;
 
+  /**
+   * Track need to warn user if on a form that has unpublished records.
+   *
+   * @var int
+   */
+  public static $unreleasedRecordsCount = 0;
+
   /**********************************/
   /* Start of main controls section */
   /**********************************/
@@ -1255,6 +1262,195 @@ JS;
   }
 
   /**
+   * Outputs a file classifier to identify species and add them to a list.
+   *
+   * The idea is that you upload a whole bunch of files to the control and then
+   * they are sent one at a time to the classifier. Rows are added to a
+   * species_checklist for each new identified species. If the same species is
+   * identified again, the count of the record is incremented. The attribute to
+   * increment is determined by it having the system function for
+   * sex-stagge-count set in the warehouse. A classification result is created
+   * for each file and the file is added to the occurrence. Where a file is not
+   * identified, a record of the unknown taxon is created.
+   *
+   * The user interface is provided by a file_box control so it shares many
+   * of the same options.
+   *
+   *
+   * @param array $options
+   *   Options array with the following possibilities, in addition to those for
+   *   a file_box:
+   *   * url - Required. Location of the service which will do the image
+   *     classification. Take a look at
+   *     https://github.com/Indicia-Team/drupal-8-modules-indicia-ai
+   *     for a proxy to classifiers designed to work with this control.
+   *   * taxonListId - Required. The list to match the classifier results
+   *     against.
+   *   * taxonControlId - Required. TODO. The control to update with the
+   *     result of the image classification.
+   *   * unknowMeaningId - Required. The taxon_meaning_id to use when adding rows
+   *     to the species grid for images the classifier could not identify.
+   *   * languageIso - The language to use with the control. Defaults to English
+   *     if not specified. If specified but not available, defaults to preferred
+   *     name.
+   *   * readAuth - Read authentication array with nonce and token.
+   */
+  public static function file_classifier(array $options) {
+    // Ensure some settings have required values.
+    if (empty($options['taxonControlId'])) {
+      throw new Exception('A taxonControlId must be provided for an image classifier.');
+    }
+
+    // Obtain default options.
+    $classifier_options = self::get_file_classifier_options($options, $options['readAuth']);
+    // Merge additional classifier options.
+    $options = array_merge(
+      [
+        'id' => 'file_classifier',
+        'table' => 'occurrence_medium',
+        'maxFileCount' => 9999,
+      ],
+      $options,
+      $classifier_options,
+      [
+        'helpText' => lang::get('Add files here, click the classify button, ' .
+        'and we will attempt to automatically identify the species in each ' .
+        'file and add them to the grid. Files featuring the specimen with ' .
+        'minimal background will be most successful.'),
+      ]
+    );
+
+    // Load javascript for the classifier.
+    self::add_resource('file_classifier');
+    // We need to call the initialisation function.
+    $containerId = 'container-' .
+      ($options['table'] ?? 'occurrence_medium') . '-' .
+      ($options['id'] ?? 'default');
+    $containerId = str_replace(':', '\\\\:', $containerId);
+    $javascript = "$('#$containerId').classifier({});\n";
+
+    // To circumvent problems in some browsers with setting up a hidden control,
+    // we juggle with javascript when the control is placed on a tab.
+    if (isset($options['tabDiv'])) {
+      // Get only html for filebox.
+      $options['codeGenerated'] = 'php';
+      $r = self::file_box($options);
+      // Prepend javascript for filebox.
+      $options['codeGenerated'] = 'js';
+      $javascript = self::file_box($options) . $javascript;
+      // Wrap the script in an event handler so we only execute it when
+      // the tab is displayed.
+      $javascript =
+        "var uploaderTabHandler = function(event, ui) { \n" .
+        "  panel = typeof ui.newPanel === 'undefined' ? ui.panel : ui.newPanel[0];\n" .
+        "  if ($(panel).attr('id') === '{$options['tabDiv']}') {\n    " .
+        $javascript .
+        "    indiciaFns.unbindTabsActivate($('#{$options['tabDiv']}').parent(), uploaderTabHandler);\n" .
+        "  }\n};\n" .
+        "indiciaFns.bindTabsActivate($('#{$options['tabDiv']}').parent(), uploaderTabHandler);\n";
+      // Insert this script at the beginning, because it must be done before
+      // the tabs are initialised or the first tab cannot fire the event.
+      self::$javascript = $javascript . self::$javascript;
+    }
+    else {
+      // Get html and add javascript for a filebox.
+      $r = self::file_box($options);
+      // Append javascript for classifier.
+      self::$javascript .= $javascript;
+    }
+
+    return $r;
+  }
+
+  /**
+   * Internal method to prepare the options for a file_classifier control.
+   *
+   * This is broken out in to a function so that it is available to the
+   * stand-alone file_classifier and the species_checklist.
+   *
+   * @param array $options
+   *   Options array passed to the control.
+   * @param array $readAuth
+   *   Read authorisation array.
+   *
+   * @return array
+   *   The options array received, augmented by any missing values that will be
+   *   needed.
+   */
+  public static function get_file_classifier_options(array $options, array $readAuth) {
+    // Required values.
+    $requirements = [
+      'fileClassifier' => TRUE,
+    ];
+
+    // Provide default settings for other options which can be overwritten.
+    $defaults = [
+      'caption' => lang::get('Image classifier'),
+      'helpText' => lang::get('Add a file here, click the classify button, ' .
+        'and we will attempt to automatically identify the species and add ' .
+        'it to the grid. Files featuring the specimen with minimal ' .
+        'background will be most successful.'),
+      'dialogTitle' => lang::get('Requesting classification'),
+      'dialogStart' => lang::get('Your files are being sent to a ' .
+        'classification service which will try to identify the species.'),
+      'dialogEnd' => lang::get('Your files have been processed. ' .
+        'Review the identifications and check the abundances.'),
+      'dialogNew' => lang::get('The file has been identified as ' .
+        '<em>{1}</em> with a probability of {2}%. ' .
+        'It is added to the grid as a new row.'),
+      'dialogUnmatched' => lang::get('Sorry, your file could not be matched ' .
+        'to a species in the survey list. It is added to the grid as Unknown.'),
+      'dialogUnknown' => lang::get('Sorry, your file could not be ' .
+        'confidently identified. It is added to the grid as Unknown.'),
+      'dialogFail' => lang::get('Sorry, an error meant your file could not ' .
+        'be identified. It is added to the grid as Unknown.'),
+      'dialogBtnOk' => lang::get('Okay'),
+      'classifyBtnCaption' => lang::get('Classify'),
+      'classifyBtnTitle' => lang::get('Start classifying files.'),
+      'buttonTemplate' =>
+      '<button id="{id}" type="button" class="{class}" title="{title}">' .
+        '{caption}' .
+      '</button>',
+      'mode' => 'multi:checklist:append',
+    ];
+    $classifier_options = array_merge($defaults, $options, $requirements);
+
+    // Obtain taxon information for unknown species in current language.
+    $items = self::get_population_data([
+      'table' => 'taxa_taxon_list',
+      'extraParams' => [
+        'view' => 'detail',
+        'taxon_meaning_id' => $options['unknownMeaningId'],
+        'language_iso' => $options['languageIso'] ?? 'eng',
+      ] + $readAuth,
+    ]);
+    if (count($items) == 0) {
+      // The requested language is not represented in the taxon list
+      // so default to the preferred name.
+      $items = self::get_population_data([
+        'table' => 'taxa_taxon_list',
+        'extraParams' => [
+          'view' => 'detail',
+          'taxon_meaning_id' => $options['unknownMeaningId'],
+          'preferred' => 't',
+        ] + $readAuth,
+      ]);
+      if (count($items) == 0) {
+        // Something is wrong with the configuration.
+        throw new Exception('Cannot find a taxon with taxon_meaning_id = ' .
+        $options['unknownMeaningId']);
+      }
+    }
+    $classifier_options['unknownTaxon'] = [
+      'taxa_taxon_list_id' => $items[0]['id'],
+      'taxon' => $items[0]['taxon'],
+      'language_iso' => $items[0]['language_iso'],
+    ];
+
+    return $classifier_options;
+  }
+
+  /**
    * Search for place name control.
    *
    * Generates a text input control with a search button that looks up an
@@ -1522,8 +1718,6 @@ JS;
     $options['class'] = 'hierarchy-select';
     $r = self::select($options);
     $indicia_templates['select'] = $oldTemplate;
-    // jQuery safe version of the Id.
-    $safeId = preg_replace('/[:]/', '\\\\\\:', $options['id']);
     // Output a hidden input that contains the value to post.
     $hiddenOptions = [
       'id' => 'fld-' . $options['id'],
@@ -1534,78 +1728,81 @@ JS;
       $hiddenOptions['default'] = $options['default'];
     }
     $r .= self::hidden_text($hiddenOptions);
+    // jQuery safe version of the Id.
+    $safeId = preg_replace('/[:]/', '\\\\\\:', $options['id']);
     $options['blankText'] = htmlspecialchars(lang::get($options['blankText']));
     $selectClass = "hierarchy-select  $indicia_templates[formControlClass]";
     // Now output JavaScript that creates and populates child selects as each option is selected. There is also code for
     // reloading existing values.
-    self::$javascript .= "
-  // enclosure needed in case there are multiple on the page
-  (function () {
-    function pickHierarchySelectNode(select,fromOnChange) {
-      select.nextAll().remove();
-      if (typeof indiciaData.selectData$id [select.val()] !== 'undefined') {
-        var html='<select class=\"$selectClass\"><option>$options[blankText]</option>', obj;
-        $.each(indiciaData.selectData$id [select.val()], function(idx, item) {
-          //If option is set then if there is only a single child item, auto select it in the list
-          //Don't do this if we are initially loading the page (fromOnChange is false) as we only want to do this when the user actually changes the value.
-          //We don't want to auto-select the child on page load, if that hasn't actually been saved to the database yet.
-          if (indiciaData.selectData$id [select.val()].length ===1 && indiciaData.autoSelectSingularChildItem===true && fromOnChange===true) {
-            html += '<option value=\"'+item.id+'\" selected>' + item.caption + '</option>';
-            //Need to set the hidden value for submission, so correct value is actually saved to the database, not just shown visually on screen.
-            //Make sure we escape the colon for jQuery selector also.
-            $('#$hiddenOptions[id]'.replace(':','\\\\:')).val(item.id);
-          } else {
-            html += '<option value=\"'+item.id+'\">' + item.caption + '</option>';
-          }
-        });
-        html += '</select>';
-        obj=$(html);
-        obj.change(function(evt) {
-          $('#fld-$safeId').val($(evt.target).val());
-          pickHierarchySelectNode($(evt.target),true);
-        });
-        select.after(obj);
-      }
-    }
-
-    $('#$safeId').change(function(evt) {
-      $('#fld-$safeId').val($(evt.target).val());
-      pickHierarchySelectNode($(evt.target),true);
-    });
-
-    pickHierarchySelectNode($('#$safeId'),false);
-
-    // Code from here on is to reload existing values.
-    function findItemParent(idToFind) {
-      var found=false;
-      $.each(indiciaData.selectData$id, function(parentId, items) {
-        $.each(items, function(idx, item) {
-          if (item.id===idToFind) {
-            found=parentId;
-          }
-        });
+    self::$javascript .= <<<JS
+// enclosure needed in case there are multiple on the page
+(function () {
+  function pickHierarchySelectNode(select,fromOnChange) {
+    select.nextAll().remove();
+    if (typeof indiciaData.selectData$id [select.val()] !== 'undefined') {
+      var html='<select class="$selectClass"><option>$options[blankText]</option>', obj;
+      $.each(indiciaData.selectData$id [select.val()], function(idx, item) {
+        //If option is set then if there is only a single child item, auto select it in the list
+        //Don't do this if we are initially loading the page (fromOnChange is false) as we only want to do this when the user actually changes the value.
+        //We don't want to auto-select the child on page load, if that hasn't actually been saved to the database yet.
+        if (indiciaData.selectData$id [select.val()].length ===1 && indiciaData.autoSelectSingularChildItem===true && fromOnChange===true) {
+          html += '<option value="'+item.id+'" selected>' + item.caption + '</option>';
+          //Need to set the hidden value for submission, so correct value is actually saved to the database, not just shown visually on screen.
+          //Make sure we escape the colon for jQuery selector also.
+          $('#$hiddenOptions[id]'.replace(':','\\\\:')).val(item.id);
+        } else {
+          html += '<option value="'+item.id+'">' + item.caption + '</option>';
+        }
       });
-      return found;
+      html += '</select>';
+      obj=$(html);
+      obj.change(function(evt) {
+        $(evt.target).closest('.hierarchical-select-cntr').find('input[type="hidden"]').val($(evt.target).val());
+        pickHierarchySelectNode($(evt.target),true);
+      });
+      select.after(obj);
     }
-    var found=true, last=$('#fld-$safeId').val(), tree=[last], toselect, thisselect;
-    while (last!=='' && found) {
-      found=findItemParent(last);
-      if (found) {
-        tree.push(found);
-        last=found;
-      }
-    }
+  }
 
-    // now we have the tree, work backwards to select each item
-    thisselect = $('#$safeId');
-    while (tree.length>0) {
-      toselect = tree.pop();
-      thisselect.val(toselect).change();
-      thisselect = thisselect.next();
+  $('#$safeId').change(function(evt) {
+    $(evt.target).closest('.hierarchical-select-cntr').find('input[type="hidden"]').val($(evt.target).val());
+    pickHierarchySelectNode($(evt.target),true);
+  });
+
+  pickHierarchySelectNode($('#$safeId'), false);
+
+  // Code from here on is to reload existing values.
+  function findItemParent(idToFind) {
+    var found=false;
+    $.each(indiciaData.selectData$id, function(parentId, items) {
+      $.each(items, function(idx, item) {
+        if (item.id===idToFind) {
+          found=parentId;
+        }
+      });
+    });
+    return found;
+  }
+  var found=true, last=$('#fld-$safeId').val(), tree=[last], toselect, thisselect;
+  while (last!=='' && found) {
+    found=findItemParent(last);
+    if (found) {
+      tree.push(found);
+      last=found;
     }
-  }) ();
-    ";
-    return $r;
+  }
+
+  // now we have the tree, work backwards to select each item
+  thisselect = $('#$safeId');
+  while (tree.length>0) {
+    toselect = tree.pop();
+    thisselect.val(toselect).change();
+    thisselect = thisselect.next();
+  }
+}) ();
+
+JS;
+    return "<div class=\"hierarchical-select-cntr\">$r</div>";
   }
 
   /**
@@ -2955,6 +3152,9 @@ JS;
       else {
         self::$uncheckedRecordsCount++;
       }
+      if (!empty(data_entry_helper::$entity_to_load['occurrence:release_status']) && data_entry_helper::$entity_to_load['occurrence:release_status'] === 'U') {
+        self::$unreleasedRecordsCount++;
+      }
     }
     $options['readAuth'] = [
       'auth_token' => $options['extraParams']['auth_token'],
@@ -3565,6 +3765,44 @@ RIJS;
         self::$javascript .= "file_box_uploaded_imageTemplate = '" . str_replace('"', '\"', $indicia_templates['file_box_uploaded_image']) . "';\n";
       }
     }
+
+    if ($options['classifierEnable']) {
+      // Load javascript to activate classifier.
+      self::add_resource('file_classifier');
+
+      // Ensure required options have values.
+      if (
+        empty($options['classifierUrl']) ||
+        empty($options['classifierTaxonListId']) ||
+        empty($options['classifierUnknownMeaningId'])
+      ) {
+        throw new Exception('A classifierUrl, a classifierTaxonListId, and
+        a classifierUnknowMeaningId must be provided for an image classifier.');
+      }
+
+      // Extract all options prefixed by 'classifier'.
+      $classifier_options = [];
+      foreach ($options as $key => $value) {
+        if (str_starts_with($key, 'classifier')) {
+          $subkey = lcfirst(substr($key, 10));
+          $classifier_options[$subkey] = $value;
+        }
+      }
+      // Add in defaults for a single-species mode classifier.
+      $classifier_options = array_merge($classifier_options, [
+        'classifyBtnTitle' => lang::get('Send all images to classifier.'),
+        'mode' => 'single-embedded',
+      ]);
+
+      // Add in remaining default options.
+      $classifier_options = self::get_file_classifier_options(
+        $classifier_options, $options['readAuth']
+      );
+
+      // Store some values that we need later when creating classifiers.
+      self::$indiciaData['classifySettings'] = $classifier_options;
+    }
+
     $occAttrControls = [];
     $occAttrs = [];
     $occAttrControlsExisting = [];
@@ -3739,11 +3977,14 @@ RIJS;
               $title = lang::get('This record has been {1}. Changing it will mean that it will need to be rechecked by an expert.', $label);
               $firstCell .= "<img class=\"record-status-set\" alt=\"$label\" title=\"$title\" src=\"{$imgPath}nuvola/$img-16px.png\">";
             }
-            data_entry_helper::$checkedRecordsCount++;
+            self::$checkedRecordsCount++;
           }
           else {
-            data_entry_helper::$uncheckedRecordsCount++;
+            self::$uncheckedRecordsCount++;
           }
+        }
+        if (isset(self::$entity_to_load["sc:$loadedTxIdx:$existingRecordId:occurrence:release_status"]) && self::$entity_to_load["sc:$loadedTxIdx:$existingRecordId:occurrence:release_status"] === 'U') {
+          self::$unreleasedRecordsCount++;
         }
         $row .= str_replace(
           ['{content}', '{colspan}', '{editClass}', '{tableId}', '{idx}'],
@@ -4252,8 +4493,9 @@ JS;
     if ($options['mediaTypes'] && !$onlyLocal && !$doneAddLinkPopup) {
       $doneAddLinkPopup = TRUE;
       $readableTypes = array_pop($linkMediaTypes);
-      if (count($linkMediaTypes) > 0)
+      if (count($linkMediaTypes) > 0) {
         $readableTypes = implode(', ', $linkMediaTypes) . ' ' . lang::get('or') . ' ' . $readableTypes;
+      }
       return '<div style="display: none"><div id="add-link-form" title="Add a link to a remote file">' .
         '<p class="validateTips">' . lang::get('Paste in the web address of a resource on {1}', $readableTypes) . '.</p>' .
         self::text_input(['label' => lang::get('URL'), 'fieldname' => 'link_url', 'class' => 'form-control']) .
@@ -4382,8 +4624,9 @@ JS;
     // Get a list of the species parent IDs.
     $ids = [];
     foreach ($taxalist as $taxon) {
-      if (!empty($taxon['parent_id']))
+      if (!empty($taxon['parent_id'])) {
         $ids[] = $taxon['parent_id'];
+      }
     }
     if (!empty($ids)) {
       // Load each parent from the db in one go.
@@ -4392,8 +4635,8 @@ JS;
         'extraParams' => $options['readAuth'] + ['id' => $ids],
       );
       $parents = data_entry_helper::get_population_data($loadOpts);
-      // assign the parents back into the relevent places in $taxalist. Not sure if there is a better
-      // way than a double loop?
+      // Assign the parents back into the relevent places in $taxalist. Not
+      // sure if there is a better way than a double loop?
       foreach ($parents as $parent) {
         foreach ($taxalist as &$taxon) {
           if ($taxon['parent_id'] === $parent['id']) {
@@ -4416,8 +4659,9 @@ JS;
     }
     if (isset($options['extraParams'])) {
       foreach ($options['extraParams'] as $key => $value) {
-        if ($key !== 'nonce' && $key !== 'auth_token')
+        if ($key !== 'nonce' && $key !== 'auth_token') {
           $filterFields[$key] = $value;
+        }
       }
     }
     if (!empty($options['taxonFilterField']) && $options['taxonFilterField'] !== 'none' && !empty($options['taxonFilter'])) {
@@ -4431,29 +4675,38 @@ JS;
   }
 
   /**
-   * Private utility function to extract the fields which need filtering against, plus any complex
-   * SQL where clauses, required to do a species name filter according to the current mode (e.g.
-   * preferred names only, all names etc).
-   * @param array $options Species_checklist options array.
-   * @return array Will be populated with the keys and values of any fields than need to be filtered.
+   * Get species name filtering information.
+   *
+   * Utility function to extract the fields which need filtering against, plus
+   * any complex SQL where clauses, required to do a species name filter
+   * according to the current mode (e.g. preferred names only, all names etc).
+   *
+   * @param array $options
+   *   Species_checklist options array.
+   *
+   * @return array
+   *   Will be populated with the keys and values of any fields than need to be
+   *   filtered.
    */
-  private static function parseSpeciesNameFilterMode($options) {
+  private static function parseSpeciesNameFilterMode(array $options) {
     $filterFields = [];
     if (isset($options['speciesNameFilterMode'])) {
-      switch($options['speciesNameFilterMode']) {
-        case 'preferred' :
+      switch ($options['speciesNameFilterMode']) {
+        case 'preferred':
           $filterFields['preferred'] = 'true';
           break;
-        case 'currentLanguage' :
+
+        case 'currentLanguage':
           if (isset($options['language'])) {
             $filterFields['language'] = $options['language'];
           }
           elseif (function_exists('hostsite_get_user_field')) {
-            // if in Drupal we can use the user's language
+            // If in Drupal we can use the user's language.
             require_once 'prebuilt_forms/includes/language_utils.php';
             $filterFields['language'] = iform_lang_iso_639_2(hostsite_get_user_field('language'));
           }
           break;
+
         case 'excludeSynonyms':
           $filterFields['synonyms'] = 'false';
           break;
@@ -4647,6 +4900,7 @@ JS;
           self::$entity_to_load["sc:$idx:$occurrence[id]:occurrence:verified_on"] = $occurrence['verified_on'];
           self::$entity_to_load["sc:$idx:$occurrence[id]:occurrence:comment"] = $occurrence['comment'];
           self::$entity_to_load["sc:$idx:$occurrence[id]:occurrence:sensitivity_precision"] = $occurrence['sensitivity_precision'];
+          self::$entity_to_load["sc:$idx:$occurrence[id]:occurrence:release_status"] = $occurrence['release_status'];
           // Warning. I observe that, in cases where more than one occurrence is loaded, the following entries in
           // $entity_to_load will just take the value of the last loaded occurrence.
           self::$entity_to_load['occurrence:record_status'] = $occurrence['record_status'];
@@ -4655,7 +4909,7 @@ JS;
           // Keep a list of all Ids.
           $occurrenceIds[$occurrence['id']] = $idx;
         }
-        if(count($occurrenceIds)>0) {
+        if (count($occurrenceIds) > 0) {
           // Load the attribute values into the entity to load as well.
           $attrValues = self::get_population_data(array(
             'table' => 'occurrence_attribute_value',
@@ -5156,6 +5410,7 @@ JS;
       'responsive' => FALSE,
       'allowAdditionalTaxa' => !empty($options['lookupListId']),
       'verificationInfoColumns' => FALSE,
+      'classifierEnable' => FALSE,
     ], $options);
     // SubSamplesPerRow can't be set without speciesControlToUseSubSamples
     $options['subSamplePerRow'] = $options['subSamplePerRow'] && $options['speciesControlToUseSubSamples'];
@@ -5477,11 +5732,46 @@ HTML;
           $onlyImages = FALSE;
         }
       }
-      $label = $onlyImages ? 'Add images' : 'Add media';
-      $class = 'sc' . $onlyImages ? 'Image' : 'Media' . 'Link';
-      $r .= '<td class="ui-widget-content scAddMediaCell" headers="' . $options['id'] . '-images-0">' .
-          '<a href="" class="add-media-link button ' . $class . '" style="display: none" id="add-media:' . $options['id'] . '--idx-:">' .
-          lang::get($label) . '</a><span class="species-checklist-select-species">' . lang::get('Select a species first') . '</span></td>';
+
+      // Html for a media link.
+      $label = lang::get($onlyImages ? 'Add images' : 'Add media');
+      $class = 'add-media-link button ';
+      $class .= 'sc' . $onlyImages ? 'Image' : 'Media' . 'Link';
+      $id = 'add-media:' . $options['id'] . '--idx-:';
+      $addMediaLink = <<<HTML
+        <a href="" class="$class" style="display: none" id="$id">$label</a>
+        HTML;
+
+      // Html for a classify link.
+      $label = lang::get('Identify');
+      $id = 'add-media:' . $options['id'] . '--idx-:';
+      $classifyLink = <<<HTML
+        <a href="" class="add-classifer-link button" id="$id">$label</a>
+        HTML;
+
+      // Html for a select species span
+      $label = lang::get('Select a species first');
+      $selectSpan = <<<HTML
+        <span class="species-checklist-select-species">$label</span>
+        HTML;
+
+      // Choose between classify link or select species span.
+      if ($options['classifierEnable'] == TRUE) {
+        $classifyOrSelect = $classifyLink;
+      }
+      else {
+        $classifyOrSelect = $selectSpan;
+      }
+
+      // Add html for table data to output.
+      $class = 'ui-widget-content scAddMediaCell';
+      $headers = $options['id'] . '-images-0';
+      $r .= <<<HTML
+        <td class="$class" headers="$headers">
+          $addMediaLink
+          $classifyOrSelect
+        </td>
+        HTML;
 
       // Extra columnn for photos in responsive mode.
       if ($options['responsive']) {
@@ -5632,8 +5922,9 @@ HTML;
     $attrOptions = [];
     foreach ($options as $option => $value) {
       if (preg_match('/^(?P<controlname>[a-z][a-z][a-z]Attr:[0-9]*)\|(?P<option>.*)$/', $option, $matches)) {
-        if (!isset($attrOptions[$matches['controlname']]))
+        if (!isset($attrOptions[$matches['controlname']])) {
           $attrOptions[$matches['controlname']] = [];
+        }
         $attrOptions[$matches['controlname']][$matches['option']] = $value;
       }
     }
@@ -5676,24 +5967,24 @@ HTML;
       'No' => 'No',
       'SRefLabel' => 'Spatial ref',
     ]);
-    // make sure we load the JS.
+    // Make sure we load the JS.
     data_entry_helper::add_resource('control_speciesmap_controls');
     data_entry_helper::$javascript .= "control_speciesmap_addcontrols(" . json_encode($options) . ");\n";
     $blocks = "";
     if (isset(data_entry_helper::$entity_to_load)) {
       foreach (data_entry_helper::$entity_to_load as $key => $value) {
         $a = explode(':', $key, 4);
-        if(count($a) === 4  && $a[0] === 'sc' && $a[3] == 'sample:entered_sref') {
+        if (count($a) === 4  && $a[0] === 'sc' && $a[3] == 'sample:entered_sref') {
           $sampleId = $a[2];
           $geomKey = "$a[0]:$a[1]:$sampleId:sample:geom";
           $idKey = "$a[0]:$a[1]:$sampleId:sample:id";
           $deletedKey = "$a[0]:$a[1]:$sampleId:sample:deleted";
-          $blocks .= '<div id="scm-' . $a[1] . '-block" class="scm-block">'.
-                    '<label>'.lang::get('Spatial ref').':</label> '.
-                    '<input type="text" value="'.$value.'" readonly="readonly" name="'.$key.'">'.
-                    '<input type="hidden" value="' . data_entry_helper::$entity_to_load[$geomKey] . '" name="' . $geomKey . '">'.
-                    '<input type="hidden" value="'.(isset(data_entry_helper::$entity_to_load[$deletedKey]) ? data_entry_helper::$entity_to_load[$deletedKey] : 'f').'" name="'.$deletedKey.'">'.
-                    (isset(data_entry_helper::$entity_to_load[$idKey]) ? '<input type="hidden" value="'.data_entry_helper::$entity_to_load[$idKey] . '" name="'.$idKey.'">' : '');
+          $blocks .= '<div id="scm-' . $a[1] . '-block" class="scm-block">' .
+                    '<label>' . lang::get('Spatial ref') . ':</label> ' .
+                    '<input type="text" value="' . $value . '" readonly="readonly" name="' . $key . '">' .
+                    '<input type="hidden" value="' . data_entry_helper::$entity_to_load[$geomKey] . '" name="' . $geomKey . '">' .
+                    '<input type="hidden" value="' . (data_entry_helper::$entity_to_load[$deletedKey] ?? 'f') . '" name="' . $deletedKey . '">' .
+                    (isset(data_entry_helper::$entity_to_load[$idKey]) ? '<input type="hidden" value="' . data_entry_helper::$entity_to_load[$idKey] . '" name="' . $idKey . '">' : '');
 
           if (!empty($options['sample_method_id'])) {
             $sampleAttrs = self::getMultiplePlacesSpeciesChecklistSubsampleAttrs($options, empty($sampleId) ? NULL : $sampleId);
@@ -5702,7 +5993,7 @@ HTML;
               $attr['id'] = "sc:$a[1]:$a[2]:$attr[id]";
             }
             $attrOptions = self::getAttrSpecificOptions($options);
-            $sampleCtrls = get_attribute_html($sampleAttrs, [], array('extraParams' =>  $options['readAuth']), NULL, $attrOptions);
+            $sampleCtrls = get_attribute_html($sampleAttrs, [], ['extraParams' => $options['readAuth']], NULL, $attrOptions);
             $blocks .= <<<HTML
 <div id="scm-$a[1]-subsample-ctrls">
   $sampleCtrls
@@ -5741,12 +6032,12 @@ HTML;
    * @return string
    *   HTML to insert into the page for the textarea control.
    */
-  public static function textarea($options) {
-    $options = array_merge(array(
+  public static function textarea(array $options) {
+    $options = array_merge([
       'cols' => '80',
       'rows' => '4',
       'isFormControl' => TRUE,
-    ), self::check_options($options));
+    ], self::check_options($options));
     return self::apply_template('textarea', $options);
   }
 
@@ -5756,7 +6047,12 @@ HTML;
    * This includes re-loading of existing values and displaying of validation
    * error messages.
    *
-   * @param array $options Options array with the following possibilities:
+   * The output of this control can be configured using the following
+   * templates:
+   * * text_input - HTML template used to generate the input element.
+   *
+   * @param array $options
+   *   Options array with the following possibilities:
    *   * fieldname - Required. The name of the database field this control is
    *     bound to.
    *   * id - Optional. The id to assign to the HTML control. If not assigned
@@ -5770,14 +6066,10 @@ HTML;
    *   * attributes - Optional. Additional HTML attribute to attach, e.g.
    *     ["type": "number", "step": "any", "min": "4"].
    *
-   * The output of this control can be configured using the following
-   * templates:
-   * * text_input - HTML template used to generate the input element.
-   *
    * @return string
    *   HTML to insert into the page for the text input control.
    */
-  public static function text_input($options) {
+  public static function text_input(array $options) {
     $options = array_merge([
       'default' => '',
       'isFormControl' => TRUE,
@@ -6261,6 +6553,8 @@ $('div#$escaped_divId').indiciaTreeBrowser({
       'captionPrev' => 'Prev step',
       'captionSave' => 'Save',
       'captionDelete'=> 'Delete',
+      'captionDraft' => 'Save draft',
+      'captionPublish' => 'Save and publish',
       'buttonClass' => "$indicia_templates[buttonDefaultClass] inline-control",
       'saveButtonClass' => "$indicia_templates[buttonHighlightedClass] inline-control",
       'deleteButtonClass' => "$indicia_templates[buttonWarningClass] inline-control",
@@ -6268,6 +6562,7 @@ $('div#$escaped_divId').indiciaTreeBrowser({
       'page'        => 'middle',
       'includeVerifyButton' => FALSE,
       'includeSubmitButton' => TRUE,
+      'includeDraftButton' => FALSE,
       'includeDeleteButton' => FALSE,
       'controlWrapTemplate' => 'justControl'
     ), $options);
@@ -6298,18 +6593,28 @@ $('div#$escaped_divId').indiciaTreeBrowser({
       }
       else {
         if ($options['includeSubmitButton']) {
-          $options['class'] = "$options[saveButtonClass] tab-submit";
-          $options['id'] = 'tab-submit';
-          $options['caption'] = lang::get($options['captionSave']);
-          $options['name'] = 'action-submit';
-          $r .= self::apply_template('submitButton', $options);
+          $r .= self::apply_template('submitButton', [
+            'caption' => $options['includeDraftButton'] ? lang::get($options['captionPublish']) : lang::get($options['captionSave']),
+            'class' => "$options[saveButtonClass] tab-submit",
+            'id' => 'tab-submit',
+            'name' => $options['includeDraftButton'] ? 'publish-button' : 'action-submit',
+          ]);
+        }
+        if ($options['includeDraftButton']) {
+          $r .= self::apply_template('submitButton', [
+            'caption' => lang::get($options['captionDraft']),
+            'class' => "$options[saveButtonClass] tab-draft",
+            'id' => 'tab-draft',
+            'name' => 'draft-button',
+          ]);
         }
         if ($options['includeDeleteButton']) {
-          $options['class'] = "$options[deleteButtonClass] tab-delete";
-          $options['id'] = 'tab-delete';
-          $options['caption'] = lang::get($options['captionDelete']);
-          $options['name'] = 'delete-button';
-          $r .= self::apply_template('submitButton', $options);
+          $r .= self::apply_template('submitButton', [
+            'caption' => lang::get($options['captionDelete']),
+            'class' => "$options[deleteButtonClass] tab-delete",
+            'id' => 'tab-delete',
+            'name' => 'delete-button',
+          ]);
           $msg = lang::get('Are you sure you want to delete this form?');
           self::$javascript .= <<<JS
 $('#tab-delete').click(function(e) {
@@ -7215,9 +7520,17 @@ if (errors$uniq.length>0) {
     // or
     // sc:<grid_id>-<rowIndex>:[<occurrence_id>]:occurrence:comment
     // or
-    // sc:<grid_id>-<rowIndex>:[<occurrence_id>]:occurrence_medium:fieldname:uniqueImageId
+    // sc:<grid_id>-<rowIndex>:[<occurrence_id>]:occurrence_medium:<fieldname>:<uniqueImageId>
     $records = [];
-    // $records will be an array containing an entry for every row in every grid on the page
+    // $records will be a 2D array containing a value for every input in every
+    // grid on the page.
+    // The first dimension is <grid_id>-<rowIndex>
+    // The second dimension is either (using the examples above)
+    //   - present,
+    //   - occAttr:<occurrence_attribute_id>[:<occurrence_attribute_value_id>]
+    //   - occurrence:comment
+    //   - occurrence_medium:<fieldname>:<uniqueImageId>
+    //   - id
     $allRowInclusionCheck = [];
     // $allRowInclusionCheck will be an array containing an entry for every
     // grid that specified a value of hasData.
@@ -7298,13 +7611,14 @@ if (errors$uniq.length>0) {
           $record['zero_abundance']=$present ? 'f' : 't';
         $record['taxa_taxon_list_id'] = $record['ttlId'];
         $record['website_id'] = $website_id;
-        self::speciesChecklistApplyFieldDefaults($fieldDefaults, $record);
+        self::speciesChecklistApplyFieldDefaults($fieldDefaults, $record, $arr);
         // Handle subSamples indicated by row specific sample values.
         $date = self::extractValueFromArray($record, 'occurrence:date');
         $sref = self::extractValueFromArray($record, 'occurrence:spatialref');
         $srefPrecision = self::extractValueFromArray($record, 'occurrence:spatialrefprecision');
         $sampleAttrKeys = preg_grep('/^occurrence:smpAttr:/', array_keys($record));
         $occ = submission_builder::wrap($record, 'occurrence');
+        self::attachClassificationToModel($occ, $record);
         self::attachOccurrenceMediaToModel($occ, $record);
         self::attachAssociationsToModel($id, $occ, $assocData, $arr);
         // If we have subSample date, sref or attrs in the grid row, then must
@@ -7459,7 +7773,7 @@ if (errors$uniq.length>0) {
           $record['zero_abundance']=$present ? 'f' : 't';
         $record['taxa_taxon_list_id'] = $record['present'];
         $record['website_id'] = $website_id;
-        self::speciesChecklistApplyFieldDefaults($fieldDefaults, $record);
+        self::speciesChecklistApplyFieldDefaults($fieldDefaults, $record, $arr);
         $occ = submission_builder::wrap($record, 'occurrence');
         self::attachOccurrenceMediaToModel($occ, $record);
         $sampleRecords[$sampleIDX]['occurrences'][] = array('fkId' => 'sample_id','model' => $occ);
@@ -7606,11 +7920,18 @@ if (errors$uniq.length>0) {
     return $fieldDefaults;
   }
 
-  private static function speciesChecklistApplyFieldDefaults($fieldDefaults, &$record) {
+  private static function speciesChecklistApplyFieldDefaults($fieldDefaults, &$record, array $values) {
     // Apply default field values but don't overwrite settings for existing records.
     if (empty($record['id'])) {
       foreach ($fieldDefaults as $field => $value)
         $record[$field] = $value;
+    }
+    // Form may have draft and publish buttons which affect release status.
+    if (!empty($values['draft-button'])) {
+      $record['release_status'] = 'U';
+    }
+    if (!empty($values['publish-button'])) {
+      $record['release_status'] = 'R';
     }
   }
 
@@ -8053,6 +8374,81 @@ HTML;
   }
 
   /**
+   * When wrapping a species checklist submission, scan the contents of the data
+   * for a single grid row to look for a classification event (which could
+   * consist of many classification results). If found it is attached to the
+   * occurrence model as a super-model (with sub-models).
+   * @param array $occ Occurrence submission structure.
+   * @param array $record Record information from the form post, which may
+   * contain classification results.
+   */
+  public static function attachClassificationToModel(&$occ, $record) {
+    $results = [];
+    foreach ($record as $key => $value) {
+      // We are interested in keys like
+      //   classification_result:<index>
+      if (substr($key, 0, 22) === 'classification_result:') {
+        $results[] = json_decode($value, TRUE);
+      }
+    }
+
+    // Were any classifications performed for this record?
+    if ($results) {
+      // Start a classification event.
+      $classificationEvent = [
+        'id' => 'classification_event',
+        'fields' => [
+          'created_by_id' => hostsite_get_user_field('indicia_user_id')
+        ],
+        'subModels' => [],
+      ];
+
+
+      // Add classification results as sub-models.
+      foreach ($results as $result) {
+      // Each $result is an array containing elements
+      //  - fields, an array of the classification_result fields,
+      //  - media, an array of the the media paths used in the classification,
+      //  - suggestions, an array of suggestions, each containing an array
+      //    of the fields in the suggestion.
+        $classificationResult = [
+          'fkId' => 'classification_event_id',
+          'model' => [
+            'id' => 'classification_result',
+            'fields' => $result['fields'],
+            'subModels' => [],
+            'metaFields' => [
+              'mediaPaths' => $result['media'],
+            ],
+          ],
+        ];
+
+        // Add classification suggestions as sub-models
+        foreach ($result['suggestions'] as $suggestion) {
+          $classificationResult['model']['subModels'][] = [
+            'fkId' => 'classification_result_id',
+            'model' => [
+              'id' => 'classification_suggestion',
+              'fields' => $suggestion,
+            ]
+          ];
+        }
+
+        $classificationEvent['subModels'][] = $classificationResult;
+      }
+
+      // Add the classification_event to the occurrence as a super-model.
+      if (!isset($occ['superModels'])) {
+        $occ['superModels'] = [];
+      }
+      $occ['superModels'][] = [
+        'fkId' => 'classification_event_id',
+        'model' => $classificationEvent,
+      ];
+    }
+  }
+
+  /**
    * Build submission for sample + occurrence list.
    *
    * Helper function to simplify building of a submission that contains a
@@ -8095,6 +8491,16 @@ HTML;
         $values['occurrence:zero_abundance'] = 't';
       }
     }
+    // Form may have draft and publish buttons which affect release status and
+    // sample record status.
+    if (!empty($values['draft-button'])) {
+      $values['occurrence:release_status'] = 'U';
+      $values['sample:record_status'] = 'I';
+    }
+    elseif (!empty($values['publish-button'])) {
+      $values['occurrence:release_status'] = 'R';
+      $values['sample:record_status'] = 'C';
+    }
     return submission_builder::build_submission($values, $structure);
   }
 
@@ -8122,6 +8528,14 @@ HTML;
    */
   public static function build_sample_occurrences_list_submission($values, $include_if_any_data = FALSE,
       $zeroAttrs = TRUE, array $zeroValues=['0','none','absent','not seen']) {
+    // Form may have draft and publish buttons which affect sample record
+    // status.
+    if (!empty($values['draft-button'])) {
+      $values['sample:record_status'] = 'I';
+    }
+    elseif (!empty($values['publish-button'])) {
+      $values['sample:record_status'] = 'C';
+    }
     // We're mainly submitting to the sample model
     $sampleMod = submission_builder::wrap_with_images($values, 'sample');
     $occurrences = data_entry_helper::wrap_species_checklist($values, $include_if_any_data,
@@ -8161,9 +8575,16 @@ HTML;
    *   Sample submission array
    */
   public static function build_sample_subsamples_occurrences_submission($values, $include_if_any_data = FALSE,
-      $zeroAttrs = TRUE, $zeroValues=['0','none','absent','not seen'])
-  {
-    // We're mainly submitting to the sample model
+      $zeroAttrs = TRUE, $zeroValues=['0','none','absent','not seen']) {
+    // Form may have draft and publish buttons which affect release status and
+    // sample record status.
+    if (!empty($values['draft-button'])) {
+      $values['sample:record_status'] = 'I';
+    }
+    elseif (!empty($values['publish-button'])) {
+      $values['sample:record_status'] = 'C';
+    }
+    // We're mainly submitting to the sample model.
     $sampleMod = submission_builder::wrap_with_images($values, 'sample');
     $subModels = data_entry_helper::wrap_species_checklist_with_subsamples($values, $include_if_any_data,
       $zeroAttrs, $zeroValues);
@@ -8180,7 +8601,7 @@ HTML;
   }
 
   /**
-   * Work out a suitable success message to displaty after saving.
+   * Work out a suitable success message to display after saving.
    *
    * @param array $response
    *   Response data from the save operation.
@@ -8195,25 +8616,34 @@ HTML;
     if ($op === 'D') {
       return lang::get("The $what has been deleted.");
     }
-    if ($op === 'U') {
-      return lang::get("The $what has been updated.");
+    if ($op === 'U' ) {
+      $msg = lang::get("The $what has been updated.");
     }
-    if ($response['success'] === 'multiple records' && $response['outer_table'] === 'sample' && isset($response['struct']['children'])) {
-      $count = 0;
-      foreach ($response['struct']['children'] as $child) {
-        if ($child['model'] === 'occurrence') {
-          $count ++;
+    else {
+      if ($response['success'] === 'multiple records' && $response['outer_table'] === 'sample' && isset($response['struct']['children'])) {
+        $count = 0;
+        foreach ($response['struct']['children'] as $child) {
+          if ($child['model'] === 'occurrence') {
+            $count ++;
+          }
+        }
+        if ($count > 0) {
+          $what = $count === 1 ? 'record' : 'records';
         }
       }
-      if ($count > 0) {
-        $what = $count === 1 ? 'record' : 'records';
+      $siteName = 'this website';
+      if (function_exists('hostsite_get_config_value')) {
+        $siteName = hostsite_get_config_value('site', 'name');
       }
+      $msg = lang::get('Thank you for submitting your {1} to {2}.', lang::get($what), lang::get($siteName));
     }
-    $siteName = 'this website';
-    if (function_exists('hostsite_get_config_value')) {
-      $siteName = hostsite_get_config_value('site', 'name');
+    if (!empty($_POST['publish-button'])) {
+      $msg .= ' ' . lang::get('The records have been published.');
     }
-    return lang::get('Thank you for submitting your {1} to {2}.', lang::get($what), lang::get($siteName));
+    elseif (!empty($_POST['draft-button'])) {
+      $msg .= ' ' . lang::get('The records have been saved as a draft.');
+    }
+    return $msg;
   }
 
   /**
@@ -8227,13 +8657,10 @@ HTML;
    * @param bool $inline Set to true if the errors are to be placed
    *   alongside the controls rather than at the top of the page. Default is
    *   true.
-   * @param bool $update
-   *   True if updating existing data, otherwise false. Alters the success
-   *   message.
    *
    * @see forward_post_to()
    */
-  public static function dump_errors($response, $inline = TRUE, $update = TRUE) {
+  public static function dump_errors($response, $inline = TRUE) {
     $r = "";
     if (is_array($response)) {
       // set form mode

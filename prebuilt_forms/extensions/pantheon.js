@@ -1,3 +1,99 @@
+(function ($) {
+
+  function formatSqiWarning() {
+    $.each($('tbody .col-sqi').not('.processed,:empty'), function () {
+      if ($(this).closest('tr').find('.col-count').text() < 15) {
+        $(this).prepend(
+          '<img title="Warning, this index was calculated from less than 15 species so may not be reliable." ' +
+          'alt="Warning icon" src="/modules/custom/iform/media/images/warning.png"/>'
+        );
+      }
+      $(this).addClass('processed');
+    });
+  }
+
+  window.formatConservation = function () {
+    $.each($('.conservation-status.unprocessed'), function () {
+      var list = $(this).html().split('|');
+      var countup = {};
+      var output = [];
+      var display;
+      var countLink;
+      $.each(list, function () {
+        if (this.length) {
+          if (typeof countup[this] === 'undefined') {
+            countup[this] = 0;
+          }
+          countup[this]++;
+        }
+      });
+      $.each(countup, function (status, count) {
+        output.push(count + ' <span>' + status + '</span>');
+      });
+      display = output.join('; ');
+      countLink = $(this).closest('tr').find('td.col-count a');
+      if (countLink.length) {
+        display = '<a href="' + countLink.attr('href') + '&dynamic-has_any_designation=t">' + display + '</a>';
+      }
+      $(this).html(display);
+      $(this).removeClass('unprocessed');
+    });
+    if (typeof indiciaFns.applyLexicon !== 'undefined') {
+      indiciaFns.applyLexicon();
+    }
+    formatSqiWarning();
+  };
+
+  window.formatOsirisResources = function () {
+    $.each($('td.col-resource'), function () {
+      if ($(this).html().trim === '' || $(this).html().substr(0, 1) !== '[') {
+        return;
+      }
+      var flat = JSON.parse($(this).html());
+      var n;
+      var i;
+      var lookupListById = {};
+      var allParentIds = [];
+      var leafList = [];
+      var html = '<ul>';
+
+      // Convert the list of nodes in the report output to lists we can easily lookup against
+      for (i = 0; i < flat.length; i++) {
+        n = {
+          id: flat[i][0],
+          name: flat[i][2],
+          parent_id: (flat[i][1] === 0) ? null : flat[i][1],
+          children: []
+        };
+        lookupListById[n.id] = n;
+        // Need a list of all parents so we can easily detect leaf nodes
+        if (n.parent_id !== null) {
+          allParentIds.push(n.parent_id);
+        }
+      }
+      // Find the leaf nodes
+      $.each(lookupListById, function () {
+        if ($.inArray(this.id, allParentIds) === -1) {
+          leafList.push(this);
+        }
+      });
+      // output each leaf and its chain of parents
+      $.each(leafList, function () {
+        html += '<li>';
+        html += recurseNodes(this, lookupListById);
+        html += '<span>' + this.name + '</span>';
+        html += '</li>';
+      });
+      html += '</ul>';
+      $(this).html(html);
+    });
+    if (typeof indiciaFns.applyLexicon !== 'undefined') {
+      indiciaFns.applyLexicon();
+    }
+  };
+
+}(jQuery));
+
 jQuery(document).ready(function ($) {
   var typeParam;
 
@@ -80,98 +176,6 @@ jQuery(document).ready(function ($) {
     return html;
   }
 
-  window.formatOsirisResources = function () {
-    $.each($('td.col-resource'), function () {
-      if ($(this).html().trim === '' || $(this).html().substr(0, 1) !== '[') {
-        return;
-      }
-      var flat = JSON.parse($(this).html());
-      var n;
-      var i;
-      var lookupListById = {};
-      var allParentIds = [];
-      var leafList = [];
-      var html = '<ul>';
-
-      // Convert the list of nodes in the report output to lists we can easily lookup against
-      for (i = 0; i < flat.length; i++) {
-        n = {
-          id: flat[i][0],
-          name: flat[i][2],
-          parent_id: (flat[i][1] === 0) ? null : flat[i][1],
-          children: []
-        };
-        lookupListById[n.id] = n;
-        // Need a list of all parents so we can easily detect leaf nodes
-        if (n.parent_id !== null) {
-          allParentIds.push(n.parent_id);
-        }
-      }
-      // Find the leaf nodes
-      $.each(lookupListById, function () {
-        if ($.inArray(this.id, allParentIds) === -1) {
-          leafList.push(this);
-        }
-      });
-      // output each leaf and its chain of parents
-      $.each(leafList, function () {
-        html += '<li>';
-        html += recurseNodes(this, lookupListById);
-        html += '<span>' + this.name + '</span>';
-        html += '</li>';
-      });
-      html += '</ul>';
-      $(this).html(html);
-    });
-    if (typeof indiciaFns.applyLexicon !== 'undefined') {
-      indiciaFns.applyLexicon();
-    }
-  };
-
-  function formatSqiWarning() {
-    $.each($('tbody .col-sqi').not('.processed,:empty'), function () {
-      if ($(this).closest('tr').find('.col-count').text() < 15) {
-        $(this).prepend(
-          '<img title="Warning, this index was calculated from less than 15 species so may not be reliable." ' +
-          'alt="Warning icon" src="/sites/www.brc.ac.uk.pantheon/modules/iform/media/images/warning.png"/>'
-        );
-      }
-      $(this).addClass('processed');
-    });
-  }
-
-  window.formatConservation = function () {
-    $.each($('.conservation-status.unprocessed'), function () {
-      var list = $(this).html().split('|');
-      var countup = {};
-      var output = [];
-      var display;
-      var countLink;
-      $.each(list, function () {
-        if (this.length) {
-          if (typeof countup[this] === 'undefined') {
-            countup[this] = 0;
-          }
-          countup[this]++;
-        }
-      });
-      $.each(countup, function (status, count) {
-        output.push(count + ' <span>' + status + '</span>');
-      });
-      display = output.join('; ');
-      countLink = $(this).closest('tr').find('td.col-count a');
-      if (countLink.length) {
-        display = '<a href="' + countLink.attr('href') + '&dynamic-has_any_designation=t">' + display + '</a>';
-      }
-      $(this).html(display);
-      $(this).removeClass('unprocessed');
-    });
-    if (typeof indiciaFns.applyLexicon !== 'undefined') {
-      indiciaFns.applyLexicon();
-    }
-    formatSqiWarning();
-  };
-
   /**
    * Retrieve an array of lists in the current Quick Analysis Group.
    */
@@ -252,4 +256,14 @@ jQuery(document).ready(function ($) {
       }
     });
   };
+
+  /**
+   * Tables can request additional pager in header with a class.
+   */
+  $.each($('table.double-pager'), function() {
+    let cloned = $(this).find('tfoot tr').clone();
+    cloned.addClass('ui-widget-content')
+    cloned.appendTo($(this).find('thead'))
+    cloned.find('div.pager').show();
+  });
 });

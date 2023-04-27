@@ -30,6 +30,7 @@
 
 require_once 'includes/dynamic.php';
 require_once 'includes/groups.php';
+require_once 'includes/language_utils.php';
 
 /**
  * Store remembered field settings.
@@ -120,7 +121,6 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
 ?Please enter the species you saw and any other information about them.?
 
 [species]
-
 @resizeWidth=1500
 @resizeHeight=1500
 
@@ -200,6 +200,8 @@ form.<br/>
   containing either sample or occurrence to limit the block of attributes to those associated at
   the sample or occurrence level only.</li>
   <li><strong>[date]</strong> - date picker control. A sample must always have a date.</li>
+  <li><strong>[file classifier]</strong> - use when in grid mode to provide a control for
+  uploading files which can be sent to an AI classifer to identify the species.</li>
   <li><strong>[map]</strong> - a map that links to the spatial reference and location
   select/autocomplete controls</li>
   <li><strong>[spatial reference]</strong> - spatial reference input text box. A sample must always
@@ -455,6 +457,15 @@ TXT;
           'group' => 'User Interface',
           'default' => FALSE,
           'required' => FALSE,
+        ],
+        [
+          'name' => 'includeDraftButton',
+          'caption' => 'Include a Save Draft button',
+          'description' => 'Tick to provide a button to allow the user to save a draft of the data entry form. The records will be flagged as release_status=U (unreleased).',
+          'type' => 'boolean',
+          'default' => FALSE,
+          'required' => FALSE,
+          'group' => 'User Interface',
         ],
         [
           'name' => 'users_manage_own_sites',
@@ -994,6 +1005,10 @@ TXT;
           'important, otherwise the records will need to be rechecked.';
       }
       hostsite_show_message(lang::get($msg));
+    }
+    if (data_entry_helper::$unreleasedRecordsCount > 0 && !empty($args['includeDraftButton'])) {
+      hostsite_show_message(lang::get('You are editing a sample containing records which are not published. ' .
+        'Use the "Save and publish" button to publish them when you are ready for them to be released.'));
     }
     return $r;
   }
@@ -2856,6 +2871,30 @@ JS;
   }
 
   /**
+   * Get the file classifier control.
+   */
+  protected static function get_control_fileclassifier($auth, $args, $tabAlias, $options) {
+    if ($args['multiple_occurrence_mode'] === 'single') {
+      return "[file classifier] control cannot be included in form unless in
+      grid entry mode, since records are automatically added to the grid.";
+    }
+    else {
+      $opts = [
+        'readAuth' => $auth['read'],
+        'resizeWidth' => 1600,
+        'resizeHeight' => 1600,
+        'languageIso' => iform_lang_iso_639_2(),
+      ];
+      if ($tabAlias) {
+        $opts['tabDiv'] = $tabAlias;
+      }
+      $options = array_merge($opts, $options);
+
+      return data_entry_helper::file_classifier($options);
+    }
+  }
+
+  /**
    * Get the recorder names control.
    *
    * @param array $auth
@@ -3402,7 +3441,15 @@ TXT;
       // Don't allow users to submit if in read only mode.
       return $r;
     }
-    $r .= '<input type="submit" class="' . $indicia_templates['buttonHighlightedClass'] . '" id="save-button" value="' . lang::get('Submit') . "\" />\n";
+    $lang = [
+      'captionSave' => empty($args['includeDraftButton']) ? lang::get('Save') : lang::get('Save and publish'),
+      'captionDraft' => lang::get('Save draft'),
+    ];
+    if (!empty($args['includeDraftButton'])) {
+      $r .= "<input type=\"submit\" class=\"$indicia_templates[buttonHighlightedClass]\" id=\"draft-button\" name=\"draft-button\" value=\"$lang[captionDraft]\" />\n";
+    }
+    $submitName = empty($args['includeDraftButton']) ? 'save-button' : 'publish-button';
+    $r .= "<input type=\"submit\" class=\"$indicia_templates[buttonHighlightedClass]\" id=\"save-button\" name=\"$submitName\" value=\"$lang[captionSave]\" />\n";
     if (!empty(self::$loadedSampleId)) {
       // Use a button here, not input, as Chrome does not post the input value.
       $formType = $args['multiple_occurrence_mode'] === 'single' ? lang::get('record') : lang::get('list of records');

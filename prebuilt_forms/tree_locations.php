@@ -864,7 +864,7 @@ $('#fieldset-optional-external-sc').prepend(\"".lang::get('If you choose to reco
           $users = db_query("select uid, name from {users} where name <> '' order by name");
         }
         else {
-          $query = \Drupal::entityQuery('user');
+          $query = \Drupal::entityQuery('user')->accessCheck(FALSE);
           $users = $query->condition('name', '', '<>')
             ->sort('name', 'DESC')
             ->execute();

@@ -76,7 +76,7 @@ class extension_print {
     helper_base::add_resource('fancybox');
     $options = array_merge([
       'format' => 'choose',
-      'includeSelector' => '#content',
+      'includeSelector' => '.content',
       'excludeSelector' => '',
       'maxRecords' => 200,
       'fileName' => 'report.pdf',
