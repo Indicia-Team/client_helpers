@@ -67,66 +67,83 @@ class form_helper extends helper_base {
     if (!$dir = opendir($path . 'prebuilt_forms/')) {
       throw new Exception('Cannot open path to prebuilt form library.');
     }
-    $forms = [];
-    $groupForms = [];
-    $recommendedForms = [];
+
+    // Build a list of prebuilt form files and their paths.
+    $files = [];
     while (FALSE !== ($file = readdir($dir))) {
       $parts = explode('.', $file);
       if ($file != "." && $file != ".." && strtolower($parts[count($parts) - 1]) === 'php') {
-        $file_tokens = explode('.', $file);
-        try {
-          require_once $path . 'prebuilt_forms/' . $file;
-        }
-        catch (Throwable $e) {
-          // Add a stub to tell the user this form is broken. Recommended so it
-          // is not hidden away.
-          $forms['Broken forms'][$file_tokens[0]] = [
-            'title' => "$file_tokens[0] has a syntax error",
-            'recommended' => TRUE,
-          ];
-          if (!isset($recommendedForms['Broken forms'])) {
-            $recommendedForms['Broken forms'] = [];
-          }
-          $recommendedForms['Broken forms'][] = $file_tokens[0];
-          continue;
-        }
-        ob_start();
-        if (is_callable([
-          'iform_' . $file_tokens[0],
-          'get_' . $file_tokens[0] . '_definition',
-        ])) {
-          $definition = call_user_func([
-            'iform_' . $file_tokens[0],
-            'get_' . $file_tokens[0] . '_definition',
-          ]);
-          $definition['title'] = lang::get($definition['title']);
-          $forms[$definition['category']][$file_tokens[0]] = $definition;
-          if (isset($options['form']) && $file_tokens[0] === $options['form']) {
-            $defaultCategory = $definition['category'];
-          }
-          if (!empty($definition['supportsGroups'])) {
-            if (!isset($groupForms[$definition['category']])) {
-              $groupForms[$definition['category']] = [];
-            }
-            $groupForms[$definition['category']][] = $file_tokens[0];
-          }
-          if (!empty($definition['recommended'])) {
-            if (!isset($recommendedForms[$definition['category']])) {
-              $recommendedForms[$definition['category']] = [];
-            }
-            $recommendedForms[$definition['category']][] = $file_tokens[0];
-          }
-        }
-        elseif (is_callable(['iform_' . $file_tokens[0], 'get_title'])) {
-          $title = call_user_func(['iform_' . $file_tokens[0], 'get_title']);
-          $forms['Miscellaneous'][$file_tokens[0]] = ['title' => $title];
-          if (isset($options['form']) && $file_tokens[0] === $options['form']) {
-            $defaultCategory = 'Miscellaneous';
-          }
-        }
-        ob_end_clean();
+        $files[] = $file;
       }
     }
+    // In a CMS context, a module may supply additional custom forms so get
+    // these.
+    if (function_exists('hostsite_get_iform_custom_forms')) {
+      $files = array_merge($files, hostsite_get_iform_custom_forms());
+    }
+
+    $forms = [];
+    $groupForms = [];
+    $recommendedForms = [];
+    foreach ($files as $file) {
+      $file_tokens = explode('.', $file);
+
+      try {
+        if (!class_exists("iform_" . $file_tokens[0])) {
+          // Custom forms will autoload.
+          require_once $path . 'prebuilt_forms/' . $file;
+        }
+      }
+      catch (Throwable $e) {
+        // Add a stub to tell the user this form is broken. Recommended so it
+        // is not hidden away.
+        $forms['Broken forms'][$file_tokens[0]] = [
+          'title' => "$file_tokens[0] has a syntax error",
+          'recommended' => TRUE,
+        ];
+        if (!isset($recommendedForms['Broken forms'])) {
+          $recommendedForms['Broken forms'] = [];
+        }
+        $recommendedForms['Broken forms'][] = $file_tokens[0];
+        continue;
+      }
+      ob_start();
+      if (is_callable([
+        'iform_' . $file_tokens[0],
+        'get_' . $file_tokens[0] . '_definition',
+      ])) {
+        $definition = call_user_func([
+          'iform_' . $file_tokens[0],
+          'get_' . $file_tokens[0] . '_definition',
+        ]);
+        $definition['title'] = lang::get($definition['title']);
+        $forms[$definition['category']][$file_tokens[0]] = $definition;
+        if (isset($options['form']) && $file_tokens[0] === $options['form']) {
+          $defaultCategory = $definition['category'];
+        }
+        if (!empty($definition['supportsGroups'])) {
+          if (!isset($groupForms[$definition['category']])) {
+            $groupForms[$definition['category']] = [];
+          }
+          $groupForms[$definition['category']][] = $file_tokens[0];
+        }
+        if (!empty($definition['recommended'])) {
+          if (!isset($recommendedForms[$definition['category']])) {
+            $recommendedForms[$definition['category']] = [];
+          }
+          $recommendedForms[$definition['category']][] = $file_tokens[0];
+        }
+      }
+      elseif (is_callable(['iform_' . $file_tokens[0], 'get_title'])) {
+        $title = call_user_func(['iform_' . $file_tokens[0], 'get_title']);
+        $forms['Miscellaneous'][$file_tokens[0]] = ['title' => $title];
+        if (isset($options['form']) && $file_tokens[0] === $options['form']) {
+          $defaultCategory = 'Miscellaneous';
+        }
+      }
+      ob_end_clean();
+    }
+
     if (isset($defaultCategory)) {
       $availableForms = [];
       foreach ($forms[$defaultCategory] as $form => $def) {
@@ -291,10 +308,22 @@ class form_helper extends helper_base {
    *   picker.
    */
   private static function addFormPickerJs($forms, $groupForms, $coreForms, $showRecommendedPageTypes) {
+    // Determine the path for ajax requests for form parameters.
+    if (function_exists('hostsite_get_iform_custom_forms_ajax_path')) {
+      // In a CMS context, an iform_custom_forms module may be used.
+      $formParamsAjaxPath = hostsite_get_iform_custom_forms_ajax_path();
+    }
+    else {
+      // Otherwise, all forms come from client_helpers.
+      $formParamsAjaxPath = self::getRootFolder(FALSE) .
+                            self::client_helper_path() .
+                            'prebuilt_forms_ajax.php';
+    }
+
     $jsParams = [
       'baseUrl' => self::$base_url,
       'forms' => json_encode($forms),
-      'formParamsAjaxPath' => self::getRootFolder(FALSE) . self::client_helper_path() . 'prebuilt_forms_ajax.php',
+      'formParamsAjaxPath' => $formParamsAjaxPath,
       'groupForms' => json_encode($groupForms),
       'coreForms' => json_encode($coreForms),
       'showRecommended' => $showRecommendedPageTypes ? 'true' : 'false',
@@ -658,8 +687,18 @@ JS;
    *   List of parameter definitions.
    */
   public static function get_form_parameters($form) {
-    $path = dirname($_SERVER['SCRIPT_FILENAME']) . '/' . self::relative_client_helper_path();
-    require_once $path . "prebuilt_forms/$form.php";
+
+    // In a CMS context, a module may supply additional custom forms so make
+    // sure these are available.
+    if (function_exists('hostsite_autoload_iform_custom_forms')) {
+      hostsite_autoload_iform_custom_forms();
+    }
+
+    if (!class_exists("iform_$form")) {
+      $path = dirname($_SERVER['SCRIPT_FILENAME']) . '/' . self::relative_client_helper_path();
+      require_once $path . "prebuilt_forms/$form.php";
+    }
+
     // First some parameters that are always required to configure the website.
     $params = [
       [
