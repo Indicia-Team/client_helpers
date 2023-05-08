@@ -352,8 +352,8 @@ JS;
       'system_name' => 'indicia',
       'orderby' => 'triggered_on',
       'sortdir' => 'DESC',
-      'default_edit_page_path' => $options['default_edit_page_path'],
-      'view_record_page_path' => $options['view_record_page_path'],
+      'default_edit_page_path' => $options['default_edit_page_path'] ?? '',
+      'view_record_page_path' => $options['view_record_page_path'] ?? '',
       'website_id' => $website_id,
     ];
     // Implode the source types so we can submit to the database in one text
