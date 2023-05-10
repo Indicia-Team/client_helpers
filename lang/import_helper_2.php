@@ -84,3 +84,4 @@ $default_terms['optionGroup-smpAttr-shortLabel'] = 'Sample attributes';
 $default_terms['Deleted'] = 'Deleted (for existing records)';
 $default_terms['External key'] = 'External key (your reference)';
 $default_terms['Id'] = 'ID (primary key for existing records)';
+$default_terms['Taxa taxon list (lookup in database)'] = 'Species or taxon name';
