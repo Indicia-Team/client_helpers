@@ -779,6 +779,8 @@ HTML;
       'title' => lang::get('Map import columns to destination database fields'),
     ];
     self::addLanguageStringsToJs('import_helper_2', [
+      'occurrence:fk_taxa_taxon_list:genus' => 'As you have selected a mapping for the Species name/epithet (builds binomial name) destination field, please also choose a column in your import file to map to the Genus (builds binomial name) field so that a complete scientific name can be built from your data values.',
+      'occurrence:fk_taxa_taxon_list:specific' => 'As you have selected a mapping for the Genus (builds binomial name) destination field, please also choose a column in your import file to map to the Species name/epithet (builds binomial name) field so that a complete scientific name can be built from your data values.',
       'suggestions' => 'Suggestions',
     ]);
     // Load the config for this import.
@@ -856,6 +858,7 @@ HTML;
           <p>$lang[requiredFieldsInstructions]</p>
           <ul>
           </ul>
+          <p class="alert alert-info" id="required-messages" style="display: none"></p>
         </div>
       </div>
     </div>
