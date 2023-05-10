@@ -936,10 +936,11 @@ HTML;
         }
       }
       $translatedCaption = lang::get($caption);
-      $colsByGroup[$optGroup][] = "<option value=\"$field\" data-untranslated=\"$caption\"$alt>$translatedCaption</option>";
+      $colsByGroup[$optGroup][$translatedCaption] = "<option value=\"$field\" data-untranslated=\"$caption\"$alt>$translatedCaption</option>";
     }
     $optGroupHtmlList = ["<option value=\"\">- $lang[notImported] -</option>"];
     foreach ($colsByGroup as $thisColOptionGroup => $optionsList) {
+      ksort($optionsList);
       $options = implode('', $optionsList);
       $shortLabel = $shortGroupLabels[$thisColOptionGroup];
       $optGroupHtmlList[] = <<<HTML
