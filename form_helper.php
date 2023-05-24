@@ -90,7 +90,7 @@ class form_helper extends helper_base {
 
       try {
         if (!class_exists("iform_" . $file_tokens[0])) {
-          // Custom forms will autoload.
+          // Custom forms will autoload. Core forms must be required.
           require_once $path . 'prebuilt_forms/' . $file;
         }
       }
