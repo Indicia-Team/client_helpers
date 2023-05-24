@@ -728,9 +728,21 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
           $hasControls = TRUE;
         }
         elseif (count($parts) === 2) {
-          $extensionPath = dirname($_SERVER['SCRIPT_FILENAME']) . '/' .
-            data_entry_helper::relative_client_helper_path() . "prebuilt_forms/extensions/$parts[0].php";
-          include_once $extensionPath;
+          // The control is provided in an extension file which must be
+          // included.
+          // In a CMS context, a module may supply custom extensions which can
+          // autoload when needed.
+          if (function_exists('hostsite_autoload_iform_custom_forms')) {
+            hostsite_autoload_iform_custom_forms();
+          }
+          // Otherwise they will be in the local extensions folder.
+          if (!class_exists("extension_$parts[0]")) {
+            $extensionPath = dirname($_SERVER['SCRIPT_FILENAME']) . '/' .
+              data_entry_helper::relative_client_helper_path() .
+              "prebuilt_forms/extensions/$parts[0].php";
+            include_once $extensionPath;
+          }
+
           if (method_exists("extension_$parts[0]", $parts[1])) {
             if (!empty($options['fieldname'])) {
               // If reloading an existing attribute, set the default and
