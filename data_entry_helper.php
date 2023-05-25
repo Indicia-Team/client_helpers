@@ -7609,7 +7609,10 @@ if (errors$uniq.length>0) {
           $record['deleted'] = 't';
         else
           $record['zero_abundance']=$present ? 'f' : 't';
-        $record['taxa_taxon_list_id'] = $record['ttlId'];
+        // This will be empty if deleting
+        if (!empty($record['ttlId'])) {
+          $record['taxa_taxon_list_id'] = $record['ttlId'];
+        }
         $record['website_id'] = $website_id;
         self::speciesChecklistApplyFieldDefaults($fieldDefaults, $record, $arr);
         // Handle subSamples indicated by row specific sample values.
