@@ -9031,6 +9031,7 @@ TXT;
         'deleted' => 'f',
         'website_deleted' => 'f',
         'query'=>json_encode($query),
+        'orderby' => 'outer_block_weight,inner_block_weight',
         'sharing' => $sharing
       ), $options['extraParams'])
     );

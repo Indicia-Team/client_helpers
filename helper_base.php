@@ -3128,7 +3128,7 @@ if (typeof validator!=='undefined') {
       array_push($replaceTags, '{'.$option.'}');
       array_push($replaceValues, $value);
       array_push($replaceTags, '{'.$option.'|escape}');
-      array_push($replaceValues, htmlspecialchars($value));
+      array_push($replaceValues, htmlspecialchars($value ?? ''));
     }
     return str_replace($replaceTags, $replaceValues, $template);
   }
