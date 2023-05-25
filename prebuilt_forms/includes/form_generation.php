@@ -56,7 +56,7 @@ function get_attribute_html(&$attributes, $args, $ctrlOptions, $outerFilter = NU
     }
     $outerBlock = $attribute['outer_structure_block'] === NULL ? '' : $attribute['outer_structure_block'];
     // Apply filter to only output 1 block at a time. Also hide controls that have already been handled.
-    if (($outerFilter === NULL || strcasecmp($outerFilter, $outerBlock) == 0) && !isset($attribute['handled'])) {
+    if (($outerFilter === NULL || strcasecmp($outerFilter, $outerBlock ?? '') == 0) && !isset($attribute['handled'])) {
       if (empty($outerFilter) && $lastOuterBlock != $outerBlock) {
         if (!empty($lastInnerBlock)) {
           $r .= '</fieldset>';

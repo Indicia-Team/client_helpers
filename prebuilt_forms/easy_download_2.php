@@ -720,7 +720,7 @@ class iform_easy_download_2 {
         'extraParams'=>data_entry_helper::$js_read_tokens + array('id'=>$matches['id'], 'view' => 'detail')
       ));
       $group = $group[0];
-      $filter = json_decode($group['filter_definition'], true);
+      $filter = json_decode($group['filter_definition'] ?? '', TRUE);
       foreach ($filter as $field=>$value) {
         // Values shouldn't be arrays. Those which are are stray data from the filter save form.
         if (!is_array($value)) {
