@@ -107,7 +107,7 @@ function get_attribute_html(&$attributes, $args, $ctrlOptions, $outerFilter = NU
   if (!empty($lastInnerBlock)) {
     $r .= '</fieldset>';
   }
-  if (!empty($lastOuterBlock) && strcasecmp($outerFilter, $lastOuterBlock) !== 0) {
+  if (!empty($lastOuterBlock) && strcasecmp($outerFilter ?? '', $lastOuterBlock) !== 0) {
     $r .= '</fieldset>';
   }
   return $r;
