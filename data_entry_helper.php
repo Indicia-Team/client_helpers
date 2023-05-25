@@ -9556,8 +9556,8 @@ HTML;
     // legacy reasons, the model name might refer to _image model, rather than _medium.
     $legacyModelName = NULL;
     if ($modelName) {
-      $modelName = preg_replace('/^([a-z_]*)_image/', '${1}_medium', $modelName);
-      $legacyModelName = preg_replace('/^([a-z_]*)_medium/', '${1}_image', $modelName);
+      $modelName = preg_replace('/^([a-z_]*)_image/', '${1}_medium', $modelName ?? '');
+      $legacyModelName = preg_replace('/^([a-z_]*)_medium/', '${1}_image', $modelName ?? '');
     }
     foreach ($values as $key => $value) {
       if (!empty($value)) {
