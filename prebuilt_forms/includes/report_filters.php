@@ -47,7 +47,7 @@ class filter_what extends FilterBase {
    *
    * @return string
    */
-  public function get_controls($readAuth, $options) {
+  public function getControls(array $readAuth, array $options) {
     $r = '';
     // There is only one tab when running on the Warehouse.
     if (!isset($options['runningOnWarehouse']) || $options['runningOnWarehouse'] == FALSE) {
@@ -327,7 +327,7 @@ class filter_when extends FilterBase {
   /**
    * Define the HTML required for this filter's UI panel.
    */
-  public function get_controls() {
+  public function getControls() {
     // Additional helptext in case it is needed when a context is applied.
     $r = '<p class="helpText context-instruct">' . lang::get('Please note that your access permissions are limiting the record dates available.').'</p>';
     $r .= '<fieldset><legend>' . lang::get('Which date field to filter on') . '</legend>';
@@ -373,6 +373,12 @@ class filter_when extends FilterBase {
  */
 class filter_where extends FilterBase {
 
+  /**
+   * Define the pane's title.
+   *
+   * @return string
+   *   Title.
+   */
   public function getTitle() {
     return lang::get('Where');
   }
@@ -407,7 +413,7 @@ class filter_where extends FilterBase {
    *
    * @throws \exception
    */
-  public function get_controls($readAuth, $options) {
+  public function getControls(array $readAuth, array $options) {
     if (function_exists('iform_load_helpers')) {
       iform_load_helpers(['map_helper']);
     }
@@ -574,6 +580,12 @@ class filter_where extends FilterBase {
  */
 class filter_who extends FilterBase {
 
+  /**
+   * Define the pane's title.
+   *
+   * @return string
+   *   Title.
+   */
   public function getTitle() {
     return lang::get('Who');
   }
@@ -581,7 +593,7 @@ class filter_who extends FilterBase {
   /**
    * Define the HTML required for this filter's UI panel.
    */
-  public function get_controls() {
+  public function getControls() {
     $r = '<div class="context-instruct messages warning">' . lang::get('Please note, you cannnot change this setting because of your access permissions in this context.') . '</div>';
     $r .= data_entry_helper::checkbox([
       'label' => lang::get('Only include my records'),
@@ -597,6 +609,12 @@ class filter_who extends FilterBase {
  */
 class filter_occ_id extends FilterBase {
 
+  /**
+   * Define the pane's title.
+   *
+   * @return string
+   *   Title.
+   */
   public function getTitle() {
     return lang::get('Record ID');
   }
@@ -604,7 +622,7 @@ class filter_occ_id extends FilterBase {
   /**
    * Define the HTML required for this filter's UI panel.
    */
-  public function get_controls() {
+  public function getControls() {
     $r = '<div id="ctrl-wrap-occ_id" class="form-row ctrl-wrap">';
     $r .= data_entry_helper::select([
       'label' => lang::get('Record ID'),
@@ -641,6 +659,12 @@ class filter_occ_id extends FilterBase {
  */
 class filter_smp_id extends FilterBase {
 
+  /**
+   * Define the pane's title.
+   *
+   * @return string
+   *   Title.
+   */
   public function getTitle() {
     return lang::get('Sample ID');
   }
@@ -648,7 +672,7 @@ class filter_smp_id extends FilterBase {
   /**
    * Define the HTML required for this filter's UI panel.
    */
-  public function get_controls() {
+  public function getControls() {
     $r = '<div id="ctrl-wrap-smp_id" class="form-row ctrl-wrap">';
     $r .= data_entry_helper::select([
       'label' => lang::get('Sample ID'),
@@ -676,6 +700,12 @@ class filter_smp_id extends FilterBase {
  */
 class filter_quality extends FilterBase {
 
+  /**
+   * Define the pane's title.
+   *
+   * @return string
+   *   Title.
+   */
   public function getTitle() {
     return lang::get('Quality');
   }
@@ -683,8 +713,8 @@ class filter_quality extends FilterBase {
   /**
    * Define the HTML required for this filter's UI panel.
    */
-  public function get_controls($readAuth, $options, $ctls = ['status', 'auto', 'difficulty', 'photo']) {
-    $r ='';
+  public function getControls($readAuth, $options, $ctls = ['status', 'auto', 'difficulty', 'photo']) {
+    $r = '';
     if (in_array('status', $ctls)) {
       $r .= '<div class="context-instruct messages warning">' . lang::get('Please note, your options for quality filtering are restricted by your access permissions in this context.') . '</div>';
       $qualityOptions = [
@@ -798,6 +828,12 @@ class filter_quality extends FilterBase {
  */
 class filter_quality_sample extends FilterBase {
 
+  /**
+   * Define the pane's title.
+   *
+   * @return string
+   *   Title.
+   */
   public function getTitle() {
     return lang::get('Quality');
   }
@@ -805,7 +841,7 @@ class filter_quality_sample extends FilterBase {
   /**
    * Define the HTML required for this filter's UI panel.
    */
-  public function get_controls() {
+  public function getControls() {
     $r = '<div class="context-instruct messages warning">' . lang::get('Please note, your options for quality filtering are restricted by your access permissions in this context.') . '</div>';
     $r .= data_entry_helper::select([
       'label' => lang::get('Samples to include'),
@@ -848,6 +884,12 @@ class filter_quality_sample extends FilterBase {
  */
 class filter_source extends FilterBase {
 
+  /**
+   * Define the pane's title.
+   *
+   * @return string
+   *   Title.
+   */
   public function getTitle() {
     return lang::get('Source');
   }
@@ -855,7 +897,7 @@ class filter_source extends FilterBase {
   /**
    * Define the HTML required for this filter's UI panel.
    */
-  public function get_controls($readAuth, $options) {
+  public function getControls(array $readAuth, array $options) {
     if (function_exists('iform_load_helpers')) {
       iform_load_helpers(['report_helper']);
     }
@@ -865,91 +907,134 @@ class filter_source extends FilterBase {
     }
     $r = '<div class="context-instruct messages warning">' . lang::get('Please note, or options for source filtering are limited by your access permissions in this context.') . '</div>';
     $r .= '<div>';
-    // If running on the warehouse then use a single website (as the user is on the website details->milestones tab for
-    // a single website) so don't diplay website selection (which is based on website sharing).
+    $lang = [
+      'exclude' => lang::get('Exclude'),
+      'include' => lang::get('Include'),
+      'inputForms' => lang::get('Input forms'),
+      'recordsFrom' => lang::get('records from'),
+      'selectSurveyToLoadInputForms' => lang::get('All records for the selected websites will be shown. Select survey datasets to include to choose from the associated recording forms.'),
+      'selectWebsiteToLoadSurveys' => lang::get('Select websites to include to choose from the associated survey datasets.'),
+      'surveyDatasets' => lang::get('Survey datasets'),
+      'websites' => lang::get('Websites'),
+    ];
+    // If running on the warehouse then use a single website (as the user is on
+    // the website details->milestones tab for a single website) so don't
+    // display website selection (which is based on website sharing).
     if (!isset($options['runningOnWarehouse']) || $options['runningOnWarehouse'] == FALSE) {
-      $sources = report_helper::get_report_data([
+      $websites = report_helper::get_report_data([
         'dataSource' => 'library/websites/websites_list',
         'readAuth' => $readAuth,
         'caching' => TRUE,
         'cachePerUser' => FALSE,
-        'extraParams' => ['sharing' => $options['sharing'] === 'me' ? 'reporting' : $options['sharing']],
-      ]);
-      if (count($sources) > 1) {
-        $r .= '<div id="filter-websites" class="filter-popup-columns"><h3>' . lang::get('Websites') . '</h3><p>' .
-            '<select id="filter-websites-mode" name="website_list_op"><option value="in">' . lang::get('Include') . '</option><option value="not in">' . lang::get('Exclude') . '</option></select> ' .
-            lang::get('records from') . ':</p><ul id="website-list-checklist">';
-        foreach ($sources as $source) {
-          $r .= '<li><input type="checkbox" value="' . $source['id'] . '" id="check-website-' . $source['id'] . '"/>' .
-              '<label for="check-website-' . $source['id'] . '">' . $source['title'] . '</label></li>';
-        }
-        $r .= '</ul></div>';
-      }
-    }
-    // If running on the warehouse then use a single website id (as the user is
-    // on the website details->milestones tab for a single website) so supply
-    // this as a param, we don't need to worry about sharing as other websites
-    // will have their own milestones.
-    if (isset($options['runningOnWarehouse']) && $options['runningOnWarehouse'] == TRUE) {
-      $sources = data_entry_helper::get_population_data([
-        'table' => 'survey',
-        'extraParams' => $readAuth + [
-          'view' => 'detail',
-          'website_id' => $options['website_id'],
+        'extraParams' => [
+          'sharing' => $options['sharing'] === 'me' ? 'reporting' : $options['sharing'],
+          'orderby' => 'title',
         ],
       ]);
-      $titleToDisplay = 'title';
+      // Build the list filter control HTML.
+      $websitesFilterInput = data_entry_helper::text_input([
+        'fieldname' => 'websites-search',
+        'attributes' => ['placeholder' => lang::get('Type here to filter')],
+      ]);
+      $surveysFilterInput = data_entry_helper::text_input([
+        'fieldname' => 'surveys-search',
+        'attributes' => ['placeholder' => lang::get('Type here to filter')],
+      ]);
+      $inputFormsFilterInput = data_entry_helper::text_input([
+        'fieldname' => 'input_forms-search',
+        'attributes' => ['placeholder' => lang::get('Type here to filter')],
+      ]);
+      // Build the filter operation controls.
+      $websitesOpSelect = $this->getOperationSelectInput('website');
+      $surveysOpSelect = $this->getOperationSelectInput('survey');
+      $inputFormsOpSelect = $this->getOperationSelectInput('input_form');
+      // If only 1 website, can skip the first column.
+      if (count($websites) > 1) {
+        $websiteListItems = '';
+        foreach ($websites as $website) {
+          $websiteListItems .= <<<HTML
+    <li>
+      <input type="checkbox" value="$website[id]" id="check-website-$website[id]"/>
+      <label for="check-website-$website[id]">$website[title]</label>
+    </li>
+HTML;
+        }
+        $r .= <<<HTML
+<div id="filter-websites" class="filter-popup-columns">
+  <h3>$lang[websites]</h3>
+  $websitesFilterInput
+  $websitesOpSelect
+  <ul id="website-list-checklist">
+    $websiteListItems
+  </ul>
+</div>
+
+HTML;
+      }
     }
     else {
-      $sources = report_helper::get_report_data([
-        'dataSource' => 'library/surveys/surveys_list',
-        'readAuth' => $readAuth,
-        'caching' => TRUE,
-        'cachePerUser' => FALSE,
-        'extraParams' => ['sharing' => $options['sharing'] === 'me' ? 'reporting' : $options['sharing']],
-      ]);
-      $titleToDisplay = 'fulltitle';
+      // If running on the warehouse then use a single website id (as the user
+      // is on the website details->milestones tab for a single website) so
+      // supply this as a param, we don't need to worry about sharing as other
+      // websites will have their own milestones.
+      $r .= '<input type="hidden" value="' . $source['id'] . '" id="check-website-' . $source['id'] . '" checked/>';
     }
-    $r .= '<div id="filter-surveys" class="filter-popup-columns"><h3>' . lang::get('Survey datasets') . '</h3><p>' .
-          '<select id="filter-surveys-mode" name="survey_list_op"><option value="in">' . lang::get('Include') . '</option><option value="not in">' . lang::get('Exclude') . '</option></select> ' .
-          lang::get('records from') . ':</p><ul id="survey-list-checklist">';
-    foreach ($sources as $source) {
-      $r .= '<li class="vis-website-' . $source['website_id'] . '">' .
-          '<input type="checkbox" value="' . $source['id'] . '" id="check-survey-' . $source['id'] . '"/>' .
-          '<label for="check-survey-' . $source['id'] . '">' . $source[$titleToDisplay] . '</label></li>';
-    }
-    $r .= '</ul></div>';
-    $sourceOptions = [
-      'dataSource' => 'library/input_forms/input_forms_list',
+    // Put a cached list of all available surveys in indiciaData to save hits
+    // when building source pane descriptions.
+    $surveys = report_helper::get_report_data([
+      'dataSource' => 'library/surveys/surveys_list',
       'readAuth' => $readAuth,
       'caching' => TRUE,
       'cachePerUser' => FALSE,
-      // Set a long cache timeout as slow.
-      'cachetimeout' => 24 * 60 * 60,
-      'extraParams' => ['sharing' => $options['sharing'] === 'me' ? 'reporting' : $options['sharing']],
-    ];
-    // If in the warehouse then we are only interested in the website for the milestone we are editing.
-    if (isset($options['website_id'])) {
-      $sourceOptions['extraParams'] = array_merge(['website_id' => $options['website_id']], $sourceOptions['extraParams']);
+      'extraParams' => [
+        'sharing' => $options['sharing'] === 'me' ? 'reporting' : $options['sharing'],
+        'orderby' => 'title',
+      ],
+    ]);
+    helper_base::$indiciaData['allSurveysList'] = [];
+    foreach ($surveys as $survey) {
+      helper_base::$indiciaData['allSurveysList'][$survey['id']] = $survey['title'];
     }
-    $sources = report_helper::get_report_data($sourceOptions);
-    $r .= '<div id="filter-input_forms" class="filter-popup-columns"><h3>' . lang::get('Input forms') . '</h3><p>' .
-          '<select id="filter-input_forms-mode" name="input_forms_list_op"><option value="in">' . lang::get('Include') . '</option><option value="not in">' . lang::get('Exclude') . '</option></select> ' .
-          lang::get('records from') . ':</p><ul id="input_form-list-checklist">';
-    // Create an object to contain a lookup from id to form for JS, since forms don't have a real id.
-    $obj = [];
-    foreach ($sources as $idx => $source) {
-      if (!empty($source['input_form'])) {
-        $r .= '<li class="vis-survey-' . $source['survey_id'] . ' vis-website-' . $source['website_id'] . '">' .
-            '<input type="checkbox" value="' . $source['input_form'] . '" id="check-form-' . $idx . '"/>' .
-            '<label for="check-form-' . $idx . '">' . ucfirst(trim(preg_replace('/(http(s)?:\/\/)|[\/\-_]|(\?q=)/', ' ', $source['input_form']))) . '</label></li>';
-        $obj[$source['input_form']] = $idx;
-      }
-    }
-    $r .= '</ul></div>';
-    report_helper::$javascript .= 'indiciaData.formsList=' . json_encode($obj) . ";\n";
+    $r .= <<<HTML
+<div id="filter-surveys" class="filter-popup-columns">
+  <h3>$lang[surveyDatasets]</h3>
+  $surveysFilterInput
+  $surveysOpSelect
+  <p class="alert alert-info" style="display: none">$lang[selectWebsiteToLoadSurveys]</p>
+  <ul id="survey-list-checklist">
+  </ul>
+</div>
+<div id="filter-input_forms" class="filter-popup-columns">
+  <h3>$lang[inputForms]</h3>
+  $inputFormsFilterInput
+  $inputFormsOpSelect
+  <p class="alert alert-info" style="display: none">$lang[selectSurveyToLoadInputForms]</p>
+  <ul id="input_form-list-checklist">
+  </ul>
+</div>
+HTML;
     $r .= '</div><p>' . lang::get('Leave any list unticked to leave that list unfiltered.') . '</p>';
     return $r;
+  }
+
+  /**
+   * Build a select control for the source operation columns.
+   *
+   * @param string $type
+   *   Column type, website, survey or input_form.
+   *
+   * @return string
+   *   Control HTML.
+   */
+  private function getOperationSelectInput($type) {
+    return data_entry_helper::select([
+      'fieldname' => "{$type}_list_op",
+      'id' => "filter-{$type}s-mode",
+      'lookupValues' => [
+        'in' => lang::get('Include records from'),
+        'not in' => lang::get('Exclude records from'),
+      ],
+    ]);
   }
 
 }
@@ -959,7 +1044,7 @@ function status_control($readAuth, $options) {
   report_helper::add_resource('reportfilters');
   $ctl = new filter_quality();
   $r = '<div class="standalone-quality-filter">';
-  $r .= $ctl->get_controls($readAuth, $options, ['status']);
+  $r .= $ctl->getControls($readAuth, $options, ['status']);
   $r .= '</div>';
 
   report_helper::$onload_javascript .= <<<JS
@@ -1146,7 +1231,8 @@ function report_filter_panel(array $readAuth, $options, $website_id, &$hiddenStu
     }
   }
   // Add some preset filters in.
-  // If in the warehouse we don't need to worry about user specific preferences when setting up milestones.
+  // If in the warehouse we don't need to worry about user specific preferences
+  // when setting up milestones.
   if (function_exists('hostsite_get_user_field')) {
     foreach ($options['presets'] as $preset) {
       $title = FALSE;
@@ -1311,7 +1397,8 @@ function report_filter_panel(array $readAuth, $options, $website_id, &$hiddenStu
       $r .= '</form>';
     }
     else {
-      // Existing filter to edit, type is therefore fixed. JS will fill these values in.
+      // Existing filter to edit, type is therefore fixed. JS will fill these
+      // values in.
       $r .= '<p>' . lang::get('This filter is for <span id="sharing-type-label"></span>.') . '</p>';
       $r .= data_entry_helper::hidden_text(['fieldname' => 'filter:sharing']);
     }
@@ -1465,7 +1552,8 @@ HTML;
       $r .= '</div></fieldset>';
     }
   }
-  $r .= '</div>'; // filter panes
+  // End of filter panes div.
+  $r .= '</div>';
   $r .= '<div class="toolbar">';
   if ($options['allowSave']) {
     $r .= '<label for="filter:title">' . lang::get('Save filter as') . ":</label> <input id=\"filter:title\" class=\"$indicia_templates[formControlClass]\"/>";
@@ -1492,7 +1580,8 @@ HTML;
     $r .= '<img src="' . data_entry_helper::$images_path . 'nuvola/save-22px.png" width="22" height="22" alt="Save filter" title="Save filter" class="button" id="filter-save"/>';
     $r .= '<img src="' . data_entry_helper::$images_path . 'trash-22px.png" width="22" height="22" alt="Bin this filter" title="Bin this filter" class="button disabled" id="filter-delete"/>';
   }
-  $r .= '</div></div>'; // toolbar + clearfix
+  // End of toolbar + clearfix divs.
+  $r .= '</div></div>';
   $r .= '</div>';
   if (!empty($options['filters_user_id'])) {
     // If we are preloading based on a filter user ID, we need to get the
@@ -1514,7 +1603,7 @@ HTML;
   $noDescriptionLangStrings = [];
   foreach ($filterModules as $category => $list) {
     foreach ($list as $moduleName => $module) {
-      $hiddenStuff .= "<div style=\"display: none\"><div class=\"filter-popup\" id=\"controls-$moduleName\"><form action=\"#\" class=\"filter-controls\"><fieldset>" . $module->get_controls($readAuth, $options) .
+      $hiddenStuff .= "<div style=\"display: none\"><div class=\"filter-popup\" id=\"controls-$moduleName\"><form action=\"#\" class=\"filter-controls\"><fieldset>" . $module->getControls($readAuth, $options) .
         '<button class="' . $indicia_templates['buttonDefaultClass'] . '" type="button" onclick="jQuery.fancybox.close();">' . lang::get('Cancel') . '</button>' .
         '<button class="' . $indicia_templates['buttonHighlightedClass'] . '" type="submit">' . lang::get('Apply') . '</button></fieldset></form></div></div>';
       $shortName = str_replace('filter_', '', $moduleName);
