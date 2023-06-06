@@ -180,7 +180,7 @@ class iform_ebms_transects_allocation {
       }
     }
 
-    $auth = []
+    $auth = [];
     $current = self::_identify_current_type($args, $auth); // config object
 
     data_entry_helper::add_resource('jquery_ui');

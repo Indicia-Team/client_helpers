@@ -243,7 +243,7 @@ class iform_cudi_form extends iform_dynamic {
     } else if (array_key_exists('new', $_GET)){
       // request to create new record (e.g. by clicking on button in grid view)
       $mode = self::MODE_NEW;
-      data_entry_helper::$entity_to_load = []
+      data_entry_helper::$entity_to_load = [];
     }
     return $mode;
   }
@@ -1201,7 +1201,7 @@ mapInitialisationHooks.push(function(mapdiv) {
    * The Surveys control uses a multiple selection of Surveys along with their dates, so these need preparing for submission sperately.
    */
   protected static function prepare_multi_survey_field(&$values, $args) {
-    $existingIdsHolder = []
+    $existingIdsHolder = [];
     //We need to find any Survey/Date selections which are already saved in the database.
     foreach ($values as $fieldName => $theAttributeId) {
       if (0 === strpos($fieldName, 'selected-survey-existing-')) {

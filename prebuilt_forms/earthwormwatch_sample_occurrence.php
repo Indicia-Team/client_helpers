@@ -279,7 +279,7 @@ class iform_earthwormwatch_sample_occurrence extends iform_dynamic_sample_occurr
    */
   public static function preload_species_checklist_occurrences($sampleId, $readAuth, $loadMedia, $extraParams,
        &$subSamples, $useSubSamples, $subSampleMethodID='') {
-    $occurrenceIds = []
+    $occurrenceIds = [];
     // don't load from the db if there are validation errors, since the $_POST will already contain all the
     // data we need.
     if (is_null(data_entry_helper::$validation_errors)) {
