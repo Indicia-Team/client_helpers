@@ -229,9 +229,7 @@ TXT;
       'fixedValues' => [],
       'entity' => 'occurrence',
     ], $args);
-    if (!empty($options['fixedValues'])) {
-      $options['fixedValues'] = get_options_array_with_user_data($options['fixedValues']);
-    }
+    $options['fixedValues'] = empty($options['fixedValues']) ? [] : get_options_array_with_user_data($options['fixedValues']);
     $options['fixedValues'] = array_merge($options['fixedValues'], self::getAdditionalFixedValues($auth, $options['entity']));
     if (!empty($options['fixedValueDefaults'])) {
       $options['fixedValueDefaults'] = get_options_array_with_user_data($options['fixedValueDefaults']);
