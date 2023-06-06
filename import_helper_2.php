@@ -109,6 +109,9 @@ class import_helper_2 extends helper_base {
     if (empty($options['writeAuth'])) {
       throw new exception('The import_helper_2::importer control needs a writeAuth option.');
     }
+    if (empty(hostsite_get_user_field('indicia_user_id'))) {
+      throw new exception('The import_helper_2::importer control requires the Easy Login module with an account that has been linked to the warehouse.');
+    }
     self::add_resource('uploader');
     self::add_resource('font_awesome');
     self::add_resource('fancybox');
