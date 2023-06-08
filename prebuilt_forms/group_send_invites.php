@@ -176,7 +176,7 @@ class iform_group_send_invites {
    * @todo Integrate with notifications for logged in users.
    */
   private static function sendInvites(array $args, array $auth) {
-    global $user;
+    $account = \Drupal::currentUser();
     $emails = helper_base::explode_lines($_POST['invitee_emails']);
     // First task is to populate the groups_invitations table.
     $base = uniqid();
@@ -206,7 +206,7 @@ class iform_group_send_invites {
         $headers[] = 'MIME-Version: 1.0';
         $headers[] = 'Content-type: text/html; charset=UTF-8;';
         $headers[] = 'From: ' . hostsite_get_config_value('site', 'mail');
-        $headers[] = 'Reply-To: ' . $user->mail;
+        $headers[] = 'Reply-To: ' . $account->getEmail();
         $headers[] = 'Return-Path: ' . hostsite_get_config_value('site', 'mail');
         $headers = implode("\r\n", $headers) . PHP_EOL;
         // Send email. Depends upon settings in php.ini being correct.
