@@ -5807,6 +5807,14 @@ HTML;
    *   linked to sample methods in the survey's setup attributes section.
    * * **spatialSystem** - grid square system which the map will operate in, e.g.
    *   OSGB.
+   * * **sampleClusterButtonContents** - optional array of items to include in
+   *   the label shown on the button for each sample point when clicking on a
+   *   map cluster to access a specific sample, if overriding the default.
+   *   Possible items are recordsCount, speciesName, gridRef or smpAttr:n where
+   *   n is the ID of an attribute in the sub-sample.
+   * * **sampleMapLabelContents** - optional array of items to include
+   *   in the label shown on the map label for each sample point, if overriding
+   *   the default. Options same as sampleOnClusterButtonContents.
    */
   public static function multiple_places_species_checklist($options) {
     if (empty($options['spatialSystem'])) {
@@ -5839,7 +5847,7 @@ HTML;
         $attr['id'] = "sc:n::$attr[id]";
       }
       $sampleCtrls = get_attribute_html($sampleAttrs, [], ['extraParams' => $options['readAuth']], NULL, $attrOptions);
-      $r .= "<div id=\"$options[id]-subsample-ctrls\" style=\"display: none\">$sampleCtrls</div>";
+      $r .= "<div id=\"$options[id]-subsample-ctrls\" style=\"display: none\" class=\"subsample-ctrl-cntr\">$sampleCtrls</div>";
     }
     $enteredSref = self::check_default_value('sample:entered_sref', '');
     $geom = self::check_default_value('sample:geom', '');
