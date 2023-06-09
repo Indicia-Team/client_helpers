@@ -143,8 +143,10 @@ clearstatcache();
 $file['size'] = filesize("{$filePath}.part");
 $file['error'] = '';
 if (!data_entry_helper::checkUploadSize($file)) {
+  // An upload size fail probably means the limit in moxie.js for not resizing
+  // huge images has been hit.
   unlink("{$filePath}.part");
-  die('{"jsonrpc" : "2.0", "error" : {"code": 104, "message": "Uploaded file too big."}, "id" : "id"}');
+  die('{"jsonrpc" : "2.0", "error" : {"code": 104, "message": "Uploaded file too big. Please resize the file and try again."}, "id" : "id"}');
 }
 
 // Check if file has been uploaded.
