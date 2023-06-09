@@ -5815,6 +5815,8 @@ HTML;
    * * **sampleMapLabelContents** - optional array of items to include
    *   in the label shown on the map label for each sample point, if overriding
    *   the default. Options same as sampleOnClusterButtonContents.
+   * * **samplePhotos** - set to true to add a photos upload control for each
+   *   sub-sample.
    */
   public static function multiple_places_species_checklist($options) {
     if (empty($options['spatialSystem'])) {
@@ -5833,6 +5835,7 @@ HTML;
       'buttonsId' => "species-grid-buttons-$code",
       'speciesControlToUseSubSamples' => TRUE,
       'base_url' => self::$base_url,
+      'samplePhotos' => FALSE,
     ], $options);
     $attrOptions = self::getAttrSpecificOptions($options);
     $speciesListEntryCtrl = data_entry_helper::species_checklist($options);
@@ -5940,6 +5943,42 @@ HTML;
   }
 
   /**
+   * When loading sub-samples for a multiplace grid, load existing photo data.
+   *
+   * Photo data values are added to $entity_to_load in a format which links to
+   * the correct sample.
+   *
+   * @param array $readAuth
+   *   Read authorisation tokens.
+   */
+  private static function loadSubSamplePhotos(array $readAuth) {
+    // First find a list of the unique sample IDs to load photos for.
+    $sampleIds = [];
+    foreach (data_entry_helper::$entity_to_load as $key => $value) {
+      $a = explode(':', $key, 4);
+      if (count($a) === 4  && $a[0] === 'sc' && $a[3] == 'sample:entered_sref') {
+        $sampleIds[$a[1]] = $a[2];
+      }
+    }
+    $subSamplePhotos = data_entry_helper::get_population_data([
+      'table' => 'sample_medium',
+      'extraParams' => $readAuth + ['query' => json_encode(['in' => ['sample_id' => array_values($sampleIds)]])],
+      'nocache' => TRUE,
+      'sharing' => 'editing',
+    ]);
+    foreach ($subSamplePhotos as $photo) {
+      // The grid row index is the key whcih holds the sample ID.
+      $gridRowIdx = array_search($photo['sample_id'], $sampleIds);
+      self::$entity_to_load["sc:$gridRowIdx:$photo[sample_id]:sample_medium:id:$photo[id]"] = $photo['id'];
+      self::$entity_to_load["sc:$gridRowIdx:$photo[sample_id]:sample_medium:path:$photo[id]"] = $photo['path'];
+      self::$entity_to_load["sc:$gridRowIdx:$photo[sample_id]:sample_medium:caption:$photo[id]"] = $photo['caption'];
+      self::$entity_to_load["sc:$gridRowIdx:$photo[sample_id]:sample_medium:media_type:$photo[id]"] = $photo['media_type'];
+      self::$entity_to_load["sc:$gridRowIdx:$photo[sample_id]:sample_medium:media_type_id:$photo[id]"] = $photo['media_type_id'];
+      self::$entity_to_load["sc:$gridRowIdx:$photo[sample_id]:sample_medium:licence_id:$photo[id]"] = $photo['licence_id'];
+    }
+  }
+
+  /**
    * Retrieves the buttons for a multiple_places_species_checklist.
    *
    * The buttons appear above the map and include options for adding, modifying
@@ -5980,6 +6019,9 @@ HTML;
     data_entry_helper::$javascript .= "control_speciesmap_addcontrols(" . json_encode($options) . ");\n";
     $blocks = "";
     if (isset(data_entry_helper::$entity_to_load)) {
+      if ($options['samplePhotos']) {
+        self::loadSubSamplePhotos($options['readAuth']);
+      }
       foreach (data_entry_helper::$entity_to_load as $key => $value) {
         $a = explode(':', $key, 4);
         if (count($a) === 4  && $a[0] === 'sc' && $a[3] == 'sample:entered_sref') {
@@ -6007,6 +6049,12 @@ HTML;
   $sampleCtrls
 </div>
 HTML;
+          }
+          if ($options['samplePhotos']) {
+            $blocks .= self::file_box([
+              'table' => "$a[0]:$a[1]:$sampleId:sample_medium",
+              'readAuth' => $options['readAuth'],
+            ]);
           }
           $blocks .= '</div>';
         }
@@ -7736,6 +7784,7 @@ if (errors$uniq.length>0) {
     // sc:<subSampleIndex>:[<sample_id>]:sample:geom
     // sc:<subSampleIndex>:[<sample_id>]:sample:entered_sref
     // sc:<subSampleIndex>:[<sample_id>]:smpAttr:[<sample_attribute_id>]
+    // sc:<subSampleIndex>:[<sample_id>]:sample_medium:fieldname:uniqueImageId
     // sc:<rowIndex>:[<occurrence_id>]:occurrence:sampleIDX (val set to subSample index)
     // sc:<rowIndex>:[<occurrence_id>]:present (checkbox with val set to ttl_id
     // sc:<rowIndex>:[<occurrence_id>]:occAttr:<occurrence_attribute_id>[:<occurrence_attribute_value_id>]
@@ -7755,7 +7804,7 @@ if (errors$uniq.length>0) {
         // Don't explode the last element for occurrence attributes
         $a = explode(':', $key, 4);
         $b = explode(':', $a[3], 2);
-        if($b[0] == "sample" || $b[0] == "smpAttr") {
+        if ($b[0] === 'sample' || $b[0] === 'smpAttr' || $b[0] === 'sample_medium') {
           $sampleRecords[$a[1]][$a[3]] = $value;
           if($a[2]) $sampleRecords[$a[1]]['id'] = $a[2];
         }
@@ -7805,7 +7854,7 @@ if (errors$uniq.length>0) {
         $sampleRecord['location_name'] = $arr['sample:location_name'];
       if (!empty($arr['sample:input_form']))
         $sampleRecord['input_form'] = $arr['sample:input_form'];
-      $subSample = submission_builder::wrap($sampleRecord, 'sample');
+      $subSample = submission_builder::wrap_with_images($sampleRecord, 'sample');
       // Add the subSample/soccurrences in as subModels without overwriting others such as a sample image
       if (array_key_exists('subModels', $subSample)) {
         $subSample['subModels'] = array_merge($subSample['subModels'], $occs);
@@ -8607,7 +8656,6 @@ HTML;
     else {
       $sampleMod['subModels'] = $subModels;
     }
-
     return $sampleMod;
   }
 
