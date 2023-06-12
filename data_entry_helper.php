@@ -3717,6 +3717,7 @@ RIJS;
       self::$indiciaData["previousRowColumnsToInclude-$options[id]"] = $options['previousRowColumnsToInclude'];
       self::$indiciaData['langAddAnother'] = lang::get('Add another');
     }
+    $onlyImages = empty($option['mediaTypes']) ? TRUE : self::isOnlyImages($option['mediaTypes']);
     if (count($options['mediaTypes'])) {
       self::add_resource('plupload');
       // Store some globals that we need later when creating uploaders.
@@ -3730,14 +3731,17 @@ RIJS;
         'relativeImageFolder' => $relativeImageFolder,
         'jsPath' => $js_path,
       ];
+      $fileTypeLabel = $onlyImages ? 'photos' : 'files';
       $langStrings = [
-        'caption' => 'Files',
-        'addBtnCaption' => 'Add {1}',
-        'msgPhoto' => 'photo',
+        'addBtnCaption' => "Add $fileTypeLabel",
+        'addBtnCaptionSubsamples' => "Add $fileTypeLabel for this position",
+        'caption' => ucfirst($fileTypeLabel),
+        'captionSubsamples' => ucfirst($fileTypeLabel) . ' for this position',
+        'msgDelete' => 'Delete this item',
         'msgFile' => 'file',
         'msgLink' => 'link',
         'msgNewImage' => 'New {1}',
-        'msgDelete' => 'Delete this item'
+        'msgPhoto' => 'photo',
       ];
       foreach ($langStrings as $key => $string) {
         $uploadSettings[$key] = lang::get($string);
@@ -3857,14 +3861,6 @@ RIJS;
       if (!empty($options['allowAdditionalTaxa'])) {
         $beforegrid .= self::get_species_checklist_clonable_row($options, $occAttrControls, $attributes);
       }
-      $onlyImages = TRUE;
-      if ($options['mediaTypes']) {
-        foreach ($options['mediaTypes'] as $mediaType) {
-          if (substr($mediaType, 0, 6) !== 'Image:') {
-            $onlyImages = FALSE;
-          }
-        }
-      }
       $grid = self::get_species_checklist_header($options, $occAttrs, $onlyImages);
       $rows = [];
       $imageRowIdxs = [];
@@ -3883,10 +3879,10 @@ RIJS;
           self::$javascript .= "indiciaData.subspeciesRanksToStrip='" . lang::get('(form[a\.]?|var\.?|ssp\.)') . "';\n";
         }
       }
-      // track if there is a row we are editing in this grid
+      // Track if there is a row we are editing in this grid.
       $hasEditedRecord = FALSE;
       if ($options['mediaTypes']) {
-        $mediaBtnLabel = lang::get($onlyImages ? 'Add images' : 'Add media');
+        $mediaBtnLabel = lang::get($onlyImages ? 'Add photos' : 'Add files');
         $mediaBtnClass = 'sc' . ($onlyImages ? 'Image' : 'Media') . 'Link';
       }
       self::addLanguageStringsToJs('speciesChecklistRowButtons', [
@@ -4356,6 +4352,27 @@ if ($('#$options[id]').parents('.ui-tabs-panel').length) {
     else {
       return $taxalist['error'];
     }
+  }
+
+  /**
+   * Checks if a list of mediaTypes only contains images.
+   *
+   * Can be used to set a caption to Photos/Images or Files as appropriate.
+   *
+   * @param array $mediaTypes
+   *   List of media type terms, e.g. Image:Local.
+   *
+   * @return $bool
+   *   True if no term other than an image term found.
+   */
+  private static function isOnlyImages(array $mediaTypes) {
+    $onlyImages = TRUE;
+    foreach ($mediaTypes as $mediaType) {
+      if (substr($mediaType, 0, 6) !== 'Image:') {
+        $onlyImages = FALSE;
+      }
+    }
+    return $onlyImages;
   }
 
   /**
@@ -5130,12 +5147,12 @@ JS;
         // button. Column can be hidden in responsive mode.
         if (count($options['mediaTypes'])) {
           $attrs = self::getSpeciesChecklistColResponsive($options, 'media');
-          $r .= self::get_species_checklist_col_header("$options[id]-images-$i", lang::get($onlyImages ? 'Add photos' : 'Add media'), $visibleColIdx, $options['colWidths'], $attrs);
+          $r .= self::get_species_checklist_col_header("$options[id]-images-$i", lang::get($onlyImages ? 'Photos' : 'Files'), $visibleColIdx, $options['colWidths'], $attrs);
           // In responsive mode, add an additional column for files which is
           // always hidden so it appears in a row below.
           if ($options['responsive']) {
             $attrs = ' data-hide="all" data-editable="true"';
-            $r .= self::get_species_checklist_col_header("$options[id]-files-$i", lang::get($onlyImages ? 'Photos' : 'Media'), $visibleColIdx, $options['colWidths'], $attrs);
+            $r .= self::get_species_checklist_col_header("$options[id]-files-$i", lang::get($onlyImages ? 'Photos' : 'Files'), $visibleColIdx, $options['colWidths'], $attrs);
           }
         }
 
@@ -5734,9 +5751,9 @@ HTML;
       }
 
       // Html for a media link.
-      $label = lang::get($onlyImages ? 'Add images' : 'Add media');
+      $label = lang::get($onlyImages ? 'Add photos' : 'Add files');
       $class = 'add-media-link button ';
-      $class .= 'sc' . $onlyImages ? 'Image' : 'Media' . 'Link';
+      $class .= 'sc' . ($onlyImages ? 'Image' : 'Media') . 'Link';
       $id = 'add-media:' . $options['id'] . '--idx-:';
       $addMediaLink = <<<HTML
         <a href="" class="$class" style="display: none" id="$id">$label</a>
