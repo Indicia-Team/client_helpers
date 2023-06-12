@@ -2284,7 +2284,7 @@ HTML;
       $label = $options['label'];
     }
     else {
-      $label = 'Overall Photo';
+      $label = 'Overall photos';
     }
     // Create a list of arrays. Each item is itself an array with a control id
     // and associated sub type.This allows there to be multiple photo controls,
