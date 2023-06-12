@@ -913,8 +913,7 @@ TXT;
   }
 
   /**
-   * Override get_form_html so we can store the remembered argument in a global,
-   * to make it available to a hook function which exists outside the form.
+   * Override get_form_html to add extra functionality.
    */
   protected static function get_form_html($args, $auth, $attributes) {
     self::addNewSampleFromExistingSampleEntityToLoadRemover($args);
@@ -926,8 +925,7 @@ TXT;
     }
     else {
       $opts = [
-        'speciesIncludeAuthorities' => isset($args['species_include_authorities']) ?
-          $args['species_include_authorities'] : FALSE,
+        'speciesIncludeAuthorities' => $args['species_include_authorities'] ?? FALSE,
         'speciesIncludeBothNames' => $args['species_include_both_names'],
         'speciesIncludeTaxonGroup' => $args['species_include_taxon_group'],
         'speciesIncludeIdDiff' => $args['species_include_id_diff'],
@@ -974,11 +972,11 @@ TXT;
           $geom = count($geoms) > 1 ? 'GEOMETRYCOLLECTION(' . implode(',', $geoms) . ')' : $geoms[0];
           $layerName = count($geoms) > 1 ? lang::get('Boundaries') : lang::get('Boundary of {1}', $response[0]['name']);
           iform_map_zoom_to_geom($geom, lang::get('{1} for the {2} group', $layerName, self::$group['title']));
-          self::hide_other_boundaries($args);
+          self::hideOtherBoundaries($args);
         }
         elseif (!empty($filterDef->searchArea)) {
           iform_map_zoom_to_geom($filterDef->searchArea, lang::get('Recording area for the {1} group', self::$group['title']));
-          self::hide_other_boundaries($args);
+          self::hideOtherBoundaries($args);
         }
       }
       if (!empty($filterDef->taxon_group_names) && !empty((array) $filterDef->taxon_group_names)) {
@@ -1014,10 +1012,12 @@ TXT;
   }
 
   /**
+   * Force hiding of additional map polygons.
+   *
    * If zooming to a group site, we don't want to display the user's own profile
    * locality or other map setting location.
    */
-  private static function hide_other_boundaries(&$args) {
+  private static function hideOtherBoundaries(&$args) {
     $args['remember_pos'] = FALSE;
     unset($args['location_boundary_id']);
     $args['display_user_profile_location'] = FALSE;
@@ -2074,6 +2074,7 @@ HTML;
    * Returns a control for picking a single species.
    *
    * @global type $indicia_templates
+   *
    * @param array $auth
    *   Read authorisation tokens.
    * @param array $args
