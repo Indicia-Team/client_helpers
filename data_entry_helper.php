@@ -5743,13 +5743,7 @@ HTML;
       $r .= self::speciesChecklistSensitivityCell($options, 0, '-idx-', '');
     }
     if ($options['mediaTypes']) {
-      $onlyImages = TRUE;
-      foreach ($options['mediaTypes'] as $mediaType) {
-        if (!preg_match('/^Image:/', $mediaType)) {
-          $onlyImages = FALSE;
-        }
-      }
-
+      $onlyImages = self::isOnlyImages($options['mediaTypes']);
       // Html for a media link.
       $label = lang::get($onlyImages ? 'Add photos' : 'Add files');
       $class = 'add-media-link button ';
