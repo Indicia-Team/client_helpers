@@ -1658,9 +1658,9 @@ class ElasticsearchProxyHelper {
   /**
    * Converts an Indicia filter definition date filter to an ES query.
    *
-   * Support for recorded (default), input, edited, verified dates. Age is
-   * supported as long as format specifies age in minutes, hours, days, weeks,
-   * months or years.
+   * Date range, year or date age filters supported. Support for recorded
+   * (default), input, edited, verified dates. Age is supported as long as
+   * format specifies age in minutes, hours, days, weeks, months or years.
    *
    * @param array $definition
    *   Definition loaded for the Indicia filter.
@@ -1674,35 +1674,59 @@ class ElasticsearchProxyHelper {
       'edited' => 'metadata.updated_on',
       'verified' => 'identification.verified_on',
     ];
-    $dateTypes = [
-      'from' => 'gte',
-      'to' => 'lte',
-      'age' => 'gte',
-    ];
     // Default to recorded date.
     $definition['date_type'] = empty($definition['date_type']) ? 'recorded' : $definition['date_type'];
-    foreach ($dateTypes as $type => $op) {
-      $fieldName = $definition['date_type'] === 'recorded' ? "date_$type" : "$definition[date_type]_date_$type";
-      if (!empty($definition[$fieldName])) {
-        $value = $definition[$fieldName];
-        // Convert date format.
-        if (preg_match('/^(?P<d>\d{2})\/(?P<m>\d{2})\/(?P<Y>\d{4})$/', $value, $matches)) {
-          $value = "$matches[Y]-$matches[m]-$matches[d]";
-        }
-        elseif ($type === 'age') {
-          $value = 'now-' . str_replace(
-            ['minute', 'hour', 'day', 'week', 'month', 'year', 's', ' '],
-            ['m', 'H', 'd', 'w', 'M', 'y', '', ''],
-            strtolower($value)
-          );
-        }
+    // Check to see if we have a year filter.
+    $fieldName = $definition['date_type'] === 'recorded' ? "date_year" : "$definition[date_type]_date_year";
+    if (!empty($definition[$fieldName]) && !empty($definition[$fieldName . '_op'])) {
+      if ($definition[$fieldName . '_op'] === '=') {
+        $bool['must'][] = [
+          'term' => [
+            'event.year' => $definition[$fieldName],
+          ],
+        ];
+      }
+      else {
+        $esOp = $definition[$fieldName . '_op'] === '>=' ? 'gte' : 'lte';
         $bool['must'][] = [
           'range' => [
-            $esFields[$definition['date_type']] => [
-              $op => $value,
+            'event.year' => [
+              $esOp => $definition[$fieldName],
             ],
           ],
         ];
+      }
+    }
+    else {
+      // Check for other filters that work off the precise date fields.
+      $dateTypes = [
+        'from' => 'gte',
+        'to' => 'lte',
+        'age' => 'gte',
+      ];
+      foreach ($dateTypes as $type => $esOp) {
+        $fieldName = $definition['date_type'] === 'recorded' ? "date_$type" : "$definition[date_type]_date_$type";
+        if (!empty($definition[$fieldName])) {
+          $value = $definition[$fieldName];
+          // Convert date format.
+          if (preg_match('/^(?P<d>\d{2})\/(?P<m>\d{2})\/(?P<Y>\d{4})$/', $value, $matches)) {
+            $value = "$matches[Y]-$matches[m]-$matches[d]";
+          }
+          elseif ($type === 'age') {
+            $value = 'now-' . str_replace(
+              ['minute', 'hour', 'day', 'week', 'month', 'year', 's', ' '],
+              ['m', 'H', 'd', 'w', 'M', 'y', '', ''],
+              strtolower($value)
+            );
+          }
+          $bool['must'][] = [
+            'range' => [
+              $esFields[$definition['date_type']] => [
+                $esOp => $value,
+              ],
+            ],
+          ];
+        }
       }
     }
   }

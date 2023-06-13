@@ -336,13 +336,40 @@ class filter_when extends FilterBase {
       'fieldname' => 'date_type',
       'lookupValues' => [
         'recorded' => lang::get('Field record date'),
-        'input' => lang::get('Input date'),
-        'edited' => lang::get('Last changed date'),
-        'verified' => lang::get('Verification status change date'),
+        'input' => lang::get('Date of record input'),
+        'edited' => lang::get('Date of last edit or verification'),
+        'verified' => lang::get('Date of last verification'),
       ],
     ]);
     $r .= '</fieldset>';
-    $r .= '<fieldset class="exclusive"><legend>' . lang::get('Specify a date range for the records to include') . '</legend>';
+    $r .= '<fieldset class="exclusive"><legend>' . lang::get('Specify a year') . '</legend>';
+    $r .= '<div class="form-inline">';
+    $r .= data_entry_helper::select([
+      'label' => lang::get('Year'),
+      'fieldname' => 'date_year_op',
+      'lookupValues' => [
+        '=' => lang::get('equals'),
+        '<=' => lang::get('is in or before'),
+        '>=' => lang::get('is in or after'),
+      ],
+      'blankText' => '- Select year filter -',
+    ]);
+    $r .= data_entry_helper::text_input([
+      'fieldname' => 'date_year',
+      'attributes' => [
+        'type' => 'number',
+        'min' => 0,
+        'max' => date('Y'),
+      ],
+      'default' => date('Y'),
+    ]);
+
+    // Add date_year and date_year_op support to standard params.
+    // Proxy
+    // Documentation
+
+    $r .= '</div></fieldset>';
+    $r .= '<fieldset class="exclusive"><legend>' . lang::get('Or, specify a date range for the records to include') . '</legend>';
     $r .= data_entry_helper::date_picker([
       'label' => lang::get('Records from'),
       'fieldname' => 'date_from',
