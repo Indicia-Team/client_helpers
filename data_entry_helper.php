@@ -543,7 +543,7 @@ $('#$escaped').change(function(e) {
         '{content}',
       ],
       [
-        ' class="complex-attr-grid"',
+        ' class="complex-attr-grid table"',
         " id=\"complex-attr-grid-$attrTypeTag-$attrId\"",
         $r,
       ],
