@@ -629,6 +629,10 @@ HTML;
     $tools = [];
     global $indicia_templates;
     foreach ($formArray as $key => $info) {
+      // @todo Description should really have i18n inside getParamsFormControl,
+      // though this would require changing how the show unrestricted button UI
+      // is done.
+      $info['description'] = lang::get($info['description']);
       $unrestrictedControl = NULL;
       if (isset($options['fixedValueDefaults'][$key])) {
         $info['default'] = $options['fixedValueDefaults'][$key];
@@ -1138,13 +1142,13 @@ HTML;
     $lang = [
       'dataValuesCopied' => lang::get('Values in this column are copied to this field'),
       'dataValuesIgnored' => lang::get('Values in this column are ignored'),
-      'dataValuesMatched' => lang::get('Values in this column are matched to equivalent database values using the rules you supplied.'),
+      'dataValuesMatched' => lang::get('Values in this column are matched against predefined lists of terms.'),
     ];
     if (empty($info['warehouseField'])) {
       $arrow = "<i class=\"fas fa-stop\" title=\"$lang[dataValuesIgnored]\"></i>";
     }
     elseif (!empty($info['isFkField'])) {
-      $arrow = "<i class=\"fas fa-random\" title=\"$lang[dataValuesMatched]\"></i><i class=\"fas fa-play\" title=\"$lang[dataValuesCopied]\"></i>";
+      $arrow = "<i class=\"fas fa-random\" title=\"$lang[dataValuesMatched]\"></i>";
     }
     else {
       $arrow = "<i class=\"fas fa-play\" title=\"$lang[dataValuesCopied]\"></i>";
@@ -1197,11 +1201,11 @@ HTML;
       'columnMappings' => lang::get('Column mappings'),
       'databaseField' => lang::get('Database field'),
       'deletionExplanation' => lang::get('Existing records will be deleted if the Deleted field is set to "1", "true" or "t".'),
-      'descriptionOfImport' => lang::get('Description of your import'),
-      'descriptionOfImportHelp' => lang::get('Please describe the data you are about to import. This will be kept in a log of your imports for future reference.'),
       'existingRecords' => lang::get('Existing records'),
       'fileType' => lang::get('File type'),
       'globalValues' => lang::get('Fixed values that apply to all rows'),
+      'importMetadata' => lang::get('Import metadata'),
+      'importMetadataHelp' => lang::get('Please provide any metadata to describe this import, such as the source of the records and the date of the import (optional).'),
       'importTemplate' => 'Import template',
       'instructions' => lang::get($options['summaryPageIntro']),
       'importColumn' => lang::get('Import column'),
@@ -1227,14 +1231,14 @@ HTML;
     foreach ($config['columns'] as $columnLabel => $info) {
       $arrow = self::getSummaryColumnArrow($info);
       $warehouseFieldLabel = self::getWarehouseFieldLabel($info, $availableFields);
-      $mappingRows[] = "<tr><th scope=\"row\">$columnLabel</th><td>$arrow</td><td>$warehouseFieldLabel</td></tr>";
+      $mappingRows[] = "<tr><td><em>$columnLabel</td></em><td>$arrow</td><td>$warehouseFieldLabel</td></tr>";
       if (preg_match('/:(id|external_key)$/', $info['warehouseField'])) {
         $existingMatchFields[] = $warehouseFieldLabel;
       }
       // @todo Correct mapping to stage attribute display
     }
     $mappings = implode('', $mappingRows);
-    $globalRows = self::globalValuesAsTableRows($config, $options['readAuth']);
+    $globalRows = self::globalValuesAsTableRows($config, $options['readAuth'], $availableFields);
     $infoRows = [
       "<dt>$lang[fileType]</dt><dd>$ext</dd>",
       "<dt>$lang[numberOfRecords]</dt><dd>$config[totalRows]</dd>",
@@ -1284,9 +1288,9 @@ HTML;
     $info
   </div>
   <div class="form-group">
-    <label for="description">$lang[descriptionOfImport]:</label>
+    <label for="description">$lang[importMetadata]:</label>
     <textarea class="form-control" rows="5" name="description"></textarea>
-    <p class="helpText">$lang[descriptionOfImportHelp]</p>
+    <p class="helpText">$lang[importMetadataHelp]</p>
   </div>
   <div class="form-group">
     <label for="template_title">$lang[saveImportTemplate]:</label>
@@ -1307,12 +1311,14 @@ HTML;
    *   Upload config.
    * @param array $readAuth
    *   Read authorisation.
+   * @param array $availableFields
+   *   List of field names and captions to use.
    *
    * @return array
    *   Each entry is the HTML for a <tr> to show on the summary page,
    *   explaining one of the global values being applied to the import.
    */
-  private static function globalValuesAsTableRows(array $config, array $readAuth) {
+  private static function globalValuesAsTableRows(array $config, array $readAuth, array $availableFields) {
     $globalRows = [];
     $lang = [
       'dataValuesCopied' => lang::get('This value is copied to this field for all records created.'),
@@ -1352,10 +1358,9 @@ HTML;
       }
       // Foreign key filters were used during matching, not actually for import.
       // Also exclude settings such as allowUpdates/deletes.
-
       if (strpos($field, 'fkFilter') === FALSE && strpos($field, 'config:') !== 0) {
         $field = $availableFields[$field] ?? $field;
-        $globalRows[] = "<tr><th scope=\"row\">$displayLabel</th><td>$arrow</td><td>$field</td></tr>";
+        $globalRows[] = "<tr><td>$displayLabel</td><td>$arrow</td><td>$field</td></tr>";
       }
     }
     return $globalRows;

@@ -31,7 +31,7 @@ Select options for importing records. These options will be applied to all recor
 TXT;
 
 $default_terms['import2mappingsFormIntro'] = <<<TXT
-Select which database field each of your import file's columns should be mapped to.
+Select which database field each of your import file's columns should be mapped to. Any columns in your file that do not have matches can be set to "- not imported -".
 TXT;
 
 $default_terms['import2lookupMatchingFormIntro'] = <<<TXT
@@ -51,7 +51,9 @@ The following validation issues have been detected.
 TXT;
 
 $default_terms['import2summaryPageIntro'] = <<<TXT
-Please check the following settings before proceeding with the import.
+Here is a summary of the import that will be carried out. Please check the settings – if anything
+needs changing you can go back to previous steps in the import process. Once you are happy that the
+details are correct scroll down and click "Start importing records".
 TXT;
 
 $default_terms['import2preprocessPageIntro'] = <<<TXT
@@ -63,7 +65,7 @@ Please wait while your data are imported.
 TXT;
 
 $default_terms['import2requiredFieldsIntro'] = <<<TXT
-The following database fields are required for the selected dataset. Please ensure they are all
+The following database fields are required for the selected survey dataset. Please ensure they are all
 mapped to columns in your import file before proceeding.
 TXT;
 
