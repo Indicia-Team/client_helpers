@@ -53,26 +53,26 @@ class extension_group_hierarchies {
     return $r;
   }
 
+  /**
+   * Replaces {group} in the page title with the title of a parent group.
+   *
+   * Used on a page which lists the child groups of a parent. Options include:
+   * * parent_parameter - set to the name of a URL query parameter that
+   *   contains the parent group ID.
+   */
   public static function set_page_title($auth, $args, $tabalias, $options, $path) {
     if (empty($options['parent_parameter']) || empty($_GET[$options['parent_parameter']]) ||
       !is_numeric($_GET[$options['parent_parameter']])
     ) {
-      return 'group_hierarchies.set_page_title control requires a numeric parent_parameter option ' .
-      'which matches to a URL parameter of the same name.';
+      return 'group_hierarchies.set_page_title control requires a numeric parent_parameter option which matches to a URL parameter of the same name.';
     }
-    if (function_exists(arg) && arg(0) == 'node' && is_numeric(arg(1))) {
-      // Drupal 7
-      $nid = arg(1);
-    } elseif (defined('DRUPAL_ROOT')) {
-      $nid = \Drupal::routeMatch()->getParameter('node')->id();
-    }
-    if (isset($nid)) {
-      $data = data_entry_helper::get_population_data(array(
+    if (!empty($options['nid'])) {
+      $data = data_entry_helper::get_population_data([
         'table' => 'group',
-        'extraParams' => $auth['read'] + array('id' => $_GET[$options['parent_parameter']])
-      ));
+        'extraParams' => $auth['read'] + ['id' => $_GET[$options['parent_parameter']]],
+      ]);
       if (count($data)) {
-        $title = hostsite_get_page_title($nid);
+        $title = hostsite_get_page_title($options['nid']);
         $title = str_replace('{group}', $data[0]['title'], $title);
         hostsite_set_page_title($title);
       }
