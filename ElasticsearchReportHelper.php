@@ -1757,7 +1757,6 @@ HTML;
       'templateHelpTokenTaxon' => lang::get('will be replaced by the identification name given to the record as originally entered.'),
       'templateHelpClose' => lang::get('Close help'),
       'updatingMultipleWarning' => lang::get('You are updating multiple records!'),
-      'updatingMultipleInParentSampleWarning' => lang::get('This verification decision will also be applied to other records of the same taxon within the parent sample (e.g. within the transect or timed count)!'),
       'upload' => lang::get('Upload'),
       'uploadVerificationDecisions' => lang::get('Upload a file of verification decisions'),
       'viewRecordDetails' => "View this record's details page",
@@ -1814,6 +1813,7 @@ HTML;
       'saveTemplateError' => 'Save template error',
       'saveTemplateErrorMsg' => 'An error occurred when saving your template to the database. Please try later.',
       'templateNameTextRequired' => 'Template details required',
+      'updatingMultipleInParentSampleWarning' => lang::get('This verification decision will be applied to a total of {1} records of the same taxon within the parent sample (e.g. within the transect or timed count)!'),
       'uploadError' => 'An error occurred whilst uploading your spreadsheet.',
       'C3' => 'marked as plausible',
       'DT' => 'redetermined',
@@ -1970,7 +1970,7 @@ HTML;
     <fieldset>
       <legend><span></span><span></span></legend>
       <p class="alert alert-warning multiple-warning">$lang[updatingMultipleWarning]</p>
-      <p class="alert alert-warning multiple-in-parent-sample-warning">$lang[updatingMultipleInParentSampleWarning]</p>
+      <p class="alert alert-warning multiple-in-parent-sample-warning"></p>
       <p class="alert alert-info"></p>
       <div class="comment-cntr form-group">
         $commentTools
