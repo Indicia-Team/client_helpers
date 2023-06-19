@@ -1525,7 +1525,7 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
     if (isset(data_entry_helper::$entity_to_load['sample:id']) && $options['useLoadedExistingRecords']===false)
       self::preload_species_checklist_occurrences(data_entry_helper::$entity_to_load['sample:id'], $options['readAuth'],
           $options['mediaTypes'], $options['reloadExtraParams'], $subSampleRows, $options['speciesControlToUseSubSamples'],
-          (isset($options['subSampleSampleMethodID']) ? $options['subSampleSampleMethodID'] : ''),$options['id'],$useThirdLevelSamples);
+          $options['id'], (isset($options['subSampleSampleMethodID']) ? $options['subSampleSampleMethodID'] : ''), $useThirdLevelSamples);
     // load the full list of species for the grid, including the main checklist plus any additional species in the reloaded occurrences.
     $taxalist = data_entry_helper::get_species_checklist_taxa_list($options, $taxonRows);
     // If we managed to read the species list data we can proceed
@@ -1874,7 +1874,7 @@ if ($('#$options[id]').parents('.ui-tabs-panel').length) {
    * Again, this is an altered copy of the one found in data_entry_helper, includes support for third level samples
    * May contain coded that is not needed and can be removed if possible
    */
-  private static function preload_species_checklist_occurrences($sampleId, $readAuth, $loadMedia, $extraParams, &$subSamples, $useSubSamples, $subSampleMethodID='', $gridId, $useThirdLevelSamples = FALSE) {
+  private static function preload_species_checklist_occurrences($sampleId, $readAuth, $loadMedia, $extraParams, &$subSamples, $useSubSamples, $gridId, $subSampleMethodID='', $useThirdLevelSamples = FALSE) {
     //Obviously this would need to not be hardcoded
     $occurrenceIds = [];
     $taxonCounter = [];
