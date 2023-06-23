@@ -1950,10 +1950,12 @@ HTML;
     if (is_array($array)) {
       arsort($array);
       foreach ($array as $a => $b) {
-        if ($encodeValues) {
-          $b = urlencode($b);
+        if (!is_array($b)) {
+          if ($encodeValues) {
+            $b = urlencode($b);
+          }
+          $params[] = "$a=$b";
         }
-        $params[] = "$a=$b";
       }
     }
     return implode('&', $params);
