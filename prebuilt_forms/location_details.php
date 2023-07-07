@@ -587,7 +587,7 @@ HTML;
   }
 
   /**
-   * Render Photos section of the page.
+   * List the subsites of the viewed location.
    *
    * Options include:
    * * @title - default to true. Set to a string to override the title, or
@@ -603,6 +603,8 @@ HTML;
    *   ```
    *   Paths should point to an "Enter a location (customisable)" with the
    *   "Link the location to a parent" option checked.
+   * * @addChildrenBtnClass - class to set on the add children buttons.
+   *   Defaults to the anchor button class from $indicia_templates.
    * * @columns - report_grid @columns option setting, if overriding the
    *   default.
    * * @dataSource - report to use if overriding the default. Should accept a
@@ -613,10 +615,12 @@ HTML;
    */
   protected static function get_control_subsites($auth, $args, $tabalias, $options) {
     iform_load_helpers(['report_helper']);
+    global $indicia_templates;
     $options = array_merge([
       'title' => TRUE,
       'dataSource' => 'reports_for_prebuilt_forms/location_details/location_data',
       'extraParams' => [],
+      'addChildrenBtnClass' => $indicia_templates['anchorButtonClass'],
     ], $options);
     foreach ($options['extraParams'] as &$value) {
       $value = apply_user_replacements($value);
@@ -661,10 +665,9 @@ HTML;
     $grid = report_helper::report_grid($reportOptions);
     $html = "$mapOutput\n$grid";
     if (!empty($options['addChildrenEditFormPaths'])) {
-      global $indicia_templates;
       foreach ($options['addChildrenEditFormPaths'] as $label => $path) {
         $href = helper_base::getRootFolder(TRUE) . "$path?parent_id=$_GET[location_id]";
-        $html .= "\n<a class=\"$indicia_templates[anchorButtonClass]\" href=\"$href\" title=\"" .
+        $html .= "\n<a class=\"$options[addChildrenBtnClass]\" href=\"$href\" title=\"" .
           lang::get('Add a subsite to this location.') . '">' . lang::get($label) . '</a>';
       }
     }
