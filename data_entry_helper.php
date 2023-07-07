@@ -5861,6 +5861,7 @@ HTML;
         $attr['id'] = "sc:n::$attr[id]";
       }
       $sampleCtrls = get_attribute_html($sampleAttrs, [], ['extraParams' => $options['readAuth']], NULL, $attrOptions);
+      // Add a template for the form section for a new subsample.
       $r .= "<div id=\"$options[id]-subsample-ctrls\" style=\"display: none\" class=\"subsample-ctrl-cntr\">$sampleCtrls</div>";
     }
     $enteredSref = self::check_default_value('sample:entered_sref', '');
@@ -6056,7 +6057,7 @@ HTML;
             $attrOptions = self::getAttrSpecificOptions($options);
             $sampleCtrls = get_attribute_html($sampleAttrs, [], ['extraParams' => $options['readAuth']], NULL, $attrOptions);
             $blocks .= <<<HTML
-<div id="scm-$a[1]-subsample-ctrls">
+<div class="subsample-ctrl-cntr">
   $sampleCtrls
 </div>
 HTML;
