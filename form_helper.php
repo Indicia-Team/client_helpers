@@ -171,7 +171,7 @@ class form_helper extends helper_base {
     if (isset($options['allowConnectionOverride']) && !$options['allowConnectionOverride']
         && !empty($options['website_id']) && !empty($options['password'])) {
       $r .= '<input type="hidden" id="website_id" name="website_id" value="' . $options['website_id'] . '"/>';
-      $r .= '<input type="hidden" id="password" name="password" value="' . $options['password'] . '"/>';
+      $r .= '<input type="hidden" id="password" name="password" value="' . htmlspecialchars($options['password']) . '"/>';
     }
     else {
       $r .= data_entry_helper::text_input([
@@ -182,20 +182,20 @@ class form_helper extends helper_base {
             'that use an alternative reporting warehouse. It should not be used for recording as the user\'s warehouse ' .
             'user ID will differ between the 2 warehouses, therefore any data posted to this warehouse will be associated ' .
             'with the admin user account.'),
-        'default' => isset($options['base_url']) ? $options['base_url'] : '',
+        'default' => $options['base_url'] ?? '',
         'class' => 'control-width-5',
       ]);
       $r .= data_entry_helper::text_input([
         'label' => lang::get('Website ID'),
         'fieldname' => 'website_id',
         'helpText' => lang::get('Enter the ID of the website record on the Warehouse you are using.'),
-        'default' => isset($options['website_id']) ? $options['website_id'] : '',
+        'default' => $options['website_id'] ?? '',
       ]);
       $r .= data_entry_helper::text_input([
         'label' => lang::get('Password'),
         'fieldname' => 'password',
         'helpText' => lang::get('Enter the password for the website record on the Warehouse you are using.'),
-        'default' => isset($options['password']) ? $options['password'] : '',
+        'default' => $options['password'] ?? '',
       ]);
     }
     // Default - we are only going to show recommended page types in the
@@ -280,7 +280,7 @@ class form_helper extends helper_base {
         'fieldname' => 'available_for_groups',
         'helpText' => lang::get('Tick this box if this page will be is made available for use by ' .
           'recording groups for their own record collection or reporting.'),
-        'default' => isset($options['available_for_groups']) ? $options['available_for_groups'] : FALSE,
+        'default' => $options['available_for_groups'] ?? FALSE,
         'labelClass' => 'auto',
       ]);
       $r .= data_entry_helper::select([
@@ -293,7 +293,7 @@ class form_helper extends helper_base {
         'valueField' => 'id',
         'captionField' => 'title',
         'extraParams' => $readAuth + ['orderby' => 'title'],
-        'default' => isset($options['limit_to_group_id']) ? $options['limit_to_group_id'] : FALSE,
+        'default' => $options['limit_to_group_id'] ?? FALSE,
         'caching' => FALSE,
       ]);
     }
@@ -704,8 +704,7 @@ JS;
       [
         'fieldname' => 'view_access_control',
         'label' => 'View access control',
-        'helpText' => 'If ticked, then a Drupal permission is created for this form to allow you to specify which '.
-            'roles are able to view the form.',
+        'helpText' => 'If ticked, then a Drupal permission is created for this form to allow you to specify which roles are able to view the form.',
         'type' => 'checkbox',
         'required' => FALSE,
       ],
