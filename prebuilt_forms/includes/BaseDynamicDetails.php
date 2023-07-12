@@ -108,7 +108,7 @@ HTML;
     ]);
     $html = "<div class=\"$options[class] photos-$settings[type]\">";
     if (empty($media)) {
-      $html = '<p>' . lang::get('No photos or media files available') . '</p>';
+      $html .= '<p>' . lang::get('No photos or media files available') . '</p>';
     }
     else {
       if (isset($options['helpText'])) {

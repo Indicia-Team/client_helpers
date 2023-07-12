@@ -614,12 +614,12 @@ JS;
    *   List of modified controls.
    */
   private static function mapControlOptions($controlList) {
-    $mappings = array(
+    $mappings = [
       'name' => 'fieldname',
       'caption' => 'label',
       'options' => 'lookupValues',
       'description' => 'helpText',
-    );
+    ];
     foreach ($controlList as &$options) {
       foreach ($options as $option => $value) {
         if (isset($mappings[$option])) {
