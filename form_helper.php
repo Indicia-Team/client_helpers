@@ -547,9 +547,7 @@ JS;
 
       // Current form settings will overwrite the default.
       if (isset($options['currentSettings']) && isset($options['currentSettings'][$control['fieldname']])) {
-        $fieldSetting = $options['currentSettings'][$control['fieldname']];
-        $ctrlOptions['default'] = is_string($fieldSetting) ?
-          htmlspecialchars($fieldSetting, ENT_QUOTES, 'UTF-8') : $fieldSetting;
+        $ctrlOptions['default'] = $options['currentSettings'][$control['fieldname']];
       }
 
       $ctrlOptions['extraParams'] = array_merge($ctrlOptions['extraParams'], $options['readAuth']);
