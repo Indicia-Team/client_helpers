@@ -219,9 +219,7 @@ Sample ID',
   }
 
   public static function get_form($args, $nid) {
-    if (empty($_GET['sample_id'])) {
-      return 'This form requires an sample_id parameter in the URL.';
-    }
+    self::getEntityId('sample');
     iform_load_helpers(['report_helper']);
     data_entry_helper::$indiciaData['username'] = hostsite_get_user_field('name');
     data_entry_helper::$indiciaData['ajaxFormPostUrl'] = iform_ajaxproxy_url(NULL, 'occurrence') . "&sharing=$args[sharing]";
@@ -334,7 +332,7 @@ Sample ID',
         'occattrs' => implode(',', $occAttrIds),
         'limit' => 200,
         'useJsonAttributes' => TRUE,
-        'sample_id' => $_GET['sample_id'],
+        'sample_id' => self::$id,
       ],
       'caching' => TRUE,
       'cachetimeout' => 60,
@@ -359,7 +357,7 @@ Sample ID',
         'occattrs' => '',
         'limit' => 200,
         'useJsonAttributes' => TRUE,
-        'sample_id' => $_GET['sample_id'],
+        'sample_id' => self::$id,
       ],
       'caching' => TRUE,
       'cachetimeout' => 60,
@@ -462,7 +460,7 @@ Sample ID',
         'dataSource' => $options['dataSource'],
         'bands' => [['content' => str_replace(['{class}'], '', $indicia_templates['dataValue'])]],
         'extraParams' => [
-          'sample_id' => $_GET['sample_id'],
+          'sample_id' => self::$id,
           // The SQL needs to take a set of the hidden fields, so this needs to be converted from an array.
           'attrs' => strtolower(self::convertArrayToSet($fields)),
           'testagainst' => $args['testagainst'],
@@ -519,7 +517,7 @@ Sample ID',
       'type' => 'sample',
       'table' => 'sample_medium',
       'key' => 'sample_id',
-      'value' => $_GET['sample_id'],
+      'value' => self::$id,
     ];
     return self::getControlPhotos($auth, $args, $options, $settings);
   }
@@ -575,7 +573,7 @@ Sample ID',
     }
     if ($options['showParentChildSampleGeoms']) {
       $params = [
-        'sample_id' => $_GET['sample_id'],
+        'sample_id' => self::$id,
         'sharing' => $args['sharing'],
       ];
       $geoms = report_helper::get_report_data([
@@ -680,7 +678,7 @@ STRUCT;
   protected static function load_sample($auth, $args) {
     if (!isset(self::$sample)) {
       $params = [
-        'sample_id' => $_GET['sample_id'],
+        'sample_id' => self::$id,
         'sharing' => $args['sharing'],
         'allow_confidential' => $args['allow_confidential'] ? 1 : 0,
         'allow_sensitive_full_precision' => $args['allow_sensitive_full_precision'] ? 1 : 0,

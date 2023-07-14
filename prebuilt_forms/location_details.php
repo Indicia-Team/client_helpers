@@ -198,12 +198,7 @@ class iform_location_details extends BaseDynamicDetails {
   }
 
   public static function get_form($args, $nid) {
-    if (empty($_GET['location_id'])) {
-      return 'This form requires an location_id parameter in the URL.';
-    }
-    if (!preg_match('/^\d+$/', trim($_GET['location_id']))) {
-      return 'The location_id parameter in the URL must be a valid location ID.';
-    }
+    self::getEntityId('location');
     iform_load_helpers(['report_helper']);
     data_entry_helper::$indiciaData['username'] = hostsite_get_user_field('name');
     data_entry_helper::$indiciaData['ajaxFormPostUrl'] = iform_ajaxproxy_url(NULL, 'occurrence') . "&sharing=$args[sharing]";
@@ -408,7 +403,7 @@ class iform_location_details extends BaseDynamicDetails {
       'dataSource' => $options['dataSource'],
       'bands' => [['content' => str_replace(['{class}'], '', $indicia_templates['dataValue'])]],
       'extraParams' => [
-        'location_id' => $_GET['location_id'],
+        'location_id' => self::$id,
         // The SQL needs to take a set of the hidden fields, so this needs to
         // be converted from an array.
         'attrs' => strtolower(self::convertArrayToSet($fields)),
@@ -680,7 +675,7 @@ HTML;
   protected static function loadLocation(array $readAuth, array $args) {
     if (!isset(self::$location)) {
       $params = [
-        'location_id' => $_GET['location_id'],
+        'location_id' => self::$id,
       ];
       $locations = report_helper::get_report_data([
         'readAuth' => $readAuth,

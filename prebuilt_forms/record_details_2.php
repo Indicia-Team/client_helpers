@@ -263,12 +263,7 @@ Record ID',
   }
 
   public static function get_form($args, $nid) {
-    if (empty($_GET['occurrence_id'])) {
-      return 'This form requires an occurrence_id parameter in the URL.';
-    }
-    if (!preg_match('/^\d+$/', trim($_GET['occurrence_id']))) {
-      return 'The occurrence_id parameter in the URL must be a valid record ID.';
-    }
+    self::getEntityId('occurrence');
     iform_load_helpers(['report_helper']);
     if ($args['available_for_groups'] === '1') {
       if (empty($_GET['group_id'])) {
@@ -283,7 +278,7 @@ Record ID',
         'readAuth' => $readAuth,
         'dataSource' => 'library/occurrences/filterable_explore_list',
         'extraParams' => get_options_array_with_user_data($argArray['param_presets']) + [
-          'occurrence_id' => $_GET['occurrence_id'],
+          'occurrence_id' => self::$id,
           'wantCount' => '1',
           'wantRecords' => 0,
           'confidential' => $args['allow_confidential'] ? 'all' : 'f',
@@ -297,7 +292,7 @@ Record ID',
           'readAuth' => $readAuth,
           'dataSource' => 'library/occurrences/filterable_explore_list',
           'extraParams' => $readAuth + [
-            'occurrence_id' => $_GET['occurrence_id'],
+            'occurrence_id' => self::$id,
             'wantCount' => '1',
             'wantRecords' => 0,
           ],
@@ -450,7 +445,7 @@ Record ID',
         'dataSource' => $options['dataSource'],
         'bands' => [['content' => str_replace(['{class}'], '', $indicia_templates['dataValue'])]],
         'extraParams' => [
-          'occurrence_id' => $_GET['occurrence_id'],
+          'occurrence_id' => self::$id,
           // The SQL needs to take a set of the hidden fields, so this needs to
           // be converted from an array.
           'attrs' => strtolower(self::convertArrayToSet($fields)),
@@ -512,7 +507,7 @@ Record ID',
       'type' => 'occurrence',
       'table' => 'occurrence_medium',
       'key' => 'occurrence_id',
-      'value' => $_GET['occurrence_id'],
+      'value' => self::$id,
     ];
     return self::getControlPhotos($auth, $args, $options, $settings);
   }
@@ -649,7 +644,7 @@ JS;
     ], $options);
     $r = '<div>';
     $params = [
-      'occurrence_id' => $_GET['occurrence_id'],
+      'occurrence_id' => self::$id,
       'sortdir' => 'DESC',
       'orderby' => 'updated_on',
     ];
@@ -714,7 +709,7 @@ JS;
       $r .= '<input type="hidden" id="comment-by" value="' . hostsite_get_user_field('name') . '"/>';
       $r .= '<textarea id="comment-text"></textarea><br/>';
       $r .= '<button type="button" class="default-button" onclick="indiciaFns.saveComment(';
-      $r .= $_GET['occurrence_id'] . ');">' . lang::get('Save') . '</button>';
+      $r .= self::$id . ');">' . lang::get('Save') . '</button>';
       $r .= '</fieldset></form>';
     }
     $r .= '</div>';
@@ -743,7 +738,7 @@ JS;
       'bands' => [['content' => '<div class="field ui-helper-clearfix">{taxon_html} by {person_name} on {date}</div>']],
       'footer' => '</div>',
       'extraParams' => [
-        'occurrence_id' => $_GET['occurrence_id'],
+        'occurrence_id' => self::$id,
         'sharing' => $args['sharing'],
       ],
     ]);
@@ -782,7 +777,7 @@ JS;
       'mode' => 'report',
       'autoParamsForm' => FALSE,
       'extraParams' => [
-        'occurrence_id' => $_GET['occurrence_id'],
+        'occurrence_id' => self::$id,
         'sharing' => $args['sharing'],
       ],
     ]) . '</div>';
@@ -1061,7 +1056,7 @@ STRUCT;
   protected static function load_record($auth, $args) {
     if (!isset(self::$record)) {
       $params = array(
-        'occurrence_id' => $_GET['occurrence_id'],
+        'occurrence_id' => self::$id,
         'sharing' => $args['sharing'],
         'allow_confidential' => $args['allow_confidential'] ? 1 : 0,
         'allow_sensitive_full_precision' => $args['allow_sensitive_full_precision'] ? 1 : 0,
