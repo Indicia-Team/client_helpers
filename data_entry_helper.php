@@ -241,7 +241,7 @@ class data_entry_helper extends helper_base {
       'escaped_input_id' => self::jq_esc($options['inputId']),
       'escaped_id' => self::jq_esc($options['id']),
       'max' => array_key_exists('numValues', $options) ? ', max : ' . $options['numValues'] : '',
-      'formatFunction' => 'function(item) { return item.{captionField}; }',
+      'formatFunction' => "function(item) { return item.$options[captionField]; }",
       'simplify' => (isset($options['simplify']) && $options['simplify']) ? 'true' : 'false',
       'warnIfNoMatch' => TRUE,
       'continueOnBlur' => TRUE,

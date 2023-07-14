@@ -2835,13 +2835,13 @@ if (typeof validator!=='undefined') {
     if (isset($options['id'])) {
       $wrap = empty($options['controlWrapTemplate']) ? $indicia_templates['controlWrap'] : $indicia_templates[$options['controlWrapTemplate']];
       $r = str_replace([
-        '{control}',
         '{id}',
         '{wrapClasses}',
+        '{control}',
       ], [
-        "\n$r",
         str_replace(':', '-', $options['id']),
         $options['wrapClasses'],
+        "\n$r",
       ], $wrap);
     }
     if (!empty($options['tooltip'])) {
@@ -3132,7 +3132,10 @@ if (typeof validator!=='undefined') {
       array_push($replaceTags, '{'.$option.'|escape}');
       array_push($replaceValues, htmlspecialchars($value ?? ''));
     }
-    return str_replace($replaceTags, $replaceValues, $template);
+    // Use strtr instead of preg_replace so earlier replacements get polluted
+    // by later ones, e.g. {id} in default value picking up the control ID.
+    // See https://www.php.net/manual/en/function.str-replace.php#88569
+    return strtr($template, array_combine($replaceTags, $replaceValues));
   }
 
    /**
