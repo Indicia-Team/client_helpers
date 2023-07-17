@@ -370,6 +370,7 @@ class ElasticsearchReportHelper {
       ]
     );
     helper_base::addLanguageStringsToJs('cardGallery', [
+      'checkToIncludeInList' => 'Check this box to include the record in the list which any verification actions will be applied to.',
       'collapseCard' => 'Return card to normal size (C or +)',
       'expandCard' => 'Expand this card (C or +)',
       'fullScreenToolHint' => 'Click to view grid in full screen mode',
@@ -391,6 +392,7 @@ class ElasticsearchReportHelper {
       'columns',
       'includeFieldCaptions',
       'includeFullScreenTool',
+      'includeMultiSelectTool',
       'includePager',
       'includeSortTool',
       'keyboardNavigation',
@@ -511,6 +513,7 @@ HTML;
     // Fancybox for image popups.
     helper_base::add_resource('fancybox');
     helper_base::addLanguageStringsToJs('dataGrid', [
+      'checkToIncludeInList' => 'Check this box to include the record in the list which any verification actions will be applied to.',
       'columnSettingsToolHint' => 'Click to show grid column settings',
       'fullScreenToolHint' => 'Click to view grid in full screen mode',
       'noHeading' => 'no heading',
@@ -528,8 +531,8 @@ HTML;
       'includeColumnSettingsTool',
       'includeFilterRow',
       'includeFullScreenTool',
-      'includePager',
       'includeMultiSelectTool',
+      'includePager',
       'keyboardNavigation',
       'responsive',
       'responsiveOptions',
