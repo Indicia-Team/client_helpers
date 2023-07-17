@@ -1827,13 +1827,13 @@ HTML;
     // Work out any extra buttons we need for provided links.
     $optionalLinkArray = [];
     if (!empty($options['editPath'])) {
-      $optionalLinkArray[] = "<a class=\"edit $btnClass\" title=\"$lang[editThisRecord]\" target=\"_blank\"><span class=\"fas fa-edit\"></span></a>";
+      $optionalLinkArray[] = "<a class=\"edit $btnClassDefault\" title=\"$lang[editThisRecord]\" target=\"_blank\"><span class=\"fas fa-edit\"></span></a>";
     }
     if (!empty($options['viewPath'])) {
-      $optionalLinkArray[] = "<a class=\"view $btnClass\" target=\"_blank\" title=\"$lang[viewRecordDetails]\" target=\"_blank\"><span class=\"fas fa-file-invoice\"></span></a>";
+      $optionalLinkArray[] = "<a class=\"view $btnClassDefault\" target=\"_blank\" title=\"$lang[viewRecordDetails]\" target=\"_blank\"><span class=\"fas fa-file-invoice\"></span></a>";
     }
     if (!empty($options['speciesPath'])) {
-      $optionalLinkArray[] = "<a class=\"species $btnClass\" target=\"_blank\" title=\"$lang[viewSpeciesPage]\" target=\"_blank\"><span class=\"fas fa-file\"></span></a>";
+      $optionalLinkArray[] = "<a class=\"species $btnClassDefault\" target=\"_blank\" title=\"$lang[viewSpeciesPage]\" target=\"_blank\"><span class=\"fas fa-file\"></span></a>";
     }
     $optionalLinks = implode("\n  ", $optionalLinkArray);
     // Build some controls for the various forms.
@@ -1938,27 +1938,27 @@ HTML;
       <div class="all-selected-buttons idc-verificationButtons-row">
         Actions:
         <span class="fas fa-toggle-on toggle fa-2x" title="Toggle additional status levels"></span>
-        <button class="verify l1 $btnClass btn-sm" data-status="V" title="$lang[accepted]"><span class="far fa-check-circle status-V"></span></button>
-        <button class="verify l2 $btnClass" data-status="V1" title="$lang[acceptedCorrect]"><span class="fas fa-check-double status-V1"></span></button>
-        <button class="verify l2 $btnClass" data-status="V2" title="$lang[acceptedConsideredCorrect]"><span class="fas fa-check status-V2"></span></button>
-        <button class="verify $btnClass" data-status="C3" title="$lang[plausible]"><span class="fas fa-check-square status-C3"></span></button>
-        <button class="verify l1 $btnClass" data-status="R" title="$lang[notAccepted]"><span class="far fa-times-circle status-R"></span></button>
-        <button class="verify l2 $btnClass" data-status="R4" title="$lang[notAcceptedUnableToVerify]"><span class="fas fa-times status-R4"></span></button>
-        <button class="verify l2 $btnClass" data-status="R5" title="$lang[notAcceptedIncorrect]"><span class="fas fa-times status-R5"></span></button>
-        <button class="apply-to-parent-sample-contents single-only $btnClass" title="$lang[applyThisDecisionToParentSample]" disabled="disabled"><span class="fas fa-sitemap"></span></button>
+        <button class="verify l1 $btnClassDefault btn-sm" data-status="V" title="$lang[accepted]"><span class="far fa-check-circle status-V"></span></button>
+        <button class="verify l2 $btnClassDefault" data-status="V1" title="$lang[acceptedCorrect]"><span class="fas fa-check-double status-V1"></span></button>
+        <button class="verify l2 $btnClassDefault" data-status="V2" title="$lang[acceptedConsideredCorrect]"><span class="fas fa-check status-V2"></span></button>
+        <button class="verify $btnClassDefault" data-status="C3" title="$lang[plausible]"><span class="fas fa-check-square status-C3"></span></button>
+        <button class="verify l1 $btnClassDefault" data-status="R" title="$lang[notAccepted]"><span class="far fa-times-circle status-R"></span></button>
+        <button class="verify l2 $btnClassDefault" data-status="R4" title="$lang[notAcceptedUnableToVerify]"><span class="fas fa-times status-R4"></span></button>
+        <button class="verify l2 $btnClassDefault" data-status="R5" title="$lang[notAcceptedIncorrect]"><span class="fas fa-times status-R5"></span></button>
+        <button class="apply-to-parent-sample-contents single-only $btnClassDefault" title="$lang[applyThisDecisionToParentSample]" disabled="disabled"><span class="fas fa-sitemap"></span></button>
         <span class="sep"></span>
-        <button class="redet $btnClass" title="Redetermine this record"><span class="fas fa-tag"></span></button>
-        <button class="query $btnClass" data-query="Q" title="$lang[raiseQuery]"><span class="fas fa-question-circle query-Q"></span></button>
+        <button class="redet $btnClassDefault" title="Redetermine this record"><span class="fas fa-tag"></span></button>
+        <button class="query $btnClassDefault" data-query="Q" title="$lang[raiseQuery]"><span class="fas fa-question-circle query-Q"></span></button>
         <div class="multi-only apply-to">
           <span>$lang[applyTo]:</span>
-          <button class="multi-mode-selected active $btnClass">$lang[selected]</button>
+          <button class="multi-mode-selected active $btnClassDefault">$lang[selected]</button>
           |
-          <button class="multi-mode-table $btnClass">$lang[all]</button>
+          <button class="multi-mode-table $btnClassDefault">$lang[all]</button>
         </div>
       </div>
     </div>
     <div class="single-record-buttons idc-verificationButtons-row">
-      <button class="email-expert $btnClass" title="$lang[contactExpert]"><span class="fas fa-chalkboard-teacher"></span></button>
+      <button class="email-expert $btnClassDefault" title="$lang[contactExpert]"><span class="fas fa-chalkboard-teacher"></span></button>
       $optionalLinks
       $uploadButton
     </div>
@@ -2028,7 +2028,7 @@ HTML;
     $loadRedetTemplateDropdown
     <div class="form-buttons">
       <button type="button" class="$btnClass" id="apply-redet">$lang[applyRedetermination]</button>
-      <button type="button" class="$btnClass cancel">$lang[cancel]</button>
+      <button type="button" class="$btnClassDefault cancel">$lang[cancel]</button>
     </div>
   </form>
 </div>
