@@ -1434,6 +1434,7 @@ HTML;
       }
     }
     $options = array_merge([
+      'from' => 0,
       'mode' => 'docs',
     ], $options);
     self::applySourceModeDefaults($options);
