@@ -1104,6 +1104,9 @@ JS;
  *     selection of a particular context (a record which has
  *     defines_permissions=TRUE in the filters table. Set to "default" to
  *     select their profile verification settings when sharing=verification.
+ *   * entity - defaults to occurrence. Set to sample to use for sample based
+ *     reports, which removes the filtering options relating to the occurrence
+ *     level of data.
  *   * filter_id - can also be passed as URL parameter. Force the initial
  *     selection of a particular filter record in the filters table.
  *   * filterTypes - allows control of the list of filter panels available,
