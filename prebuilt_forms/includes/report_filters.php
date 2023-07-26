@@ -1233,9 +1233,21 @@ function report_filter_panel(array $readAuth, $options, $website_id, &$hiddenStu
   report_helper::add_resource('reportfilters');
   report_helper::add_resource('validation');
   report_helper::add_resource('fancybox');
+  report_helper::add_resource('font_awesome');
   if (function_exists('hostsite_add_library')) {
     hostsite_add_library('collapse');
   }
+  $lang = [
+    'context' => lang::get('Context'),
+    'deleteFilter' => lang::get('Delete filter'),
+    'filter' => lang::get('Filter'),
+    'filterChanged' => lang::get('This filter has been changed'),
+    'filterSaveInstruct' => lang::get('To save these filter settings for future use, give the filter a name then click Save Filter.'),
+    'filterName' => lang::get('Filter name'),
+    'saveFilter' => lang::get('Save filter'),
+    'selectStoredFilter' => lang::get('Select stored filter'),
+    'storedFilters' => lang::get('Stored filters'),
+  ];
   $filterData = report_filters_load_existing($readAuth, $options['sharingCode']);
   $existing = '';
   $contexts = '';
@@ -1407,7 +1419,7 @@ function report_filter_panel(array $readAuth, $options, $website_id, &$hiddenStu
       }
     }
   }
-  $r = '<div id="standard-params" class="ui-widget">';
+  $r = '<div id="standard-params">';
   if ($options['allowSave'] && $options['admin']) {
     if (empty($_GET['filters_user_id'])) {
       // New filter to create, so sharing type can be edited.
@@ -1434,9 +1446,11 @@ function report_filter_panel(array $readAuth, $options, $website_id, &$hiddenStu
     }
   }
   if ($options['allowLoad']) {
-    $r .= '<div class="header ui-toolbar ui-widget-header ui-helper-clearfix"><div><span id="active-filter-label">'.
-        '</span></div><span class="changed" style="display:none" title="' .
-        lang::get('This filter has been changed') . '">*</span>';
+    $r .= <<<HTML
+<div class="header ui-toolbar ui-widget-header ui-helper-clearfix form-inline">
+  <span id="active-filter-label">$lang[storedFilters]</span>
+  <span class="changed" style="display:none" title="$lang[filterChanged]">*</span>
+HTML;
     $r .= '<div>';
     if ($customDefs) {
       data_entry_helper::$javascript .= "indiciaData.filterCustomDefs = " . json_encode($customDefs) . ";\n";
@@ -1444,7 +1458,10 @@ function report_filter_panel(array $readAuth, $options, $website_id, &$hiddenStu
     if ($contexts) {
       data_entry_helper::$javascript .= "indiciaData.filterContextDefs = " . json_encode($contextDefs) . ";\n";
       if (count($contextDefs) > 1) {
-        $r .= '<label for="context-filter">' . lang::get('Context:') . "</label><select id=\"context-filter\">$contexts</select>";
+        $r .= <<<HTML
+<label for="context-filter">$lang[context]:</label>
+<select id="context-filter" class="$indicia_templates[formControlClass]">$contexts</select>
+HTML;
       }
       else {
         $keys = array_keys($contextDefs);
@@ -1477,13 +1494,18 @@ function report_filter_panel(array $readAuth, $options, $website_id, &$hiddenStu
       unset(report_helper::$initialFilterParamsToApply[$key]);
       unset(report_helper::$initialFilterParamsToApply["{$key}_context"]);
     }
-    $r .= '<label for="select-filter">' . lang::get('Filter:') . '</label><select id="select-filter"><option value="" selected="selected">' .
-        lang::get('Select filter') . "...</option>$existing</select>";
+    $r .= <<<HTML
+<label for="select-filter">$lang[filter]:</label>
+<select id="select-filter" class="$indicia_templates[formControlClass]">
+  <option value="" selected="selected">$lang[selectStoredFilter]...</option>
+  $existing
+</select>
+HTML;
     $r .= helper_base::apply_static_template('button', [
       'id' => 'filter-apply',
       'title' => lang::get('Apply filter'),
       'class' => ' class="' . $indicia_templates['buttonDefaultClass'] . '"',
-      'caption' => lang::get('Apply'),
+      'caption' => lang::get('Apply filter'),
     ]);
     $r .= helper_base::apply_static_template('button', [
       'id' => 'filter-reset',
@@ -1584,9 +1606,14 @@ HTML;
   }
   // End of filter panes div.
   $r .= '</div>';
-  $r .= '<div class="toolbar">';
   if ($options['allowSave']) {
-    $r .= '<label for="filter:title">' . lang::get('Save filter as') . ":</label> <input id=\"filter:title\" class=\"$indicia_templates[formControlClass]\"/>";
+    $inline = $options['admin'] ? '' : ' form-inline';
+    $r .= <<<HTML
+<p>$lang[filterSaveInstruct]</p>
+<div class="save-controls$inline">
+<label for="filter:title">$lang[filterName]:</label> <input id="filter:title" class="$indicia_templates[formControlClass]" />
+HTML;
+
     if ($options['admin']) {
       $r .= '<br/>';
       if (empty($options['adminCanSetSharingTo'])) {
@@ -1607,11 +1634,14 @@ HTML;
         'fieldname' => 'filter:description',
       ]);
     }
-    $r .= '<img src="' . data_entry_helper::$images_path . 'nuvola/save-22px.png" width="22" height="22" alt="Save filter" title="Save filter" class="button" id="filter-save"/>';
-    $r .= '<img src="' . data_entry_helper::$images_path . 'trash-22px.png" width="22" height="22" alt="Bin this filter" title="Bin this filter" class="button disabled" id="filter-delete"/>';
+    $r .= <<<HTML
+<button class="$indicia_templates[buttonHighlightedClass]" id="filter-save"><i class="fas fa-save"></i> $lang[saveFilter]</button>
+<button class="$indicia_templates[buttonWarningClass] disabled" id="filter-delete"><i class="fas fa-trash-alt"></i> $lang[deleteFilter]</button>
+HTML;
+    $r .= '</div>';
   }
-  // End of toolbar + clearfix divs.
-  $r .= '</div></div>';
+  // End of clearfix div.
+  $r .= '</div>';
   $r .= '</div>';
   if (!empty($options['filters_user_id'])) {
     // If we are preloading based on a filter user ID, we need to get the
