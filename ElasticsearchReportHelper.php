@@ -813,8 +813,7 @@ JS;
    *   Control HTML.
    */
   private static function internalLocationSelect(array $options, $addGeomHiddenInput) {
-    if (empty($options['locationTypeId']) ||
-        (!is_array($options['locationTypeId']) && !preg_match('/^\d+$/', $options['locationTypeId']))) {
+    if (!is_array($options['locationTypeId']) && !preg_match('/^\d+$/', $options['locationTypeId'])) {
       throw new Exception('An integer or integer array @locationTypeId parameter is required for location select controls');
     }
     $typeIds = is_array($options['locationTypeId']) ? $options['locationTypeId'] : [$options['locationTypeId']];
@@ -847,7 +846,7 @@ JS;
         $r .= "<input type=\"hidden\" id=\"$options[id]-geom\" class=\"es-filter-param $options[class]-geom\" data-es-bool-clause=\"must\">";
       }
     }
-    return $r;
+    return "<div class=\"location-select-cntr\">$r</div>";
   }
 
   /**
@@ -859,8 +858,11 @@ JS;
    * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-highergeopgraphyselect
    */
   public static function higherGeographySelect(array $options) {
+    self::checkOptions('higherGeographySelect', $options,
+      ['locationTypeId'],
+      []
+    );
     $options = array_merge([
-      'id' => 'higher-geography-select',
       'class' => 'es-higher-geography-select',
     ], $options);
     return self::internalLocationSelect($options, FALSE);
@@ -875,8 +877,11 @@ JS;
    * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-locationselect
    */
   public static function locationSelect(array $options) {
+    self::checkOptions('locationSelect', $options,
+      ['locationTypeId'],
+      []
+    );
     $options = array_merge([
-      'id' => 'location-select',
       'class' => 'es-location-select',
     ], $options);
     return self::internalLocationSelect($options, TRUE);
