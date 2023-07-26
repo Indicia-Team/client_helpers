@@ -307,7 +307,7 @@ class filter_what extends FilterBase {
     $r .= '</div>';
     $r .= "</div>\n";
     data_entry_helper::enable_tabs([
-      'divId' => 'what-tabs'
+      'divId' => 'what-tabs',
     ]);
 
     return $r;
@@ -575,7 +575,8 @@ class filter_where extends FilterBase {
       $r .= map_helper::map_panel($mapOpts);
     }
     else {
-      // We are going to use an existing map for drawing boundaries etc. So prepare a container.
+      // We are going to use an existing map for drawing boundaries etc. So
+      // prepare a container.
       $r .= '<div id="filter-map-container"></div>';
       data_entry_helper::$javascript .= "indiciaData.linkToMapDiv='" . $options['linkToMapDiv'] . "';\n";
     }
