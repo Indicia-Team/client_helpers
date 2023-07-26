@@ -7653,9 +7653,17 @@ if (errors$uniq.length>0) {
     $assocDataKeys = preg_grep('/occurrence_association:\d+:(\d+)?:from_occurrence_id/', array_keys($arr));
     $assocData = count($assocDataKeys) ?
         array_intersect_key($arr, array_combine($assocDataKeys, $assocDataKeys)) : [];
-    $existingSampleIdsByOccIds = !empty($_POST['existingSampleIdsByOccIds']) ?
-        json_decode($_POST['existingSampleIdsByOccIds'], TRUE) : [];
+        
+    // Get the posted data that might link existing occurrences to subsamples.
+    // Each grid on the page may include subsamples with key 
+    // <grid-id>-existingSampleIdsByOccIds
+    $existingSampleIdsByOccIds = [];
+    $subsampleKeys = preg_grep('/.+existingSampleIdsByOccIds/', array_keys($arr));
+    foreach($subsampleKeys as $subsampleKey) {
+      $existingSampleIdsByOccIds = json_decode($arr[$subsampleKey], TRUE) + $existingSampleIdsByOccIds;
+    }
     $unusedExistingSampleIds = array_values($existingSampleIdsByOccIds);
+
     foreach ($records as $id => $record) {
       // Determine the id of the grid this record is from.
       // $id = <grid_id>-<rowIndex> but <grid_id> could contain a hyphen
@@ -8366,28 +8374,38 @@ HTML;
     $r = '';
     $data = [];
     $geomsData = [];
+
     if ($options['subSamplePerRow'] && !empty(self::$entity_to_load)) {
+      // Locate all subsample ids by key sc:<sampleIdx>:<sampleId>:sample:id.
       $sampleIdKeys = preg_grep("/^sc:\d+:\d+:sample:id$/", array_keys(self::$entity_to_load));
+      $samplesByIdx = [];
       foreach ($sampleIdKeys as $sampleIdKey) {
-        if (preg_match("/^sc:(?<sampleIdx>\d+):(?<sample_id>\d+):sample:id$/", $sampleIdKey, $matches)) {
-          $sample_id = $matches['sample_id'];
-          $sampleIdx = $matches['sampleIdx'];
-          $sampleIdxKeys = preg_grep("/^sc:$sampleIdx:\d+:occurrence:sampleIDX$/", array_keys(self::$entity_to_load));
-          if ($sampleIdxKeys) {
-            foreach ($sampleIdxKeys as $sampleIdxKey) {
-              if (preg_match("/^sc:$sampleIdx:(?<occurrence_id>\d+):occurrence:sampleIDX$/", $sampleIdxKey, $matches)) {
-                $data[$matches['occurrence_id']] = $sample_id;
-                $geomsData[self::$entity_to_load["sc:$sampleIdx:$sample_id:sample:entered_sref"]]
-                  = self::$entity_to_load["sc:$sampleIdx:$sample_id:sample:geom"];
-              }
-            }
-          }
-        }
+        preg_match("/^sc:(?<sampleIdx>\d+):\d+:sample:id$/", $sampleIdKey, $matches);
+        $sampleId = self::$entity_to_load[$sampleIdKey];
+        $sampleIdx = $matches['sampleIdx'];
+        $samplesByIdx[$sampleIdx] = $sampleId;
       }
+
+      // Locate all sampleIDXs by key sc:<rowIdx><occurrenceId>:occurrence:sampleIDX.
+      $sampleIdxKeys = preg_grep("/^sc:\d+:\d+:occurrence:sampleIDX$/", array_keys(self::$entity_to_load));
+      foreach ($sampleIdxKeys as $sampleIdxKey) {
+        preg_match("/^sc:\d+:(?<occurrence_id>\d+):occurrence:sampleIDX$/", $sampleIdxKey, $matches);
+        $sampleIdx = self::$entity_to_load[$sampleIdxKey];
+        $sampleId = $samplesByIdx[$sampleIdx];
+        $occurrenceId = $matches['occurrence_id'];
+        $srefKey = "sc:$sampleIdx:$sampleId:sample:entered_sref";
+        $geomKey = "sc:$sampleIdx:$sampleId:sample:geom";
+        // Build the arrays we want to output
+        $data[$occurrenceId] = $sampleId;
+        $geomsData[self::$entity_to_load[$srefKey]] = self::$entity_to_load[$geomKey];
+      }
+
       $value = htmlspecialchars(json_encode($data));
-      $r .= "<input type=\"hidden\" name=\"existingSampleIdsByOccIds\" value=\"$value\" />\n";
+      $r .= "<input type=\"hidden\" name=\"$options[id]-existingSampleIdsByOccIds\" value=\"$value\" />\n";
+
       $geomsValue = htmlspecialchars(json_encode($geomsData));
-      $r .= "<input type=\"hidden\" id=\"existingSampleGeomsBySref\" value=\"$geomsValue\" />\n";
+      $r .= "<input type=\"hidden\" id=\"$options[id]-existingSampleGeomsBySref\"
+        class=\"existingSampleGeomsBySref\" value=\"$geomsValue\" />\n";
     }
     return $r;
   }
