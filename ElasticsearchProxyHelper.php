@@ -210,8 +210,9 @@ class ElasticsearchProxyHelper {
       'extraParams' => ['occurrence_id' => $_GET['occurrence_id']],
     ];
     $reportData = report_helper::get_report_data($options);
-    // Convert the output to a structured JSON object.
-    $data = [];
+    // Convert the output to a structured JSON object, including fresh read
+    // auth tokens.
+    $data = ['auth' => $readAuth];
     // Organise some attributes by system function, so we can make output
     // consistent.
     $sysFuncAttrs = [];
