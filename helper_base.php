@@ -2502,11 +2502,10 @@ indiciaData.jQuery = jQuery; //saving the current version of jQuery
         self::$js_read_tokens['url'] = self::getProxiedBaseUrl();
         $script .= "indiciaData.read = " . json_encode(self::$js_read_tokens) . ";\n";
       }
-      if (!empty($javascript) || !empty($late_javascript)) {
-        if (!self::$is_ajax) {
-          $script .= "\n$(document).ready(function() {\n";
-        }
-        $script .= <<<JS
+      if (!self::$is_ajax) {
+        $script .= "\n$(document).ready(function() {\n";
+      }
+      $script .= <<<JS
 indiciaData.documentReady = 'started';
 if (typeof indiciaFns.initDataSources !== 'undefined') {
   indiciaFns.initDataSources();
@@ -2530,9 +2529,8 @@ if (indiciaData.windowLoaded === 'done') {
 indiciaData.documentReady = 'done';
 
 JS;
-        if (!self::$is_ajax) {
-          $script .= "});\n";
-        }
+      if (!self::$is_ajax) {
+        $script .= "});\n";
       }
       if (!empty($onload_javascript)) {
         if (self::$is_ajax) {
@@ -2541,17 +2539,17 @@ JS;
           $script .= "$onload_javascript\n";
         }
         else {
-          // If no code running on docReady, can proceed with onload without
-          // testing.
-          $documentReadyDone = empty($javascript) && empty($late_javascript) ? "indiciaData.documentReady = 'done';" : '';
           // Create a function that can be called from window.onLoad. Don't put
           // it directly in the onload in case another form is added to the
           // same page which overwrites onload.
           $script .= <<<JS
-$documentReadyDone
 indiciaData.onloadFns.push(function() {
   $onload_javascript
 });
+JS;
+        }
+      }
+      $script .= <<<JS
 window.onload = function() {
   indiciaData.windowLoad = 'started';
   // Ensure this is only run after document.ready.
@@ -2564,8 +2562,6 @@ window.onload = function() {
 }
 
 JS;
-        }
-      }
       $script .= $closure ? "})(jQuery);\n" : "";
       $script .= $includeWrapper ? "/* ]]> */</script>\n" : "";
     }
