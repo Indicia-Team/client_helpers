@@ -37,7 +37,7 @@
  *   If NULL, the code of the language in use on the host site is returned.
  *
  * @return string
- *   The three-character language code corresponding to the Slang parameter.
+ *   The three-character language code corresponding to the $lang parameter.
  *
  * @todo Complete the list.
  */
@@ -67,15 +67,19 @@ function iform_lang_iso_639_2($lang = NULL) {
     'de' => 'deu', // German.
     'hu' => 'hun', // Hugarian.
     'ga' => 'gle', // Irish.
+    'it' => 'ita', // Italian.
     'ja' => 'jpn', // Japanese.
     'la' => 'lat', // Latin.
     'lt' => 'lit', // Lithuanian.
     'lb' => 'ltz', // Luxembourgish.
+    'no' => 'nor', // Norwegian.
     'pl' => 'pol', // Polish.
+    'pt' => 'por', // Portuguese.
     'ru' => 'rus', // Russian.
     'sl' => 'slv', // Slovenian.
     'es' => 'spa', // Spanish.
     'sv' => 'swe', // Swedish.
+    'tr' => 'tur', // Turkish.
     'cy' => 'cym', // Welsh.
   ];
   return $list[$lang];

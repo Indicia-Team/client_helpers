@@ -2711,10 +2711,14 @@ if (typeof mapSettingsHooks!=='undefined') {
     foreach ($row as $key=>$value) {
       $value = $value === NULL ? '' : $value;
       $jsReplacements[$key] = $value;
-      $jsReplacements["$key-escape-quote"] = str_replace("'", "\'", $value);
-      $jsReplacements["$key-escape-dblquote"] = str_replace('"', '\"', $value);
-      $jsReplacements["$key-escape-htmlquote"] = str_replace("'", "&#39;", $value);
-      $jsReplacements["$key-escape-htmldblquote"] = str_replace('"', '&quot;', $value);
+      $jsReplacements["$key-escape-quote"] =
+        isset($value) ? str_replace("'", "\'", $value) : NULL;
+      $jsReplacements["$key-escape-dblquote"] =
+        isset($value) ? str_replace('"', '\"', $value) : NULL;
+      $jsReplacements["$key-escape-htmlquote"] =
+        isset($value) ? str_replace("'", "&#39;", $value) : NULL;
+      $jsReplacements["$key-escape-htmldblquote"] =
+        isset($value) ? str_replace('"', '&quot;', $value) : NULL;
     }
     $links = [];
     $currentUrl = self::get_reload_link_parts(); // needed for params
