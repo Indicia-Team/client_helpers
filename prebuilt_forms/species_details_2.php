@@ -553,6 +553,12 @@ class iform_species_details_2 extends BaseDynamicDetails {
       // Exclude rejected records in ES queries.
       $esFilter .= self::createEsFilterHtml('identification.verification_status', 'R', 'term', 'must_not');
 
+      // Exclude unverified records if 'xu' GET URL param is set to on
+      if (isset($_GET['xu']) && $_GET['xu'] === 'on') {
+        $esFilter .= self::createEsFilterHtml('identification.verification_status', '', 'term', 'must_not');
+        $esFilter .= self::createEsFilterHtml('identification.verification_status', 'C', 'term', 'must_not');
+      }
+
       return $taxonNames . $esFilter . parent::get_form_html($args, $auth, $attributes);
     }
   }
@@ -1037,6 +1043,7 @@ class iform_species_details_2 extends BaseDynamicDetails {
       'functionName' => 'populateRecsByYearChart',
     ];
     $r .= ElasticsearchReportHelper::customScript($optionsCustomScript);
+    $r .= '<div>Records that span more than one year are not included in this chart.</div>';
     $r .= '<div class="brc-recsbyyear-chart"></div>';
     return $r;
   }
@@ -1194,8 +1201,8 @@ class iform_species_details_2 extends BaseDynamicDetails {
       'mode' => 'compositeAggregation',
       'uniqueField' => 'location.grid_square.10km.centre',
       'aggregation' => [
-        'minYear' => ['min' => ['field' => 'event.year']],
-        'maxYear' => ['max' => ['field' => 'event.year']],
+        'minYear' => ['min' => ['field' => 'event.date_start']],
+        'maxYear' => ['max' => ['field' => 'event.date_end']],
       ],
       'proxyCacheTimeout' => 300,
     ];
@@ -1253,11 +1260,24 @@ class iform_species_details_2 extends BaseDynamicDetails {
       $r .= '<button style="margin-left: 0.5em" class="button brc-hectad-map-image-download">' . lang::get('Download') . '</button>';
     }
     $r .= '</div>';
-
     $r .= '<div class="brc-hectad-map"></div>';
     $r .= '<div id="brc-hectad-map-dot-details">Move mouse cursor over dot for info</div>';
-    $r .= '<div style="margin: 0 0 2em 0; font-size: small">Rejected records are excluded from this map. Unverified records are included.</div>';
-
+    if (isset($_GET['xu']) && $_GET['xu'] === 'on') {
+      $r .= '<div style="font-size: small">Rejected and unverified records are excluded from this map.</div>';
+    } else {
+      $r .= '<div style="font-size: small">Rejected records are excluded from this map. Unverified records are included.</div>';
+    }
+    $r .= '<form method="GET" id="unverified-checkbox-form">';
+    $r .= '<div style="margin: 0 0 2em 0;">';
+    if (isset($_GET['xu']) && $_GET['xu'] === 'on') {
+      $r .= '<input type="checkbox" onChange="this.form.submit()" id="xu" name="xu" style="position: relative; top: 2px" checked>';
+    } else {
+      $r .= '<input type="checkbox" onChange="this.form.submit()" id="xu" name="xu" style="position: relative; top: 2px">';
+    }
+    $r .= '<label for="brc-hectad-map-exclude-unverified" style="margin-left: 0.5em">Exclude unverified records</label>';
+    $r .= '</div>';
+    $r .= '<input type="hidden" id="taxa_taxon_list_id" name="taxa_taxon_list_id" value="' . self::$taxaTaxonListId . '"></input>';
+    $r .= '</form>';
     return $r;
   }
 
@@ -1709,6 +1729,11 @@ class iform_species_details_2 extends BaseDynamicDetails {
     $r = call_user_func(['data_entry_helper', 'species_autocomplete'], $species_ctrl_opts);
 
     $r .= '<form method="GET" id="taxon-search-form">';
+    if (isset($_GET['xu']) && $_GET['xu'] === 'on') {
+      // If xu param set on URL, then set hidden param. This preserves
+      // the value of the hectad map exclude unverified if used.
+      $r .= '<input type="hidden" id="xu" name="xu" value="on">';
+    }
     $r .= '<input type="hidden" id="taxa_taxon_list_id" name="taxa_taxon_list_id"></input>';
     $r .= '</form>';
     $r .= '<button id="submit-taxon-search-form" type="button" onclick="indiciaFns.speciesDetailsSub()">Get details</button>';
