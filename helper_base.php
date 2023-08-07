@@ -2398,11 +2398,11 @@ HTML;
       else {
         $value = $data;
       }
-      if (strpos($key, '-') !== FALSE) {
-        $r[] = "indiciaData['$key'] = $value;";
+      if (preg_match('/^[a-zA-Z0-9_$]$/', $key)) {
+        $r[] = "indiciaData.$key = $value;";
       }
       else {
-        $r[] = "indiciaData.$key = $value;";
+        $r[] = "indiciaData['$key'] = $value;";
       }
     }
     return implode("\n", $r) . "\n";
