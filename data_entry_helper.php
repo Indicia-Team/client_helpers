@@ -1900,7 +1900,13 @@ JS;
     $options['class'] = trim($options['class'] . ' control-box jsonwidget');
 
     self::add_resource('jsonwidget');
-    $options['default'] = str_replace(["\\n", "\r", "\n", "'"], ['\\\n', '\r', '\n', "\'"], $options['default']);
+    if (isset($options['default'])) {
+      $options['default'] = str_replace(
+        ["\\n", "\r", "\n", "'"],
+        ['\\\n', '\r', '\n', "\'"],
+        $options['default']
+      );
+    }
     self::$javascript .= <<<JS
 $('#$options[id]').jsonedit({
   schema: $options[schema],
