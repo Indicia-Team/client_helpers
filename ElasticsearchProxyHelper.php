@@ -1050,6 +1050,7 @@ class ElasticsearchProxyHelper {
         // One of the standard ES field based query types (e.g. term or match).
         // Special handling needed for metadata and release_status filters.
         if ($qryConfig['field'] == 'metadata.confidential') {
+          self::$confidentialFilterApplied = TRUE;
           if ($qryConfig['value'] == 'all') {
             // A special value removing any filtering on confidential.
             continue;
@@ -1057,7 +1058,6 @@ class ElasticsearchProxyHelper {
           // Convert other values using PHP boolean rules.
           // Omit the filter and confidential = false is applied by default.
           $qryConfig['value'] = (bool) $qryConfig['value'];
-          self::$confidentialFilterApplied = TRUE;
         }
         elseif ($qryConfig['field'] == 'metadata.release_status') {
           // Omit the filter and release_status = 'R' is applied by default.
