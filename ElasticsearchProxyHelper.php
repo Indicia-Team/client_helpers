@@ -1047,6 +1047,21 @@ class ElasticsearchProxyHelper {
       }
       elseif (in_array($qryConfig['query_type'], $arrayFieldQueryTypes)) {
         // One of the standard ES field based query types (e.g. term or match).
+        // Special handling needed for metadata and release_status filters.
+        if ($qryConfig['field'] == 'metadata.confidential') {
+          if ($qryConfig['value'] == 'all') {
+            // A special value removing any filtering on confidential.
+            continue;
+          }
+          // Convert other values using PHP boolean rules.
+          // Omit the filter and confidential = false is applied by default.
+          $qryConfig['value'] = (bool) $qryConfig['value'];
+          self::$confidentialFilterApplied = TRUE;
+        }
+        elseif ($qryConfig['field'] == 'metadata.release_status') {
+          // Omit the filter and release_status = 'R' is applied by default.
+          self::$releaseStatusFilterApplied = TRUE;
+        }
         $queryDef = [$qryConfig['query_type'] => [$qryConfig['field'] => json_decode($qryConfig['value'], TRUE)]];
       }
       elseif (in_array($qryConfig['query_type'], $stringQueryTypes)) {
