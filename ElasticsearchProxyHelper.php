@@ -1346,7 +1346,7 @@ class ElasticsearchProxyHelper {
     self::applyUserFiltersIdentificationDifficulty($definition, $bool);
     self::applyUserFiltersRuleChecks($definition, $bool);
     self::applyUserFiltersAutoCheckRule($definition, $bool);
-    self::applyUserFiltersHasPhotos($readAuth, $definition, ['has_photos'], $bool);
+    self::applyUserFiltersHasPhotos($definition, ['has_photos'], $bool, $readAuth);
     self::applyUserFiltersWebsiteList($definition, $bool);
     self::applyUserFiltersSurveyList($definition, $bool);
     self::applyUserFiltersImportGuidList($definition, $bool);
@@ -2153,8 +2153,6 @@ class ElasticsearchProxyHelper {
   /**
    * Converts an Indicia filter definition has_photos filter to an ES query.
    *
-   * @param array $readAuth
-   *   Read authentication tokens.
    * @param array $definition
    *   Definition loaded for the Indicia filter.
    * @param array $params
@@ -2162,8 +2160,10 @@ class ElasticsearchProxyHelper {
    *   (allowing for deprecated names etc).
    * @param array $bool
    *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   * @param array $readAuth
+   *   Read authentication tokens.
    */
-  private static function applyUserFiltersHasPhotos(array $readAuth, array $definition, array $params, array &$bool) {
+  private static function applyUserFiltersHasPhotos(array $definition, array $params, array &$bool, array $readAuth) {
     $filter = self::getDefinitionFilter($definition, $params);
     if (!empty($filter)) {
       $boolClause = !empty($filter['op']) && $filter['op'] === 'not in' ? 'must_not' : 'must';
