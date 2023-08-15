@@ -1327,7 +1327,7 @@ class ElasticsearchProxyHelper {
     self::applyUserFiltersTaxonGroupList($definition, $bool);
     self::applyUserFiltersTaxaTaxonList($definition, $bool, $readAuth);
     self::applyUserFiltersTaxonMeaning($definition, $bool, $readAuth);
-    self::applyUserFiltersTaxaTaxonListExternalKey($definition, $bool, $readAuth);
+    self::applyUserFiltersTaxaTaxonListExternalKey($definition, $bool);
     self::applyUserFiltersTaxonRankSortOrder($definition, $bool);
     self::applyFlagFilter('marine', $definition, $bool);
     self::applyFlagFilter('freshwater', $definition, $bool);
@@ -1404,8 +1404,6 @@ class ElasticsearchProxyHelper {
   /**
    * Generic function to apply a taxonomy filter to ES query.
    *
-   * @param array $definition
-   *   Definition loaded for the Indicia filter.
    * @param array $bool
    *   Bool clauses that filters can be added to (e.g. $bool['must']).
    * @param array $readAuth
@@ -1415,7 +1413,7 @@ class ElasticsearchProxyHelper {
    * @param string $filterValues
    *   Comma separated list of IDs to filter against.
    */
-  private static function applyTaxonomyFilter(array $definition, array &$bool, array $readAuth, $filterField, $filterValues) {
+  private static function applyTaxonomyFilter(array &$bool, array $readAuth, $filterField, $filterValues) {
     // Convert the IDs to external keys, stored in ES as taxon_ids.
     $taxonData = helper_base::get_population_data([
       'report' => 'library/taxa/convert_ids_to_external_keys',
@@ -1451,7 +1449,7 @@ class ElasticsearchProxyHelper {
       'higher_taxa_taxon_list_id',
     ]);
     if (!empty($filter)) {
-      self::applyTaxonomyFilter($definition, $bool, $readAuth, 'id', $filter['value']);
+      self::applyTaxonomyFilter($bool, $readAuth, 'id', $filter['value']);
     }
   }
 
@@ -1471,7 +1469,7 @@ class ElasticsearchProxyHelper {
       'taxon_meaning_id',
     ]);
     if (!empty($filter)) {
-      self::applyTaxonomyFilter($definition, $bool, $readAuth, 'taxon_meaning_id', $filter['value']);
+      self::applyTaxonomyFilter($bool, $readAuth, 'taxon_meaning_id', $filter['value']);
     }
   }
 
@@ -1482,10 +1480,8 @@ class ElasticsearchProxyHelper {
    *   Definition loaded for the Indicia filter.
    * @param array $bool
    *   Bool clauses that filters can be added to (e.g. $bool['must']).
-   * @param array $readAuth
-   *   Read authentication tokens.
    */
-  private static function applyUserFiltersTaxaTaxonListExternalKey(array $definition, array &$bool, array $readAuth) {
+  private static function applyUserFiltersTaxaTaxonListExternalKey(array $definition, array &$bool) {
     $filter = self::getDefinitionFilter($definition, [
       'taxa_taxon_list_external_key_list',
     ]);
