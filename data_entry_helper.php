@@ -1900,7 +1900,13 @@ JS;
     $options['class'] = trim($options['class'] . ' control-box jsonwidget');
 
     self::add_resource('jsonwidget');
-    $options['default'] = str_replace(["\\n", "\r", "\n", "'"], ['\\\n', '\r', '\n', "\'"], $options['default']);
+    if (isset($options['default'])) {
+      $options['default'] = str_replace(
+        ["\\n", "\r", "\n", "'"],
+        ['\\\n', '\r', '\n', "\'"],
+        $options['default']
+      );
+    }
     self::$javascript .= <<<JS
 $('#$options[id]').jsonedit({
   schema: $options[schema],
@@ -7113,7 +7119,6 @@ HTML;
   private static function initLinkedLists($options) {
     // Setup JavaScript to do the population when the parent control changes.
     $parentControlId = str_replace(':', '\\:', $options['parentControlId']);
-    $escapedId = str_replace(':','\\:', $options['id']);
     if (!empty($options['report'])) {
       $url = parent::getProxiedBaseUrl() . "index.php/services/report/requestReport";
       $request = "$url?report=" . $options['report'] . ".xml&mode=json&reportSource=local&callback=?";
@@ -7146,14 +7151,17 @@ HTML;
     if (array_key_exists('extraParams', $options)) {
       $request .= '&' . http_build_query($options['extraParams']);
     }
-    // store default in JavaScript so we can load the correct value after AJAX population.
-    if (!empty($options['default']) && preg_match('/^[0-9]+$/', $options['default']))
-      self::$javascript .= "indiciaData['default$escapedId']=$options[default];\n";
+    // Store default in JavaScript so we can load the correct value after AJAX
+    // population.
+    if (!empty($options['default']) && preg_match('/^[0-9]+$/', $options['default'])) {
+      self::$indiciaData["default$options[id]"] = $options['default'];
+    }
     if (!isset(self::$indiciaData['linkedSelects'])) {
       self::$indiciaData['linkedSelects'] = [];
     }
     self::$indiciaData['linkedSelects'][] = [
-      'escapedId' => $escapedId,
+      'id' => $options['id'],
+      'escapedId' => str_replace(':','\\:', $options['id']),
       'request' => $request,
       'query' => $query,
       'valueField' => $options['valueField'],
@@ -7653,9 +7661,9 @@ if (errors$uniq.length>0) {
     $assocDataKeys = preg_grep('/occurrence_association:\d+:(\d+)?:from_occurrence_id/', array_keys($arr));
     $assocData = count($assocDataKeys) ?
         array_intersect_key($arr, array_combine($assocDataKeys, $assocDataKeys)) : [];
-        
+
     // Get the posted data that might link existing occurrences to subsamples.
-    // Each grid on the page may include subsamples with key 
+    // Each grid on the page may include subsamples with key
     // <grid-id>-existingSampleIdsByOccIds
     $existingSampleIdsByOccIds = [];
     $subsampleKeys = preg_grep('/.+existingSampleIdsByOccIds/', array_keys($arr));
