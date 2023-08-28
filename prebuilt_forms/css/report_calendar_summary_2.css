@@ -104,4 +104,55 @@ table.report-grid th.freeze-first-col {
 	height:16px;
 }
 
+#controls-table .form-control {
+  display: block;
+  width: 100%;
+  height: auto;
+  padding: 4px;
+  font-size: 1em;
+}
 
+.year-select {
+  min-width: 70px;
+}
+#controls-table .input-group-addon {
+  padding: 4px;
+  font-size: 1em;
+}
+#controls-table .ui-widget-header th {
+  padding-left: 8px;
+  padding-right: 8px;
+}
+#controls-table div.form-group input[type="checkbox"] {
+    margin-left: 0 !important;
+}
+#controls-table label.inline {
+  display: inline;
+}
+#controls-table a .glyphicon {
+  color: #333333;
+}
+#controls-table thead th {
+  padding: 5px;
+}
+.sitetype-select {
+  min-width: 110px;
+}
+
+.ui-widget-header th {
+  padding: 0.2em;
+}
+
+.no-close .ui-dialog-titlebar-close {
+  display: none;
+}
+
+#report-table-raw .ui-widget-header th,
+#report-table-summary .ui-widget-header th,
+#report-table-estimate .ui-widget-header th {
+  padding-right: 3px;
+  border: navy solid thin;
+}
+body.page-node-type-iform-page {
+  overflow-x: visible;
+}
