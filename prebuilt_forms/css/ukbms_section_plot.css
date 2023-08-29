@@ -42,3 +42,47 @@ p.graph-body-warning {
 option.italic-option {
   font-style: italic;
 }
+
+#primary-controls-table .form-control {
+  display: block;
+  width: 100%;
+}
+#secondary-controls-table .form-control {
+  display: inline;
+  width: auto;
+  margin-left: 4px;
+}
+.controls-table .form-control {
+  height: auto;
+  padding: 4px;
+  font-size: 1em;
+}
+table.controls-table .input-group-addon {
+  padding: 4px;
+  font-size: 1em;
+}
+table.controls-table > thead > tr > th {
+  padding: 5px;
+}
+.sitetype-select {
+  min-width: 110px;
+}
+.controls-table .btn {
+  font-size: 1em;
+}
+
+.controls-table .form-group {
+  margin-bottom: 0;
+}
+.controls-table h2 {
+  color: inherit;
+}
+tr.title th {
+  text-align: center;
+}
+.report-grid {
+  margin-bottom: 20px;
+}
+.no-close .ui-dialog-titlebar-close {
+  display: none;
+}
