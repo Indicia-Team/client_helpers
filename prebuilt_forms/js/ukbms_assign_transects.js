@@ -69,7 +69,7 @@ indiciaData.holidayLocationLayer = false;
             }
           }
 
-          if (site['attr_location_' + indiciaData.holiday_attr_id]) {
+          if (parseInt(site['attr_location_' + indiciaData.holiday_attr_id], 10)) {
             site['feature'].attributes.name = site.name;
             site['feature'].attributes.id = site.location_id;
             site['feature'].attributes.isAssignee = isAssignee;

@@ -147,7 +147,7 @@ class iform_ukbms_assign_transects {
   public static function get_form($args, $nid, $response=null) {
     $user = \Drupal::currentUser();
 
-    $userID = $user->uid;
+    $userID = $user->id();
 
     iform_load_helpers(array('map_helper'));
     data_entry_helper::add_resource('jquery_form');
