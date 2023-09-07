@@ -1819,7 +1819,7 @@ HTML;
       'C3' => 'marked as plausible',
       'DT' => 'redetermined',
     ]);
-    if (!isset($options['taxon_list_id'])) {
+    if (!is_numeric($options['taxon_list_id'])) {
       throw new Exception('[verificationButtons] requires a @taxon_list_id option, or the Indicia setting Master Checklist ID to be set. This ' .
         'is required to provide a list to select the redetermination from.');
     }
