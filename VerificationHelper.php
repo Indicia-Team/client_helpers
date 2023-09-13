@@ -82,11 +82,11 @@ class VerificationHelper {
   public static function doesUserSeeNotifications(array $readAuth, $userId) {
     iform_load_helpers(['report_helper']);
     // Get some summary stats about the user's existing notifications.
-    $data = report_helper::get_report_data(array(
+    $data = report_helper::get_report_data([
       'dataSource' => 'library/users/user_notification_response_likely',
       'readAuth' => $readAuth,
-      'extraParams' => array('user_id' => $userId)
-    ));
+      'extraParams' => ['user_id' => $userId],
+    ]);
     $acknowledged = 0;
     $unacknowledged = 0;
     $emailFrequency = FALSE;
@@ -102,11 +102,13 @@ class VerificationHelper {
       }
     }
     if ($emailFrequency) {
-      // If they receive emails for comment notifications, we can assume they will see a comment.
+      // If they receive emails for comment notifications, we can assume they
+      // will see a comment.
       return 'yes';
     }
     elseif ($acknowledged + $unacknowledged > 0) {
-      // otherwise, we need some info on the ratio of acknowledged to unacknowledged notifications over the last year
+      // Otherwise, we need some info on the ratio of acknowledged to
+      // unacknowledged notifications over the last year.
       $ratio = $acknowledged / ($acknowledged + $unacknowledged);
       if ($ratio > 0.3) {
         return 'yes';
@@ -140,13 +142,13 @@ class VerificationHelper {
    *   HTML.
    */
   public static function getComments(array $readAuth, array $params, $occurrenceId, $emailMode = FALSE) {
-    iform_load_helpers(array('data_entry_helper', 'report_helper'));
-    $options = array(
+    iform_load_helpers(['data_entry_helper', 'report_helper']);
+    $options = [
       'dataSource' => 'reports_for_prebuilt_forms/verification_5/occurrence_comments_and_dets',
       'readAuth' => $readAuth,
       'sharing' => $params['sharing'],
-      'extraParams' => array('occurrence_id' => $occurrenceId),
-    );
+      'extraParams' => ['occurrence_id' => $occurrenceId],
+    ];
     $comments = report_helper::get_report_data($options);
     $imgPath = empty(report_helper::$images_path) ? report_helper::relative_client_helper_path() . "../media/images/" : report_helper::$images_path;
     $r = '';
@@ -230,19 +232,19 @@ class VerificationHelper {
   public static function getMedia(array $readAuth, array $params, $occurrenceId, $sampleId) {
     iform_load_helpers(['data_entry_helper']);
     // Retrieve occurrence media for record.
-    $occ_media = data_entry_helper::get_population_data(array(
+    $occ_media = data_entry_helper::get_population_data([
       'table' => 'occurrence_medium',
-      'extraParams' => $readAuth + array('occurrence_id' => $occurrenceId),
+      'extraParams' => $readAuth + ['occurrence_id' => $occurrenceId],
       'nocache' => TRUE,
       'sharing' => $params['sharing'],
-    ));
+    ]);
     // Retrieve related sample media.
-    $smp_media = data_entry_helper::get_population_data(array(
+    $smp_media = data_entry_helper::get_population_data([
       'table' => 'sample_medium',
-      'extraParams' => $readAuth + array('sample_id' => $sampleId),
+      'extraParams' => $readAuth + ['sample_id' => $sampleId],
       'nocache' => TRUE,
       'sharing' => $params['sharing'],
-    ));
+    ]);
     $r = '';
     if (count($occ_media) + count($smp_media) === 0) {
       $r .= lang::get('No media found for this record');
@@ -272,9 +274,9 @@ class VerificationHelper {
    * @return string
    *   HTML.
    */
-  private static function getMediaHtml($entity, $media) {
+  private static function getMediaHtml($entity, array $media) {
     require_once 'prebuilt_forms/includes/report.php';
-    $r = '<div class="media-gallery"><ul >';
+    $r = '<div class="media-gallery"><ul>';
     foreach ($media as $file) {
       $r .= iform_report_get_gallery_item($entity, $file);
     }
