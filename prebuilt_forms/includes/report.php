@@ -406,9 +406,7 @@ function iform_report_get_gallery_item($entity, array $medium, $imageSize = 'thu
     // Standard link to Indicia image.
     return <<<HTML
 <li class="gallery-item">
-  <a $mediaAttr$captionAttr
-      href="$fullPath"
-      data-fancybox="gallery" class="single">
+  <a $mediaAttr$captionAttr href="$fullPath" data-fancybox="gallery" class="single">
     <img src="$thumbPath" />
   </a>
 HTML;
@@ -417,8 +415,7 @@ HTML;
     // Output the media file content, with the info attached.
     return <<<HTML
 <li class="gallery-item">
-  <audio $mediaAttr$captionAttr
-      controls src="$imageFolder$medium[path]" type="audio/mpeg"></audio>
+  <audio $mediaAttr$captionAttr controls src="$imageFolder$medium[path]" type="audio/mpeg"></audio>
 </li>
 HTML;
   }
@@ -427,9 +424,7 @@ HTML;
     $path = $imageSize === 'med' ? str_replace('/square.', '/medium.', $medium['path']) : $medium['path'];
     return <<<HTML
 <li class="gallery-item">
-  <a $mediaAttr$captionAttr
-      href="$imgLarge"
-      data-fancybox="gallery" class="single">
+  <a $mediaAttr$captionAttr href="$imgLarge" data-fancybox="gallery" class="single">
     <img src="$path" />
   </a>
 </li>
@@ -441,8 +436,7 @@ HTML;
     $fileType = substr($medium['media_type'], 0, strlen($medium['media_type']) - 6);
     return <<<HTML
 <li class="gallery-item">
-  <a $mediaAttr$captionAttr
-      href="$imageFolder$medium[path]">
+  <a $mediaAttr$captionAttr href="$imageFolder$medium[path]">
     <span class="fas fa-file-invoice fa-2x"></span><br/>
     $fileType
   </a>
