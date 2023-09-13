@@ -1620,6 +1620,10 @@ JS;
    *   * valueField - Field to draw values to return from the control from if
    *     the select is being populated by a service call. Defaults to the value
    *     of captionField.
+   *   * blankText - Optional. If specified then the first option in the drop
+   *     down is the blank text, used when there is no value.
+   *   * childBlankText - Optional. If specified then the first option in the child
+   *     drop-down list is the childBlankText.
    *   * extraParams - Optional. Associative array of items to pass via the
    *     query string to the service. This should at least contain the read
    *     authorisation array if the select is being populated by a service
@@ -1731,6 +1735,12 @@ JS;
     // jQuery safe version of the Id.
     $safeId = preg_replace('/[:]/', '\\\\\\:', $options['id']);
     $options['blankText'] = htmlspecialchars(lang::get($options['blankText']));
+    if (empty($options['childBlankText'])) {
+      $options['childBlankText'] = $options['blankText'];
+    }
+    else {
+      $options['childBlankText'] = htmlspecialchars(lang::get($options['childBlankText'])); 
+    }
     $selectClass = "hierarchy-select  $indicia_templates[formControlClass]";
     // Now output JavaScript that creates and populates child selects as each option is selected. There is also code for
     // reloading existing values.
@@ -1740,7 +1750,7 @@ JS;
   function pickHierarchySelectNode(select,fromOnChange) {
     select.nextAll().remove();
     if (typeof indiciaData.selectData$id [select.val()] !== 'undefined') {
-      var html='<select class="$selectClass"><option>$options[blankText]</option>', obj;
+      var html = '<select class="$selectClass"><option>$options[childBlankText]</option>', obj;
       $.each(indiciaData.selectData$id [select.val()], function(idx, item) {
         //If option is set then if there is only a single child item, auto select it in the list
         //Don't do this if we are initially loading the page (fromOnChange is false) as we only want to do this when the user actually changes the value.
