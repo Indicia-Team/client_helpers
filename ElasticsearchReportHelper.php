@@ -1209,6 +1209,12 @@ JS;
       'showSelectedRow',
     ], TRUE);
     helper_base::add_resource('tabs');
+    helper_base::addLanguageStringsToJs('recordDetails', [
+      'actionByPersonOnDate' => '{1} by {2} on {3}',
+      'comment' => 'Comment',
+      'redetermination' => 'Redetermination',
+      'verificationDecision' => 'Verification',
+    ]);
     // Record details pane must be initialised after the control acting as row
     // data source, so it can hook to events.
     helper_base::$javascript .= <<<JS
@@ -1253,7 +1259,7 @@ HTML;
    * @return string
    *   Panel container HTML.
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-recordsMover
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-recordsmover
    */
   public static function recordsMover(array $options) {
     self::checkOptions(
@@ -1718,6 +1724,7 @@ HTML;
       'accepted' => lang::get('Accepted'),
       'acceptedConsideredCorrect' => lang::get('Accepted :: considered correct'),
       'acceptedCorrect' => lang::get('Accepted :: correct'),
+      'addComment' => lang::get('Add comment'),
       'all' => lang::get('all'),
       'applyThisDecisionToParentSample' => lang::get(
         'Only available for records that are part of a parent sample, such as a transect or timed count on a single date. Click to activate the button then verification ' .
@@ -1726,10 +1733,15 @@ HTML;
       'applyRedetermination' => lang::get('Apply redetermination'),
       'cancel' => lang::get('Cancel'),
       'cancelSaveTemplate' => lang::get('Cancel saving the template'),
+      'commentTabTitle' => 'Comment on the record',
       'contactExpert' => lang::get('Contact an expert'),
       'deleteTemplate' => lang::get('Delete the selected template'),
       'edit' => lang::get('Edit'),
-      'editThisRecord' => 'Edit this record',
+      'editThisRecord' => lang::get('Edit this record'),
+      'emailBody' => lang::get('Email body'),
+      'emailPlaceholder' => lang::get('Enter the email address to send the record to'),
+      'emailSubject' => lang::get('Email subject'),
+      'emailTabTitle' => lang::get('Email record details'),
       'help' => lang::get('Help'),
       'notAccepted' => lang::get('Not accepted'),
       'notAcceptedIncorrect' => lang::get('Not accepted :: incorrect'),
@@ -1739,6 +1751,8 @@ HTML;
       'saveStatus' => lang::get('Save status'),
       'saveTemplate' => lang::get('Save template'),
       'selected' => lang::get('selected'),
+      'sendEmail' => lang::get('Send email'),
+      'sendEmailTo' => lang::get('Send email to'),
       'showPreview' => lang::get('Preview'),
       'templateHelpIntroAvailableTokens' => lang::get('Available placeholders as follows - use the copy buttons (<i class="far fa-copy"></i>) to copy the placeholder to the clipboard so you can paste it into your comment:'),
       'templateHelpIntro1' => lang::get('You can create and save templates for your verification comments which can be used to provide the comment for future verification actions. ' .
@@ -1773,10 +1787,8 @@ HTML;
     ];
 
     helper_base::addLanguageStringsToJs('verificationButtons', [
-      'addComment' => 'Add comment',
       'cancel' => 'Cancel',
       'close' => 'Close',
-      'commentTabTitle' => 'Comment on the record',
       'copyPlaceholder' => 'Copy &quot;{{ placeholder }}&quot; to the clipboard.',
       'deleteTemplateConfirm' => 'Delete template',
       'deleteTemplateMsg' => 'Are you sure you want to delete the "{{ title }}" template?',
@@ -1815,6 +1827,7 @@ HTML;
       'queryCommentTabUserIsNotNotified' => 'Although you can add a comment, sending the query as an email is preferred as the recorder does not check their notifications.',
       'queryInMultiselectMode' => 'As you are in multi-select mode, email facilities cannot be used and queries can only be added as comments to the record.',
       'recordRedetermined' => 'This record has been redetermined.',
+      'redetErrorMsg' => 'An error occurred on the server when redetermining the records.',
       'redetPartialListInfo' => 'This record was originally input using a taxon checklist which may not be a complete list of all species. If you cannot find the species you wish to redetermine it to using the search box below, then please tick the "Search all species" checkbox and try again.',
       'requestManualEmail' => 'The webserver is not correctly configured to send emails. Please send the following email usual your email client:',
       'saveQueryToComments' => 'Save query to comments log',
@@ -1870,6 +1883,7 @@ HTML;
     // Remember which is the master list.
     helper_base::$indiciaData['mainTaxonListId'] = $options['taxon_list_id'];
     $verificationCommentInput = data_entry_helper::textarea([
+      'id' => 'verification-comment-input',
       'label' => lang::get('Add the following comment'),
       'labelClass' => 'auto',
       'class' => 'comment-textarea',
@@ -1886,6 +1900,7 @@ HTML;
       ]);
     }
     $redetCommentInput = data_entry_helper::textarea([
+      'id' => 'redet-comment-input',
       'label' => lang::get('Explanation comment'),
       'labelClass' => 'auto',
       'helpText' => lang::get('Please give reasons why you are changing this record.'),
@@ -1893,25 +1908,20 @@ HTML;
       'class' => 'comment-textarea',
       'wrapClasses' => ['not-full-width-lg'],
     ]);
+    $queryCommentInput = data_entry_helper::textarea([
+      'id' => 'query-comment-input',
+      'label' => lang::get('Add the following comment'),
+      'labelClass' => 'auto',
+      'class' => 'comment-textarea',
+      'default' => '',
+    ]);
     $uploadButton = empty($options['includeUploadButton']) ? '' : <<<HTML
       <button class="upload-decisions $btnClass" title="$lang[uploadVerificationDecisions]"><span class="fas fa-file-upload"></span>$lang[upload]</button>
 HTML;
     if ($options['verificationTemplates']) {
-      $loadVerifyTemplateDropdown = data_entry_helper::select([
-        'label' => lang::get('Or, load the following comment template'),
-        'fieldname' => 'verify-template',
-        'class' => 'comment-template',
-        'lookupValues' => [],
-        'blankText' => lang::get('- select template to load -'),
-        'afterControl' => "<i class=\"fas fa-trash-alt delete-template disabled\" title=\"$lang[deleteTemplate]\"></i>",
-      ]);
-      $loadRedetTemplateDropdown = data_entry_helper::select([
-        'label' => lang::get('Or, load the following comment template'),
-        'fieldname' => 'redet-template',
-        'class' => 'comment-template',
-        'lookupValues' => [],
-        'blankText' => lang::get('- select template to load -'),
-      ]);
+      $loadVerifyTemplateDropdown = self::getTemplateSelect('verify-template');
+      $loadRedetTemplateDropdown = self::getTemplateSelect('redet-template');
+      $loadQueryTemplateDropdown = self::getTemplateSelect('query-template');
       $saveTemplateButtons = <<<HTML
 <button type="button" class="save-template $indicia_templates[buttonDefaultClass]"><i class="fas fa-save" title="$lang[saveTemplate]"></i></button>
 <button type="button" class="cancel-save-template $indicia_templates[buttonDefaultClass]" title="$lang[cancelSaveTemplate]"><i class="fas fa-window-close"></i></button>
@@ -1938,6 +1948,7 @@ HTML;
     else {
       $loadVerifyTemplateDropdown = '';
       $loadRedetTemplateDropdown = '';
+      $loadQueryTemplateDropdown = '';
       $commentTools = '';
     }
     $r = <<<HTML
@@ -1994,6 +2005,73 @@ HTML;
   </form>
 </div>
 
+<div id="redet-panel-wrap" style="display: none">
+  <form id="redet-form" class="verification-popup" data-status="DT">
+    <p class="alert alert-warning multiple-warning">$lang[updatingMultipleWarning]</p>
+    <div class="alt-taxon-list-controls alt-taxon-list-message">$indicia_templates[messageBox]</div>
+    $speciesInput
+    $altListCheckbox
+    $redetNameBehaviourOption
+    <div class="comment-cntr form-group not-full-width-lg">
+      $commentTools
+      $redetCommentInput
+    </div>
+    $loadRedetTemplateDropdown
+    <div class="form-buttons">
+      <button type="button" class="$btnClass" id="apply-redet">$lang[applyRedetermination]</button>
+      <button type="button" class="$btnClassDefault cancel">$lang[cancel]</button>
+    </div>
+  </form>
+</div>
+
+<div id="query-panel-wrap" style="display: none">
+  <div id="query-form" class="verification-popup">
+    <ul>
+      <li id="tab-query-comment-tab"><a href="#tab-query-comment">$lang[addComment]</a></li>
+      <li id="tab-query-email-tab"><a href="#tab-query-email">$lang[sendEmail]</a></li>
+    </ul>
+    <fieldset class="verification-popup comment-popup" id="tab-query-comment" data-query="Q">
+      <legend>
+        <span class="fas fa-question-circle fa-2x"></span>
+        $lang[commentTabTitle]
+      </legend>
+      <p class="alert alert-info"></p>
+      <div class="comment-cntr form-group not-full-width-lg">
+        $commentTools
+        $queryCommentInput
+      </div>
+      $loadQueryTemplateDropdown
+      <div class="form-buttons">
+        <button class="indicia-button btn btn-primary save">$lang[addComment]</button>
+        <button class="indicia-button btn btn-default cancel">$lang[cancel]</button>
+      </div>
+    </fieldset>
+    <fieldset class="verification-popup query-popup" id="tab-query-email">
+      <legend>
+        <span class="fas fa-question-circle fa-2x"></span>
+        $lang[emailTabTitle]
+      </legend>
+      <form novalidate="novalidate">
+        <p class="alert alert-info"></p>
+        <div class="form-group">
+          <label for="email-to">$lang[sendEmailTo]:</label>
+          <input id="email-to" class="form-control email required" placeholder="$lang[emailPlaceholder]">
+        </div>
+        <div class="form-group">
+          <label for="email-subject">$lang[emailSubject]:</label>
+          <input id="email-subject" class="form-control required">
+        </div>
+        <div class="form-group">
+          <label for="email-body">$lang[emailBody]:</label>
+          <textarea id="email-body" class="form-control required valid" rows="12"></textarea>
+        </div>
+        <button type="submit" class="$btnClass">$lang[sendEmail]</button>
+        <button type="button" class="$btnClassDefault cancel">$lang[cancel]</button>
+      </form>
+    </fieldset>
+  </div>
+</div>
+
 <div id="template-help-cntr" style="display: none">
   <article>
     <h3>$lang[templateHelpTitle]</h3>
@@ -2021,25 +2099,6 @@ HTML;
     </ul>
   </article>
   <button type="button" class="help-close $btnClass $indicia_templates[buttonSmallClass]">$lang[templateHelpClose]</button>
-</div>
-
-<div id="redet-panel-wrap" style="display: none">
-  <form id="redet-form" class="verification-popup" data-status="DT">
-    <p class="alert alert-warning multiple-warning">$lang[updatingMultipleWarning]</p>
-    <div class="alt-taxon-list-controls alt-taxon-list-message">$indicia_templates[messageBox]</div>
-    $speciesInput
-    $altListCheckbox
-    $redetNameBehaviourOption
-    <div class="comment-cntr form-group">
-      $commentTools
-      $redetCommentInput
-    </div>
-    $loadRedetTemplateDropdown
-    <div class="form-buttons">
-      <button type="button" class="$btnClass" id="apply-redet">$lang[applyRedetermination]</button>
-      <button type="button" class="$btnClassDefault cancel">$lang[cancel]</button>
-    </div>
-  </form>
 </div>
 HTML;
     if (!empty($options['includeUploadButton'])) {
@@ -2090,6 +2149,27 @@ HTML;
 
     }
     return $r;
+  }
+
+  /**
+   * Return the HTML for a comment template select control.
+   *
+   * @param string $name
+   *   Fieldname to allocate to the control.
+   *
+   * @return string
+   *   Control HTML.
+   */
+  private static function getTemplateSelect($name) {
+    return data_entry_helper::select([
+      'label' => lang::get('Or, load the following comment template'),
+      'fieldname' => $name,
+      'class' => 'comment-template',
+      'lookupValues' => [],
+      'blankText' => lang::get('- select template to load -'),
+      'afterControl' => "<i class=\"fas fa-trash-alt delete-template disabled\" title=\"$lang[deleteTemplate]\"></i>",
+      'wrapClasses' => ['template-select'],
+    ]);
   }
 
   /**
@@ -2344,7 +2424,7 @@ AGG;
   /**
    * Returns the HTML required to act as a control container.
    *
-   * Creates the common HTML strucuture required to wrap any data output
+   * Creates the common HTML structure required to wrap any data output
    * control.
    *
    * @param string $controlName
