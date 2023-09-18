@@ -3727,7 +3727,7 @@ RIJS;
       self::$indiciaData["previousRowColumnsToInclude-$options[id]"] = $options['previousRowColumnsToInclude'];
       self::$indiciaData['langAddAnother'] = lang::get('Add another');
     }
-    $onlyImages = empty($option['mediaTypes']) ? TRUE : self::isOnlyImages($option['mediaTypes']);
+    $onlyImages = empty($options['mediaTypes']) ? TRUE : self::isOnlyImages($options['mediaTypes']);
     if (count($options['mediaTypes'])) {
       self::add_resource('plupload');
       // Store some globals that we need later when creating uploaders.
