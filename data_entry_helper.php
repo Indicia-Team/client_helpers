@@ -1739,7 +1739,7 @@ JS;
       $options['childBlankText'] = $options['blankText'];
     }
     else {
-      $options['childBlankText'] = htmlspecialchars(lang::get($options['childBlankText'])); 
+      $options['childBlankText'] = htmlspecialchars(lang::get($options['childBlankText']));
     }
     $selectClass = "hierarchy-select  $indicia_templates[formControlClass]";
     // Now output JavaScript that creates and populates child selects as each option is selected. There is also code for
@@ -2339,74 +2339,68 @@ JS;
   }
 
   /**
-   * Generates a map control, with optional data entry fields and location finder powered by the
-   * Yahoo! geoservices API. This is just a shortcut to building a control using a map_panel and the
-   * associated controls.
+   * Map control.
    *
-   * @param array $options Options array with the following possibilities:<ul>
-   * <li><b>presetLayers</b><br/>
-   * Array of preset layers to include. Options are 'google_physical', 'google_streets', 'google_hybrid',
-   * 'google_satellite', 'openlayers_wms', 'bing_aerial', 'bing_hybrid, 'bing_shaded', 'bing_os',
-   * 'osm' (for OpenStreetMap).</li>
-   * <li><b>edit</b><br/>
-   * True or false to include the edit controls for picking spatial references.</li>
-   * <li><b>locate</b><br/>
-   * True or false to include the geolocate controls.</li>
-   * <li><b>wkt</b><br/>
-   * Well Known Text of a spatial object to add to the map at startup.</li>
-   * <li><b>tabDiv</b><br/>
-   * If the map is on a tab or wizard interface, specify the div the map loads on.</li>
-   * </ul>
+   * Generates a map control, with optional data entry fields and location
+   * finder This is just a shortcut to building a control using a map_panel and
+   * the associated controls.
    *
-   * The output of this control can be configured using the following templates:
-   * <ul>
-   * <li><b>georeference_lookup</b></br>
-   * Template which outputs the HTML for the georeference search input, button placehold and container
-   * for the list of search results. The default template uses JavaScript to write the output, so that
-   * this control is removed from the page if JavaScript is disabled as it will have no functionality.
-   * </li>
-   * <li><b>button</b></br>
-   * HTML template for the buttons used for the georeference_lookup.
-   * </li>
-   * <li><b>sref_textbox</b></br>
-   * HTML template for the spatial reference input control.
-   * </li>
-   * <li><b>sref_textbox_latlong</b></br>
-   * HTML template for the spatial reference input control used when inputting latitude
-   * and longitude into separate inputs.
-   * </li>
-   * <li><b>select</b></br>
-   * HTML template used by the select control for picking a spatial reference system, if there
-   * is one.
-   * </li>
-   * <li><b>select_item</b></br>
-   * HTML template used by the option items in the select control for picking a spatial
-   * reference system, if there is one.
-   * </li>
-   * </ul>
+   * The output of this control can be configured using the following
+   * templates:
+   * * georeference_lookup - Template which outputs the HTML for the
+   *   georeference search input, button placehold and container for the list
+   *   of search results. The default template uses JavaScript to write the
+   *   output, so that this control is removed from the page if JavaScript is
+   *   disabled as it will have no functionality.
+   * * button - HTML template for the buttons used for the georeference_lookup.
+   * * sref_textbox - HTML template for the spatial reference input control.
+   * * sref_textbox_latlong - HTML template for the spatial reference input
+   *   control used when inputting latitude and longitude into separate inputs.
+   * * select -    * HTML template used by the select control for picking a
+   *   spatial reference system, if there is one.
+   * * select_item -    * HTML template used by the option items in the select
+   *   control for picking a spatial reference system, if there is one.
+   *
+   * @param array $options
+   *   Options array with the following possibilities:
+   *   * presetLayers - Array of preset layers to include. Options are
+   *     'google_physical', 'google_streets', 'google_hybrid',
+   *     'google_satellite', 'openlayers_wms', 'bing_aerial', 'bing_hybrid,
+   *     'bing_shaded', 'bing_os', 'osm' (for OpenStreetMap).
+   *   * edit - True or false to include the edit controls for picking spatial
+   *     references.
+   *   * locate - True or false to include the geolocate controls.
+   *   * wkt - Well Known Text of a spatial object to add to the map at
+   *     startup.
+   *   * tabDiv -If the map is on a tab or wizard interface, specify the div
+   *     the map loads on.
    */
   public static function map($options) {
     $options = self::check_options($options);
-    $options = array_merge(array(
+    $options = array_merge([
       'div' => 'map',
       'edit' => TRUE,
       'locate' => TRUE,
       'wkt' => NULL
-    ), $options);
+    ], $options);
     $r = '';
     if ($options['edit']) {
-      $r .= self::sref_and_system(array(
+      $r .= self::sref_and_system([
         'label' => lang::get('spatial ref'),
-      ));
+      ]);
     }
     if ($options['locate']) {
-      $r .= self::georeference_lookup(array(
-        'label'=>lang::get('search for place on map')
-      ));
+      $r .= self::georeference_lookup([
+        'label' => lang::get('search for place on map')
+      ]);
     }
-    $mapPanelOptions = array('initialFeatureWkt' => $options['wkt']);
-    if (array_key_exists('presetLayers', $options)) $mapPanelOptions['presetLayers'] = $options['presetLayers'];
-    if (array_key_exists('tabDiv', $options)) $mapPanelOptions['tabDiv'] = $options['tabDiv'];
+    $mapPanelOptions = ['initialFeatureWkt' => $options['wkt']];
+    if (array_key_exists('presetLayers', $options)) {
+      $mapPanelOptions['presetLayers'] = $options['presetLayers'];
+    }
+    if (array_key_exists('tabDiv', $options)) {
+      $mapPanelOptions['tabDiv'] = $options['tabDiv'];
+    }
     require_once 'map_helper.php';
     $r .= map_helper::map_panel($mapPanelOptions);
     return $r;
@@ -5584,7 +5578,7 @@ JS;
     // Provides a default class based on the control caption.
     return (array_key_exists('occAttrClasses', $options) && $idx < count($options['occAttrClasses'])) ?
       $options['occAttrClasses'][$idx] :
-      'sc' . preg_replace('/[^a-zA-Z0-9]/', '', ucWords($caption));
+      'sc' . preg_replace('/[^a-zA-Z0-9]/', '', ucwords($caption));
   }
 
   /**
