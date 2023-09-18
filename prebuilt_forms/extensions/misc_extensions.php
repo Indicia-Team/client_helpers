@@ -472,6 +472,9 @@ class extension_misc_extensions {
     if (!isset($options['path'])) {
       return 'Please set an array of entries in the @path option';
     }
+    if (!is_array($options['path']) || isset($options['path'][0])) {
+      return 'The configuration for the @path option is invalid';
+    }
     $options = array_merge([
       'includeCurrentPage' => TRUE,
       'force' => FALSE,
