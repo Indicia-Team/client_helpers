@@ -44,7 +44,7 @@ class iform_mnhnl_bats2 extends iform_mnhnl_bats {
    */
   public static function get_mnhnl_bats2_definition() {
     return array(
-      'title'=>self::get_title(),
+      'title' => self::get_title(),
       'category' => 'MNHNL forms',
       'description' => 'MNHNL Summer Bats form. Inherits from Winter Bats (and hence Dynamic 1).'
     );
@@ -59,7 +59,7 @@ class iform_mnhnl_bats2 extends iform_mnhnl_bats {
   }
 
   public static function get_parameters() {
-    $retVal=[]
+    $retVal = [];
     $parentVal = array_merge(
       parent::get_parameters(),
       array(
@@ -267,7 +267,7 @@ jQuery('span').filter('.control-box').each(function(idex, elem){
   }
 });\n";
     if (!empty($args['attributeValidation'])) {
-      $rules = []
+      $rules = [];
       $argRules = explode(';', $args['attributeValidation']);
       foreach($argRules as $rule){
         $rules[] = explode(',', $rule);
@@ -568,7 +568,7 @@ hook_species_checklist_pre_delete_row=function(e) {
     ), $options);
     if ($args['extra_list_id']) $species_ctrl_opts['lookupListId']=$args['extra_list_id'];
     if (isset($args['col_widths']) && $args['col_widths']) $species_ctrl_opts['colWidths']=explode(',', $args['col_widths']);
-    call_user_func(array(get_called_class(), 'build_grid_taxon_label_function'), $args, []
+    call_user_func(array(get_called_class(), 'build_grid_taxon_label_function'), $args, []);
     // Start by outputting a hidden value that tells us we are using a grid when the data is posted,
     // then output the grid control
     return self::mnhnl_bats2_species_checklist($args, $species_ctrl_opts);
@@ -832,7 +832,7 @@ bindSpeciesAutocomplete(\"taxonLookupControl\",\"".data_entry_helper::$base_url.
     global $indicia_templates;
     // assume always removeable and presence is hidden.
     // first row has X to remove row, plus species
-    $rows=[]
+    $rows = [];
     foreach ($attributes as $attrId=>$attr) {
     	$row=substr ( $attr['inner_structure_block'], 3);
     	if(!isset($rows[$row])) {
