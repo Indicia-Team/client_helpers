@@ -4487,13 +4487,10 @@ JS;
       return '';
     }
     if ($options['mediaTypes']) {
-      $onlyImages = TRUE;
       $onlyLocal = TRUE;
       $linkMediaTypes = [];
       foreach ($options['mediaTypes'] as $mediaType) {
         $tokens = explode(':', $mediaType);
-        if ($tokens[0] !== 'Image')
-          $onlyImages = FALSE;
         if ($tokens[1] !== 'Local') {
           $onlyLocal = FALSE;
           $linkMediaTypes[] = $tokens[1];
