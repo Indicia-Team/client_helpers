@@ -507,8 +507,24 @@ jQuery('#".$ctrlid."').change(function(){
     $reportOptions['newURL'] = self::get_url($args['newURL'], $extensions);
     if (isset($args['footer']))
     	$reportOptions['footer'] = $args['footer'];
-    if(isset($args['first_year']) && $args['first_year']!='')
-    	$reportOptions['first_year'] = $args['first_year'];
+    if (isset($args['first_year']) && $args['first_year']!='') {
+      $reportOptions['first_year'] = $args['first_year'];
+    } else {
+      $indicia_user_id = hostsite_get_user_field('indicia_user_id');
+      $response = data_entry_helper::get_population_data([
+        'table' => 'sample',
+        'extraParams' => $auth + [
+          'view' => 'detail',
+          'created_by_id' => $indicia_user_id,
+          'limit' => 1,
+          'orderby' => 'date_start'
+        ],
+      ]);
+      if (count($response) > 0) {
+        $date = DateTime::createFromFormat('Y-m-d', $response[0]['date_start']);
+        $reportOptions['first_year'] = $date->format('Y');
+      }
+    }
     $grid .= report_helper::report_calendar_grid($reportOptions);
     return $grid;
   }

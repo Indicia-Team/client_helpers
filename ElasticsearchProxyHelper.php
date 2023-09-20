@@ -210,8 +210,9 @@ class ElasticsearchProxyHelper {
       'extraParams' => ['occurrence_id' => $_GET['occurrence_id']],
     ];
     $reportData = report_helper::get_report_data($options);
-    // Convert the output to a structured JSON object.
-    $data = [];
+    // Convert the output to a structured JSON object, including fresh read
+    // auth tokens.
+    $data = ['auth' => $readAuth];
     // Organise some attributes by system function, so we can make output
     // consistent.
     $sysFuncAttrs = [];
@@ -1341,7 +1342,7 @@ class ElasticsearchProxyHelper {
     self::applyUserFiltersTaxonGroupList($definition, $bool);
     self::applyUserFiltersTaxaTaxonList($definition, $bool, $readAuth);
     self::applyUserFiltersTaxonMeaning($definition, $bool, $readAuth);
-    self::applyUserFiltersTaxaTaxonListExternalKey($definition, $bool, $readAuth);
+    self::applyUserFiltersTaxaTaxonListExternalKey($definition, $bool);
     self::applyUserFiltersTaxonRankSortOrder($definition, $bool);
     self::applyFlagFilter('marine', $definition, $bool);
     self::applyFlagFilter('freshwater', $definition, $bool);
@@ -1360,7 +1361,7 @@ class ElasticsearchProxyHelper {
     self::applyUserFiltersIdentificationDifficulty($definition, $bool);
     self::applyUserFiltersRuleChecks($definition, $bool);
     self::applyUserFiltersAutoCheckRule($definition, $bool);
-    self::applyUserFiltersHasPhotos($readAuth, $definition, ['has_photos'], $bool);
+    self::applyUserFiltersHasPhotos($definition, $bool);
     self::applyUserFiltersWebsiteList($definition, $bool);
     self::applyUserFiltersSurveyList($definition, $bool);
     self::applyUserFiltersImportGuidList($definition, $bool);
@@ -1418,8 +1419,6 @@ class ElasticsearchProxyHelper {
   /**
    * Generic function to apply a taxonomy filter to ES query.
    *
-   * @param array $definition
-   *   Definition loaded for the Indicia filter.
    * @param array $bool
    *   Bool clauses that filters can be added to (e.g. $bool['must']).
    * @param array $readAuth
@@ -1429,7 +1428,7 @@ class ElasticsearchProxyHelper {
    * @param string $filterValues
    *   Comma separated list of IDs to filter against.
    */
-  private static function applyTaxonomyFilter(array $definition, array &$bool, array $readAuth, $filterField, $filterValues) {
+  private static function applyTaxonomyFilter(array &$bool, array $readAuth, $filterField, $filterValues) {
     // Convert the IDs to external keys, stored in ES as taxon_ids.
     $taxonData = helper_base::get_population_data([
       'report' => 'library/taxa/convert_ids_to_external_keys',
@@ -1465,7 +1464,7 @@ class ElasticsearchProxyHelper {
       'higher_taxa_taxon_list_id',
     ]);
     if (!empty($filter)) {
-      self::applyTaxonomyFilter($definition, $bool, $readAuth, 'id', $filter['value']);
+      self::applyTaxonomyFilter($bool, $readAuth, 'id', $filter['value']);
     }
   }
 
@@ -1485,7 +1484,7 @@ class ElasticsearchProxyHelper {
       'taxon_meaning_id',
     ]);
     if (!empty($filter)) {
-      self::applyTaxonomyFilter($definition, $bool, $readAuth, 'taxon_meaning_id', $filter['value']);
+      self::applyTaxonomyFilter($bool, $readAuth, 'taxon_meaning_id', $filter['value']);
     }
   }
 
@@ -1496,10 +1495,8 @@ class ElasticsearchProxyHelper {
    *   Definition loaded for the Indicia filter.
    * @param array $bool
    *   Bool clauses that filters can be added to (e.g. $bool['must']).
-   * @param array $readAuth
-   *   Read authentication tokens.
    */
-  private static function applyUserFiltersTaxaTaxonListExternalKey(array $definition, array &$bool, array $readAuth) {
+  private static function applyUserFiltersTaxaTaxonListExternalKey(array $definition, array &$bool) {
     $filter = self::getDefinitionFilter($definition, [
       'taxa_taxon_list_external_key_list',
     ]);
@@ -1673,9 +1670,9 @@ class ElasticsearchProxyHelper {
   /**
    * Converts an Indicia filter definition date filter to an ES query.
    *
-   * Support for recorded (default), input, edited, verified dates. Age is
-   * supported as long as format specifies age in minutes, hours, days, weeks,
-   * months or years.
+   * Date range, year or date age filters supported. Support for recorded
+   * (default), input, edited, verified dates. Age is supported as long as
+   * format specifies age in minutes, hours, days, weeks, months or years.
    *
    * @param array $definition
    *   Definition loaded for the Indicia filter.
@@ -1689,35 +1686,59 @@ class ElasticsearchProxyHelper {
       'edited' => 'metadata.updated_on',
       'verified' => 'identification.verified_on',
     ];
-    $dateTypes = [
-      'from' => 'gte',
-      'to' => 'lte',
-      'age' => 'gte',
-    ];
     // Default to recorded date.
     $definition['date_type'] = empty($definition['date_type']) ? 'recorded' : $definition['date_type'];
-    foreach ($dateTypes as $type => $op) {
-      $fieldName = $definition['date_type'] === 'recorded' ? "date_$type" : "$definition[date_type]_date_$type";
-      if (!empty($definition[$fieldName])) {
-        $value = $definition[$fieldName];
-        // Convert date format.
-        if (preg_match('/^(?P<d>\d{2})\/(?P<m>\d{2})\/(?P<Y>\d{4})$/', $value, $matches)) {
-          $value = "$matches[Y]-$matches[m]-$matches[d]";
-        }
-        elseif ($type === 'age') {
-          $value = 'now-' . str_replace(
-            ['minute', 'hour', 'day', 'week', 'month', 'year', 's', ' '],
-            ['m', 'H', 'd', 'w', 'M', 'y', '', ''],
-            strtolower($value)
-          );
-        }
+    // Check to see if we have a year filter.
+    $fieldName = $definition['date_type'] === 'recorded' ? "date_year" : "$definition[date_type]_date_year";
+    if (!empty($definition[$fieldName]) && !empty($definition[$fieldName . '_op'])) {
+      if ($definition[$fieldName . '_op'] === '=') {
+        $bool['must'][] = [
+          'term' => [
+            'event.year' => $definition[$fieldName],
+          ],
+        ];
+      }
+      else {
+        $esOp = $definition[$fieldName . '_op'] === '>=' ? 'gte' : 'lte';
         $bool['must'][] = [
           'range' => [
-            $esFields[$definition['date_type']] => [
-              $op => $value,
+            'event.year' => [
+              $esOp => $definition[$fieldName],
             ],
           ],
         ];
+      }
+    }
+    else {
+      // Check for other filters that work off the precise date fields.
+      $dateTypes = [
+        'from' => 'gte',
+        'to' => 'lte',
+        'age' => 'gte',
+      ];
+      foreach ($dateTypes as $type => $esOp) {
+        $fieldName = $definition['date_type'] === 'recorded' ? "date_$type" : "$definition[date_type]_date_$type";
+        if (!empty($definition[$fieldName])) {
+          $value = $definition[$fieldName];
+          // Convert date format.
+          if (preg_match('/^(?P<d>\d{2})\/(?P<m>\d{2})\/(?P<Y>\d{4})$/', $value, $matches)) {
+            $value = "$matches[Y]-$matches[m]-$matches[d]";
+          }
+          elseif ($type === 'age') {
+            $value = 'now-' . str_replace(
+              ['minute', 'hour', 'day', 'week', 'month', 'year', 's', ' '],
+              ['m', 'H', 'd', 'w', 'M', 'y', '', ''],
+              strtolower($value)
+            );
+          }
+          $bool['must'][] = [
+            'range' => [
+              $esFields[$definition['date_type']] => [
+                $esOp => $value,
+              ],
+            ],
+          ];
+        }
       }
     }
   }
@@ -2143,18 +2164,13 @@ class ElasticsearchProxyHelper {
   /**
    * Converts an Indicia filter definition has_photos filter to an ES query.
    *
-   * @param array $readAuth
-   *   Read authentication tokens.
    * @param array $definition
    *   Definition loaded for the Indicia filter.
-   * @param array $params
-   *   List of parameter names that can be used for this type of filter
-   *   (allowing for deprecated names etc).
    * @param array $bool
    *   Bool clauses that filters can be added to (e.g. $bool['must']).
    */
-  private static function applyUserFiltersHasPhotos(array $readAuth, array $definition, array $params, array &$bool) {
-    $filter = self::getDefinitionFilter($definition, $params);
+  private static function applyUserFiltersHasPhotos(array $definition, array &$bool) {
+    $filter = self::getDefinitionFilter($definition, ['has_photos']);
     if (!empty($filter)) {
       $boolClause = !empty($filter['op']) && $filter['op'] === 'not in' ? 'must_not' : 'must';
       $bool[$boolClause][] = [

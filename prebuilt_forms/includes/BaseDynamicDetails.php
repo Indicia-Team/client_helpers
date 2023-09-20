@@ -26,6 +26,13 @@ require_once 'dynamic.php';
 
 class BaseDynamicDetails extends iform_dynamic {
 
+  /**
+   * ID of the record being loaded.
+   *
+   * @var int
+   */
+  protected static $id;
+
   protected static function controlContainer($defaultTitle, $htmlContent, $options) {
     $r = '';
     if ($options['title'] === TRUE) {
@@ -61,6 +68,33 @@ HTML;
    */
   protected static function convertArrayToSet(array $theArray) {
     return "'" . implode("','", str_replace("'", "''", $theArray)) . "'";
+  }
+
+  /**
+   * Retrieve the ID of the record we are showing the details of.
+   *
+   * Flexible to cope with different paths to land on this page.
+   *
+   * @return int
+   *   Id of the record to load, also stored in self::$id.
+   */
+  protected static function getEntityId($entity) {
+    if (!empty($_GET["{$entity}_id"])) {
+      // E.g. normal link with occurrence_id=123 or similar in the URL.
+      $id = $_GET["{$entity}_id"];
+    }
+    elseif (($_GET['table'] ?? '') === $entity && !empty($_GET['id'])) {
+      // Link generated after saving a record, e.g. table=occurrence&id=123.
+      $id = $_GET['id'];
+    }
+    if (!isset($id)) {
+      throw new exception("Invalid link - missing {$entity}_id parameter.");
+    }
+    if (!preg_match('/^\d+$/', $id)) {
+      throw new exception('Invalid link - the ID is formatted incorrectly.');
+    }
+    self::$id = $id;
+    return $id;
   }
 
   /**
@@ -108,7 +142,7 @@ HTML;
     ]);
     $html = "<div class=\"$options[class] photos-$settings[type]\">";
     if (empty($media)) {
-      $html = '<p>' . lang::get('No photos or media files available') . '</p>';
+      $html .= '<p>' . lang::get('No photos or media files available') . '</p>';
     }
     else {
       if (isset($options['helpText'])) {

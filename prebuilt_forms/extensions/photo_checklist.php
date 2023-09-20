@@ -237,7 +237,7 @@ class extension_photo_checklist {
    * @param array $s_array
    *   Submission array, which will initially contain a sample.
    */
-  public function build_submission(array $values, array $s_array) {
+  public static function build_submission(array $values, array $s_array) {
     $existingIdFields = preg_grep('/occ:photo-checklist-occ:id:\d+-\d+/', array_keys($values));
     $countFields = preg_grep('/occ:photo-checklist-count-\d+-\d+/', array_keys($values));
     foreach ($countFields as $countField) {

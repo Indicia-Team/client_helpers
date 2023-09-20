@@ -55,7 +55,7 @@ class iform_mnhnl_bats extends iform_mnhnl_dynamic_1 {
   }
 
   public static function get_parameters() {
-    $retVal=[]
+    $retVal = [];
     $parentVal = array_merge(
       parent::get_parameters(),
       iform_mnhnl_getParameters(),
@@ -927,8 +927,9 @@ bindSpeciesAutocomplete(\"taxonLookupControl\",\"".data_entry_helper::$base_url.
       }
       // No help text
       return $grid;
-    } else {
-      return $taxalist['error'];
+    }
+     else {
+      return $occList['error'];
     }
   }
 

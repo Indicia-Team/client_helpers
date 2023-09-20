@@ -370,6 +370,7 @@ class ElasticsearchReportHelper {
       ]
     );
     helper_base::addLanguageStringsToJs('cardGallery', [
+      'checkToIncludeInList' => 'Check this box to include the record in the list which any verification actions will be applied to.',
       'collapseCard' => 'Return card to normal size (C or +)',
       'expandCard' => 'Expand this card (C or +)',
       'fullScreenToolHint' => 'Click to view grid in full screen mode',
@@ -391,6 +392,7 @@ class ElasticsearchReportHelper {
       'columns',
       'includeFieldCaptions',
       'includeFullScreenTool',
+      'includeMultiSelectTool',
       'includePager',
       'includeSortTool',
       'keyboardNavigation',
@@ -511,6 +513,7 @@ HTML;
     // Fancybox for image popups.
     helper_base::add_resource('fancybox');
     helper_base::addLanguageStringsToJs('dataGrid', [
+      'checkToIncludeInList' => 'Check this box to include the record in the list which any verification actions will be applied to.',
       'columnSettingsToolHint' => 'Click to show grid column settings',
       'fullScreenToolHint' => 'Click to view grid in full screen mode',
       'noHeading' => 'no heading',
@@ -528,8 +531,8 @@ HTML;
       'includeColumnSettingsTool',
       'includeFilterRow',
       'includeFullScreenTool',
-      'includePager',
       'includeMultiSelectTool',
+      'includePager',
       'keyboardNavigation',
       'responsive',
       'responsiveOptions',
@@ -810,8 +813,7 @@ JS;
    *   Control HTML.
    */
   private static function internalLocationSelect(array $options, $addGeomHiddenInput) {
-    if (empty($options['locationTypeId']) ||
-        (!is_array($options['locationTypeId']) && !preg_match('/^\d+$/', $options['locationTypeId']))) {
+    if (!is_array($options['locationTypeId']) && !preg_match('/^\d+$/', $options['locationTypeId'])) {
       throw new Exception('An integer or integer array @locationTypeId parameter is required for location select controls');
     }
     $typeIds = is_array($options['locationTypeId']) ? $options['locationTypeId'] : [$options['locationTypeId']];
@@ -844,7 +846,7 @@ JS;
         $r .= "<input type=\"hidden\" id=\"$options[id]-geom\" class=\"es-filter-param $options[class]-geom\" data-es-bool-clause=\"must\">";
       }
     }
-    return $r;
+    return "<div class=\"location-select-cntr\">$r</div>";
   }
 
   /**
@@ -856,8 +858,11 @@ JS;
    * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-highergeopgraphyselect
    */
   public static function higherGeographySelect(array $options) {
+    self::checkOptions('higherGeographySelect', $options,
+      ['locationTypeId'],
+      []
+    );
     $options = array_merge([
-      'id' => 'higher-geography-select',
       'class' => 'es-higher-geography-select',
     ], $options);
     return self::internalLocationSelect($options, FALSE);
@@ -872,8 +877,11 @@ JS;
    * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-locationselect
    */
   public static function locationSelect(array $options) {
+    self::checkOptions('locationSelect', $options,
+      ['locationTypeId'],
+      []
+    );
     $options = array_merge([
-      'id' => 'location-select',
       'class' => 'es-location-select',
     ], $options);
     return self::internalLocationSelect($options, TRUE);
@@ -1201,6 +1209,12 @@ JS;
       'showSelectedRow',
     ], TRUE);
     helper_base::add_resource('tabs');
+    helper_base::addLanguageStringsToJs('recordDetails', [
+      'actionByPersonOnDate' => '{1} by {2} on {3}',
+      'comment' => 'Comment',
+      'redetermination' => 'Redetermination',
+      'verificationDecision' => 'Verification',
+    ]);
     // Record details pane must be initialised after the control acting as row
     // data source, so it can hook to events.
     helper_base::$javascript .= <<<JS
@@ -1245,7 +1259,7 @@ HTML;
    * @return string
    *   Panel container HTML.
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-recordsMover
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-recordsmover
    */
   public static function recordsMover(array $options) {
     self::checkOptions(
@@ -1710,6 +1724,7 @@ HTML;
       'accepted' => lang::get('Accepted'),
       'acceptedConsideredCorrect' => lang::get('Accepted :: considered correct'),
       'acceptedCorrect' => lang::get('Accepted :: correct'),
+      'addComment' => lang::get('Add comment'),
       'all' => lang::get('all'),
       'applyThisDecisionToParentSample' => lang::get(
         'Only available for records that are part of a parent sample, such as a transect or timed count on a single date. Click to activate the button then verification ' .
@@ -1718,10 +1733,15 @@ HTML;
       'applyRedetermination' => lang::get('Apply redetermination'),
       'cancel' => lang::get('Cancel'),
       'cancelSaveTemplate' => lang::get('Cancel saving the template'),
+      'commentTabTitle' => 'Comment on the record',
       'contactExpert' => lang::get('Contact an expert'),
       'deleteTemplate' => lang::get('Delete the selected template'),
       'edit' => lang::get('Edit'),
-      'editThisRecord' => 'Edit this record',
+      'editThisRecord' => lang::get('Edit this record'),
+      'emailBody' => lang::get('Email body'),
+      'emailPlaceholder' => lang::get('Enter the email address to send the record to'),
+      'emailSubject' => lang::get('Email subject'),
+      'emailTabTitle' => lang::get('Email record details'),
       'help' => lang::get('Help'),
       'notAccepted' => lang::get('Not accepted'),
       'notAcceptedIncorrect' => lang::get('Not accepted :: incorrect'),
@@ -1731,6 +1751,8 @@ HTML;
       'saveStatus' => lang::get('Save status'),
       'saveTemplate' => lang::get('Save template'),
       'selected' => lang::get('selected'),
+      'sendEmail' => lang::get('Send email'),
+      'sendEmailTo' => lang::get('Send email to'),
       'showPreview' => lang::get('Preview'),
       'templateHelpIntroAvailableTokens' => lang::get('Available placeholders as follows - use the copy buttons (<i class="far fa-copy"></i>) to copy the placeholder to the clipboard so you can paste it into your comment:'),
       'templateHelpIntro1' => lang::get('You can create and save templates for your verification comments which can be used to provide the comment for future verification actions. ' .
@@ -1758,7 +1780,6 @@ HTML;
       'templateHelpTokenTaxon' => lang::get('will be replaced by the identification name given to the record as originally entered.'),
       'templateHelpClose' => lang::get('Close help'),
       'updatingMultipleWarning' => lang::get('You are updating multiple records!'),
-      'updatingMultipleInParentSampleWarning' => lang::get('This verification decision will also be applied to other records of the same taxon within the parent sample (e.g. within the transect or timed count)!'),
       'upload' => lang::get('Upload'),
       'uploadVerificationDecisions' => lang::get('Upload a file of verification decisions'),
       'viewRecordDetails' => "View this record's details page",
@@ -1766,10 +1787,8 @@ HTML;
     ];
 
     helper_base::addLanguageStringsToJs('verificationButtons', [
-      'addComment' => 'Add comment',
       'cancel' => 'Cancel',
       'close' => 'Close',
-      'commentTabTitle' => 'Comment on the record',
       'copyPlaceholder' => 'Copy &quot;{{ placeholder }}&quot; to the clipboard.',
       'deleteTemplateConfirm' => 'Delete template',
       'deleteTemplateMsg' => 'Are you sure you want to delete the "{{ title }}" template?',
@@ -1808,6 +1827,7 @@ HTML;
       'queryCommentTabUserIsNotNotified' => 'Although you can add a comment, sending the query as an email is preferred as the recorder does not check their notifications.',
       'queryInMultiselectMode' => 'As you are in multi-select mode, email facilities cannot be used and queries can only be added as comments to the record.',
       'recordRedetermined' => 'This record has been redetermined.',
+      'redetErrorMsg' => 'An error occurred on the server when redetermining the records.',
       'redetPartialListInfo' => 'This record was originally input using a taxon checklist which may not be a complete list of all species. If you cannot find the species you wish to redetermine it to using the search box below, then please tick the "Search all species" checkbox and try again.',
       'requestManualEmail' => 'The webserver is not correctly configured to send emails. Please send the following email usual your email client:',
       'saveQueryToComments' => 'Save query to comments log',
@@ -1815,6 +1835,7 @@ HTML;
       'saveTemplateError' => 'Save template error',
       'saveTemplateErrorMsg' => 'An error occurred when saving your template to the database. Please try later.',
       'templateNameTextRequired' => 'Template details required',
+      'updatingMultipleInParentSampleWarning' => lang::get('This verification decision will be applied to a total of {1} records of the same taxon within the parent sample (e.g. within the transect or timed count)!'),
       'uploadError' => 'An error occurred whilst uploading your spreadsheet.',
       'C3' => 'marked as plausible',
       'DT' => 'redetermined',
@@ -1828,13 +1849,13 @@ HTML;
     // Work out any extra buttons we need for provided links.
     $optionalLinkArray = [];
     if (!empty($options['editPath'])) {
-      $optionalLinkArray[] = "<a class=\"edit $btnClass\" title=\"$lang[editThisRecord]\" target=\"_blank\"><span class=\"fas fa-edit\"></span></a>";
+      $optionalLinkArray[] = "<a class=\"edit $btnClassDefault\" title=\"$lang[editThisRecord]\" target=\"_blank\"><span class=\"fas fa-edit\"></span></a>";
     }
     if (!empty($options['viewPath'])) {
-      $optionalLinkArray[] = "<a class=\"view $btnClass\" target=\"_blank\" title=\"$lang[viewRecordDetails]\" target=\"_blank\"><span class=\"fas fa-file-invoice\"></span></a>";
+      $optionalLinkArray[] = "<a class=\"view $btnClassDefault\" target=\"_blank\" title=\"$lang[viewRecordDetails]\" target=\"_blank\"><span class=\"fas fa-file-invoice\"></span></a>";
     }
     if (!empty($options['speciesPath'])) {
-      $optionalLinkArray[] = "<a class=\"species $btnClass\" target=\"_blank\" title=\"$lang[viewSpeciesPage]\" target=\"_blank\"><span class=\"fas fa-file\"></span></a>";
+      $optionalLinkArray[] = "<a class=\"species $btnClassDefault\" target=\"_blank\" title=\"$lang[viewSpeciesPage]\" target=\"_blank\"><span class=\"fas fa-file\"></span></a>";
     }
     $optionalLinks = implode("\n  ", $optionalLinkArray);
     // Build some controls for the various forms.
@@ -1862,6 +1883,7 @@ HTML;
     // Remember which is the master list.
     helper_base::$indiciaData['mainTaxonListId'] = $options['taxon_list_id'];
     $verificationCommentInput = data_entry_helper::textarea([
+      'id' => 'verification-comment-input',
       'label' => lang::get('Add the following comment'),
       'labelClass' => 'auto',
       'class' => 'comment-textarea',
@@ -1878,6 +1900,7 @@ HTML;
       ]);
     }
     $redetCommentInput = data_entry_helper::textarea([
+      'id' => 'redet-comment-input',
       'label' => lang::get('Explanation comment'),
       'labelClass' => 'auto',
       'helpText' => lang::get('Please give reasons why you are changing this record.'),
@@ -1885,25 +1908,20 @@ HTML;
       'class' => 'comment-textarea',
       'wrapClasses' => ['not-full-width-lg'],
     ]);
+    $queryCommentInput = data_entry_helper::textarea([
+      'id' => 'query-comment-input',
+      'label' => lang::get('Add the following comment'),
+      'labelClass' => 'auto',
+      'class' => 'comment-textarea',
+      'default' => '',
+    ]);
     $uploadButton = empty($options['includeUploadButton']) ? '' : <<<HTML
       <button class="upload-decisions $btnClass" title="$lang[uploadVerificationDecisions]"><span class="fas fa-file-upload"></span>$lang[upload]</button>
 HTML;
     if ($options['verificationTemplates']) {
-      $loadVerifyTemplateDropdown = data_entry_helper::select([
-        'label' => lang::get('Or, load the following comment template'),
-        'fieldname' => 'verify-template',
-        'class' => 'comment-template',
-        'lookupValues' => [],
-        'blankText' => lang::get('- select template to load -'),
-        'afterControl' => "<i class=\"fas fa-trash-alt delete-template disabled\" title=\"$lang[deleteTemplate]\"></i>",
-      ]);
-      $loadRedetTemplateDropdown = data_entry_helper::select([
-        'label' => lang::get('Or, load the following comment template'),
-        'fieldname' => 'redet-template',
-        'class' => 'comment-template',
-        'lookupValues' => [],
-        'blankText' => lang::get('- select template to load -'),
-      ]);
+      $loadVerifyTemplateDropdown = self::getTemplateSelect('verify-template');
+      $loadRedetTemplateDropdown = self::getTemplateSelect('redet-template');
+      $loadQueryTemplateDropdown = self::getTemplateSelect('query-template');
       $saveTemplateButtons = <<<HTML
 <button type="button" class="save-template $indicia_templates[buttonDefaultClass]"><i class="fas fa-save" title="$lang[saveTemplate]"></i></button>
 <button type="button" class="cancel-save-template $indicia_templates[buttonDefaultClass]" title="$lang[cancelSaveTemplate]"><i class="fas fa-window-close"></i></button>
@@ -1930,6 +1948,7 @@ HTML;
     else {
       $loadVerifyTemplateDropdown = '';
       $loadRedetTemplateDropdown = '';
+      $loadQueryTemplateDropdown = '';
       $commentTools = '';
     }
     $r = <<<HTML
@@ -1939,27 +1958,27 @@ HTML;
       <div class="all-selected-buttons idc-verificationButtons-row">
         Actions:
         <span class="fas fa-toggle-on toggle fa-2x" title="Toggle additional status levels"></span>
-        <button class="verify l1 $btnClass btn-sm" data-status="V" title="$lang[accepted]"><span class="far fa-check-circle status-V"></span></button>
-        <button class="verify l2 $btnClass" data-status="V1" title="$lang[acceptedCorrect]"><span class="fas fa-check-double status-V1"></span></button>
-        <button class="verify l2 $btnClass" data-status="V2" title="$lang[acceptedConsideredCorrect]"><span class="fas fa-check status-V2"></span></button>
-        <button class="verify $btnClass" data-status="C3" title="$lang[plausible]"><span class="fas fa-check-square status-C3"></span></button>
-        <button class="verify l1 $btnClass" data-status="R" title="$lang[notAccepted]"><span class="far fa-times-circle status-R"></span></button>
-        <button class="verify l2 $btnClass" data-status="R4" title="$lang[notAcceptedUnableToVerify]"><span class="fas fa-times status-R4"></span></button>
-        <button class="verify l2 $btnClass" data-status="R5" title="$lang[notAcceptedIncorrect]"><span class="fas fa-times status-R5"></span></button>
-        <button class="apply-to-parent-sample-contents single-only $btnClass" title="$lang[applyThisDecisionToParentSample]" disabled="disabled"><span class="fas fa-sitemap"></span></button>
+        <button class="verify l1 $btnClassDefault btn-sm" data-status="V" title="$lang[accepted]"><span class="far fa-check-circle status-V"></span></button>
+        <button class="verify l2 $btnClassDefault" data-status="V1" title="$lang[acceptedCorrect]"><span class="fas fa-check-double status-V1"></span></button>
+        <button class="verify l2 $btnClassDefault" data-status="V2" title="$lang[acceptedConsideredCorrect]"><span class="fas fa-check status-V2"></span></button>
+        <button class="verify $btnClassDefault" data-status="C3" title="$lang[plausible]"><span class="fas fa-check-square status-C3"></span></button>
+        <button class="verify l1 $btnClassDefault" data-status="R" title="$lang[notAccepted]"><span class="far fa-times-circle status-R"></span></button>
+        <button class="verify l2 $btnClassDefault" data-status="R4" title="$lang[notAcceptedUnableToVerify]"><span class="fas fa-times status-R4"></span></button>
+        <button class="verify l2 $btnClassDefault" data-status="R5" title="$lang[notAcceptedIncorrect]"><span class="fas fa-times status-R5"></span></button>
+        <button class="apply-to-parent-sample-contents single-only $btnClassDefault" title="$lang[applyThisDecisionToParentSample]" disabled="disabled"><span class="fas fa-sitemap"></span></button>
         <span class="sep"></span>
-        <button class="redet $btnClass" title="Redetermine this record"><span class="fas fa-tag"></span></button>
-        <button class="query $btnClass" data-query="Q" title="$lang[raiseQuery]"><span class="fas fa-question-circle query-Q"></span></button>
+        <button class="redet $btnClassDefault" title="Redetermine this record"><span class="fas fa-tag"></span></button>
+        <button class="query $btnClassDefault" data-query="Q" title="$lang[raiseQuery]"><span class="fas fa-question-circle query-Q"></span></button>
         <div class="multi-only apply-to">
           <span>$lang[applyTo]:</span>
-          <button class="multi-mode-selected active $btnClass">$lang[selected]</button>
+          <button class="multi-mode-selected active $btnClassDefault">$lang[selected]</button>
           |
-          <button class="multi-mode-table $btnClass">$lang[all]</button>
+          <button class="multi-mode-table $btnClassDefault">$lang[all]</button>
         </div>
       </div>
     </div>
     <div class="single-record-buttons idc-verificationButtons-row">
-      <button class="email-expert $btnClass" title="$lang[contactExpert]"><span class="fas fa-chalkboard-teacher"></span></button>
+      <button class="email-expert $btnClassDefault" title="$lang[contactExpert]"><span class="fas fa-chalkboard-teacher"></span></button>
       $optionalLinks
       $uploadButton
     </div>
@@ -1971,7 +1990,7 @@ HTML;
     <fieldset>
       <legend><span></span><span></span></legend>
       <p class="alert alert-warning multiple-warning">$lang[updatingMultipleWarning]</p>
-      <p class="alert alert-warning multiple-in-parent-sample-warning">$lang[updatingMultipleInParentSampleWarning]</p>
+      <p class="alert alert-warning multiple-in-parent-sample-warning"></p>
       <p class="alert alert-info"></p>
       <div class="comment-cntr form-group">
         $commentTools
@@ -1984,6 +2003,73 @@ HTML;
       </div>
     </fieldset>
   </form>
+</div>
+
+<div id="redet-panel-wrap" style="display: none">
+  <form id="redet-form" class="verification-popup" data-status="DT">
+    <p class="alert alert-warning multiple-warning">$lang[updatingMultipleWarning]</p>
+    <div class="alt-taxon-list-controls alt-taxon-list-message">$indicia_templates[messageBox]</div>
+    $speciesInput
+    $altListCheckbox
+    $redetNameBehaviourOption
+    <div class="comment-cntr form-group not-full-width-lg">
+      $commentTools
+      $redetCommentInput
+    </div>
+    $loadRedetTemplateDropdown
+    <div class="form-buttons">
+      <button type="button" class="$btnClass" id="apply-redet">$lang[applyRedetermination]</button>
+      <button type="button" class="$btnClassDefault cancel">$lang[cancel]</button>
+    </div>
+  </form>
+</div>
+
+<div id="query-panel-wrap" style="display: none">
+  <div id="query-form" class="verification-popup">
+    <ul>
+      <li id="tab-query-comment-tab"><a href="#tab-query-comment">$lang[addComment]</a></li>
+      <li id="tab-query-email-tab"><a href="#tab-query-email">$lang[sendEmail]</a></li>
+    </ul>
+    <fieldset class="verification-popup comment-popup" id="tab-query-comment" data-query="Q">
+      <legend>
+        <span class="fas fa-question-circle fa-2x"></span>
+        $lang[commentTabTitle]
+      </legend>
+      <p class="alert alert-info"></p>
+      <div class="comment-cntr form-group not-full-width-lg">
+        $commentTools
+        $queryCommentInput
+      </div>
+      $loadQueryTemplateDropdown
+      <div class="form-buttons">
+        <button class="indicia-button btn btn-primary save">$lang[addComment]</button>
+        <button class="indicia-button btn btn-default cancel">$lang[cancel]</button>
+      </div>
+    </fieldset>
+    <fieldset class="verification-popup query-popup" id="tab-query-email">
+      <legend>
+        <span class="fas fa-question-circle fa-2x"></span>
+        $lang[emailTabTitle]
+      </legend>
+      <form novalidate="novalidate">
+        <p class="alert alert-info"></p>
+        <div class="form-group">
+          <label for="email-to">$lang[sendEmailTo]:</label>
+          <input id="email-to" class="form-control email required" placeholder="$lang[emailPlaceholder]">
+        </div>
+        <div class="form-group">
+          <label for="email-subject">$lang[emailSubject]:</label>
+          <input id="email-subject" class="form-control required">
+        </div>
+        <div class="form-group">
+          <label for="email-body">$lang[emailBody]:</label>
+          <textarea id="email-body" class="form-control required valid" rows="12"></textarea>
+        </div>
+        <button type="submit" class="$btnClass">$lang[sendEmail]</button>
+        <button type="button" class="$btnClassDefault cancel">$lang[cancel]</button>
+      </form>
+    </fieldset>
+  </div>
 </div>
 
 <div id="template-help-cntr" style="display: none">
@@ -2013,25 +2099,6 @@ HTML;
     </ul>
   </article>
   <button type="button" class="help-close $btnClass $indicia_templates[buttonSmallClass]">$lang[templateHelpClose]</button>
-</div>
-
-<div id="redet-panel-wrap" style="display: none">
-  <form id="redet-form" class="verification-popup" data-status="DT">
-    <p class="alert alert-warning multiple-warning">$lang[updatingMultipleWarning]</p>
-    <div class="alt-taxon-list-controls alt-taxon-list-message">$indicia_templates[messageBox]</div>
-    $speciesInput
-    $altListCheckbox
-    $redetNameBehaviourOption
-    <div class="comment-cntr form-group">
-      $commentTools
-      $redetCommentInput
-    </div>
-    $loadRedetTemplateDropdown
-    <div class="form-buttons">
-      <button type="button" class="$btnClass" id="apply-redet">$lang[applyRedetermination]</button>
-      <button type="button" class="$btnClass cancel">$lang[cancel]</button>
-    </div>
-  </form>
 </div>
 HTML;
     if (!empty($options['includeUploadButton'])) {
@@ -2082,6 +2149,27 @@ HTML;
 
     }
     return $r;
+  }
+
+  /**
+   * Return the HTML for a comment template select control.
+   *
+   * @param string $name
+   *   Fieldname to allocate to the control.
+   *
+   * @return string
+   *   Control HTML.
+   */
+  private static function getTemplateSelect($name) {
+    return data_entry_helper::select([
+      'label' => lang::get('Or, load the following comment template'),
+      'fieldname' => $name,
+      'class' => 'comment-template',
+      'lookupValues' => [],
+      'blankText' => lang::get('- select template to load -'),
+      'afterControl' => "<i class=\"fas fa-trash-alt delete-template disabled\" title=\"$lang[deleteTemplate]\"></i>",
+      'wrapClasses' => ['template-select'],
+    ]);
   }
 
   /**
@@ -2336,7 +2424,7 @@ AGG;
   /**
    * Returns the HTML required to act as a control container.
    *
-   * Creates the common HTML strucuture required to wrap any data output
+   * Creates the common HTML structure required to wrap any data output
    * control.
    *
    * @param string $controlName

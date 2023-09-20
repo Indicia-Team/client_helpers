@@ -241,7 +241,7 @@ class data_entry_helper extends helper_base {
       'escaped_input_id' => self::jq_esc($options['inputId']),
       'escaped_id' => self::jq_esc($options['id']),
       'max' => array_key_exists('numValues', $options) ? ', max : ' . $options['numValues'] : '',
-      'formatFunction' => 'function(item) { return item.{captionField}; }',
+      'formatFunction' => "function(item) { return item.$options[captionField]; }",
       'simplify' => (isset($options['simplify']) && $options['simplify']) ? 'true' : 'false',
       'warnIfNoMatch' => TRUE,
       'continueOnBlur' => TRUE,
@@ -1739,7 +1739,7 @@ JS;
       $options['childBlankText'] = $options['blankText'];
     }
     else {
-      $options['childBlankText'] = htmlspecialchars(lang::get($options['childBlankText'])); 
+      $options['childBlankText'] = htmlspecialchars(lang::get($options['childBlankText']));
     }
     $selectClass = "hierarchy-select  $indicia_templates[formControlClass]";
     // Now output JavaScript that creates and populates child selects as each option is selected. There is also code for
@@ -2339,74 +2339,68 @@ JS;
   }
 
   /**
-   * Generates a map control, with optional data entry fields and location finder powered by the
-   * Yahoo! geoservices API. This is just a shortcut to building a control using a map_panel and the
-   * associated controls.
+   * Map control.
    *
-   * @param array $options Options array with the following possibilities:<ul>
-   * <li><b>presetLayers</b><br/>
-   * Array of preset layers to include. Options are 'google_physical', 'google_streets', 'google_hybrid',
-   * 'google_satellite', 'openlayers_wms', 'bing_aerial', 'bing_hybrid, 'bing_shaded', 'bing_os',
-   * 'osm' (for OpenStreetMap).</li>
-   * <li><b>edit</b><br/>
-   * True or false to include the edit controls for picking spatial references.</li>
-   * <li><b>locate</b><br/>
-   * True or false to include the geolocate controls.</li>
-   * <li><b>wkt</b><br/>
-   * Well Known Text of a spatial object to add to the map at startup.</li>
-   * <li><b>tabDiv</b><br/>
-   * If the map is on a tab or wizard interface, specify the div the map loads on.</li>
-   * </ul>
+   * Generates a map control, with optional data entry fields and location
+   * finder This is just a shortcut to building a control using a map_panel and
+   * the associated controls.
    *
-   * The output of this control can be configured using the following templates:
-   * <ul>
-   * <li><b>georeference_lookup</b></br>
-   * Template which outputs the HTML for the georeference search input, button placehold and container
-   * for the list of search results. The default template uses JavaScript to write the output, so that
-   * this control is removed from the page if JavaScript is disabled as it will have no functionality.
-   * </li>
-   * <li><b>button</b></br>
-   * HTML template for the buttons used for the georeference_lookup.
-   * </li>
-   * <li><b>sref_textbox</b></br>
-   * HTML template for the spatial reference input control.
-   * </li>
-   * <li><b>sref_textbox_latlong</b></br>
-   * HTML template for the spatial reference input control used when inputting latitude
-   * and longitude into separate inputs.
-   * </li>
-   * <li><b>select</b></br>
-   * HTML template used by the select control for picking a spatial reference system, if there
-   * is one.
-   * </li>
-   * <li><b>select_item</b></br>
-   * HTML template used by the option items in the select control for picking a spatial
-   * reference system, if there is one.
-   * </li>
-   * </ul>
+   * The output of this control can be configured using the following
+   * templates:
+   * * georeference_lookup - Template which outputs the HTML for the
+   *   georeference search input, button placehold and container for the list
+   *   of search results. The default template uses JavaScript to write the
+   *   output, so that this control is removed from the page if JavaScript is
+   *   disabled as it will have no functionality.
+   * * button - HTML template for the buttons used for the georeference_lookup.
+   * * sref_textbox - HTML template for the spatial reference input control.
+   * * sref_textbox_latlong - HTML template for the spatial reference input
+   *   control used when inputting latitude and longitude into separate inputs.
+   * * select -    * HTML template used by the select control for picking a
+   *   spatial reference system, if there is one.
+   * * select_item -    * HTML template used by the option items in the select
+   *   control for picking a spatial reference system, if there is one.
+   *
+   * @param array $options
+   *   Options array with the following possibilities:
+   *   * presetLayers - Array of preset layers to include. Options are
+   *     'google_physical', 'google_streets', 'google_hybrid',
+   *     'google_satellite', 'openlayers_wms', 'bing_aerial', 'bing_hybrid,
+   *     'bing_shaded', 'bing_os', 'osm' (for OpenStreetMap).
+   *   * edit - True or false to include the edit controls for picking spatial
+   *     references.
+   *   * locate - True or false to include the geolocate controls.
+   *   * wkt - Well Known Text of a spatial object to add to the map at
+   *     startup.
+   *   * tabDiv -If the map is on a tab or wizard interface, specify the div
+   *     the map loads on.
    */
   public static function map($options) {
     $options = self::check_options($options);
-    $options = array_merge(array(
+    $options = array_merge([
       'div' => 'map',
       'edit' => TRUE,
       'locate' => TRUE,
       'wkt' => NULL
-    ), $options);
+    ], $options);
     $r = '';
     if ($options['edit']) {
-      $r .= self::sref_and_system(array(
+      $r .= self::sref_and_system([
         'label' => lang::get('spatial ref'),
-      ));
+      ]);
     }
     if ($options['locate']) {
-      $r .= self::georeference_lookup(array(
-        'label'=>lang::get('search for place on map')
-      ));
+      $r .= self::georeference_lookup([
+        'label' => lang::get('search for place on map')
+      ]);
     }
-    $mapPanelOptions = array('initialFeatureWkt' => $options['wkt']);
-    if (array_key_exists('presetLayers', $options)) $mapPanelOptions['presetLayers'] = $options['presetLayers'];
-    if (array_key_exists('tabDiv', $options)) $mapPanelOptions['tabDiv'] = $options['tabDiv'];
+    $mapPanelOptions = ['initialFeatureWkt' => $options['wkt']];
+    if (array_key_exists('presetLayers', $options)) {
+      $mapPanelOptions['presetLayers'] = $options['presetLayers'];
+    }
+    if (array_key_exists('tabDiv', $options)) {
+      $mapPanelOptions['tabDiv'] = $options['tabDiv'];
+    }
     require_once 'map_helper.php';
     $r .= map_helper::map_panel($mapPanelOptions);
     return $r;
@@ -3733,6 +3727,7 @@ RIJS;
       self::$indiciaData["previousRowColumnsToInclude-$options[id]"] = $options['previousRowColumnsToInclude'];
       self::$indiciaData['langAddAnother'] = lang::get('Add another');
     }
+    $onlyImages = empty($options['mediaTypes']) ? TRUE : self::isOnlyImages($options['mediaTypes']);
     if (count($options['mediaTypes'])) {
       self::add_resource('plupload');
       // Store some globals that we need later when creating uploaders.
@@ -3746,14 +3741,17 @@ RIJS;
         'relativeImageFolder' => $relativeImageFolder,
         'jsPath' => $js_path,
       ];
+      $fileTypeLabel = $onlyImages ? 'photos' : 'files';
       $langStrings = [
-        'caption' => 'Files',
-        'addBtnCaption' => 'Add {1}',
-        'msgPhoto' => 'photo',
+        'addBtnCaption' => "Add $fileTypeLabel",
+        'addBtnCaptionSubsamples' => "Add $fileTypeLabel for this position",
+        'caption' => ucfirst($fileTypeLabel),
+        'captionSubsamples' => ucfirst($fileTypeLabel) . ' for this position',
+        'msgDelete' => 'Delete this item',
         'msgFile' => 'file',
         'msgLink' => 'link',
         'msgNewImage' => 'New {1}',
-        'msgDelete' => 'Delete this item'
+        'msgPhoto' => 'photo',
       ];
       foreach ($langStrings as $key => $string) {
         $uploadSettings[$key] = lang::get($string);
@@ -3873,14 +3871,6 @@ RIJS;
       if (!empty($options['allowAdditionalTaxa'])) {
         $beforegrid .= self::get_species_checklist_clonable_row($options, $occAttrControls, $attributes);
       }
-      $onlyImages = TRUE;
-      if ($options['mediaTypes']) {
-        foreach ($options['mediaTypes'] as $mediaType) {
-          if (substr($mediaType, 0, 6) !== 'Image:') {
-            $onlyImages = FALSE;
-          }
-        }
-      }
       $grid = self::get_species_checklist_header($options, $occAttrs, $onlyImages);
       $rows = [];
       $imageRowIdxs = [];
@@ -3899,10 +3889,10 @@ RIJS;
           self::$javascript .= "indiciaData.subspeciesRanksToStrip='" . lang::get('(form[a\.]?|var\.?|ssp\.)') . "';\n";
         }
       }
-      // track if there is a row we are editing in this grid
+      // Track if there is a row we are editing in this grid.
       $hasEditedRecord = FALSE;
       if ($options['mediaTypes']) {
-        $mediaBtnLabel = lang::get($onlyImages ? 'Add images' : 'Add media');
+        $mediaBtnLabel = lang::get($onlyImages ? 'Add photos' : 'Add files');
         $mediaBtnClass = 'sc' . ($onlyImages ? 'Image' : 'Media') . 'Link';
       }
       self::addLanguageStringsToJs('speciesChecklistRowButtons', [
@@ -4375,6 +4365,27 @@ if ($('#$options[id]').parents('.ui-tabs-panel').length) {
   }
 
   /**
+   * Checks if a list of mediaTypes only contains images.
+   *
+   * Can be used to set a caption to Photos/Images or Files as appropriate.
+   *
+   * @param array $mediaTypes
+   *   List of media type terms, e.g. Image:Local.
+   *
+   * @return $bool
+   *   True if no term other than an image term found.
+   */
+  private static function isOnlyImages(array $mediaTypes) {
+    $onlyImages = TRUE;
+    foreach ($mediaTypes as $mediaType) {
+      if (substr($mediaType, 0, 6) !== 'Image:') {
+        $onlyImages = FALSE;
+      }
+    }
+    return $onlyImages;
+  }
+
+  /**
    * If showing sub-sample per row, select a map feature highlights row.
    *
    * @param array $options
@@ -4476,13 +4487,10 @@ JS;
       return '';
     }
     if ($options['mediaTypes']) {
-      $onlyImages = TRUE;
       $onlyLocal = TRUE;
       $linkMediaTypes = [];
       foreach ($options['mediaTypes'] as $mediaType) {
         $tokens = explode(':', $mediaType);
-        if ($tokens[0] !== 'Image')
-          $onlyImages = FALSE;
         if ($tokens[1] !== 'Local') {
           $onlyLocal = FALSE;
           $linkMediaTypes[] = $tokens[1];
@@ -5146,12 +5154,12 @@ JS;
         // button. Column can be hidden in responsive mode.
         if (count($options['mediaTypes'])) {
           $attrs = self::getSpeciesChecklistColResponsive($options, 'media');
-          $r .= self::get_species_checklist_col_header("$options[id]-images-$i", lang::get($onlyImages ? 'Add photos' : 'Add media'), $visibleColIdx, $options['colWidths'], $attrs);
+          $r .= self::get_species_checklist_col_header("$options[id]-images-$i", lang::get($onlyImages ? 'Photos' : 'Files'), $visibleColIdx, $options['colWidths'], $attrs);
           // In responsive mode, add an additional column for files which is
           // always hidden so it appears in a row below.
           if ($options['responsive']) {
             $attrs = ' data-hide="all" data-editable="true"';
-            $r .= self::get_species_checklist_col_header("$options[id]-files-$i", lang::get($onlyImages ? 'Photos' : 'Media'), $visibleColIdx, $options['colWidths'], $attrs);
+            $r .= self::get_species_checklist_col_header("$options[id]-files-$i", lang::get($onlyImages ? 'Photos' : 'Files'), $visibleColIdx, $options['colWidths'], $attrs);
           }
         }
 
@@ -5567,7 +5575,7 @@ JS;
     // Provides a default class based on the control caption.
     return (array_key_exists('occAttrClasses', $options) && $idx < count($options['occAttrClasses'])) ?
       $options['occAttrClasses'][$idx] :
-      'sc' . preg_replace('/[^a-zA-Z0-9]/', '', ucWords($caption));
+      'sc' . preg_replace('/[^a-zA-Z0-9]/', '', ucwords($caption));
   }
 
   /**
@@ -5742,17 +5750,11 @@ HTML;
       $r .= self::speciesChecklistSensitivityCell($options, 0, '-idx-', '');
     }
     if ($options['mediaTypes']) {
-      $onlyImages = TRUE;
-      foreach ($options['mediaTypes'] as $mediaType) {
-        if (!preg_match('/^Image:/', $mediaType)) {
-          $onlyImages = FALSE;
-        }
-      }
-
+      $onlyImages = self::isOnlyImages($options['mediaTypes']);
       // Html for a media link.
-      $label = lang::get($onlyImages ? 'Add images' : 'Add media');
+      $label = lang::get($onlyImages ? 'Add photos' : 'Add files');
       $class = 'add-media-link button ';
-      $class .= 'sc' . $onlyImages ? 'Image' : 'Media' . 'Link';
+      $class .= 'sc' . ($onlyImages ? 'Image' : 'Media') . 'Link';
       $id = 'add-media:' . $options['id'] . '--idx-:';
       $addMediaLink = <<<HTML
         <a href="" class="$class" style="display: none" id="$id">$label</a>
@@ -5823,6 +5825,16 @@ HTML;
    *   linked to sample methods in the survey's setup attributes section.
    * * **spatialSystem** - grid square system which the map will operate in, e.g.
    *   OSGB.
+   * * **sampleClusterButtonContents** - optional array of items to include in
+   *   the label shown on the button for each sample point when clicking on a
+   *   map cluster to access a specific sample, if overriding the default.
+   *   Possible items are recordsCount, speciesName, gridRef or smpAttr:n where
+   *   n is the ID of an attribute in the sub-sample.
+   * * **sampleMapLabelContents** - optional array of items to include
+   *   in the label shown on the map label for each sample point, if overriding
+   *   the default. Options same as sampleOnClusterButtonContents.
+   * * **samplePhotos** - set to true to add a photos upload control for each
+   *   sub-sample.
    */
   public static function multiple_places_species_checklist($options) {
     if (empty($options['spatialSystem'])) {
@@ -5841,6 +5853,7 @@ HTML;
       'buttonsId' => "species-grid-buttons-$code",
       'speciesControlToUseSubSamples' => TRUE,
       'base_url' => self::$base_url,
+      'samplePhotos' => FALSE,
     ], $options);
     $attrOptions = self::getAttrSpecificOptions($options);
     $speciesListEntryCtrl = data_entry_helper::species_checklist($options);
@@ -5855,7 +5868,8 @@ HTML;
         $attr['id'] = "sc:n::$attr[id]";
       }
       $sampleCtrls = get_attribute_html($sampleAttrs, [], ['extraParams' => $options['readAuth']], NULL, $attrOptions);
-      $r .= "<div id=\"$options[id]-subsample-ctrls\" style=\"display: none\">$sampleCtrls</div>";
+      // Add a template for the form section for a new subsample.
+      $r .= "<div id=\"$options[id]-subsample-ctrls\" style=\"display: none\" class=\"subsample-ctrl-cntr\">$sampleCtrls</div>";
     }
     $enteredSref = self::check_default_value('sample:entered_sref', '');
     $geom = self::check_default_value('sample:geom', '');
@@ -5948,6 +5962,42 @@ HTML;
   }
 
   /**
+   * When loading sub-samples for a multiplace grid, load existing photo data.
+   *
+   * Photo data values are added to $entity_to_load in a format which links to
+   * the correct sample.
+   *
+   * @param array $readAuth
+   *   Read authorisation tokens.
+   */
+  private static function loadSubSamplePhotos(array $readAuth) {
+    // First find a list of the unique sample IDs to load photos for.
+    $sampleIds = [];
+    foreach (data_entry_helper::$entity_to_load as $key => $value) {
+      $a = explode(':', $key, 4);
+      if (count($a) === 4  && $a[0] === 'sc' && $a[3] == 'sample:entered_sref') {
+        $sampleIds[$a[1]] = $a[2];
+      }
+    }
+    $subSamplePhotos = data_entry_helper::get_population_data([
+      'table' => 'sample_medium',
+      'extraParams' => $readAuth + ['query' => json_encode(['in' => ['sample_id' => array_values($sampleIds)]])],
+      'nocache' => TRUE,
+      'sharing' => 'editing',
+    ]);
+    foreach ($subSamplePhotos as $photo) {
+      // The grid row index is the key whcih holds the sample ID.
+      $gridRowIdx = array_search($photo['sample_id'], $sampleIds);
+      self::$entity_to_load["sc:$gridRowIdx:$photo[sample_id]:sample_medium:id:$photo[id]"] = $photo['id'];
+      self::$entity_to_load["sc:$gridRowIdx:$photo[sample_id]:sample_medium:path:$photo[id]"] = $photo['path'];
+      self::$entity_to_load["sc:$gridRowIdx:$photo[sample_id]:sample_medium:caption:$photo[id]"] = $photo['caption'];
+      self::$entity_to_load["sc:$gridRowIdx:$photo[sample_id]:sample_medium:media_type:$photo[id]"] = $photo['media_type'];
+      self::$entity_to_load["sc:$gridRowIdx:$photo[sample_id]:sample_medium:media_type_id:$photo[id]"] = $photo['media_type_id'];
+      self::$entity_to_load["sc:$gridRowIdx:$photo[sample_id]:sample_medium:licence_id:$photo[id]"] = $photo['licence_id'];
+    }
+  }
+
+  /**
    * Retrieves the buttons for a multiple_places_species_checklist.
    *
    * The buttons appear above the map and include options for adding, modifying
@@ -5988,6 +6038,9 @@ HTML;
     data_entry_helper::$javascript .= "control_speciesmap_addcontrols(" . json_encode($options) . ");\n";
     $blocks = "";
     if (isset(data_entry_helper::$entity_to_load)) {
+      if ($options['samplePhotos']) {
+        self::loadSubSamplePhotos($options['readAuth']);
+      }
       foreach (data_entry_helper::$entity_to_load as $key => $value) {
         $a = explode(':', $key, 4);
         if (count($a) === 4  && $a[0] === 'sc' && $a[3] == 'sample:entered_sref') {
@@ -6011,10 +6064,16 @@ HTML;
             $attrOptions = self::getAttrSpecificOptions($options);
             $sampleCtrls = get_attribute_html($sampleAttrs, [], ['extraParams' => $options['readAuth']], NULL, $attrOptions);
             $blocks .= <<<HTML
-<div id="scm-$a[1]-subsample-ctrls">
+<div class="subsample-ctrl-cntr">
   $sampleCtrls
 </div>
 HTML;
+          }
+          if ($options['samplePhotos']) {
+            $blocks .= self::file_box([
+              'table' => "$a[0]:$a[1]:$sampleId:sample_medium",
+              'readAuth' => $options['readAuth'],
+            ]);
           }
           $blocks .= '</div>';
         }
@@ -7754,6 +7813,7 @@ if (errors$uniq.length>0) {
     // sc:<subSampleIndex>:[<sample_id>]:sample:geom
     // sc:<subSampleIndex>:[<sample_id>]:sample:entered_sref
     // sc:<subSampleIndex>:[<sample_id>]:smpAttr:[<sample_attribute_id>]
+    // sc:<subSampleIndex>:[<sample_id>]:sample_medium:fieldname:uniqueImageId
     // sc:<rowIndex>:[<occurrence_id>]:occurrence:sampleIDX (val set to subSample index)
     // sc:<rowIndex>:[<occurrence_id>]:present (checkbox with val set to ttl_id
     // sc:<rowIndex>:[<occurrence_id>]:occAttr:<occurrence_attribute_id>[:<occurrence_attribute_value_id>]
@@ -7773,7 +7833,7 @@ if (errors$uniq.length>0) {
         // Don't explode the last element for occurrence attributes
         $a = explode(':', $key, 4);
         $b = explode(':', $a[3], 2);
-        if($b[0] == "sample" || $b[0] == "smpAttr") {
+        if ($b[0] === 'sample' || $b[0] === 'smpAttr' || $b[0] === 'sample_medium') {
           $sampleRecords[$a[1]][$a[3]] = $value;
           if($a[2]) $sampleRecords[$a[1]]['id'] = $a[2];
         }
@@ -7823,7 +7883,7 @@ if (errors$uniq.length>0) {
         $sampleRecord['location_name'] = $arr['sample:location_name'];
       if (!empty($arr['sample:input_form']))
         $sampleRecord['input_form'] = $arr['sample:input_form'];
-      $subSample = submission_builder::wrap($sampleRecord, 'sample');
+      $subSample = submission_builder::wrap_with_images($sampleRecord, 'sample');
       // Add the subSample/soccurrences in as subModels without overwriting others such as a sample image
       if (array_key_exists('subModels', $subSample)) {
         $subSample['subModels'] = array_merge($subSample['subModels'], $occs);
@@ -8646,7 +8706,6 @@ HTML;
     else {
       $sampleMod['subModels'] = $subModels;
     }
-
     return $sampleMod;
   }
 
@@ -9081,6 +9140,7 @@ TXT;
         'deleted' => 'f',
         'website_deleted' => 'f',
         'query'=>json_encode($query),
+        'orderby' => 'outer_block_weight,inner_block_weight',
         'sharing' => $sharing
       ), $options['extraParams'])
     );

@@ -198,12 +198,7 @@ class iform_location_details extends BaseDynamicDetails {
   }
 
   public static function get_form($args, $nid) {
-    if (empty($_GET['location_id'])) {
-      return 'This form requires an location_id parameter in the URL.';
-    }
-    if (!preg_match('/^\d+$/', trim($_GET['location_id']))) {
-      return 'The location_id parameter in the URL must be a valid location ID.';
-    }
+    self::getEntityId('location');
     iform_load_helpers(['report_helper']);
     data_entry_helper::$indiciaData['username'] = hostsite_get_user_field('name');
     data_entry_helper::$indiciaData['ajaxFormPostUrl'] = iform_ajaxproxy_url(NULL, 'occurrence') . "&sharing=$args[sharing]";
@@ -408,7 +403,7 @@ class iform_location_details extends BaseDynamicDetails {
       'dataSource' => $options['dataSource'],
       'bands' => [['content' => str_replace(['{class}'], '', $indicia_templates['dataValue'])]],
       'extraParams' => [
-        'location_id' => $_GET['location_id'],
+        'location_id' => self::$id,
         // The SQL needs to take a set of the hidden fields, so this needs to
         // be converted from an array.
         'attrs' => strtolower(self::convertArrayToSet($fields)),
@@ -587,7 +582,7 @@ HTML;
   }
 
   /**
-   * Render Photos section of the page.
+   * List the subsites of the viewed location.
    *
    * Options include:
    * * @title - default to true. Set to a string to override the title, or
@@ -603,6 +598,8 @@ HTML;
    *   ```
    *   Paths should point to an "Enter a location (customisable)" with the
    *   "Link the location to a parent" option checked.
+   * * @addChildrenBtnClass - class to set on the add children buttons.
+   *   Defaults to the anchor button class from $indicia_templates.
    * * @columns - report_grid @columns option setting, if overriding the
    *   default.
    * * @dataSource - report to use if overriding the default. Should accept a
@@ -613,10 +610,12 @@ HTML;
    */
   protected static function get_control_subsites($auth, $args, $tabalias, $options) {
     iform_load_helpers(['report_helper']);
+    global $indicia_templates;
     $options = array_merge([
       'title' => TRUE,
       'dataSource' => 'reports_for_prebuilt_forms/location_details/location_data',
       'extraParams' => [],
+      'addChildrenBtnClass' => $indicia_templates['anchorButtonClass'],
     ], $options);
     foreach ($options['extraParams'] as &$value) {
       $value = apply_user_replacements($value);
@@ -661,10 +660,9 @@ HTML;
     $grid = report_helper::report_grid($reportOptions);
     $html = "$mapOutput\n$grid";
     if (!empty($options['addChildrenEditFormPaths'])) {
-      global $indicia_templates;
       foreach ($options['addChildrenEditFormPaths'] as $label => $path) {
         $href = helper_base::getRootFolder(TRUE) . "$path?parent_id=$_GET[location_id]";
-        $html .= "\n<a class=\"$indicia_templates[anchorButtonClass]\" href=\"$href\" title=\"" .
+        $html .= "\n<a class=\"$options[addChildrenBtnClass]\" href=\"$href\" title=\"" .
           lang::get('Add a subsite to this location.') . '">' . lang::get($label) . '</a>';
       }
     }
@@ -677,7 +675,7 @@ HTML;
   protected static function loadLocation(array $readAuth, array $args) {
     if (!isset(self::$location)) {
       $params = [
-        'location_id' => $_GET['location_id'],
+        'location_id' => self::$id,
       ];
       $locations = report_helper::get_report_data([
         'readAuth' => $readAuth,

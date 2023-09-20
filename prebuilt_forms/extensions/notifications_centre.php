@@ -312,20 +312,22 @@ JS;
         'urlParams' => $urlParams,
         'img' => $imgPath . 'nuvola/package_editors-22px.png',
         'visibility_field' => 'editable_flag',
-      ],
-      [
+      ]
+    ];
+    if (!empty($options['view_record_page_path'])) {
+      $availableActions[] = [
         'caption' => lang::get('View this record'),
         'class' => 'view-notification',
         'url' => '{rootFolder}{viewing_form}',
         'urlParams' => $urlParams,
         'img' => $imgPath . 'nuvola/find-22px.png',
         'visibility_field' => 'viewable_flag',
-      ],
-      [
-        'caption' => lang::get('Mark as read'),
-        'javascript' => 'remove_message({notification_id});',
-        'img' => $imgPath . 'nuvola/kmail-22px.png',
-      ],
+      ];
+    }
+    $availableActions[] = [
+      'caption' => lang::get('Mark as read'),
+      'javascript' => 'remove_message({notification_id});',
+      'img' => $imgPath . 'nuvola/kmail-22px.png',
     ];
     if (!empty($options['manage_members_page_path'])) {
       $availableActions[] = [

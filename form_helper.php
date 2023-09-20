@@ -67,66 +67,83 @@ class form_helper extends helper_base {
     if (!$dir = opendir($path . 'prebuilt_forms/')) {
       throw new Exception('Cannot open path to prebuilt form library.');
     }
-    $forms = [];
-    $groupForms = [];
-    $recommendedForms = [];
+
+    // Build a list of prebuilt form files and their paths.
+    $files = [];
     while (FALSE !== ($file = readdir($dir))) {
       $parts = explode('.', $file);
       if ($file != "." && $file != ".." && strtolower($parts[count($parts) - 1]) === 'php') {
-        $file_tokens = explode('.', $file);
-        try {
-          require_once $path . 'prebuilt_forms/' . $file;
-        }
-        catch (Throwable $e) {
-          // Add a stub to tell the user this form is broken. Recommended so it
-          // is not hidden away.
-          $forms['Broken forms'][$file_tokens[0]] = [
-            'title' => "$file_tokens[0] has a syntax error",
-            'recommended' => TRUE,
-          ];
-          if (!isset($recommendedForms['Broken forms'])) {
-            $recommendedForms['Broken forms'] = [];
-          }
-          $recommendedForms['Broken forms'][] = $file_tokens[0];
-          continue;
-        }
-        ob_start();
-        if (is_callable([
-          'iform_' . $file_tokens[0],
-          'get_' . $file_tokens[0] . '_definition',
-        ])) {
-          $definition = call_user_func([
-            'iform_' . $file_tokens[0],
-            'get_' . $file_tokens[0] . '_definition',
-          ]);
-          $definition['title'] = lang::get($definition['title']);
-          $forms[$definition['category']][$file_tokens[0]] = $definition;
-          if (isset($options['form']) && $file_tokens[0] === $options['form']) {
-            $defaultCategory = $definition['category'];
-          }
-          if (!empty($definition['supportsGroups'])) {
-            if (!isset($groupForms[$definition['category']])) {
-              $groupForms[$definition['category']] = [];
-            }
-            $groupForms[$definition['category']][] = $file_tokens[0];
-          }
-          if (!empty($definition['recommended'])) {
-            if (!isset($recommendedForms[$definition['category']])) {
-              $recommendedForms[$definition['category']] = [];
-            }
-            $recommendedForms[$definition['category']][] = $file_tokens[0];
-          }
-        }
-        elseif (is_callable(['iform_' . $file_tokens[0], 'get_title'])) {
-          $title = call_user_func(['iform_' . $file_tokens[0], 'get_title']);
-          $forms['Miscellaneous'][$file_tokens[0]] = ['title' => $title];
-          if (isset($options['form']) && $file_tokens[0] === $options['form']) {
-            $defaultCategory = 'Miscellaneous';
-          }
-        }
-        ob_end_clean();
+        $files[] = $file;
       }
     }
+    // In a CMS context, a module may supply additional custom forms so get
+    // these.
+    if (function_exists('hostsite_get_iform_custom_forms')) {
+      $files = array_merge($files, hostsite_get_iform_custom_forms());
+    }
+
+    $forms = [];
+    $groupForms = [];
+    $recommendedForms = [];
+    foreach ($files as $file) {
+      $file_tokens = explode('.', $file);
+
+      try {
+        if (!class_exists("iform_" . $file_tokens[0])) {
+          // Custom forms will autoload. Core forms must be required.
+          require_once $path . 'prebuilt_forms/' . $file;
+        }
+      }
+      catch (Throwable $e) {
+        // Add a stub to tell the user this form is broken. Recommended so it
+        // is not hidden away.
+        $forms['Broken forms'][$file_tokens[0]] = [
+          'title' => "$file_tokens[0] has a syntax error",
+          'recommended' => TRUE,
+        ];
+        if (!isset($recommendedForms['Broken forms'])) {
+          $recommendedForms['Broken forms'] = [];
+        }
+        $recommendedForms['Broken forms'][] = $file_tokens[0];
+        continue;
+      }
+      ob_start();
+      if (is_callable([
+        'iform_' . $file_tokens[0],
+        'get_' . $file_tokens[0] . '_definition',
+      ])) {
+        $definition = call_user_func([
+          'iform_' . $file_tokens[0],
+          'get_' . $file_tokens[0] . '_definition',
+        ]);
+        $definition['title'] = lang::get($definition['title']);
+        $forms[$definition['category']][$file_tokens[0]] = $definition;
+        if (isset($options['form']) && $file_tokens[0] === $options['form']) {
+          $defaultCategory = $definition['category'];
+        }
+        if (!empty($definition['supportsGroups'])) {
+          if (!isset($groupForms[$definition['category']])) {
+            $groupForms[$definition['category']] = [];
+          }
+          $groupForms[$definition['category']][] = $file_tokens[0];
+        }
+        if (!empty($definition['recommended'])) {
+          if (!isset($recommendedForms[$definition['category']])) {
+            $recommendedForms[$definition['category']] = [];
+          }
+          $recommendedForms[$definition['category']][] = $file_tokens[0];
+        }
+      }
+      elseif (is_callable(['iform_' . $file_tokens[0], 'get_title'])) {
+        $title = call_user_func(['iform_' . $file_tokens[0], 'get_title']);
+        $forms['Miscellaneous'][$file_tokens[0]] = ['title' => $title];
+        if (isset($options['form']) && $file_tokens[0] === $options['form']) {
+          $defaultCategory = 'Miscellaneous';
+        }
+      }
+      ob_end_clean();
+    }
+
     if (isset($defaultCategory)) {
       $availableForms = [];
       foreach ($forms[$defaultCategory] as $form => $def) {
@@ -154,7 +171,7 @@ class form_helper extends helper_base {
     if (isset($options['allowConnectionOverride']) && !$options['allowConnectionOverride']
         && !empty($options['website_id']) && !empty($options['password'])) {
       $r .= '<input type="hidden" id="website_id" name="website_id" value="' . $options['website_id'] . '"/>';
-      $r .= '<input type="hidden" id="password" name="password" value="' . $options['password'] . '"/>';
+      $r .= '<input type="hidden" id="password" name="password" value="' . htmlspecialchars($options['password']) . '"/>';
     }
     else {
       $r .= data_entry_helper::text_input([
@@ -165,20 +182,20 @@ class form_helper extends helper_base {
             'that use an alternative reporting warehouse. It should not be used for recording as the user\'s warehouse ' .
             'user ID will differ between the 2 warehouses, therefore any data posted to this warehouse will be associated ' .
             'with the admin user account.'),
-        'default' => isset($options['base_url']) ? $options['base_url'] : '',
+        'default' => $options['base_url'] ?? '',
         'class' => 'control-width-5',
       ]);
       $r .= data_entry_helper::text_input([
         'label' => lang::get('Website ID'),
         'fieldname' => 'website_id',
         'helpText' => lang::get('Enter the ID of the website record on the Warehouse you are using.'),
-        'default' => isset($options['website_id']) ? $options['website_id'] : '',
+        'default' => $options['website_id'] ?? '',
       ]);
       $r .= data_entry_helper::text_input([
         'label' => lang::get('Password'),
         'fieldname' => 'password',
         'helpText' => lang::get('Enter the password for the website record on the Warehouse you are using.'),
-        'default' => isset($options['password']) ? $options['password'] : '',
+        'default' => $options['password'] ?? '',
       ]);
     }
     // Default - we are only going to show recommended page types in the
@@ -263,7 +280,7 @@ class form_helper extends helper_base {
         'fieldname' => 'available_for_groups',
         'helpText' => lang::get('Tick this box if this page will be is made available for use by ' .
           'recording groups for their own record collection or reporting.'),
-        'default' => isset($options['available_for_groups']) ? $options['available_for_groups'] : FALSE,
+        'default' => $options['available_for_groups'] ?? FALSE,
         'labelClass' => 'auto',
       ]);
       $r .= data_entry_helper::select([
@@ -276,7 +293,7 @@ class form_helper extends helper_base {
         'valueField' => 'id',
         'captionField' => 'title',
         'extraParams' => $readAuth + ['orderby' => 'title'],
-        'default' => isset($options['limit_to_group_id']) ? $options['limit_to_group_id'] : FALSE,
+        'default' => $options['limit_to_group_id'] ?? FALSE,
         'caching' => FALSE,
       ]);
     }
@@ -291,10 +308,22 @@ class form_helper extends helper_base {
    *   picker.
    */
   private static function addFormPickerJs($forms, $groupForms, $coreForms, $showRecommendedPageTypes) {
+    // Determine the path for ajax requests for form parameters.
+    if (function_exists('hostsite_get_iform_custom_forms_ajax_path')) {
+      // In a CMS context, an iform_custom_forms module may be used.
+      $formParamsAjaxPath = hostsite_get_iform_custom_forms_ajax_path();
+    }
+    else {
+      // Otherwise, all forms come from client_helpers.
+      $formParamsAjaxPath = self::getRootFolder(FALSE) .
+                            self::client_helper_path() .
+                            'prebuilt_forms_ajax.php';
+    }
+
     $jsParams = [
       'baseUrl' => self::$base_url,
       'forms' => json_encode($forms),
-      'formParamsAjaxPath' => self::getRootFolder(FALSE) . self::client_helper_path() . 'prebuilt_forms_ajax.php',
+      'formParamsAjaxPath' => $formParamsAjaxPath,
       'groupForms' => json_encode($groupForms),
       'coreForms' => json_encode($coreForms),
       'showRecommended' => $showRecommendedPageTypes ? 'true' : 'false',
@@ -518,9 +547,7 @@ JS;
 
       // Current form settings will overwrite the default.
       if (isset($options['currentSettings']) && isset($options['currentSettings'][$control['fieldname']])) {
-        $fieldSetting = $options['currentSettings'][$control['fieldname']];
-        $ctrlOptions['default'] = is_string($fieldSetting) ?
-          htmlspecialchars($fieldSetting, ENT_QUOTES, 'UTF-8') : $fieldSetting;
+        $ctrlOptions['default'] = $options['currentSettings'][$control['fieldname']];
       }
 
       $ctrlOptions['extraParams'] = array_merge($ctrlOptions['extraParams'], $options['readAuth']);
@@ -585,12 +612,12 @@ JS;
    *   List of modified controls.
    */
   private static function mapControlOptions($controlList) {
-    $mappings = array(
+    $mappings = [
       'name' => 'fieldname',
       'caption' => 'label',
       'options' => 'lookupValues',
       'description' => 'helpText',
-    );
+    ];
     foreach ($controlList as &$options) {
       foreach ($options as $option => $value) {
         if (isset($mappings[$option])) {
@@ -658,15 +685,24 @@ JS;
    *   List of parameter definitions.
    */
   public static function get_form_parameters($form) {
-    $path = dirname($_SERVER['SCRIPT_FILENAME']) . '/' . self::relative_client_helper_path();
-    require_once $path . "prebuilt_forms/$form.php";
+
+    // In a CMS context, a module may supply additional custom forms so make
+    // sure these are available.
+    if (function_exists('hostsite_autoload_iform_custom_forms')) {
+      hostsite_autoload_iform_custom_forms();
+    }
+
+    if (!class_exists("iform_$form")) {
+      $path = dirname($_SERVER['SCRIPT_FILENAME']) . '/' . self::relative_client_helper_path();
+      require_once $path . "prebuilt_forms/$form.php";
+    }
+
     // First some parameters that are always required to configure the website.
     $params = [
       [
         'fieldname' => 'view_access_control',
         'label' => 'View access control',
-        'helpText' => 'If ticked, then a Drupal permission is created for this form to allow you to specify which '.
-            'roles are able to view the form.',
+        'helpText' => 'If ticked, then a Drupal permission is created for this form to allow you to specify which roles are able to view the form.',
         'type' => 'checkbox',
         'required' => FALSE,
       ],

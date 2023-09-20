@@ -1950,10 +1950,12 @@ HTML;
     if (is_array($array)) {
       arsort($array);
       foreach ($array as $a => $b) {
-        if ($encodeValues) {
-          $b = urlencode($b);
+        if (!is_array($b)) {
+          if ($encodeValues) {
+            $b = urlencode($b);
+          }
+          $params[] = "$a=$b";
         }
-        $params[] = "$a=$b";
       }
     }
     return implode('&', $params);
@@ -2500,11 +2502,10 @@ indiciaData.jQuery = jQuery; //saving the current version of jQuery
         self::$js_read_tokens['url'] = self::getProxiedBaseUrl();
         $script .= "indiciaData.read = " . json_encode(self::$js_read_tokens) . ";\n";
       }
-      if (!empty($javascript) || !empty($late_javascript)) {
-        if (!self::$is_ajax) {
-          $script .= "\n$(document).ready(function() {\n";
-        }
-        $script .= <<<JS
+      if (!self::$is_ajax) {
+        $script .= "\n$(document).ready(function() {\n";
+      }
+      $script .= <<<JS
 indiciaData.documentReady = 'started';
 if (typeof indiciaFns.initDataSources !== 'undefined') {
   indiciaFns.initDataSources();
@@ -2528,9 +2529,8 @@ if (indiciaData.windowLoaded === 'done') {
 indiciaData.documentReady = 'done';
 
 JS;
-        if (!self::$is_ajax) {
-          $script .= "});\n";
-        }
+      if (!self::$is_ajax) {
+        $script .= "});\n";
       }
       if (!empty($onload_javascript)) {
         if (self::$is_ajax) {
@@ -2539,17 +2539,17 @@ JS;
           $script .= "$onload_javascript\n";
         }
         else {
-          // If no code running on docReady, can proceed with onload without
-          // testing.
-          $documentReadyDone = empty($javascript) && empty($late_javascript) ? "indiciaData.documentReady = 'done';" : '';
           // Create a function that can be called from window.onLoad. Don't put
           // it directly in the onload in case another form is added to the
           // same page which overwrites onload.
           $script .= <<<JS
-$documentReadyDone
 indiciaData.onloadFns.push(function() {
   $onload_javascript
 });
+JS;
+        }
+      }
+      $script .= <<<JS
 window.onload = function() {
   indiciaData.windowLoad = 'started';
   // Ensure this is only run after document.ready.
@@ -2562,8 +2562,6 @@ window.onload = function() {
 }
 
 JS;
-        }
-      }
       $script .= $closure ? "})(jQuery);\n" : "";
       $script .= $includeWrapper ? "/* ]]> */</script>\n" : "";
     }
@@ -2833,13 +2831,13 @@ if (typeof validator!=='undefined') {
     if (isset($options['id'])) {
       $wrap = empty($options['controlWrapTemplate']) ? $indicia_templates['controlWrap'] : $indicia_templates[$options['controlWrapTemplate']];
       $r = str_replace([
-        '{control}',
         '{id}',
         '{wrapClasses}',
+        '{control}',
       ], [
-        "\n$r",
         str_replace(':', '-', $options['id']),
         $options['wrapClasses'],
+        "\n$r",
       ], $wrap);
     }
     if (!empty($options['tooltip'])) {
@@ -3130,7 +3128,10 @@ if (typeof validator!=='undefined') {
       array_push($replaceTags, '{'.$option.'|escape}');
       array_push($replaceValues, htmlspecialchars($value ?? ''));
     }
-    return str_replace($replaceTags, $replaceValues, $template);
+    // Use strtr instead of preg_replace so earlier replacements get polluted
+    // by later ones, e.g. {id} in default value picking up the control ID.
+    // See https://www.php.net/manual/en/function.str-replace.php#88569
+    return strtr($template, array_combine($replaceTags, $replaceValues));
   }
 
    /**

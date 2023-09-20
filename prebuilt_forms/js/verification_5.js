@@ -455,6 +455,8 @@ indiciaData.rowIdToReselect = false;
   }
 
   function processEmail() {
+    // Capture occurrence ID now, in case it changes before Ajax response received.
+    var commentOccurrenceId = occurrenceId;
     // Complete creation of email of record details
     if (validator.numberOfInvalids() === 0) {
       email.to = $('#email-to').val();
@@ -482,7 +484,8 @@ indiciaData.rowIdToReselect = false;
               ($('#email-confidential:checked').length > 0 ? 't' : 'f'),
               email,
               't',
-              true
+              true,
+              commentOccurrenceId
             );
             sendEmail();
           }
@@ -587,13 +590,17 @@ indiciaData.rowIdToReselect = false;
     $('#comment-list').prepend(html);
   }
 
-  indiciaFns.saveComment = function (text, reference, confidential, emailDef, query, reloadGridAfterSave) {
+  indiciaFns.saveComment = function (text, reference, confidential, emailDef, query, reloadGridAfterSave, commentOccurrenceId) {
     var data;
     var q = typeof query === 'undefined' ? 'f' : query;
     var c = (typeof confidential === 'undefined' || confidential == 0 || confidential === 'f') ? 'f' : 't';
+    // Default occurrence ID to the current row. It might need to be overridden
+    // if calling from inside an AJAX response, in case the selected record has
+    // since changed.
+    commentOccurrenceId = typeof commentOccurrenceId === 'undefined' ? occurrenceId : commentOccurrenceId;
     data = {
       website_id: indiciaData.website_id,
-      'occurrence_comment:occurrence_id': occurrenceId,
+      'occurrence_comment:occurrence_id': commentOccurrenceId,
       'occurrence_comment:comment': text,
       'occurrence_comment:reference': reference,
       'occurrence_comment:person_name': indiciaData.username,

@@ -32,7 +32,7 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
    * @var array List of custom sample attributes in array keyed by caption. Helps to make this form
    * ID independent.
    */
-  private static $attrsByCaption = []
+  private static $attrsByCaption = [];
 
   /**
    * Return the form metadata.
@@ -310,7 +310,7 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
       //Cycle through the attributes for the habitat
       foreach ($habitatSmpAttrIds as $habitatSmpAttrId) {
         //Only get sample attributes and then store them in an array so they can be passed to the existing function that builds the html
-        $attrbuteArray=[]
+        $attrbuteArray = [];
         foreach ($habitatAttrs as $habitatAttr) {
           if (!empty($habitatAttr['sample_attribute_id'])) {
             if ($habitatSmpAttrId==$habitatAttr['sample_attribute_id']) {
@@ -400,7 +400,7 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
     ), $options),$habitats,$args['dive_duration_attr_id'],$habitatColours,$numberOfHabitats);
 
 
-    $habitatIds=[]
+    $habitatIds = [];
     $r.='<div class="habitats-div" style="float: left; width: 50%"><h3>Habitats</h3>';
     //Create the html to display the habitats and a splitter for each habitat
     if (!empty($habitats)) {
@@ -581,7 +581,7 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
    */
   private static function set_photo_order($photoResults) {
     //TODO if a photo lacks exif data it currently isn't handled.
-    $photosWithExif=[]
+    $photosWithExif = [];
     //Order pictures by date
     foreach ($photoResults as $photoResult) {
       $photoResultDecoded = json_decode($photoResult['exif'],true);
@@ -1359,7 +1359,7 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
     if (isset($options['view']))
       $extraParams['view'] = $options['view'];
     // There may be options in the form occAttr:n|param => value targetted at specific attributes
-    $occAttrOptions = []
+    $occAttrOptions = [];
     $optionToUnset = [];
     foreach ($options as $option => $value) {
       // split the id of the option into the attribute name and option name.
@@ -1525,7 +1525,7 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
     if (isset(data_entry_helper::$entity_to_load['sample:id']) && $options['useLoadedExistingRecords']===false)
       self::preload_species_checklist_occurrences(data_entry_helper::$entity_to_load['sample:id'], $options['readAuth'],
           $options['mediaTypes'], $options['reloadExtraParams'], $subSampleRows, $options['speciesControlToUseSubSamples'],
-          (isset($options['subSampleSampleMethodID']) ? $options['subSampleSampleMethodID'] : ''),$options['id'],$useThirdLevelSamples);
+          $options['id'], (isset($options['subSampleSampleMethodID']) ? $options['subSampleSampleMethodID'] : ''), $useThirdLevelSamples);
     // load the full list of species for the grid, including the main checklist plus any additional species in the reloaded occurrences.
     $taxalist = data_entry_helper::get_species_checklist_taxa_list($options, $taxonRows);
     // If we managed to read the species list data we can proceed
@@ -1874,7 +1874,7 @@ if ($('#$options[id]').parents('.ui-tabs-panel').length) {
    * Again, this is an altered copy of the one found in data_entry_helper, includes support for third level samples
    * May contain coded that is not needed and can be removed if possible
    */
-  private static function preload_species_checklist_occurrences($sampleId, $readAuth, $loadMedia, $extraParams, &$subSamples, $useSubSamples, $subSampleMethodID='', $gridId, $useThirdLevelSamples = FALSE) {
+  private static function preload_species_checklist_occurrences($sampleId, $readAuth, $loadMedia, $extraParams, &$subSamples, $useSubSamples, $gridId, $subSampleMethodID='', $useThirdLevelSamples = FALSE) {
     //Obviously this would need to not be hardcoded
     $occurrenceIds = [];
     $taxonCounter = [];
