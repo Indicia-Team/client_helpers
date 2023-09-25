@@ -4971,6 +4971,8 @@ JS;
                 = $medium['media_type_id'];
               self::$entity_to_load['sc:' . $occurrenceIds[$medium['occurrence_id']] . ":$medium[occurrence_id]:occurrence_medium:media_type:$medium[id]"]
                 = $medium['media_type'];
+              self::$entity_to_load['sc:' . $occurrenceIds[$medium['occurrence_id']] . ":$medium[occurrence_id]:occurrence_medium:licence_id:$medium[id]"]
+                = $medium['licence_id'];
             }
           }
         }
@@ -5316,7 +5318,7 @@ JS;
         if ($loadIntoList) {
           $ttlId = $value;
           if ($options['speciesControlToUseSubSamples']) {
-            $smpIdx = self::$entity_to_load['sc:' . $parts[1] . ':' . $parts[2] . ':occurrence:sampleIDX'];
+            $smpIdx = self::$entity_to_load['sc:' . $parts[1] . ':' . $parts[2] . ':occurrence:sampleIDX'] ?? NULL;
           }
           else {
             $smpIdx = NULL;
@@ -6929,6 +6931,7 @@ JS;
         self::$entity_to_load["$mediaEntity:caption:$image[id]"] = $image['caption'];
         self::$entity_to_load["$mediaEntity:media_type:$image[id]"] = $image['media_type'];
         self::$entity_to_load["$mediaEntity:media_type_id:$image[id]"] = $image['media_type_id'];
+        self::$entity_to_load["$mediaEntity:licence_id:$image[id]"] = $image['licence_id'];
       }
     }
   }
@@ -8850,7 +8853,7 @@ HTML;
     if (self::$validation_errors !== NULL) {
       foreach (self::$validation_errors as $errorKey => $error) {
         if (!in_array($error, self::$displayed_errors)) {
-          $errors[] = lang::get($error) . '<br/>&nbsp;&nbsp;' . lang::get(' (related to attribute {1})', "[$errorKey]");
+          $errors[] = lang::get($error) . ' - ' . lang::get(' (related to attribute {1})', "[$errorKey]");
         }
       }
     }
@@ -8858,9 +8861,9 @@ HTML;
     if (count($errors)) {
       $msg = <<<TXT
 Validation errors occurred when this form was submitted to the server. The form configuration may be incorrect as
-it appears the controls associated with these messages are missing from the form.
+it appears the controls associated with these messages are missing from the form. The errors reported were:
 TXT;
-      $r = lang::get($msg) . '<ul><li>' . implode('</li><li>', $errors) . '</li></ul>';
+      $r = lang::get($msg) . ' ' . implode('; ', $errors) . '.';
       if (function_exists('hostsite_show_message')) {
         hostsite_show_message($r, 'error');
       }
