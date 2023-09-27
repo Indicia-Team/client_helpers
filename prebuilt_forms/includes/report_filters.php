@@ -48,67 +48,99 @@ class filter_what extends FilterBase {
    * @return string
    */
   public function getControls(array $readAuth, array $options) {
+    global $indicia_templates;
     $r = '';
+    // Optional tab texts.
+    $orDesignations = $options['elasticsearch'] ? '' : 'or designations, ';
+    $orScratchpads = empty($options['scratchpadSearch']) ? '' : 'or scratchpads, ';
+    // Language strings for emmitted HTML.
+    $lang = [
+      'buildListOfGroups' => lang::get('Build a list of groups'),
+      'designations' => lang::get('Designations'),
+      'includeMyGroups' => lang::get('Include my groups'),
+      'level' => lang::get('Level'),
+      'myGroups' => lang::get('My groups'),
+      'otherFlags' => lang::get('Other flags'),
+      'scratchpads' => lang::get('Scratchpads'),
+      'selectAnyTab' => lang::get("Select the appropriate tab to filter by species group; or taxon name; {$orDesignations}or taxon level; {$orScratchpads}or other flags (such as marine, or non-native)."),
+      'speciesGroups' => lang::get('Species groups'),
+      'speciesGroupsFullListLink' => lang::get('Click here to show the full list'),
+      'speciesGroupsIntro1' => lang::get('This tab allows you to choose one or more broad species groups. These have to match the group names that we use. Find a group by typing any part of its name, e.g. type "moth" to find "insect - moth".'),
+      'speciesGroupsIntro2' => lang::get('Click on the group name from the dropdown list, then click on Add. You can add multiple groups. When you have added all the groups that you want, click Apply to filter the records.'),
+      'speciesGroupsIntro3' => lang::get('Go to the "Species or higher taxa" tab to chose an individual species, genus or family etc.'),
+      'speciesGroupsLimited' => lang::get('Please note that your access permissions are limiting the groups available to choose from.'),
+      'speciesIntro1' => lang::get('This tab allows you to choose one or more individual species, or you can use genus, family, order etc. Type in a scientific or English name and click on the name you want from the dropdown list that appears. Then click on Add.'),
+      'speciesIntro2' => lang::get('You can add multiple species or higher taxa. When you have added all the names that you want, click Apply to filter the records.'),
+      'speciesLimited' => lang::get('Please note that your access permissions will limit the records returned to the species you are allowed to see.'),
+      'speciesOrHigherTaxa' => lang::get('Species or higher taxa'),
+    ];
     // There is only one tab when running on the Warehouse.
     if (!isset($options['runningOnWarehouse']) || $options['runningOnWarehouse'] == FALSE) {
       if (!empty($options['scratchpadSearch']) && $options['scratchpadSearch'] == TRUE) {
         $r .= "<p id=\"what-filter-instruct\">" . lang::get('Select the appropriate tab to filter by species group, taxon name, ' .
             'the level within the taxonomic hierarchy, a species scratchpad or other flags such as marine/terrestrial/freshwater or non-native taxa.') . "</p>\n";
-      } else {
-        $r .= "<p id=\"what-filter-instruct\">" . lang::get('Select the appropriate tab to filter by species group, taxon name, ' .
-            'the level within the taxonomic hierarchy or other flags such as marine/terrestrial/freshwater or non-native taxa.') . "</p>\n";
+      }
+      else {
+        $r .= "<p id=\"what-filter-instruct\">$lang[selectAnyTab]</p>\n";
       }
     }
-    $r .= '<div id="what-tabs">' . "\n";
+    $r .= "<div id=\"what-tabs\">\n";
+    // Designations filter currently not available in ES.
+    $designationsTab = $options['elasticsearch'] ? '' : "<li id=\"designations-tab-tab\"><a href=\"#designations-tab\" rel=\"address:designations-tab\"><span>$lang[designations]</span></a></li>";
+    // Scratchpads tab an optional extra.
+    $scratchpadsTab = empty($options['scratchpadSearch']) ? '' : "<li id=\"scratchpad-tab-tab\"><a href=\"#scratchpad-tab\" rel=\"address:scratchpad-tab\"><span>$lang[scratchpads]</span></a></li>";
     // Data_entry_helper::tab_header breaks inside fancybox. So output manually.
-    $r .= '<ul>' .
-        '<li id="species-group-tab-tab"><a href="#species-group-tab" rel="address:species-group-tab"><span>' . lang::get('Species groups') . '</span></a></li>';
-    $r .= '<li id="species-tab-tab"><a href="#species-tab" rel="address:species-tab"><span>' . lang::get('Species or higher taxa') . '</span></a></li>';
-    if (!$options['elasticsearch']) {
-      $r .= '<li id="designations-tab-tab"><a href="#designations-tab" rel="address:designations-tab"><span>' . lang::get('Designations') . '</span></a></li>';
-    }
-    $r .= '<li id="rank-tab-tab"><a href="#rank-tab" rel="address:rank-tab"><span>' . lang::get('Level') . '</span></a></li>';
-    if (!empty($options['scratchpadSearch']) && $options['scratchpadSearch'] == TRUE) {
-      $r .= '<li id="scratchpad-tab-tab"><a href="#scratchpad-tab" rel="address:scratchpad-tab"><span>' . lang::get('Scratchpads') . '</span></a></li>';
-    }
-    $r .= '<li id="flags-tab-tab"><a href="#flags-tab" rel="address:flags-tab"><span>' . lang::get('Other flags') . '</span></a></li>' .
-        '</ul>';
-    $r .= '<div id="species-group-tab">' . "\n";
+    $r .= <<<HTML
+<div id="what-tabs">
+  <ul>
+    <li id="species-group-tab-tab"><a href="#species-group-tab" rel="address:species-group-tab"><span>$lang[speciesGroups]</span></a></li>
+    <li id="species-tab-tab"><a href="#species-tab" rel="address:species-tab"><span>$lang[speciesOrHigherTaxa]</span></a></li>
+    $designationsTab
+    <li id="rank-tab-tab"><a href="#rank-tab" rel="address:rank-tab"><span>$lang[level]</span></a></li>
+    $scratchpadsTab
+    <li id="flags-tab-tab"><a href="#flags-tab" rel="address:flags-tab"><span>$lang[otherFlags]</span></a></li>
+  </ul>
+HTML;
+
+    // Species groups tab.
     if (function_exists('hostsite_get_user_field')) {
       $myGroupIds = hostsite_get_user_field('taxon_groups', [], TRUE);
     }
     else {
       $myGroupIds = [];
     }
+    $myGroupsPanel = '';
     if ($myGroupIds) {
-      $r .= '<h3>' . lang::get('My groups') . '</h3>';
       $myGroupsData = data_entry_helper::get_population_data([
         'table' => 'taxon_group',
         'extraParams' => $readAuth + [
           'query' => json_encode([
             'in' => ['id', $myGroupIds],
           ]),
+          'columns' => 'id,title',
         ],
       ]);
-      $myGroupNames = [];
-      data_entry_helper::$javascript .= "indiciaData.myGroups = [];\n";
+      $myGroupNamesLis = [];
+      data_entry_helper::$indiciaData['myGroups'] = $myGroupsData;
       foreach ($myGroupsData as $group) {
-        $myGroupNames[] = $group['title'];
-        data_entry_helper::$javascript .= "indiciaData.myGroups.push([$group[id],'$group[title]']);\n";
+        $myGroupNamesLis[] = "<li>$group[title]</li>";
       }
-      $r .= '<button type="button" id="my_groups">' . lang::get('Include my groups') . '</button>';
-      $r .= '<ul class="inline"><li>' . implode('</li><li>', $myGroupNames) . '</li></ul>';
-      $r .= '<h3>' . lang::get('Build a list of groups') . '</h3>';
+      $myGroupNamesList = implode('', $myGroupNamesLis) . '</li>';
+      $myGroupsPanel = <<<HTML
+<h3>$lang[myGroups]</h3>
+<button type="button" id="my_groups">$lang[includeMyGroups]</button>
+<ul class="inline">
+  $myGroupNamesList
+</ul>
+HTML;
     }
     // Warehouse doesn't have master taxon list, so only need warning when not
     // running on warehouse.
     if (empty($options['taxon_list_id']) && (!isset($options['runningOnWarehouse']) || $options['runningOnWarehouse'] == FALSE)) {
       throw new exception('Please specify a @taxon_list_id option in the page configuration.');
     }
-    $r .= '<p>' . lang::get('Search for and build a list of species groups to include') . '</p>' .
-        ' <div class="context-instruct messages warning">' . lang::get('Please note that your access permissions are limiting the groups available to choose from.') . '</div>';
     $baseParams = empty($options['taxon_list_id']) ? $readAuth : $readAuth + ['taxon_list_id' => $options['taxon_list_id']];
-    $r .= data_entry_helper::sub_list([
+    $taxonGroupsSubListCtrl = data_entry_helper::sub_list([
       'fieldname' => 'taxon_group_list',
       'report' => 'library/taxon_groups/taxon_groups_used_in_checklist_lookup',
       'captionField' => 'q',
@@ -116,11 +148,32 @@ class filter_what extends FilterBase {
       'extraParams' => $baseParams,
       'addToTable' => FALSE,
       'continueOnBlur' => FALSE,
+      'matchContains' => TRUE,
     ]);
-    $r .= "</div>\n";
-    $r .= '<div id="species-tab">' . "\n";
-    $r .= '<p>' . lang::get('Search for and build a list of species or higher taxa to include.') . '</p>' .
-        ' <div class="context-instruct messages warning">' . lang::get('Please note that your access permissions will limit the records returned to the species you are allowed to see.') . '</div>';
+    data_entry_helper::$indiciaData['allTaxonGroups'] = data_entry_helper::get_population_data([
+      'report' => 'library/taxon_groups/taxon_groups_used_in_checklist',
+      'extraParams' => $baseParams,
+      // Long cache timeout.
+      'cacheTimeout' => 7 * 24 * 60 * 60,
+    ]);
+    $columns = str_replace(['{attrs}', '{col-1}', '{col-2}'], [
+      '',
+      "<h3>$lang[buildListOfGroups]</h3>\n$taxonGroupsSubListCtrl",
+      $myGroupsPanel,
+    ], $indicia_templates['two-col-50']);
+    $r .= <<<HTML
+<div id="species-group-tab">
+  <ul>
+    <li>$lang[speciesGroupsIntro1] <a id="show-species-groups">$lang[speciesGroupsFullListLink]</a></li>
+    <li>$lang[speciesGroupsIntro2]</li>
+    <li>$lang[speciesGroupsIntro3]</li>
+  </ul>
+  <div class="context-instruct messages warning">$lang[speciesGroupsLimited]</div>
+  $columns
+</div>
+HTML;
+
+    // Species tab.
     $subListOptions = [
       'fieldname' => 'taxa_taxon_list_list',
       'autocompleteControl' => 'species_autocomplete',
@@ -133,8 +186,19 @@ class filter_what extends FilterBase {
       'addToTable' => FALSE,
       'continueOnBlur' => FALSE,
     ];
-    $r .= data_entry_helper::sub_list($subListOptions);
-    $r .= "</div>\n";
+    $taxaSubListCtrl = data_entry_helper::sub_list($subListOptions);
+    $r .= <<<HTML
+<div id="species-tab">
+  <ul>
+    <li>$lang[speciesIntro1]</li>
+    <li>$lang[speciesIntro2]</li>
+  </ul>
+  <div class="context-instruct messages warning">$lang[SpeciesLimited]</div>
+  $taxaSubListCtrl
+</div>
+HTML;
+
+    // Designations tab.
     if (!$options['elasticsearch']) {
       try {
         $r .= "<div id=\"designations-tab\">\n";
@@ -156,7 +220,6 @@ class filter_what extends FilterBase {
       }
       catch (Exception $e) {
         if (strpos($e->getMessage(), 'Unrecognised entity') !== FALSE) {
-          global $indicia_templates;
           $r .= '<p>' . str_replace(['{message}'], [lang::get('Designations functionality is not enabled on this server.')], $indicia_templates['messageBox']);
         }
         else {
@@ -164,6 +227,8 @@ class filter_what extends FilterBase {
         }
       }
     }
+
+    // Ranks tab.
     $r .= "<div id=\"rank-tab\">\n";
     $r .= '<p id="level-label">' . lang::get('Include records where the level') . '</p>';
     $r .= data_entry_helper::select([
@@ -192,6 +257,8 @@ class filter_what extends FilterBase {
     }
     $r .= '</select>';
     $r .= "</div>\n";
+
+    // Scratchpads tab.
     if (!empty($options['scratchpadSearch']) && $options['scratchpadSearch'] == TRUE) {
       $r .= "<div id=\"scratchpad-tab\">\n";
       $r .= '<p>' . lang::get('Select a species scratchpad to filter against') . '</p>';
@@ -207,6 +274,8 @@ class filter_what extends FilterBase {
       ]);
       $r .= "</div>\n";
     }
+
+    // Flags tab.
     $r .= "<div id=\"flags-tab\">\n";
     $r .= '<p>' . lang::get('Select additional flags to filter for.') . '</p>' .
         ' <div class="context-instruct messages warning">' . lang::get('Please note that your access permissions limit the settings you can change on this tab.') . '</div>';
@@ -1683,6 +1752,7 @@ HTML;
   report_helper::addLanguageStringsToJs('reportFiltersNoDescription', $noDescriptionLangStrings);
   report_filters_set_parser_language_strings();
   report_helper::addLanguageStringsToJs('reportFilters', [
+    'Back' => 'Back',
     'PleaseSelect' => 'Please select',
     'CreateAFilter' => 'Create a filter',
     'ModifyFilter' => 'Modify filter',
