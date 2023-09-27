@@ -567,6 +567,7 @@ class filter_where extends FilterBase {
       'valueField' => 'id',
       'addToTable' => FALSE,
       'extraParams' => $readAuth,
+      'matchContains' => TRUE,
     ]);
 
     $r .= '</div></fieldset>';
