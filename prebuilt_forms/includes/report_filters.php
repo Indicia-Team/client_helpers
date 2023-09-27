@@ -623,9 +623,18 @@ class filter_who extends FilterBase {
    */
   public function getControls() {
     $r = '<div class="context-instruct messages warning">' . lang::get('Please note, you cannnot change this setting because of your access permissions in this context.') . '</div>';
-    $r .= data_entry_helper::checkbox([
-      'label' => lang::get('Only include my records'),
+    $r .= data_entry_helper::radio_group([
+      'label' => lang::get('Recorders'),
       'fieldname' => 'my_records',
+      'lookupValues' => [
+        '' => lang::get('Records from all recorders'),
+        '1' => lang::get('Only include my records'),
+        '0' => lang::get('Exclude my records'),
+      ],
+    ]);
+    $r .= data_entry_helper::text_input([
+      'label' => lang::get('Or, filter by name or part of name'),
+      'fieldname' => 'recorder_name',
     ]);
     return $r;
   }
@@ -1841,7 +1850,10 @@ function report_filters_set_parser_language_strings() {
     'IdentificationDifficulty' => 'Identification difficulty',
     'HasPhotos' => 'Only include records which have photos',
     'HasNoPhotos' => 'Exclude records which have photos',
-    'MyRecords' => 'My records only',
+    'ListJoin' => ' or ',
+    'MyRecords' => 'Only include my records',
+    'NotMyRecords' => 'Exclude my records',
+    'RecorderNameContains' => 'Recorder name contains {1}',
     'OnlyConfidentialRecords' => 'Only confidential records',
     'AllConfidentialRecords' => 'Include both confidential and non-confidential records',
     'NoConfidentialRecords' => 'Exclude confidential records',

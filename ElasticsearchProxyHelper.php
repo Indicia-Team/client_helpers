@@ -1752,9 +1752,17 @@ class ElasticsearchProxyHelper {
    *   Bool clauses that filters can be added to (e.g. $bool['must']).
    */
   private static function applyUserFiltersWho(array $definition, array &$bool) {
-    if (!empty($definition['my_records']) && $definition['my_records'] === '1') {
-      $bool['must'][] = [
+    if (!empty($definition['my_records'] && (string) $definition['my_records'] === '1' || (string) $definition['my_records'] === '0')) {
+      $bool[$definition['my_records'] === '1' ? 'must' : 'must_not'][] = [
         'match' => ['metadata.created_by_id' => hostsite_get_user_field('indicia_user_id')],
+      ];
+    }
+    if (!empty($definition['recorder_name']) && !empty(trim($definition['recorder_name']))) {
+      $bool['must'][] = [
+        'query_string' => [
+          'default_field' => 'event.recorded_by',
+          'query' => '*' . $definition['recorder_name'] . '*',
+        ],
       ];
     }
   }
