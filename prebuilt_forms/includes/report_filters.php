@@ -820,34 +820,36 @@ class filter_quality extends FilterBase {
   /**
    * Define the HTML required for this filter's UI panel.
    */
-  public function getControls($readAuth, $options, $ctls = ['status', 'auto', 'difficulty', 'photo']) {
+  public function getControls($readAuth, $options, $ctls = ['status', 'certainty', 'auto', 'difficulty', 'photo']) {
     $r = '';
     if (in_array('status', $ctls)) {
       $r .= '<div class="context-instruct messages warning">' . lang::get('Please note, your options for quality filtering are restricted by your access permissions in this context.') . '</div>';
       $qualityOptions = [
-        'V1' => lang::get('Accepted as correct records only'),
-        'V' => lang::get('Accepted records only'),
-        '-3' => lang::get('Reviewer agreed at least plausible'),
-        'C3' => lang::get('Plausible records only'),
-        'C' => lang::get('Recorder was certain'),
-        'L' => lang::get('Recorder thought the record was at least likely'),
-        'P' => lang::get('Not reviewed'),
-        'T' => lang::get('Not reviewed but trusted recorder'),
-        '!R' => lang::get('Exclude not accepted records'),
-        '!D' => lang::get('Exclude queried or not accepted records'),
+        'P' => lang::get('Pending'),
+        'V' => lang::get('Accepted (all)'),
+        'V1' => lang::get('Accepted - correct only'),
+        'V2' => lang::get('Accepted - considered correct only'),
+        'R' => lang::get('Not accepted (all)'),
+        'R4' => lang::get('Not accepted - unable to verify only'),
+        'R5' => lang::get('Not accepted - incorrect only'),
+        'C3' => lang::get('Plausible'),
+        'D' => lang::get('Queried'),
+        'A' => lang::get('Answered'),
         'all' => lang::get('All records'),
-        'D' => lang::get('Queried records only'),
-        'A' => lang::get('Answered records only'),
-        'R' => lang::get('Not accepted records only'),
-        'R4' => lang::get('Not accepted as reviewer unable to verify records only'),
-        'DR' => lang::get('Queried or not accepted records'),
       ];
+      if ($options['sharing'] === 'verification') {
+        $qualityOptions['OV'] = lang::get('Verified by other verifiers');
+      }
       if ($options['elasticsearch']) {
         // Elasticsearch doesn't currently support recorder trust.
         unset($qualityOptions['T']);
+        // Additional option available for Elasticsearch verification.
+        if ($options['sharing'] === 'verification') {
+          $qualityOptions['OV'] = lang::get('Verified by other verifiers');
+        }
       }
       $options = array_merge([
-        'label' => lang::get('Records to include'),
+        'label' => lang::get('Record status'),
       ], $options);
 
       $r .= data_entry_helper::select([
@@ -855,6 +857,19 @@ class filter_quality extends FilterBase {
         'fieldname' => 'quality',
         'id' => 'quality-filter',
         'lookupValues' => $qualityOptions,
+      ]);
+    }
+    if (in_array('certainty', $ctls)) {
+      $r .= data_entry_helper::checkbox_group([
+        'label' => lang::get('Recorder certainty'),
+        'fieldname' => 'certainty[]',
+        'id' => 'certainty-filter',
+        'lookupValues' => [
+          'C' => lang::get('Certain'),
+          'L' => lang::get('Likely'),
+          'U' => lang::get('Uncertain'),
+          'NS' => lang::get('Not stated'),
+        ],
       ]);
     }
     if (in_array('auto', $ctls)) {
@@ -1041,14 +1056,17 @@ class filter_source extends FilterBase {
       // Build the list filter control HTML.
       $websitesFilterInput = data_entry_helper::text_input([
         'fieldname' => 'websites-search',
+        'class' => 'filter-exclude',
         'attributes' => ['placeholder' => lang::get('Type here to filter')],
       ]);
       $surveysFilterInput = data_entry_helper::text_input([
         'fieldname' => 'surveys-search',
+        'class' => 'filter-exclude',
         'attributes' => ['placeholder' => lang::get('Type here to filter')],
       ]);
       $inputFormsFilterInput = data_entry_helper::text_input([
         'fieldname' => 'input_forms-search',
+        'class' => 'filter-exclude',
         'attributes' => ['placeholder' => lang::get('Type here to filter')],
       ]);
       // Build the filter operation controls.
@@ -1753,15 +1771,17 @@ HTML;
   report_helper::addLanguageStringsToJs('reportFiltersNoDescription', $noDescriptionLangStrings);
   report_filters_set_parser_language_strings();
   report_helper::addLanguageStringsToJs('reportFilters', [
-    'Back' => 'Back',
-    'PleaseSelect' => 'Please select',
-    'CreateAFilter' => 'Create a filter',
-    'ModifyFilter' => 'Modify filter',
-    'FilterSaved' => 'The filter has been saved',
-    'FilterDeleted' => 'The filter has been deleted',
-    'ConfirmFilterChangedLoad' => 'Do you want to load the selected filter and lose your current changes?',
-    'FilterExistsOverwrite' => 'A filter with that name already exists. Would you like to overwrite it?',
-    'ConfirmFilterDelete' => 'Are you sure you want to permanently delete the {title} filter?',
+    'back' => 'Back',
+    'confirmFilterChangedLoad' => 'Do you want to load the selected filter and lose your current changes?',
+    'confirmFilterDelete' => 'Are you sure you want to permanently delete the {title} filter?',
+    'createAFilter' => 'Create a filter',
+    'filterDeleted' => 'The filter has been deleted',
+    'filterExistsOverwrite' => 'A filter with that name already exists. Would you like to overwrite it?',
+    'filterSaved' => 'The filter has been saved',
+    'modifyFilter' => 'Modify filter',
+    'orListJoin' => ' or ',
+    'pleaseSelect' => 'Please select',
+    'recorderCertaintyWas' => 'Recorder certainty was',
   ]);
   if (function_exists('iform_ajaxproxy_url')) {
     report_helper::$javascript .= "indiciaData.filterPostUrl='" . iform_ajaxproxy_url(NULL, 'filter') . "';\n";

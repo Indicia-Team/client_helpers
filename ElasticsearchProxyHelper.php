@@ -1358,6 +1358,7 @@ class ElasticsearchProxyHelper {
     self::applyUserFiltersOccExternalKey($definition, $bool);
     self::applyUserFiltersSmpId($definition, $bool);
     self::applyUserFiltersQuality($definition, $bool);
+    self::applyUserFiltersCertainty($definition, $bool);
     self::applyUserFiltersIdentificationDifficulty($definition, $bool);
     self::applyUserFiltersRuleChecks($definition, $bool);
     self::applyUserFiltersAutoCheckRule($definition, $bool);
@@ -1864,6 +1865,11 @@ class ElasticsearchProxyHelper {
           $bool['must'][] = ['match' => ['identification.verification_substatus' => 1]];
           break;
 
+        case 'V2':
+          $bool['must'][] = ['match' => ['identification.verification_status' => 'V']];
+          $bool['must'][] = ['match' => ['identification.verification_substatus' => 2]];
+          break;
+
         case 'V':
           $bool['must'][] = ['match' => ['identification.verification_status' => 'V']];
           break;
@@ -1950,6 +1956,11 @@ class ElasticsearchProxyHelper {
           $bool['must'][] = ['match' => ['identification.verification_substatus' => 4]];
           break;
 
+        case 'R5':
+          $bool['must'][] = ['match' => ['identification.verification_status' => 'R']];
+          $bool['must'][] = ['match' => ['identification.verification_substatus' => 5]];
+          break;
+
         case 'DR':
           // Queried or not accepted.
           $bool['must'][] = [
@@ -1974,8 +1985,72 @@ class ElasticsearchProxyHelper {
           ];
           break;
 
+        case 'OV':
+          // Decision by other verifiers.
+          $userId = hostsite_get_user_field('indicia_user_id');
+          $bool['must'][] = ['query_string' => ['query' => "(NOT identification.verifier.id:$userId AND _exists_:identification.verifier.id)"]];
+
         default:
           // Nothing to do for 'all'.
+      }
+    }
+  }
+
+  /**
+   * Converts an Indicia filter definition certainty filter to an ES query.
+   *
+   * @param array $definition
+   *   Definition loaded for the Indicia filter.
+   * @param array $bool
+   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   */
+  private static function applyUserFiltersCertainty(array $definition, array &$bool) {
+    $filter = self::getDefinitionFilter($definition, ['certainty']);
+    if (!empty($filter)) {
+      $certaintyCodes = explode(',', $filter['value']);
+      $certaintyMapping = [
+        'C' => 'Certain',
+        'L' => 'Likely',
+        'U' => 'Maybe',
+      ];
+      $certaintyTerms = [];
+      foreach ($certaintyCodes as $code) {
+        if (array_key_exists($code, $certaintyMapping)) {
+          $certaintyTerms[] = $certaintyMapping[$code];
+        }
+      }
+      $boolClauses = [];
+      if (in_array('NS', $certaintyCodes)) {
+        // Not stated in the list, needs special handling.
+        $boolClauses['must_not'] = ['exists' => ['field' => 'identification.recorder_certainty']];
+      }
+      if (count($certaintyTerms)) {
+        $boolClauses['must'] = ['term' => ['identification.verification_status' => 'V1']];//['terms' => ['identification.recorder_certainty' => $certaintyTerms]];
+      }
+      if (count($boolClauses) === 1) {
+        $bool[array_keys($boolClauses)[0]][] = array_values($boolClauses)[0];
+      }
+      elseif (count($boolClauses) === 2) {
+        $bool['must'][] = [
+          'bool' => [
+            'should' => [
+              [
+                'bool' => [
+                  array_keys($boolClauses)[0] => [
+                    array_values($boolClauses)[0],
+                  ],
+                ],
+              ],
+              [
+                'bool' => [
+                  array_keys($boolClauses)[1] => [
+                    array_values($boolClauses)[1],
+                  ],
+                ],
+              ],
+            ],
+          ],
+        ];
       }
     }
   }
