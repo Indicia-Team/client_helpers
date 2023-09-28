@@ -888,9 +888,11 @@ class filter_quality extends FilterBase {
         'lookupValues' => $checkOptions,
       ]);
       if (!empty($options['autocheck_rules'])) {
-        $ruleOptions = ['' => lang::get('Not filtered')];
+        $ruleOptions = [
+          '' => lang::get('No filtering on checks'),
+        ];
         foreach ($options['autocheck_rules'] as $rule) {
-          $ruleOptions[$rule] = lang::get($rule);
+          $ruleOptions[$rule] = lang::get("$rule failed");
         };
         $r .= data_entry_helper::select([
           'label' => lang::get('Select records by specific automated check flags'),

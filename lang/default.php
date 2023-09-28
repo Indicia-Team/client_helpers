@@ -98,6 +98,12 @@ $default_terms = [
   'Click to Filter Occ_id' => 'Select records by record ID',
   'Click to Filter Quality' => 'Select records based on quality criteria such as verification status or presence of photos',
   'Click to Filter Source' => 'Select records based on source website, survey or input form',
+
+  // Data cleaner rules.
+  'identification_difficulty failed' => 'ID difficulty check failed',
+  'period failed' => 'Year range check failed',
+  'period_within_year failed' => 'Date range check failed',
+  'without_polygon failed' => 'Distribution check failed',
 ];
 
 // Some bigger bits of text better handled with HEREDOC.
