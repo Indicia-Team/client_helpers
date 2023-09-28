@@ -427,6 +427,20 @@ class iform_importer {
       $presets['sample:training'] = 't';
       $presets['occurrence:training'] = 't';
     }
+    // Allow presets to come from URL params
+    // Must be preceded with "dynamic-" (works in same way as report pages that use URL params)
+    // e.g. A parameter such as dynamic-location:fk_parent:id=1 passed to the importer
+    // would set a location's parent to location 1.
+    if (!empty($_GET)) {
+      foreach ($_GET as $getKey => $getValue) {
+        if (substr($getKey,0,8) === 'dynamic-'
+            && $getKey !== 'dynamic-website_id'
+            && $getKey !== 'dynamic-password') {
+          //Remove dynamic- from front of param before placing in presets
+          $presets[str_replace("dynamic-", "", $getKey)] = $getValue;
+        }
+      }
+    }
     try {
       $existingRecordLookupMethod = empty($args['existingRecordLookupMethod']) ?
         $args['existingRecordLookupMethodCustom'] : self::lookupConfig($args['existingRecordLookupMethod']);
