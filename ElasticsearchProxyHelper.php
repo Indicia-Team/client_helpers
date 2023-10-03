@@ -1878,13 +1878,9 @@ class ElasticsearchProxyHelper {
           $bool['must'][] = [
             'bool' => [
               'should' => [
-                [
-                  'bool' => [
-                    'must' => [
-                      ['term' => ['identification.verification_status' => 'V']],
-                    ],
-                  ],
-                ],
+                // Verified.
+                ['term' => ['identification.verification_status' => 'V']],
+                // Or plausible.
                 [
                   'bool' => [
                     'must' => [
