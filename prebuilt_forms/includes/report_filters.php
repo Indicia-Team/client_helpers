@@ -933,12 +933,12 @@ class filter_quality extends FilterBase {
     }
     if (in_array('photo', $ctls)) {
       $r .= data_entry_helper::select([
-        'label' => 'Photos',
+        'label' => lang::get('Records and photos'),
         'fieldname' => 'has_photos',
         'lookupValues' => [
-          '' => 'Include all records',
-          '1' => 'Only include records which have photos',
-          '0' => 'Exclude records which have photos',
+          '' => lang::get('-No filter-'),
+          '1' => lang::get('With'),
+          '0' => lang::get('Without'),
         ],
       ]);
     }
@@ -1166,7 +1166,23 @@ HTML;
 
 }
 
-function status_control($readAuth, $options) {
+/**
+ * Output a standalone media/photos drop-down filter.
+ */
+function media_filter_control($readAuth, $options) {
+  iform_load_helpers(['report_helper']);
+  report_helper::add_resource('reportfilters');
+  $ctl = new filter_quality();
+  $r = '<div class="standalone-media-filter">';
+  $r .= $ctl->getControls($readAuth, $options, ['photo']);
+  $r .= '</div>';
+  return $r;
+}
+
+/**
+ * Output a standalone status drop-down filter.
+ */
+function status_filter_control($readAuth, $options) {
   iform_load_helpers(['report_helper']);
   report_helper::add_resource('reportfilters');
   $ctl = new filter_quality();

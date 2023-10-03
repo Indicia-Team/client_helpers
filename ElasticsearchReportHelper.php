@@ -1141,7 +1141,7 @@ HTML;
 
     helper_base::$late_javascript .= <<<JS
 $('#es-filter-summary').idcFilterSummary('populate');
-$('.es-filter-param, .user-filter, .permissions-filter, .standalone-quality-filter select').change(function () {
+$('.es-filter-param, .user-filter, .permissions-filter, .standalone-quality-filter select,.standalone-media-filter select').change(function () {
     // Update any summary output
     $('#es-filter-summary').idcFilterSummary('populate');
 });
@@ -1149,6 +1149,22 @@ $('.es-filter-param, .user-filter, .permissions-filter, .standalone-quality-filt
 JS;
 
     return self::getControlContainer('filterSummary', $options, json_encode([]), $html);
+  }
+
+  /**
+   * Output a selector for presence of media.
+   *
+   * Mirrors the 'quality - records and photos' drop-down in standardParams
+   * control.
+   *
+   * @return string
+   *   Select HTML.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-mediafilter
+   */
+  public static function mediaFilter(array $options) {
+    require_once 'prebuilt_forms/includes/report_filters.php';
+    return media_filter_control($options['readAuth'], $options);
   }
 
   /**
@@ -1168,7 +1184,7 @@ JS;
       'elasticsearch' => TRUE,
     ], $options);
 
-    return status_control($options['readAuth'], $options);
+    return status_filter_control($options['readAuth'], $options);
   }
 
   /**

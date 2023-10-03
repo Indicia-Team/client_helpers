@@ -320,8 +320,21 @@ TXT;
   }
 
   /**
-   * Output a selector for a general record access contexts based on permission filters and group permissions etc
+   * Output a selector for records with or without media.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-mediaFilter
+   */
+  protected static function get_control_mediaFilter($auth, $args, $tabalias, $options) {
+    return ElasticsearchReportHelper::mediaFilter(array_merge($options, [
+      'readAuth' => $auth['read'],
+    ]));
+  }
+
+  /**
    * Output a selector for record status.
+   *
+   * Output a selector for a general record access contexts based on permission
+   * filters and group permissions etc.
    *
    * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-statusFilters
    */
