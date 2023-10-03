@@ -836,6 +836,7 @@ class helper_base {
    *   * brc_charts
    *   * bigr
    *   * d3
+   *   * html2canvas
    */
   public static function add_resource($resource) {
     // Ensure indiciaFns is always the first resource added.
@@ -1280,6 +1281,11 @@ class helper_base {
             'https://unpkg.com/brc-atlas-bigr@2.4.0/dist/bigr.min.umd.js',
           ],
         ],
+        'html2canvas' => [
+          'javascript' => [
+            'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',
+           ],
+         ],
       ];
     }
     return self::$resource_list;
