@@ -91,6 +91,48 @@ every imported record.</p>
 <p>You can use the following replacement tokens in the values: {user_id}, {username}, {email} or {profile_*} (i.e. any
 field in the user profile data).</p>
 TXT;
+
+// @todo Make sure the state of the advanced toggle is saved in a template
+
+    $advancedFieldsDefault = <<<TXT
+occurrence:confidential
+occurrence:fk_taxa_taxon_list:external_key
+occurrence:fk_taxa_taxon_list:genus
+occurrence:fk_taxa_taxon_list:id
+occurrence:fk_taxa_taxon_list:specific
+occurrence:import_guid
+occurrence:record_status
+occurrence:record_substatus
+occurrence:release_status
+occurrence:zero_abundance
+occurrence_medium:caption:1
+occurrence_medium:caption:2
+occurrence_medium:caption:3
+occurrence_medium:caption:4
+occurrence_medium:path:1
+occurrence_medium:path:2
+occurrence_medium:path:3
+occurrence_medium:path:4
+sample:date_end
+sample:date_start
+sample:date_type
+sample:date:day
+sample:date:month
+sample:date:year
+sample:entered_sref_system
+sample:external_key
+sample:fk_group
+sample:fk_licence
+sample:fk_licence:code
+sample:fk_location
+sample:fk_location:code
+sample:fk_location:external_key
+sample:fk_location:id
+sample:input_form
+sample:privacy_precision
+sample:record_status
+sample:sensitivity_precision
+TXT;
     return [
       [
         'name' => 'fixedValues',
@@ -105,6 +147,14 @@ TXT;
         'description' => 'Specify default values for any item in the Fixed values list above where the key is a control from the Import Settings page that has a list of available options.',
         'type' => 'textarea',
         'required' => FALSE,
+      ],
+      [
+        'name' => 'advancedFields',
+        'caption' => 'Advanced fields',
+        'description' => 'Fields that will be hidden unless the option to show advanced fields is selected.',
+        'type' => 'textarea',
+        'required' => FALSE,
+        'default' => $advancedFieldsDefault,
       ],
       [
         'name' => 'allowUpdates',
@@ -228,12 +278,14 @@ TXT;
       'writeAuth' => $auth['write_tokens'],
       'fixedValues' => [],
       'entity' => 'occurrence',
+      'advancedFields' => '',
     ], $args);
     $options['fixedValues'] = empty($options['fixedValues']) ? [] : get_options_array_with_user_data($options['fixedValues']);
     $options['fixedValues'] = array_merge($options['fixedValues'], self::getAdditionalFixedValues($auth, $options['entity']));
     if (!empty($options['fixedValueDefaults'])) {
       $options['fixedValueDefaults'] = get_options_array_with_user_data($options['fixedValueDefaults']);
     }
+    $options['advancedFields'] = helper_base::explode_lines($options['advancedFields']);
     return import_helper_2::importer($options);
   }
 
