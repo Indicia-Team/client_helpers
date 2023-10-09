@@ -834,12 +834,13 @@ class filter_quality extends FilterBase {
         'R5' => lang::get('Not accepted - incorrect only'),
         'C3' => lang::get('Plausible'),
         'D' => lang::get('Queried'),
-        'A' => lang::get('Answered'),
         'all' => lang::get('All records'),
       ];
       if ($options['sharing'] === 'verification') {
         $qualityOptions['OV'] = lang::get('Verified by other verifiers');
+        $qualityOptions['A'] = lang::get('Answered');
       }
+      $qualityOptions['all'] = lang::get('All records');
       if ($options['elasticsearch']) {
         // Elasticsearch doesn't currently support recorder trust.
         unset($qualityOptions['T']);
