@@ -63,7 +63,8 @@ $default_terms = [
   // Default labels for various database fields.
   'occurrence:taxa_taxon_list_id' => 'Species',
   'sample:date' => 'Date',
-  'sample:entered_sref' => 'Spatial Reference',
+  'sample:entered_sref' => 'Spatial reference',
+  'sample:entered_sref_system' => 'Spatial reference system',
 
   // Spatial reference systems.
   'sref:OSGB' => 'British National Grid',

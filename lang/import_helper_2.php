@@ -31,7 +31,13 @@ Select options for importing records. These options will be applied to all recor
 TXT;
 
 $default_terms['import2mappingsFormIntro'] = <<<TXT
-Select which database field each of your import file's columns should be mapped to. Any columns in your file that do not have matches can be set to "- not imported -".
+Select which database field each of your import file's columns should be mapped to. Any columns in
+your file that do not need to be imported, or that have no matches, should be set to
+“- not imported -“.<br><br>
+By default this page shows all the “standard” attributes that will be sufficient for typical
+biological record formats. If needed you can add “advanced”  attributes to the list - these provide
+additional options but are not always straightforward to use.
+
 TXT;
 
 $default_terms['import2lookupMatchingFormIntro'] = <<<TXT
@@ -82,8 +88,14 @@ $default_terms['optionGroup-occAttr-shortLabel'] = 'Occurrence attributes';
 $default_terms['optionGroup-sample-shortLabel'] = 'Sample';
 $default_terms['optionGroup-sample_medium-shortLabel'] = 'Sample media';
 $default_terms['optionGroup-smpAttr-shortLabel'] = 'Sample attributes';
+// Improved field name captions.
+$default_terms['occurrence:comment'] = 'Occurrence comment';
+$default_terms['occurrence:external_key'] = 'External record ID';
+$default_terms['location:external_key'] = 'External location ID';
+$default_terms['sample:comment'] = 'Sample comment';
+$default_terms['sample:external_key'] = 'External sample ID';
+$default_terms['sample:record_status'] = 'Sample verification status';
 
 $default_terms['Deleted'] = 'Deleted (for existing records)';
-$default_terms['External key'] = 'External key (your reference)';
 $default_terms['Id'] = 'ID (primary key for existing records)';
-$default_terms['Taxa taxon list (lookup in database)'] = 'Species or taxon name';
+$default_terms['Taxa taxon list (lookup)'] = 'Species or taxon name';
