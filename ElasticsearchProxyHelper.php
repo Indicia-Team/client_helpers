@@ -1095,7 +1095,6 @@ class ElasticsearchProxyHelper {
       else {
         $bool[$qryConfig['bool_clause']][] = $queryDef;
       }
-
     }
     unset($query['bool_queries']);
     // Apply a training mode filter.
@@ -1520,7 +1519,7 @@ class ElasticsearchProxyHelper {
     if (!empty($filter)) {
       if ($filter['op'] === '=') {
         $bool['must'][] = [
-          'match' => [
+          'term' => [
             'taxon.taxon_rank_sort_order' => $filter['value'],
           ],
         ];
@@ -1555,7 +1554,7 @@ class ElasticsearchProxyHelper {
     // Filter op can be =, >= or <=.
     if (!empty($filter) && $filter['value'] !== 'all') {
       $bool['must'][] = [
-        'match' => [
+        'term' => [
           "taxon.$flag" => $filter['value'] === 'Y',
         ],
       ];
@@ -1753,9 +1752,9 @@ class ElasticsearchProxyHelper {
    *   Bool clauses that filters can be added to (e.g. $bool['must']).
    */
   private static function applyUserFiltersWho(array $definition, array &$bool) {
-    if (!empty($definition['my_records'] && (string) $definition['my_records'] === '1' || (string) $definition['my_records'] === '0')) {
+    if (!empty($definition['my_records']) && ((string) $definition['my_records'] === '1' || (string) $definition['my_records'] === '0')) {
       $bool[$definition['my_records'] === '1' ? 'must' : 'must_not'][] = [
-        'match' => ['metadata.created_by_id' => hostsite_get_user_field('indicia_user_id')],
+        'term' => ['metadata.created_by_id' => hostsite_get_user_field('indicia_user_id')],
       ];
     }
     if (!empty($definition['recorder_name']) && !empty(trim($definition['recorder_name']))) {
@@ -1859,135 +1858,220 @@ class ElasticsearchProxyHelper {
   private static function applyUserFiltersQuality(array $definition, array &$bool) {
     $filter = self::getDefinitionFilter($definition, ['quality']);
     if (!empty($filter)) {
-      switch ($filter['value']) {
-        case 'V1':
-          $bool['must'][] = ['match' => ['identification.verification_status' => 'V']];
-          $bool['must'][] = ['match' => ['identification.verification_substatus' => 1]];
-          break;
+      $valueList = explode(',', $filter['value']);
+      $defs = [];
+      foreach ($valueList as $value) {
+        switch ($value) {
+          // Answered query.
+          case 'A':
+            $defs[] = [
+              'term' => ['identification.query.keyword' => 'A'],
+            ];
+            break;
 
-        case 'V2':
-          $bool['must'][] = ['match' => ['identification.verification_status' => 'V']];
-          $bool['must'][] = ['match' => ['identification.verification_substatus' => 2]];
-          break;
-
-        case 'V':
-          $bool['must'][] = ['match' => ['identification.verification_status' => 'V']];
-          break;
-
-        case '-3':
-          $bool['must'][] = [
-            'bool' => [
-              'should' => [
-                // Verified.
-                ['term' => ['identification.verification_status' => 'V']],
-                // Or plausible.
-                [
-                  'bool' => [
-                    'must' => [
-                      ['term' => ['identification.verification_status' => 'C']],
-                      ['term' => ['identification.verification_substatus' => 3]],
-                    ],
-                  ],
+          // Plausible.
+          case 'C3':
+            $defs[] = [
+              'bool' => [
+                'must' => [
+                  ['term' => ['identification.verification_status' => 'C']],
+                  ['term' => ['identification.verification_substatus' => 3]],
                 ],
               ],
-            ],
-          ];
-          break;
+            ];
+            break;
 
-        case 'C3':
-          $bool['must'][] = ['match' => ['identification.verification_status' => 'C']];
-          $bool['must'][] = ['match' => ['identification.verification_substatus' => 3]];
-          break;
+          // Queried.
+          case 'D':
+            $defs[] = [
+              'term' => ['identification.query.keyword' => 'Q'],
+            ];
+            break;
 
-        case 'C':
-          $bool['must'][] = ['match' => ['identification.recorder_certainty' => 'Certain']];
-          $bool['must_not'][] = ['match' => ['identification.verification_status' => 'R']];
-          break;
-
-        case 'L':
-          $bool['must'][] = [
-            'terms' => [
-              'identification.recorder_certainty.keyword' => [
-                'Certain',
-                'Likely',
-              ],
-            ],
-          ];
-          $bool['must_not'][] = ['match' => ['identification.verification_status' => 'R']];
-          break;
-
-        case 'P':
-          $bool['must'][] = ['match' => ['identification.verification_status' => 'C']];
-          $bool['must'][] = ['match' => ['identification.verification_substatus' => 0]];
-          $bool['must_not'][] = ['exists' => ['field' => 'identification.query']];
-          break;
-
-        case '!R':
-          $bool['must_not'][] = ['match' => ['identification.verification_status' => 'R']];
-          break;
-
-        case '!D':
-          $bool['must_not'][] = [
-            'match' => ['identification.verification_status' => 'R'],
-          ];
-          $bool['must_not'][] = [
-            'terms' => ['identification.query.keyword' => ['Q', 'A']],
-          ];
-          break;
-
-        case 'D':
-          $bool['must'][] = ['match' => ['identification.query' => 'Q']];
-          break;
-
-        case 'A':
-          $bool['must'][] = ['match' => ['identification.query' => 'A']];
-          break;
-
-        case 'R':
-          $bool['must'][] = ['match' => ['identification.verification_status' => 'R']];
-          break;
-
-        case 'R4':
-          $bool['must'][] = ['match' => ['identification.verification_status' => 'R']];
-          $bool['must'][] = ['match' => ['identification.verification_substatus' => 4]];
-          break;
-
-        case 'R5':
-          $bool['must'][] = ['match' => ['identification.verification_status' => 'R']];
-          $bool['must'][] = ['match' => ['identification.verification_substatus' => 5]];
-          break;
-
-        case 'DR':
-          // Queried or not accepted.
-          $bool['must'][] = [
-            'bool' => [
-              'should' => [
-                [
-                  'bool' => [
-                    'must' => [
-                      ['term' => ['identification.verification_status' => 'R']],
-                    ],
-                  ],
-                ],
-                [
-                  'bool' => [
-                    'must' => [
-                      ['match' => ['identification.query' => 'Q']],
-                    ],
-                  ],
-                ],
-              ],
-            ],
-          ];
-          break;
-
-        case 'OV':
           // Decision by other verifiers.
-          $userId = hostsite_get_user_field('indicia_user_id');
-          $bool['must'][] = ['query_string' => ['query' => "(NOT identification.verifier.id:$userId AND _exists_:identification.verifier.id)"]];
+          case 'OV':
+            $userId = hostsite_get_user_field('indicia_user_id');
+            $defs[] = [
+              'query_string' => ['query' => "(NOT identification.verifier.id:$userId AND _exists_:identification.verifier.id)"],
+            ];
+            break;
 
-        default:
-          // Nothing to do for 'all'.
+          case 'P':
+            $defs[] = [
+              'bool' => [
+                'must' => [
+                  ['term' => ['identification.verification_status' => 'C']],
+                  ['term' => ['identification.verification_substatus' => 0]],
+                ],
+                'must_not' => [
+                  ['exists' => ['field' => 'identification.query']],
+                ],
+              ],
+            ];
+            break;
+
+          // Not accepted.
+          case 'R':
+            $defs[] = [
+              'term' => ['identification.verification_status' => 'R'],
+            ];
+            break;
+
+          case 'R4':
+            $defs[] = [
+              'bool' => [
+                'must' => [
+                  ['term' => ['identification.verification_status' => 'R']],
+                  ['term' => ['identification.verification_substatus' => 4]],
+                ],
+              ],
+            ];
+            break;
+
+          case 'R5':
+            $defs[] = [
+              'bool' => [
+                'must' => [
+                  ['term' => ['identification.verification_status' => 'R']],
+                  ['term' => ['identification.verification_substatus' => 5]],
+                ],
+              ],
+            ];
+            break;
+
+          // Accepted.
+          case 'V':
+            $defs[] = ['term' => ['identification.verification_status' => 'V']];
+            break;
+
+          case 'V1':
+            $defs[] = [
+              'bool' => [
+                'must' => [
+                  ['term' => ['identification.verification_status' => 'V']],
+                  ['term' => ['identification.verification_substatus' => 1]],
+                ],
+              ],
+            ];
+            break;
+
+          case 'V2':
+            $defs[] = [
+              'bool' => [
+                'must' => [
+                  ['term' => ['identification.verification_status' => 'V']],
+                  ['term' => ['identification.verification_substatus' => 2]],
+                ],
+              ],
+            ];
+            break;
+
+          // Legacy parameters to support old filters.
+          // Accepted or plausible.
+          case '-3':
+            $defs[] = [
+              'bool' => [
+                'should' => [
+                  // Verified.
+                  ['term' => ['identification.verification_status' => 'V']],
+                  // Or plausible.
+                  [
+                    'bool' => [
+                      'must' => [
+                        ['term' => ['identification.verification_status' => 'C']],
+                        ['term' => ['identification.verification_substatus' => 3]],
+                      ],
+                    ],
+                  ],
+                ],
+              ],
+            ];
+            break;
+
+          // Not queried or rejected.
+          case '!D':
+            $defs[] = [
+              'bool' => [
+                'must_not' => [
+                  ['term' => ['identification.verification_status' => 'R']],
+                  ['terms' => ['identification.query.keyword' => ['Q', 'A']]],
+                ],
+              ],
+            ];
+            break;
+
+          // Not rejected.
+          case '!R':
+            $defs[] = [
+              'bool' => [
+                'must_not' => [
+                  ['term' => ['identification.verification_status' => 'R']],
+                ],
+              ],
+            ];
+            break;
+
+          // Recorder certain.
+          case 'C':
+            $defs[] = [
+              'bool' => [
+                'must' => [
+                  ['term' => ['identification.recorder_certainty.keyword' => 'Certain']],
+                ],
+                'must_not' => [
+                  ['term' => ['identification.verification_status' => 'R']],
+                ],
+              ],
+            ];
+            break;
+
+          // Queried or not accepted.
+          case 'DR':
+            $defs[] = [
+              'bool' => [
+                'should' => [
+                  ['term' => ['identification.verification_status' => 'R']],
+                  ['match' => ['identification.query' => 'Q']],
+                ],
+              ],
+            ];
+            break;
+
+          // Recorder thinks record identification is likely.
+          case 'L':
+            $defs[] = [
+              'bool' => [
+                'must' => [
+                  [
+                    'terms' => [
+                      'identification.recorder_certainty.keyword' => [
+                        'Certain',
+                        'Likely',
+                      ],
+                    ],
+                  ],
+                ],
+                'must_not' => [
+                  ['term' => ['identification.verification_status' => 'R']],
+                ],
+              ],
+            ];
+            break;
+
+          default:
+            // Nothing to do for 'all'.
+        }
+      }
+      if (!empty($defs)) {
+        $boolGroup = !empty($filter['op']) && $filter['op'] === 'not in' ? 'must_not' : 'must';
+        if (count($defs) === 1) {
+          // Single filter can be simplified.
+          $bool[$boolGroup][] = [array_keys($defs[0])[0] => array_values($defs[0])[0]];
+        }
+        else {
+          // Join multiple filters with OR.
+          $bool[$boolGroup][] = ['bool' => ['should' => $defs]];
+        }
       }
     }
   }
@@ -2021,7 +2105,7 @@ class ElasticsearchProxyHelper {
         $boolClauses['must_not'] = ['exists' => ['field' => 'identification.recorder_certainty']];
       }
       if (count($certaintyTerms)) {
-        $boolClauses['must'] = ['term' => ['identification.verification_status' => 'V1']];//['terms' => ['identification.recorder_certainty' => $certaintyTerms]];
+        $boolClauses['must'] = ['terms' => ['identification.recorder_certainty.keyword' => $certaintyTerms]];
       }
       if (count($boolClauses) === 1) {
         $bool[array_keys($boolClauses)[0]][] = array_values($boolClauses)[0];
