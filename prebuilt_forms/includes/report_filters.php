@@ -193,7 +193,7 @@ HTML;
     <li>$lang[speciesIntro1]</li>
     <li>$lang[speciesIntro2]</li>
   </ul>
-  <div class="context-instruct messages warning">$lang[SpeciesLimited]</div>
+  <div class="context-instruct messages warning">$lang[speciesLimited]</div>
   $taxaSubListCtrl
 </div>
 HTML;
@@ -251,7 +251,7 @@ HTML;
       ],
       'cachePerUser' => FALSE,
     ]);
-    $r .= '<select id="taxon_rank_sort_order_combined" name="taxon_rank_sort_order_combined"><option value="">&lt;' . lang::get('Please select') . '&gt;</option>';
+    $r .= '<select id="taxon_rank_sort_order_combined" name="taxon_rank_sort_order_combined" class="' . $indicia_templates['formControlClass'] . '"><option value="">&lt;' . lang::get('Please select') . '&gt;</option>';
     foreach ($ranks as $rank) {
       $r .= "<option value=\"$rank[sort_order]:$rank[id]\">$rank[rank]</option>";
     }
@@ -821,6 +821,7 @@ class filter_quality extends FilterBase {
    * Define the HTML required for this filter's UI panel.
    */
   public function getControls($readAuth, $options, $ctls = ['status', 'certainty', 'auto', 'difficulty', 'photo']) {
+    global $indicia_templates;
     $r = '';
     if (in_array('status', $ctls)) {
       $r .= '<div class="context-instruct messages warning">' . lang::get('Please note, your options for quality filtering are restricted by your access permissions in this context.') . '</div>';
@@ -852,13 +853,39 @@ class filter_quality extends FilterBase {
       $options = array_merge([
         'label' => lang::get('Record status'),
       ], $options);
-
-      $r .= data_entry_helper::select([
-        'label' => $options['label'],
+      $includeExcludeRadios = data_entry_helper::radio_group([
+        'fieldname' => 'quality_op',
+        'lookupValues' => [
+          'in' => lang::get('Include'),
+          'not in' => lang::get('Exclude'),
+        ],
+        'default' => 'in',
+      ]);
+      $qualityCheckboxes = data_entry_helper::checkbox_group([
         'fieldname' => 'quality',
-        'id' => 'quality-filter',
         'lookupValues' => $qualityOptions,
       ]);
+      $lang = [
+        'cancel' => lang::get('Cancel'),
+        'ok' => lang::get('Ok'),
+        'recordStatus' => lang::get('Record status'),
+      ];
+      $r .= <<<HTML
+<div class="quality-cntr">
+  <label>$lang[recordStatus]:
+  <input type="hidden" name="quality" class="quality-value $indicia_templates[formControlClass]" />
+  <input type="text" class="quality-filter $indicia_templates[formControlClass]" />
+  </label>
+  <div class="quality-pane" style="display: none">
+    $includeExcludeRadios
+    $qualityCheckboxes
+    <div class="pull-right">
+      <button type="button" class="$indicia_templates[buttonHighlightedClass] btn-xs ok">$lang[ok]</button>
+      <button type="button" class="$indicia_templates[buttonDefaultClass] btn-xs cancel">$lang[cancel]</button>
+    </div>
+  </div>
+</div>
+HTML;
     }
     if (in_array('certainty', $ctls)) {
       $r .= data_entry_helper::checkbox_group([
@@ -971,7 +998,7 @@ class filter_quality_sample extends FilterBase {
     $r .= data_entry_helper::select([
       'label' => lang::get('Samples to include'),
       'fieldname' => 'quality',
-      'id' => 'quality-filter',
+      'class' => 'quality-filter',
       'lookupValues' => [
         'V' => lang::get('Accepted records only'),
         'P' => lang::get('Not reviewed'),
@@ -1190,13 +1217,6 @@ function status_filter_control($readAuth, $options) {
   $r = '<div class="standalone-quality-filter">';
   $r .= $ctl->getControls($readAuth, $options, ['status']);
   $r .= '</div>';
-
-  report_helper::$onload_javascript .= <<<JS
-    indiciaData.filter.def.quality = '!R';
-    indiciaFns.applyFilterToReports(false);
-
-JS;
-
   return $r;
 }
 
@@ -1794,6 +1814,19 @@ HTML;
     'confirmFilterChangedLoad' => 'Do you want to load the selected filter and lose your current changes?',
     'confirmFilterDelete' => 'Are you sure you want to permanently delete the {title} filter?',
     'createAFilter' => 'Create a filter',
+    'quality:P' => 'Pending',
+    'quality:V' => 'Accepted (all)',
+    'quality:V1' => 'Accepted - correct only',
+    'quality:V2' => 'Accepted - considered correct only',
+    'quality:R' => 'Not accepted (all)',
+    'quality:R4' => 'Not accepted - unable to verify only',
+    'quality:R5' => 'Not accepted - incorrect only',
+    'quality:C3' => 'Plausible',
+    'quality:D' => 'Queried',
+    'quality:A' => 'Answered',
+    'quality:all' => 'All records',
+    'quality_op:in' => 'Include',
+    'quality_op:not in' => 'Exclude',
     'filterDeleted' => 'The filter has been deleted',
     'filterExistsOverwrite' => 'A filter with that name already exists. Would you like to overwrite it?',
     'filterSaved' => 'The filter has been saved',
