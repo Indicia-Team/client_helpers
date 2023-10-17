@@ -7223,7 +7223,7 @@ HTML;
           'type' => $type,
           'value' => $value,
           'class' => $itemClass . (($idx == 0) ? ' first-item' : ''),
-          'itemId' => $options['id'] . '--' . $idx
+          'itemId' => $options['id'] . ':' . $idx
         )
       );
       $item['fieldname'] = $fieldName;
