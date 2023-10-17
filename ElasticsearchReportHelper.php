@@ -1164,6 +1164,9 @@ JS;
    */
   public static function mediaFilter(array $options) {
     require_once 'prebuilt_forms/includes/report_filters.php';
+    $options = array_merge([
+      'standalone' => TRUE,
+    ], $options);
     return media_filter_control($options['readAuth'], $options);
   }
 
@@ -1182,8 +1185,8 @@ JS;
     $options = array_merge([
       'sharing' => 'reporting',
       'elasticsearch' => TRUE,
+      'standalone' => TRUE,
     ], $options);
-
     return status_filter_control($options['readAuth'], $options);
   }
 

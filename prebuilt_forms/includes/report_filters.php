@@ -855,6 +855,7 @@ class filter_quality extends FilterBase {
       ], $options);
       $includeExcludeRadios = data_entry_helper::radio_group([
         'fieldname' => 'quality_op',
+        'id' => 'quality_op' . (empty($options['standalone']) ? '' : '--standalone'),
         'lookupValues' => [
           'in' => lang::get('Include'),
           'not in' => lang::get('Exclude'),
@@ -863,6 +864,7 @@ class filter_quality extends FilterBase {
       ]);
       $qualityCheckboxes = data_entry_helper::checkbox_group([
         'fieldname' => 'quality',
+        'id' => 'quality' . (empty($options['standalone']) ? '' : '--standalone'),
         'lookupValues' => $qualityOptions,
       ]);
       $lang = [
@@ -1865,13 +1867,16 @@ HTML;
       $optionParams[substr($key, 7)] = $value;
     }
   }
-  $allParams = array_merge(['quality' => '!R'], $optionParams, $getParams);
+  $allParams = array_merge(['quality' => 'R', 'quality_op' => 'not in'], $optionParams, $getParams);
   if (!empty($allParams)) {
     report_helper::$initialFilterParamsToApply = array_merge(report_helper::$initialFilterParamsToApply, $allParams);
     $json = json_encode($allParams);
-    report_helper::$onload_javascript .= "var params = $json;\n";
-    report_helper::$onload_javascript .= "indiciaData.filter.def=$.extend(indiciaData.filter.def, params);\n";
-    report_helper::$onload_javascript .= "indiciaData.filter.resetParams = $.extend({}, params);\n";
+    report_helper::$onload_javascript .= <<<JS
+var params = $json;
+indiciaData.filter.def = $.extend(indiciaData.filter.def, params);
+indiciaData.filter.resetParams = $.extend({}, params);
+
+JS;
   }
   $getParams = empty($getParams) ? '{}' : json_encode($getParams);
   if (!empty($options['filters_user_id']) && isset($fu)) {
@@ -1882,8 +1887,17 @@ HTML;
 if ($('#select-filter').val()) {
   loadFilter($('#select-filter').val(), $getParams);
 } else {
+  $.each($('#filter-panes .pane'), function (idx, pane) {
+    var name = pane.id.replace(/^pane-filter_/, '');
+    if (indiciaData.filterParser[name].fixLegacyFilter) {
+      indiciaData.filterParser[name].fixLegacyFilter(indiciaData.filter.def);
+    }
+  });
   indiciaFns.applyFilterToReports(false);
 }
+// Set initial description in the quality filter input.
+$('.quality-filter').val(indiciaData.filterParser.quality.statusDescriptionFromFilter(
+    indiciaData.filter.def.quality, indiciaData.filter.def.quality_op));
 
 JS;
   }
