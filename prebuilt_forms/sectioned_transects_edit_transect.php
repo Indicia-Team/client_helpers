@@ -410,7 +410,7 @@ class iform_sectioned_transects_edit_transect {
           'parent_id' => $settings['locationId'],
           'deleted' => 'f',
           'orderby' => 'id',
-          'location_type_id' => $settings['locationTypes'][0]['id'],
+          'location_type_id' => $settings['locationTypes'][1]['id'],
         ],
         'nocache' => TRUE,
       ]);
