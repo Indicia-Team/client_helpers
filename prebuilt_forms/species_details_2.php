@@ -34,6 +34,7 @@ require_once 'includes/report.php';
  * - Species Details including custom attributes.
  * - An Explore Species' Records button that links to a custom URL.
  * - Any photos of occurrences with the same meaning as the taxon.
+ * - A list of recording schemes & societies associated by the taxon (in the UKSI).
  * - A map displaying occurrences of taxa with the same meaning as the taxon.
  * - A bar chart indicating the accummulation of records over time.
  * - A phenology chart showing the accummulation of records through the year.
@@ -267,6 +268,7 @@ class iform_species_details_2 extends BaseDynamicDetails {
           "<strong>[control name]</strong> indicates a predefined control is to be added to the form with the following predefined controls available: <br/>" .
           "&nbsp;&nbsp;<strong>[species]</strong> - a taxon selection control.<br/>" .
           "&nbsp;&nbsp;<strong>[speciesdetails]</strong> - displays information relating to the occurrence and its sample<br/>" .
+          "&nbsp;&nbsp;<strong>[rss]</strong> - displays a list of recording schemes & societies associated with the taxon<br/>" .
           "&nbsp;&nbsp;<strong>[explore]</strong> - a button “Explore this species' records” which takes you to explore all records, filtered to the species.<br/>" .
           "&nbsp;&nbsp;<strong>[photos]</strong> - photos associated with the occurrence<br/>" .
           "&nbsp;&nbsp;<strong>[hectadmap]</strong> - a hectad distribution overview map for the taxon<br/>" .
@@ -282,6 +284,7 @@ class iform_species_details_2 extends BaseDynamicDetails {
           'default' => '
 =General=
 [speciesdetails]
+[rss]
 [photos]
 [explore]
 |
@@ -1282,6 +1285,48 @@ class iform_species_details_2 extends BaseDynamicDetails {
   }
 
   /**
+   * Output RSS information.
+   *
+   * @return string
+   */
+  protected static function get_control_rss($auth, $args, $tabalias, $options) {
+
+    if (isset(self::$taxonMeaningId)) {
+      //dpm('taxonMeaningId' . ' ' . self::$taxonMeaningId);
+
+      iform_load_helpers(['report_helper']);
+
+      $extraParams['taxon_meaning_id'] = self::$taxonMeaningId;
+      $extraParams['taxon_list_id'] = 15;
+
+      $rss = report_helper::get_report_data([
+        'readAuth' => $auth['read'],
+        'dataSource' => 'library/taxa/taxon_rss',
+        'useCache' => TRUE,
+        'extraParams' => $extraParams,
+      ]);
+
+      //dpm($rss);
+
+      $r = '<div class="detail-panel" id="detail-panel-rss"><h3>' . lang::get('Recording schemes & societies') . '</h3>';
+
+      if (count($rss) > 0) {
+        $r .= '<div class="' . $options['class'] . '"><ul>';
+        foreach ($rss as $scheme) {
+          $r .= '<li>' . $scheme['title'] . '</li>';
+        }
+        $r .= '</ul></div>';
+      } else {
+        $r .= '<div>No societies are listed in the UK Species Inventory for this taxon.</div>';
+      }
+      $r .= '</div>';
+    } else {
+      $r = '';
+    }
+    return $r;
+  }
+
+  /**
    * Draw Photos section of the page.
    *
    * @return string
@@ -1764,6 +1809,7 @@ class iform_species_details_2 extends BaseDynamicDetails {
     if (!isset($args['structure']) || empty($args['structure'])) {
       $args['structure'] = '=General=
 [speciesdetails]
+[rss]
 [photos]
 [explore]
 |
