@@ -183,9 +183,8 @@ class iform_earthwormwatch_sample_occurrence extends iform_dynamic_sample_occurr
    * Depends upon a report existing that uses the parameter e.g. earthworm_sample_occurrence_samples
    */
   protected static function getSampleListGrid($args, $nid, $auth, $attributes) {
-    global $user;
     // User must be logged in before we can access their records.
-    if ($user->uid===0) {
+    if (!hostsite_get_user_field('id')) {
       // Return a login link that takes you back to this form when done.
       return lang::get('<br><br><br><br><br><br><p>Before using this facility, please <a href="'.url('user/login', array('query'=>array('destination=node/'.($nid)))).'">Login</a> to the website, or <a href="'.url('user/register', array('query'=>array('destination=node/'.($nid)))).'">Register</a> if you haven’t done so previously.</p><br><br><br><br><br><br>');
     }
@@ -450,7 +449,6 @@ class iform_earthwormwatch_sample_occurrence extends iform_dynamic_sample_occurr
   }
 
   protected static function getSampleListGridPreamble() {
-    global $user;
     $r = '';
     $r .= '<br><p class="first-pit-help"><b>Completed your Earthworm Watch survey? Submit your data by using this simple form.</b></p>';
     $r .= '<p class="first-pit-help"><b>To get started, first add details about your site, and then input data for each of your soil pits in turn.</b></p>';

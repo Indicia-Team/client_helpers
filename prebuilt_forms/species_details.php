@@ -856,7 +856,6 @@ class iform_species_details extends iform_dynamic {
       return self::mapWithoutGeoserver($auth, $args, $tabalias, $options);
     }
     iform_load_helpers(array('map_helper', 'data_entry_helper'));
-    global $user;
     // setup the map options
     $options = iform_map_get_map_options($args, $auth['read']);
     if ($tabalias)
@@ -1053,7 +1052,6 @@ class iform_species_details extends iform_dynamic {
       'itemsPerPage' => 6,
       'galleryColCount' => 2,
     ], $options);
-    global $user;
     global $indicia_templates;
     // Use this report to return the photos.
     $reportName = 'library/taxa/species_notes_and_images';

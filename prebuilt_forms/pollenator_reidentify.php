@@ -122,10 +122,9 @@ class iform_pollenator_reidentify {
 	data_entry_helper::enable_validation('new-comments-form'); // don't care about ID itself, just want resources
 	data_entry_helper::add_resource('autocomplete');
 
-	global $user;
-    $uid = $user->uid;
-    $email = $user->mail;
-    $username = $user->name;
+	$uid = hostsite_get_user_field('id');
+	$email = hostsite_get_user_field('mail');
+	$username = hostsite_get_user_field('name');
 	// Get authorisation tokens to update and read from the Warehouse.
 	$readAuth = data_entry_helper::get_read_auth($args['website_id'], $args['password']);
 	$svcUrl = data_entry_helper::$base_url.'/index.php/services';

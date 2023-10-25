@@ -1471,7 +1471,6 @@ class iform_species_details_2 extends BaseDynamicDetails {
       return self::mapWithoutGeoserver($auth, $args, $tabalias, $options);
     }
     iform_load_helpers(['map_helper', 'data_entry_helper']);
-    global $user;
     // Set up the map options.
     $options = iform_map_get_map_options($args, $auth['read']);
     if ($tabalias) {
@@ -1704,7 +1703,6 @@ class iform_species_details_2 extends BaseDynamicDetails {
       'itemsPerPage' => 6,
       'galleryColCount' => 2,
     ], $options);
-    global $user;
     global $indicia_templates;
     // Use this report to return the photos.
     $reportName = 'library/taxa/species_notes_and_images';

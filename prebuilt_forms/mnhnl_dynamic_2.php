@@ -238,13 +238,12 @@ jQuery('#downloads').find('[name=params]').val('{\"survey_id\":".$args['survey_i
    * When viewing the list of samples for this user, get the grid to insert into the page.
    */
   protected static function getSampleListGrid($args, $nid, $auth, $attributes) {
-  	global $user;
     // get the CMS User ID attribute so we can filter the grid to this user
     $userIdAttr=iform_mnhnl_getAttrID($auth, $args, 'sample', 'CMS User ID', isset($args['sample_method_id']) && $args['sample_method_id']!="" ? $args['sample_method_id'] : false);
     if (!$userIdAttr) return lang::get('getSampleListGrid function: This form must be used with a survey that has the CMS User ID sample attribute associated with it, so records can be tagged against their creator.');
     $extraParams = array('survey_id'=>$args['survey_id'],
         'userID_attr_id'=>$userIdAttr,
-        'userID'=>(hostsite_user_has_permission($args['edit_permission']) ? -1 :  $user->uid)); // use -1 if admin - non logged in will not get this far.
+        'userID'=>(hostsite_user_has_permission($args['edit_permission']) ? -1 : hostsite_get_user_field('id'))); // use -1 if admin - non logged in will not get this far.
     $userNameAttr=iform_mnhnl_getAttrID($auth, $args, 'sample', 'CMS Username', isset($args['sample_method_id']) && $args['sample_method_id']!="" ? $args['sample_method_id'] : false);
     if ($userNameAttr) $extraParams['userName_attr_id']=$userNameAttr;
     if(isset($args['targetSpeciesAttr']) && $args['targetSpeciesAttr']!="") {
@@ -312,9 +311,8 @@ deleteSurvey = function(sampleID){
   }
 
   protected static function getSampleListGridPreamble() {
-    global $user;
     $r = '<p>'.lang::get('LANG_SampleListGrid_Preamble').
-        (hostsite_user_has_permission($args['edit_permission']) ? lang::get('LANG_All_Users') : $user->name).'</p>';
+        (hostsite_user_has_permission($args['edit_permission']) ? lang::get('LANG_All_Users') : hostsite_get_user_field('name')).'</p>';
     return $r;
   }
   protected static function getReportActions() {

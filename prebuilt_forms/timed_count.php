@@ -216,8 +216,6 @@ class iform_timed_count {
   }
 
   public static function get_sample_form($args, $nid, $response) {
-
-  	global $user;
   	iform_load_helpers(array('map_helper'));
   	$auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
   	// either looking at existing, creating a new one, or an error occurred: no successful posts...
@@ -665,7 +663,6 @@ mapInitialisationHooks.push(function(mapdiv) {
   }
 
   public static function get_occurrences_form($args, $nid, $response) {
-    global $user;
     data_entry_helper::add_resource('jquery_form');
     data_entry_helper::add_resource('jquery_ui');
     data_entry_helper::add_resource('autocomplete');

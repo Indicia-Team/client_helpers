@@ -127,7 +127,6 @@ class iform_sectioned_transects_input_sample {
   }
 
   public static function get_sample_form($args, $nid, $response) {
-    global $user;
     if (!hostsite_module_exists('iform_ajaxproxy'))
       return 'This form must be used in Drupal with the Indicia AJAX Proxy module enabled.';
     iform_load_helpers(array('map_helper'));
@@ -176,7 +175,7 @@ class iform_sectioned_transects_input_sample {
       $availableSites = data_entry_helper::get_population_data(array(
         'report' => 'library/locations/locations_list',
         'extraParams' => $auth['read'] + array('website_id' => $args['website_id'], 'location_type_id'=>$locationTypes[0]['id'],
-            'locattrs' => 'CMS User ID', 'attr_location_cms_user_id'=>$user->uid),
+            'locattrs' => 'CMS User ID', 'attr_location_cms_user_id' => hostsite_get_user_field('id')),
         'nocache' => true
       ));
       // convert the report data to an array for the lookup, plus one to pass to the JS so it can keep the hidden sref fields updated

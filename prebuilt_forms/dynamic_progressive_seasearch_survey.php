@@ -444,7 +444,6 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
    */
   private static function taxa_image_to_link($options,$habitats, $diveDurationAttrId,$habitatColours,$numberOfHabitats) {
     iform_load_helpers(array('report_helper'));
-    global $user;
     //Use this report to return the photos
     $reportName = 'reports_for_prebuilt_forms/seasearch/get_media_for_all_sub_samples';
     $reportOptions=array(
@@ -1353,8 +1352,6 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
    * May contain coded that is not needed and can be removed if possible
    */
   protected static function get_control_species_checklist($auth, $args, $extraParams, $options) {
-    global $user;
-
     // Build the configuration options
     if (isset($options['view']))
       $extraParams['view'] = $options['view'];

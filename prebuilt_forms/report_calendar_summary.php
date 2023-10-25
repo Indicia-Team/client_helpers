@@ -975,11 +975,9 @@ class iform_report_calendar_summary {
   	return isset(self::$siteUrlParams[self::$SurveyKey]);
   }
 
-  private static function location_control($args, $readAuth, $nid, &$options)
-  {
+  private static function location_control($args, $readAuth, $nid, &$options) {
   	// note that when in user specific mode it returns the list currently assigned to the user: it does not give
   	// locations which the user previously recorded data against, but is no longer allocated to.
-    global $user;
     $ctrl = '';
     $siteUrlParams = self::get_site_url_params();
     if(!isset($args['includeLocationFilter']) || !$args['includeLocationFilter'])
@@ -1052,7 +1050,7 @@ class iform_report_calendar_summary {
         isset($args['userSpecificLocationLookUp']) && $args['userSpecificLocationLookUp'] &&
         isset($options['extraParams']['user_id']) && $options['extraParams']['user_id']!="" &&
         $siteUrlParams[self::$userKey]['value']!="branch") {
-      if(!$allowSensitive && $options['extraParams']['user_id']!=$user->uid) { // ensure can see sensitive sites for my sites only.
+      if(!$allowSensitive && $options['extraParams']['user_id'] != hostsite_get_user_field('id')) { // ensure can see sensitive sites for my sites only.
         $locationListArgs['extraParams']['sensattr'] = $args['sensitivityLocAttrId'];
         $locationListArgs['extraParams']['exclude_sensitive'] = 1;
       }
@@ -1063,7 +1061,7 @@ class iform_report_calendar_summary {
       				'location_attribute_id'=>$cmsAttr['attributeId'], 'raw_value'=>$options['extraParams']['user_id']),
       				$readAuth),
       		'table' => 'location_attribute_value');
-      $description="All ".($user->uid == $options['extraParams']['user_id'] ? 'my' : 'user')." sites";
+      $description="All ".(hostsite_get_user_field('id') == $options['extraParams']['user_id'] ? 'my' : 'user')." sites";
       $attrList = data_entry_helper::get_population_data($attrListArgs);
       if (isset($attrList['error'])) return $attrList['error'];
       if(count($attrList)===0) {
@@ -1100,7 +1098,7 @@ class iform_report_calendar_summary {
       if($cmsAttr) {
         $attrListArgs=array(// 'nocache'=>true,
             'extraParams'=>array_merge(array('view' => 'list', 'website_id'=>$args['website_id'],
-                'location_attribute_id'=>$cmsAttr['attributeId'], 'raw_value'=>$user->uid),
+                'location_attribute_id'=>$cmsAttr['attributeId'], 'raw_value' => hostsite_get_user_field('id')),
                 $readAuth),
             'table' => 'location_attribute_value');
         $attrList = data_entry_helper::get_population_data($attrListArgs);
@@ -1213,6 +1211,7 @@ class iform_report_calendar_summary {
   private static function user_control($args, $readAuth, $nid, &$options)
   {
     // we don't use the userID option as the user_id can be blank, and will force the parameter request if left as a blank
+    // @todo Remove reference to deprecated global $user variable.
     global $user;
     if(!isset($args['includeUserFilter']) || !$args['includeUserFilter'])
       return '';
@@ -1224,7 +1223,7 @@ class iform_report_calendar_summary {
     if (function_exists('hostsite_module_exists') && hostsite_module_exists('easy_login') && hostsite_module_exists('hostsite_get_user_field')) {
       $options['my_user_id']=hostsite_get_user_field('indicia_user_id');
     } else {
-      $options['my_user_id']=$user->uid;
+      $options['my_user_id'] = hostsite_get_user_field('id');
     }
     if(!isset($args['managerPermission']) || $args['managerPermission']=="" || !hostsite_user_has_permission($args['managerPermission'])) {
       // user is a normal user
@@ -1379,7 +1378,6 @@ class iform_report_calendar_summary {
    * Get the parameters required for the current filter.
    */
   private static function get_site_url_params() {
-    global $user;
     if (!self::$siteUrlParams) {
       self::$siteUrlParams = array(
         self::$userKey => array(
@@ -1411,7 +1409,7 @@ class iform_report_calendar_summary {
       if(self::$siteUrlParams[self::$userKey]['value'] == 'all')
         self::$siteUrlParams[self::$userKey]['value'] = '';
       elseif(self::$siteUrlParams[self::$userKey]['value'] == '')
-        self::$siteUrlParams[self::$userKey]['value'] = $user->uid;
+        self::$siteUrlParams[self::$userKey]['value'] = hostsite_get_user_field('id');
       foreach (self::$removableParams as $param=>$caption) {
         self::$siteUrlParams[$param] = array(
           'name' => $param,
@@ -1511,8 +1509,7 @@ jQuery('#".$ctrlid."').change(function(){
    * @return HTML string
    */
   public static function get_form($args, $nid, $response) {
-    global $user;
-    $logged_in = $user->uid>0;
+    $logged_in = !empty(hostsite_get_user_field('id'));
     if(!$logged_in) {
       return('<p>'.lang::get('Please log in before attempting to use this form.').'</p>');
     }
@@ -1586,7 +1583,7 @@ jQuery('#".$ctrlid."').change(function(){
          return(lang::get('Branch Manager location list lookup: missing Branch allocation attribute').' {'.print_r($attrArgs,true).'} : '.$args['branchFilterAttribute']);
       $attrListArgs=array(// 'nocache'=>true,
       			'extraParams'=>array_merge(array('view' => 'list', 'website_id'=>$args['website_id'],
-      					'location_attribute_id'=>$cmsAttr['attributeId'], 'raw_value'=>$user->uid),
+      					'location_attribute_id'=>$cmsAttr['attributeId'], 'raw_value' => hostsite_get_user_field('id')),
       					$auth),
       			'table' => 'location_attribute_value');
       $attrList = data_entry_helper::get_population_data($attrListArgs);
@@ -1605,7 +1602,7 @@ jQuery('#".$ctrlid."').change(function(){
     if (function_exists('hostsite_module_exists') && hostsite_module_exists('easy_login') && function_exists('hostsite_get_user_field')) {
       $reportOptions['my_user_id']=hostsite_get_user_field('indicia_user_id');
     } else {
-      $reportOptions['my_user_id']=$user->uid;
+      $reportOptions['my_user_id'] = hostsite_get_user_field('id');
     }
     $retVal = '';
     // Add controls first: set up a control bar
