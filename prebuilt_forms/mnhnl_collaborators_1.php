@@ -187,8 +187,7 @@ class iform_mnhnl_collaborators_1 {
    * @return Form HTML.
    */
   public static function get_form($args, $nid) {
-    global $user;
-    $logged_in = $user->uid>0;
+    $logged_in = !empty(hostsite_get_user_field('id'));
     $r = '';
 
     // Get authorisation tokens to update and read from the Warehouse.
@@ -235,7 +234,7 @@ class iform_mnhnl_collaborators_1 {
         'extraParams' => array(
           'survey_id'=>$args['survey_id'],
           'userID_attr_id'=>$args['uid_attr_id'],
-          'userID'=>$user->uid
+          'userID' => hostsite_get_user_field('id'),
         )
       ));
       $r .= '<form><input type="button" value="'.lang::get('LANG_Add_Sample').'" onclick="window.location.href=\''.url("node/$nid", array('query' => 'newSample')).'\'"></form>';
@@ -309,9 +308,9 @@ locationLayer = new OpenLayers.Layer.Vector(\"".lang::get("LANG_Location_Layer")
     ));
     if ($logged_in) {
       // If logged in, output some hidden data about the user
-      $uid = $user->uid;
-      $email = $user->mail;
-      $username = $user->name;
+      $uid = hostsite_get_user_field('id');
+      $email = hostsite_get_user_field('mail');
+      $username = hostsite_get_user_field('name');
       $uid_attr_id = $args['uid_attr_id'];
       $email_attr_id = $args['email_attr_id'];
       $username_attr_id = $args['username_attr_id'];
@@ -378,7 +377,7 @@ locationLayer = new OpenLayers.Layer.Vector(\"".lang::get("LANG_Location_Layer")
     if ($args['interface']=='wizard') {
       $r .= data_entry_helper::wizard_buttons(array(
         'divId' => 'controls',
-        'page'=>($user->id==0) ? 'first' : 'middle'
+        'page'=> $logged_in ? 'middle' : 'first',
       ));
     }
     $r .= "</div>\n";

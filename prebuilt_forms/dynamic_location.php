@@ -637,9 +637,8 @@ function switchToSatelliteBaseLayerForZoom(map) {
    * user profile. Enable Easy Login module to achieve this function.
    */
   protected static function getLocationListGrid($args, $nid, $auth) {
-    global $user;
     // User must be logged in before we can access their records.
-    if ($user->uid === 0) {
+    if (!hostsite_get_user_field('id')) {
       // Return a login link that takes you back to this form when done.
       return lang::get('Before using this facility, please <a href="' .
           hostsite_get_url( 'user/login', ['destination' => "node/$nid"]) .

@@ -134,21 +134,21 @@ class extension_cudi_information_sheet {
    * A button link to the cudi form for the same location as being viewed on the information sheet
    */
   public function cudiFormButtonLink($auth, $args, $tabalias, $options, $path) {
-    global $user;
     iform_load_helpers(['report_helper']);
     //Get the Count Units that are in the user's tasks list using the same report.
     $getNormalUserEditableCountUnitData  = report_helper::get_report_data(array(
       'dataSource' => 'reports_for_prebuilt_forms/cudi/my_cudi_tasks',
       'readAuth'=>$auth['read'],
-      'extraParams'=>array('clean_url' => $options['clean_url'],
-                           'cudi_form_url' => $options['cudi_form_url'],
-                           'deactivate_site_attribute_id' => $options['deactivate_site_attribute_id'],
-                           'preferred_boundary_attribute_id' => $options['preferred_boundary_attribute_id'],
-                           'count_unit_boundary_type_id'=>$options['count_unit_boundary_type_id'],
-                           'count_unit_type_id'=>$options['count_unit_type_id'],
-                           'is_complete_attribute_id'=>$options['is_complete_attribute_id'],
-                           'preferred_sites_attribute_id'=>$options['preferred_sites_attribute_id'],
-                           'current_user_id'=>$user->profile_indicia_user_id)
+      'extraParams' => [
+        'clean_url' => $options['clean_url'],
+        'cudi_form_url' => $options['cudi_form_url'],
+        'deactivate_site_attribute_id' => $options['deactivate_site_attribute_id'],
+        'preferred_boundary_attribute_id' => $options['preferred_boundary_attribute_id'],
+        'count_unit_boundary_type_id' => $options['count_unit_boundary_type_id'],
+        'count_unit_type_id' => $options['count_unit_type_id'],
+        'is_complete_attribute_id' => $options['is_complete_attribute_id'],
+        'preferred_sites_attribute_id' => $options['preferred_sites_attribute_id'],
+        'current_user_id' => hostsite_get_user_field('indicia_user_id')],
     ));
     $isNormalUserAccessibleCountUnitIds = [];
     //Convert the Count Units in the user's task list into an array of ids only.

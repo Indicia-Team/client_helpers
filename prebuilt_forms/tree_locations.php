@@ -289,7 +289,6 @@ class iform_tree_locations {
    * @return Form HTML.
    */
   public static function get_form($args, $nid, $response=null) {
-    global $user;
     data_entry_helper::$helpTextPos = 'before';
     $checks=self::check_prerequisites();
     $args = self::getArgDefaults($args);
@@ -390,7 +389,7 @@ check_attrs = function(){
       $canEdit = ($args['manager_permission']=="" || hostsite_user_has_permission($args['manager_permission']));
       if($args['allow_user_assignment'] && isset($settings['cmsUserAttr']['default']) && !empty($settings['cmsUserAttr']['default'])) {
         foreach($settings['cmsUserAttr']['default'] as $value) { // multi value
-          if($value['default'] == $user->uid) { // comparing string against int so no triple equals
+          if($value['default'] == hostsite_get_user_field('id')) { // comparing string against int so no triple equals
             $canEdit = true;
             break;
           }
@@ -577,9 +576,8 @@ indiciaFns.bindTabsActivate(jQuery(jQuery('#site-details').parent()), mapTabHand
         $r .= self::get_user_assignment_control($auth['read'], $settings['cmsUserAttr'], $args);
       } else if (!$settings['locationId']) {
         // for a new record, we need to link the current user to the location if they are not admin.
-        global $user;
         self::get_user_assignment_control($auth['read'], $settings['cmsUserAttr'], $args); // this will populate the recorder list.
-        $r .= '<input type="hidden" name="locAttr:'.self::$cmsUserAttrId.'" value="'.$user->uid.'">';
+        $r .= '<input type="hidden" name="locAttr:'.self::$cmsUserAttrId.'" value="' . hostsite_get_user_field('id') . '">';
       }
     }
     $r .= '<button type="submit" class="indicia-button right">'.lang::get('Save').'</button>';
