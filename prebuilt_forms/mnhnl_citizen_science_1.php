@@ -210,9 +210,7 @@ class iform_mnhnl_citizen_science_1 {
    *   Form HTML.
    */
   public static function get_form($args) {
-
-    global $user;
-    $logged_in = $user->uid > 0;
+    $logged_in = !empty(hostsite_get_user_field('id'));
     // Get authorisation tokens to update and read from the Warehouse.
     $auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
     $readAuth = $auth['read'];
@@ -309,7 +307,7 @@ class iform_mnhnl_citizen_science_1 {
         'style' => $args['interface'],
       ));
     }
-    if ($user->uid === 0) {
+    if (!$logged_in) {
       $r .= "<fieldset id=\"about_you\">\n";
       $r .= '<p class="page-notice ui-state-highlight ui-corner-all">' . lang::get('about you tab instructions') . "</p>";
       $r .= data_entry_helper::text_input(array(
@@ -381,7 +379,7 @@ class iform_mnhnl_citizen_science_1 {
       if ($args['interface'] === 'wizard') {
         $r .= data_entry_helper::wizard_buttons(array(
           'divId' => 'controls',
-          'page' => ($user->id == 0) ? 'first' : 'middle',
+          'page' => (!$logged_in) ? 'first' : 'middle',
         ));
       }
       $r .= "</fieldset>\n";
@@ -424,7 +422,7 @@ class iform_mnhnl_citizen_science_1 {
     if ($args['interface'] === 'wizard') {
       $r .= data_entry_helper::wizard_buttons(array(
         'divId' => 'controls',
-        'page' => ($user->uid !== 0 && isset($taxa_taxon_list_id)) ? 'first' : 'middle',
+        'page' => ($logged_in && isset($taxa_taxon_list_id)) ? 'first' : 'middle',
       ));
     }
     $r .= "</fieldset>\n";

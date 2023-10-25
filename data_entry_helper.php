@@ -8764,7 +8764,7 @@ HTML;
    * Takes a response from a call to forward_post_to() and outputs any errors
    * from it onto the screen.
    *
-   * @param string $response
+   * @param string|array $response
    *   Return value from a call to forward_post_to().
    * @param bool $inline Set to true if the errors are to be placed
    *   alongside the controls rather than at the top of the page. Default is

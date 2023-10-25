@@ -449,8 +449,7 @@ idlist=';
     $r = str_replace(array('{grid}','{paramsForm}'), array($grid, $params),
       self::get_template_with_map($args, $auth['read'], $opts['extraParams'], $opts['paramDefaults']));
     $link = data_entry_helper::get_reload_link_parts();
-    global $user;
-    data_entry_helper::$javascript .= 'indiciaData.username = "'.$user->name."\";\n";
+    data_entry_helper::$javascript .= 'indiciaData.username = "' . hostsite_get_user_field('name') . "\";\n";
     data_entry_helper::$javascript .= 'indiciaData.rootUrl = "'.$link['path']."\";\n";
     data_entry_helper::$javascript .= 'indiciaData.ajaxFormPostUrl="'.iform_ajaxproxy_url($nid, 'sample')."&user_id=$indicia_user_id&sharing=verification\";\n";
     data_entry_helper::$javascript .= 'indiciaData.ajaxUrl="'.url('iform/ajax/verification_samples')."\";\n";
@@ -813,13 +812,12 @@ idlist=';
    * @return boolean True if the email was sent.
    */
   public static function ajax_email() {
-    global $user;
     $site_email = hostsite_get_config_value('site', 'mail', '');
     $headers = [];
     $headers[] = 'MIME-Version: 1.0';
     $headers[] = 'Content-type: text/html; charset=UTF-8;';
     $headers[] = 'From: '. $site_email;
-    $headers[] = 'Reply-To: '. $user->mail;
+    $headers[] = 'Reply-To: '. hostsite_get_user_field('mail');
     $headers[] = 'Return-Path: '. $site_email;
     $headers = implode("\r\n", $headers) . PHP_EOL;
     $emailBody = $_POST['body'];

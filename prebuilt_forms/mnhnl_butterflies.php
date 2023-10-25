@@ -154,9 +154,8 @@ class iform_mnhnl_butterflies extends iform_mnhnl_dynamic_1 {
 
   public static function get_form($args, $nid, $response=null) {
     global $indicia_templates;
-    global $user;
     $indicia_templates['select_item'] = '<option value="{value}" {selected} >{caption}&nbsp;</option>';
-    if ($user->uid===0)
+    if (!hostsite_get_user_field('id'))
       return lang::get('Before using this facility, please <a href="'.url('user/login', array('query'=>"destination=node/$nid")).'">login</a> to the website.');
     // we don't use the map, but a lot of the inherited code assumes the map is present.
     self::$svcUrl = data_entry_helper::$base_url.'/index.php/services';
@@ -171,7 +170,7 @@ class iform_mnhnl_butterflies extends iform_mnhnl_dynamic_1 {
         data_entry_helper::$javascript .= "
 jQuery('[name=smpAttr\\:".$args['observer_attr_id']."],[name^=smpAttr\\:".$args['observer_attr_id']."\\:]').attr('readonly',true)";
         if(parent::$mode == self::MODE_NEW){
-          data_entry_helper::$javascript .= ".val(\"".$user->name."\");";
+          data_entry_helper::$javascript .= ".val(\"" . $hostsite_get_user_field('name') . "\");";
         } else {
           data_entry_helper::$javascript .= ";";
         }
@@ -324,8 +323,7 @@ deleteSurvey = function(sampleID){
    * When viewing the list of samples for this user, get the grid to insert into the page.
    */
   protected static function getSampleListGrid($args, $nid, $auth, $attributes) {
-  	global $user;
-    if ($user->uid === 0) {
+    if (!hostsite_get_user_field('id')) {
       // Return a login link that takes you back to this form when done.
       return lang::get('Before using this facility, please <a href="'.url('user/login', array('query'=>"destination=node/$nid")).'">login</a> to the website.');
     }
@@ -349,15 +347,15 @@ deleteSurvey = function(sampleID){
       'mode' => 'report',
       'readAuth' => $auth['read'],
       'columns' => call_user_func(array(get_called_class(), 'getReportActions')),
-      'itemsPerPage' =>(isset($args['grid_num_rows']) ? $args['grid_num_rows'] : 10),
+      'itemsPerPage' => (isset($args['grid_num_rows']) ? $args['grid_num_rows'] : 10),
       'autoParamsForm' => true,
       'extraParams' => array(
-        'survey_id'=>$args['survey_id'],
-        'userID_attr_id'=>$userIdAttr,
-        'userID'=>(hostsite_user_has_permission($args['edit_permission']) ? -1 :  $user->uid), // use -1 if manager - non logged in will not get this far.
-        'userName_attr_id'=>$userNameAttr,
-        'userName'=>($user->name),
-        'observer_attr_id'=>$observerAttr
+        'survey_id' => $args['survey_id'],
+        'userID_attr_id' => $userIdAttr,
+        'userID' => (hostsite_user_has_permission($args['edit_permission']) ? -1 : hostsite_get_user_field('id')), // use -1 if manager - non logged in will not get this far.
+        'userName_attr_id' => $userNameAttr,
+        'userName' => (hostsite_get_user_field('name')),
+        'observer_attr_id' => $observerAttr
     )
     ));
     $r .= '<form>';
@@ -905,8 +903,7 @@ jQuery('input#sectionlist_taxa_taxon_list_id\\\\:taxon').result(function(event, 
   }
 
   protected static function getSampleListGridPreamble() {
-    global $user;
-    $r = '<p>'.lang::get('LANG_SampleListGrid_Preamble').(hostsite_user_has_permission($args['edit_permission']) ? lang::get('LANG_All_Users') : $user->name).'</p>';
+    $r = '<p>'.lang::get('LANG_SampleListGrid_Preamble').(hostsite_user_has_permission($args['edit_permission']) ? lang::get('LANG_All_Users') : hostsite_get_user_field('name')).'</p>';
     return $r;
   }
 

@@ -871,8 +871,7 @@ $('#entry_form').submit(function() {
     $r = '';
     $class = empty(data_entry_helper::$validation_errors['groups_user:general']) ? 'control-width-5' : 'ui-state-error control-width-5';
     if ($args['include_administrators']) {
-      global $user;
-      $me = hostsite_get_user_field('last_name') . ', ' . hostsite_get_user_field('first_name') . ' (' . $user->mail . ')';
+      $me = hostsite_get_user_field('last_name') . ', ' . hostsite_get_user_field('first_name') . ' (' . hostsite_get_user_field('mail') . ')';
       $r .= data_entry_helper::sub_list(array(
         'fieldname' => 'groups_user:admin_user_id',
         'label' => ucfirst(lang::get('{1} administrators', self::$groupType)),

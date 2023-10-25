@@ -137,7 +137,6 @@ class iform_tree_sample_occurrence extends iform_dynamic_sample_occurrence {
    */
   protected static function get_control_treelocationselect($auth, $args, $tabAlias, $options) {
     global $indicia_templates;
-    global $user;
 
     data_entry_helper::$helpTextPos = 'before';
     $indicia_templates['two-col-50'] = '<div class="two_columns"><div id="leftcol" class="column">{col-1}</div><div id="rightcol" class="column">{col-2}</div></div>';
@@ -515,7 +514,7 @@ $('[name=sample\\\\:date]').change(function(){
       return 'This form is designed to be used with the "CMS User ID" attribute setup for Site locations in the survey.';
     $response = data_entry_helper::get_population_data(array(
       'table' => 'location_attribute_value',
-      'extraParams' => $auth['read'] + array('view' => 'list', 'location_attribute_id'=>$cmsUserAttr['attributeId'], 'raw_value'=>$user->uid),
+      'extraParams' => $auth['read'] + array('view' => 'list', 'location_attribute_id'=>$cmsUserAttr['attributeId'], 'raw_value' => hostsite_get_user_field('id')),
       'nocache' => true
     ));
     if(count($response)==0)

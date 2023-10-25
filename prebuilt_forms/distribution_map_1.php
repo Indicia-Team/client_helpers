@@ -202,7 +202,6 @@ class iform_distribution_map_1 {
    */
   public static function get_form($args) {
     iform_load_helpers(array('map_helper', 'data_entry_helper'));
-    global $user;
     $readAuth = map_helper::get_read_auth($args['website_id'], $args['password']);
     // setup the map options
     $options = iform_map_get_map_options($args, $readAuth);

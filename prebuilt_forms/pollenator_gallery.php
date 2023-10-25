@@ -455,15 +455,14 @@ class iform_pollenator_gallery {
    *
    */
   public static function get_form($args, $nid) {
-  	global $user;
   	// There is a language entry in the args parameter list: this is derived from the $language DRUPAL global.
   	// It holds the 2 letter code, used to pick the language file from the lang subdirectory of prebuilt_forms.
   	// There should be no explicitly output text in this file.
   	// We must translate any field names and ensure that the termlists and taxonlists use the correct language.
   	// For attributes, the caption is automatically translated by data_entry_helper.
-    $uid = $user->uid;
-    $email = $user->mail;
-    $username = $user->name;
+    $uid = hostsite_get_user_field('id');
+    $email = hostsite_get_user_field('mail');
+    $username = hostsite_get_user_field('name');
 
     if(!hostsite_user_has_permission('IForm n'.$nid.' access')){
     	return "<p>".lang::get('LANG_Insufficient_Privileges')."</p>";

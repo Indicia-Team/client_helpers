@@ -207,9 +207,8 @@ class iform_mnhnl_bird_transect_walks {
    * @return Form HTML.
    */
   public static function get_form($args, $nid, $response = NULL) {
-    global $user;
     global $custom_terms;
-    $logged_in = $user->uid>0;
+    $logged_in = !empty(hostsite_get_user_field('id'));
     $r = '';
     iform_load_helpers(['map_helper']);
     // Get authorisation tokens to update and read from the Warehouse.

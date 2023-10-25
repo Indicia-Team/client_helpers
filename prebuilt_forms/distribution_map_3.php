@@ -408,7 +408,6 @@ class iform_distribution_map_3 {
    * @return The taxon name.
    */
   private static function get_taxon($meaningId, $readAuth) {
-    global $user;
     $fetchOpts = array(
       'table' => 'taxa_taxon_list',
       'extraParams' => $readAuth + array(
