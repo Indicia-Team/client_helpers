@@ -1754,7 +1754,6 @@ HTML;
       'cancelSaveTemplate' => lang::get('Cancel saving the template'),
       'commentTabTitle' => 'Comment on the record',
       'contactExpert' => lang::get('Contact an expert'),
-      'deleteTemplate' => lang::get('Delete the selected template'),
       'edit' => lang::get('Edit'),
       'editThisRecord' => lang::get('Edit this record'),
       'emailBody' => lang::get('Email body'),
@@ -2180,6 +2179,9 @@ HTML;
    *   Control HTML.
    */
   private static function getTemplateSelect($name) {
+    $lang = [
+      'deleteTemplate' => lang::get('Delete the selected template'),
+    ];
     return data_entry_helper::select([
       'label' => lang::get('Or, load the following comment template'),
       'fieldname' => $name,
