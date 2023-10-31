@@ -686,6 +686,7 @@ HTML;
     if (empty($group_id) && $options['missingGroupIdBehaviour'] !== 'showAll') {
       hostsite_show_message(lang::get('The link you have followed is invalid.'), 'warning', TRUE);
       hostsite_goto_page('<front>');
+      return '';
     }
     require_once 'prebuilt_forms/includes/groups.php';
     $member = group_authorise_group_id($group_id, $options['readAuth']);
@@ -708,6 +709,7 @@ HTML;
         if (!count($groups)) {
           hostsite_show_message(lang::get('The link you have followed is invalid.'), 'warning', TRUE);
           hostsite_goto_page('<front>');
+          return '';
         }
         $group = $groups[0];
         if ($options['showGroupSummary']) {
