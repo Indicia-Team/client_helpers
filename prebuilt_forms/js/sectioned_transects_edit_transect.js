@@ -96,6 +96,10 @@ loadSectionDetails = function(section) {
 };
 
 confirmSelectSection = function(section, doFeature, withCancel) {
+  if (indiciaData.insertingSection) {
+    $.fancyDialog({ title: 'Save operation in progress...', message: 'Please wait until the previous section has been saved to the database before selecting a new section.', cancelButton: null });
+    return;
+  }
   var buttons =  {
     "Yes": function() {
           dialog.dialog('close');
@@ -600,9 +604,9 @@ $(document).ready(function() {
       function featureChangeEvent(evt) {
         // Only handle lines - as things like the sref control also trigger feature change events
         if (evt.feature.geometry.CLASS_NAME==="OpenLayers.Geometry.LineString") {
-          var current, oldSection = [];
+          var oldSection = [];
           // Find section attribute if existing, or selected section button if new
-          current = (typeof evt.feature.attributes.section==="undefined") ? $('#section-select-route li.selected').html() : evt.feature.attributes.section;
+          const current = (typeof evt.feature.attributes.section==="undefined") ? $('#section-select-route li.selected').html() : evt.feature.attributes.section;
           // label a new feature properly (and remove the undefined that appears)
           evt.feature.attributes = {section:current, type:"boundary"};
           $.each(evt.feature.layer.features, function(idx, feature) {
@@ -638,12 +642,15 @@ $(document).ready(function() {
             // First save, so need to link website.
             data['locations_website:website_id'] = indiciaData.website_id;
             indiciaData.sections[current] = {};
+            indiciaData.insertingSection = true;
           } else {
             data['location:id']=indiciaData.sections[current].id;
           }
           if (indiciaData.defaultSectionGridRef==='parent') {
-            // initially set the section Sref etc to match the parent. Geom will be auto generated on the server
-            indiciaData.sections[current] = {sref : $('#imp-sref').val(),	system : $('#imp-sref-system').val()};
+            // Initially set the section Sref etc to match the parent. Geom
+            // will be auto generated on the server.
+            indiciaData.sections[current].sref = $('#imp-sref').val()
+            indiciaData.sections[current].system = $('#imp-sref-system').val();
           } else if (indiciaData.defaultSectionGridRef.match(/^section(Centroid|Start)100$/)) {
             if (typeof indiciaData.srefHandlers!=="undefined" &&
                 typeof indiciaData.srefHandlers[$('#imp-sref-system').val().toLowerCase()]!=="undefined") {
@@ -653,13 +660,14 @@ $(document).ready(function() {
               } else {
                 pt = jQuery.extend({}, selectedFeature.geometry.components[0]);
               }
-              sref=handler.pointToGridNotation(pt.transform(indiciaData.mapdiv.map.projection, 'EPSG:'+handler.srid), 6);
-              indiciaData.sections[current] = {sref : sref,	system : $('#imp-sref-system').val()};
+              sref = handler.pointToGridNotation(pt.transform(indiciaData.mapdiv.map.projection, 'EPSG:'+handler.srid), 6);
+              indiciaData.sections[current].sref = sref;
+              indiciaData.sections[current].system = $('#imp-sref-system').val();
             }
           }
           indiciaData.sections[current].geom = evt.feature.geometry.toString();
-          data['location:centroid_sref']=indiciaData.sections[current].sref;
-          data['location:centroid_sref_system']=indiciaData.sections[current].system;
+          data['location:centroid_sref'] = indiciaData.sections[current].sref;
+          data['location:centroid_sref_system'] = indiciaData.sections[current].system;
           // autocalc section length
           if (indiciaData.autocalcSectionLengthAttrId) {
         	var sectionLen = Math.round(selectedFeature.geometry.clone().transform(indiciaData.mapdiv.map.projection, 'EPSG:27700').getLength());
@@ -674,8 +682,9 @@ $(document).ready(function() {
                 alert(data.error);
               } else {
                 // Better way of doing this?
-                var current = $('#section-select-route li.selected').html();
+                // @todo Check not changing if exists
                 indiciaData.sections[current].id = data.outer_id;
+                indiciaData.insertingSection = false;
                 $('#section-location-id').val(data.outer_id);
                 $('#section-select-route-'+current).removeClass('missing');
                 $('#section-select-'+current).removeClass('missing');
