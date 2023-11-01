@@ -285,14 +285,15 @@ class iform_sectioned_transects_edit_transect {
       return $checks;
     iform_load_helpers(array('map_helper'));
     data_entry_helper::add_resource('jquery_form');
+    data_entry_helper::add_resource('fancybox');
     self::$ajaxFormUrl = iform_ajaxproxy_url($nid, 'location');
     self::$ajaxFormSampleUrl = iform_ajaxproxy_url($nid, 'sample');
     $auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
-    $typeTerms = array(
+    $typeTerms = [
       empty($args['transect_type_term']) ? 'Transect' : $args['transect_type_term'],
-      empty($args['section_type_term']) ? 'Section' : $args['section_type_term']
-    );
-    $settings = array(
+      empty($args['section_type_term']) ? 'Section' : $args['section_type_term'],
+    ];
+    $settings = [
       'locationTypes' => helper_base::get_termlist_terms($auth, 'indicia:location_types', $typeTerms),
       // ID parameter is id immediately after first save of transect, but
       // location_id when accessed elsewhere.
@@ -300,11 +301,11 @@ class iform_sectioned_transects_edit_transect {
       'canEditBody' => TRUE,
       'canEditSections' => TRUE, // this is specifically the number of sections: so can't delete or change the attribute value.
       // Allocations of Branch Manager are done by a person holding the managerPermission.
-      'canAllocBranch' => $args['managerPermission']=="" || hostsite_user_has_permission($args['managerPermission']),
+      'canAllocBranch' => $args['managerPermission'] == "" || hostsite_user_has_permission($args['managerPermission']),
       // Allocations of Users are done by a person holding the managerPermission or the allocate Branch Manager.
-      // The extra check on this for branch managers is done later
-      'canAllocUser' => $args['managerPermission']=="" || hostsite_user_has_permission($args['managerPermission'])
-    );
+      // The extra check on this for branch managers is done later.
+      'canAllocUser' => $args['managerPermission'] == "" || hostsite_user_has_permission($args['managerPermission']),
+    ];
     $settings['attributes'] = data_entry_helper::getAttributes(array(
         'id' => $settings['locationId'],
         'valuetable' => 'location_attribute_value',
@@ -342,7 +343,8 @@ class iform_sectioned_transects_edit_transect {
     }
 
     data_entry_helper::$javascript .= "indiciaData.sections = {};\n";
-    $settings['sections']=[];
+    data_entry_helper::$javascript .= "indiciaData.insertingSection = false;\n";
+    $settings['sections'] = [];
     $settings['numSectionsAttr'] = "";
     $settings['maxSectionCount'] = $args['maxSectionCount'];
     $settings['autocalcSectionLengthAttrId'] = empty($args['autocalc_section_length_attr_id']) ? 0 : $args['autocalc_section_length_attr_id'];
@@ -391,29 +393,37 @@ class iform_sectioned_transects_edit_transect {
         }
       } // for an admin user the defaults apply, which will be can do everything.
       // find the number of sections attribute.
-      foreach($settings['attributes'] as $attr) {
+      foreach ($settings['attributes'] as $attr) {
         if ($attr['caption']==='No. of sections') {
           $settings['numSectionsAttr'] = $attr['fieldname'];
-          for ($i=1; $i<=$attr['displayValue']; $i++) {
+          for ($i = 1; $i <= $attr['displayValue']; $i++) {
             $settings['sections']["S$i"]=NULL;
           }
           $existingSectionCount = empty($attr['displayValue']) ? 1 : $attr['displayValue'];
           data_entry_helper::$javascript .= "$('#".str_replace(':','\\\\:',$attr['id'])."').attr('min',$existingSectionCount).attr('max',".$args['maxSectionCount'].");\n";
-          if(!$settings['canEditSections'])
+          if (!$settings['canEditSections'])
             data_entry_helper::$javascript .= "$('#".str_replace(':','\\\\:',$attr['id'])."').attr('readonly','readonly').css('color','graytext');\n";
         }
       }
-      $sections = data_entry_helper::get_population_data(array(
+      $sections = data_entry_helper::get_population_data([
         'table' => 'location',
-        'extraParams' => $auth['read'] + array('view' => 'detail','parent_id'=>$settings['locationId'],'deleted' => 'f','orderby' => 'id'),
-        'nocache' => TRUE
-      ));
-      foreach($sections as $section) {
+        'extraParams' => $auth['read'] + [
+          'view' => 'detail',
+          'parent_id' => $settings['locationId'],
+          'deleted' => 'f',
+          'orderby' => 'id',
+          'location_type_id' => $settings['locationTypes'][1]['id'],
+        ],
+        'nocache' => TRUE,
+      ]);
+      foreach ($sections as $section) {
         $code = $section['code'];
         data_entry_helper::$javascript .= "indiciaData.sections.$code = {'geom':'".$section['boundary_geom']."','id':'".$section['id']."','sref':'".$section['centroid_sref']."','system':'".$section['centroid_sref_system']."'};\n";
-        $settings['sections'][$code]=$section;
+        $settings['sections'][$code] = $section;
       }
-    } else { // not an existing site therefore no walks. On initial save, no section data is created.
+    }
+    else {
+      // Not an existing site therefore no walks. On initial save, no section data is created.
       foreach($settings['attributes'] as $attr) {
         if ($attr['caption']==='No. of sections') {
           $settings['numSectionsAttr'] = $attr['fieldname'];
