@@ -798,18 +798,26 @@ $('#delete-transect').click(deleteSurvey);
    */
   private static function getUserList() {
     $users = [];
-    if(version_compare(hostsite_get_cms_version(), '7', '<')) {
+    // DB handling is different in 7 and 8.
+    if (version_compare(hostsite_get_cms_version(), '7', '<')) {
       $results = db_query("SELECT uid, name FROM {users} where name <> '' order by name");
-      while($result = db_fetch_object($results)){
-          $users[$result->uid] = $result->name;
+      while ($result = db_fetch_object($results)) {
+        $users[$result->uid] = $result->name;
       }
-    } else if(version_compare(hostsite_get_cms_version(), '8', '<')) {
+    }
+    elseif (version_compare(hostsite_get_cms_version(), '8', '<')) {
       $results = db_query("SELECT uid, name FROM {users} where name <> '' order by name");
-      foreach ($results as $result) {  // DB handling is different in 7 and 8
-          $users[$result->uid] = $result->name;
+      foreach ($results as $result) {
+        $users[$result->uid] = $result->name;
       }
-    } else {
-      $result = \Drupal::entityTypeManager()->getStorage('user')->getQuery()->sort('name', 'ASC')->execute();
+    }
+    else {
+      $result = \Drupal::entityTypeManager()
+        ->getStorage('user')
+        ->getQuery()
+        ->sort('name', 'ASC')
+        ->accessCheck(FALSE)
+        ->execute();
       $userList = \Drupal\user\Entity\User::loadMultiple($result);
       foreach ($userList as $user) {
         if ($user->id() != 0) {
