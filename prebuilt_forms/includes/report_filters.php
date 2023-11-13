@@ -874,10 +874,9 @@ class filter_quality extends FilterBase {
       ];
       $r .= <<<HTML
 <div class="quality-cntr">
-  <label>$lang[recordStatus]:
+  <label for="quality-filter">$lang[recordStatus]:</label>
   <input type="hidden" name="quality" class="quality-value $indicia_templates[formControlClass]" />
-  <input type="text" class="quality-filter $indicia_templates[formControlClass]" />
-  </label>
+  <input type="text" id="quality-filter" class="quality-filter $indicia_templates[formControlClass]" />
   <div class="quality-pane" style="display: none">
     $includeExcludeRadios
     $qualityCheckboxes
@@ -904,32 +903,24 @@ HTML;
     }
     if (in_array('auto', $ctls)) {
       $checkOptions = [
-        '' => lang::get('Not filtered'),
-        'P' => lang::get('Only include records that pass all automated checks'),
-        'F' => lang::get('Only include records that fail at least one automated check'),
+        '' => lang::get('No filtering on checks'),
+        'P' => lang::get('All checks passed'),
+        'F' => lang::get('Any checks failed'),
       ];
       if (!empty($options['customRuleCheckFilters'])) {
-        $checkOptions['PC'] = lang::get('Only include records that have not been flagged by one of your custom rules.');
-        $checkOptions['FC'] = lang::get('Only include records that have been flagged by one of your custom rules.');
+        $checkOptions['PC'] = lang::get('All custom rule checks passed');
+        $checkOptions['FC'] = lang::get('Any custom rule checks failed');
+      }
+      if (!empty($options['autocheck_rules'])) {
+        foreach ($options['autocheck_rules'] as $rule) {
+          $checkOptions[$rule] = lang::get("$rule failed");
+        };
       }
       $r .= data_entry_helper::select([
         'label' => empty($options['customRuleCheckFilters']) ? lang::get('Automated checks') : lang::get('Automated or custom rule checks'),
         'fieldname' => 'autochecks',
         'lookupValues' => $checkOptions,
       ]);
-      if (!empty($options['autocheck_rules'])) {
-        $ruleOptions = [
-          '' => lang::get('No filtering on checks'),
-        ];
-        foreach ($options['autocheck_rules'] as $rule) {
-          $ruleOptions[$rule] = lang::get("$rule failed");
-        };
-        $r .= data_entry_helper::select([
-          'label' => lang::get('Select records by specific automated check flags'),
-          'fieldname' => 'autocheck_rule',
-          'lookupValues' => $ruleOptions,
-        ]);
-      }
     }
     if (in_array('difficulty', $ctls)) {
       global $indicia_templates;
@@ -946,18 +937,19 @@ HTML;
         'label' => lang::get('Level'),
         'fieldname' => 'identification_difficulty',
         'lookupValues' => [
-          '' => lang::get('Not filtered'),
-          1 => 1,
-          2 => 2,
-          3 => 3,
-          4 => 4,
-          5 => 5,
+          '' => lang::get('any'),
+          1 => lang::get('difficulty 1 - easiest to ID'),
+          2 => lang::get('difficulty 2'),
+          3 => lang::get('difficulty 3'),
+          4 => lang::get('difficulty 4'),
+          5 => lang::get('difficulty 5 - hardest to ID'),
+          6 => lang::get('difficulty 1 - custom rule'),
         ],
         'controlWrapTemplate' => 'justControl',
       ]);
       $r .= str_replace(
         ['{attrs}', '{col-1}', '{col-2}'],
-        ['', $s1, $s2],
+        [' id="id-diff-cntr" style="display: none"', $s1, $s2],
         $indicia_templates['two-col-50']
       );
     }
@@ -2000,10 +1992,14 @@ function report_filters_full_term_to_sharing_code($term) {
  */
 function report_filters_set_parser_language_strings() {
   report_helper::addLanguageStringsToJs('reportFilterParser', [
-    'AutochecksF' => 'Automated checks failed',
-    'AutochecksP' => 'Automated checks passed',
-    'AutochecksFC' => 'Flagged by a custom verification rule',
-    'AutochecksPC' => 'Not flagged by a custom verification rule',
+    'Autochecks_F' => 'Automated checks failed',
+    'Autochecks_FC' => 'Any custom verification rule check failed',
+    'Autochecks_identification_difficulty' => 'ID difficulty check failed',
+    'Autochecks_P' => 'Automated checks passed.',
+    'Autochecks_period' => 'Year range check failed',
+    'Autochecks_period_within_year' => 'Date range check failed',
+    'Autochecks_PC' => 'All custom verification rule checks passed.',
+    'Autochecks_without_polygon' => 'Distribution check failed',
     'IdentificationDifficulty' => 'Identification difficulty',
     'HasPhotos' => 'Only include records which have photos',
     'HasNoPhotos' => 'Exclude records which have photos',
@@ -2016,9 +2012,5 @@ function report_filters_set_parser_language_strings() {
     'NoConfidentialRecords' => 'Exclude confidential records',
     'includeUnreleasedRecords' => 'Include unreleased records',
     'excludeUnreleasedRecords' => 'Exclude unreleased records',
-    'Rule_identification_difficulty' => 'Has an identification difficulty flag',
-    'Rule_period' => 'Has a time period flag',
-    'Rule_period_within_year' => 'Has a period within year flag',
-    'Rule_without_polygon' => 'Has a range flag',
   ]);
 }

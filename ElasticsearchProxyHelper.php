@@ -1360,7 +1360,6 @@ class ElasticsearchProxyHelper {
     self::applyUserFiltersCertainty($definition, $bool);
     self::applyUserFiltersIdentificationDifficulty($definition, $bool);
     self::applyUserFiltersRuleChecks($definition, $bool);
-    self::applyUserFiltersAutoCheckRule($definition, $bool);
     self::applyUserFiltersHasPhotos($definition, $bool);
     self::applyUserFiltersWebsiteList($definition, $bool);
     self::applyUserFiltersSurveyList($definition, $bool);
@@ -2173,7 +2172,12 @@ class ElasticsearchProxyHelper {
    *   Bool clauses that filters can be added to (e.g. $bool['must']).
    */
   private static function applyUserFiltersRuleChecks(array $definition, array &$bool) {
-    $filter = self::getDefinitionFilter($definition, ['autochecks']);
+    // Also check for legacy autocheck_rule filters which are now merged with
+    // autochecks.
+    $filter = self::getDefinitionFilter($definition, [
+      'autocheck_rule',
+      'autochecks',
+    ]);
     if (!empty($filter)) {
       if (in_array($filter['value'], ['P', 'F'])) {
         // Pass or Fail options are auto-checks from the Data Cleaner module.
@@ -2203,26 +2207,14 @@ class ElasticsearchProxyHelper {
           ],
         ];
       }
+      else {
+        // Other filter values are rule names.
+        $value = str_replace('_', '', $filter['value']);
+        $bool['must'][] = [
+          'term' => ['identification.auto_checks.output.rule_type' => $value],
+        ];
+      }
     }
-  }
-
-  /**
-   * Converts an Indicia filter definition auto checks filter to an ES query.
-   *
-   * @param array $definition
-   *   Definition loaded for the Indicia filter.
-   * @param array $bool
-   *   Bool clauses that filters can be added to (e.g. $bool['must']).
-   */
-  private static function applyUserFiltersAutoCheckRule(array $definition, array &$bool) {
-    $filter = self::getDefinitionFilter($definition, ['autocheck_rule']);
-    if (!empty($filter)) {
-      $value = str_replace('_', '', $filter['value']);
-      $bool['must'][] = [
-        'term' => ['identification.auto_checks.output.rule_type' => $value],
-      ];
-    }
-
   }
 
   /**
