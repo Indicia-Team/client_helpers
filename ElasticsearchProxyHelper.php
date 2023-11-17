@@ -1040,14 +1040,6 @@ class ElasticsearchProxyHelper {
       }
       elseif (in_array($qryConfig['query_type'], $fieldValueQueryTypes)) {
         // One of the standard ES field based query types (e.g. term or match).
-        $queryDef = [$qryConfig['query_type'] => [$qryConfig['field'] => $qryConfig['value']]];
-      }
-      elseif (in_array($qryConfig['query_type'], $fieldQueryTypes)) {
-        // A query type that just needs a field name.
-        $queryDef = [$qryConfig['query_type'] => ['field' => $qryConfig['field']]];
-      }
-      elseif (in_array($qryConfig['query_type'], $arrayFieldQueryTypes)) {
-        // One of the standard ES field based query types (e.g. term or match).
         // Special handling needed for metadata and release_status filters.
         if ($qryConfig['field'] == 'metadata.confidential') {
           self::$confidentialFilterApplied = TRUE;
@@ -1063,6 +1055,13 @@ class ElasticsearchProxyHelper {
           // Omit the filter and release_status = 'R' is applied by default.
           self::$releaseStatusFilterApplied = TRUE;
         }
+        $queryDef = [$qryConfig['query_type'] => [$qryConfig['field'] => $qryConfig['value']]];
+      }
+      elseif (in_array($qryConfig['query_type'], $fieldQueryTypes)) {
+        // A query type that just needs a field name.
+        $queryDef = [$qryConfig['query_type'] => ['field' => $qryConfig['field']]];
+      }
+      elseif (in_array($qryConfig['query_type'], $arrayFieldQueryTypes)) {
         $queryDef = [$qryConfig['query_type'] => [$qryConfig['field'] => json_decode($qryConfig['value'], TRUE)]];
       }
       elseif (in_array($qryConfig['query_type'], $stringQueryTypes)) {
@@ -1096,6 +1095,7 @@ class ElasticsearchProxyHelper {
         $bool[$qryConfig['bool_clause']][] = $queryDef;
       }
     }
+    \Drupal::logger('iform')->alert(var_export($queryDef, TRUE));
     unset($query['bool_queries']);
     // Apply a training mode filter.
     $bool['must'][] = [
@@ -1366,6 +1366,7 @@ class ElasticsearchProxyHelper {
     self::applyUserFiltersImportGuidList($definition, $bool);
     self::applyUserFiltersInputFormList($definition, $bool);
     self::applyUserFiltersGroupId($definition, $bool);
+    self::applyUserFiltersLicences($definition, $bool);
     self::applyUserFiltersAccessRestrictions($definition, $bool);
     self::applyUserFiltersTaxaScratchpadList($definition, $bool, $readAuth);
   }
@@ -2314,6 +2315,86 @@ class ElasticsearchProxyHelper {
         'terms' => ['metadata.group.id' => explode(',', $filter['value'])],
       ];
     }
+  }
+
+  /**
+   * Converts an Indicia filter def licences or media_licences to an ES query.
+   *
+   * @param array $definition
+   *   Definition loaded for the Indicia filter.
+   * @param array $bool
+   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   */
+  private static function applyUserFiltersLicences(array $definition, array &$bool) {
+    $filter = self::getDefinitionFilter($definition, ['licences']);
+    if (!empty($filter)) {
+    }
+    $filter = self::getDefinitionFilter($definition, ['media_licences']);
+    if (!empty($filter)) {
+      $licenceTypes = explode(',', $filter['value']);
+      // Media licences filter. Build a list of possibilities, starting with
+      // allowing records with no photos.
+      $options = [
+        [
+          'bool' => [
+            'must_not' => [
+              'nested' => [
+                'path' => 'occurrence.media',
+                'query' => [
+                  'exists' => ['field' => 'occurrence.media'],
+                ],
+              ],
+            ],
+          ],
+        ],
+      ];
+      if (in_array('none', $licenceTypes)) {
+        // Add option for with photos that have no licences.
+        $options[] = [
+          'bool' => [
+            'must_not' => [
+              'nested' => [
+                'path' => 'occurrence.media',
+                'query' => [
+                  'exists' => ['field' => 'occurrence.media.licence'],
+                ],
+              ],
+            ],
+          ],
+        ];
+      }
+      // @todo Obtain from database.
+      $openLicenceCodes = ['OGL', 'CC0', 'CC BY'];
+      $restrictedLicenceCodes = ['CC BY-NC'];
+      if (in_array('open', $licenceTypes)) {
+        $options[] = [
+          'nested' => [
+            'path' => 'occurrence.media',
+            'query' => [
+              'terms' => [
+                'occurrence.media.licence' => $openLicenceCodes,
+              ],
+            ],
+          ],
+        ];
+      }
+      if (in_array('restricted', $licenceTypes)) {
+        $options[] = [
+          'nested' => [
+            'path' => 'occurrence.media',
+            'query' => [
+              'terms' => [
+                'occurrence.media.licence' => $restrictedLicenceCodes,
+              ],
+            ],
+          ],
+        ];
+      }
+      $bool['must'][] = [
+        'bool' => ['should' => $options],
+      ];
+    }
+
   }
 
   /**
