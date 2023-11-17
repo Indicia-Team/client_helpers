@@ -1095,7 +1095,6 @@ class ElasticsearchProxyHelper {
         $bool[$qryConfig['bool_clause']][] = $queryDef;
       }
     }
-    \Drupal::logger('iform')->alert(var_export($queryDef, TRUE));
     unset($query['bool_queries']);
     // Apply a training mode filter.
     $bool['must'][] = [
