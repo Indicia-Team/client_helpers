@@ -2373,6 +2373,7 @@ HTML;
       'buttonDefaultClass' => $indicia_templates['buttonDefaultClass'],
       'buttonHighlightedClass' => $indicia_templates['buttonHighlightedClass'],
       'buttonSmallClass' => 'btn-xs',
+      'jQueryValidateErrorClass' => $indicia_templates['error_class'],
     ];
     self::$indiciaData['formControlClass'] = $indicia_templates['formControlClass'];
     self::$indiciaData['inlineErrorClass'] = $indicia_templates['error_class'];
