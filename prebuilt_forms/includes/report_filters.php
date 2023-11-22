@@ -820,7 +820,15 @@ class filter_quality extends FilterBase {
   /**
    * Define the HTML required for this filter's UI panel.
    */
-  public function getControls($readAuth, $options, $ctls = ['status', 'certainty', 'auto', 'difficulty', 'photo']) {
+  public function getControls($readAuth, $options, $ctls = [
+    'status',
+    'certainty',
+    'auto',
+    'difficulty',
+    'photo',
+    'licences',
+    'media_licences',
+  ]) {
     global $indicia_templates;
     $r = '';
     if (in_array('status', $ctls)) {
@@ -872,11 +880,15 @@ class filter_quality extends FilterBase {
         'ok' => lang::get('Ok'),
         'recordStatus' => lang::get('Record status'),
       ];
+      $qualityInput = data_entry_helper::text_input([
+        'label' => $lang['recordStatus'],
+        'fieldname' => 'quality-filter',
+        'class' => 'quality-filter',
+      ]);
       $r .= <<<HTML
 <div class="quality-cntr">
-  <label for="quality-filter">$lang[recordStatus]:</label>
+  $qualityInput
   <input type="hidden" name="quality" class="quality-value $indicia_templates[formControlClass]" />
-  <input type="text" id="quality-filter" class="quality-filter $indicia_templates[formControlClass]" />
   <div class="quality-pane" style="display: none">
     $includeExcludeRadios
     $qualityCheckboxes
@@ -961,6 +973,28 @@ HTML;
           '' => lang::get('-No filter-'),
           '1' => lang::get('With'),
           '0' => lang::get('Without'),
+        ],
+      ]);
+    }
+    if (in_array('licences', $ctls)) {
+      $r .= data_entry_helper::checkbox_group([
+        'label' => lang::get('Include records with'),
+        'fieldname' => 'licences',
+        'lookupValues' => [
+          'none' => lang::get('-No licence-'),
+          'open' => lang::get('Open licence (OGL, CCO, CC BY)'),
+          'restricted' => lang::get('Restricted licence (CC BY-NC)'),
+        ],
+      ]);
+    }
+    if (in_array('media_licences', $ctls)) {
+      $r .= data_entry_helper::checkbox_group([
+        'label' => lang::get('Include records with photos that have'),
+        'fieldname' => 'media_licences',
+        'lookupValues' => [
+          'none' => lang::get('-No licence-'),
+          'open' => lang::get('Open licence (OGL, CCO, CC BY)'),
+          'restricted' => lang::get('Restricted licence (CC BY-NC)'),
         ],
       ]);
     }
@@ -1805,6 +1839,8 @@ HTML;
   report_filters_set_parser_language_strings();
   report_helper::addLanguageStringsToJs('reportFilters', [
     'back' => 'Back',
+    'cannotDeselectAllLicences' => 'You cannot deselect all licence options otherwise no records will be returned.',
+    'cannotDeselectAllMediaLicences' => 'You cannot deselect all photo licence options otherwise no records with photos will be returned.',
     'confirmFilterChangedLoad' => 'Do you want to load the selected filter and lose your current changes?',
     'confirmFilterDelete' => 'Are you sure you want to permanently delete the {title} filter?',
     'createAFilter' => 'Create a filter',
@@ -1824,6 +1860,8 @@ HTML;
     'filterDeleted' => 'The filter has been deleted',
     'filterExistsOverwrite' => 'A filter with that name already exists. Would you like to overwrite it?',
     'filterSaved' => 'The filter has been saved',
+    'licenceIs' => 'Licence is',
+    'mediaLicenceIs' => 'Media licence is',
     'modifyFilter' => 'Modify filter',
     'orListJoin' => ' or ',
     'pleaseSelect' => 'Please select',

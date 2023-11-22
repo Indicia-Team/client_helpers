@@ -1365,7 +1365,7 @@ class ElasticsearchProxyHelper {
     self::applyUserFiltersImportGuidList($definition, $bool);
     self::applyUserFiltersInputFormList($definition, $bool);
     self::applyUserFiltersGroupId($definition, $bool);
-    self::applyUserFiltersLicences($definition, $bool);
+    self::applyUserFiltersLicences($definition, $bool, $readAuth);
     self::applyUserFiltersAccessRestrictions($definition, $bool);
     self::applyUserFiltersTaxaScratchpadList($definition, $bool, $readAuth);
   }
@@ -2317,83 +2317,151 @@ class ElasticsearchProxyHelper {
   }
 
   /**
-   * Converts an Indicia filter def licences or media_licences to an ES query.
+   * Retrieve licence codes from the database.
+   *
+   * Returns a list of licence codes grouped into open and restricted licences.
+   *
+   * @param array $readAuth
+   *   Read authenticattion tokens.
+   *
+   * @return array
+   *   Array with open and restricted keys, each containing a child array of
+   *   codes.
+   */
+  private static function getLicenceCodes(array $readAuth) {
+    $r = [
+      'open' => [],
+      'restricted' => [],
+    ];
+    $licences = helper_base::get_population_data([
+      'table' => 'licence',
+      'extraParams' => $readAuth,
+      'columns' => 'code,open',
+      'cachePerUser' => FALSE,
+    ]);
+    foreach ($licences as $licence) {
+      $r[$licence['open'] === 't' ? 'open' : 'restricted'][] = $licence['code'];
+    }
+    return $r;
+  }
+
+  /**
+   * Returns the list of licence codes that should be included in a filter.
+   *
+   * @param array $licenceTypes
+   *   List of types that should be in the filter, options are open and
+   *   restricted.
+   * @param array $licenceCodes
+   *   Licence codes loaded from the database.
+   *
+   * @return array
+   *   Simple array of the licence codes that should be included in the filter.
+   */
+  private static function getLicencesToAllow(array $licenceTypes, array $licenceCodes) {
+    $licencesToAllow = [];
+    if (in_array('open', $licenceTypes)) {
+      $licencesToAllow = array_merge($licencesToAllow, $licenceCodes['open']);
+    }
+    if (in_array('restricted', $licenceTypes)) {
+      $licencesToAllow = array_merge($licencesToAllow, $licenceCodes['restricted']);
+    }
+    return $licencesToAllow;
+  }
+
+  /**
+   * Converts an Indicia filter's licences or media_licences to an ES query.
    *
    * @param array $definition
    *   Definition loaded for the Indicia filter.
    * @param array $bool
    *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   * @param array $readAuth
+   *   Read authentication tokens.
    */
-  private static function applyUserFiltersLicences(array $definition, array &$bool) {
+  private static function applyUserFiltersLicences(array $definition, array &$bool, array $readAuth) {
+    $licenceCodes = self::getLicenceCodes($readAuth);
     $filter = self::getDefinitionFilter($definition, ['licences']);
     if (!empty($filter)) {
+      $licenceTypes = explode(',', $filter['value']);
+      if (count(array_diff(['none', 'open', 'restricted'], $licenceTypes)) > 0) {
+        // Record licences filter. Build a list of possibilities.
+        $options = [];
+        if (in_array('none', $licenceTypes)) {
+          // Add option for records that have no licences.
+          $options[] = [
+            'bool' => [
+              'must_not' => [
+                'exists' => ['field' => 'metadata.licence_code'],
+              ],
+            ],
+          ];
+        }
+        // Add options for the codes matching the requested licence types.
+        if (in_array('open', $licenceTypes) || in_array('restricted', $licenceTypes)) {
+          $options[] = [
+            'terms' => [
+              'metadata.licence_code.keyword' => self::getLicencesToAllow($licenceTypes, $licenceCodes),
+            ],
+          ];
+        }
+        $bool['must'][] = [
+          'bool' => ['should' => $options],
+        ];
+      }
     }
     $filter = self::getDefinitionFilter($definition, ['media_licences']);
     if (!empty($filter)) {
       $licenceTypes = explode(',', $filter['value']);
-      // Media licences filter. Build a list of possibilities, starting with
-      // allowing records with no photos.
-      $options = [
-        [
-          'bool' => [
-            'must_not' => [
-              'nested' => [
-                'path' => 'occurrence.media',
-                'query' => [
-                  'exists' => ['field' => 'occurrence.media'],
-                ],
-              ],
-            ],
-          ],
-        ],
-      ];
-      if (in_array('none', $licenceTypes)) {
-        // Add option for with photos that have no licences.
-        $options[] = [
-          'bool' => [
-            'must_not' => [
-              'nested' => [
-                'path' => 'occurrence.media',
-                'query' => [
-                  'exists' => ['field' => 'occurrence.media.licence'],
+      if (count(array_diff(['none', 'open', 'restricted'], $licenceTypes)) > 0) {
+        // Media licences filter. Build a list of possibilities, starting with
+        // allowing records with no photos.
+        $options = [
+          [
+            'bool' => [
+              'must_not' => [
+                'nested' => [
+                  'path' => 'occurrence.media',
+                  'query' => [
+                    'exists' => ['field' => 'occurrence.media'],
+                  ],
                 ],
               ],
             ],
           ],
         ];
-      }
-      // @todo Obtain from database.
-      $openLicenceCodes = ['OGL', 'CC0', 'CC BY'];
-      $restrictedLicenceCodes = ['CC BY-NC'];
-      if (in_array('open', $licenceTypes)) {
-        $options[] = [
-          'nested' => [
-            'path' => 'occurrence.media',
-            'query' => [
-              'terms' => [
-                'occurrence.media.licence' => $openLicenceCodes,
+        if (in_array('none', $licenceTypes)) {
+          // Add option for records with photos that have no licences.
+          $options[] = [
+            'bool' => [
+              'must_not' => [
+                'nested' => [
+                  'path' => 'occurrence.media',
+                  'query' => [
+                    'exists' => ['field' => 'occurrence.media.licence'],
+                  ],
+                ],
               ],
             ],
-          ],
-        ];
-      }
-      if (in_array('restricted', $licenceTypes)) {
-        $options[] = [
-          'nested' => [
-            'path' => 'occurrence.media',
-            'query' => [
-              'terms' => [
-                'occurrence.media.licence' => $restrictedLicenceCodes,
+          ];
+        }
+        // Add options for the codes matching the requested licence types.
+        if (in_array('open', $licenceTypes) || in_array('restricted', $licenceTypes)) {
+          $options[] = [
+            'nested' => [
+              'path' => 'occurrence.media',
+              'query' => [
+                'terms' => [
+                  'occurrence.media.licence.keyword' => self::getLicencesToAllow($licenceTypes, $licenceCodes),
+                ],
               ],
             ],
-          ],
+          ];
+        }
+        $bool['must'][] = [
+          'bool' => ['should' => $options],
         ];
       }
-      $bool['must'][] = [
-        'bool' => ['should' => $options],
-      ];
     }
-
   }
 
   /**
