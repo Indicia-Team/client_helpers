@@ -156,9 +156,6 @@ HTML;
     helper_base::$indiciaData['importerDropArea'] = '.dm-uploader';
     helper_base::$indiciaData['uploadFileUrl'] = hostsite_get_url('iform/ajax/custom_verification_rules_upload') . "/upload_interim_file/$nid";
     helper_base::$indiciaData['uploadRulesStepUrl'] = hostsite_get_url('iform/ajax/custom_verification_rules_upload') . "/upload_rules_step/$nid";
-    helper_base::$indiciaData['templates'] = [
-      'warningBox' => $indicia_templates['warningBox'],
-    ];
     return $r;
   }
 
