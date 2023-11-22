@@ -92,6 +92,10 @@ class ElasticsearchReportHelper {
       'caption' => 'Submitted on',
       'description' => 'Date the record was submitted.',
     ],
+    'metadata.licence_code' => [
+      'caption' => 'Licence',
+      'description' => 'Code for the licence that applies to the record.',
+    ],
     'metadata.website.id' => [
       'caption' => 'Website ID',
       'description' => 'Unique ID of the website the record was submitted from.',
