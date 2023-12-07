@@ -824,7 +824,7 @@ class ElasticsearchProxyHelper {
       }
       $privateKey = file_get_contents($keyFile);
       $payload = [
-        'iss' => hostsite_get_url('<front>', [], FALSE, TRUE),
+        'iss' => rtrim(hostsite_get_url('<front>', [], FALSE, TRUE), '/'),
         'http://indicia.org.uk/user:id' => hostsite_get_user_field('indicia_user_id'),
         'scope' => $config['es']['scope'],
         'exp' => time() + 300,
