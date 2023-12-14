@@ -3278,12 +3278,6 @@ if (typeof validator!=='undefined') {
    *   * **report** - Path to the report file to use when loading data from a
    *     report, e.g. "library/occurrences/explore_list", excluding the .xml
    *     extension.
-   *   * **orderby** - Optional. For a non-default sort order, provide the
-   *     field name to sort by. Can be comma separated to sort by several
-   *     fields in descending order of precedence.
-   *   * **sortdir** - Optional. Specify ASC or DESC to define ascending or
-   *     descending sort order respectively. Can be comma separated if several
-   *     sort fields are specified in the orderby parameter.
    *   * **extraParams** - Array of extra URL parameters to send with the web
    *     service request. Should include key value pairs for the field filters
    *     (for table data) or report parameters (for the report data) as well as
