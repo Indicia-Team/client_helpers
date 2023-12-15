@@ -1285,7 +1285,23 @@ class helper_base {
           'javascript' => [
             'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',
            ],
-         ],
+        ],
+        'brc_atlas_e' => [
+          'deps' => [
+            'd3_v7',
+          ],
+          'stylesheets' => [
+            'https://cdn.jsdelivr.net/gh/biologicalrecordscentre/brc-atlas@1.1.6/dist/brcatlas_e.umd.css',
+          ],
+          'javascript' => [
+            'https://cdn.jsdelivr.net/gh/biologicalrecordscentre/brc-atlas@1.1.6/dist/brcatlas_e.umd.min.js',
+          ],
+        ],
+        'd3_v7' => [
+          'javascript' => [
+            'https://d3js.org/d3.v7.min.js',
+          ],
+        ],
       ];
     }
     return self::$resource_list;
