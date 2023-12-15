@@ -5846,7 +5846,6 @@ HTML;
         'Incorrect configuration - multiple_places_species_checklist requires a @include_sref_handler_jsspatialSystem option.',
         $indicia_templates['messageBox']
       );
-      return;
     }
     // The ID must be done here so it can be accessed by both the species grid and the buttons.
     $code = rand(0, 1000);
@@ -5864,6 +5863,7 @@ HTML;
     self::includeSrefHandlerJs([$options['spatialSystem'] => '']);
     $r = '';
     if (isset($options['sample_method_id'])) {
+      require_once 'prebuilt_forms/includes/form_generation.php';
       $sampleAttrs = self::getMultiplePlacesSpeciesChecklistSubsampleAttrs($options);
       foreach ($sampleAttrs as &$attr) {
         $attr['fieldname'] = "sc:n::$attr[fieldname]";
