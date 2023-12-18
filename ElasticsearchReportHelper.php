@@ -2443,7 +2443,10 @@ AGG;
     // Build a hidden input which causes filtering to this list.
     $keys = [];
     foreach ($listEntries as $row) {
-      $keys[] = $row[$outputField];
+      if ($row[$outputField]) {
+        // Don't want nulls as they break ES terms filters.
+        $keys[] = $row[$outputField];
+      }
     }
     return str_replace('"', '&quot;', json_encode($keys));
   }
