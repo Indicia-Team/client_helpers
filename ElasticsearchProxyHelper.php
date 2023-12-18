@@ -263,6 +263,9 @@ class ElasticsearchProxyHelper {
           'system_function' => $attribute['system_function'],
         ];
       }
+      elseif ($attribute['attribute_type'] === 'Output geom') {
+        $data['public_geom'] = $attribute['raw_value'];
+      }
     }
     header('Content-type: application/json');
     echo json_encode($data);
