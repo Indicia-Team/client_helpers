@@ -256,4 +256,14 @@ JS;
 HTML;
   }
 
+  /**
+   * Adds write tokens to the page so that JS can trigger data services calls.
+   */
+  public static function enable_write_auth($auth, $args, $tabalias, $options, $path) {
+    $conn = iform_get_connection_details();
+    $auth = helper_base::get_read_write_auth($conn['website_id'], $conn['password']);
+    helper_base::$indiciaData['writeTokens'] = $auth['write_tokens'];
+    return '';
+  }
+
 }
