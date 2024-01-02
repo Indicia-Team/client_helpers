@@ -262,7 +262,7 @@ class iform_ebms_atlas_map extends iform_dynamic {
     // $hidden = '<input type="hidden" id="preferred-name" value="' . $title . '"/>';
     // Make the external-key available to JS.
 
-    $hidden .= '<input type="hidden" id="external-key" value="' . self::$externalKey . '"/>';
+    $hidden = '<input type="hidden" id="external-key" value="' . self::$externalKey . '"/>';
 
     $getOrPost = $getForm ? 'GET' : 'POST';
     $form = '<form method="' . $getOrPost . '" id="ebms-atlas-map-form">';
@@ -289,7 +289,7 @@ class iform_ebms_atlas_map extends iform_dynamic {
       $esFilter .= self::createEsFilterHtml('event.year', self::$dataYearFilter, 'match_phrase', 'must');
     }
 
-    return $title . $hidden . $form . $esFilter . parent::get_form_html($args, $auth, $attributes);
+    return $hidden . $form . $esFilter . parent::get_form_html($args, $auth, $attributes);
   }
 
 
