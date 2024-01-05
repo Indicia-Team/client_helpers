@@ -36,7 +36,7 @@ class ElasticsearchProxyHelper {
   /**
    * Elasticsearch config.
    *
-   * @var bool
+   * @var array
    */
   private static $config;
 
@@ -75,88 +75,71 @@ class ElasticsearchProxyHelper {
    *   Method name.
    * @param int $nid
    *   Node ID.
+   *
+   * @return mixed
+   *   JSON (as object or string, whichever is more efficient).
    */
   public static function callMethod($method, $nid) {
     self::$config = hostsite_get_es_config($nid);
     if (empty(self::$config['es']['endpoint']) ||
         (self::$config['es']['auth_method'] === 'directClient' && (empty(self::$config['es']['user']) || empty(self::$config['es']['secret'])))) {
-      header("HTTP/1.1 405 Method not allowed");
-      echo json_encode(['error' => 'Method not allowed as server configuration incomplete']);
-      throw new ElasticsearchProxyAbort('Configuration incomplete');
+      throw new ElasticsearchProxyAbort('Method not allowed as server configuration incomplete', 405);
     }
 
     switch ($method) {
       case 'attrs':
-        self::proxyAttrDetails($nid);
-        break;
+        return self::proxyAttrDetails($nid);
 
       case 'comments':
-        self::proxyComments($nid);
-        break;
+        return self::proxyComments($nid);
 
       case 'doesUserSeeNotifications':
-        self::proxyDoesUserSeeNotifications($nid);
-        break;
+        return self::proxyDoesUserSeeNotifications($nid);
 
       case 'download':
-        self::proxyDownload($nid);
-        break;
+        return self::proxyDownload($nid);
 
       case 'mediaAndComments':
-        self::proxyMediaAndComments($nid);
-        break;
+        return self::proxyMediaAndComments($nid);
 
       case 'rawsearch':
-        self::proxyRawsearch();
-        break;
+        return self::proxyRawsearch();
 
       case 'searchbyparams':
-        self::proxySearchByParams($nid);
-        break;
+        return self::proxySearchByParams($nid);
 
       case 'verifyall':
-        self::proxyVerifyAll($nid);
-        break;
+        return self::proxyVerifyAll($nid);
 
       case 'verifyspreadsheet':
-        self::proxyVerifySpreadsheet();
-        break;
+        return self::proxyVerifySpreadsheet();
 
       case 'verifyids':
-        self::proxyVerifyIds();
-        break;
+        return self::proxyVerifyIds();
 
       case 'verificationQueryEmail':
-        self::proxyVerificationQueryEmail();
-        break;
+        return self::proxyVerificationQueryEmail();
 
       case 'redetall':
-        self::proxyRedetAll($nid);
-        break;
+        return self::proxyRedetAll($nid);
 
       case 'redetids':
-        self::proxyRedetIds();
-        break;
+        return self::proxyRedetIds();
 
       case 'bulkmoveall':
-        self::proxyBulkMoveAll($nid);
-        break;
+        return self::proxyBulkMoveAll($nid);
 
       case 'bulkmoveids':
-        self::proxyBulkMoveIds($nid);
-        break;
+        return self::proxyBulkMoveIds($nid);
 
       case 'clearcustomresults':
-        self::proxyClearCustomResults($nid);
-        break;
+        return self::proxyClearCustomResults($nid);
 
       case 'runcustomruleset':
-        self::proxyRunCustomRuleset($nid);
-        break;
+        return self::proxyRunCustomRuleset($nid);
 
       default:
-        header("HTTP/1.1 404 Not found");
-        echo json_encode(['error' => 'Method not found']);
+        throw new ElasticsearchProxyAbort('Method not found', 404);
     }
   }
 
@@ -197,6 +180,9 @@ class ElasticsearchProxyHelper {
    *
    * @param int $nid
    *   Node ID to obtain connection info from.
+   *
+   * @return array
+   *   Attribute details associative array.
    */
   private static function proxyAttrDetails($nid) {
     iform_load_helpers(['report_helper']);
@@ -267,21 +253,26 @@ class ElasticsearchProxyHelper {
         $data['public_geom'] = $attribute['raw_value'];
       }
     }
-    header('Content-type: application/json');
-    echo json_encode($data);
+    return $data;
   }
 
   /**
    * Provides information on a user's ability to see notifications.
    *
    * Used when querying records for verification.
+   *
+   * @param int $nid
+   *   Node ID.
+   *
+   * @return array
+   *   Data to return, containing a messsage indicating the information
+   *   requested.
    */
   private static function proxyDoesUserSeeNotifications($nid) {
     iform_load_helpers(['VerificationHelper']);
     $conn = iform_get_connection_details($nid);
     $readAuth = helper_base::get_read_auth($conn['website_id'], $conn['password']);
-    header('Content-type: application/json');
-    echo json_encode(['msg' => VerificationHelper::doesUserSeeNotifications($readAuth, $_GET['user_id'])]);
+    return ['msg' => VerificationHelper::doesUserSeeNotifications($readAuth, $_GET['user_id'])];
   }
 
   /**
@@ -289,6 +280,9 @@ class ElasticsearchProxyHelper {
    *
    * @param int $nid
    *   Node ID to obtain connection info from.
+   *
+   * @return array
+   *   Comments data array loaded from the report.
    *
    * @todo Consider switch to using VerificationHelper::getComments().
    */
@@ -306,10 +300,18 @@ class ElasticsearchProxyHelper {
       ],
     ];
     $reportData = report_helper::get_report_data($options);
-    header('Content-type: application/json');
-    echo json_encode($reportData);
+    return $reportData;
   }
 
+  /**
+   * A search proxy that processes Indicia search info to ES.
+   *
+   * @param int $nid
+   *   Node ID.
+   *
+   * @return string
+   *   JSON string data returned by Elasticsearch.
+   */
   private static function proxySearchByParams($nid) {
     iform_load_helpers(['helper_base']);
     $conn = iform_get_connection_details($nid);
@@ -317,7 +319,7 @@ class ElasticsearchProxyHelper {
     self::checkPermissionsFilter($_POST, $readAuth, $nid);
     $url = self::getEsUrl() . '/_search';
     $query = self::buildEsQueryFromRequest($_POST);
-    echo self::curlPost($url, $query);
+    return self::curlPost($url, $query);
   }
 
   /**
@@ -328,16 +330,22 @@ class ElasticsearchProxyHelper {
    * filter. For example a report page that shows "my records" may also include
    * aggregated data across the entire dataset which is not limited by the page
    * permissions.
+   *
+   * @return string
+   *   JSON string data returned by Elasticsearch.
    */
   private static function proxyRawsearch() {
     $url = self::getEsUrl() . '/_search';
     $query = array_merge($_POST);
     $query['size'] = 0;
-    echo self::curlPost($url, $query);
+    return self::curlPost($url, $query);
   }
 
   /**
    * A search proxy that handles build of a CSV download file.
+   *
+   * @return string
+   *   JSON string, describing the download process in an object.
    */
   private static function proxyDownload($nid) {
     $isScrollToNextPage = array_key_exists('scroll_id', $_GET);
@@ -366,7 +374,7 @@ class ElasticsearchProxyHelper {
       }
     }
     $query = self::buildEsQueryFromRequest($_POST);
-    echo self::curlPost($url, $query);
+    return self::curlPost($url, $query);
   }
 
   /**
@@ -375,17 +383,19 @@ class ElasticsearchProxyHelper {
    * When an email is sent to query a record, the comments and media are
    * injected into the HTML. Echoes an array with a media entry and a comments
    * entry, both containing the required HTML.
+   *
+   * @return array
+   *   Media and comments data.
    */
   private static function proxyMediaAndComments($nid) {
     iform_load_helpers(['VerificationHelper']);
     $conn = iform_get_connection_details($nid);
     $readAuth = helper_base::get_read_auth($conn['website_id'], $conn['password']);
     $params = array_merge(['sharing' => 'verification'], hostsite_get_node_field_value($nid, 'params'));
-    header('Content-type: application/json');
-    echo json_encode([
+    return [
       'media' => VerificationHelper::getMedia($readAuth, $params, $_GET['occurrence_id'], $_GET['sample_id']),
       'comments' => VerificationHelper::getComments($readAuth, $params, $_GET['occurrence_id'], TRUE),
-    ]);
+    ];
   }
 
   /**
@@ -396,13 +406,16 @@ class ElasticsearchProxyHelper {
    */
   private static function proxyVerifyIds() {
     if (empty(self::$config['es']['warehouse_prefix'])) {
-      header("HTTP/1.1 405 Method not allowed");
-      echo json_encode(['error' => 'Method not allowed as server configuration incomplete']);
-      throw new ElasticsearchProxyAbort('Configuration incomplete');
+      throw new ElasticsearchProxyAbort('Method not allowed as server configuration incomplete', 405);
     }
     $statuses = $_POST['doc']['identification'] ?? [];
-    echo self::internalModifyListOnES($_POST['ids'], $statuses,
-      isset($_POST['doc']['metadata']['website']['id']) ? $_POST['doc']['metadata']['website']['id'] : NULL);
+    return [
+      'updated' => self::internalModifyListOnES(
+        $_POST['ids'],
+        $statuses,
+        isset($_POST['doc']['metadata']['website']['id']) ? $_POST['doc']['metadata']['website']['id'] : NULL
+      ),
+    ];
   }
 
   /**
@@ -512,17 +525,16 @@ class ElasticsearchProxyHelper {
    *   Set to 0 if clearing the website ID as a temporary measure to disable
    *   records after redetermination, until Logstash fills in the taxonomy
    *   again.
+   *
+   * @param int
+   *   Number of updated records.
    */
   private static function processWholeEsFilter($nid, array $statuses, $websiteIdToModify = NULL) {
     if (empty(self::$config['es']['warehouse_prefix'])) {
-      header("HTTP/1.1 405 Method not allowed");
-      echo json_encode(['error' => 'Method not allowed as server configuration incomplete']);
-      throw new ElasticsearchProxyAbort('Configuration incomplete');
+      throw new ElasticsearchProxyAbort('Method not allowed as server configuration incomplete', 405);
     }
     if (empty($_POST['website_id'])) {
-      header("HTTP/1.1 400 Missing parameter");
-      echo json_encode(['error' => 'Missing website_id parameter']);
-      throw new ElasticsearchProxyAbort('Parameter missing');
+      throw new ElasticsearchProxyAbort('Missing website_id parameter', 400);
     }
     $ids = self::getOccurrenceIdsFromFilter($nid, $_POST['occurrence:idsFromElasticFilter']);
 
@@ -531,13 +543,9 @@ class ElasticsearchProxyHelper {
       self::updateWarehouseVerificationAction($ids, $nid);
     }
     catch (Exception $e) {
-      header("HTTP/1.1 500 Internal server error");
-      echo json_encode(['error' => 'Error whilst updating warehouse records: ' . $e->getMessage()]);
-      throw new ElasticsearchProxyAbort('Internal server error');
+      throw new ElasticsearchProxyAbort('Error whilst updating warehouse records: ' . $e->getMessage(), 500);
     }
-    echo json_encode([
-      'updated' => count($ids),
-    ]);
+    return count($ids);
   }
 
   /**
@@ -545,13 +553,19 @@ class ElasticsearchProxyHelper {
    *
    * Uses a filter definition passed in the post to retrieve the records from
    * ES then applies the decision to all aof them.
+   *
+   * @return array
+   *   Data to return from the proxy request, including the number of updated
+   *   records.
    */
   private static function proxyVerifyAll($nid) {
     $statuses = [
       'verification_status' => $_POST['occurrence:record_status'],
       'verification_substatus' => empty($_POST['occurrence:record_substatus']) ? 0 : $_POST['occurrence:record_substatus'],
     ];
-    self::processWholeEsFilter($nid, $statuses);
+    return [
+      'updated' => self::processWholeEsFilter($nid, $statuses),
+    ];
   }
 
   /**
@@ -588,11 +602,9 @@ class ElasticsearchProxyHelper {
       }
     }
     if (empty($payload)) {
-      header("HTTP/1.1 400 Bad request");
-      echo json_encode(['error' => 'Missing decisions file or fileId parameter']);
-      throw new ElasticsearchProxyAbort('Missing decisions file or fileId parameter');
+      throw new ElasticsearchProxyAbort('Missing decisions file or fileId parameter', 400);
     }
-    echo self::curlPost($url, $payload, [], TRUE);
+    return self::curlPost($url, $payload, [], TRUE);
   }
 
   /**
@@ -603,13 +615,13 @@ class ElasticsearchProxyHelper {
    */
   private static function proxyRedetIds() {
     if (empty(self::$config['es']['warehouse_prefix'])) {
-      header("HTTP/1.1 405 Method not allowed");
-      echo json_encode(['error' => 'Method not allowed as server configuration incomplete']);
-      throw new ElasticsearchProxyAbort('Configuration incomplete');
+      throw new ElasticsearchProxyAbort('Method not allowed as server configuration incomplete', 405);
     }
     // Set website ID to 0, basically disabling the ES copy of the record until
     // a proper update with correct taxonomy information comes through.
-    echo self::internalModifyListOnES($_POST['ids'], [], 0);
+    return [
+      'updated' => self::internalModifyListOnES($_POST['ids'], [], 0),
+    ];
   }
 
   /**
@@ -618,7 +630,9 @@ class ElasticsearchProxyHelper {
   private static function proxyRedetAll($nid) {
     // Set website ID to 0, basically disabling the ES copy of the record until
     // a proper update with correct taxonomy information comes through.
-    self::processWholeEsFilter($nid, [], 0);
+    return [
+      'updated' => self::processWholeEsFilter($nid, [], 0),
+    ];
   }
 
   /**
@@ -638,10 +652,9 @@ class ElasticsearchProxyHelper {
          $_POST['subject'],
          wordwrap($emailBody, 70),
          $headers);
-    header('Content-type: application/json');
-    echo json_encode([
+    return [
       'status' => $success ? 'OK' : 'Fail',
-    ]);
+    ];
   }
 
   /**
@@ -681,8 +694,8 @@ class ElasticsearchProxyHelper {
    *   If changing the website ID (i.e. setting to 0 to temporarily hide the
    *   record), set it here.
    *
-   * @return string
-   *   Result of the POST to ES.
+   * @return int
+   *   Number of records updated.
    */
   private static function internalModifyListOnES(array $ids, array $statuses, $websiteIdToModify) {
     $url = self::getEsUrl() . "/_update_by_query";
@@ -728,7 +741,7 @@ class ElasticsearchProxyHelper {
     // Since the verification alias can only see 1 copy of each record (e.g.
     // full precision), the total in the response will correspond to the number
     // of occurrences updated.
-    return json_encode(['updated' => $rObj->updated]);
+    return $rObj->updated;
   }
 
   /**
@@ -822,8 +835,7 @@ class ElasticsearchProxyHelper {
       $keyFile = \Drupal::service('file_system')->realpath("private://") . '/rsa_private.pem';
       if (!file_exists($keyFile)) {
         \Drupal::logger('iform')->error('Missing private key file for jwtUser Elasticsearch authentication.');
-        echo json_encode(['error' => 'Method not allowed as server configuration incomplete']);
-        throw new ElasticsearchProxyAbort('Configuration incomplete');
+        throw new ElasticsearchProxyAbort('Method not allowed as server configuration incomplete', 405);
       }
       $privateKey = file_get_contents($keyFile);
       $payload = [
@@ -897,10 +909,6 @@ class ElasticsearchProxyHelper {
       helper_base::array_to_query_string($cacheKey);
       helper_base::cache_set($cacheKey, json_encode($curlResponse), $cacheTimeout);
     }
-    if (array_key_exists('charset', $curlResponse['headers'])) {
-      $curlResponse['headers']['content_type'] .= '; ' . $curlResponse['headers']['charset'];
-    }
-    header('Content-type: ' . $curlResponse['headers']['content_type']);
     return $curlResponse['output'];
   }
 
@@ -928,9 +936,7 @@ class ElasticsearchProxyHelper {
     $permissionName = substr($permissionsFilter, 2) . '_records_permission';
     if (in_array($permissionsFilter, $roleBasedPermissionsFilters)) {
       if (!hostsite_user_has_permission(self::$config['es'][$permissionName])) {
-        header("HTTP/1.1 401 Unauthorised");
-        echo json_encode(['error' => "User does not have permission to $permissionName"]);
-        throw new ElasticsearchProxyAbort('Unauthorised');
+        throw new ElasticsearchProxyAbort("User does not have permission to $permissionName", 401);
       }
     }
     else {
@@ -963,9 +969,7 @@ class ElasticsearchProxyHelper {
       $availablePermissionFilters = ElasticsearchReportHelper::getPermissionFiltersOptions($options);
       // Check $permissionsFilter in list, else access denied.
       if (!array_key_exists($permissionsFilter, $availablePermissionFilters)) {
-        header("HTTP/1.1 401 Unauthorised");
-        echo json_encode(['error' => "User does not have permission to $permissionsFilter records"]);
-        throw new ElasticsearchProxyAbort("Unauthorised - $permissionsFilter not in " . var_export($availablePermissionFilters, TRUE));
+        throw new ElasticsearchProxyAbort("Unauthorised - $permissionsFilter not in " . var_export($availablePermissionFilters, TRUE), 401);
       }
     }
   }
@@ -1076,9 +1080,7 @@ class ElasticsearchProxyHelper {
         $queryDef = [$qryConfig['query_type'] => $qryConfig['value']];
       }
       else {
-        header("HTTP/1.1 400 Bad request");
-        echo json_encode(['error' => 'Incorrect filter type parameter']);
-        throw new ElasticsearchProxyAbort('Incorrect filter type parameter: ' . $qryConfig['query_type']);
+        throw new ElasticsearchProxyAbort('Incorrect filter type parameter: ' . $qryConfig['query_type'], 400);
       }
       if (!empty($qryConfig['nested']) && $qryConfig['nested'] !== 'null') {
         // Must not nested queries should be handled at outer level.
@@ -1209,9 +1211,7 @@ class ElasticsearchProxyHelper {
         }
         else {
           // This shouldn't happen.
-          header("HTTP/1.1 400 Bad request");
-          echo json_encode(['error' => 'Incorrect permissions_filter parameter']);
-          throw new ElasticsearchProxyAbort('Incorrect permissions_filter parameter: ' . $query['permissions_filter']);
+          throw new ElasticsearchProxyAbort('Incorrect permissions_filter parameter: ' . $query['permissions_filter'], 400);
         }
 
     }
@@ -2260,7 +2260,7 @@ class ElasticsearchProxyHelper {
           break;
 
         default:
-          throw new ElasticsearchProxyAbort("Invalid release_status filter value $filter[value]");
+          throw new ElasticsearchProxyAbort("Invalid release_status filter value $filter[value]", 422);
       }
       self::$releaseStatusFilterApplied = TRUE;
     }
@@ -2321,6 +2321,9 @@ class ElasticsearchProxyHelper {
    * Receives a list of IDs to move between websites/datasets.
    *
    * Used by the recordsMover button.
+   *
+   * @return string
+   *   Response from the data_utils/bulk_move service.
    */
   private static function bulkMoveIds($nid, array $ids, $datasetMappings, $precheck) {
     // Now do the move on the warehouse.
@@ -2371,7 +2374,7 @@ class ElasticsearchProxyHelper {
       // all done).
       $responseArr['search_after'] = $batchInfo['search_after'];
     }
-    echo json_encode($responseArr);
+    return $responseArr;
   }
 
   /**
@@ -2380,7 +2383,7 @@ class ElasticsearchProxyHelper {
    * Used by the recordsMover button.
    */
   private static function proxyBulkMoveIds($nid) {
-    echo self::bulkMoveIds($nid, explode(',', $_POST['occurrence:ids']), $_POST['datasetMappings'], !empty($_POST['precheck']));
+    return self::bulkMoveIds($nid, explode(',', $_POST['occurrence:ids']), $_POST['datasetMappings'], !empty($_POST['precheck']));
   }
 
   /**
@@ -2401,7 +2404,7 @@ class ElasticsearchProxyHelper {
     self::checkPermissionsFilter($_POST, $readAuth, $nid);
     $url = self::$config['indicia']['base_url'] . "index.php/services/rest/custom_verification_rulesets/clear-flags?alias=$alias&user_id=$userId";
     $query = self::buildEsQueryFromRequest($_POST);
-    echo self::curlPost($url, $query);
+    return self::curlPost($url, $query);
   }
 
   /**
@@ -2422,7 +2425,7 @@ class ElasticsearchProxyHelper {
     self::checkPermissionsFilter($_POST, $readAuth, $nid);
     $url = self::$config['indicia']['base_url'] . "index.php/services/rest/custom_verification_rulesets/$rulesetId/run-request?alias=$alias&user_id=$userId";
     $query = self::buildEsQueryFromRequest($_POST);
-    echo self::curlPost($url, $query);
+    return self::curlPost($url, $query);
   }
 
 }
