@@ -17,10 +17,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers
  */
+
+use Firebase\JWT\JWT;
 
 /**
  * Exception class for request abort.
@@ -410,10 +411,10 @@ class ElasticsearchProxyHelper {
     }
     $statuses = $_POST['doc']['identification'] ?? [];
     return [
-      'updated' => self::internalModifyListOnES(
+      'updated' => self::internalModifyListOnEs(
         $_POST['ids'],
         $statuses,
-        isset($_POST['doc']['metadata']['website']['id']) ? $_POST['doc']['metadata']['website']['id'] : NULL
+        $_POST['doc']['metadata']['website']['id'] ?? NULL
       ),
     ];
   }
@@ -526,7 +527,7 @@ class ElasticsearchProxyHelper {
    *   records after redetermination, until Logstash fills in the taxonomy
    *   again.
    *
-   * @param int
+   * @return int
    *   Number of updated records.
    */
   private static function processWholeEsFilter($nid, array $statuses, $websiteIdToModify = NULL) {
@@ -538,7 +539,7 @@ class ElasticsearchProxyHelper {
     }
     $ids = self::getOccurrenceIdsFromFilter($nid, $_POST['occurrence:idsFromElasticFilter']);
 
-    self::internalModifyListOnES($ids, $statuses, $websiteIdToModify);
+    self::internalModifyListOnEs($ids, $statuses, $websiteIdToModify);
     try {
       self::updateWarehouseVerificationAction($ids, $nid);
     }
@@ -620,7 +621,7 @@ class ElasticsearchProxyHelper {
     // Set website ID to 0, basically disabling the ES copy of the record until
     // a proper update with correct taxonomy information comes through.
     return [
-      'updated' => self::internalModifyListOnES($_POST['ids'], [], 0),
+      'updated' => self::internalModifyListOnEs($_POST['ids'], [], 0),
     ];
   }
 
@@ -697,7 +698,7 @@ class ElasticsearchProxyHelper {
    * @return int
    *   Number of records updated.
    */
-  private static function internalModifyListOnES(array $ids, array $statuses, $websiteIdToModify) {
+  private static function internalModifyListOnEs(array $ids, array $statuses, $websiteIdToModify) {
     $url = self::getEsUrl() . "/_update_by_query";
     $scripts = [];
     if (!empty($statuses['verification_status'])) {
@@ -847,7 +848,7 @@ class ElasticsearchProxyHelper {
       $modulePath = \Drupal::service('module_handler')->getModule('iform')->getPath();
       // @todo persist the token in the cache?
       require_once "$modulePath/lib/php-jwt/vendor/autoload.php";
-      $token = \Firebase\JWT\JWT::encode($payload, $privateKey, 'RS256');
+      $token = JWT::encode($payload, $privateKey, 'RS256');
       $headers[] = "Authorization: Bearer $token";
     }
     return $headers;
@@ -956,7 +957,7 @@ class ElasticsearchProxyHelper {
               if (substr($line, 0, 1) === '@') {
                 $parts = explode('=', $line, 2);
                 $decoded = json_decode($parts[1]);
-                $options[substr($parts[0], 1)] = $decoded === NULL ? $parts[1] : $decoded;
+                $options[substr($parts[0], 1)] = $decoded ?? $parts[1];
               }
               else {
                 // Finish loop as done permissionFilters control options.
@@ -974,7 +975,13 @@ class ElasticsearchProxyHelper {
     }
   }
 
-  private static function buildEsQueryFromRequest($post) {
+  /**
+   * Convert a posted request to an ES query.
+   *
+   * @param array $post
+   *   Posted request data.
+   */
+  private static function buildEsQueryFromRequest(array $post) {
     $query = array_merge([
       'bool_queries' => [],
     ], $post);
@@ -1569,8 +1576,8 @@ class ElasticsearchProxyHelper {
    * For ES purposes, any location_list filter is modified to a searchArea
    * filter beforehand.
    *
-   * @param string $definition
-   *   WKT for the searchArea in EPSG:4326.
+   * @param array $definition
+   *   Containing WKT for the searchArea in EPSG:4326.
    * @param array $bool
    *   Bool clauses that filters can be added to (e.g. $bool['must']).
    */
@@ -2646,7 +2653,7 @@ class ElasticsearchProxyHelper {
     if (!$precheck && $output->code === 200) {
       // Set website ID to 0, basically disabling the ES copy of the record
       // until a proper update with correct taxonomy information comes through.
-      self::internalModifyListOnES($ids, [], 0);
+      self::internalModifyListOnEs($ids, [], 0);
     }
     return $response['output'];
   }
