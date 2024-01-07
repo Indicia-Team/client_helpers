@@ -127,7 +127,7 @@ class user_helper extends helper_base {
    * @return string HTML to insert into the page for the login control.
    */
 
-  public static function login_control($options = []
+  public static function login_control($options = []) {
     $r = '';
     $method = (array_key_exists('control_method', $options)) ? ' method="'.$options['control_method'].'"' : ' method="post"';
     $id = (array_key_exists('control_id', $options)) ? ' id="'.$options['control_id'].'"' : ' id="indicia-login-control"';
