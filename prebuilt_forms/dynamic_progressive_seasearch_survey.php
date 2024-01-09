@@ -804,14 +804,15 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
         unset($ModelOrWarning['submissionWarning']);
       }
       $response = data_entry_helper::forward_post_to('save', $ModelOrWarning, $writeTokens);
-      if (!empty($submissionWarning))
-        $response['submissionWarning']=$submissionWarning;
-      echo json_encode($response);
-    } else {
-      echo json_encode($ModelOrWarning);
+      if (!empty($submissionWarning)) {
+        $response['submissionWarning'] = $submissionWarning;
+      }
+      return $response;
+    }
+    else {
+      return $ModelOrWarning;
     }
   }
-
 
   /*
    * Build a submission that can be made up of 3 levels of sample and an occurrence.

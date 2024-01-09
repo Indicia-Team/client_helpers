@@ -654,6 +654,9 @@ class iform_dynamic_report_explorer extends iform_dynamic {
 
   /**
    * Ajax handler to provide the content for the details of a single record.
+   *
+   * @return array
+   *   Report data containing the records details.
    */
   public static function ajax_get_feature_popup_details($website_id, $password, $nid) {
     require_once 'extensions/misc_extensions.php';
@@ -683,11 +686,9 @@ class iform_dynamic_report_explorer extends iform_dynamic {
     $reportData = report_helper::get_report_data($options);
     // Set some values which must exist in the record.
     if (count($reportData) === 0) {
-      echo '';
-      return;
+      return '';
     }
-    header('Content-type: application/json');
-    echo json_encode($reportData);
+    return $reportData;
   }
 
 }

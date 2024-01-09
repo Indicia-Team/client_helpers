@@ -2490,12 +2490,13 @@ JS;
   /**
    * Ajax handler to retrieve the dynamic attrs for a taxon.
    *
-   * Attribute HTML is echoed to the client.
+   * @return string
+   *   Attribute HTML which may contain scripts for functionality.
    */
   public static function ajax_dynamicattrs($website_id, $password) {
     iform_load_helpers(['report_helper']);
     $readAuth = report_helper::get_read_auth($website_id, $password);
-    echo self::getDynamicAttrs(
+    $r = self::getDynamicAttrs(
       $readAuth,
       $_GET['survey_id'],
       $_GET['taxa_taxon_list_id'],
@@ -2533,13 +2534,14 @@ JS;
       FALSE, TRUE
     );
     if ($scripts) {
-      echo <<<JS
+      $r .= <<<JS
 <script type="text/javascript">
 $scripts
 </script>
 
 JS;
     }
+    return $r;
   }
 
   /**

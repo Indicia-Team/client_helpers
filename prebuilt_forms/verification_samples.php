@@ -670,12 +670,11 @@ idlist=';
     $extra['recorder_email'] = $email;
     $extra['localities'] = $record['localities'];
     $extra['locality_ids'] = $record['locality_ids'];
-    header('Content-type: application/json');
-    echo json_encode(array(
+    return [
       'content' => $r,
       'data' => $data,
       'extra' => $extra
-    ));
+    ];
   }
 
   /**
@@ -697,7 +696,7 @@ idlist=';
   public static function ajax_media($website_id, $password) {
     iform_load_helpers(array('report_helper'));
     $readAuth = report_helper::get_read_auth($website_id, $password);
-    echo self::get_media($readAuth);
+    return self::get_media($readAuth);
   }
 
   private static function get_media($readAuth) {
@@ -734,7 +733,7 @@ idlist=';
   public static function ajax_comments($website_id, $password) {
     iform_load_helpers(array('report_helper'));
     $readAuth = report_helper::get_read_auth($website_id, $password);
-    echo self::get_comments($readAuth);
+    return self::get_comments($readAuth);
   }
 
   private static function status_icons($status, $imgPath) {
@@ -800,16 +799,17 @@ idlist=';
   public static function ajax_mediaAndComments($website_id, $password) {
     iform_load_helpers(array('report_helper'));
     $readAuth = report_helper::get_read_auth($website_id, $password);
-    header('Content-type: application/json');
-    echo json_encode(array(
+    return [
       'media' => self::get_media($readAuth),
       'comments' => self::get_comments($readAuth, false)
-    ));
+    ];
   }
 
   /**
    * Ajax method to send an email. Takes the subject and body in the $_GET parameters.
-   * @return boolean True if the email was sent.
+   *
+   * @return string
+   *   Ok or Fail
    */
   public static function ajax_email() {
     $site_email = hostsite_get_config_value('site', 'mail', '');
@@ -827,10 +827,7 @@ idlist=';
       $_POST['subject'],
       wordwrap($emailBody, 70),
       $headers);
-    if ($success)
-      echo 'OK';
-    else
-      echo 'Fail';
+    return $success ? 'OK' : 'Fail';
   }
 
   /**
@@ -844,7 +841,7 @@ idlist=';
   public static function ajax_do_they_see_notifications($website_id, $password, $nid) {
     iform_load_helpers(array('VerificationHelper'));
     $readAuth = helper_base::get_read_auth($website_id, $password);
-    echo VerificationHelper::doesUserSeeNotifications($readAuth, $_GET['user_id']);
+    return VerificationHelper::doesUserSeeNotifications($readAuth, $_GET['user_id']);
   }
 
   /**
@@ -857,7 +854,7 @@ idlist=';
     $url = data_entry_helper::$base_url."index.php/services/data_utils/bulk_verify_samples";
     $params = array_merge($_POST, $auth['write_tokens']);
     $response = data_entry_helper::http_post($url, $params);
-    echo $response['output'];
+    return $response['output'];
   }
 
   private static function report_filter_panel($args, $readAuth) {

@@ -334,12 +334,21 @@ class iform_easy_download_2 {
 
   /**
    * Return the generated form output.
-   * @param array $args List of parameter values passed through to the form depending on how the form has been configured.
-   * This array always contains a value for language.
-   * @param object $nid The Drupal node object's ID.
-   * @param array $response When this form is reloading after saving a submission, contains the response from the service call.
-   * Note this does not apply when redirecting (in this case the details of the saved object are in the $_GET data).
-   * @return Form HTML.
+   *
+   * @param array $args
+   *   List of parameter values passed through to the form depending on how the
+   *   form has been configured. This array always contains a value for
+   *   language.
+   * @param object $nid
+   *   The Drupal node object's ID.
+   * @param array $response
+   *   When this form is reloading after saving a submission, contains the
+   *   response from the service call. Note this does not apply when
+   *   redirecting (in this case the details of the saved object are in the
+   *   $_GET data).
+   *
+   * @return string
+   *   Form HTML.
    */
   public static function get_form($args, $nid, $response=null) {
     $conn = iform_get_connection_details($nid);
@@ -578,10 +587,16 @@ class iform_easy_download_2 {
 
   /**
    * An ajax handler which returns the surveys that are available for a given sharing type.
-   * @param type $website_id
-   * @param type $password
+   *
+   * @param int $website_id
+   *   Warehouse website ID.
+   * @param string $password
+   *   Warehouse website password.
    * @param int $nid
    *   Node ID.
+   *
+   * @return array
+   *   Survey list.
    */
   public static function ajax_surveys_for_sharing_type($website_id, $password, $nid) {
     iform_load_helpers(array('data_entry_helper'));
@@ -596,9 +611,10 @@ class iform_easy_download_2 {
       'sharing'=>self::expand_sharing_mode($_GET['sharing_type'])
     ));
     $r = [];
-    foreach ($surveys as $survey)
+    foreach ($surveys as $survey) {
       $r["survey-$survey[id]"]="$survey[website] &gt; $survey[title]";
-    echo json_encode($r);
+    }
+    return $r;
   }
 
   /**
