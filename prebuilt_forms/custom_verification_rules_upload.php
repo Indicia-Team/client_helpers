@@ -165,7 +165,8 @@ HTML;
    * Provides functionality that can receive an selected file and saves it to
    * the interim location on the client website's server.
    *
-   * Echoes a JSON response including the name of the uploaded file.
+   * @param array
+   *   Response including the name of the uploaded file.
    */
   public static function ajax_upload_interim_file() {
     iform_load_helpers(['helper_base']);
@@ -195,11 +196,11 @@ HTML;
     }
 
     // All good.
-    echo json_encode([
+    return [
       'status' => 'ok',
       'interimFile' => $fileName,
       'originalName' => $_FILES['file']['name'],
-    ]);
+    ];
   }
 
   /**
@@ -210,37 +211,42 @@ HTML;
    * * validateStructure
    * * validateContents
    * * importContents.
+   *
+   * @param array
+   *   Response data.
    */
   public static function ajax_upload_rules_step() {
-    header('Content-type: application/json');
     $state = $_POST['state'] ?? 'sendFileToWarehouse';
     if ($state === 'sendFileToWarehouse') {
-      echo json_encode([
+      return [
         'uploadedFile' => self::sendFileToWarehouse(),
         'status' => 'ok',
         'nextState' => 'validateStructure',
-      ]);
+      ];
     }
     elseif ($state === 'validateStructure') {
-      self::echoProxyResponse(self::validateStructure(), 'validateContents');
+      return self::getProxyResponse(self::validateStructure(), 'validateContents');
     }
     elseif ($state === 'validateContents') {
-      self::echoProxyResponse(self::validateContents(), 'importContents');
+      return self::getProxyResponse(self::validateContents(), 'importContents');
     }
     elseif ($state === 'importContents') {
-      self::echoProxyResponse(self::importContents(), 'done');
+      return self::getProxyResponse(self::importContents(), 'done');
     }
   }
 
   /**
-   * Echoes the response from a warehouse request back to the proxy caller.
+   * Gets the response from a warehouse request back to the proxy caller.
    *
    * @param array $r
    *   Warehouse response.
    * @param string $nextState
    *   Next step state name to return if the response indicates success.
+   *
+   * @param array
+   *   Response data.
    */
-  private static function echoProxyResponse(array $r, $nextState) {
+  private static function getProxyResponse(array $r, $nextState) {
     if (isset($r['output'])) {
       $output = json_decode($r['output'], TRUE);
       if ($output) {
@@ -255,7 +261,7 @@ HTML;
         'response' => $r,
       ];
     }
-    echo json_encode($output);
+    return $output;
   }
 
   /**

@@ -896,12 +896,13 @@ HTML;
   /**
    * Ajax handler to retrieve the dynamic attrs for a taxon.
    *
-   * Attribute HTML is echoed to the client.
+   * @return string
+   *   Attribute HTML which may contain scripts for functionality.
    */
   public static function ajax_dynamicattrs($website_id, $password) {
     iform_load_helpers(['data_entry_helper']);
     $readAuth = data_entry_helper::get_read_auth($website_id, $password);
-    echo self::getDynamicAttrs(
+    return self::getDynamicAttrs(
       $readAuth,
       $_GET['taxon_list_id'],
       $_GET['taxa_taxon_list_id'],
