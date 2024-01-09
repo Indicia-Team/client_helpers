@@ -239,42 +239,59 @@ TXT;
 
   /**
    * Ajax handler to handle file upload into interim location.
+   *
+   * @param int $website_id
+   *   Warehouse website ID.
+   * @param string $password
+   *   Warehouse website password.
+   * @param int $nid
+   *   Node ID.
+   *
+   * @return array
+   *   Progress data from the warehouse.
    */
   public static function ajax_upload_file($website_id, $password, $nid) {
-    header('Content-type: application/json');
-    iform_load_helpers(['import_helper_2']);
-    echo json_encode([
+    return [
       'status' => 'ok',
       'interimFile' => import_helper_2::uploadInterimFile(),
       'originalName' => $_FILES['file']['name'],
-    ]);
+    ];
   }
 
   /**
    * Ajax handler to handle transferring the file to the warehouse.
+   *
+   * @param int $website_id
+   *   Warehouse website ID.
+   * @param string $password
+   *   Warehouse website password.
+   * @param int $nid
+   *   Node ID.
+   *
+   * @return array
+   *   Progress data from the warehouse.
    */
   public static function ajax_send_file_to_warehouse($website_id, $password, $nid) {
-    header('Content-type: application/json');
     $writeAuth = self::getAuthFromHeaders();
     iform_load_helpers(['import_helper_2']);
     $interimPath = import_helper_2::getInterimImageFolder('fullpath');
     if (!file_exists($interimPath . $_GET['interim-file'])) {
       // Assume the page has been loaded twice and the file already sent. If
       // not we will get other errors anyway.
-      echo json_encode([
+      return [
         'status' => 'ok',
         // Warehouse lowercases the file name and replaces spaces.
         'uploadedFile' => strtolower(str_replace(' ', '_', $_GET['interim-file'])),
-      ]);
+      ];
     }
     else {
       $r = import_helper_2::sendFileToWarehouse($_GET['interim-file'], $writeAuth);
       if ($r === TRUE) {
-        echo json_encode([
+        return [
           'status' => 'ok',
           // Warehouse lowercases the file name and replaces spaces.
           'uploadedFile' => strtolower(str_replace(' ', '_', $_GET['interim-file'])),
-        ]);
+        ];
       }
       else {
         throw new Exception(var_export($r, TRUE));
@@ -284,74 +301,155 @@ TXT;
 
   /**
    * Ajax handler to handle transferring the file to the warehouse.
+   *
+   * @param int $website_id
+   *   Warehouse website ID.
+   * @param string $password
+   *   Warehouse website password.
+   * @param int $nid
+   *   Node ID.
+   *
+   * @return array
+   *   Progress data from the warehouse.
    */
   public static function ajax_extract_file_on_warehouse($website_id, $password, $nid) {
-    header('Content-type: application/json');
     $writeAuth = self::getAuthFromHeaders();
     iform_load_helpers(['import_helper_2']);
-    echo json_encode(import_helper_2::extractFileOnWarehouse($_GET['uploaded-file'], $writeAuth));
+    return import_helper_2::extractFileOnWarehouse($_GET['uploaded-file'], $writeAuth);
   }
 
   /**
    * Ajax handler to initialise the JSON config file on the warehouse.
+   *
+   * @param int $website_id
+   *   Warehouse website ID.
+   * @param string $password
+   *   Warehouse website password.
+   * @param int $nid
+   *   Node ID.
+   *
+   * @return array
+   *   Progress data from the warehouse.
    */
   public static function ajax_init_server_config($website_id, $password, $nid) {
-    header('Content-type: application/json');
     $writeAuth = self::getAuthFromHeaders();
     iform_load_helpers(['import_helper_2']);
-    echo json_encode(import_helper_2::initServerConfig(
+    return import_helper_2::initServerConfig(
       $_GET['data-file'],
       isset($_GET['import_template_id']) ? $_GET['import_template_id'] : NULL,
       $writeAuth
-    ));
+    );
   }
 
   /**
    * Ajax handler to request that the warehouse loads a chunk of records.
+   *
+   * @param int $website_id
+   *   Warehouse website ID.
+   * @param string $password
+   *   Warehouse website password.
+   * @param int $nid
+   *   Node ID.
+   *
+   * @return array
+   *   Progress data from the warehouse.
    */
   public static function ajax_load_chunk_to_temp_table($website_id, $password, $nid) {
-    header('Content-type: application/json');
     $writeAuth = self::getAuthFromHeaders();
     iform_load_helpers(['import_helper_2']);
-    echo json_encode(import_helper_2::loadChunkToTempTable($_GET['data-file'], $writeAuth));
+    return import_helper_2::loadChunkToTempTable($_GET['data-file'], $writeAuth);
   }
 
   /**
    * AJAX handler to retrieve the required fields for the selected survey.
+   *
+   * @param int $website_id
+   *   Warehouse website ID.
+   * @param string $password
+   *   Warehouse website password.
+   * @param int $nid
+   *   Node ID.
+   *
+   * @return array
+   *   Progress data from the warehouse.
    */
   public static function ajax_get_required_fields($website_id, $password, $nid) {
-    header('Content-type: application/json');
     $readAuth = self::getAuthFromHeaders();
     iform_load_helpers(['import_helper_2']);
-    echo json_encode(import_helper_2::getRequiredFields($_GET['data-file'], $readAuth));
+    return import_helper_2::getRequiredFields($_GET['data-file'], $readAuth);
   }
 
+  /**
+   * Perform processing on lookup matching.
+   *
+   * @param int $website_id
+   *   Warehouse website ID.
+   * @param string $password
+   *   Warehouse website password.
+   * @param int $nid
+   *   Node ID.
+   *
+   * @return array
+   *   Progress data from the warehouse.
+   */
   public static function ajax_process_lookup_matching($website_id, $password, $nid) {
-    header('Content-type: application/json');
     $writeAuth = self::getAuthFromHeaders();
     iform_load_helpers(['import_helper_2']);
-    echo json_encode(import_helper_2::processLookupMatching($_GET['data-file'], $_GET['index'], $writeAuth));
+    return import_helper_2::processLookupMatching($_GET['data-file'], $_GET['index'], $writeAuth);
   }
 
+  /**
+   * Save a group of lookup matches.
+   *
+   * @param int $website_id
+   *   Warehouse website ID.
+   * @param string $password
+   *   Warehouse website password.
+   * @param int $nid
+   *   Node ID.
+   *
+   * @return array
+   *   Progress data from the warehouse.
+   */
   public static function ajax_save_lookup_matches_group($website_id, $password, $nid) {
-    header('Content-type: application/json');
     $writeAuth = self::getAuthFromHeaders();
     iform_load_helpers(['import_helper_2']);
-    echo json_encode(import_helper_2::saveLookupMatchesGroup($_GET['data-file'], $_POST, $writeAuth));
+    return import_helper_2::saveLookupMatchesGroup($_GET['data-file'], $_POST, $writeAuth);
   }
 
   /**
    * Perform processing that can be done before the final import stage.
+   *
+   * @param int $website_id
+   *   Warehouse website ID.
+   * @param string $password
+   *   Warehouse website password.
+   * @param int $nid
+   *   Node ID.
+   *
+   * @return array
+   *   Progress data from the warehouse.
    */
   public static function ajax_preprocess($website_id, $password, $nid) {
-    header('Content-type: application/json');
     $writeAuth = self::getAuthFromHeaders();
     iform_load_helpers(['import_helper_2']);
-    echo json_encode(import_helper_2::preprocess($_GET['data-file'], $_GET['index'], $writeAuth));
+    return import_helper_2::preprocess($_GET['data-file'], $_GET['index'], $writeAuth);
   }
 
+  /**
+   * Import a single chunk of data.
+   *
+   * @param int $website_id
+   *   Warehouse website ID.
+   * @param string $password
+   *   Warehouse website password.
+   * @param int $nid
+   *   Node ID.
+   *
+   * @return array
+   *   Progress data from the warehouse.
+   */
   public static function ajax_import_chunk($website_id, $password, $nid) {
-    header('Content-type: application/json');
     $writeAuth = self::getAuthFromHeaders();
     iform_load_helpers(['import_helper_2']);
     $params = array_merge($_POST);
@@ -364,7 +462,7 @@ TXT;
       $params,
       $writeAuth
     );
-    echo json_encode($response);
+    return $response;
   }
 
   /**

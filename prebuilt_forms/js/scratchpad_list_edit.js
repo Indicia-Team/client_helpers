@@ -226,7 +226,7 @@ jQuery(document).ready(function ($) {
       $.post(indiciaData.ajaxUrl + '/check/' + indiciaData.nid + sep + $.param(reportParams),
         { params: JSON.stringify(postParams) },
         matchResponse,
-        'jsonp'
+        'json'
       );
     } else {
       $('#scratchpad-check').removeClass('checking');
