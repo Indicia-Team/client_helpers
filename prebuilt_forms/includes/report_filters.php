@@ -1412,6 +1412,7 @@ function report_filter_panel(array $readAuth, $options, $website_id, &$hiddenStu
     'elasticsearch' => FALSE,
     'customRuleCheckFilters' => FALSE,
     'autocheck_rules' => [
+      'ancillary_species',
       'identification_difficulty',
       'period',
       'period_within_year',
@@ -2083,6 +2084,7 @@ function report_filters_full_term_to_sharing_code($term) {
  */
 function report_filters_set_parser_language_strings() {
   report_helper::addLanguageStringsToJs('reportFilterParser', [
+    'Autochecks_ancillary_species' => 'Rarity check failed',
     'Autochecks_F' => 'Automated checks failed',
     'Autochecks_FC' => 'Any custom verification rule check failed',
     'Autochecks_identification_difficulty' => 'ID difficulty check failed',
