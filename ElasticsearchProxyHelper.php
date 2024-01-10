@@ -1370,12 +1370,13 @@ class ElasticsearchProxyHelper {
     self::applyUserFiltersIdentificationDifficulty($definition, $bool);
     self::applyUserFiltersRuleChecks($definition, $bool);
     self::applyUserFiltersHasPhotos($definition, $bool);
+    self::applyUserFiltersLicences($definition, $bool, $readAuth);
+    self::applyUserFiltersCoordinatePrecision($definition, $bool, $readAuth);
     self::applyUserFiltersWebsiteList($definition, $bool);
     self::applyUserFiltersSurveyList($definition, $bool);
     self::applyUserFiltersImportGuidList($definition, $bool);
     self::applyUserFiltersInputFormList($definition, $bool);
     self::applyUserFiltersGroupId($definition, $bool);
-    self::applyUserFiltersLicences($definition, $bool, $readAuth);
     self::applyUserFiltersAccessRestrictions($definition, $bool);
     self::applyUserFiltersTaxaScratchpadList($definition, $bool, $readAuth);
   }
@@ -2469,6 +2470,38 @@ class ElasticsearchProxyHelper {
         }
         $bool['must'][] = [
           'bool' => ['should' => $options],
+        ];
+      }
+    }
+  }
+
+  /**
+   * Converts a filter definition coordinate_precision filter to an ES query.
+   *
+   * @param array $definition
+   *   Definition loaded for the Indicia filter.
+   * @param array $bool
+   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   */
+  private static function applyUserFiltersCoordinatePrecision(array $definition, array &$bool) {
+    $filter = self::getDefinitionFilter($definition, ['coordinate_precision']);
+    \Drupal::logger('iform')->notice(var_export($filter, TRUE));
+    if (!empty($filter)) {
+      // Default is same as or better than.
+      $filter['op'] = $filter['op'] ?? '<=';
+      if ($filter['op'] === '=') {
+        $bool['must'][] = [
+          'term' => ['location.coordinate_uncertainty_in_meters' => $filter['value']],
+        ];
+      }
+      else {
+        $op = $filter['op'] === '<=' ? 'lte' : 'gt';
+        $bool['must'][] = [
+          'range' => [
+            'location.coordinate_uncertainty_in_meters' => [
+              $op => $filter['value'],
+            ],
+          ],
         ];
       }
     }
