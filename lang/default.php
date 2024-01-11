@@ -101,6 +101,7 @@ $default_terms = [
   'Click to Filter Source' => 'Select records based on source website, survey or input form',
 
   // Data cleaner rules.
+  'ancillary_species failed' => 'Rarity check failed',
   'identification_difficulty failed' => 'ID difficulty check failed',
   'period failed' => 'Year range check failed',
   'period_within_year failed' => 'Date range check failed',

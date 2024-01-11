@@ -1194,12 +1194,11 @@ HTML
     $extra['sref_precision'] = $record['sref_precision'];
     $extra['query'] = $record['query'] === NULL ? '' : $record['query'];
     $extra['metadata'] = isset($record['metadata']) ? json_decode($record['metadata']) : json_decode('{}');
-    header('Content-type: application/json');
-    echo json_encode(array(
+    return [
       'content' => $r,
       'data' => $data,
       'extra' => $extra,
-    ));
+    ];
   }
 
   /**
@@ -1269,7 +1268,7 @@ HTML
     iform_load_helpers(['helper_base', 'VerificationHelper']);
     $params = array_merge(['sharing' => 'verification'], hostsite_get_node_field_value($nid, 'params'));
     $readAuth = helper_base::get_read_auth($website_id, $password);
-    echo VerificationHelper::getMedia($readAuth, $params, $_GET['occurrence_id'], $_GET['sample_id']);
+    return VerificationHelper::getMedia($readAuth, $params, $_GET['occurrence_id'], $_GET['sample_id']);
   }
 
   /**
@@ -1279,8 +1278,8 @@ HTML
     iform_load_helpers(array('VerificationHelper'));
     $params = array_merge(['sharing' => 'verification'], hostsite_get_node_field_value($nid, 'params'));
     $readAuth = helper_base::get_read_auth($website_id, $password);
-    echo VerificationHelper::getComments($readAuth, $params, $_GET['occurrence_id']);
-    echo self::getCommentsForm();
+    $r = VerificationHelper::getComments($readAuth, $params, $_GET['occurrence_id']);
+    return $r . self::getCommentsForm();
   }
 
   /**
@@ -1293,11 +1292,10 @@ HTML
     iform_load_helpers(array('VerificationHelper'));
     $readAuth = helper_base::get_read_auth($website_id, $password);
     $params = array_merge(['sharing' => 'verification'], hostsite_get_node_field_value($nid, 'params'));
-    header('Content-type: application/json');
-    echo json_encode(array(
+    return [
       'media' => VerificationHelper::getMedia($readAuth, $params, $_GET['occurrence_id'], $_GET['sample_id']),
       'comments' => VerificationHelper::getComments($readAuth, $params, $_GET['occurrence_id'], TRUE),
-    ));
+    ];
   }
 
   /**
@@ -1326,7 +1324,7 @@ HTML
          $_POST['subject'],
          wordwrap($emailBody, 70),
          $headers);
-    echo $success ? 'OK' : 'Fail';
+    return $success ? 'OK' : 'Fail';
   }
 
   /**
@@ -1425,7 +1423,7 @@ HTML;
     if (empty($r)) {
       $r = lang::get("No information available on this recorder's experience");
     }
-    echo $r;
+    return $r;
   }
 
   /**
@@ -1437,7 +1435,7 @@ HTML;
   public static function ajax_do_they_see_notifications($website_id, $password) {
     iform_load_helpers(array('VerificationHelper'));
     $readAuth = helper_base::get_read_auth($website_id, $password);
-    echo VerificationHelper::doesUserSeeNotifications($readAuth, $_GET['user_id']);
+    return VerificationHelper::doesUserSeeNotifications($readAuth, $_GET['user_id']);
   }
 
   /**
@@ -1556,7 +1554,7 @@ HTML;
       // -1 here, because our array is zero indexed, but the report returns a real month number.
       $output[$month['name'] - 1][1] = intval($month['value']);
     }
-    echo json_encode($output);
+    return $output;
   }
 
   /**
@@ -1569,7 +1567,7 @@ HTML;
     $url = data_entry_helper::$base_url . "index.php/services/data_utils/bulk_verify";
     $params = array_merge($_POST, $auth['write_tokens']);
     $response = data_entry_helper::http_post($url, $params);
-    echo $response['output'];
+    return $response['output'];
   }
 
   private static function reportFilterPanel($args, $readAuth) {

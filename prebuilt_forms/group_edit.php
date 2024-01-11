@@ -1336,10 +1336,16 @@ $('#entry_form').submit(function() {
   /**
    * Ajax handler allowing the sub list controls for member lookup to be extended to
    * search for people by email address.
-   * @param $website_id
-   * @param $password
-   * @param $nid
-   * @throws \Exception
+   *
+   * @param int $website_id
+   *   Warehouse website ID.
+   * @param string $password
+   *   Warehouse website password.
+   * @param int $nid
+   *   Node ID.
+   *
+   * @return array
+   *   List of users matching the email (normally 1).
    */
   public static function ajax_lookup_email($website_id, $password) {
     if (empty($_GET['email'])) {
@@ -1352,7 +1358,7 @@ $('#entry_form').submit(function() {
       'table' => 'user',
       'extraParams' => $readAuth + array('view' => 'detail', 'email_address' => $_GET['email'])
     ));
-    echo json_encode($data);
+    return $data;
   }
 
 }

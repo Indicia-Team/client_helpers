@@ -1,5 +1,9 @@
 <?php
+
 /**
+ * @file
+ * German translations for the dynamic base class.
+ *
  * Indicia, the OPAL Online Recording Toolkit.
  *
  * This program is free software: you can redistribute it and/or modify
@@ -35,5 +39,5 @@ $custom_terms = [
   'LANG_Save' => 'Save',
   'LANG_Blank_Text' => 'Select...',
   'validation_required' => 'Dieses Feld ist erforderlich.',
-  'Click here' => 'Hier klicken'
-);
+  'Click here' => 'Hier klicken',
+];

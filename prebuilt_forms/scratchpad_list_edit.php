@@ -282,11 +282,18 @@ HTML;
   }
 
   /**
-   * AJAX handler for the Check button's web request. Proxies to the warehouse and requests the list of provided names
-   * is checked against the database.
-   * @param $website_id
-   * @param $password
-   * @return string
+   * AJAX handler for the Check button's web request.
+   *
+   * Proxies to the warehouse and requests the list of provided names is
+   * checked against the database.
+   *
+   * @param int $website_id
+   *   Warehouse website ID.
+   * @param string $password
+   *   Warehouse website password.
+   *
+   * @return array
+   *   Response from the warehouse for the check request.
    */
   public static function ajax_check($website_id, $password) {
     iform_load_helpers(array('data_entry_helper'));
@@ -298,6 +305,6 @@ HTML;
       data_entry_helper::array_to_query_string($_GET);
     $params = array_merge($_POST, $auth);
     $response = data_entry_helper::http_post($url, $params);
-    echo $response['output'];
+    return json_decode($response['output'], TRUE);
   }
 }

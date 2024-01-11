@@ -828,6 +828,7 @@ class filter_quality extends FilterBase {
     'photo',
     'licences',
     'media_licences',
+    'coordinate_precision',
   ]) {
     global $indicia_templates;
     $r = '';
@@ -915,7 +916,7 @@ HTML;
     }
     if (in_array('auto', $ctls)) {
       $checkOptions = [
-        '' => lang::get('No filtering on checks'),
+        '' => lang::get('Not filtered'),
         'P' => lang::get('All checks passed'),
         'F' => lang::get('Any checks failed'),
       ];
@@ -925,11 +926,16 @@ HTML;
       }
       if (!empty($options['autocheck_rules'])) {
         foreach ($options['autocheck_rules'] as $rule) {
-          $checkOptions[$rule] = lang::get("$rule failed");
+          // ID diff handled separately.
+          if ($rule !== 'identification_difficulty') {
+            $checkOptions[$rule] = lang::get("$rule failed");
+          }
         };
       }
       $r .= data_entry_helper::select([
-        'label' => empty($options['customRuleCheckFilters']) ? lang::get('Automated checks') : lang::get('Automated or custom rule checks'),
+        'label' => empty($options['customRuleCheckFilters'])
+          ? lang::get('Select records by specific type of automated check')
+          : lang::get('Select records by specific type of automated or custom rule check'),
         'fieldname' => 'autochecks',
         'lookupValues' => $checkOptions,
       ]);
@@ -937,7 +943,7 @@ HTML;
     if (in_array('difficulty', $ctls)) {
       global $indicia_templates;
       $s1 = data_entry_helper::select([
-        'label' => lang::get('Identification difficulty'),
+        'label' => lang::get('ID difficulty'),
         'fieldname' => 'identification_difficulty_op',
         'lookupValues' => [
           '=' => lang::get('is'),
@@ -946,24 +952,20 @@ HTML;
         ],
       ]);
       $s2 = data_entry_helper::select([
-        'label' => lang::get('Level'),
         'fieldname' => 'identification_difficulty',
         'lookupValues' => [
-          '' => lang::get('any'),
+          '' => lang::get('Not filtered'),
           1 => lang::get('difficulty 1 - easiest to ID'),
           2 => lang::get('difficulty 2'),
           3 => lang::get('difficulty 3'),
           4 => lang::get('difficulty 4'),
           5 => lang::get('difficulty 5 - hardest to ID'),
-          6 => lang::get('difficulty 1 - custom rule'),
+          6 => lang::get('difficulty 6 - custom check'),
         ],
         'controlWrapTemplate' => 'justControl',
       ]);
-      $r .= str_replace(
-        ['{attrs}', '{col-1}', '{col-2}'],
-        [' id="id-diff-cntr" style="display: none"', $s1, $s2],
-        $indicia_templates['two-col-50']
-      );
+      $r .= '<label>' . lang::get('Select records by identification difficulty:') . '</label>';
+      $r .= "<div class=\"form-inline\">$s1$s2</div>";
     }
     if (in_array('photo', $ctls)) {
       $r .= data_entry_helper::select([
@@ -976,8 +978,10 @@ HTML;
         ],
       ]);
     }
+    $licencesCtrl = '';
+    $mediaLicencesCtrl = '';
     if (in_array('licences', $ctls)) {
-      $r .= data_entry_helper::checkbox_group([
+      $licencesCtrl = data_entry_helper::checkbox_group([
         'label' => lang::get('Include records with'),
         'fieldname' => 'licences',
         'lookupValues' => [
@@ -988,7 +992,7 @@ HTML;
       ]);
     }
     if (in_array('media_licences', $ctls)) {
-      $r .= data_entry_helper::checkbox_group([
+      $mediaLicencesCtrl = data_entry_helper::checkbox_group([
         'label' => lang::get('Include records with photos that have'),
         'fieldname' => 'media_licences',
         'lookupValues' => [
@@ -997,6 +1001,51 @@ HTML;
           'restricted' => lang::get('Restricted licence (CC BY-NC)'),
         ],
       ]);
+    }
+    //$r .= var_export($ctls, TRUE);
+    if ($licencesCtrl && $mediaLicencesCtrl) {
+      $r .= str_replace(
+        ['{attrs}', '{col-1}', '{col-2}'],
+        ['', $licencesCtrl, $mediaLicencesCtrl],
+        $indicia_templates['two-col-50'],
+      );
+    }
+    else {
+      $r .= $licencesCtrl;
+      $r .= $mediaLicencesCtrl;
+    }
+    if (in_array('coordinate_precision', $ctls)) {
+      $lang = [
+        'coordinatePrecision' => lang::get('Coordinate precision'),
+        'includeRecordsWhere' => lang::get('Include records where the grid ref precision'),
+      ];
+      $r .= <<<HTML
+<h2>$lang[coordinatePrecision]</h2>
+<p>$lang[includeRecordsWhere]</p>
+HTML;
+      $opCtrl = data_entry_helper::radio_group([
+        'fieldname' => 'coordinate_precision_op',
+        'lookupValues' => [
+          '<=' => lang::get('is the same as or better than'),
+          '>' => lang::get('is worse than'),
+          '=' => lang::get('is equal to'),
+        ],
+      ]);
+      $coordSizeCtrl = data_entry_helper::radio_group([
+        'fieldname' => 'coordinate_precision',
+        'lookupValues' => [
+          '' => lang::get('Not filtered'),
+          '1000' => '1km',
+          '2000' => '2km',
+          '10000' => '10km',
+          '100000' => '100km',
+        ],
+      ]);
+      $r .= str_replace(
+        ['{attrs}', '{col-1}', '{col-2}'],
+        ['', $opCtrl, $coordSizeCtrl],
+        $indicia_templates['two-col-50'],
+      );
     }
     return $r;
   }
@@ -1363,6 +1412,7 @@ function report_filter_panel(array $readAuth, $options, $website_id, &$hiddenStu
     'elasticsearch' => FALSE,
     'customRuleCheckFilters' => FALSE,
     'autocheck_rules' => [
+      'ancillary_species',
       'identification_difficulty',
       'period',
       'period_within_year',
@@ -1843,6 +1893,7 @@ HTML;
     'cannotDeselectAllMediaLicences' => 'You cannot deselect all photo licence options otherwise no records with photos will be returned.',
     'confirmFilterChangedLoad' => 'Do you want to load the selected filter and lose your current changes?',
     'confirmFilterDelete' => 'Are you sure you want to permanently delete the {title} filter?',
+    'coordinatePrecisionIs' => 'Coordinate precision is',
     'createAFilter' => 'Create a filter',
     'quality:P' => 'Pending',
     'quality:V' => 'Accepted (all)',
@@ -1866,6 +1917,9 @@ HTML;
     'orListJoin' => ' or ',
     'pleaseSelect' => 'Please select',
     'recorderCertaintyWas' => 'Recorder certainty was',
+    'sameAsOrBetterThan' => 'same as or better than',
+    'worseThan' => 'worse than',
+    'equalTo' => 'equal to',
   ]);
   if (function_exists('iform_ajaxproxy_url')) {
     report_helper::$javascript .= "indiciaData.filterPostUrl='" . iform_ajaxproxy_url(NULL, 'filter') . "';\n";
@@ -2030,6 +2084,7 @@ function report_filters_full_term_to_sharing_code($term) {
  */
 function report_filters_set_parser_language_strings() {
   report_helper::addLanguageStringsToJs('reportFilterParser', [
+    'Autochecks_ancillary_species' => 'Rarity check failed',
     'Autochecks_F' => 'Automated checks failed',
     'Autochecks_FC' => 'Any custom verification rule check failed',
     'Autochecks_identification_difficulty' => 'ID difficulty check failed',
