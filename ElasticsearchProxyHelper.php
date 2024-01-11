@@ -1381,7 +1381,7 @@ class ElasticsearchProxyHelper {
     self::applyUserFiltersRuleChecks($definition, $bool);
     self::applyUserFiltersHasPhotos($definition, $bool);
     self::applyUserFiltersLicences($definition, $bool, $readAuth);
-    self::applyUserFiltersCoordinatePrecision($definition, $bool, $readAuth);
+    self::applyUserFiltersCoordinatePrecision($definition, $bool);
     self::applyUserFiltersWebsiteList($definition, $bool);
     self::applyUserFiltersSurveyList($definition, $bool);
     self::applyUserFiltersImportGuidList($definition, $bool);
