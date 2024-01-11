@@ -303,6 +303,7 @@ TXT;
    *   Progress data from the warehouse.
    */
   public static function ajax_upload_file($website_id, $password, $nid) {
+    iform_load_helpers(['import_helper_2']);
     return [
       'status' => 'ok',
       'interimFile' => import_helper_2::uploadInterimFile(),
