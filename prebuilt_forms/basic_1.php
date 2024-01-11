@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Indicia, the OPAL Online Recording Toolkit.
  *
@@ -26,64 +27,70 @@ class iform_basic_1 {
 
   /**
    * Return the form metadata.
-   * @return string The definition of the form.
+   *
+   * @return array
+   *   The definition of the form.
    */
   public static function get_basic_1_definition() {
-    return array(
+    return [
       'title' => 'Basic 1 - species, date, place, survey and comment',
       'category' => 'Training/Testing forms',
       'description' => 'A very simple form designed to illustrate the prebuilt form development and setup process.'
-    );
+    ];
   }
 
   /**
    * Get the list of parameters for this form.
-   * @return array List of parameters that this form requires.
+   *
+   * @return array
+   *   List of parameters that this form requires.
    */
   public static function get_parameters() {
-    return array(
-      array(
+    return [
+      [
       	'fieldname' => 'species_ctrl',
         'label' => 'Species Control Type',
         'helpText' => 'The type of control that will be available to select a species.',
         'type' => 'select',
-        'lookupValues' => array(
+        'lookupValues' => [
           'autocomplete' => 'Autocomplete',
           'select' => 'Select',
           'listbox' => 'List box',
           'radio_group' => 'Radio group',
-          'species_checklist' => 'Checkbox grid'
-        )
-      ),
-      array(
+          'species_checklist' => 'Checkbox grid',
+        ],
+      ],
+      [
       	'fieldname' => 'list_id',
         'label' => 'Species List',
         'helpText' => 'The species list that species can be selected from.',
         'type' => 'select',
         'table' => 'taxon_list',
         'valueField' => 'id',
-        'captionField' => 'title'
-      ),
-      array(
+        'captionField' => 'title',
+      ],
+      [
       	'fieldname' => 'preferred',
         'label' => 'Preferred species only?',
         'helpText' => 'Should the selection of species be limited to preferred names only?',
         'type' => 'boolean',
-        'required'=>false
-      ),
-      array(
+        'required' => FALSE,
+      ],
+      [
       	'fieldname' => 'tabs',
         'label' => 'Use Tabbed Interface',
         'helpText' => 'If checked, then the page will be built using a tabbed interface style.',
         'type' => 'boolean',
-        'required'=>false
-      )
-    );
+        'required' => FALSE,
+      ],
+    ];
   }
 
   /**
    * Return the generated form output.
-   * @return Form HTML.
+   *
+   * @return string
+   *   HTML.
    */
   public static function get_form($args) {
     $r = "<form method=\"post\">\n";

@@ -345,7 +345,7 @@ indiciaFns.hookDynamicAttrsAfterLoad = [];
       '<option value="">&lt;' + indiciaData.lang.taxondesig.pleaseSelect + '&gt;</option>' +
       designationOptions +
       '</select></td>').appendTo(tr);
-    $('<td><input type="text" class="form-control taxon-designation-start_date" ' +
+    $('<td><input type="date" class="form-control taxon-designation-start_date" ' +
       'name="taxon-designation-start_date:' + rowCount + '"></td>').appendTo(tr);
     $('<td><input type="text" class="form-control taxon-designation-source" ' +
       'name="taxon-designation-source:' + rowCount + '"></td>').appendTo(tr);
@@ -353,8 +353,6 @@ indiciaFns.hookDynamicAttrsAfterLoad = [];
       'name="taxon-designation-geographical_constraint:' + rowCount + '"></td>').appendTo(tr);
     // Button to remove row.
     $('<td><span class="fas fa-trash-alt taxon-designation-remove"></span></td>').appendTo(tr);
-    // Hook up datepicker.
-    $(tr).find('.taxon-designation-start_date').datepicker();
     return tr;
   }
 

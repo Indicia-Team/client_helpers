@@ -17,10 +17,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers
  */
+
+use Firebase\JWT\JWT;
 
 /**
  * Exception class for request abort.
@@ -410,10 +411,10 @@ class ElasticsearchProxyHelper {
     }
     $statuses = $_POST['doc']['identification'] ?? [];
     return [
-      'updated' => self::internalModifyListOnES(
+      'updated' => self::internalModifyListOnEs(
         $_POST['ids'],
         $statuses,
-        isset($_POST['doc']['metadata']['website']['id']) ? $_POST['doc']['metadata']['website']['id'] : NULL
+        $_POST['doc']['metadata']['website']['id'] ?? NULL
       ),
     ];
   }
@@ -526,7 +527,7 @@ class ElasticsearchProxyHelper {
    *   records after redetermination, until Logstash fills in the taxonomy
    *   again.
    *
-   * @param int
+   * @return int
    *   Number of updated records.
    */
   private static function processWholeEsFilter($nid, array $statuses, $websiteIdToModify = NULL) {
@@ -538,7 +539,7 @@ class ElasticsearchProxyHelper {
     }
     $ids = self::getOccurrenceIdsFromFilter($nid, $_POST['occurrence:idsFromElasticFilter']);
 
-    self::internalModifyListOnES($ids, $statuses, $websiteIdToModify);
+    self::internalModifyListOnEs($ids, $statuses, $websiteIdToModify);
     try {
       self::updateWarehouseVerificationAction($ids, $nid);
     }
@@ -620,7 +621,7 @@ class ElasticsearchProxyHelper {
     // Set website ID to 0, basically disabling the ES copy of the record until
     // a proper update with correct taxonomy information comes through.
     return [
-      'updated' => self::internalModifyListOnES($_POST['ids'], [], 0),
+      'updated' => self::internalModifyListOnEs($_POST['ids'], [], 0),
     ];
   }
 
@@ -697,7 +698,7 @@ class ElasticsearchProxyHelper {
    * @return int
    *   Number of records updated.
    */
-  private static function internalModifyListOnES(array $ids, array $statuses, $websiteIdToModify) {
+  private static function internalModifyListOnEs(array $ids, array $statuses, $websiteIdToModify) {
     $url = self::getEsUrl() . "/_update_by_query";
     $scripts = [];
     if (!empty($statuses['verification_status'])) {
@@ -839,7 +840,7 @@ class ElasticsearchProxyHelper {
       }
       $privateKey = file_get_contents($keyFile);
       $payload = [
-        'iss' => hostsite_get_url('<front>', [], FALSE, TRUE),
+        'iss' => rtrim(hostsite_get_url('<front>', [], FALSE, TRUE), '/'),
         'http://indicia.org.uk/user:id' => hostsite_get_user_field('indicia_user_id'),
         'scope' => $config['es']['scope'],
         'exp' => time() + 300,
@@ -847,7 +848,7 @@ class ElasticsearchProxyHelper {
       $modulePath = \Drupal::service('module_handler')->getModule('iform')->getPath();
       // @todo persist the token in the cache?
       require_once "$modulePath/lib/php-jwt/vendor/autoload.php";
-      $token = \Firebase\JWT\JWT::encode($payload, $privateKey, 'RS256');
+      $token = JWT::encode($payload, $privateKey, 'RS256');
       $headers[] = "Authorization: Bearer $token";
     }
     return $headers;
@@ -855,8 +856,18 @@ class ElasticsearchProxyHelper {
 
   /**
    * A simple wrapper for the cUrl functionality to POST to Elastic.
+   *
+   * @param string $url
+   *   Warehouse REST API Elasticsearch endpoint URL.
+   * @param array $data
+   *   ES request object. Can contain a property `proxyCacheTimeout` if the
+   *   response should be cached for a number of seconds.
+   * @param array $getParams
+   *   Optional query string parameters to add to the URL, e.g. _source.
+   * @param bool $multipart
+   *   Set to TRUE if doint a multi-part form submission.
    */
-  private static function curlPost($url, $data, $getParams = [], $multipart = FALSE) {
+  public static function curlPost($url, array $data, array $getParams = [], $multipart = FALSE) {
     $curlResponse = FALSE;
     $cacheTimeout = FALSE;
     if (!empty($data['proxyCacheTimeout'])) {
@@ -956,7 +967,7 @@ class ElasticsearchProxyHelper {
               if (substr($line, 0, 1) === '@') {
                 $parts = explode('=', $line, 2);
                 $decoded = json_decode($parts[1]);
-                $options[substr($parts[0], 1)] = $decoded === NULL ? $parts[1] : $decoded;
+                $options[substr($parts[0], 1)] = $decoded ?? $parts[1];
               }
               else {
                 // Finish loop as done permissionFilters control options.
@@ -974,7 +985,13 @@ class ElasticsearchProxyHelper {
     }
   }
 
-  private static function buildEsQueryFromRequest($post) {
+  /**
+   * Convert a posted request to an ES query.
+   *
+   * @param array $post
+   *   Posted request data.
+   */
+  private static function buildEsQueryFromRequest(array $post) {
     $query = array_merge([
       'bool_queries' => [],
     ], $post);
@@ -1047,14 +1064,6 @@ class ElasticsearchProxyHelper {
       }
       elseif (in_array($qryConfig['query_type'], $fieldValueQueryTypes)) {
         // One of the standard ES field based query types (e.g. term or match).
-        $queryDef = [$qryConfig['query_type'] => [$qryConfig['field'] => $qryConfig['value']]];
-      }
-      elseif (in_array($qryConfig['query_type'], $fieldQueryTypes)) {
-        // A query type that just needs a field name.
-        $queryDef = [$qryConfig['query_type'] => ['field' => $qryConfig['field']]];
-      }
-      elseif (in_array($qryConfig['query_type'], $arrayFieldQueryTypes)) {
-        // One of the standard ES field based query types (e.g. term or match).
         // Special handling needed for metadata and release_status filters.
         if ($qryConfig['field'] == 'metadata.confidential') {
           self::$confidentialFilterApplied = TRUE;
@@ -1070,6 +1079,13 @@ class ElasticsearchProxyHelper {
           // Omit the filter and release_status = 'R' is applied by default.
           self::$releaseStatusFilterApplied = TRUE;
         }
+        $queryDef = [$qryConfig['query_type'] => [$qryConfig['field'] => $qryConfig['value']]];
+      }
+      elseif (in_array($qryConfig['query_type'], $fieldQueryTypes)) {
+        // A query type that just needs a field name.
+        $queryDef = [$qryConfig['query_type'] => ['field' => $qryConfig['field']]];
+      }
+      elseif (in_array($qryConfig['query_type'], $arrayFieldQueryTypes)) {
         $queryDef = [$qryConfig['query_type'] => [$qryConfig['field'] => json_decode($qryConfig['value'], TRUE)]];
       }
       elseif (in_array($qryConfig['query_type'], $stringQueryTypes)) {
@@ -1100,7 +1116,6 @@ class ElasticsearchProxyHelper {
       else {
         $bool[$qryConfig['bool_clause']][] = $queryDef;
       }
-
     }
     unset($query['bool_queries']);
     // Apply a training mode filter.
@@ -1361,10 +1376,12 @@ class ElasticsearchProxyHelper {
     self::applyUserFiltersOccExternalKey($definition, $bool);
     self::applyUserFiltersSmpId($definition, $bool);
     self::applyUserFiltersQuality($definition, $bool);
+    self::applyUserFiltersCertainty($definition, $bool);
     self::applyUserFiltersIdentificationDifficulty($definition, $bool);
     self::applyUserFiltersRuleChecks($definition, $bool);
-    self::applyUserFiltersAutoCheckRule($definition, $bool);
     self::applyUserFiltersHasPhotos($definition, $bool);
+    self::applyUserFiltersLicences($definition, $bool, $readAuth);
+    self::applyUserFiltersCoordinatePrecision($definition, $bool);
     self::applyUserFiltersWebsiteList($definition, $bool);
     self::applyUserFiltersSurveyList($definition, $bool);
     self::applyUserFiltersImportGuidList($definition, $bool);
@@ -1522,7 +1539,7 @@ class ElasticsearchProxyHelper {
     if (!empty($filter)) {
       if ($filter['op'] === '=') {
         $bool['must'][] = [
-          'match' => [
+          'term' => [
             'taxon.taxon_rank_sort_order' => $filter['value'],
           ],
         ];
@@ -1557,7 +1574,7 @@ class ElasticsearchProxyHelper {
     // Filter op can be =, >= or <=.
     if (!empty($filter) && $filter['value'] !== 'all') {
       $bool['must'][] = [
-        'match' => [
+        'term' => [
           "taxon.$flag" => $filter['value'] === 'Y',
         ],
       ];
@@ -1570,8 +1587,8 @@ class ElasticsearchProxyHelper {
    * For ES purposes, any location_list filter is modified to a searchArea
    * filter beforehand.
    *
-   * @param string $definition
-   *   WKT for the searchArea in EPSG:4326.
+   * @param array $definition
+   *   Containing WKT for the searchArea in EPSG:4326.
    * @param array $bool
    *   Bool clauses that filters can be added to (e.g. $bool['must']).
    */
@@ -1755,9 +1772,17 @@ class ElasticsearchProxyHelper {
    *   Bool clauses that filters can be added to (e.g. $bool['must']).
    */
   private static function applyUserFiltersWho(array $definition, array &$bool) {
-    if (!empty($definition['my_records']) && $definition['my_records'] === '1') {
+    if (!empty($definition['my_records']) && ((string) $definition['my_records'] === '1' || (string) $definition['my_records'] === '0')) {
+      $bool[$definition['my_records'] === '1' ? 'must' : 'must_not'][] = [
+        'term' => ['metadata.created_by_id' => hostsite_get_user_field('indicia_user_id')],
+      ];
+    }
+    if (!empty($definition['recorder_name']) && !empty(trim($definition['recorder_name']))) {
       $bool['must'][] = [
-        'match' => ['metadata.created_by_id' => hostsite_get_user_field('indicia_user_id')],
+        'query_string' => [
+          'default_field' => 'event.recorded_by',
+          'query' => '*' . $definition['recorder_name'] . '*',
+        ],
       ];
     }
   }
@@ -1853,124 +1878,279 @@ class ElasticsearchProxyHelper {
   private static function applyUserFiltersQuality(array $definition, array &$bool) {
     $filter = self::getDefinitionFilter($definition, ['quality']);
     if (!empty($filter)) {
-      switch ($filter['value']) {
-        case 'V1':
-          $bool['must'][] = ['match' => ['identification.verification_status' => 'V']];
-          $bool['must'][] = ['match' => ['identification.verification_substatus' => 1]];
-          break;
+      $valueList = explode(',', $filter['value']);
+      $defs = [];
+      foreach ($valueList as $value) {
+        switch ($value) {
+          // Answered query.
+          case 'A':
+            $defs[] = [
+              'term' => ['identification.query.keyword' => 'A'],
+            ];
+            break;
 
-        case 'V':
-          $bool['must'][] = ['match' => ['identification.verification_status' => 'V']];
-          break;
-
-        case '-3':
-          $bool['must'][] = [
-            'bool' => [
-              'should' => [
-                [
-                  'bool' => [
-                    'must' => [
-                      ['term' => ['identification.verification_status' => 'V']],
-                    ],
-                  ],
+          // Plausible.
+          case 'C3':
+            $defs[] = [
+              'bool' => [
+                'must' => [
+                  ['term' => ['identification.verification_status' => 'C']],
+                  ['term' => ['identification.verification_substatus' => 3]],
                 ],
-                [
-                  'bool' => [
-                    'must' => [
-                      ['term' => ['identification.verification_status' => 'C']],
-                      ['term' => ['identification.verification_substatus' => 3]],
+              ],
+            ];
+            break;
+
+          // Queried.
+          case 'D':
+            $defs[] = [
+              'term' => ['identification.query.keyword' => 'Q'],
+            ];
+            break;
+
+          // Decision by other verifiers.
+          case 'OV':
+            $userId = hostsite_get_user_field('indicia_user_id');
+            $defs[] = [
+              'query_string' => ['query' => "(NOT identification.verifier.id:$userId AND _exists_:identification.verifier.id)"],
+            ];
+            break;
+
+          case 'P':
+            $defs[] = [
+              'bool' => [
+                'must' => [
+                  ['term' => ['identification.verification_status' => 'C']],
+                  ['term' => ['identification.verification_substatus' => 0]],
+                ],
+                'must_not' => [
+                  ['exists' => ['field' => 'identification.query']],
+                ],
+              ],
+            ];
+            break;
+
+          // Not accepted.
+          case 'R':
+            $defs[] = [
+              'term' => ['identification.verification_status' => 'R'],
+            ];
+            break;
+
+          case 'R4':
+            $defs[] = [
+              'bool' => [
+                'must' => [
+                  ['term' => ['identification.verification_status' => 'R']],
+                  ['term' => ['identification.verification_substatus' => 4]],
+                ],
+              ],
+            ];
+            break;
+
+          case 'R5':
+            $defs[] = [
+              'bool' => [
+                'must' => [
+                  ['term' => ['identification.verification_status' => 'R']],
+                  ['term' => ['identification.verification_substatus' => 5]],
+                ],
+              ],
+            ];
+            break;
+
+          // Accepted.
+          case 'V':
+            $defs[] = ['term' => ['identification.verification_status' => 'V']];
+            break;
+
+          case 'V1':
+            $defs[] = [
+              'bool' => [
+                'must' => [
+                  ['term' => ['identification.verification_status' => 'V']],
+                  ['term' => ['identification.verification_substatus' => 1]],
+                ],
+              ],
+            ];
+            break;
+
+          case 'V2':
+            $defs[] = [
+              'bool' => [
+                'must' => [
+                  ['term' => ['identification.verification_status' => 'V']],
+                  ['term' => ['identification.verification_substatus' => 2]],
+                ],
+              ],
+            ];
+            break;
+
+          // Legacy parameters to support old filters.
+          // Accepted or plausible.
+          case '-3':
+            $defs[] = [
+              'bool' => [
+                'should' => [
+                  // Verified.
+                  ['term' => ['identification.verification_status' => 'V']],
+                  // Or plausible.
+                  [
+                    'bool' => [
+                      'must' => [
+                        ['term' => ['identification.verification_status' => 'C']],
+                        ['term' => ['identification.verification_substatus' => 3]],
+                      ],
                     ],
                   ],
                 ],
               ],
-            ],
-          ];
-          break;
+            ];
+            break;
 
-        case 'C3':
-          $bool['must'][] = ['match' => ['identification.verification_status' => 'C']];
-          $bool['must'][] = ['match' => ['identification.verification_substatus' => 3]];
-          break;
-
-        case 'C':
-          $bool['must'][] = ['match' => ['identification.recorder_certainty' => 'Certain']];
-          $bool['must_not'][] = ['match' => ['identification.verification_status' => 'R']];
-          break;
-
-        case 'L':
-          $bool['must'][] = [
-            'terms' => [
-              'identification.recorder_certainty.keyword' => [
-                'Certain',
-                'Likely',
+          // Not queried or rejected.
+          case '!D':
+            $defs[] = [
+              'bool' => [
+                'must_not' => [
+                  ['term' => ['identification.verification_status' => 'R']],
+                  ['terms' => ['identification.query.keyword' => ['Q', 'A']]],
+                ],
               ],
-            ],
-          ];
-          $bool['must_not'][] = ['match' => ['identification.verification_status' => 'R']];
-          break;
+            ];
+            break;
 
-        case 'P':
-          $bool['must'][] = ['match' => ['identification.verification_status' => 'C']];
-          $bool['must'][] = ['match' => ['identification.verification_substatus' => 0]];
-          $bool['must_not'][] = ['exists' => ['field' => 'identification.query']];
-          break;
+          // Not rejected.
+          case '!R':
+            $defs[] = [
+              'bool' => [
+                'must_not' => [
+                  ['term' => ['identification.verification_status' => 'R']],
+                ],
+              ],
+            ];
+            break;
 
-        case '!R':
-          $bool['must_not'][] = ['match' => ['identification.verification_status' => 'R']];
-          break;
+          // Recorder certain.
+          case 'C':
+            $defs[] = [
+              'bool' => [
+                'must' => [
+                  ['term' => ['identification.recorder_certainty.keyword' => 'Certain']],
+                ],
+                'must_not' => [
+                  ['term' => ['identification.verification_status' => 'R']],
+                ],
+              ],
+            ];
+            break;
 
-        case '!D':
-          $bool['must_not'][] = [
-            'match' => ['identification.verification_status' => 'R'],
-          ];
-          $bool['must_not'][] = [
-            'terms' => ['identification.query.keyword' => ['Q', 'A']],
-          ];
-          break;
-
-        case 'D':
-          $bool['must'][] = ['match' => ['identification.query' => 'Q']];
-          break;
-
-        case 'A':
-          $bool['must'][] = ['match' => ['identification.query' => 'A']];
-          break;
-
-        case 'R':
-          $bool['must'][] = ['match' => ['identification.verification_status' => 'R']];
-          break;
-
-        case 'R4':
-          $bool['must'][] = ['match' => ['identification.verification_status' => 'R']];
-          $bool['must'][] = ['match' => ['identification.verification_substatus' => 4]];
-          break;
-
-        case 'DR':
           // Queried or not accepted.
-          $bool['must'][] = [
-            'bool' => [
-              'should' => [
-                [
-                  'bool' => [
-                    'must' => [
-                      ['term' => ['identification.verification_status' => 'R']],
+          case 'DR':
+            $defs[] = [
+              'bool' => [
+                'should' => [
+                  ['term' => ['identification.verification_status' => 'R']],
+                  ['match' => ['identification.query' => 'Q']],
+                ],
+              ],
+            ];
+            break;
+
+          // Recorder thinks record identification is likely.
+          case 'L':
+            $defs[] = [
+              'bool' => [
+                'must' => [
+                  [
+                    'terms' => [
+                      'identification.recorder_certainty.keyword' => [
+                        'Certain',
+                        'Likely',
+                      ],
                     ],
                   ],
                 ],
-                [
-                  'bool' => [
-                    'must' => [
-                      ['match' => ['identification.query' => 'Q']],
-                    ],
+                'must_not' => [
+                  ['term' => ['identification.verification_status' => 'R']],
+                ],
+              ],
+            ];
+            break;
+
+          default:
+            // Nothing to do for 'all'.
+        }
+      }
+      if (!empty($defs)) {
+        $boolGroup = !empty($filter['op']) && $filter['op'] === 'not in' ? 'must_not' : 'must';
+        if (count($defs) === 1) {
+          // Single filter can be simplified.
+          $bool[$boolGroup][] = [array_keys($defs[0])[0] => array_values($defs[0])[0]];
+        }
+        else {
+          // Join multiple filters with OR.
+          $bool[$boolGroup][] = ['bool' => ['should' => $defs]];
+        }
+      }
+    }
+  }
+
+  /**
+   * Converts an Indicia filter definition certainty filter to an ES query.
+   *
+   * @param array $definition
+   *   Definition loaded for the Indicia filter.
+   * @param array $bool
+   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   */
+  private static function applyUserFiltersCertainty(array $definition, array &$bool) {
+    $filter = self::getDefinitionFilter($definition, ['certainty']);
+    if (!empty($filter)) {
+      $certaintyCodes = explode(',', $filter['value']);
+      $certaintyMapping = [
+        'C' => 'Certain',
+        'L' => 'Likely',
+        'U' => 'Maybe',
+      ];
+      $certaintyTerms = [];
+      foreach ($certaintyCodes as $code) {
+        if (array_key_exists($code, $certaintyMapping)) {
+          $certaintyTerms[] = $certaintyMapping[$code];
+        }
+      }
+      $boolClauses = [];
+      if (in_array('NS', $certaintyCodes)) {
+        // Not stated in the list, needs special handling.
+        $boolClauses['must_not'] = ['exists' => ['field' => 'identification.recorder_certainty']];
+      }
+      if (count($certaintyTerms)) {
+        $boolClauses['must'] = ['terms' => ['identification.recorder_certainty.keyword' => $certaintyTerms]];
+      }
+      if (count($boolClauses) === 1) {
+        $bool[array_keys($boolClauses)[0]][] = array_values($boolClauses)[0];
+      }
+      elseif (count($boolClauses) === 2) {
+        $bool['must'][] = [
+          'bool' => [
+            'should' => [
+              [
+                'bool' => [
+                  array_keys($boolClauses)[0] => [
+                    array_values($boolClauses)[0],
+                  ],
+                ],
+              ],
+              [
+                'bool' => [
+                  array_keys($boolClauses)[1] => [
+                    array_values($boolClauses)[1],
                   ],
                 ],
               ],
             ],
-          ];
-          break;
-
-        default:
-          // Nothing to do for 'all'.
+          ],
+        ];
       }
     }
   }
@@ -2013,7 +2193,12 @@ class ElasticsearchProxyHelper {
    *   Bool clauses that filters can be added to (e.g. $bool['must']).
    */
   private static function applyUserFiltersRuleChecks(array $definition, array &$bool) {
-    $filter = self::getDefinitionFilter($definition, ['autochecks']);
+    // Also check for legacy autocheck_rule filters which are now merged with
+    // autochecks.
+    $filter = self::getDefinitionFilter($definition, [
+      'autocheck_rule',
+      'autochecks',
+    ]);
     if (!empty($filter)) {
       if (in_array($filter['value'], ['P', 'F'])) {
         // Pass or Fail options are auto-checks from the Data Cleaner module.
@@ -2043,26 +2228,14 @@ class ElasticsearchProxyHelper {
           ],
         ];
       }
+      else {
+        // Other filter values are rule names.
+        $value = str_replace('_', '', $filter['value']);
+        $bool['must'][] = [
+          'term' => ['identification.auto_checks.output.rule_type' => $value],
+        ];
+      }
     }
-  }
-
-  /**
-   * Converts an Indicia filter definition auto checks filter to an ES query.
-   *
-   * @param array $definition
-   *   Definition loaded for the Indicia filter.
-   * @param array $bool
-   *   Bool clauses that filters can be added to (e.g. $bool['must']).
-   */
-  private static function applyUserFiltersAutoCheckRule(array $definition, array &$bool) {
-    $filter = self::getDefinitionFilter($definition, ['autocheck_rule']);
-    if (!empty($filter)) {
-      $value = str_replace('_', '', $filter['value']);
-      $bool['must'][] = [
-        'term' => ['identification.auto_checks.output.rule_type' => $value],
-      ];
-    }
-
   }
 
   /**
@@ -2161,6 +2334,186 @@ class ElasticsearchProxyHelper {
       $bool['must'][] = [
         'terms' => ['metadata.group.id' => explode(',', $filter['value'])],
       ];
+    }
+  }
+
+  /**
+   * Retrieve licence codes from the database.
+   *
+   * Returns a list of licence codes grouped into open and restricted licences.
+   *
+   * @param array $readAuth
+   *   Read authenticattion tokens.
+   *
+   * @return array
+   *   Array with open and restricted keys, each containing a child array of
+   *   codes.
+   */
+  private static function getLicenceCodes(array $readAuth) {
+    $r = [
+      'open' => [],
+      'restricted' => [],
+    ];
+    $licences = helper_base::get_population_data([
+      'table' => 'licence',
+      'extraParams' => $readAuth,
+      'columns' => 'code,open',
+      'cachePerUser' => FALSE,
+    ]);
+    foreach ($licences as $licence) {
+      $r[$licence['open'] === 't' ? 'open' : 'restricted'][] = $licence['code'];
+    }
+    return $r;
+  }
+
+  /**
+   * Returns the list of licence codes that should be included in a filter.
+   *
+   * @param array $licenceTypes
+   *   List of types that should be in the filter, options are open and
+   *   restricted.
+   * @param array $licenceCodes
+   *   Licence codes loaded from the database.
+   *
+   * @return array
+   *   Simple array of the licence codes that should be included in the filter.
+   */
+  private static function getLicencesToAllow(array $licenceTypes, array $licenceCodes) {
+    $licencesToAllow = [];
+    if (in_array('open', $licenceTypes)) {
+      $licencesToAllow = array_merge($licencesToAllow, $licenceCodes['open']);
+    }
+    if (in_array('restricted', $licenceTypes)) {
+      $licencesToAllow = array_merge($licencesToAllow, $licenceCodes['restricted']);
+    }
+    return $licencesToAllow;
+  }
+
+  /**
+   * Converts an Indicia filter's licences or media_licences to an ES query.
+   *
+   * @param array $definition
+   *   Definition loaded for the Indicia filter.
+   * @param array $bool
+   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   * @param array $readAuth
+   *   Read authentication tokens.
+   */
+  private static function applyUserFiltersLicences(array $definition, array &$bool, array $readAuth) {
+    $licenceCodes = self::getLicenceCodes($readAuth);
+    $filter = self::getDefinitionFilter($definition, ['licences']);
+    if (!empty($filter)) {
+      $licenceTypes = explode(',', $filter['value']);
+      if (count(array_diff(['none', 'open', 'restricted'], $licenceTypes)) > 0) {
+        // Record licences filter. Build a list of possibilities.
+        $options = [];
+        if (in_array('none', $licenceTypes)) {
+          // Add option for records that have no licences.
+          $options[] = [
+            'bool' => [
+              'must_not' => [
+                'exists' => ['field' => 'metadata.licence_code'],
+              ],
+            ],
+          ];
+        }
+        // Add options for the codes matching the requested licence types.
+        if (in_array('open', $licenceTypes) || in_array('restricted', $licenceTypes)) {
+          $options[] = [
+            'terms' => [
+              'metadata.licence_code.keyword' => self::getLicencesToAllow($licenceTypes, $licenceCodes),
+            ],
+          ];
+        }
+        $bool['must'][] = [
+          'bool' => ['should' => $options],
+        ];
+      }
+    }
+    $filter = self::getDefinitionFilter($definition, ['media_licences']);
+    if (!empty($filter)) {
+      $licenceTypes = explode(',', $filter['value']);
+      if (count(array_diff(['none', 'open', 'restricted'], $licenceTypes)) > 0) {
+        // Media licences filter. Build a list of possibilities, starting with
+        // allowing records with no photos.
+        $options = [
+          [
+            'bool' => [
+              'must_not' => [
+                'nested' => [
+                  'path' => 'occurrence.media',
+                  'query' => [
+                    'exists' => ['field' => 'occurrence.media'],
+                  ],
+                ],
+              ],
+            ],
+          ],
+        ];
+        if (in_array('none', $licenceTypes)) {
+          // Add option for records with photos that have no licences.
+          $options[] = [
+            'bool' => [
+              'must_not' => [
+                'nested' => [
+                  'path' => 'occurrence.media',
+                  'query' => [
+                    'exists' => ['field' => 'occurrence.media.licence'],
+                  ],
+                ],
+              ],
+            ],
+          ];
+        }
+        // Add options for the codes matching the requested licence types.
+        if (in_array('open', $licenceTypes) || in_array('restricted', $licenceTypes)) {
+          $options[] = [
+            'nested' => [
+              'path' => 'occurrence.media',
+              'query' => [
+                'terms' => [
+                  'occurrence.media.licence.keyword' => self::getLicencesToAllow($licenceTypes, $licenceCodes),
+                ],
+              ],
+            ],
+          ];
+        }
+        $bool['must'][] = [
+          'bool' => ['should' => $options],
+        ];
+      }
+    }
+  }
+
+  /**
+   * Converts a filter definition coordinate_precision filter to an ES query.
+   *
+   * @param array $definition
+   *   Definition loaded for the Indicia filter.
+   * @param array $bool
+   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   */
+  private static function applyUserFiltersCoordinatePrecision(array $definition, array &$bool) {
+    $filter = self::getDefinitionFilter($definition, ['coordinate_precision']);
+    \Drupal::logger('iform')->notice(var_export($filter, TRUE));
+    if (!empty($filter)) {
+      // Default is same as or better than.
+      $filter['op'] = $filter['op'] ?? '<=';
+      if ($filter['op'] === '=') {
+        $bool['must'][] = [
+          'term' => ['location.coordinate_uncertainty_in_meters' => $filter['value']],
+        ];
+      }
+      else {
+        $op = $filter['op'] === '<=' ? 'lte' : 'gt';
+        $bool['must'][] = [
+          'range' => [
+            'location.coordinate_uncertainty_in_meters' => [
+              $op => $filter['value'],
+            ],
+          ],
+        ];
+      }
     }
   }
 
@@ -2343,7 +2696,7 @@ class ElasticsearchProxyHelper {
     if (!$precheck && $output->code === 200) {
       // Set website ID to 0, basically disabling the ES copy of the record
       // until a proper update with correct taxonomy information comes through.
-      self::internalModifyListOnES($ids, [], 0);
+      self::internalModifyListOnEs($ids, [], 0);
     }
     return $response['output'];
   }

@@ -128,6 +128,7 @@ class import_helper_2 extends helper_base {
     self::$indiciaData['importChunkUrl'] = $options['importChunkUrl'];
     self::$indiciaData['getErrorFileUrl'] = $options['getErrorFileUrl'];
     self::$indiciaData['write'] = $options['writeAuth'];
+    self::$indiciaData['advancedFields'] = $options['advancedFields'];
     $nextImportStep = empty($_POST['next-import-step']) ? 'fileSelectForm' : $_POST['next-import-step'];
     self::$indiciaData['step'] = $nextImportStep;
     switch ($nextImportStep) {
@@ -779,10 +780,13 @@ HTML;
     $lang = [
       'columnInImportFile' => lang::get('Column in import file'),
       'destinationDatabaseField' => lang::get('Destination database field'),
+      'display' => lang::get('Display'),
       'instructions' => lang::get($options['mappingsFormIntro']),
       'next' => lang::get('Next step'),
       'requiredFields' => lang::get('Required fields'),
       'requiredFieldsInstructions' => lang::get($options['requiredFieldsIntro']),
+      'standardFieldsOnly' => lang::get('standard fields'),
+      'standardAndAdvancedFields' => lang::get('standard and advanced fields'),
       'title' => lang::get('Map import columns to destination database fields'),
     ];
     self::addLanguageStringsToJs('import_helper_2', [
@@ -843,6 +847,11 @@ HTML;
     return <<<HTML
 <h3>$lang[title]</h3>
 <p>$lang[instructions]</p>
+<div class="inline field-type-selector">
+  <span>$lang[display]</span>
+  <label class="radio-inline auto"><input type="radio" name="field-type-toggle" value="standard" checked> $lang[standardFieldsOnly]</label>
+  <label class="radio-inline auto"><input type="radio" name="field-type-toggle" value="advanced"> $lang[standardAndAdvancedFields]</label>
+</div>
 <form method="POST">
   <div class="row">
     <div class="col-md-8">
@@ -908,42 +917,74 @@ HTML;
         $shortGroupLabels[$optGroup] = lang::get("optionGroup-$fieldParts[0]-shortLabel");
       }
       // Find variants of field names for auto matching.
+      $alts = [];
       switch ($field) {
-        case 'sample:date':
-          $alt = ' data-alt="eventdate"';
+        case 'occurrence:comment':
+          $alts = ['comment', 'comments', 'notes'];
           break;
 
-        case 'sample:entered_sref':
-          $alt = ' data-alt="gridref,gridreference,spatialref,spatialreference,mapref,mapreference"';
-          break;
-
-        case 'sample:location_name':
-          $alt = ' data-alt="location,site,sitename"';
-          break;
-
-        case 'sample:recorder_names':
-          $alt = ' data-alt="recorder,recordername,recordernames"';
+        case 'occurrence:external_key':
+          $alts = ['recordkey', 'ref', 'referenceno', 'referencenumber'];
           break;
 
         case 'occurrence:fk_taxa_taxon_list':
-          $alt = ' data-alt="species,speciesname,taxon,taxonname,scientificname"';
+          $alts = ['commonname', 'scientificname', 'species', 'speciesname', 'taxon', 'taxonname', 'vernacular'];
+          break;
+
+        case 'occurrence:fk_taxa_taxon_list:search_code':
+          $alts = ['searchcode','tvk','taxonversionkey'];
+          break;
+
+        case 'sample:date':
+          $alts = ['eventdate'];
+          break;
+
+        case 'sample:entered_sref':
+          $alts = ['gridref', 'gridreference', 'spatialref', 'spatialreference', 'mapref', 'mapreference', 'coords', 'coordinates'];
+          break;
+
+        case 'sample:location_name':
+          $alts = ['location', 'site', 'sitename'];
+          break;
+
+        case 'sample:recorder_names':
+          $alts = ['recorder', 'recordername', 'recordernames'];
           break;
 
         default:
           $alt = '';
       }
-      // Also use caption to pick up custom attributes.
-      if (substr($field, 3, 5) === 'Attr:') {
-        switch (preg_replace('/[^a-z]/', '', strtolower($caption))) {
-          case 'recorder':
-          case 'recordername':
-          case 'recordernames':
-            $alt = ' data-alt="recorder,recordername,recordernames"';
-            break;
+      // Matching variations for some potential custom attribute captions.
+      if (preg_match('/(.+) \(.+\)/', $caption, $matches)) {
+        // Strip anything in brackets from caption we are checking.
+        $captionSimplified = preg_replace('/[^a-z]/', '', strtolower($matches[1]));
+      }
+      else {
+        $captionSimplified = preg_replace('/[^a-z]/', '', strtolower($caption));
+      }
+      $customAttrVariations = [
+        ['abundance', 'count', 'qty', 'quantity'],
+        ['vc', 'vicecounty', 'vicecountynumber'],
+        ['recorder', 'recordername', 'recordernames', 'recorders'],
+        ['determinedby', 'determiner', 'identifiedby', 'identifier'],
+        ['lifestage','stage'],
+      ];
+      foreach ($customAttrVariations as $variationSet) {
+        if (in_array(strtolower($captionSimplified), $variationSet)) {
+          unset($variationSet[array_search($captionSimplified, $variationSet)]);
+          $alts = array_merge($alts, $variationSet);
         }
       }
-      $translatedCaption = lang::get($caption);
-      $colsByGroup[$optGroup][$translatedCaption] = "<option value=\"$field\" data-untranslated=\"$caption\"$alt>$translatedCaption</option>";
+      // Build the data attribute.
+      $alt = empty($alts) ? '' : ' data-alt="' . implode(',', $alts) . '"';
+      // Translation can be a precise term keyed by the field name, or a loose
+      // term keyed off the caption.
+      $translatedCaption = lang::get($field);
+      if ($translatedCaption === $field) {
+        $translatedCaption = lang::get($caption);
+      }
+      $advanced = in_array($field, $options['advancedFields']) ? ' class="advanced" ' : '';
+      $colsByGroup[$optGroup][$translatedCaption] = "<option value=\"$field\"$advanced data-untranslated=\"$caption\"$alt>$translatedCaption</option>";
     }
     $optGroupHtmlList = ["<option value=\"\">- $lang[notImported] -</option>"];
     foreach ($colsByGroup as $thisColOptionGroup => $optionsList) {
@@ -1589,6 +1630,7 @@ HTML;
       'extraParams' => $options['readAuth'] + [
         'entity' => $options['entity'],
         'created_by_id' => hostsite_get_user_field('indicia_user_id'),
+        'orderby' => 'title',
       ],
     ]);
   }

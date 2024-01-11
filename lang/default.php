@@ -63,7 +63,8 @@ $default_terms = [
   // Default labels for various database fields.
   'occurrence:taxa_taxon_list_id' => 'Species',
   'sample:date' => 'Date',
-  'sample:entered_sref' => 'Spatial Reference',
+  'sample:entered_sref' => 'Spatial reference',
+  'sample:entered_sref_system' => 'Spatial reference system',
 
   // Spatial reference systems.
   'sref:OSGB' => 'British National Grid',
@@ -98,6 +99,13 @@ $default_terms = [
   'Click to Filter Occ_id' => 'Select records by record ID',
   'Click to Filter Quality' => 'Select records based on quality criteria such as verification status or presence of photos',
   'Click to Filter Source' => 'Select records based on source website, survey or input form',
+
+  // Data cleaner rules.
+  'ancillary_species failed' => 'Rarity check failed',
+  'identification_difficulty failed' => 'ID difficulty check failed',
+  'period failed' => 'Year range check failed',
+  'period_within_year failed' => 'Date range check failed',
+  'without_polygon failed' => 'Distribution check failed',
 ];
 
 // Some bigger bits of text better handled with HEREDOC.

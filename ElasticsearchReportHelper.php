@@ -92,6 +92,10 @@ class ElasticsearchReportHelper {
       'caption' => 'Submitted on',
       'description' => 'Date the record was submitted.',
     ],
+    'metadata.licence_code' => [
+      'caption' => 'Licence',
+      'description' => 'Code for the licence that applies to the record.',
+    ],
     'metadata.website.id' => [
       'caption' => 'Website ID',
       'description' => 'Unique ID of the website the record was submitted from.',
@@ -686,6 +690,7 @@ HTML;
     if (empty($group_id) && $options['missingGroupIdBehaviour'] !== 'showAll') {
       hostsite_show_message(lang::get('The link you have followed is invalid.'), 'warning', TRUE);
       hostsite_goto_page('<front>');
+      return '';
     }
     require_once 'prebuilt_forms/includes/groups.php';
     $member = group_authorise_group_id($group_id, $options['readAuth']);
@@ -708,6 +713,7 @@ HTML;
         if (!count($groups)) {
           hostsite_show_message(lang::get('The link you have followed is invalid.'), 'warning', TRUE);
           hostsite_goto_page('<front>');
+          return '';
         }
         $group = $groups[0];
         if ($options['showGroupSummary']) {
@@ -1141,7 +1147,7 @@ HTML;
 
     helper_base::$late_javascript .= <<<JS
 $('#es-filter-summary').idcFilterSummary('populate');
-$('.es-filter-param, .user-filter, .permissions-filter, .standalone-quality-filter select').change(function () {
+$('.es-filter-param, .user-filter, .permissions-filter, .standalone-quality-filter select,.standalone-media-filter select').change(function () {
     // Update any summary output
     $('#es-filter-summary').idcFilterSummary('populate');
 });
@@ -1149,6 +1155,25 @@ $('.es-filter-param, .user-filter, .permissions-filter, .standalone-quality-filt
 JS;
 
     return self::getControlContainer('filterSummary', $options, json_encode([]), $html);
+  }
+
+  /**
+   * Output a selector for presence of media.
+   *
+   * Mirrors the 'quality - records and photos' drop-down in standardParams
+   * control.
+   *
+   * @return string
+   *   Select HTML.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-mediafilter
+   */
+  public static function mediaFilter(array $options) {
+    require_once 'prebuilt_forms/includes/report_filters.php';
+    $options = array_merge([
+      'standalone' => TRUE,
+    ], $options);
+    return media_filter_control($options['readAuth'], $options);
   }
 
   /**
@@ -1166,9 +1191,9 @@ JS;
     $options = array_merge([
       'sharing' => 'reporting',
       'elasticsearch' => TRUE,
+      'standalone' => TRUE,
     ], $options);
-
-    return status_control($options['readAuth'], $options);
+    return status_filter_control($options['readAuth'], $options);
   }
 
   /**
@@ -2418,7 +2443,10 @@ AGG;
     // Build a hidden input which causes filtering to this list.
     $keys = [];
     foreach ($listEntries as $row) {
-      $keys[] = $row[$outputField];
+      if ($row[$outputField]) {
+        // Don't want nulls as they break ES terms filters.
+        $keys[] = $row[$outputField];
+      }
     }
     return str_replace('"', '&quot;', json_encode($keys));
   }

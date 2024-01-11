@@ -48,67 +48,99 @@ class filter_what extends FilterBase {
    * @return string
    */
   public function getControls(array $readAuth, array $options) {
+    global $indicia_templates;
     $r = '';
+    // Optional tab texts.
+    $orDesignations = $options['elasticsearch'] ? '' : 'or designations, ';
+    $orScratchpads = empty($options['scratchpadSearch']) ? '' : 'or scratchpads, ';
+    // Language strings for emmitted HTML.
+    $lang = [
+      'buildListOfGroups' => lang::get('Build a list of groups'),
+      'designations' => lang::get('Designations'),
+      'includeMyGroups' => lang::get('Include my groups'),
+      'level' => lang::get('Level'),
+      'myGroups' => lang::get('My groups'),
+      'otherFlags' => lang::get('Other flags'),
+      'scratchpads' => lang::get('Scratchpads'),
+      'selectAnyTab' => lang::get("Select the appropriate tab to filter by species group; or taxon name; {$orDesignations}or taxon level; {$orScratchpads}or other flags (such as marine, or non-native)."),
+      'speciesGroups' => lang::get('Species groups'),
+      'speciesGroupsFullListLink' => lang::get('Click here to show the full list'),
+      'speciesGroupsIntro1' => lang::get('This tab allows you to choose one or more broad species groups. These have to match the group names that we use. Find a group by typing any part of its name, e.g. type "moth" to find "insect - moth".'),
+      'speciesGroupsIntro2' => lang::get('Click on the group name from the dropdown list, then click on Add. You can add multiple groups. When you have added all the groups that you want, click Apply to filter the records.'),
+      'speciesGroupsIntro3' => lang::get('Go to the "Species or higher taxa" tab to chose an individual species, genus or family etc.'),
+      'speciesGroupsLimited' => lang::get('Please note that your access permissions are limiting the groups available to choose from.'),
+      'speciesIntro1' => lang::get('This tab allows you to choose one or more individual species, or you can use genus, family, order etc. Type in a scientific or English name and click on the name you want from the dropdown list that appears. Then click on Add.'),
+      'speciesIntro2' => lang::get('You can add multiple species or higher taxa. When you have added all the names that you want, click Apply to filter the records.'),
+      'speciesLimited' => lang::get('Please note that your access permissions will limit the records returned to the species you are allowed to see.'),
+      'speciesOrHigherTaxa' => lang::get('Species or higher taxa'),
+    ];
     // There is only one tab when running on the Warehouse.
     if (!isset($options['runningOnWarehouse']) || $options['runningOnWarehouse'] == FALSE) {
       if (!empty($options['scratchpadSearch']) && $options['scratchpadSearch'] == TRUE) {
         $r .= "<p id=\"what-filter-instruct\">" . lang::get('Select the appropriate tab to filter by species group, taxon name, ' .
             'the level within the taxonomic hierarchy, a species scratchpad or other flags such as marine/terrestrial/freshwater or non-native taxa.') . "</p>\n";
-      } else {
-        $r .= "<p id=\"what-filter-instruct\">" . lang::get('Select the appropriate tab to filter by species group, taxon name, ' .
-            'the level within the taxonomic hierarchy or other flags such as marine/terrestrial/freshwater or non-native taxa.') . "</p>\n";
+      }
+      else {
+        $r .= "<p id=\"what-filter-instruct\">$lang[selectAnyTab]</p>\n";
       }
     }
-    $r .= '<div id="what-tabs">' . "\n";
+    $r .= "<div id=\"what-tabs\">\n";
+    // Designations filter currently not available in ES.
+    $designationsTab = $options['elasticsearch'] ? '' : "<li id=\"designations-tab-tab\"><a href=\"#designations-tab\" rel=\"address:designations-tab\"><span>$lang[designations]</span></a></li>";
+    // Scratchpads tab an optional extra.
+    $scratchpadsTab = empty($options['scratchpadSearch']) ? '' : "<li id=\"scratchpad-tab-tab\"><a href=\"#scratchpad-tab\" rel=\"address:scratchpad-tab\"><span>$lang[scratchpads]</span></a></li>";
     // Data_entry_helper::tab_header breaks inside fancybox. So output manually.
-    $r .= '<ul>' .
-        '<li id="species-group-tab-tab"><a href="#species-group-tab" rel="address:species-group-tab"><span>' . lang::get('Species groups') . '</span></a></li>';
-    $r .= '<li id="species-tab-tab"><a href="#species-tab" rel="address:species-tab"><span>' . lang::get('Species or higher taxa') . '</span></a></li>';
-    if (!$options['elasticsearch']) {
-      $r .= '<li id="designations-tab-tab"><a href="#designations-tab" rel="address:designations-tab"><span>' . lang::get('Designations') . '</span></a></li>';
-    }
-    $r .= '<li id="rank-tab-tab"><a href="#rank-tab" rel="address:rank-tab"><span>' . lang::get('Level') . '</span></a></li>';
-    if (!empty($options['scratchpadSearch']) && $options['scratchpadSearch'] == TRUE) {
-      $r .= '<li id="scratchpad-tab-tab"><a href="#scratchpad-tab" rel="address:scratchpad-tab"><span>' . lang::get('Scratchpads') . '</span></a></li>';
-    }
-    $r .= '<li id="flags-tab-tab"><a href="#flags-tab" rel="address:flags-tab"><span>' . lang::get('Other flags') . '</span></a></li>' .
-        '</ul>';
-    $r .= '<div id="species-group-tab">' . "\n";
+    $r .= <<<HTML
+<div id="what-tabs">
+  <ul>
+    <li id="species-group-tab-tab"><a href="#species-group-tab" rel="address:species-group-tab"><span>$lang[speciesGroups]</span></a></li>
+    <li id="species-tab-tab"><a href="#species-tab" rel="address:species-tab"><span>$lang[speciesOrHigherTaxa]</span></a></li>
+    $designationsTab
+    <li id="rank-tab-tab"><a href="#rank-tab" rel="address:rank-tab"><span>$lang[level]</span></a></li>
+    $scratchpadsTab
+    <li id="flags-tab-tab"><a href="#flags-tab" rel="address:flags-tab"><span>$lang[otherFlags]</span></a></li>
+  </ul>
+HTML;
+
+    // Species groups tab.
     if (function_exists('hostsite_get_user_field')) {
       $myGroupIds = hostsite_get_user_field('taxon_groups', [], TRUE);
     }
     else {
       $myGroupIds = [];
     }
+    $myGroupsPanel = '';
     if ($myGroupIds) {
-      $r .= '<h3>' . lang::get('My groups') . '</h3>';
       $myGroupsData = data_entry_helper::get_population_data([
         'table' => 'taxon_group',
         'extraParams' => $readAuth + [
           'query' => json_encode([
             'in' => ['id', $myGroupIds],
           ]),
+          'columns' => 'id,title',
         ],
       ]);
-      $myGroupNames = [];
-      data_entry_helper::$javascript .= "indiciaData.myGroups = [];\n";
+      $myGroupNamesLis = [];
+      data_entry_helper::$indiciaData['myGroups'] = $myGroupsData;
       foreach ($myGroupsData as $group) {
-        $myGroupNames[] = $group['title'];
-        data_entry_helper::$javascript .= "indiciaData.myGroups.push([$group[id],'$group[title]']);\n";
+        $myGroupNamesLis[] = "<li>$group[title]</li>";
       }
-      $r .= '<button type="button" id="my_groups">' . lang::get('Include my groups') . '</button>';
-      $r .= '<ul class="inline"><li>' . implode('</li><li>', $myGroupNames) . '</li></ul>';
-      $r .= '<h3>' . lang::get('Build a list of groups') . '</h3>';
+      $myGroupNamesList = implode('', $myGroupNamesLis) . '</li>';
+      $myGroupsPanel = <<<HTML
+<h3>$lang[myGroups]</h3>
+<button type="button" id="my_groups">$lang[includeMyGroups]</button>
+<ul class="inline">
+  $myGroupNamesList
+</ul>
+HTML;
     }
     // Warehouse doesn't have master taxon list, so only need warning when not
     // running on warehouse.
     if (empty($options['taxon_list_id']) && (!isset($options['runningOnWarehouse']) || $options['runningOnWarehouse'] == FALSE)) {
       throw new exception('Please specify a @taxon_list_id option in the page configuration.');
     }
-    $r .= '<p>' . lang::get('Search for and build a list of species groups to include') . '</p>' .
-        ' <div class="context-instruct messages warning">' . lang::get('Please note that your access permissions are limiting the groups available to choose from.') . '</div>';
     $baseParams = empty($options['taxon_list_id']) ? $readAuth : $readAuth + ['taxon_list_id' => $options['taxon_list_id']];
-    $r .= data_entry_helper::sub_list([
+    $taxonGroupsSubListCtrl = data_entry_helper::sub_list([
       'fieldname' => 'taxon_group_list',
       'report' => 'library/taxon_groups/taxon_groups_used_in_checklist_lookup',
       'captionField' => 'q',
@@ -116,11 +148,32 @@ class filter_what extends FilterBase {
       'extraParams' => $baseParams,
       'addToTable' => FALSE,
       'continueOnBlur' => FALSE,
+      'matchContains' => TRUE,
     ]);
-    $r .= "</div>\n";
-    $r .= '<div id="species-tab">' . "\n";
-    $r .= '<p>' . lang::get('Search for and build a list of species or higher taxa to include.') . '</p>' .
-        ' <div class="context-instruct messages warning">' . lang::get('Please note that your access permissions will limit the records returned to the species you are allowed to see.') . '</div>';
+    data_entry_helper::$indiciaData['allTaxonGroups'] = data_entry_helper::get_population_data([
+      'report' => 'library/taxon_groups/taxon_groups_used_in_checklist',
+      'extraParams' => $baseParams,
+      // Long cache timeout.
+      'cacheTimeout' => 7 * 24 * 60 * 60,
+    ]);
+    $columns = str_replace(['{attrs}', '{col-1}', '{col-2}'], [
+      '',
+      "<h3>$lang[buildListOfGroups]</h3>\n$taxonGroupsSubListCtrl",
+      $myGroupsPanel,
+    ], $indicia_templates['two-col-50']);
+    $r .= <<<HTML
+<div id="species-group-tab">
+  <ul>
+    <li>$lang[speciesGroupsIntro1] <a id="show-species-groups">$lang[speciesGroupsFullListLink]</a></li>
+    <li>$lang[speciesGroupsIntro2]</li>
+    <li>$lang[speciesGroupsIntro3]</li>
+  </ul>
+  <div class="context-instruct messages warning">$lang[speciesGroupsLimited]</div>
+  $columns
+</div>
+HTML;
+
+    // Species tab.
     $subListOptions = [
       'fieldname' => 'taxa_taxon_list_list',
       'autocompleteControl' => 'species_autocomplete',
@@ -133,8 +186,19 @@ class filter_what extends FilterBase {
       'addToTable' => FALSE,
       'continueOnBlur' => FALSE,
     ];
-    $r .= data_entry_helper::sub_list($subListOptions);
-    $r .= "</div>\n";
+    $taxaSubListCtrl = data_entry_helper::sub_list($subListOptions);
+    $r .= <<<HTML
+<div id="species-tab">
+  <ul>
+    <li>$lang[speciesIntro1]</li>
+    <li>$lang[speciesIntro2]</li>
+  </ul>
+  <div class="context-instruct messages warning">$lang[speciesLimited]</div>
+  $taxaSubListCtrl
+</div>
+HTML;
+
+    // Designations tab.
     if (!$options['elasticsearch']) {
       try {
         $r .= "<div id=\"designations-tab\">\n";
@@ -156,7 +220,6 @@ class filter_what extends FilterBase {
       }
       catch (Exception $e) {
         if (strpos($e->getMessage(), 'Unrecognised entity') !== FALSE) {
-          global $indicia_templates;
           $r .= '<p>' . str_replace(['{message}'], [lang::get('Designations functionality is not enabled on this server.')], $indicia_templates['messageBox']);
         }
         else {
@@ -164,6 +227,8 @@ class filter_what extends FilterBase {
         }
       }
     }
+
+    // Ranks tab.
     $r .= "<div id=\"rank-tab\">\n";
     $r .= '<p id="level-label">' . lang::get('Include records where the level') . '</p>';
     $r .= data_entry_helper::select([
@@ -186,12 +251,14 @@ class filter_what extends FilterBase {
       ],
       'cachePerUser' => FALSE,
     ]);
-    $r .= '<select id="taxon_rank_sort_order_combined" name="taxon_rank_sort_order_combined"><option value="">&lt;' . lang::get('Please select') . '&gt;</option>';
+    $r .= '<select id="taxon_rank_sort_order_combined" name="taxon_rank_sort_order_combined" class="' . $indicia_templates['formControlClass'] . '"><option value="">&lt;' . lang::get('Please select') . '&gt;</option>';
     foreach ($ranks as $rank) {
       $r .= "<option value=\"$rank[sort_order]:$rank[id]\">$rank[rank]</option>";
     }
     $r .= '</select>';
     $r .= "</div>\n";
+
+    // Scratchpads tab.
     if (!empty($options['scratchpadSearch']) && $options['scratchpadSearch'] == TRUE) {
       $r .= "<div id=\"scratchpad-tab\">\n";
       $r .= '<p>' . lang::get('Select a species scratchpad to filter against') . '</p>';
@@ -207,6 +274,8 @@ class filter_what extends FilterBase {
       ]);
       $r .= "</div>\n";
     }
+
+    // Flags tab.
     $r .= "<div id=\"flags-tab\">\n";
     $r .= '<p>' . lang::get('Select additional flags to filter for.') . '</p>' .
         ' <div class="context-instruct messages warning">' . lang::get('Please note that your access permissions limit the settings you can change on this tab.') . '</div>';
@@ -498,6 +567,7 @@ class filter_where extends FilterBase {
       'valueField' => 'id',
       'addToTable' => FALSE,
       'extraParams' => $readAuth,
+      'matchContains' => TRUE,
     ]);
 
     $r .= '</div></fieldset>';
@@ -623,9 +693,18 @@ class filter_who extends FilterBase {
    */
   public function getControls() {
     $r = '<div class="context-instruct messages warning">' . lang::get('Please note, you cannnot change this setting because of your access permissions in this context.') . '</div>';
-    $r .= data_entry_helper::checkbox([
-      'label' => lang::get('Only include my records'),
+    $r .= data_entry_helper::radio_group([
+      'label' => lang::get('Recorders'),
       'fieldname' => 'my_records',
+      'lookupValues' => [
+        '' => lang::get('Records from all recorders'),
+        '1' => lang::get('Only include my records'),
+        '0' => lang::get('Exclude my records'),
+      ],
+    ]);
+    $r .= data_entry_helper::text_input([
+      'label' => lang::get('Or, filter by name or part of name'),
+      'fieldname' => 'recorder_name',
     ]);
     return $r;
   }
@@ -741,74 +820,130 @@ class filter_quality extends FilterBase {
   /**
    * Define the HTML required for this filter's UI panel.
    */
-  public function getControls($readAuth, $options, $ctls = ['status', 'auto', 'difficulty', 'photo']) {
+  public function getControls($readAuth, $options, $ctls = [
+    'status',
+    'certainty',
+    'auto',
+    'difficulty',
+    'photo',
+    'licences',
+    'media_licences',
+    'coordinate_precision',
+  ]) {
+    global $indicia_templates;
     $r = '';
     if (in_array('status', $ctls)) {
       $r .= '<div class="context-instruct messages warning">' . lang::get('Please note, your options for quality filtering are restricted by your access permissions in this context.') . '</div>';
       $qualityOptions = [
-        'V1' => lang::get('Accepted as correct records only'),
-        'V' => lang::get('Accepted records only'),
-        '-3' => lang::get('Reviewer agreed at least plausible'),
-        'C3' => lang::get('Plausible records only'),
-        'C' => lang::get('Recorder was certain'),
-        'L' => lang::get('Recorder thought the record was at least likely'),
-        'P' => lang::get('Not reviewed'),
-        'T' => lang::get('Not reviewed but trusted recorder'),
-        '!R' => lang::get('Exclude not accepted records'),
-        '!D' => lang::get('Exclude queried or not accepted records'),
+        'P' => lang::get('Pending'),
+        'V' => lang::get('Accepted (all)'),
+        'V1' => lang::get('Accepted - correct only'),
+        'V2' => lang::get('Accepted - considered correct only'),
+        'R' => lang::get('Not accepted (all)'),
+        'R4' => lang::get('Not accepted - unable to verify only'),
+        'R5' => lang::get('Not accepted - incorrect only'),
+        'C3' => lang::get('Plausible'),
+        'D' => lang::get('Queried'),
         'all' => lang::get('All records'),
-        'D' => lang::get('Queried records only'),
-        'A' => lang::get('Answered records only'),
-        'R' => lang::get('Not accepted records only'),
-        'R4' => lang::get('Not accepted as reviewer unable to verify records only'),
-        'DR' => lang::get('Queried or not accepted records'),
       ];
+      if ($options['sharing'] === 'verification') {
+        $qualityOptions['OV'] = lang::get('Verified by other verifiers');
+        $qualityOptions['A'] = lang::get('Answered');
+      }
+      $qualityOptions['all'] = lang::get('All records');
       if ($options['elasticsearch']) {
         // Elasticsearch doesn't currently support recorder trust.
         unset($qualityOptions['T']);
+        // Additional option available for Elasticsearch verification.
+        if ($options['sharing'] === 'verification') {
+          $qualityOptions['OV'] = lang::get('Verified by other verifiers');
+        }
       }
       $options = array_merge([
-        'label' => lang::get('Records to include'),
+        'label' => lang::get('Record status'),
       ], $options);
-
-      $r .= data_entry_helper::select([
-        'label' => $options['label'],
+      $includeExcludeRadios = data_entry_helper::radio_group([
+        'fieldname' => 'quality_op',
+        'id' => 'quality_op' . (empty($options['standalone']) ? '' : '--standalone'),
+        'lookupValues' => [
+          'in' => lang::get('Include'),
+          'not in' => lang::get('Exclude'),
+        ],
+        'default' => 'in',
+      ]);
+      $qualityCheckboxes = data_entry_helper::checkbox_group([
         'fieldname' => 'quality',
-        'id' => 'quality-filter',
+        'id' => 'quality' . (empty($options['standalone']) ? '' : '--standalone'),
         'lookupValues' => $qualityOptions,
+      ]);
+      $lang = [
+        'cancel' => lang::get('Cancel'),
+        'ok' => lang::get('Ok'),
+        'recordStatus' => lang::get('Record status'),
+      ];
+      $qualityInput = data_entry_helper::text_input([
+        'label' => $lang['recordStatus'],
+        'fieldname' => 'quality-filter',
+        'class' => 'quality-filter',
+      ]);
+      $r .= <<<HTML
+<div class="quality-cntr">
+  $qualityInput
+  <input type="hidden" name="quality" class="quality-value $indicia_templates[formControlClass]" />
+  <div class="quality-pane" style="display: none">
+    $includeExcludeRadios
+    $qualityCheckboxes
+    <div class="pull-right">
+      <button type="button" class="$indicia_templates[buttonHighlightedClass] btn-xs ok">$lang[ok]</button>
+      <button type="button" class="$indicia_templates[buttonDefaultClass] btn-xs cancel">$lang[cancel]</button>
+    </div>
+  </div>
+</div>
+HTML;
+    }
+    if (in_array('certainty', $ctls)) {
+      $r .= data_entry_helper::checkbox_group([
+        'label' => lang::get('Recorder certainty'),
+        'fieldname' => 'certainty[]',
+        'id' => 'certainty-filter',
+        'lookupValues' => [
+          'C' => lang::get('Certain'),
+          'L' => lang::get('Likely'),
+          'U' => lang::get('Uncertain'),
+          'NS' => lang::get('Not stated'),
+        ],
       ]);
     }
     if (in_array('auto', $ctls)) {
       $checkOptions = [
         '' => lang::get('Not filtered'),
-        'P' => lang::get('Only include records that pass all automated checks'),
-        'F' => lang::get('Only include records that fail at least one automated check'),
+        'P' => lang::get('All checks passed'),
+        'F' => lang::get('Any checks failed'),
       ];
       if (!empty($options['customRuleCheckFilters'])) {
-        $checkOptions['PC'] = lang::get('Only include records that have not been flagged by one of your custom rules.');
-        $checkOptions['FC'] = lang::get('Only include records that have been flagged by one of your custom rules.');
+        $checkOptions['PC'] = lang::get('All custom rule checks passed');
+        $checkOptions['FC'] = lang::get('Any custom rule checks failed');
+      }
+      if (!empty($options['autocheck_rules'])) {
+        foreach ($options['autocheck_rules'] as $rule) {
+          // ID diff handled separately.
+          if ($rule !== 'identification_difficulty') {
+            $checkOptions[$rule] = lang::get("$rule failed");
+          }
+        };
       }
       $r .= data_entry_helper::select([
-        'label' => empty($options['customRuleCheckFilters']) ? lang::get('Automated checks') : lang::get('Automated or custom rule checks'),
+        'label' => empty($options['customRuleCheckFilters'])
+          ? lang::get('Select records by specific type of automated check')
+          : lang::get('Select records by specific type of automated or custom rule check'),
         'fieldname' => 'autochecks',
         'lookupValues' => $checkOptions,
       ]);
-      if (!empty($options['autocheck_rules'])) {
-        $ruleOptions = ['' => lang::get('Not filtered')];
-        foreach ($options['autocheck_rules'] as $rule) {
-          $ruleOptions[$rule] = lang::get($rule);
-        };
-        $r .= data_entry_helper::select([
-          'label' => lang::get('Select records by specific automated check flags'),
-          'fieldname' => 'autocheck_rule',
-          'lookupValues' => $ruleOptions,
-        ]);
-      }
     }
     if (in_array('difficulty', $ctls)) {
       global $indicia_templates;
       $s1 = data_entry_helper::select([
-        'label' => lang::get('Identification difficulty'),
+        'label' => lang::get('ID difficulty'),
         'fieldname' => 'identification_difficulty_op',
         'lookupValues' => [
           '=' => lang::get('is'),
@@ -817,34 +952,100 @@ class filter_quality extends FilterBase {
         ],
       ]);
       $s2 = data_entry_helper::select([
-        'label' => lang::get('Level'),
         'fieldname' => 'identification_difficulty',
         'lookupValues' => [
           '' => lang::get('Not filtered'),
-          1 => 1,
-          2 => 2,
-          3 => 3,
-          4 => 4,
-          5 => 5,
+          1 => lang::get('difficulty 1 - easiest to ID'),
+          2 => lang::get('difficulty 2'),
+          3 => lang::get('difficulty 3'),
+          4 => lang::get('difficulty 4'),
+          5 => lang::get('difficulty 5 - hardest to ID'),
+          6 => lang::get('difficulty 6 - custom check'),
         ],
         'controlWrapTemplate' => 'justControl',
       ]);
-      $r .= str_replace(
-        ['{attrs}', '{col-1}', '{col-2}'],
-        ['', $s1, $s2],
-        $indicia_templates['two-col-50']
-      );
+      $r .= '<label>' . lang::get('Select records by identification difficulty:') . '</label>';
+      $r .= "<div class=\"form-inline\">$s1$s2</div>";
     }
     if (in_array('photo', $ctls)) {
       $r .= data_entry_helper::select([
-        'label' => 'Photos',
+        'label' => lang::get('Records and photos'),
         'fieldname' => 'has_photos',
         'lookupValues' => [
-          '' => 'Include all records',
-          '1' => 'Only include records which have photos',
-          '0' => 'Exclude records which have photos',
+          '' => lang::get('-No filter-'),
+          '1' => lang::get('With'),
+          '0' => lang::get('Without'),
         ],
       ]);
+    }
+    $licencesCtrl = '';
+    $mediaLicencesCtrl = '';
+    if (in_array('licences', $ctls)) {
+      $licencesCtrl = data_entry_helper::checkbox_group([
+        'label' => lang::get('Include records with'),
+        'fieldname' => 'licences',
+        'lookupValues' => [
+          'none' => lang::get('-No licence-'),
+          'open' => lang::get('Open licence (OGL, CCO, CC BY)'),
+          'restricted' => lang::get('Restricted licence (CC BY-NC)'),
+        ],
+      ]);
+    }
+    if (in_array('media_licences', $ctls)) {
+      $mediaLicencesCtrl = data_entry_helper::checkbox_group([
+        'label' => lang::get('Include records with photos that have'),
+        'fieldname' => 'media_licences',
+        'lookupValues' => [
+          'none' => lang::get('-No licence-'),
+          'open' => lang::get('Open licence (OGL, CCO, CC BY)'),
+          'restricted' => lang::get('Restricted licence (CC BY-NC)'),
+        ],
+      ]);
+    }
+    //$r .= var_export($ctls, TRUE);
+    if ($licencesCtrl && $mediaLicencesCtrl) {
+      $r .= str_replace(
+        ['{attrs}', '{col-1}', '{col-2}'],
+        ['', $licencesCtrl, $mediaLicencesCtrl],
+        $indicia_templates['two-col-50'],
+      );
+    }
+    else {
+      $r .= $licencesCtrl;
+      $r .= $mediaLicencesCtrl;
+    }
+    if (in_array('coordinate_precision', $ctls)) {
+      $lang = [
+        'coordinatePrecision' => lang::get('Coordinate precision'),
+        'includeRecordsWhere' => lang::get('Include records where the grid ref precision'),
+      ];
+      $r .= <<<HTML
+<h2>$lang[coordinatePrecision]</h2>
+<p>$lang[includeRecordsWhere]</p>
+HTML;
+      $opCtrl = data_entry_helper::radio_group([
+        'fieldname' => 'coordinate_precision_op',
+        'lookupValues' => [
+          '<=' => lang::get('is the same as or better than'),
+          '>' => lang::get('is worse than'),
+          '=' => lang::get('is equal to'),
+        ],
+      ]);
+      $coordSizeCtrl = data_entry_helper::radio_group([
+        'fieldname' => 'coordinate_precision',
+        'lookupValues' => [
+          '' => lang::get('Not filtered'),
+          '1000' => '1km',
+          '2000' => '2km',
+          '10000' => '10km',
+          '100000' => '100km',
+        ],
+      ]);
+      $r .= str_replace(
+        ['{attrs}', '{col-1}', '{col-2}'],
+        ['', $opCtrl, $coordSizeCtrl],
+        $indicia_templates['two-col-50'],
+      );
     }
     return $r;
   }
@@ -874,7 +1075,7 @@ class filter_quality_sample extends FilterBase {
     $r .= data_entry_helper::select([
       'label' => lang::get('Samples to include'),
       'fieldname' => 'quality',
-      'id' => 'quality-filter',
+      'class' => 'quality-filter',
       'lookupValues' => [
         'V' => lang::get('Accepted records only'),
         'P' => lang::get('Not reviewed'),
@@ -962,14 +1163,17 @@ class filter_source extends FilterBase {
       // Build the list filter control HTML.
       $websitesFilterInput = data_entry_helper::text_input([
         'fieldname' => 'websites-search',
+        'class' => 'filter-exclude',
         'attributes' => ['placeholder' => lang::get('Type here to filter')],
       ]);
       $surveysFilterInput = data_entry_helper::text_input([
         'fieldname' => 'surveys-search',
+        'class' => 'filter-exclude',
         'attributes' => ['placeholder' => lang::get('Type here to filter')],
       ]);
       $inputFormsFilterInput = data_entry_helper::text_input([
         'fieldname' => 'input_forms-search',
+        'class' => 'filter-exclude',
         'attributes' => ['placeholder' => lang::get('Type here to filter')],
       ]);
       // Build the filter operation controls.
@@ -1067,20 +1271,29 @@ HTML;
 
 }
 
-function status_control($readAuth, $options) {
+/**
+ * Output a standalone media/photos drop-down filter.
+ */
+function media_filter_control($readAuth, $options) {
+  iform_load_helpers(['report_helper']);
+  report_helper::add_resource('reportfilters');
+  $ctl = new filter_quality();
+  $r = '<div class="standalone-media-filter">';
+  $r .= $ctl->getControls($readAuth, $options, ['photo']);
+  $r .= '</div>';
+  return $r;
+}
+
+/**
+ * Output a standalone status drop-down filter.
+ */
+function status_filter_control($readAuth, $options) {
   iform_load_helpers(['report_helper']);
   report_helper::add_resource('reportfilters');
   $ctl = new filter_quality();
   $r = '<div class="standalone-quality-filter">';
   $r .= $ctl->getControls($readAuth, $options, ['status']);
   $r .= '</div>';
-
-  report_helper::$onload_javascript .= <<<JS
-    indiciaData.filter.def.quality = '!R';
-    indiciaFns.applyFilterToReports(false);
-
-JS;
-
   return $r;
 }
 
@@ -1199,6 +1412,7 @@ function report_filter_panel(array $readAuth, $options, $website_id, &$hiddenStu
     'elasticsearch' => FALSE,
     'customRuleCheckFilters' => FALSE,
     'autocheck_rules' => [
+      'ancillary_species',
       'identification_difficulty',
       'period',
       'period_within_year',
@@ -1674,14 +1888,38 @@ HTML;
   report_helper::addLanguageStringsToJs('reportFiltersNoDescription', $noDescriptionLangStrings);
   report_filters_set_parser_language_strings();
   report_helper::addLanguageStringsToJs('reportFilters', [
-    'PleaseSelect' => 'Please select',
-    'CreateAFilter' => 'Create a filter',
-    'ModifyFilter' => 'Modify filter',
-    'FilterSaved' => 'The filter has been saved',
-    'FilterDeleted' => 'The filter has been deleted',
-    'ConfirmFilterChangedLoad' => 'Do you want to load the selected filter and lose your current changes?',
-    'FilterExistsOverwrite' => 'A filter with that name already exists. Would you like to overwrite it?',
-    'ConfirmFilterDelete' => 'Are you sure you want to permanently delete the {title} filter?',
+    'back' => 'Back',
+    'cannotDeselectAllLicences' => 'You cannot deselect all licence options otherwise no records will be returned.',
+    'cannotDeselectAllMediaLicences' => 'You cannot deselect all photo licence options otherwise no records with photos will be returned.',
+    'confirmFilterChangedLoad' => 'Do you want to load the selected filter and lose your current changes?',
+    'confirmFilterDelete' => 'Are you sure you want to permanently delete the {title} filter?',
+    'coordinatePrecisionIs' => 'Coordinate precision is',
+    'createAFilter' => 'Create a filter',
+    'quality:P' => 'Pending',
+    'quality:V' => 'Accepted (all)',
+    'quality:V1' => 'Accepted - correct only',
+    'quality:V2' => 'Accepted - considered correct only',
+    'quality:R' => 'Not accepted (all)',
+    'quality:R4' => 'Not accepted - unable to verify only',
+    'quality:R5' => 'Not accepted - incorrect only',
+    'quality:C3' => 'Plausible',
+    'quality:D' => 'Queried',
+    'quality:A' => 'Answered',
+    'quality:all' => 'All records',
+    'quality_op:in' => 'Include',
+    'quality_op:not in' => 'Exclude',
+    'filterDeleted' => 'The filter has been deleted',
+    'filterExistsOverwrite' => 'A filter with that name already exists. Would you like to overwrite it?',
+    'filterSaved' => 'The filter has been saved',
+    'licenceIs' => 'Licence is',
+    'mediaLicenceIs' => 'Media licence is',
+    'modifyFilter' => 'Modify filter',
+    'orListJoin' => ' or ',
+    'pleaseSelect' => 'Please select',
+    'recorderCertaintyWas' => 'Recorder certainty was',
+    'sameAsOrBetterThan' => 'same as or better than',
+    'worseThan' => 'worse than',
+    'equalTo' => 'equal to',
   ]);
   if (function_exists('iform_ajaxproxy_url')) {
     report_helper::$javascript .= "indiciaData.filterPostUrl='" . iform_ajaxproxy_url(NULL, 'filter') . "';\n";
@@ -1713,13 +1951,16 @@ HTML;
       $optionParams[substr($key, 7)] = $value;
     }
   }
-  $allParams = array_merge(['quality' => '!R'], $optionParams, $getParams);
+  $allParams = array_merge(['quality' => 'R', 'quality_op' => 'not in'], $optionParams, $getParams);
   if (!empty($allParams)) {
     report_helper::$initialFilterParamsToApply = array_merge(report_helper::$initialFilterParamsToApply, $allParams);
     $json = json_encode($allParams);
-    report_helper::$onload_javascript .= "var params = $json;\n";
-    report_helper::$onload_javascript .= "indiciaData.filter.def=$.extend(indiciaData.filter.def, params);\n";
-    report_helper::$onload_javascript .= "indiciaData.filter.resetParams = $.extend({}, params);\n";
+    report_helper::$onload_javascript .= <<<JS
+var params = $json;
+indiciaData.filter.def = $.extend(indiciaData.filter.def, params);
+indiciaData.filter.resetParams = $.extend({}, params);
+
+JS;
   }
   $getParams = empty($getParams) ? '{}' : json_encode($getParams);
   if (!empty($options['filters_user_id']) && isset($fu)) {
@@ -1730,8 +1971,17 @@ HTML;
 if ($('#select-filter').val()) {
   loadFilter($('#select-filter').val(), $getParams);
 } else {
+  $.each($('#filter-panes .pane'), function (idx, pane) {
+    var name = pane.id.replace(/^pane-filter_/, '');
+    if (indiciaData.filterParser[name].fixLegacyFilter) {
+      indiciaData.filterParser[name].fixLegacyFilter(indiciaData.filter.def);
+    }
+  });
   indiciaFns.applyFilterToReports(false);
 }
+// Set initial description in the quality filter input.
+$('.quality-filter').val(indiciaData.filterParser.quality.statusDescriptionFromFilter(
+    indiciaData.filter.def.quality, indiciaData.filter.def.quality_op));
 
 JS;
   }
@@ -1834,22 +2084,26 @@ function report_filters_full_term_to_sharing_code($term) {
  */
 function report_filters_set_parser_language_strings() {
   report_helper::addLanguageStringsToJs('reportFilterParser', [
-    'AutochecksF' => 'Automated checks failed',
-    'AutochecksP' => 'Automated checks passed',
-    'AutochecksFC' => 'Flagged by a custom verification rule',
-    'AutochecksPC' => 'Not flagged by a custom verification rule',
+    'Autochecks_ancillary_species' => 'Rarity check failed',
+    'Autochecks_F' => 'Automated checks failed',
+    'Autochecks_FC' => 'Any custom verification rule check failed',
+    'Autochecks_identification_difficulty' => 'ID difficulty check failed',
+    'Autochecks_P' => 'Automated checks passed.',
+    'Autochecks_period' => 'Year range check failed',
+    'Autochecks_period_within_year' => 'Date range check failed',
+    'Autochecks_PC' => 'All custom verification rule checks passed.',
+    'Autochecks_without_polygon' => 'Distribution check failed',
     'IdentificationDifficulty' => 'Identification difficulty',
     'HasPhotos' => 'Only include records which have photos',
     'HasNoPhotos' => 'Exclude records which have photos',
-    'MyRecords' => 'My records only',
+    'ListJoin' => ' or ',
+    'MyRecords' => 'Only include my records',
+    'NotMyRecords' => 'Exclude my records',
+    'RecorderNameContains' => 'Recorder name contains {1}',
     'OnlyConfidentialRecords' => 'Only confidential records',
     'AllConfidentialRecords' => 'Include both confidential and non-confidential records',
     'NoConfidentialRecords' => 'Exclude confidential records',
     'includeUnreleasedRecords' => 'Include unreleased records',
     'excludeUnreleasedRecords' => 'Exclude unreleased records',
-    'Rule_identification_difficulty' => 'Has an identification difficulty flag',
-    'Rule_period' => 'Has a time period flag',
-    'Rule_period_within_year' => 'Has a period within year flag',
-    'Rule_without_polygon' => 'Has a range flag',
   ]);
 }
