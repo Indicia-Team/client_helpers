@@ -22,6 +22,8 @@
  * @link https://github.com/indicia-team/client_helpers
  */
 
+use Firebase\JWT\JWT;
+
 /**
  * Exception class for request abort.
  */
@@ -401,8 +403,7 @@ class ElasticsearchProxyHelper {
       throw new ElasticsearchProxyAbort('Configuration incomplete');
     }
     $statuses = $_POST['doc']['identification'] ?? [];
-    echo self::internalModifyListOnES($_POST['ids'], $statuses,
-      isset($_POST['doc']['metadata']['website']['id']) ? $_POST['doc']['metadata']['website']['id'] : NULL);
+    echo self::internalModifyListOnEs($_POST['ids'], $statuses, $_POST['doc']['metadata']['website']['id'] ?? NULL);
   }
 
   /**
@@ -526,7 +527,7 @@ class ElasticsearchProxyHelper {
     }
     $ids = self::getOccurrenceIdsFromFilter($nid, $_POST['occurrence:idsFromElasticFilter']);
 
-    self::internalModifyListOnES($ids, $statuses, $websiteIdToModify);
+    self::internalModifyListOnEs($ids, $statuses, $websiteIdToModify);
     try {
       self::updateWarehouseVerificationAction($ids, $nid);
     }
@@ -609,7 +610,7 @@ class ElasticsearchProxyHelper {
     }
     // Set website ID to 0, basically disabling the ES copy of the record until
     // a proper update with correct taxonomy information comes through.
-    echo self::internalModifyListOnES($_POST['ids'], [], 0);
+    echo self::internalModifyListOnEs($_POST['ids'], [], 0);
   }
 
   /**
@@ -684,7 +685,7 @@ class ElasticsearchProxyHelper {
    * @return string
    *   Result of the POST to ES.
    */
-  private static function internalModifyListOnES(array $ids, array $statuses, $websiteIdToModify) {
+  private static function internalModifyListOnEs(array $ids, array $statuses, $websiteIdToModify) {
     $url = self::getEsUrl() . "/_update_by_query";
     $scripts = [];
     if (!empty($statuses['verification_status'])) {
@@ -835,7 +836,7 @@ class ElasticsearchProxyHelper {
       $modulePath = \Drupal::service('module_handler')->getModule('iform')->getPath();
       // @todo persist the token in the cache?
       require_once "$modulePath/lib/php-jwt/vendor/autoload.php";
-      $token = \Firebase\JWT\JWT::encode($payload, $privateKey, 'RS256');
+      $token = JWT::encode($payload, $privateKey, 'RS256');
       $headers[] = "Authorization: Bearer $token";
     }
     return $headers;
@@ -843,8 +844,18 @@ class ElasticsearchProxyHelper {
 
   /**
    * A simple wrapper for the cUrl functionality to POST to Elastic.
+   *
+   * @param string $url
+   *   Warehouse REST API Elasticsearch endpoint URL.
+   * @param array $data
+   *   ES request object. Can contain a property `proxyCacheTimeout` if the
+   *   response should be cached for a number of seconds.
+   * @param array $getParams
+   *   Optional query string parameters to add to the URL, e.g. _source.
+   * @param bool $multipart
+   *   Set to TRUE if doint a multi-part form submission.
    */
-  private static function curlPost($url, $data, $getParams = [], $multipart = FALSE) {
+  public static function curlPost($url, array $data, array $getParams = [], $multipart = FALSE) {
     $curlResponse = FALSE;
     $cacheTimeout = FALSE;
     if (!empty($data['proxyCacheTimeout'])) {
@@ -950,7 +961,7 @@ class ElasticsearchProxyHelper {
               if (substr($line, 0, 1) === '@') {
                 $parts = explode('=', $line, 2);
                 $decoded = json_decode($parts[1]);
-                $options[substr($parts[0], 1)] = $decoded === NULL ? $parts[1] : $decoded;
+                $options[substr($parts[0], 1)] = $decoded ?? $parts[1];
               }
               else {
                 // Finish loop as done permissionFilters control options.
@@ -2643,7 +2654,7 @@ class ElasticsearchProxyHelper {
     if (!$precheck && $output->code === 200) {
       // Set website ID to 0, basically disabling the ES copy of the record
       // until a proper update with correct taxonomy information comes through.
-      self::internalModifyListOnES($ids, [], 0);
+      self::internalModifyListOnEs($ids, [], 0);
     }
     return $response['output'];
   }
