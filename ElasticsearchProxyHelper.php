@@ -2495,7 +2495,6 @@ class ElasticsearchProxyHelper {
    */
   private static function applyUserFiltersCoordinatePrecision(array $definition, array &$bool) {
     $filter = self::getDefinitionFilter($definition, ['coordinate_precision']);
-    \Drupal::logger('iform')->notice(var_export($filter, TRUE));
     if (!empty($filter)) {
       // Default is same as or better than.
       $filter['op'] = $filter['op'] ?? '<=';
