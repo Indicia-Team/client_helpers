@@ -17,14 +17,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers
  */
 
- /**
-  * A helper class for requests from client JS for info on dynamic attributes.
-  */
+/**
+ * A helper class for requests from client JS for info on dynamic attributes.
+ */
 class DynamicAttrsProxyHelper {
 
   /**
@@ -33,12 +32,10 @@ class DynamicAttrsProxyHelper {
   public static function callMethod($method) {
     switch ($method) {
       case 'getSpeciesChecklistAttrs':
-        self::getSpeciesChecklistAttrs();
-        break;
+        return self::getSpeciesChecklistAttrs();
 
       default:
-        header("HTTP/1.1 404 Not found");
-        echo json_encode(['error' => 'Method not found']);
+        throw new \Exception('Method not found', 404);
     }
   }
 
@@ -58,7 +55,6 @@ class DynamicAttrsProxyHelper {
       $_GET['taxa_taxon_list_ids'],
       NULL,
       $_GET['language'],
-      isset($_GET['attributeTermlistLanguageFilter']) ? $_GET['attributeTermlistLanguageFilter'] : 0
     );
     // Convert to a response with control HTML.
     $attrData = [];
@@ -99,10 +95,7 @@ class DynamicAttrsProxyHelper {
         }
       }
     }
-    // Return the AJAX response as JSON.
-    header('Content-type: application/json');
-    echo json_encode($attrData);
-    helper_base::$is_ajax = TRUE;
+    return $attrData;
   }
 
   /**
