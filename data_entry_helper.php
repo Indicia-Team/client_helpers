@@ -2838,6 +2838,8 @@ JS;
    *     Associative array with the key being the EPSG code for the system or
    *     the notation abbreviation (e.g. OSGB), and the value being the
    *     description to display.
+   *   * blankText - adds an item to the start of the list for when there is no
+   *     value.
    *
    * @return string
    *   HTML to insert into the page for the spatial reference systems selection
@@ -2856,6 +2858,13 @@ JS;
     ], $options);
     $options = self::check_options($options);
     $opts = '';
+    if ($options['blankText']) {
+      $opts .= str_replace(
+        ['{value}', '{caption}', '{selected}', '{attribute_list}'],
+        ['', $options['blankText']],
+        $indicia_templates['select_item']
+      );
+    }
     foreach ($options['systems'] as $system => $caption) {
       $selected = ($options['default'] == $system ? 'selected' : '');
       $opts .= str_replace(
