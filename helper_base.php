@@ -1974,7 +1974,7 @@ HTML;
       foreach ($array as $a => $b) {
         if (!is_array($b)) {
           if ($encodeValues) {
-            $b = urlencode($b);
+            $b = urlencode($b ?? '');
           }
           $params[] = "$a=$b";
         }
