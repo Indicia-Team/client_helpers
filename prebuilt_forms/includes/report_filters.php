@@ -1202,6 +1202,12 @@ HTML;
 </div>
 
 HTML;
+        $selectWebsiteFirstInfo = "<p class=\"alert alert-info\" style=\"display: none\">$lang[selectWebsiteToLoadSurveys]</p>";
+      }
+      else {
+        $website = $websites[0];
+        $r .= "<div id=\"website-list-checklist\" style=\"display: none\"><input type=\"checkbox\" value=\"$website[id]\" id=\"check-website-$website[id]\" checked/></div>";
+        $selectWebsiteFirstInfo = '';
       }
     }
     else {
@@ -1209,7 +1215,8 @@ HTML;
       // is on the website details->milestones tab for a single website) so
       // supply this as a param, we don't need to worry about sharing as other
       // websites will have their own milestones.
-      $r .= '<input type="hidden" value="' . $source['id'] . '" id="check-website-' . $source['id'] . '" checked/>';
+      $r .= "<div id=\"website-list-checklist\" style=\"display: none\"><input type=\"checkbox\" value=\"$source[id]\" id=\"check-website-$source[id]\" checked/></div>";
+      $selectWebsiteFirstInfo = '';
     }
     // Put a cached list of all available surveys in indiciaData to save hits
     // when building source pane descriptions.
@@ -1232,6 +1239,7 @@ HTML;
   <h3>$lang[surveyDatasets]</h3>
   $surveysFilterInput
   $surveysOpSelect
+  $selectWebsiteFirstInfo
   <p class="alert alert-info" style="display: none">$lang[selectWebsiteToLoadSurveys]</p>
   <ul id="survey-list-checklist">
   </ul>
@@ -1951,7 +1959,11 @@ HTML;
       $optionParams[substr($key, 7)] = $value;
     }
   }
-  $allParams = array_merge(['quality' => 'R', 'quality_op' => 'not in'], $optionParams, $getParams);
+  $allParams = array_merge($optionParams, $getParams);
+  if (!isset($allParams['quality'])) {
+    $allParams['quality'] = 'R';
+    $allParams['quality_op'] = 'not in';
+  }
   if (!empty($allParams)) {
     report_helper::$initialFilterParamsToApply = array_merge(report_helper::$initialFilterParamsToApply, $allParams);
     $json = json_encode($allParams);
