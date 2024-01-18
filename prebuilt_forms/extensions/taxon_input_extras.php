@@ -37,8 +37,6 @@ class extension_taxon_input_extras {
    * * @title  - Override the title of the box displaying the hints.
    */
   public static function add_species_hints($auth, $args, $tabalias, $options, $path) {
-    // enable nice tooltips
-    //drupal_add_library('system', 'ui.tooltip', true);
     $options = array_merge([
       'title' => 'Hints relating to species names entered',
     ], $options);
