@@ -176,6 +176,10 @@ class iform_group_send_invites {
    * @todo Integrate with notifications for logged in users.
    */
   private static function sendInvites(array $args, array $auth) {
+    $lang = [
+      'acceptInvitiation' => lang::get('Accept this invitation'),
+      'invitationToJoinRecordingGroup' => lang::get('Invitation to join a recording group'),
+    ];
     $account = \Drupal::currentUser();
     $emails = helper_base::explode_lines($_POST['invitee_emails']);
     // First task is to populate the groups_invitations table.
@@ -200,22 +204,32 @@ class iform_group_send_invites {
         $protocol = ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off') || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
         $clean = strpos($rootFolder, '?') === FALSE;
         $acceptUrl = $protocol . $_SERVER['HTTP_HOST'] . $rootFolder . $args['accept_invite_path'] . ($clean ? '?' : '&') . 'token=' . $base . $idx;
-        $body = $_POST['invite_message'] . "<br/><br/>" .
-            '<a href="' . $acceptUrl . '">' . lang::get('Accept this invitation') . '</a>';
-        $headers = [];
-        $headers[] = 'MIME-Version: 1.0';
-        $headers[] = 'Content-type: text/html; charset=UTF-8;';
-        $headers[] = 'From: ' . hostsite_get_config_value('site', 'mail');
-        $headers[] = 'Reply-To: ' . $account->getEmail();
-        $headers[] = 'Return-Path: ' . hostsite_get_config_value('site', 'mail');
+        $messageHtml = str_replace("\n", '<br/>', $_POST['invite_message']);
+        $emailBodyHtml = <<<HTML
+<html>
+  <head>
+    <title>$lang[invitationToJoinRecordingGroup]</title>
+  </head>
+  <body>
+    $messageHtml
+    <br/>
+    <br/>
+    <a href="$acceptUrl">$lang[acceptInvitiation]</a>
+  </body>
+</html>
+HTML;
+        $headers = [
+          'MIME-Version: 1.0',
+          'Content-type: text/html; charset=UTF-8;',
+          'From: ' . hostsite_get_config_value('site', 'mail', ''),
+          'Reply-To: ' . $account->getEmail(),
+          'Return-Path: ' . hostsite_get_config_value('site', 'mail'),
+          'Date: ' . date(DateTime::RFC2822),
+          'Message-ID: <' . time() . '-' . md5($account->getEmail() . $trimmedEmail) . '@' . $_SERVER['SERVER_NAME'] . '>',
+        ];
         $headers = implode("\r\n", $headers) . PHP_EOL;
         // Send email. Depends upon settings in php.ini being correct.
-        $thismailsuccess = mail(
-          $trimmedEmail,
-          lang::get('Invitation to join a recording group'),
-          wordwrap($body, 80),
-          $headers
-        );
+        $thismailsuccess = mail($trimmedEmail, $lang['invitationToJoinRecordingGroup'], wordwrap($emailBodyHtml, 80), $headers);
         if (!$thismailsuccess) {
           $failedRecipients[$trimmedEmail] = $acceptUrl;
         }
