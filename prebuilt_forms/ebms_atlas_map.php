@@ -320,7 +320,6 @@ class iform_ebms_atlas_map extends iform_dynamic {
    *   Empty string as no HTML required.
    */
   protected static function get_control_source($auth, $args, $tabalias, $options) {
-    dpm($options);
     return ElasticsearchReportHelper::source($options);
   }
 
@@ -601,10 +600,6 @@ class iform_ebms_atlas_map extends iform_dynamic {
    *   Hidden input HTML.
    */
   protected static function createEsFilterHtml($field, $value, $queryType, $boolClause) {
-    // dpm([
-    //   'field' => $field,
-    //   'value' => $value
-    // ]);
     $r = <<<HTML
 <input type="hidden" class="es-filter-param" value="$value"
   data-es-bool-clause="$boolClause" data-es-field="$field" data-es-query-type="$queryType" />
@@ -639,8 +634,6 @@ HTML;
         self::$externalKey = $species_details[0]['external_key'];
       }
 
-      //dpm($species_details[0]);
-      //self::$preferred = $species_details[0]['taxon_plain'];
       self::$preferred = $species_details[0]['taxon'];
     }
   }
