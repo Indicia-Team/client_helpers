@@ -640,19 +640,33 @@ class ElasticsearchProxyHelper {
    * Proxy method to send an email querying a record.
    */
   private static function proxyVerificationQueryEmail() {
+    $lang = [
+      'verificationQuery' => lang::get('Verification query'),
+    ];
     $headers = [
       'MIME-Version: 1.0',
       'Content-type: text/html; charset=UTF-8;',
       'From: ' . hostsite_get_config_value('site', 'mail', ''),
       'Reply-To: ' . hostsite_get_user_field('mail'),
+      'Date: ' . date(DateTime::RFC2822),
+      'Message-ID: <' . time() . '-' . md5(hostsite_get_user_field('mail') . $_POST['to']) . '@' . $_SERVER['SERVER_NAME'] . '>',
     ];
     $headers = implode("\r\n", $headers) . PHP_EOL;
     $emailBody = $_POST['body'];
+    // Format correct HTML.
+    $emailBody = str_replace("\n", '<br/>', $emailBody);
+    $emailBodyHtml = <<<HTML
+<html>
+  <head>
+    <title>$lang[verificationQuery]</title>
+  </head>
+  <body>
+    $emailBody
+  </body>
+</html>
+HTML;
     // Send email. Depends upon settings in php.ini being correct.
-    $success = mail($_POST['to'],
-         $_POST['subject'],
-         wordwrap($emailBody, 70),
-         $headers);
+    $success = mail($_POST['to'], $_POST['subject'], wordwrap($emailBodyHtml, 70), $headers);
     return [
       'status' => $success ? 'OK' : 'Fail',
     ];
