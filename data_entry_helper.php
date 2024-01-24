@@ -2858,7 +2858,7 @@ JS;
     ], $options);
     $options = self::check_options($options);
     $opts = '';
-    if ($options['blankText']) {
+    if (!empty($options['blankText'])) {
       $opts .= str_replace(
         ['{value}', '{caption}', '{selected}', '{attribute_list}'],
         ['', $options['blankText']],

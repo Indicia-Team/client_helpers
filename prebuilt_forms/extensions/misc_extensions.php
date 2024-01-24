@@ -520,7 +520,7 @@ class extension_misc_extensions {
    * Helper method to enable jQuery tooltips.
    */
   public static function enable_tooltips() {
-    drupal_add_library('system', 'ui.tooltip', TRUE);
+    data_entry_helper::add_resource('jquery_ui');
     data_entry_helper::$javascript .= "
 $('form#entry_form').tooltip({
   open: function(event, ui) {

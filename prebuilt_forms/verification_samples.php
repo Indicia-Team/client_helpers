@@ -812,21 +812,32 @@ idlist=';
    *   Ok or Fail
    */
   public static function ajax_email() {
-    $site_email = hostsite_get_config_value('site', 'mail', '');
-    $headers = [];
-    $headers[] = 'MIME-Version: 1.0';
-    $headers[] = 'Content-type: text/html; charset=UTF-8;';
-    $headers[] = 'From: '. $site_email;
-    $headers[] = 'Reply-To: '. hostsite_get_user_field('mail');
-    $headers[] = 'Return-Path: '. $site_email;
+    $lang = [
+      'verification' => lang::get('Verification'),
+    ];
+    $siteEmail = hostsite_get_config_value('site', 'mail', '');
+    $headers = [
+      'MIME-Version: 1.0',
+      'Content-type: text/html; charset=UTF-8;',
+      "From: $siteEmail",
+      'Reply-To: ' . hostsite_get_user_field('mail'),
+      'Date: ' . date(DateTime::RFC2822),
+      'Message-ID: <' . time() . '-' . md5(hostsite_get_user_field('mail') . $_POST['to']) . '@' . $_SERVER['SERVER_NAME'] . '>',
+    ];
     $headers = implode("\r\n", $headers) . PHP_EOL;
-    $emailBody = $_POST['body'];
-    $emailBody = str_replace("\n", "<br/>", $emailBody);
+    $emailBody = str_replace("\n", "<br/>", $_POST['body']);
+    $emailBodyHtml = <<<HTML
+<html>
+  <head>
+    <title>$lang[verification]</title>
+  </head>
+  <body>
+    $emailBody
+  </body>
+</html>
+HTML;
     // Send email. Depends upon settings in php.ini being correct
-    $success = mail($_POST['to'],
-      $_POST['subject'],
-      wordwrap($emailBody, 70),
-      $headers);
+    $success = mail($_POST['to'], $_POST['subject'], wordwrap($emailBodyHtml, 80), $headers);
     return $success ? 'OK' : 'Fail';
   }
 

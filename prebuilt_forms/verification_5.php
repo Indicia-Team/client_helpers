@@ -1304,6 +1304,9 @@ HTML
    * Response is OK or Fail depending on whether the email was sent or not.
    */
   public static function ajax_email($website_id, $password, $nid) {
+    $lang = [
+      'verification' => lang::get('Verification'),
+    ];
     $params = hostsite_get_node_field_value($nid, 'params');
     if (empty($params['email_from_address'])) {
       $fromEmail = hostsite_get_config_value('site', 'mail', '');
@@ -1311,19 +1314,28 @@ HTML
     else {
       $fromEmail = $params['email_from_address'];
     }
-    $headers = [];
-    $headers[] = 'MIME-Version: 1.0';
-    $headers[] = 'Content-type: text/html; charset=UTF-8;';
-    $headers[] = 'From: ' . $fromEmail;
-    $headers[] = 'Reply-To: ' . hostsite_get_user_field('mail');
+    $headers = [
+      'MIME-Version: 1.0',
+      'Content-type: text/html; charset=UTF-8;',
+      "From: $fromEmail",
+      'Reply-To: ' . hostsite_get_user_field('mail'),
+      'Date: ' . date(DateTime::RFC2822),
+      'Message-ID: <' . time() . '-' . md5(hostsite_get_user_field('mail') . $_POST['to']) . '@' . $_SERVER['SERVER_NAME'] . '>',
+    ];
     $headers = implode("\r\n", $headers) . PHP_EOL;
-    $emailBody = $_POST['body'];
-    $emailBody = str_replace("\n", "<br/>", $emailBody);
+    $emailBody = str_replace("\n", "<br/>", $_POST['body']);
+    $emailBodyHtml = <<<HTML
+<html>
+  <head>
+    <title>$lang[verification]</title>
+  </head>
+  <body>
+    $emailBody
+  </body>
+</html>
+HTML;
     // Send email. Depends upon settings in php.ini being correct.
-    $success = mail($_POST['to'],
-         $_POST['subject'],
-         wordwrap($emailBody, 70),
-         $headers);
+    $success = mail($_POST['to'], $_POST['subject'], wordwrap($emailBodyHtml, 80), $headers);
     return $success ? 'OK' : 'Fail';
   }
 

@@ -94,7 +94,7 @@ class iform_seasearch_survey extends iform_dynamic_sample_occurrence {
     // toggle the checkboxes to after the label to match the form.
     $indicia_templates['check_or_radio_group_item'] =
       '<li><label for="{itemId}">{caption}</label><input type="{type}" name="{fieldname}" id="{itemId}" value="{value}"{class}{checked}{title} {disabled}/></li>';
-    drupal_add_library('system', 'ui.tooltip', true);
+    data_entry_helper::add_resource('jquery_ui');
     // Create an array of custom attributes keyed by caption for easy lookup later
     foreach($attributes as $attr)
       self::$attrsByCaption[strtolower($attr['caption'])] = $attr;

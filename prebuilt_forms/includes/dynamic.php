@@ -265,13 +265,16 @@ class iform_dynamic {
     }
 
     // Get authorisation tokens to update and read from the Warehouse. We allow
-    // child classes to generate this first if subclassed.
-    if (self::$auth) {
-      $auth = self::$auth;
-    }
-    else {
+    // child classes to generate this first if subclassed. So, if not already
+    // generated, or we are on a data entry form without write auth (which can
+    // happen when loading multiple pages using a view), then fetch read write
+    // auth.
+    if (!self::$auth || (empty(self::$auth['write']) && call_user_func([self::$called_class, 'isDataEntryForm']))) {
       $auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
       self::$auth = $auth;
+    }
+    else {
+      $auth = self::$auth;
     }
     // Determine how the form was requested and therefore what to output.
     $mode = (method_exists(self::$called_class, 'getMode')) ?

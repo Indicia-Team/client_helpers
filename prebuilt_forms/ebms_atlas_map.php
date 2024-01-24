@@ -280,10 +280,28 @@ class iform_ebms_atlas_map extends iform_dynamic {
       $esFilter = self::createEsFilterHtml('taxon.accepted_taxon_id', self::$externalKey, 'match_phrase', 'must');
       // Exclude rejected records in ES queries.
       $esFilter .= self::createEsFilterHtml('identification.verification_status', 'R', 'term', 'must_not');
+      // Only those that pass auto-checks should be included.
+      $esFilter .= self::createEsFilterHtml('identification.auto_checks.result', 'true', 'term', 'must');
+      // Do not include any immature life stages
+      $esFilter .= self::createEsFilterHtml('occurrence.life_stage', 'egg', 'term', 'must_not');
+      $esFilter .= self::createEsFilterHtml('occurrence.life_stage', 'Egg', 'term', 'must_not');
+      $esFilter .= self::createEsFilterHtml('occurrence.life_stage', 'larva', 'term', 'must_not');
+      $esFilter .= self::createEsFilterHtml('occurrence.life_stage', 'Larva', 'term', 'must_not');
+      $esFilter .= self::createEsFilterHtml('occurrence.life_stage', 'larvae', 'term', 'must_not');
+      $esFilter .= self::createEsFilterHtml('occurrence.life_stage', 'Larvae', 'term', 'must_not');
+      $esFilter .= self::createEsFilterHtml('occurrence.life_stage', 'pupa', 'term', 'must_not');
+      $esFilter .= self::createEsFilterHtml('occurrence.life_stage', 'Pupa', 'term', 'must_not');
+      $esFilter .= self::createEsFilterHtml('occurrence.life_stage', 'pupae', 'term', 'must_not');
+      $esFilter .= self::createEsFilterHtml('occurrence.life_stage', 'Pupae', 'term', 'must_not');
+      $esFilter .= self::createEsFilterHtml('occurrence.life_stage', 'cocoon', 'term', 'must_not');
+      $esFilter .= self::createEsFilterHtml('occurrence.life_stage', 'Cocoon', 'term', 'must_not');
+      $esFilter .= self::createEsFilterHtml('occurrence.life_stage', 'caterpillar', 'term', 'must_not');
+      $esFilter .= self::createEsFilterHtml('occurrence.life_stage', 'Caterpillar', 'term', 'must_not');
     } else {
       self::$taxaTaxonListId = '';
       $esFilter = '';
     }
+
 
     if (self::$dataYearFilter != 0) {
       $esFilter .= self::createEsFilterHtml('event.year', self::$dataYearFilter, 'match_phrase', 'must');
@@ -302,7 +320,6 @@ class iform_ebms_atlas_map extends iform_dynamic {
    *   Empty string as no HTML required.
    */
   protected static function get_control_source($auth, $args, $tabalias, $options) {
-    dpm($options);
     return ElasticsearchReportHelper::source($options);
   }
 
@@ -583,10 +600,6 @@ class iform_ebms_atlas_map extends iform_dynamic {
    *   Hidden input HTML.
    */
   protected static function createEsFilterHtml($field, $value, $queryType, $boolClause) {
-    // dpm([
-    //   'field' => $field,
-    //   'value' => $value
-    // ]);
     $r = <<<HTML
 <input type="hidden" class="es-filter-param" value="$value"
   data-es-bool-clause="$boolClause" data-es-field="$field" data-es-query-type="$queryType" />
@@ -621,8 +634,6 @@ HTML;
         self::$externalKey = $species_details[0]['external_key'];
       }
 
-      //dpm($species_details[0]);
-      //self::$preferred = $species_details[0]['taxon_plain'];
       self::$preferred = $species_details[0]['taxon'];
     }
   }
