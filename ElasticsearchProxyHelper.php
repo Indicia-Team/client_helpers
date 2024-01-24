@@ -1355,7 +1355,7 @@ class ElasticsearchProxyHelper {
    * @param array $bool
    *   ES bool query definintion.
    */
-  private static function applyFilterDef(array $readAuth, array $definition, array &$bool) {
+  public static function applyFilterDef(array $readAuth, array $definition, array &$bool) {
     self::convertLocationListToSearchArea($definition, $readAuth);
     self::applyUserFiltersTaxonGroupList($definition, $bool);
     self::applyUserFiltersTaxaTaxonList($definition, $bool, $readAuth);
