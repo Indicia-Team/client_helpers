@@ -117,6 +117,7 @@ class iform_pollenator_reidentify {
 	$r = '';
 	drupal_add_js(\Drupal::service('extension.path.resolver')->getPath('module', 'iform') .'/media/js/jquery.form.js', 'module');
 	data_entry_helper::link_default_stylesheet();
+	data_entry_helper::add_resource('jquery_form');
 	data_entry_helper::add_resource('jquery_ui');
 	data_entry_helper::add_resource('openlayers');
 	data_entry_helper::enable_validation('new-comments-form'); // don't care about ID itself, just want resources
