@@ -578,14 +578,14 @@ class iform_sectioned_transects_edit_transect {
     }
     // Other blocks to go at the top, next to the map.
     if (isset($args['site_help']) && $args['site_help'] != '') {
-      $r .= '<p class="ui-state-highlight page-notice ui-corner-all">' . t($args['site_help']) . '</p>';
+      $r .= '<p class="ui-state-highlight page-notice ui-corner-all">' . lang::get($args['site_help']) . '</p>';
     }
     $r .= get_attribute_html($settings['attributes'], $args, ['extraParams' => $auth['read']]);
     $r .= '</fieldset>';
     $r .= "</div>"; // left
     $r .= '<div class="right" style="width: 44%">';
     if (!$settings['locationId']) {
-      $help = t('Use the search box to find a nearby town or village, then drag the map to pan and click on the map to set the centre grid reference of the transect. '.
+      $help = lang::get('Use the search box to find a nearby town or village, then drag the map to pan and click on the map to set the centre grid reference of the transect. '.
           'Alternatively if you know the grid reference you can enter it in the Grid Ref box on the left.');
       $r .= '<p class="ui-state-highlight page-notice ui-corner-all">' . $help . '</p>';
       $r .= data_entry_helper::georeference_lookup([
