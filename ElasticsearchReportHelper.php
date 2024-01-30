@@ -1216,6 +1216,7 @@ JS;
         $options['explorePath'],
         [
           'filter-quality' => '-q-',
+          'filter-quality_op' => 'in',
           'filter-date_from' => '-df-',
           'filter-date_to' => '-dt-',
           'filter-user_id' => '-userId-',
