@@ -807,6 +807,14 @@ HTML;
         $requiredFields['occurrence:deleted'] = 'Occurrence deleted';
       }
     }
+    // Ensure captions correctly translated.
+    foreach ($requiredFields as $field => &$caption) {
+      $translatedCaption = lang::get($field);
+      if ($translatedCaption === $field) {
+        $translatedCaption = lang::get($caption);
+      }
+      $caption = $translatedCaption;
+    }
     self::$indiciaData['requiredFields'] = $requiredFields;
     $dbFieldOptions = self::getAvailableDbFieldsAsOptions($options, $availableFields);
     foreach ($config['columns'] as $columnLabel => $info) {
