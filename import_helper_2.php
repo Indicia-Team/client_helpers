@@ -880,6 +880,15 @@ HTML;
     $colsByGroup = [];
     $optGroup = '';
     $shortGroupLabels = [];
+    // A set of variations on custom attribute captions that can match. E.g.
+    // determiner column can match an identified by attribute and vice versa.
+    $customAttrVariations = [
+      ['abundance', 'count', 'qty', 'quantity'],
+      ['vc', 'vicecounty', 'vicecountynumber'],
+      ['recorder', 'recorders', 'recordername', 'recordernames'],
+      ['determinedby', 'determiner', 'identifiedby', 'identifier'],
+      ['lifestage','stage'],
+    ];
     foreach ($availableFields as $field => $caption) {
       // Skip fields that are not suitable for non-expert imports.
       if (self::fieldIsBlocked($options, $field)) {
@@ -923,7 +932,7 @@ HTML;
           break;
 
         case 'sample:recorder_names':
-          $alts = ['recorder', 'recordername', 'recordernames'];
+          $alts = ['recorder', 'recorders', 'recordername', 'recordernames'];
           break;
 
         default:
@@ -937,17 +946,13 @@ HTML;
       else {
         $captionSimplified = preg_replace('/[^a-z]/', '', strtolower($caption));
       }
-      $customAttrVariations = [
-        ['abundance', 'count', 'qty', 'quantity'],
-        ['vc', 'vicecounty', 'vicecountynumber'],
-        ['recorder', 'recordername', 'recordernames', 'recorders'],
-        ['determinedby', 'determiner', 'identifiedby', 'identifier'],
-        ['lifestage','stage'],
-      ];
-      foreach ($customAttrVariations as $variationSet) {
-        if (in_array(strtolower($captionSimplified), $variationSet)) {
-          unset($variationSet[array_search($captionSimplified, $variationSet)]);
-          $alts = array_merge($alts, $variationSet);
+      // Allow for variations in custom attribute naming.
+      if (substr($field, 3, 4) === 'Attr') {
+        foreach ($customAttrVariations as $variationSet) {
+          if (in_array(strtolower($captionSimplified), $variationSet)) {
+            unset($variationSet[array_search($captionSimplified, $variationSet)]);
+            $alts = array_merge($alts, $variationSet);
+          }
         }
       }
       // Build the data attribute.
