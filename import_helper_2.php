@@ -66,8 +66,6 @@ class import_helper_2 extends helper_base {
    * * loadChunkToTempTableUrl - path to a script that triggers the load of the
    *   next chunk of records into a temp table on the warehouse. The script can
    *   call import_helper_2::loadChunkToTempTable for a complete implementation.
-   * * getRequiredFieldsUrl - path to a function that returns the list of
-   *   required fields for the dataset being imported into.
    * * preprocessUrl - path to a script that performs processing
    *   that can be done after the file is loaded and mappings done.
    * * processLookupMatchingUrl - path to a script that performs steps in the
@@ -121,7 +119,6 @@ class import_helper_2 extends helper_base {
     self::$indiciaData['extractFileOnWarehouseUrl'] = $options['extractFileOnWarehouseUrl'];
     self::$indiciaData['initServerConfigUrl'] = $options['initServerConfigUrl'];
     self::$indiciaData['loadChunkToTempTableUrl'] = $options['loadChunkToTempTableUrl'];
-    self::$indiciaData['getRequiredFieldsUrl'] = $options['getRequiredFieldsUrl'];
     self::$indiciaData['preprocessUrl'] = $options['preprocessUrl'];
     self::$indiciaData['processLookupMatchingUrl'] = $options['processLookupMatchingUrl'];
     self::$indiciaData['saveLookupMatchesGroupUrl'] = $options['saveLookupMatchesGroupUrl'];
@@ -280,28 +277,6 @@ class import_helper_2 extends helper_base {
     $output = json_decode($response['output'], TRUE);
     if (!$response['result']) {
       \Drupal::logger('iform')->notice('Error in loadChunkToTempTable: ' . var_export($response, TRUE));
-    }
-    return $output;
-  }
-
-  /**
-   * Retrieves the required field list for the current import setup.
-   *
-   * @param string $fileName
-   *   Name of the file to process.
-   * @param array $readAuth
-   *   Write authorisation tokens.
-   */
-  public static function getRequiredFields($fileName, array $readAuth) {
-    $serviceUrl = self ::$base_url . 'index.php/services/import_2/get_required_fields/occurrence';
-    $data = $readAuth + [
-      'data-file' => $fileName,
-    ];
-    $response = self::http_post($serviceUrl, $data, FALSE);
-    $output = json_decode($response['output'], TRUE);
-    if (!$response['result']) {
-      \Drupal::logger('iform')->notice('Error in getRequiredFields: ' . var_export($response, TRUE));
-      throw new exception(isset($output['msg']) ? $output['msg'] : $response['output']);
     }
     return $output;
   }
@@ -1534,7 +1509,6 @@ HTML;
       'sendFileToWarehouseUrl',
       'initServerConfigUrl',
       'loadChunkToTempTableUrl',
-      'getRequiredFieldsUrl',
       'preprocessUrl',
       'processLookupMatchingUrl',
       'saveLookupMatchesGroupUrl',

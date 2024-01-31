@@ -268,7 +268,6 @@ TXT;
       'extractFileOnWarehouseUrl' => hostsite_get_url('iform/ajax/importer_2') . "/extract_file_on_warehouse/$nid",
       'initServerConfigUrl' => hostsite_get_url('iform/ajax/importer_2') . "/init_server_config/$nid",
       'loadChunkToTempTableUrl' => hostsite_get_url('iform/ajax/importer_2') . "/load_chunk_to_temp_table/$nid",
-      'getRequiredFieldsUrl' => hostsite_get_url('iform/ajax/importer_2') . "/get_required_fields/$nid",
       'processLookupMatchingUrl' => hostsite_get_url('iform/ajax/importer_2') . "/process_lookup_matching/$nid",
       'preprocessUrl' => hostsite_get_url('iform/ajax/importer_2') . "/preprocess/$nid",
       'saveLookupMatchesGroupUrl' => hostsite_get_url('iform/ajax/importer_2') . "/save_lookup_matches_group/$nid",
@@ -411,25 +410,6 @@ TXT;
     $writeAuth = self::getAuthFromHeaders();
     iform_load_helpers(['import_helper_2']);
     return import_helper_2::loadChunkToTempTable($_GET['data-file'], $writeAuth);
-  }
-
-  /**
-   * AJAX handler to retrieve the required fields for the selected survey.
-   *
-   * @param int $website_id
-   *   Warehouse website ID.
-   * @param string $password
-   *   Warehouse website password.
-   * @param int $nid
-   *   Node ID.
-   *
-   * @return array
-   *   Progress data from the warehouse.
-   */
-  public static function ajax_get_required_fields($website_id, $password, $nid) {
-    $readAuth = self::getAuthFromHeaders();
-    iform_load_helpers(['import_helper_2']);
-    return import_helper_2::getRequiredFields($_GET['data-file'], $readAuth);
   }
 
   /**
