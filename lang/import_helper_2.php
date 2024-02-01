@@ -98,4 +98,4 @@ $default_terms['sample:record_status'] = 'Sample verification status';
 
 $default_terms['Deleted'] = 'Deleted (for existing records)';
 $default_terms['Id'] = 'ID (primary key for existing records)';
-$default_terms['Taxa taxon list (lookup)'] = 'Species or taxon name';
+$default_terms['Taxa taxon list (lookup in database)'] = 'Species or taxon name';
