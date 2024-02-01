@@ -66,8 +66,6 @@ class import_helper_2 extends helper_base {
    * * loadChunkToTempTableUrl - path to a script that triggers the load of the
    *   next chunk of records into a temp table on the warehouse. The script can
    *   call import_helper_2::loadChunkToTempTable for a complete implementation.
-   * * getRequiredFieldsUrl - path to a function that returns the list of
-   *   required fields for the dataset being imported into.
    * * preprocessUrl - path to a script that performs processing
    *   that can be done after the file is loaded and mappings done.
    * * processLookupMatchingUrl - path to a script that performs steps in the
@@ -121,7 +119,6 @@ class import_helper_2 extends helper_base {
     self::$indiciaData['extractFileOnWarehouseUrl'] = $options['extractFileOnWarehouseUrl'];
     self::$indiciaData['initServerConfigUrl'] = $options['initServerConfigUrl'];
     self::$indiciaData['loadChunkToTempTableUrl'] = $options['loadChunkToTempTableUrl'];
-    self::$indiciaData['getRequiredFieldsUrl'] = $options['getRequiredFieldsUrl'];
     self::$indiciaData['preprocessUrl'] = $options['preprocessUrl'];
     self::$indiciaData['processLookupMatchingUrl'] = $options['processLookupMatchingUrl'];
     self::$indiciaData['saveLookupMatchesGroupUrl'] = $options['saveLookupMatchesGroupUrl'];
@@ -280,28 +277,6 @@ class import_helper_2 extends helper_base {
     $output = json_decode($response['output'], TRUE);
     if (!$response['result']) {
       \Drupal::logger('iform')->notice('Error in loadChunkToTempTable: ' . var_export($response, TRUE));
-    }
-    return $output;
-  }
-
-  /**
-   * Retrieves the required field list for the current import setup.
-   *
-   * @param string $fileName
-   *   Name of the file to process.
-   * @param array $readAuth
-   *   Write authorisation tokens.
-   */
-  public static function getRequiredFields($fileName, array $readAuth) {
-    $serviceUrl = self ::$base_url . 'index.php/services/import_2/get_required_fields/occurrence';
-    $data = $readAuth + [
-      'data-file' => $fileName,
-    ];
-    $response = self::http_post($serviceUrl, $data, FALSE);
-    $output = json_decode($response['output'], TRUE);
-    if (!$response['result']) {
-      \Drupal::logger('iform')->notice('Error in getRequiredFields: ' . var_export($response, TRUE));
-      throw new exception(isset($output['msg']) ? $output['msg'] : $response['output']);
     }
     return $output;
   }
@@ -832,6 +807,14 @@ HTML;
         $requiredFields['occurrence:deleted'] = 'Occurrence deleted';
       }
     }
+    // Ensure captions correctly translated.
+    foreach ($requiredFields as $field => &$caption) {
+      $translatedCaption = lang::get($field);
+      if ($translatedCaption === $field) {
+        $translatedCaption = lang::get($caption);
+      }
+      $caption = $translatedCaption;
+    }
     self::$indiciaData['requiredFields'] = $requiredFields;
     $dbFieldOptions = self::getAvailableDbFieldsAsOptions($options, $availableFields);
     foreach ($config['columns'] as $columnLabel => $info) {
@@ -905,6 +888,15 @@ HTML;
     $colsByGroup = [];
     $optGroup = '';
     $shortGroupLabels = [];
+    // A set of variations on custom attribute captions that can match. E.g.
+    // determiner column can match an identified by attribute and vice versa.
+    $customAttrVariations = [
+      ['abundance', 'count', 'qty', 'quantity'],
+      ['vc', 'vicecounty', 'vicecountynumber'],
+      ['recorder', 'recorders', 'recordername', 'recordernames'],
+      ['determinedby', 'determiner', 'identifiedby', 'identifier'],
+      ['lifestage','stage'],
+    ];
     foreach ($availableFields as $field => $caption) {
       // Skip fields that are not suitable for non-expert imports.
       if (self::fieldIsBlocked($options, $field)) {
@@ -948,7 +940,7 @@ HTML;
           break;
 
         case 'sample:recorder_names':
-          $alts = ['recorder', 'recordername', 'recordernames'];
+          $alts = ['recorder', 'recorders', 'recordername', 'recordernames'];
           break;
 
         default:
@@ -962,17 +954,13 @@ HTML;
       else {
         $captionSimplified = preg_replace('/[^a-z]/', '', strtolower($caption));
       }
-      $customAttrVariations = [
-        ['abundance', 'count', 'qty', 'quantity'],
-        ['vc', 'vicecounty', 'vicecountynumber'],
-        ['recorder', 'recordername', 'recordernames', 'recorders'],
-        ['determinedby', 'determiner', 'identifiedby', 'identifier'],
-        ['lifestage','stage'],
-      ];
-      foreach ($customAttrVariations as $variationSet) {
-        if (in_array(strtolower($captionSimplified), $variationSet)) {
-          unset($variationSet[array_search($captionSimplified, $variationSet)]);
-          $alts = array_merge($alts, $variationSet);
+      // Allow for variations in custom attribute naming.
+      if (substr($field, 3, 4) === 'Attr') {
+        foreach ($customAttrVariations as $variationSet) {
+          if (in_array(strtolower($captionSimplified), $variationSet)) {
+            unset($variationSet[array_search($captionSimplified, $variationSet)]);
+            $alts = $alts + $variationSet;
+          }
         }
       }
       // Build the data attribute.
@@ -1534,7 +1522,6 @@ HTML;
       'sendFileToWarehouseUrl',
       'initServerConfigUrl',
       'loadChunkToTempTableUrl',
-      'getRequiredFieldsUrl',
       'preprocessUrl',
       'processLookupMatchingUrl',
       'saveLookupMatchesGroupUrl',
