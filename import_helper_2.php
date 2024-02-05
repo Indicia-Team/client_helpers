@@ -771,7 +771,8 @@ HTML;
     ]);
     // Load the config for this import.
     $request = parent::$base_url . "index.php/services/import_2/get_config";
-    $request .= '?' . self::array_to_query_string($options['readAuth'] + ['data-file' => $_POST['data-file']]);
+    $request .= '?' . http_build_query($options['readAuth'] + ['data-file' => $_POST['data-file']]);
+
     $response = self::http_post($request, []);
     $config = json_decode($response['output'], TRUE);
     // Save the results of the previous global values form, which can be merged
@@ -1247,7 +1248,7 @@ HTML;
       'value' => lang::get('Value'),
     ];
     $request = parent::$base_url . "index.php/services/import_2/get_config";
-    $request .= '?' . self::array_to_query_string($options['readAuth'] + ['data-file' => $_POST['data-file']]);
+    $request .= '?' . http_build_query($options['readAuth'] + ['data-file' => $_POST['data-file']]);
     $response = self::http_post($request, []);
     $config = json_decode($response['output'], TRUE);
     if (!is_array($config)) {
