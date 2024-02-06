@@ -771,7 +771,8 @@ HTML;
     ]);
     // Load the config for this import.
     $request = parent::$base_url . "index.php/services/import_2/get_config";
-    $request .= '?' . self::array_to_query_string($options['readAuth'] + ['data-file' => $_POST['data-file']]);
+    $request .= '?' . http_build_query($options['readAuth'] + ['data-file' => $_POST['data-file']]);
+
     $response = self::http_post($request, []);
     $config = json_decode($response['output'], TRUE);
     // Save the results of the previous global values form, which can be merged
@@ -783,6 +784,7 @@ HTML;
     }
     self::$indiciaData['globalValues'] = $globalValues;
     $availableFields = self::getAvailableDbFields($options, $globalValues);
+    self::hideCoreFieldsIfReplaced($options, $globalValues['survey_id'], $availableFields);
     $requiredFields = self::getAvailableDbFields($options, $globalValues, TRUE);
     // Only include required fields that are available for selection. Others
     // get populated by some other means.
@@ -867,6 +869,58 @@ HTML;
   <input type="hidden" name="data-file" id="data-file" value="{$_POST['data-file']}" />
 </form>
 HTML;
+  }
+
+  /**
+   * Hides a single core field from mapping if not required.
+   *
+   * @param string $entity
+   *   Sample or occurrence.
+   * @param string $field
+   *   Field name to check.
+   * @param string $sysFunc
+   *   System function for the attribute that might replace the field.
+   * @param array $options
+   *   Import options, including read auth and blocked fields list.
+   * @param int $surveyId
+   *   Survey ID.
+   * @param array $availableFields
+   *   List of available fields which will be modified.
+   */
+  private static function hideCoreFieldIfReplaced($entity, $field, $sysFunc, array $options, $surveyId, array &$availableFields) {
+    // Don't bother if field already on blocked list.
+    if (!self::fieldIsBlocked($options, "$entity:$field")) {
+      $attr = data_entry_helper::get_population_data([
+        'table' => "{$entity}_attribute",
+        'extraParams' => $options['readAuth'] + [
+          'restrict_to_survey_id' => $surveyId,
+          'system_function' => $sysFunc,
+        ],
+        'cachePerUser' => FALSE,
+        'cachetimeout' => 24 * 60 * 60,
+      ]);
+      if (count($attr) > 0) {
+        unset($availableFields["$entity:$field"]);
+      }
+    }
+  }
+
+  /**
+   * Hides core fields from mapping if not required.
+   *
+   * E.g. if sample:recorder_names replaced by a custom attribute, then hide
+   * the core version. Also applies to occurrence:determiner_id.
+   *
+   * @param array $options
+   *   Import options, including read auth and blocked fields list.
+   * @param int $surveyId
+   *   Survey ID.
+   * @param array $availableFields
+   *   List of available fields which will be modified.
+   */
+  private static function hideCoreFieldsIfReplaced(array $options, $surveyId, array &$availableFields) {
+    self::hideCoreFieldIfReplaced('sample', 'recorder_names', 'full_name', $options, $surveyId, $availableFields);
+    self::hideCoreFieldIfReplaced('occurrence', 'fk_determiner', 'det_full_name', $options, $surveyId, $availableFields);
   }
 
   /**
@@ -1247,7 +1301,7 @@ HTML;
       'value' => lang::get('Value'),
     ];
     $request = parent::$base_url . "index.php/services/import_2/get_config";
-    $request .= '?' . self::array_to_query_string($options['readAuth'] + ['data-file' => $_POST['data-file']]);
+    $request .= '?' . http_build_query($options['readAuth'] + ['data-file' => $_POST['data-file']]);
     $response = self::http_post($request, []);
     $config = json_decode($response['output'], TRUE);
     if (!is_array($config)) {
