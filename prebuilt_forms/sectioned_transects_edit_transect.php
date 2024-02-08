@@ -350,6 +350,7 @@ class iform_sectioned_transects_edit_transect {
     $settings['autocalcSectionLengthAttrId'] = empty($args['autocalc_section_length_attr_id']) ? 0 : $args['autocalc_section_length_attr_id'];
     $settings['autocalcTransectLengthAttrId'] = empty($args['autocalc_transect_length_attr_id']) ? 0 : $args['autocalc_transect_length_attr_id'];
     $settings['defaultSectionGridRef'] = empty($args['default_section_grid_ref']) ? 'parent' : $args['default_section_grid_ref'];
+    $sectionIds = [];
     if ($settings['locationId']) {
       data_entry_helper::load_existing_record($auth['read'], 'location', $settings['locationId']);
       $settings['walks'] = data_entry_helper::get_population_data(array(
@@ -397,7 +398,7 @@ class iform_sectioned_transects_edit_transect {
         if ($attr['caption']==='No. of sections') {
           $settings['numSectionsAttr'] = $attr['fieldname'];
           for ($i = 1; $i <= $attr['displayValue']; $i++) {
-            $settings['sections']["S$i"]=NULL;
+            $settings['sections']["S$i"] = NULL;
           }
           $existingSectionCount = empty($attr['displayValue']) ? 1 : $attr['displayValue'];
           data_entry_helper::$javascript .= "$('#".str_replace(':','\\\\:',$attr['id'])."').attr('min',$existingSectionCount).attr('max',".$args['maxSectionCount'].");\n";
@@ -420,6 +421,7 @@ class iform_sectioned_transects_edit_transect {
         $code = $section['code'];
         data_entry_helper::$javascript .= "indiciaData.sections.$code = {'geom':'".$section['boundary_geom']."','id':'".$section['id']."','sref':'".$section['centroid_sref']."','system':'".$section['centroid_sref_system']."'};\n";
         $settings['sections'][$code] = $section;
+        $sectionIds[$section['code']] = $section['id'];
       }
     }
     else {
@@ -452,7 +454,7 @@ class iform_sectioned_transects_edit_transect {
           'progressBar' => isset($args['tabProgress']) && $args['tabProgress']==TRUE
       ));
     }
-    $r .= self::get_site_tab($auth, $args, $settings);
+    $r .= self::getSiteTab($auth, $args, $settings, $sectionIds);
     if ($settings['locationId']) {
       $r .= self::get_your_route_tab($auth, $args, $settings);
       if ($args['always_show_section_details'] || count($settings['section_attributes']) > 0)
@@ -514,7 +516,22 @@ class iform_sectioned_transects_edit_transect {
     return $ok;
   }
 
-  private static function get_site_tab($auth, $args, $settings) {
+  /**
+   * Retrieve the HTML for the site tab.
+   *
+   * @param array $auth
+   *   Read and write auth tokens.
+   * @param array $args
+   *   Form arguments.
+   * @param array $settings
+   *   Settings data.
+   * @param array $sectionIds
+   *   List of child section IDs, keyed by code.
+   *
+   * @return string
+   *   Tab HTML.
+   */
+  private static function getSiteTab($auth, $args, $settings, array $sectionIds) {
     $r = '<div id="site-details" class="ui-helper-clearfix">';
     $r .= '<form method="post" id="input-form">';
     $r .= $auth['write'];
@@ -525,6 +542,11 @@ class iform_sectioned_transects_edit_transect {
     $r .= "<input type=\"hidden\" name=\"location:location_type_id\" value=\"" . $settings['locationTypes'][0]['id'] . "\" />\n";
     if ($settings['locationId']) {
       $r .= "<input type=\"hidden\" name=\"location:id\" id=\"location:id\" value=\"$settings[locationId]\" />\n";
+      // Enable detecting changes to the site name.
+      $r .= "<input type=\"hidden\" name=\"previous_name\" value=\"" . data_entry_helper::$entity_to_load['location:name'] . "\" />\n";
+      // Include section IDs to make name update propogation simpler.
+      $sectionIdsJson = htmlspecialchars(json_encode($sectionIds));
+      $r .= "<input type=\"hidden\" name=\"section_ids\" value=\"$sectionIdsJson\" />\n";
     }
     // Pass through the group_id if set in URL parameters, so we can save the
     // location against the group.
@@ -774,15 +796,18 @@ $('#delete-transect').click(deleteSurvey);
    */
   protected static function section_selector($settings, $id) {
     $sectionArr = [];
-    foreach ($settings['sections'] as $code=>$section)
+    foreach ($settings['sections'] as $code => $section) {
       $sectionArr[$code] = $code;
-    $selector = '<label for="'.$id.'">'.lang::get('Select section').':</label><ol id="'.$id.'" class="section-select">';
-    foreach ($sectionArr as $key=>$value) {
+    }
+    $selector = '<label for="'.$id.'">' . lang::get('Select section') . ':</label><ol id="' . $id . '" class="section-select">';
+    foreach ($sectionArr as $key => $value) {
       $classes = [];
-      if ($key=='S1')
+      if ($key === 'S1') {
         $classes[] = 'selected';
-      if (!isset($settings['sections'][$key]))
+      }
+      if (!isset($settings['sections'][$key])) {
         $classes[] = 'missing';
+      }
       $class = count($classes) ? ' class="'.implode(' ', $classes).'"' : '';
       $selector .= "<li id=\"$id-$value\"$class>$value</li>";
     }
@@ -951,6 +976,24 @@ $('#delete-transect').click(deleteSurvey);
             'id' => 'groups_location',
             'fields' => [
               'group_id' => $values['group_id'],
+            ],
+          ],
+        ];
+      }
+    }
+    elseif (isset($values['previous_name']) && $values['previous_name'] !== $values['location:name'] && !empty($values['section_ids'])) {
+      // Not the first save and the transect name has been updated. So, update
+      // the section names to match the new transect name.
+      $sectionIds = json_decode($values['section_ids'], TRUE);
+      foreach ($sectionIds as $code => $sectionId) {
+        // Add a sub-model for each section just to update the name.
+        $s['subModels'][] = [
+          'fkId' => 'parent_id',
+          'model' => [
+            'id' => 'location',
+            'fields' => [
+              'id' => $sectionId,
+              'name' => $values['location:name'] . ' - ' . $code,
             ],
           ],
         ];
