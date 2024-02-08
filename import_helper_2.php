@@ -811,11 +811,7 @@ HTML;
     }
     // Ensure captions correctly translated.
     foreach ($requiredFields as $field => &$caption) {
-      $translatedCaption = lang::get($field);
-      if ($translatedCaption === $field) {
-        $translatedCaption = lang::get($caption);
-      }
-      $caption = $translatedCaption;
+      $caption = self::getWarehouseFieldLabel($field, $availableFields);
     }
     self::$indiciaData['requiredFields'] = $requiredFields;
     $dbFieldOptions = self::getAvailableDbFieldsAsOptions($options, $availableFields);
@@ -986,7 +982,7 @@ HTML;
           break;
 
         case 'sample:entered_sref':
-          $alts = ['gridref', 'gridreference', 'spatialref', 'spatialreference', 'mapref', 'mapreference', 'coords', 'coordinates'];
+          $alts = ['gridref', 'gridreference', 'spatialref', 'spatialreference', 'gridreforotherspatialref', 'mapref', 'mapreference', 'coords', 'coordinates'];
           break;
 
         case 'sample:location_name':
@@ -1019,14 +1015,9 @@ HTML;
       }
       // Build the data attribute.
       $alt = empty($alts) ? '' : ' data-alt="' . implode(',', $alts) . '"';
-      // Translation can be a precise term keyed by the field name, or a loose
-      // term keyed off the caption.
-      $translatedCaption = lang::get($field);
-      if ($translatedCaption === $field) {
-        $translatedCaption = lang::get($caption);
-      }
+      $label = self::getWarehouseFieldLabel($field, $availableFields);
       $advanced = in_array($field, $options['advancedFields']) ? ' class="advanced" ' : '';
-      $colsByGroup[$optGroup][$translatedCaption] = "<option value=\"$field\"$advanced data-untranslated=\"$caption\"$alt>$translatedCaption</option>";
+      $colsByGroup[$optGroup][$label] = "<option value=\"$field\"$advanced data-untranslated=\"$caption\"$alt>$label</option>";
     }
     $optGroupHtmlList = ["<option value=\"\">- $lang[notImported] -</option>"];
     foreach ($colsByGroup as $thisColOptionGroup => $optionsList) {
@@ -1242,7 +1233,7 @@ HTML;
   /**
    * Convert warehouse field name to readable form.
    *
-   * E.g. sample:comment is returned as Sample comment.
+   * E.g. sample:comment is returned as Comment.
    *
    * @param string $warehouseField
    *   Field name.
@@ -1252,21 +1243,30 @@ HTML;
    */
   private static function getReadableWarehouseField($warehouseField) {
     $parts = explode(':', $warehouseField);
-    $asWords = implode(' ', $parts);
-    return str_replace('_', ' ', ucfirst($asWords));
+    return str_replace('_', ' ', ucfirst(array_pop($parts)));
   }
 
   /**
    * Retrieve a readable label for a destination warehouse field.
    *
-   * @param array $info
-   *   Column info data.
+   * @param string $field
+   *   Database field name.
    * @param array $availableFields
    *   List of available fields for the import entity, with their display
    *   labels.
+   *
    */
-  private static function getWarehouseFieldLabel(array $info, array $availableFields) {
-    $label = $availableFields[$info['warehouseField']] ?? self::getReadableWarehouseField($info['warehouseField']);
+  private static function getWarehouseFieldLabel($field, array $availableFields) {
+    $label = lang::get($field);
+    if ($label === $field) {
+      // No translation provided.
+      if (isset($availableFields[$field])) {
+        $label = lang::get($availableFields[$field]);
+      }
+      else {
+        $label = self::getReadableWarehouseField($field);
+      }
+    }
     return $label;
   }
 
@@ -1313,12 +1313,11 @@ HTML;
     $existingMatchFields = [];
     foreach ($config['columns'] as $columnLabel => $info) {
       $arrow = self::getSummaryColumnArrow($info);
-      $warehouseFieldLabel = self::getWarehouseFieldLabel($info, $availableFields);
+      $warehouseFieldLabel = self::getWarehouseFieldLabel($info['warehouseField'], $availableFields);
       $mappingRows[] = "<tr><td><em>$columnLabel</td></em><td>$arrow</td><td>$warehouseFieldLabel</td></tr>";
       if (preg_match('/:(id|external_key)$/', $info['warehouseField'])) {
         $existingMatchFields[] = $warehouseFieldLabel;
       }
-      // @todo Correct mapping to stage attribute display
     }
     $mappings = implode('', $mappingRows);
     $globalRows = self::globalValuesAsTableRows($config, $options['readAuth'], $availableFields);
