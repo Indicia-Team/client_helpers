@@ -1,0 +1,5 @@
+{
+    "name": "drupal/client_helpers",
+    "description": "Client_helpers module for Drupal integration with Indicia.",
+    "type": "drupal-custom-module"
+}
