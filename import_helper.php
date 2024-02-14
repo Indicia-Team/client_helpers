@@ -1004,7 +1004,7 @@ JS;
   private static function getErrorsMessage($output, $msgLangKey) {
     $downloadInstructions = lang::get($msgLangKey);
     $r = '<p>' . lang::get('{1} problems were detected during the import.', $output['problems']) . ' ' . $downloadInstructions . '</p>';
-    $r .= "<div><a class=\"btn btn-primary\" href=\"$output[file]\">" . lang::get('Download the records that did not import.') . '</a></div>';
+    $r .= "<div><a class=\"btn btn-primary\" download href=\"$output[file]\">" . lang::get('Download the records that did not import.') . '</a></div>';
     return $r;
   }
 
