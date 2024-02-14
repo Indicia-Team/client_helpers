@@ -3130,9 +3130,10 @@ JS;
     if (!empty($options['default']) && empty($options['defaultCaption'])) {
       // Which field will be used to lookup the default caption?
       $idField = $options['valueField'] === 'taxa_taxon_list_id' ? 'id' : $options['valueField'];
-      // We've been given an attribute value but no caption for the species name in the data to load for an existing record. So look it up.
+      // We've been given an attribute value but no caption for the species
+      // name in the data to load for an existing record. So look it up.
       $r = self::get_population_data([
-        'table' => 'cache_taxa_taxon_list',
+        'table' => 'taxa_taxon_list',
         'extraParams' => [
           'nonce' => $options['extraParams']['nonce'],
           'auth_token' => $options['extraParams']['auth_token'],
@@ -3140,6 +3141,9 @@ JS;
           'columns' => "taxon",
           'orderby' => 'preferred',
           'sortdir' => 'DESC',
+          // If on warehouse doing editing, want latest data as it might be a
+          // field that just changed.
+          'view' => defined('KOHANA') ? 'list' : 'cache',
         ],
       ]);
       $options['defaultCaption'] = $r[0]['taxon'];
