@@ -1378,7 +1378,7 @@ class helper_base {
    *
    * @param string $url
    *   The URL the POST request is sent to.
-   * @param string $postargs
+   * @param string|array $postargs
    *   Arguments to include in the POST data.
    * @param bool $output_errors
    *   Set to false to prevent echoing of errors. Defaults to true.
