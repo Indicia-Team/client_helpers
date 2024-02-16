@@ -4823,7 +4823,7 @@ JS;
    * @param string $spatialRefPrecisionAttrId
    *   Provide the ID of the attribute which defines the spatial ref precision
    *   of each subSample where relevant.
-   *  @param string $subSampleAttrs
+   *  @param array $subSampleAttrs
    *   Array of attribute IDs to load for the sub-samples.
    *
    * @return array
@@ -4831,7 +4831,7 @@ JS;
    */
   public static function preload_species_checklist_occurrences($sampleId, $readAuth, array $loadMedia, $extraParams,
        &$subSamples, $useSubSamples, $subSampleMethodID='',
-       $spatialRefPrecisionAttrId = NULL, $subSampleAttrs = []) {
+       $spatialRefPrecisionAttrId = NULL, array $subSampleAttrs = []) {
     $occurrenceIds = [];
     // don't load from the db if there are validation errors, since the $_POST will already contain all the
     // data we need.
@@ -4857,9 +4857,16 @@ JS;
         }
       }
       if ($useSubSamples) {
-        $extraParams += $readAuth + ['view' => 'detail','parent_id'=>$sampleId,'deleted' => 'f', 'orderby' => 'id', 'sortdir' => 'ASC'];
-        if($subSampleMethodID != '')
+        $extraParams += $readAuth + [
+          'view' => 'detail',
+          'parent_id'=>$sampleId,
+          'deleted' => 'f',
+          'orderby' => 'id',
+          'sortdir' => 'ASC',
+        ];
+        if($subSampleMethodID != '') {
           $extraParams['sample_method_id'] = $subSampleMethodID;
+        }
         $params = array(
           'table' => 'sample',
           'extraParams' => $extraParams,
@@ -6826,7 +6833,7 @@ JS;
    *   ID of the database record to load.
    * @param string $view
    *   Name of the view to load attributes from, normally 'list' or 'detail'.
-   * @param bool $sharing
+   * @param bool|string $sharing
    *   Defaults to false. If set to the name of a sharing task (reporting,
    *   peer_review, verification, data_flow, moderation or editing), then the
    *   record can be loaded from another client website if a sharing agreement
@@ -6885,7 +6892,7 @@ JS;
    *   ID of the database record to load.
    * @param string $view
    *   Name of the view to load attributes from, normally 'list' or 'detail'.
-   * @param boolean $sharing
+   * @param boolean|string $sharing
    *   Defaults to false. If set to the name of a sharing task (reporting,
    *   peer_review, verification, data_flow, moderation or editing), then the
    *   record can be loaded from another client website if a sharing agreement
