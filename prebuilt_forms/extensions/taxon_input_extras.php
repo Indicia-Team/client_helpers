@@ -41,7 +41,7 @@ class extension_taxon_input_extras {
       'title' => 'Hints relating to species names entered',
     ], $options);
     $filePath = hostsite_get_public_file_path();
-    data_entry_helper::$javascript .= "initSpeciesHints('$filePath/indicia/speciesHints.json');\n";
+    data_entry_helper::$javascript .= "initSpeciesHints('/$filePath/indicia/speciesHints.json');\n";
     return '<div id="species-hints-outer"><h3>' . lang::get($options['title']) . '</h3> ' .
         "<div id=\"species-hints\"></div></div>";
   }
