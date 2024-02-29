@@ -9124,7 +9124,7 @@ TXT;
     }
     elseif ($options['attrtable'] !== 'person_attribute' && $options['attrtable'] !== 'taxa_taxon_list_attribute') {
       $surveys = array(NULL);
-      if (isset($options['survey_id'])) {
+      if (!empty($options['survey_id'])) {
         $surveys[] = $options['survey_id'];
         $survey = data_entry_helper::get_population_data(array(
           'table' => 'survey',
