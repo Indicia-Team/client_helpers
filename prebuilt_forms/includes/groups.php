@@ -16,7 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers
  */
@@ -56,33 +55,41 @@ function group_authorise_form($args, $readAuth) {
  *   ID of the group.
  * @param array $readAuth
  *   Authentication tokens.
+ * @param bool $checkPage
+ *   Set to false to disable checking that the current page path is an iform
+ *   page linked to the group.
  */
-function group_authorise_group_id($group_id, $readAuth) {
+function group_authorise_group_id($group_id, $readAuth, $checkPage = TRUE) {
   $gu = [];
   // Loading data into a recording group. Are they a member or is the page
   // public?
   // @todo: consider performance - 2 web services hits required to check permissions.
   if (hostsite_get_user_field('indicia_user_id')) {
-    $gu = data_entry_helper::get_population_data(array(
+    $gu = helper_base::get_population_data([
       'table' => 'groups_user',
-      'extraParams' => $readAuth + array(
+      'extraParams' => $readAuth + [
         'group_id' => $group_id,
         'user_id' => hostsite_get_user_field('indicia_user_id'),
         'pending' => 'f',
-      ),
-      'nocache' => true
-    ));
+      ],
+      'nocache' => TRUE,
+    ]);
   }
-  $gp = data_entry_helper::get_population_data(array(
-    'table' => 'group_page',
-    'extraParams' => $readAuth + array('group_id' => $group_id, 'path' => hostsite_get_current_page_path())
-  ));
-  if (count($gp) === 0) {
-    hostsite_show_message(lang::get('You are trying to access a page which is not available for this group.'), 'warning', TRUE);
-    hostsite_goto_page('<front>');
-    return FALSE;
+  if ($checkPage) {
+    $gp = helper_base::get_population_data([
+      'table' => 'group_page',
+      'extraParams' => $readAuth + [
+        'group_id' => $group_id,
+        'path' => hostsite_get_current_page_path(),
+      ]
+    ]);
+    if (count($gp) === 0) {
+      hostsite_show_message(lang::get('You are trying to access a page which is not available for this group.'), 'warning', TRUE);
+      hostsite_goto_page('<front>');
+      return FALSE;
+    }
   }
-  elseif (count($gu) === 0 && $gp[0]['administrator'] !== NULL) {
+  if (count($gu) === 0 && $gp[0]['administrator'] !== NULL) {
     // Administrator field is null if the page is fully public. Else if not
     // a group member, then throw them out.
     hostsite_show_message(lang::get('You are trying to access a page for a group you do not belong to.'), 'warning', TRUE);
@@ -118,7 +125,7 @@ function group_authorise_group_id($group_id, $readAuth) {
  *   Group field values loaded from the database.
  */
 function group_apply_report_limits(array &$args, $readAuth, $nid, $isMember) {
-  $group = data_entry_helper::get_population_data([
+  $group = helper_base::get_population_data([
     'table' => 'group',
     'extraParams' => $readAuth + ['id' => $_GET['group_id'], 'view' => 'detail']
   ]);

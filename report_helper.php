@@ -3093,8 +3093,8 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue, removeparam) {
     setlocale (LC_TIME, $lang);
 
     for($i=0; $i<7; $i++){
-      $r .= "<td class=\"day\">" . 
-        lang::get(mb_convert_encoding(date('D', $header_date->getTimestamp()), 'UTF-8', 'ISO-8859-1')) . 
+      $r .= "<td class=\"day\">" .
+        lang::get(mb_convert_encoding(date('D', $header_date->getTimestamp()), 'UTF-8', 'ISO-8859-1')) .
         "</td>"; // i8n
       $header_date->modify('+1 day');
     }
@@ -3136,8 +3136,8 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue, removeparam) {
         $weekno++;
         $r .= "<tr class=\"datarow\">" .
           ($options['includeWeekNumber'] ? "<td class=\"weeknum\">" . $weekno . "</td>" : "") .
-          "<td class\"month\">" . 
-          t(mb_convert_encoding(date('M', $consider_date->getTimestamp()), 'UTF-8', 'ISO-8859-1')) . 
+          "<td class\"month\">" .
+          t(mb_convert_encoding(date('M', $consider_date->getTimestamp()), 'UTF-8', 'ISO-8859-1')) .
           "</td>";
       }
       $cellContents=$consider_date->format('j');  // day in month.

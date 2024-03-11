@@ -668,12 +668,16 @@ HTML;
   /**
    * Integrates the page with groups (activities).
    *
+   * @param bool $checkPage
+   *   Set to false to disable checking that the current page path is an iform
+   *   page linked to the group.
+   *
    * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-groupintegration
    *
    * @return string
    *   Control HTML
    */
-  public static function groupIntegration(array $options) {
+  public static function groupIntegration(array $options, $checkPage = TRUE) {
     $options = array_merge([
       'missingGroupIdBehaviour' => 'error',
       'showGroupSummary' => FALSE,
@@ -693,7 +697,7 @@ HTML;
       return '';
     }
     require_once 'prebuilt_forms/includes/groups.php';
-    $member = group_authorise_group_id($group_id, $options['readAuth']);
+    $member = group_authorise_group_id($group_id, $options['readAuth'], $checkPage);
     $output = '';
     if (!empty($group_id)) {
       // Apply filtering by group.
@@ -723,21 +727,21 @@ HTML;
           $output .= self::getGroupPageLinks($group, $options, $member);
         }
       }
-    }
-    $filterBoundaries = helper_base::get_population_data([
-      'report' => 'library/groups/group_boundary_transformed',
-      'extraParams' => $options['readAuth'] + ['group_id' => $group_id],
-      'cachePerUser' => FALSE,
-    ]);
-    if (count($filterBoundaries) > 0) {
-      helper_base::$indiciaData['reportBoundaries'] = [];
-      foreach ($filterBoundaries as $boundary) {
-        helper_base::$indiciaData['reportBoundaries'][] = $boundary['boundary'];
-      }
-      helper_base::$late_javascript .= <<<JS
+      $filterBoundaries = helper_base::get_population_data([
+        'report' => 'library/groups/group_boundary_transformed',
+        'extraParams' => $options['readAuth'] + ['group_id' => $group_id],
+        'cachePerUser' => FALSE,
+      ]);
+      if (count($filterBoundaries) > 0) {
+        helper_base::$indiciaData['reportBoundaries'] = [];
+        foreach ($filterBoundaries as $boundary) {
+          helper_base::$indiciaData['reportBoundaries'][] = $boundary['boundary'];
+        }
+        helper_base::$late_javascript .= <<<JS
 indiciaFns.loadReportBoundaries();
 
 JS;
+      }
     }
     return $output;
   }
