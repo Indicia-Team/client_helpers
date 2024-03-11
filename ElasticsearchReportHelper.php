@@ -923,6 +923,17 @@ JS;
         }
       }
     }
+    // Override map position from URL if needed. 
+    // (e.g. this allows control via an iFrame).
+    if (!empty($_GET['initialLat'])) {
+      $options['initialLat'] = $_GET['initialLat'];
+    }
+    if (!empty($_GET['initialLng'])) {
+      $options['initialLng'] = $_GET['initialLng'];
+    }
+    if (!empty($_GET['initialZoom'])) {
+      $options['initialZoom'] = $_GET['initialZoom'];
+    }
     $dataOptions = helper_base::getOptionsForJs($options, [
       'baseLayerConfig',
       'cookies',
