@@ -1,5 +1,10 @@
 {
     "name": "indicia/client_helpers",
     "description": "Client_helpers module for Drupal integration with Indicia.",
-    "type": "drupal-custom-module"
+    "type": "drupal-custom-module",
+    "extra": {
+        "installer-paths": {
+            "modules/custom/iform/{$name}": ["type:drupal-custom-module"]
+        }
+    }
 }
