@@ -218,14 +218,16 @@ class iform_group_send_invites {
   </body>
 </html>
 HTML;
+        $replyTo = $account->getEmail();
+        $siteEmail = hostsite_get_config_value('site', 'mail', '');
         $headers = [
           'MIME-Version: 1.0',
           'Content-type: text/html; charset=UTF-8;',
-          'From: ' . hostsite_get_config_value('site', 'mail', ''),
-          'Reply-To: ' . $account->getEmail(),
+          "From: \"$siteEmail\" <$siteEmail>",
+          "Reply-To: \"$replyTo\" <$replyTo>",
           'Return-Path: ' . hostsite_get_config_value('site', 'mail'),
           'Date: ' . date(DateTime::RFC2822),
-          'Message-ID: <' . time() . '-' . md5($account->getEmail() . $trimmedEmail) . '@' . $_SERVER['SERVER_NAME'] . '>',
+          'Message-ID: <' . time() . '-' . md5($replyTo . $trimmedEmail) . '@' . $_SERVER['SERVER_NAME'] . '>',
         ];
         $headers = implode("\r\n", $headers) . PHP_EOL;
         // Send email. Depends upon settings in php.ini being correct.
