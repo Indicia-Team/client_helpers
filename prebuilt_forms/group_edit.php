@@ -75,6 +75,13 @@ class iform_group_edit {
         'extraParams' => ['termlist_external_key' => 'indicia:group_types'],
       ],
       [
+        'name' => 'default_group_label',
+        'caption' => 'Default group label',
+        'description' => 'What should a group be referred to as? E.g. project, activity etc. This will be overriden with the selected group\'s type when editing.',
+        'type' => 'text_input',
+        'default' => 'group',
+      ],
+      [
         'name' => 'parent_group_type',
         'caption' => 'Parent group type',
         'description' => 'Type of group that this form can create children of. Requires that you set the parent relationship type ' .
@@ -364,6 +371,9 @@ class iform_group_edit {
     $args['filter_types'] = json_decode($args['filter_types'], TRUE);
     $reloadPath = self::getReloadPath();
     data_entry_helper::$website_id = $args['website_id'];
+    if (!empty($args['default_group_label'])) {
+      self::$groupType = strtolower($args['default_group_label']);
+    }
     // Maintain compatibility with form settings from before group type became
     // multiselect.
     if (empty($args['group_type'])) {
