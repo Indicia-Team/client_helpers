@@ -1310,17 +1310,20 @@ HTML
     $params = hostsite_get_node_field_value($nid, 'params');
     if (empty($params['email_from_address'])) {
       $fromEmail = hostsite_get_config_value('site', 'mail', '');
+      $fromName = hostsite_get_config_value('site', 'name', '');
     }
     else {
       $fromEmail = $params['email_from_address'];
+      $fromName = $fromEmail;
     }
+    $replyTo = hostsite_get_user_field('mail');
     $headers = [
       'MIME-Version: 1.0',
       'Content-type: text/html; charset=UTF-8;',
-      "From: $fromEmail",
-      'Reply-To: ' . hostsite_get_user_field('mail'),
+      "From: \"$fromName\" <$fromEmail>",
+      "Reply-To: \"$replyTo\" <$replyTo>",
       'Date: ' . date(DateTime::RFC2822),
-      'Message-ID: <' . time() . '-' . md5(hostsite_get_user_field('mail') . $_POST['to']) . '@' . $_SERVER['SERVER_NAME'] . '>',
+      'Message-ID: <' . time() . '-' . md5($replyTo . $_POST['to']) . '@' . $_SERVER['SERVER_NAME'] . '>',
     ];
     $headers = implode("\r\n", $headers) . PHP_EOL;
     $emailBody = str_replace("\n", "<br/>", $_POST['body']);
@@ -1335,7 +1338,7 @@ HTML
 </html>
 HTML;
     // Send email. Depends upon settings in php.ini being correct.
-    $success = mail($_POST['to'], $_POST['subject'], wordwrap($emailBodyHtml, 80), $headers);
+    $success = mail("\"$_POST[to]\" <$_POST[to]>", $_POST['subject'], wordwrap($emailBodyHtml, 80), $headers);
     return $success ? 'OK' : 'Fail';
   }
 
