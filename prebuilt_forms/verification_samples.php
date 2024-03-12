@@ -816,11 +816,12 @@ idlist=';
       'verification' => lang::get('Verification'),
     ];
     $siteEmail = hostsite_get_config_value('site', 'mail', '');
+    $replyTo = hostsite_get_user_field('mail');
     $headers = [
       'MIME-Version: 1.0',
       'Content-type: text/html; charset=UTF-8;',
-      "From: $siteEmail",
-      'Reply-To: ' . hostsite_get_user_field('mail'),
+      "From: \"$siteEmail\" <$siteEmail>",
+      "Reply-To: \"$replyTo\" <$replyTo>",
       'Date: ' . date(DateTime::RFC2822),
       'Message-ID: <' . time() . '-' . md5(hostsite_get_user_field('mail') . $_POST['to']) . '@' . $_SERVER['SERVER_NAME'] . '>',
     ];
@@ -837,7 +838,7 @@ idlist=';
 </html>
 HTML;
     // Send email. Depends upon settings in php.ini being correct
-    $success = mail($_POST['to'], $_POST['subject'], wordwrap($emailBodyHtml, 80), $headers);
+    $success = mail("\"$_POST[to]\" <$_POST[to]>", $_POST['subject'], wordwrap($emailBodyHtml, 80), $headers);
     return $success ? 'OK' : 'Fail';
   }
 
