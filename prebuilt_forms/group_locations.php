@@ -72,15 +72,11 @@ class iform_group_locations {
         'default' => TRUE,
       ],
       [
-        'name' => 'location_type_id',
-        'caption' => 'Location type',
-        'type' => 'select',
-        'table' => 'termlists_term',
-        'captionField' => 'term',
-        'valueField' => 'id',
-        'extraParams' => ['termlist_external_key' => 'indicia:location_types'],
+        'name' => 'location_type_ids',
+        'caption' => 'Allow selection of existing sites of type',
+        'description' => 'Comma separated list of location type IDs which the available existing sites to add will be limited to.',
+        'type' => 'string',
         'required' => FALSE,
-        'helpText' => 'The location type to filter the list of locations to, if required.',
       ],
     ], iform_map_get_map_parameters());
     return $r;
@@ -158,9 +154,6 @@ class iform_group_locations {
       ];
     }
     $params = ['group_id' => $_GET['group_id']];
-    if (!empty($args['location_type_id'])) {
-      $params['location_type_id'] = $args['location_type_id'];
-    }
     $leftcol = report_helper::report_grid([
       'readAuth' => $readAuth,
       'dataSource' => 'library/locations/locations_for_groups',
@@ -180,9 +173,15 @@ class iform_group_locations {
       $leftcol .= '<fieldset><legend>' . lang::Get('Add sites to the group') . '</legend>';
       $leftcol .= '<p>' . lang::get('LANG_Add_Sites_Instruct') . '</p>';
       if (!empty($args['edit_location_path'])) {
-        $leftcol .= lang::get('Either') .
-          ' <a class="button" href="' . hostsite_get_url($args['edit_location_path'], array('group_id' => $_GET['group_id'])) .
-          '">' . lang::get('enter details of a new site') . '</a><br/>';
+        $url = hostsite_get_url($args['edit_location_path'], ['group_id' => $_GET['group_id']]);
+        $leftcol .= lang::get('Either') . " <a class=\"$indicia_templates[buttonHighlightedClass]\" href=\"$url\">" . lang::get('enter details of a new site') . '</a><br/>';
+      }
+      $params = [
+        'group_id' => $_GET['group_id'],
+        'user_id' => hostsite_get_user_field('indicia_user_id', 0),
+      ];
+      if (!empty($args['location_type_ids'])) {
+        $params['location_type_ids'] = $args['location_type_ids'];
       }
       $leftcol .= data_entry_helper::select([
         'label' => lang::get('Or, add an existing site'),
@@ -192,12 +191,9 @@ class iform_group_locations {
         'blankText' => lang::get('<please select>'),
         'valueField' => 'location_id',
         'captionField' => 'name',
-        'extraParams' => $readAuth + [
-          'group_id' => $_GET['group_id'],
-          'user_id' => hostsite_get_user_field('indicia_user_id', 0),
-        ],
+        'extraParams' => $readAuth + $params,
         'afterControl' => '<button id="add-existing">Add</button>',
-        ]);
+      ]);
       $leftcol .= '</fieldset>';
     }
     // @todo Link existing My Site to group. Need a new report to list sites I created, with sites already in the group
