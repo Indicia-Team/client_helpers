@@ -1072,17 +1072,25 @@ class filter_quality_sample extends FilterBase {
    */
   public function getControls() {
     $r = '<div class="context-instruct messages warning">' . lang::get('Please note, your options for quality filtering are restricted by your access permissions in this context.') . '</div>';
+    $r .= data_entry_helper::radio_group([
+      'label' => lang::get('Samples to include or exclude'),
+      'fieldname' => 'quality_op',
+      'id' => 'quality_op' . (empty($options['standalone']) ? '' : '--standalone'),
+      'lookupValues' => [
+        'in' => lang::get('Include'),
+        'not in' => lang::get('Exclude'),
+      ],
+      'default' => 'in',
+    ]);
     $r .= data_entry_helper::select([
-      'label' => lang::get('Samples to include'),
       'fieldname' => 'quality',
       'class' => 'quality-filter',
       'lookupValues' => [
-        'V' => lang::get('Accepted records only'),
-        'P' => lang::get('Not reviewed'),
-        '!R' => lang::get('Exclude not accepted records'),
-        '!D' => lang::get('Exclude queried or not accepted records'),
+        'P' => lang::get('Pending'),
+        'V' => lang::get('Accepted'),
+        'R' => lang::get('Not accepted'),
+        'D' => lang::get('Queried or rejected'),
         'all' => lang::get('All records'),
-        'R' => lang::get('Not accepted records only'),
       ],
     ]);
     $r .= data_entry_helper::select([
@@ -1440,6 +1448,7 @@ function report_filter_panel(array $readAuth, $options, $website_id, &$hiddenStu
     unset($options['presets']['my-groups']);
     unset($options['presets']['my-groups-locality']);
   }
+  data_entry_helper::$indiciaData['filterEntity'] = $options['entity'];
   // If in the warehouse we don't need to worry about the iform master list.
   if (function_exists('hostsite_get_config_value')) {
     $options = array_merge(
