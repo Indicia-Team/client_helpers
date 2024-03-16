@@ -3846,6 +3846,20 @@ RIJS;
     // Load the full list of species for the grid, including the main checklist
     // plus any additional species in the reloaded occurrences.
     $taxalist = self::get_species_checklist_taxa_list($options, $taxonRows);
+    $shiftedTtlIds = [];
+    if ((!empty($_GET['sample_id']) || !empty($_GET['occurrence_id'])) &&
+        !empty($options['listId'])) {
+      // If using a static species list, load occurrences using a name with
+      // same meaning if original name not available.
+      $fullDetailsOfTaxonListFormatted = self::createFormattedTaxaListForProcessing($options['readAuth'], $taxalist);
+      $shiftTaxaOntoNamesWithSameMeaningResults = self::shiftTaxaOntoNamesWithSameMeaning($options['readAuth'], $taxonRows, $fullDetailsOfTaxonListFormatted);
+      $taxonRows = $shiftTaxaOntoNamesWithSameMeaningResults['taxonRows'];
+      $shiftedTtlIds = $shiftTaxaOntoNamesWithSameMeaningResults['shiftedTtlIds'];
+    }
+    // If we are use species grid name that wasn't original recorded name, inform the user of the recorded name as well.
+    // Run this code even when sample_id, occurrence_id not supplied otherwise {previously_recorded_as} replacement tokens
+    // appear on the screen.
+    $taxalist = self::addPreviousNameWarningToList($options['readAuth'], $shiftedTtlIds, $taxalist);
     // If we managed to read the species list data we can proceed.
     if (!array_key_exists('error', $taxalist)) {
       $attrOptions = [
@@ -4031,6 +4045,12 @@ RIJS;
         }
         $row .= "\n<td class=\"scPresenceCell\" headers=\"$options[id]-present-$colIdx\"$hidden>";
         $fieldname = "sc:$options[id]-$txIdx:$existingRecordId:present";
+        // If an occurrence does not have its original name available, then an alternative name
+        // with same meaning can be used.
+        // Switch back to the old taxa_taxon_list_id (but leave the updated name) so we don't fire a redetermination.
+        if (!empty($shiftedTtlIds) && array_key_exists($taxon['taxa_taxon_list_id'], $shiftedTtlIds)) {
+          $taxon['taxa_taxon_list_id'] = $shiftedTtlIds[$taxon['taxa_taxon_list_id']];
+        }
         if ($options['rowInclusionCheck'] === 'hasData') {
           $row .= "<input type=\"hidden\" name=\"$fieldname\" id=\"$fieldname\" class=\"presence-checkbox\" value=\"$taxon[taxa_taxon_list_id]\"/>";
         }
@@ -4375,6 +4395,194 @@ if ($('#$options[id]').parents('.ui-tabs-panel').length) {
     else {
       return $taxalist['error'];
     }
+  }
+
+  /**
+   * Display occurrence against a name with the same meaning if original name not available.
+   *
+   * When taxa are loaded onto data entry page in edit mode, we need to display the occurrence
+   * against a different name if we can find one with the same meaning and the original is not available.
+   *
+   * @param array @readAuth
+   *   Authentication tokens for the Warehouse.
+   * @param array $taxaInOccDetail
+   *   List of taxa taxon list ids and occurrence information if applicable (might include taxa not actually on the page)
+   * @param array $taxonListItems
+   *   All the available species items displayed on the page.
+   * @return array;
+   */
+  function shiftTaxaOntoNamesWithSameMeaning($readAuth, $taxaInOccDetail, $fullDetailsOfTaxonListFormatted) {
+    // Cycle through all taxa relating to occurrences for the sample.
+    // This can include names that don't actually appear on the page.
+    foreach ($taxaInOccDetail as $taxaInOccDetailRow) {
+      $ttlIdsOfTaxaInOccDetail[] = $taxaInOccDetailRow['ttlId'];
+    }
+    // Collect full details as we need the meaning IDs of these
+    $fullDetailsOfTaxaInOccDetail = data_entry_helper::get_population_data([
+      'table' => 'taxa_taxon_list',
+      'extraParams' => $readAuth + [
+        'query' => json_encode(['in' => ['id' => $ttlIdsOfTaxaInOccDetail]]),
+        'view' => 'detail',
+      ],
+    ]);
+    // Format so we have the taxa taxon list ID as a key
+    $fullDetailsOfTaxaInOccDetailFormatted = [];
+    foreach ($fullDetailsOfTaxaInOccDetail as $fullRowDetail) {
+      $fullDetailsOfTaxaInOccDetailFormatted[$fullRowDetail['id']] = $fullRowDetail;
+    }
+    // Keep track of processed rows
+    $shiftedTtlIds = [];
+    // Cycle through all taxa relating to occurences so we can find ones without a taxa_taxon_list on the page
+    // then find a taxa_taxon_list_id we can actually use
+    foreach ($taxaInOccDetail as &$possibleRowToShiftFrom) {
+      // If the taxon is pointed to by an occurrence
+      if (isset($possibleRowToShiftFrom['occId'])) {
+        // If the taxon name is not displayed on the page, we need to find one to use
+        if (!array_key_exists($possibleRowToShiftFrom['ttlId'], $fullDetailsOfTaxonListFormatted)) {
+          // Cycle through all taxa again to find a name with the same meaning but isn't the same name
+          // The first time we do this, only look for preferred names as we want to use that if available
+          foreach ($taxaInOccDetail as &$possibleRowToShiftTo) {
+            // If row to shift has already been processed then don't do anymore work
+            if (!in_array($possibleRowToShiftFrom['ttlId'], $shiftedTtlIds)) {
+              // If the meaning is a match between the two rows but not the same taxa_taxon_list_id
+              if ($fullDetailsOfTaxaInOccDetailFormatted[$possibleRowToShiftFrom['ttlId']]['taxon_meaning_id'] == $fullDetailsOfTaxaInOccDetailFormatted[$possibleRowToShiftTo['ttlId']]['taxon_meaning_id'] &&
+                  $possibleRowToShiftFrom['ttlId'] != $possibleRowToShiftTo['ttlId'] &&
+                  array_key_exists($possibleRowToShiftTo['ttlId'], $fullDetailsOfTaxonListFormatted) &&
+                  // Note cannot use TRUE, as boolean is supplied as string
+                  $fullDetailsOfTaxonListFormatted[$possibleRowToShiftTo['ttlId']]['preferred'] == 't') {
+                self::applyChangesToSwitchedRows($possibleRowToShiftFrom, $possibleRowToShiftTo, $shiftedTtlIds);
+              }
+            }
+          }
+          // If we need didn't find a preferred name, then continue to find a common name/synonym in similar way.
+          foreach ($taxaInOccDetail as &$possibleRowToShiftTo) {
+            // If row to shift already processed then don't do anymore
+            if (!in_array($possibleRowToShiftFrom['ttlId'], $shiftedTtlIds)) {
+              if ($fullDetailsOfTaxaInOccDetailFormatted[$possibleRowToShiftFrom['ttlId']]['taxon_meaning_id'] == $fullDetailsOfTaxaInOccDetailFormatted[$possibleRowToShiftTo['ttlId']]['taxon_meaning_id'] &&
+                  $possibleRowToShiftFrom['ttlId'] != $possibleRowToShiftTo['ttlId'] &&
+                  array_key_exists($possibleRowToShiftTo['ttlId'], $fullDetailsOfTaxonListFormatted) &&
+                  // Note cannot use TRUE as boolean is supplied as string
+                  // Use != 't' instead of == 't' as it will catch all other cases if this result is corrupted for some reason
+                  $fullDetailsOfTaxonListFormatted[$possibleRowToShiftTo['ttlId']]['preferred'] != 't') {
+                self::applyChangesToSwitchedRows($possibleRowToShiftFrom, $possibleRowToShiftTo, $shiftedTtlIds);
+              }
+            }
+          }
+        }
+      }
+    }
+    $shiftTaxaOntoNamesWithSameMeaningResults=[];
+    $shiftTaxaOntoNamesWithSameMeaningResults['taxonRows'] = $taxaInOccDetail;
+    $shiftTaxaOntoNamesWithSameMeaningResults['shiftedTtlIds'] = $shiftedTtlIds;
+    return $shiftTaxaOntoNamesWithSameMeaningResults;
+  }
+
+  /**
+   * Get formatted full details of the species list.
+   *
+   * Get species list with full details,
+   * using taxa_taxon_list_id as array key.
+   *
+   * @param array @readAuth
+   *   Authentication tokens for the Warehouse.
+   * @param array $taxonListItems
+   *   The details of the taxa available on screen.
+   *
+   * @return array
+   */
+  private static function createFormattedTaxaListForProcessing($readAuth, $taxonListItems) {
+    // Put the taxa_taxon_list IDS into a flat array so can be passed as query param.
+    $idsOfAllAvailableTtlRows = [];
+    foreach ($taxonListItems as $listRow) {
+      if (!empty($listRow['taxa_taxon_list_id'])) {
+        $idsOfAllAvailableTtlRows[] = $listRow['taxa_taxon_list_id'];
+      }
+    }
+    // Get the details of every item in the available species list
+    $fullDetailsOfTaxonList = data_entry_helper::get_population_data([
+      'table' => 'taxa_taxon_list',
+      'extraParams' => $readAuth + [
+        'query' => json_encode(['in' => ['id' => $idsOfAllAvailableTtlRows]]),
+        'view' => 'detail',
+      ],
+    ]);
+    $fullDetailsOfTaxonListFormatted = [];
+    // Create array where the taxa_taxon_list_id is the key to make processing easier.
+    foreach ($fullDetailsOfTaxonList as $taxonListRowDetail) {
+      $fullDetailsOfTaxonListFormatted[$taxonListRowDetail['id']] = $taxonListRowDetail;
+    }
+    return $fullDetailsOfTaxonListFormatted;
+  }
+
+  /**
+   * Move occurrence onto another name with same meaning.
+   *
+   * Add occurrence data to the new row, unset from old row.
+   *
+   * @param array $rowToShiftFrom
+   *   The original row we are moving the occurrence data from.
+   * @param array $rowToShiftTo
+   *   The original row we are moving the occurrence data to.
+   * @param array $shiftedTtlIds
+   *   Taxa_taxon_list_ids of species that have already been processed.
+   *
+   * @return array
+   */
+  public static function applyChangesToSwitchedRows(&$rowToShiftFrom, &$rowToShiftTo, &$shiftedTtlIds) {
+    // Add the occurrence detail to the name we have found
+    $rowToShiftTo['loadedTxIdx'] = $rowToShiftFrom['loadedTxIdx'];
+    $rowToShiftTo['occId'] = $rowToShiftFrom['occId'];
+    $rowToShiftTo['smpIdx'] = $rowToShiftFrom['smpIdx'];
+    // Then remove the data relating to the occurrence from original row
+    unset($rowToShiftFrom['loadedTxIdx']);
+    unset($rowToShiftFrom['occId']);
+    unset($rowToShiftFrom['smpIdx']);
+    // Note that this row has now been processed.
+    $shiftedTtlIds[$rowToShiftTo['ttlId']] = $rowToShiftFrom['ttlId'];
+  }
+
+  /**
+   * Add recorded name to species list if needed.
+   *
+   * If the species name available on screen is not the same as the recorded name,
+   * then inform the user of the recorded name.
+   *
+   * @param array @readAuth
+   *   Authentication tokens for the Warehouse.
+   * @param array $shiftedTtlIds
+   *   Array The array key is the displayed taxon's ttl ID, the value is the original recorded ttl ID).
+   * @param array $taxonListItems
+   *   The details of the taxa available on screen.
+   *
+   * @return array
+   */
+  private static function addPreviousNameWarningToList($readAuth, $shiftedTtlIds, $taxonListItems) {
+    // Get details of the original recorded taxa
+    $fullDetailsRecordedTaxa = data_entry_helper::get_population_data([
+      'table' => 'taxa_taxon_list',
+      'extraParams' => $readAuth + [
+        'query' => json_encode(['in' => ['id' => $shiftedTtlIds]]),
+        'view' => 'detail',
+      ],
+    ]);
+    // Format the output so that the ttl_id is the array key
+    $fullDetailsRecordedTaxaFormatted = [];
+    foreach ($fullDetailsRecordedTaxa as $fullDetailsRecordedTaxonRow) {
+      $fullDetailsRecordedTaxaFormatted[$fullDetailsRecordedTaxonRow['id']] = $fullDetailsRecordedTaxonRow;
+    }
+    foreach ($taxonListItems as &$taxonListItem) {
+      // If we find a name we are using that is not the original name on the occurrence
+      if (array_key_exists($taxonListItem['taxa_taxon_list_id'], $shiftedTtlIds)) {
+        // Then we are going make a label displaying the recorded name to the user.
+        // To get the name, we need to get the recorded ttl from the $shiftedTtlIds,
+        // then simply collect the taxon name from the array containing the taxon details.
+        $taxonListItem['previously_recorded_as'] =
+            $fullDetailsRecordedTaxaFormatted[$shiftedTtlIds[$taxonListItem['taxa_taxon_list_id']]]['taxon'];
+      } else {
+        $taxonListItem['previously_recorded_as'] = '';
+      }
+    }
+    return $taxonListItems;
   }
 
   /**
