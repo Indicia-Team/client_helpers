@@ -923,7 +923,7 @@ JS;
         }
       }
     }
-    // Override map position from URL if needed. 
+    // Override map position from URL if needed.
     // (e.g. this allows control via an iFrame).
     if (!empty($_GET['initialLat'])) {
       $options['initialLat'] = $_GET['initialLat'];
@@ -2364,9 +2364,11 @@ AGG;
    *   Options passed to the [source]. Will be modified as appropriate.
    */
   private static function applySourceModeDefaults(array &$options) {
-    $method = 'applySourceModeDefaults' . ucfirst($options['mode']);
-    if (method_exists('ElasticsearchReportHelper', $method)) {
-      self::$method($options);
+    if (!empty($options['mode'])) {
+      $method = 'applySourceModeDefaults' . ucfirst($options['mode']);
+      if (method_exists('ElasticsearchReportHelper', $method)) {
+        self::$method($options);
+      }
     }
   }
 
