@@ -843,6 +843,8 @@ JS;
       }
       if ($idx > 0) {
         $options['parentControlId'] = "$baseId-" . ($idx - 1);
+        // We don't want the query to apply to the child drop-downs ($idx > 0), as the query can't apply to both parent/child, as they are very different.
+        unset($options['extraParams']['query']);
         if ($idx === 1) {
           $options['parentControlLabel'] = $options['label'];
           $options['filterField'] = 'parent_id';
