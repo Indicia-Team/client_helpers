@@ -1378,6 +1378,10 @@ function status_filter_control($readAuth, $options) {
  *     verification rule tools are available for the user to apply their own
  *     data checks. Enables options for filtering on the outcome of custom
  *     rule checks.
+ *   * layout - defaults to horizontal, but can be set to vertical so that the
+ *     panel buttons are arranged vertically.
+ *   * initialState - defaults to closed, but can be set to open if you want
+ *     the panel buttons to be always visible. Works well with vertical layout.
  * @param int $website_id
  *   The current website's warehouse ID.
  * @param string $hiddenStuff
@@ -1434,6 +1438,8 @@ function report_filter_panel(array $readAuth, $options, $website_id, &$hiddenStu
       'period_within_year',
       'without_polygon',
     ],
+    'layout' => 'horizontal',
+    'initialState' => 'closed',
   ], $options);
   // Introduce some extra quick filters useful for verifiers.
   if ($options['sharing'] === 'verification') {
@@ -1470,6 +1476,7 @@ function report_filter_panel(array $readAuth, $options, $website_id, &$hiddenStu
     hostsite_add_library('collapse');
   }
   $lang = [
+    'closeFilterBuilder' => lang::get('Close Filter Builder'),
     'context' => lang::get('Context'),
     'deleteFilter' => lang::get('Delete filter'),
     'filter' => lang::get('Filter'),
@@ -1477,6 +1484,7 @@ function report_filter_panel(array $readAuth, $options, $website_id, &$hiddenStu
     'filterSaveInstruct' => lang::get('To save these filter settings for future use, give the filter a name then click Save Filter.'),
     'filterName' => lang::get('Filter name'),
     'saveFilter' => lang::get('Save filter'),
+    'saveFilterAs' => lang::get('Save filter as'),
     'selectStoredFilter' => lang::get('Select stored filter'),
     'storedFilters' => lang::get('Stored filters'),
   ];
@@ -1651,7 +1659,7 @@ function report_filter_panel(array $readAuth, $options, $website_id, &$hiddenStu
       }
     }
   }
-  $r = '<div id="standard-params">';
+  $r = "<div id=\"standard-params\" class=\"standard-params-$options[layout]\">";
   if ($options['allowSave'] && $options['admin']) {
     if (empty($_GET['filters_user_id'])) {
       // New filter to create, so sharing type can be edited.
@@ -1677,11 +1685,15 @@ function report_filter_panel(array $readAuth, $options, $website_id, &$hiddenStu
       $r .= data_entry_helper::hidden_text(['fieldname' => 'filter:sharing']);
     }
   }
+  $formInline = $options['layout'] === 'horizontal' ? ' form-inline' : '';
   if ($options['allowLoad']) {
+    // Position of changed indicator asterisk depends on space available due to
+    // layout.
+    $changed = $options['layout'] === 'horizontal' ? "<span class=\"changed\" style=\"display:none\" title=\"$lang[filterChanged]\">*</span>" : '';
     $r .= <<<HTML
-<div class="header ui-toolbar ui-widget-header ui-helper-clearfix form-inline">
+<div class="header ui-toolbar ui-widget-header ui-helper-clearfix$formInline">
   <span id="active-filter-label">$lang[storedFilters]</span>
-  <span class="changed" style="display:none" title="$lang[filterChanged]">*</span>
+  $changed
 HTML;
     $r .= '<div>';
     if ($customDefs) {
@@ -1745,16 +1757,21 @@ HTML;
       'class' => ' class="' . $indicia_templates['buttonDefaultClass'] . '"',
       'caption' => lang::get('Reset'),
     ]);
-    $r .= helper_base::apply_static_template('button', [
-      'id' => 'filter-build',
-      'title' => lang::get('Create a custom filter'),
-      'class' => ' class="' . $indicia_templates['buttonDefaultClass'] . '"',
-      'caption' => lang::get('Create a filter'),
-    ]);
+    if ($options['initialState'] === 'closed') {
+      $r .= helper_base::apply_static_template('button', [
+        'id' => 'filter-build',
+        'title' => lang::get('Create a custom filter'),
+        'class' => ' class="' . $indicia_templates['buttonDefaultClass'] . '"',
+        'caption' => lang::get('Create a filter'),
+      ]);
+    }
     $r .= '</div></div>';
-    $r .= '<div id="filter-details" style="display: none">';
-    $r .= '<img src="' . data_entry_helper::$images_path . 'nuvola/close-22px.png" width="22" height="22" alt="Close filter builder" title="' .
-        lang::get('Close filter builder') . '" class="button" id="filter-done"/>' . "\n";
+    $style = $options['initialState'] === 'closed' ? ' style="display: none"' : '';
+    $r .= "<div id=\"filter-details\"$style>";
+    if ($options['initialState'] === 'closed') {
+      // Add close button if panes can be opened/closed.
+      $r .= "<i class=\"fas fa-window-close\" alt=\"$lang[closeFilterBuilder]\" title=\"$lang[closeFilterBuilder]\" class=\"button\" id=\"filter-done\" ></i>";
+    }
   }
   else {
     $r .= '<div id="filter-details">';
@@ -1821,13 +1838,28 @@ HTML;
     }
     $r .= '<div class="pane-row">';
     $done = 0;
+    $horizontalDesc = $options['layout'] === 'horizontal' ? '<div class="filter-desc"></div>' : '';
+    $verticalDesc = $options['layout'] === 'vertical' ? '<div class="filter-desc"></div>' : '';
     foreach ($list as $moduleName => $module) {
-      $r .= "<div class=\"pane\" id=\"pane-$moduleName\"><a class=\"fb-filter-link\" href=\"#controls-$moduleName\"><span class=\"pane-title\">" . $module->getTitle() . '</span>';
-      $r .= '<span class="filter-desc"></span></a>';
-      $r .= "</div>";
+      $moduleTitle = $module->getTitle();
+      // Add a down triangle for expanding the description which is initially
+      // hidden in vertical mode.
+      $toggleDescriptionArrow = $options['layout'] === 'vertical' ? ' <i class="toggle-description fas fa-caret-down"></i>' : '';
+      $r .= <<<HTML
+        <div class="pane" id="pane-$moduleName">
+          <div class="pane-cntr">
+            <a class="fb-filter-link" href="#controls-$moduleName">
+              <span class="pane-title">$moduleTitle</span>
+              $horizontalDesc
+            </a>
+            $toggleDescriptionArrow
+          </div>
+          $verticalDesc
+        </div>
+HTML;
       $done++;
       // Split rows if necessary.
-      if (count($list) >= 5 && $done === 3) {
+      if ($options['layout'] === 'horizontal' && count($list) >= 5 && $done === 3) {
         $r .= '</div><div class="pane-row">';
       }
     }
@@ -1839,11 +1871,13 @@ HTML;
   // End of filter panes div.
   $r .= '</div>';
   if ($options['allowSave']) {
-    $inline = $options['admin'] ? '' : ' form-inline';
+    $inline = $options['admin'] || $options['layout'] === 'vertical' ? '' : ' form-inline';
+    $changed = $options['layout'] === 'vertical' ? "<span class=\"changed\" style=\"display:none\" title=\"$lang[filterChanged]\">*</span> " : '';
+    $label = $options['layout'] === 'vertical' ? $lang['saveFilterAs'] : $lang['filterName'];
     $r .= <<<HTML
 <p>$lang[filterSaveInstruct]</p>
 <div class="save-controls$inline">
-<label for="filter:title">$lang[filterName]:</label> <input id="filter:title" class="$indicia_templates[formControlClass]" />
+<label for="filter:title">$changed$label:</label> <input id="filter:title" class="$indicia_templates[formControlClass]" />
 HTML;
 
     if ($options['admin']) {
@@ -1866,10 +1900,18 @@ HTML;
         'fieldname' => 'filter:description',
       ]);
     }
-    $r .= <<<HTML
-<button class="$indicia_templates[buttonHighlightedClass]" id="filter-save"><i class="fas fa-save"></i> $lang[saveFilter]</button>
-<button class="$indicia_templates[buttonWarningClass] disabled" id="filter-delete"><i class="fas fa-trash-alt"></i> $lang[deleteFilter]</button>
+    if ($options['layout'] === 'vertical') {
+      $r .= <<<HTML
+        <button class="$indicia_templates[buttonHighlightedClass] $indicia_templates[buttonSmallClass]" id="filter-save" title="$lang[saveFilter]"><i class="fas fa-save"></i></button>
+        <button class="$indicia_templates[buttonWarningClass] $indicia_templates[buttonSmallClass] disabled" id="filter-delete" title="$lang[deleteFilter]"><i class="fas fa-trash-alt"></i></button>
 HTML;
+    }
+    else {
+      $r .= <<<HTML
+        <button class="$indicia_templates[buttonHighlightedClass]" id="filter-save"><i class="fas fa-save"></i> $lang[saveFilter]</button>
+        <button class="$indicia_templates[buttonWarningClass] disabled" id="filter-delete"><i class="fas fa-trash-alt"></i> $lang[deleteFilter]</button>
+HTML;
+    }
     $r .= '</div>';
   }
   // End of clearfix div.
