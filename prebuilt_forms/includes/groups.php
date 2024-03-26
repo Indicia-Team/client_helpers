@@ -88,21 +88,21 @@ function group_authorise_group_id($group_id, $readAuth, $checkPage = TRUE) {
       hostsite_goto_page('<front>');
       return FALSE;
     }
-  }
-  if (count($gu) === 0 && $gp[0]['administrator'] !== NULL) {
-    // Administrator field is null if the page is fully public. Else if not
-    // a group member, then throw them out.
-    hostsite_show_message(lang::get('You are trying to access a page for a group you do not belong to.'), 'warning', TRUE);
-    hostsite_goto_page('<front>');
-    return FALSE;
-  }
-  elseif (isset($gu[0]['administrator']) && isset($gp[0]['administrator'])) {
-    // Use isn't an administrator, and page is administration
-    // Note: does not work if using TRUE as bool test, only string 't'
-    if ($gu[0]['administrator'] != 't' && $gp[0]['administrator'] == 't') {
-      hostsite_show_message(lang::get('You are trying to open a group page that you do not have permission to access.'));
+    if (count($gu) === 0 && $gp[0]['administrator'] !== NULL) {
+      // Administrator field is null if the page is fully public. Else if not
+      // a group member, then throw them out.
+      hostsite_show_message(lang::get('You are trying to access a page for a group you do not belong to.'), 'warning', TRUE);
       hostsite_goto_page('<front>');
       return FALSE;
+    }
+    elseif (isset($gu[0]['administrator']) && isset($gp[0]['administrator'])) {
+      // Use isn't an administrator, and page is administration
+      // Note: does not work if using TRUE as bool test, only string 't'
+      if ($gu[0]['administrator'] != 't' && $gp[0]['administrator'] == 't') {
+        hostsite_show_message(lang::get('You are trying to open a group page that you do not have permission to access.'));
+        hostsite_goto_page('<front>');
+        return FALSE;
+      }
     }
   }
   return count($gu) > 0;

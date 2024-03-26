@@ -2509,7 +2509,7 @@ JS;
 $('#$options[id]').$initFn({});
 
 JS;
-    $class = "idc-control idc-$controlName" . ($options['class'] ? ' ' . $options['class'] : '');
+    $class = "idc-control idc-$controlName" . (empty($options['class']) ? '' : ' ' . $options['class']);
     return <<<HTML
 <div id="$options[id]" class="$class" data-idc-class="$initFn" data-idc-config="$dataOptions">
   $content
