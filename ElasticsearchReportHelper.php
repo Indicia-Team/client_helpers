@@ -2480,9 +2480,10 @@ AGG;
    * @param string $controlName
    *   Control type name (e.g. source, dataGrid).
    * @param array $options
-   *   Options passed to the control. If the control's @containerElement option
+   *   Options passed to the control. If the control's containerElement option
    *   is set then sets the required JavaScript to make the control inject
-   *   itself into the existing element instead.
+   *   itself into the existing element instead. Can include an option for the
+   *   id and class to assign to the container if not using containerElement.
    * @param string $dataOptions
    *   Options to store in the HTML data-idc-config attribute on the container.
    *   These are made available to configure the JS behaviour of the control.
@@ -2508,8 +2509,9 @@ JS;
 $('#$options[id]').$initFn({});
 
 JS;
+    $class = "idc-control idc-$controlName" . ($options['class'] ? ' ' . $options['class'] : '');
     return <<<HTML
-<div id="$options[id]" class="idc-control idc-$controlName" data-idc-class="$initFn" data-idc-config="$dataOptions">
+<div id="$options[id]" class="$class" data-idc-class="$initFn" data-idc-config="$dataOptions">
   $content
 </div>
 
