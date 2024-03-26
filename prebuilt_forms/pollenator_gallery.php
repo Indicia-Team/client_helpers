@@ -477,6 +477,7 @@ class iform_pollenator_gallery {
 
 	drupal_add_js(\Drupal::service('extension.path.resolver')->getPath('module', 'iform') .'/media/js/jquery.form.js', 'module');
 	data_entry_helper::link_default_stylesheet();
+	data_entry_helper::add_resource('jquery_form');
 	data_entry_helper::add_resource('jquery_ui');
 	if($args['language'] != 'en')
 		data_entry_helper::add_resource('jquery_ui_'.$args['language']);

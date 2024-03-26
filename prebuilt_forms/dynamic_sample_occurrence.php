@@ -2248,6 +2248,12 @@ HTML;
           '} else {' . "\n" .
           '  $r = "<span class=\'taxon-name\'>{taxon}</span>";' . "\n" .
           '}' . "\n";
+      // If the species name available on screen is not the same as the recorded name,
+      // then inform the user of the recorded name.
+      $php .=
+          'if ("{previously_recorded_as}"!="" && "{previously_recorded_as}"!=NULL) {' . "\n" .
+          '  $r .= "<br>Previously recorded as {previously_recorded_as}";' . "\n" .
+          '}' . "\n";
       // This bit optionally adds '- common' or '- latin' depending on what was
       // being searched.
       if (isset($args['species_include_both_names']) && $args['species_include_both_names']) {

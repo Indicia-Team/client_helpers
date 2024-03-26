@@ -1372,7 +1372,7 @@ HTML;
    * @param array $bool
    *   ES bool query definintion.
    */
-  private static function applyFilterDef(array $readAuth, array $definition, array &$bool) {
+  public static function applyFilterDef(array $readAuth, array $definition, array &$bool) {
     self::convertLocationListToSearchArea($definition, $readAuth);
     self::applyUserFiltersTaxonGroupList($definition, $bool);
     self::applyUserFiltersTaxaTaxonList($definition, $bool, $readAuth);
@@ -1420,16 +1420,25 @@ HTML;
       'location_id',
     ]);
     if (!empty($filter)) {
-      require_once 'report_helper.php';
-      $boundaryData = report_helper::get_report_data([
-        'dataSource' => '/library/locations/locations_combined_boundary_transformed',
-        'extraParams' => [
-          'location_ids' => $filter['value'],
-        ],
-        'readAuth' => $readAuth,
-        'caching' => TRUE,
-      ]);
-      $definition['searchArea'] = $boundaryData[0]['geom'];
+      if (defined('KOHANA')) {
+        // Use direct access as on warehouse.
+        $polygon = warehouseEsFilters::getCombinedBoundaryData($filter['value']);
+      }
+      else {
+        // API access as on client.
+        require_once 'report_helper.php';
+        $boundaryData = report_helper::get_report_data([
+          'dataSource' => '/library/locations/locations_combined_boundary_transformed',
+          'extraParams' => [
+            'location_ids' => $filter['value'],
+          ],
+          'readAuth' => $readAuth,
+          'caching' => TRUE,
+          'cachePerUser' => FALSE,
+        ]);
+        $polygon = $boundaryData[0]['geom'];
+      }
+      $definition['searchArea'] = $polygon;
     }
   }
 
@@ -1467,14 +1476,21 @@ HTML;
    */
   private static function applyTaxonomyFilter(array &$bool, array $readAuth, $filterField, $filterValues) {
     // Convert the IDs to external keys, stored in ES as taxon_ids.
-    $taxonData = helper_base::get_population_data([
-      'report' => 'library/taxa/convert_ids_to_external_keys',
-      'extraParams' => [
-        $filterField => $filterValues,
-        'master_checklist_id' => hostsite_get_config_value('iform', 'master_checklist_id', 0),
-      ] + $readAuth,
-      'cachePerUser' => FALSE,
-    ]);
+    if (defined('KOHANA')) {
+      // Use direct access as on warehouse.
+      $taxonData = warehouseEsFilters::taxonIdsToExternalKeys($filterField, $filterValues);
+    }
+    else {
+      // API access as on client.
+      $taxonData = helper_base::get_population_data([
+        'report' => 'library/taxa/convert_ids_to_external_keys',
+        'extraParams' => [
+          $filterField => $filterValues,
+          'master_checklist_id' => hostsite_get_config_value('iform', 'master_checklist_id', 0),
+        ] + $readAuth,
+        'cachePerUser' => FALSE,
+      ]);
+    }
     $keys = [];
     foreach ($taxonData as $taxon) {
       $keys[] = $taxon['external_key'];
@@ -1680,16 +1696,23 @@ HTML;
     if (!empty($filter)) {
       // Convert the location type IDs to terms that are used in the ES
       // document.
-      $typeRows = helper_base::get_population_data([
-        'table' => 'termlists_term',
-        'extraParams' => [
-          'id' => $filter,
-          'view' => 'cache',
-        ] + $readAuth,
-      ]);
+      if (defined('KOHANA')) {
+        // Use direct access as on warehouse.
+        $typeTerms = warehouseEsFilters::getTermsFromIds($filter);
+      }
+      else {
+        // API access as on client.
+        $typeTerms = helper_base::get_population_data([
+          'table' => 'termlists_term',
+          'extraParams' => [
+            'id' => $filter,
+            'view' => 'cache',
+          ] + $readAuth,
+        ]);
+      }
       $types = [];
-      foreach ($typeRows as $typeRow) {
-        $types[] = $typeRow['term'];
+      foreach ($typeTerms as $typeTermRow) {
+        $types[] = $typeTermRow['term'];
       }
       if (count($types) > 0) {
         $bool['must'][] = [
@@ -2371,12 +2394,19 @@ HTML;
       'open' => [],
       'restricted' => [],
     ];
-    $licences = helper_base::get_population_data([
-      'table' => 'licence',
-      'extraParams' => $readAuth,
-      'columns' => 'code,open',
-      'cachePerUser' => FALSE,
-    ]);
+    if (defined('KOHANA')) {
+      // Direct access as on warehouse.
+      $licences = warehouseEsFilters::getLicences();
+    }
+    else {
+      // API access as on client.
+      $licences = helper_base::get_population_data([
+        'table' => 'licence',
+        'extraParams' => $readAuth,
+        'columns' => 'code,open',
+        'cachePerUser' => FALSE,
+      ]);
+    }
     foreach ($licences as $licence) {
       $r[$licence['open'] === 't' ? 'open' : 'restricted'][] = $licence['code'];
     }
@@ -2512,7 +2542,6 @@ HTML;
    */
   private static function applyUserFiltersCoordinatePrecision(array $definition, array &$bool) {
     $filter = self::getDefinitionFilter($definition, ['coordinate_precision']);
-    \Drupal::logger('iform')->notice(var_export($filter, TRUE));
     if (!empty($filter)) {
       // Default is same as or better than.
       $filter['op'] = $filter['op'] ?? '<=';
@@ -2654,16 +2683,23 @@ HTML;
       'taxa_scratchpad_list_id',
     ]);
     if (!empty($filter)) {
-      require_once 'report_helper.php';
-      // Convert the IDs to external keys, stored in ES as taxon_ids.
-      $taxonData = report_helper::get_report_data([
-        'dataSource' => '/library/taxa/external_keys_for_scratchpad',
-        'extraParams' => [
-          'scratchpad_list_id' => $filter['value'],
-        ],
-        'readAuth' => $readAuth,
-        'caching' => TRUE,
-      ]);
+      if (defined('KOHANA')) {
+        // Direct access as on warehouse.
+        $taxonData = warehouseEsFilters::getExternalKeysForTaxonScratchpad($filter['value']);
+      }
+      else {
+        require_once 'report_helper.php';
+        // Convert the IDs to external keys, stored in ES as taxon_ids.
+        $taxonData = report_helper::get_report_data([
+          'dataSource' => '/library/taxa/external_keys_for_scratchpad',
+          'extraParams' => [
+            'scratchpad_list_id' => $filter['value'],
+          ],
+          'readAuth' => $readAuth,
+          'caching' => TRUE,
+          'cachePerUser' => FALSE,
+        ]);
+      }
       $keys = [];
       foreach ($taxonData as $taxon) {
         $keys[] = $taxon['external_key'];

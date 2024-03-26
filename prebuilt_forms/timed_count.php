@@ -216,6 +216,7 @@ class iform_timed_count {
   }
 
   public static function get_sample_form($args, $nid, $response) {
+  	global $user;
   	iform_load_helpers(array('map_helper'));
   	$auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
   	// either looking at existing, creating a new one, or an error occurred: no successful posts...
@@ -554,7 +555,8 @@ mapInitialisationHooks.push(function(mapdiv) {
 	editControl.activate();
 	nav.activate();
 ").
-"	mapdiv.map.events.triggerEvent('zoomend');
+"   delete indiciaData['zoomToAfterFetchingGoogleApiScript-' + mapdiv.map.id];
+    mapdiv.map.events.triggerEvent('zoomend');
 });
 ";
 
@@ -576,9 +578,9 @@ mapInitialisationHooks.push(function(mapdiv) {
       'attrtable' => 'sample_attribute',
       'key' => 'sample_id',
       'fieldprefix' => 'smpAttr',
-      'extraParams'=>$auth['read'],
-      'survey_id'=>$args['survey_id'],
-      'sample_method_id'=>$sampleMethods[0]['id']
+      'extraParams' => $auth['read'],
+      'survey_id' => $args['survey_id'],
+      'sample_method_id' => $sampleMethods[0]['id']
     ));
     $r .= get_user_profile_hidden_inputs($attributes, $args, isset(data_entry_helper::$entity_to_load['sample:id']), $auth['read']).
         data_entry_helper::text_input(array('label' => lang::get('Site Name'), 'fieldname' => 'sample:location_name', 'validation' => array('required') /*, 'class' => 'control-width-5' */ ))
@@ -587,6 +589,22 @@ mapInitialisationHooks.push(function(mapdiv) {
     if ($sampleId == null){
       if(isset($_GET['date'])) data_entry_helper::$entity_to_load['C1:sample:date'] = $_GET['date'];
       $r .= data_entry_helper::date_picker(array('label' => lang::get('Date of first count'), 'fieldname' => 'C1:sample:date', 'validation' => array('required','date')));
+      data_entry_helper::$javascript .= "
+indiciaFns.on('change', '.precise-date-picker', {}, function(e) {
+  var dateToSave = $(e.currentTarget).val();
+  var result;
+  if (result = dateToSave.trim().match(/^\\d{4}/)) {
+    // Date given year first, so ISO format. That's how HTML5 date input
+    // values are formatted.
+    $('#sample\\\\:date').val(result);
+  } else if (result = dateToSave.trim().match(/\\d{4}$/)) {
+    // Date given year last
+    $('#sample\\\\:date').val(result);
+  }
+});
+if($('#C1\\\\:sample\\\\:date').val() != '') {
+  $('.precise-date-picker').change();
+}\n";
     }
     unset(data_entry_helper::$default_validation_rules['sample:date']);
     $help = lang::get('The Year field is read-only, and is calculated automatically from the date(s) of the Counts.');
@@ -663,6 +681,7 @@ mapInitialisationHooks.push(function(mapdiv) {
   }
 
   public static function get_occurrences_form($args, $nid, $response) {
+    global $user;
     data_entry_helper::add_resource('jquery_form');
     data_entry_helper::add_resource('jquery_ui');
     data_entry_helper::add_resource('autocomplete');
@@ -779,21 +798,24 @@ indiciaData.indiciaSvc = '".data_entry_helper::$base_url."';\n";
     for($i = 0; $i < max($args['numberOfCounts'], count($subSamples)+1); $i++){
       $subSampleId = (isset($subSamples[$i]) ? $subSamples[$i]['sample_id'] : null);
       $r .= "<fieldset id=\"count-$i\"><legend>".lang::get('Count ').($i+1)."</legend>";
-      if($subSampleId) $r .= "<input type='hidden' name='C".($i+1).":sample:id' value='".$subSampleId."'/>";
+      if ($subSampleId) {
+        $r .= "<input type='hidden' name='C".($i+1).":sample:id' value='".$subSampleId."'/>";
+      }
       $r .= '<input type="hidden" name="C'.($i+1).':sample:sample_method_id" value="'.$sampleMethods[0]['id'].'" />';
-      if($subSampleId || (isset(data_entry_helper::$entity_to_load['C'.($i+1).':sample:date']) && data_entry_helper::$entity_to_load['C'.($i+1).':sample:date'] != ''))
-        $dateValidation = array('required','date');
+      if ($subSampleId || (isset(data_entry_helper::$entity_to_load['C'.($i+1).':sample:date']) && data_entry_helper::$entity_to_load['C'.($i+1).':sample:date'] != ''))
+        $dateValidation = ['required', 'date'];
       else
-        $dateValidation = array('date');
+        $dateValidation = ['date'];
       // The sample dates are restrained to the requisite year, but there is already a restriction on future dates, so only
       // change the upper limit if not this year. the date in data_entry_helper::$entity_to_load['sample:date'] is a vague date year
-      $r .= data_entry_helper::date_picker(array('label' => lang::get('Date'), 'fieldname' => 'C'.($i+1).':sample:date', 'validation' => $dateValidation));
-      data_entry_helper::$javascript .= "$('#C".($i+1)."\\\\:sample\\\\:date' ).datepicker( 'option', 'minDate', new Date(".data_entry_helper::$entity_to_load['sample:date'].", 1 - 1, 1) );\n";
-      if(date('Y') > data_entry_helper::$entity_to_load['sample:date'])
-      	data_entry_helper::$javascript .= "$('#C".($i+1)."\\\\:sample\\\\:date' ).datepicker( 'option', 'maxDate', new Date(".data_entry_helper::$entity_to_load['sample:date'].", 12 - 1, 31) );\n";
-      if(!$subSampleId && $i) {
+      $r .= data_entry_helper::date_picker(['label' => lang::get('Date'), 'fieldname' => 'C' . ($i+1) . ':sample:date', 'validation' => $dateValidation]);
+      data_entry_helper::$javascript .= "$('#ctrl-wrap-C" . ($i+1) . "-sample-date .precise-date-picker' ).prop( 'min', '".data_entry_helper::$entity_to_load['sample:date']."-01-01' );\n";
+      if (date('Y') > data_entry_helper::$entity_to_load['sample:date']) {
+        data_entry_helper::$javascript .= "$('#ctrl-wrap-C" . ($i+1) . "-sample-date .precise-date-picker' ).prop( 'max', '".data_entry_helper::$entity_to_load['sample:date']."-12-31' );\n";
+      }
+      if (!$subSampleId && $i) {
         $r .= "<p>".lang::get('You must enter the date before you can enter any further information.').'</p>';
-        data_entry_helper::$javascript .= "$('#C".($i+1)."\\\\:sample\\\\:date' ).change(function(){
+        data_entry_helper::$javascript .= "$('#ctrl-wrap-C" . ($i+1) . "-sample-date .precise-date-picker' ).change(function(){
   myFieldset = $(this).addClass('required').closest('fieldset');
   myFieldset.find('.smp-input,[name=taxonLookupControl]').removeAttr('disabled'); // leave the count fields as are.
 });\n";

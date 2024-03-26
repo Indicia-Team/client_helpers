@@ -46,6 +46,10 @@ jQuery(document).ready(function($) {
 
   indiciaFns.processTraceMapData2 = function (el, sourceSettings, response) {
     console.log(response.aggregations.aggs.buckets)
+
+    const total=response.aggregations.aggs.buckets.reduce((t,d) => t=t+d.doc_count, 0)
+    console.log('total:', total)
+
     const mapData = []
     response.aggregations.aggs.buckets.forEach(wb => {
       const week = Number(wb.key)

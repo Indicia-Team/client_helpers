@@ -668,12 +668,16 @@ HTML;
   /**
    * Integrates the page with groups (activities).
    *
+   * @param bool $checkPage
+   *   Set to false to disable checking that the current page path is an iform
+   *   page linked to the group.
+   *
    * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-groupintegration
    *
    * @return string
    *   Control HTML
    */
-  public static function groupIntegration(array $options) {
+  public static function groupIntegration(array $options, $checkPage = TRUE) {
     $options = array_merge([
       'missingGroupIdBehaviour' => 'error',
       'showGroupSummary' => FALSE,
@@ -693,7 +697,7 @@ HTML;
       return '';
     }
     require_once 'prebuilt_forms/includes/groups.php';
-    $member = group_authorise_group_id($group_id, $options['readAuth']);
+    $member = group_authorise_group_id($group_id, $options['readAuth'], $checkPage);
     $output = '';
     if (!empty($group_id)) {
       // Apply filtering by group.
@@ -723,21 +727,21 @@ HTML;
           $output .= self::getGroupPageLinks($group, $options, $member);
         }
       }
-    }
-    $filterBoundaries = helper_base::get_population_data([
-      'report' => 'library/groups/group_boundary_transformed',
-      'extraParams' => $options['readAuth'] + ['group_id' => $group_id],
-      'cachePerUser' => FALSE,
-    ]);
-    if (count($filterBoundaries) > 0) {
-      helper_base::$indiciaData['reportBoundaries'] = [];
-      foreach ($filterBoundaries as $boundary) {
-        helper_base::$indiciaData['reportBoundaries'][] = $boundary['boundary'];
-      }
-      helper_base::$late_javascript .= <<<JS
+      $filterBoundaries = helper_base::get_population_data([
+        'report' => 'library/groups/group_boundary_transformed',
+        'extraParams' => $options['readAuth'] + ['group_id' => $group_id],
+        'cachePerUser' => FALSE,
+      ]);
+      if (count($filterBoundaries) > 0) {
+        helper_base::$indiciaData['reportBoundaries'] = [];
+        foreach ($filterBoundaries as $boundary) {
+          helper_base::$indiciaData['reportBoundaries'][] = $boundary['boundary'];
+        }
+        helper_base::$late_javascript .= <<<JS
 indiciaFns.loadReportBoundaries();
 
 JS;
+      }
     }
     return $output;
   }
@@ -839,6 +843,8 @@ JS;
       }
       if ($idx > 0) {
         $options['parentControlId'] = "$baseId-" . ($idx - 1);
+        // We don't want the query to apply to the child drop-downs ($idx > 0), as the query can't apply to both parent/child, as they are very different.
+        unset($options['extraParams']['query']);
         if ($idx === 1) {
           $options['parentControlLabel'] = $options['label'];
           $options['filterField'] = 'parent_id';
@@ -919,7 +925,7 @@ JS;
         }
       }
     }
-    // Override map position from URL if needed. 
+    // Override map position from URL if needed.
     // (e.g. this allows control via an iFrame).
     if (!empty($_GET['initialLat'])) {
       $options['initialLat'] = $_GET['initialLat'];
@@ -2360,9 +2366,11 @@ AGG;
    *   Options passed to the [source]. Will be modified as appropriate.
    */
   private static function applySourceModeDefaults(array &$options) {
-    $method = 'applySourceModeDefaults' . ucfirst($options['mode']);
-    if (method_exists('ElasticsearchReportHelper', $method)) {
-      self::$method($options);
+    if (!empty($options['mode'])) {
+      $method = 'applySourceModeDefaults' . ucfirst($options['mode']);
+      if (method_exists('ElasticsearchReportHelper', $method)) {
+        self::$method($options);
+      }
     }
   }
 
@@ -2472,9 +2480,10 @@ AGG;
    * @param string $controlName
    *   Control type name (e.g. source, dataGrid).
    * @param array $options
-   *   Options passed to the control. If the control's @containerElement option
+   *   Options passed to the control. If the control's containerElement option
    *   is set then sets the required JavaScript to make the control inject
-   *   itself into the existing element instead.
+   *   itself into the existing element instead. Can include an option for the
+   *   id and class to assign to the container if not using containerElement.
    * @param string $dataOptions
    *   Options to store in the HTML data-idc-config attribute on the container.
    *   These are made available to configure the JS behaviour of the control.
@@ -2500,8 +2509,9 @@ JS;
 $('#$options[id]').$initFn({});
 
 JS;
+    $class = "idc-control idc-$controlName" . (empty($options['class']) ? '' : ' ' . $options['class']);
     return <<<HTML
-<div id="$options[id]" class="idc-control idc-$controlName" data-idc-class="$initFn" data-idc-config="$dataOptions">
+<div id="$options[id]" class="$class" data-idc-class="$initFn" data-idc-config="$dataOptions">
   $content
 </div>
 
