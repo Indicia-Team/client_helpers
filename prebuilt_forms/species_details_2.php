@@ -1095,6 +1095,15 @@ class iform_species_details_2 extends BaseDynamicDetails {
   /**
    * Leaflet ES map to explore records.
    *
+   * Options:
+   * * minSqSizeKms - minimum square size to show (10, 2 or 1). Set this to
+   *   limit the precision of data shown.
+   * * maxSqSizeKms - maximum square size to show (10, 2 or 1). Set this to
+   *   force a higher precision when zoomed out.
+   * * switchToGeomsAt - layer zoom level below which full precision geometries
+   *   are shown. Defaults to 13, set to NULL to disable full precision
+   *   geometries.
+   *
    * @return string
    *   The output map.
    */
@@ -1113,7 +1122,7 @@ class iform_species_details_2 extends BaseDynamicDetails {
       'nid' => $options['nid'],
       'id' => 'recordsGridSquares',
       'mode' => 'mapGridSquare',
-      'switchToGeomsAt' => 13,
+      'switchToGeomsAt' => $options['switchToGeomsAt'] ?? 13,
     ];
     ElasticsearchReportHelper::source($optionsMapSource);
     $optionsLeafletMap = [
@@ -1135,6 +1144,12 @@ class iform_species_details_2 extends BaseDynamicDetails {
         ],
       ],
     ];
+    if (!empty($options['minSqSizeKms'])) {
+      $optionsLeafletMap['minSqSizeKms'] = $options['minSqSizeKms'];
+    }
+    if (!empty($options['maxSqSizeKms'])) {
+      $optionsLeafletMap['maxSqSizeKms'] = $options['maxSqSizeKms'];
+    }
     return ElasticsearchReportHelper::leafletMap($optionsLeafletMap);
   }
 

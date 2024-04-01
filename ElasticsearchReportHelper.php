@@ -943,6 +943,8 @@ JS;
       'initialLng',
       'initialZoom',
       'layerConfig',
+      'maxSqSizeKms',
+      'minSqSizeKms',
       'selectedFeatureStyle',
       'showSelectedRow',
     ], TRUE);

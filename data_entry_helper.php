@@ -6341,6 +6341,10 @@ HTML;
       'rows' => '4',
       'isFormControl' => TRUE,
     ], self::check_options($options));
+    // Additional encoding required in textarea content.
+    if (!empty($options['default'])) {
+      $options['default'] = htmlspecialchars($options['default']);
+    }
     return self::apply_template('textarea', $options);
   }
 

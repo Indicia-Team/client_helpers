@@ -2539,7 +2539,7 @@ $late_javascript
 if (typeof indiciaFns.hookupDataSources !== 'undefined') {
   indiciaFns.hookupDataSources();
   // Populate unless a report filter builder present as that will do it for us.
-  if (!window.loadFilter) {
+  if (!indiciaData.lang.reportFilters) {
     indiciaFns.populateDataSources();
   }
 }
