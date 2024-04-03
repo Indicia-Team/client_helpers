@@ -1257,6 +1257,7 @@ JS;
     helper_base::addLanguageStringsToJs('recordDetails', [
       'actionByPersonOnDate' => '{1} by {2} on {3}',
       'comment' => 'Comment',
+      'recordEntered' => 'Record entered',
       'redetermination' => 'Redetermination',
       'verificationDecision' => 'Verification',
     ]);
