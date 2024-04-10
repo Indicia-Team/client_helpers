@@ -666,8 +666,39 @@ HTML;
   }
 
   /**
+   * A scale for grid square opacity.
+   *
+   * Showing the number of records for each level.
+   *
+   * @param array $options
+   *   Control options.
+   *
+   * @return string
+   *   Scale container HTML.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-gridsquareopacityscale
+   */
+  public static function gridSquareOpacityScale(array $options) {
+    self::checkOptions('gridSquareOpacityScale', $options,
+      ['linkToDataControl', 'layer'],
+      []
+    );
+    helper_base::addLanguageStringsToJs('gridSquareOpacityScale', [
+      'noOfRecords' => 'No. of records',
+    ]);
+    $dataOptions = helper_base::getOptionsForJs($options, [
+      'id',
+      'linkToDataControl',
+      'layer',
+    ], TRUE);
+    return self::getControlContainer('gridSquareOpacityScale', $options, $dataOptions);
+  }
+
+  /**
    * Integrates the page with groups (activities).
    *
+   * @param array $options
+   *   Control options.
    * @param bool $checkPage
    *   Set to false to disable checking that the current page path is an iform
    *   page linked to the group.

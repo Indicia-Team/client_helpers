@@ -403,6 +403,18 @@ TXT;
   }
 
   /**
+   * A scale for showing relationship between square opacity and record count.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-gridSquareOpacityScale
+   *
+   * @return string
+   *   Control HTML
+   */
+  protected static function get_control_gridSquareOpacityScale($auth, $args, $tabalias, $options) {
+    return ElasticsearchReportHelper::gridSquareOpacityScale($options);
+  }
+
+  /**
    * Integrates the page with groups (activities).
    *
    * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-groupIntegration
