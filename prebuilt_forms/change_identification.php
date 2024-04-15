@@ -125,8 +125,9 @@ class iform_change_identification {
     ));
     $attributes = array_merge($smpAttrs, $occAttrs);
     foreach($attributes as $attr) {
-
-      $r .= "<tr><td><strong>".$attr['caption']."</strong></td><td>".$attr['displayValue']."</td></tr>\n";
+      if (!empty($attr['caption']) && !empty($attr['displayValue'])) {
+        $r .= "<tr><td><strong>".$attr['caption']."</strong></td><td>".$attr['displayValue']."</td></tr>\n";
+      }
     }
     $extraParams = $auth['read'] + array('taxon_list_id' => $args['list_id']);
     if ($args['preferred']) {
