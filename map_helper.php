@@ -168,6 +168,7 @@ class map_helper extends helper_base {
    *       shift key down. This functionality is provided by the panZoom and
    *       panZoomBar controls as well so is only relevant when they are not
    *       selected.
+   *     * zoom - +/- buttons for controlling the zoom level.
    *     * panZoom - simple controls in the corner of the map for panning and
    *       zooming.
    *     * panZoomBar - controls in the corner of the map for panning and
