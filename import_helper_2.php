@@ -1471,6 +1471,7 @@ HTML;
     ]);
     $lang = [
       'checkingData' => lang::get('Checking data'),
+      'importAnother' => lang::get('Import another file'),
       'importingDone' => lang::get('Import complete'),
       'importingTitle' => lang::get('Importing the data...'),
       'precheckDone' => 'Checking complete',
@@ -1486,6 +1487,8 @@ HTML;
       // Force a cache reload so the new template is instantly available.
       self::clearTemplateCache($options);
     }
+    $urlInfo = self::get_reload_link_parts();
+    $restartUrl = $urlInfo['path'] . '?' . self::array_to_query_string($urlInfo['params']);
     return <<<HTML
 <h3 id="current-task">$lang[checkingData]</h3>
 <progress id="file-progress" class="progress" value="0" max="100"></progress>
@@ -1500,6 +1503,7 @@ HTML;
     <p id="import-details-importing-title" style="display: none">$lang[importingTitle]</p>
     <p id="import-details-importing-details" style="display: none"></p>
     <p id="import-details-importing-done" style="display: none"><i class="fas fa-check"></i>$lang[importingDone]</p>
+    <p id="import-details-import-another" style="display: none"><a href="$restartUrl" class="btn btn-primary">$lang[importAnother]</a></p>
   </div>
 </div>
 <div class="alert alert-danger clearfix" id="error-info" style="display: none">
