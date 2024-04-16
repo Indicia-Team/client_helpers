@@ -530,7 +530,7 @@ HTML;
       'value' => lang::get('Value'),
     ];
     $template = self::loadSelectedTemplate($options);
-    if ($template && !empty($template['global_values'])) {
+    if (!empty($template) && !empty($template['global_values'])) {
       // Merge the template global values into the configuration's fixed
       // values.
       $globalValuesFromTemplate = json_decode($template['global_values'], TRUE);
@@ -1475,7 +1475,6 @@ HTML;
       'importingTitle' => lang::get('Importing the data...'),
       'precheckDone' => 'Checking complete',
       'precheckTitle' => 'Checking the import data for validation errors...',
-      'precheckDone' => 'Checking complete',
       'specifyUniqueTemplateName' => 'Please specify a unique name for the import template',
     ];
     self::$indiciaData['readyToImport'] = TRUE;
@@ -1702,7 +1701,7 @@ HTML;
         throw new Exception('Failed to load selected template');
       }
     }
-    return NULL;
+    return [];
   }
 
 }
