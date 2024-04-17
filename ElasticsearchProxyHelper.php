@@ -850,7 +850,11 @@ HTML;
       $headers[] = 'Authorization: ' . implode(':', $tokens);
     }
     else {
-      $keyFile = \Drupal::service('file_system')->realpath("private://") . '/rsa_private.pem';
+      $keyFile = \Drupal::service('file_system')->realpath("private://") . '/private.key';
+      if (!file_exists($keyFile)) {
+        // Fall back on legacy setup.
+        $keyFile = \Drupal::service('file_system')->realpath("private://") . '/rsa_private.pem';
+      }
       if (!file_exists($keyFile)) {
         \Drupal::logger('iform')->error('Missing private key file for jwtUser Elasticsearch authentication.');
         throw new ElasticsearchProxyAbort('Method not allowed as server configuration incomplete', 405);
