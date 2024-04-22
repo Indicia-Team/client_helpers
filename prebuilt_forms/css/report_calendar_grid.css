@@ -65,11 +65,17 @@ table td a.newLink {
   background-repeat: no-repeat;
   background-size: auto auto;
   background-image: url("../../../media/images/add.png") !important;
+  border: none;
 }
-/* line 59, sass/report_calendar_grid.scss */
+/* line 60, sass/report_calendar_grid.scss */
 table tr.datarow td {
   border: navy solid thin;
   padding: 3px;
   vertical-align: top;
   font-weight: bold;
+}
+
+/* line 67, sass/report_calendar_grid.scss */
+a.yearControl {
+  color: black;
 }
