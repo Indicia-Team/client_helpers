@@ -53,6 +53,7 @@ table {
       &.newLink {
         @include calendar-button;
         background-image: url("../../../media/images/add.png") !important;
+        border: none;
       }
     }
   }
@@ -63,4 +64,6 @@ table {
     font-weight: bold;
   }
 }
-
+a.yearControl {
+  color: black;
+} 
