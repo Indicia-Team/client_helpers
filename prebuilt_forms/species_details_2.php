@@ -541,7 +541,9 @@ class iform_species_details_2 extends BaseDynamicDetails {
 
       // In Drupal 9, markup cannot be used in page title, so remove em tags.
       $repArray = ['<em>', '</em>'];
-      hostsite_set_page_title(lang::get('Summary details for {1}', str_replace($repArray, '', self::$preferred)));
+      $preferredClean = str_replace($repArray, '', self::$preferred);
+      $titleName = isset(self::$defaultCommonName) ? self::$defaultCommonName . " ($preferredClean)" : $preferredClean;
+      hostsite_set_page_title(lang::get('Summary details for {1}', $titleName));
 
       // Make the preferred and default common name available via
       // hidden controls.
@@ -812,10 +814,14 @@ class iform_species_details_2 extends BaseDynamicDetails {
     }
     if ($hideOtherCommon == FALSE && !empty(self::$commonNames)) {
       $label = 'Other common names';
-      $r .= str_replace(
-        ['{caption}', '{value}', '{class}'],
-        [lang::get($label), implode(', ', self::$commonNames), ''],
-        $indicia_templates['dataValue']);
+      $otherCommonNames = array_merge(self::$commonNames);
+      array_shift($otherCommonNames);
+      if (!empty($otherCommonNames)) {
+        $r .= str_replace(
+          ['{caption}', '{value}', '{class}'],
+          [lang::get($label), implode(', ', $otherCommonNames), ''],
+          $indicia_templates['dataValue']);
+      }
     }
     if ($hideSynonym == FALSE && !empty(self::$synonyms)) {
       $label = (count(self::$synonyms) === 1) ? 'Synonym' : 'Synonyms';
