@@ -454,6 +454,17 @@ class extension_misc_extensions {
   }
 
   /**
+   * Add one of the helper base resources to the page.
+   *
+   * Specify the resource name in an option called 'resource'.
+   */
+  public static function add_resource($auth, $args, $tabalias, $options, $path) {
+    if (!empty($options['resource'])) {
+      helper_base::add_resource($options['resource']);
+    }
+  }
+
+  /**
    * Adds a Drupal breadcrumb to the page.
    *
    * The $options array can contain the following parameters:
