@@ -2021,6 +2021,7 @@ HTML;
           array_push($replaceTags, '{' . $param . '-escape-dblquote}');
           array_push($replaceTags, '{' . $param . '-escape-htmlquote}');
           array_push($replaceTags, '{' . $param . '-escape-htmldblquote}');
+          array_push($replaceTags, '{' . $param . '-escape-urlpath}');
         }
         // Allow sep to have <br/>.
         $value = ($param == 'sep' || $allowHtml) ? $value : htmlspecialchars($value ?? '', ENT_QUOTES, "UTF-8");
@@ -2034,6 +2035,7 @@ HTML;
           array_push($replaceValues, str_replace('"', '\"', $value ?? ''));
           array_push($replaceValues, str_replace("'", "&#39;", $value ?? ''));
           array_push($replaceValues, str_replace('"', '&quot;', $value ?? ''));
+          array_push($replaceValues, trim(preg_replace('/[^a-z0-9\-]/', '', str_replace(' ', '-', strtolower($value))), '-'));
         }
       }
     }

@@ -291,20 +291,22 @@ HTML;
   *      {rootFolder} already contains a ?. The url and urlParams can also have replacements from any query string parameter in the URL
   *      so report parameters can be passed through to linked actions. Because the javascript may pass the field values as parameters to functions,
   *      there are escaped versions of each of the replacements available for the javascript action type. Add -escape-quote or
-  *      -escape-dblquote to the fieldname for quote escaping, or -escape-htmlquote/-escape-htmldblquote for escaping quotes in HTML
-  *      attributes. For example this would be valid in the action javascript: foo("{bar-escape-dblquote}");
-  *      even if the field value contains a double quote which would have broken the syntax. Set img to the path to an image to use an
-  *      image for the action instead of a text caption - the caption then becomes the image's title. The image path can contain
-  *      {rootFolder} to be replaced by the root folder of the site, in this case it excludes the path parameter used in Drupal when
-  *      dirty URLs are used (since this is a direct link to a URL).
+  *      -escape-dblquote to the fieldname for quote escaping, -escape-htmlquote/-escape-htmldblquote for escaping quotes in HTML
+  *      attributes, or -escape-urlpath to convert text to a format suitable for part of a URL path (lowercase with hyphens).
+  *      For example this would be valid in the action javascript: foo("{bar-escape-dblquote}"); even if the field value contains a
+  *      double quote which would have broken the syntax. Set img to the path to an image to use an image for the action instead of
+  *      a text caption - the caption then becomes the image's title. The image path can contain {rootFolder} to be replaced by the
+  *      root folder of the site, in this case it excludes the path parameter used in Drupal when dirty URLs are used (since this
+  *      is a direct link to a URL).
   *  - visible: true or false, defaults to true
   *  - responsive-hide: an array, keyed by breakpoint name, with boolean values
   *      to indicate whether the column will be hidden when the breakpoint
   *      condition is met. Only takes effect if the 'responsiveOpts'option is set.
   *  - template: allows you to create columns that contain dynamic content using a template, rather than just the output
   *      of a field. The template text can contain fieldnames in braces, which will be replaced by the respective field values.
-  *      Add -escape-quote or -escape-dblquote to the fieldname for quote escaping, or -escape-htmlquote/-escape-htmldblquote
-  *      for escaping quotes in HTML attributes. Note that template columns cannot be sorted by clicking grid headers.
+  *      Add -escape-quote or -escape-dblquote to the fieldname for quote escaping, -escape-htmlquote/-escape-htmldblquote
+  *      for escaping quotes in HTML attributes, or -escape-urlpath for URL path segments as described above. Note that template
+  *      columns cannot be sorted by clicking grid headers.
   *     An example array for the columns option is:
   *     array(
   *       array('fieldname' => 'survey', 'display' => 'Survey Title'),
@@ -2719,6 +2721,7 @@ if (typeof mapSettingsHooks!=='undefined') {
         isset($value) ? str_replace("'", "&#39;", $value) : NULL;
       $jsReplacements["$key-escape-htmldblquote"] =
         isset($value) ? str_replace('"', '&quot;', $value) : NULL;
+      $jsReplacements["$key-escape-urlpath"] = trim(preg_replace('/[^a-z0-9\-]/', '', str_replace(' ', '-', strtolower($value))), '-');
     }
     $links = [];
     $currentUrl = self::get_reload_link_parts(); // needed for params
