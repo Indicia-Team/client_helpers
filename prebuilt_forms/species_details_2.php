@@ -1029,11 +1029,10 @@ class iform_species_details_2 extends BaseDynamicDetails {
     if (self::$notaxon) {
       return '';
     }
+    data_entry_helper::add_resource('brc_charts');
     $options = array_merge([
       'title' => 'Number of records by year',
     ], $options);
-    $r = '<div class="detail-panel" id="detail-panel-recsbyyear"><h3>' . lang::get($options['title']) . '</h3>';
-    data_entry_helper::add_resource('brc_charts');
     $optionsSource = [
       'extraParams' => $options['extraParams'],
       'nid' => $options['nid'],
@@ -1051,9 +1050,16 @@ class iform_species_details_2 extends BaseDynamicDetails {
       'source' => 'recsbyyearSource',
       'functionName' => 'populateRecsByYearChart',
     ];
-    $r .= ElasticsearchReportHelper::customScript($optionsCustomScript);
-    $r .= '<div>Records that span more than one year are not included in this chart.</div>';
-    $r .= '<div class="brc-recsbyyear-chart"></div>';
+    $customScript = ElasticsearchReportHelper::customScript($optionsCustomScript);
+    $title = lang::get($options['title']);
+    $r = <<<HTML
+      <div class="detail-panel" id="detail-panel-recsbyyear">
+        <h3>$title</h3>
+        $customScript
+        <div>Records that span more than one year are not included in this chart.</div>
+        <div class="brc-recsbyyear-chart"></div>
+      </div>
+HTML;
     return $r;
   }
 
@@ -1067,6 +1073,7 @@ class iform_species_details_2 extends BaseDynamicDetails {
     if (self::$notaxon) {
       return '';
     }
+    data_entry_helper::add_resource('brc_charts');
     $options = array_merge([
       'title' => 'Number of records through the year',
       'period' => 'week'
@@ -1074,8 +1081,6 @@ class iform_species_details_2 extends BaseDynamicDetails {
     if ($options['period'] !== 'week' && $options['period'] !== 'month') {
       $options['period'] = 'week';
     }
-    $r = '<div class="detail-panel" id="detail-panel-recsthroughyear"><h3>' . lang::get($options['title']) . '</h3>';
-    data_entry_helper::add_resource('brc_charts');
     $optionsSource = [
       'extraParams' => $options['extraParams'],
       'nid' => $options['nid'],
@@ -1087,14 +1092,21 @@ class iform_species_details_2 extends BaseDynamicDetails {
       'proxyCacheTimeout' => 300,
     ];
     ElasticsearchReportHelper::source($optionsSource);
+    $title = lang::get($options['title']);
     $optionsCustomScript = [
       'extraParams' => $options['extraParams'],
       'nid' => $options['nid'],
       'source' => 'recsthroughyearSource',
       'functionName' => 'populateRecsThroughYearChart',
     ];
-    $r .= ElasticsearchReportHelper::customScript($optionsCustomScript);
-    $r .= '<div class="brc-recsby' . $options['period'] . '-chart"></div>';
+    $customScript .= ElasticsearchReportHelper::customScript($optionsCustomScript);
+    $r = <<<HTML
+      <div class="detail-panel" id="detail-panel-recsthroughyear">
+        <h3>$title</h3>
+        $customScript
+        <div class="brc-recsby$options[period]-chart"></div>
+      </div>
+HTML;
     return $r;
   }
 
