@@ -2993,13 +2993,13 @@ if (typeof mapSettingsHooks!=='undefined') {
     $options = self::get_report_calendar_grid_options($options);
     $extras = '';
     $currentParamValues = self::getReportGridCurrentParamValues($options);
-    self::request_report($response, $options, $currentParamValues, false, $extras);
+    self::request_report($response, $options, $currentParamValues, FALSE, $extras);
     if (isset($response['error'])) {
       return "ERROR RETURNED FROM request_report:".$response['error'];
     }
     // We're not even going to bother with asking the user to populate a partially filled in report parameter set.
     if (isset($response['parameterRequest'])) {
-      return '<p>Internal Error: Report request parameters not set up correctly.<br />'.(print_r($response,true)).'<p>';
+      return '<p>Internal Error: Report request parameters not set up correctly.<br />'.(print_r($response,TRUE)).'<p>';
     }
     self::$javascript .= "
 var pageURI = \"".$_SERVER['REQUEST_URI']."\";
@@ -3026,29 +3026,90 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue, removeparam) {
       if(isset($dateRecords[$record['date']])) {
         $dateRecords[$record['date']][] = $record;
       } else {
-        $dateRecords[$record['date']] = array($record);
+        $dateRecords[$record['date']] = [$record];
       }
     }
     $pageUrlParams = self::get_report_calendar_grid_page_url_params();
     $pageUrl = self::report_calendar_grid_get_reload_url($pageUrlParams);
-    $pageUrl .= (strpos($pageUrl , '?')===false) ? '?' : '&';
+    $pageUrl .= (strpos($pageUrl , '?') === FALSE) ? '?' : '&';
     $thClass = $options['thClass'];
-    $r = "\n<table class=\"".$options['class']."\">";
-    $r .= "\n<thead class=\"$thClass\"><tr>".($options['includeWeekNumber'] ? "<td>".lang::get("Week Number")."</td>" : "")."<td></td><td></td><td></td><td colspan=\"3\" class=\"year-picker\">";
-    if(!isset($options["first_year"]) || $options["year"]>$options["first_year"]){
-    	$r .= "<a id=\"year-control-previous\" title=\"".($options["year"]-1)."\" rel=\"\nofollow\" href=\"".$pageUrl.$pageUrlParams['year']['name']."=".($options["year"]-1).
-        	"\" class=\"ui-datepicker-prev ui-corner-all\"><span class=\"ui-icon ui-icon-circle-triangle-w\">Prev</span></a>";
+    $r = PHP_EOL . '<table class="' . $options['class'] . '">';
+    $r .= PHP_EOL . '<thead class="' . $thClass . '">' .
+      '<tr>' .
+      ($options['includeWeekNumber'] ?
+        '<th class="' . $thClass . '" colspan=2>' . lang::get('Week Number') . '</th><th class="' . $thClass . '" colspan=4></th>' :
+        '<th class="' . $thClass . '" colspan=5></th>');
+    
+    $baseTheme = hostsite_get_config_value('iform.settings', 'base_theme', 'generic');
+    $reloadURL = $pageUrl . $pageUrlParams['year']['name']."=";
+    $firstYear = (!empty($options["first_year"]) && $options["year"] >= $options["first_year"] ? $options["first_year"] : $options["year"]);
+    if ($baseTheme === 'generic') {
+      $template = '<a id="year-control-previous" title="' . ($options["year"]-1) . '" rel="nofollow" href="' . $reloadURL . ($options["year"]-1) . '" class="ui-datepicker-prev ui-corner-all">' .
+        '<span class="ui-icon ui-icon-circle-triangle-w">' . lang::get('Prev') . '</span>' .
+        '</a>' .
+        '{control}' .
+        ($options["year"] < date('Y') ?
+          '<a id="year-control-next" title="' . ($options["year"]+1) . '" rel="nofollow" href="' . $reloadURL.($options["year"]+1) . '" class="ui-datepicker-next ui-corner-all">' .
+          '<span class="ui-icon ui-icon-circle-triangle-e">' . lang::get('Next') . '</span>' .
+          '</a>' : '') .
+        '</div>' .
+        PHP_EOL;
+    } else {
+      $template = '<div id="ctrl-wrap-{id}" class="ctrl-wrap right">' .
+        '<div class="input-group">' .
+        '<div class="input-group-addon ctrl-addons">' .
+        '<a id="year-control-previous" title="' . ($options["year"]-1) . '" rel="nofollow" href="'  .$reloadURL . ($options["year"]-1) . '" class="yearControl">' .
+        '<span class="glyphicon glyphicon-step-backward"></span>' .
+        '</a>' .
+        '</div>' .
+        '{control}' .
+        ($options["year"] < date('Y') ?
+          '<div class="input-group-addon ctrl-addons">' .
+          '<a id="year-control-next" title="' . ($options["year"]+1) . '" rel="nofollow" href="' . $reloadURL . ($options["year"]+1) . '" class="yearControl">' .
+          '<span class="glyphicon glyphicon-step-forward" aria-hidden="true"></span>' .
+          '</a>' .
+          '</div>' : '') .
+        '</div>' .
+        '</div>' . PHP_EOL;
     }
-    $r .= "<span class=\"thisYear\">".$options["year"]."</span>";
-    if($options["year"]<date('Y')){
-      $r .= "  <a id=\"year-control-next\" title=\"".($options["year"]+1)."\" rel=\"\nofollow\" href=\"".$pageUrl.$pageUrlParams['year']['name']."=".($options["year"]+1)."\" class=\"ui-datepicker-next ui-corner-all\">
-        <span class=\"ui-icon ui-icon-circle-triangle-e\">Next</span></a>";
+    
+    global $indicia_templates;
+    $r .= '<th class="' . $thClass . '" colspan=3 class="year-picker">';
+    $indicia_templates['rcg_controlWrap'] = $template;
+    $ctrlid = 'year-select';
+    $lookUpValues = range(date('Y'), $firstYear, -1);
+    $lookUpValues = array_combine($lookUpValues, $lookUpValues);
+    if ($baseTheme === 'generic') {
+      $r .= str_replace(['{control}', '{id}'], ['<span class="thisYear">' . $options["year"] . '</span>', $ctrlid], $template);
+    } else {
+      if(empty($options["first_year"]) && $options["year"] == date('Y')) {
+        $r .= data_entry_helper::text_input([
+          'id' => $ctrlid,
+          'class' => 'year-select',
+          'disabled' => ' disabled="disabled" ',
+          'fieldname' => 'year-select',
+          'default' => $options["year"],
+          'controlWrapTemplate' => 'rcg_controlWrap'
+        ]);
+      } else {
+        $r .= data_entry_helper::select([
+          'id' => $ctrlid,
+          'class' => 'year-select',
+          'fieldname' => 'year-select',
+          'lookupValues' => $lookUpValues,
+          'default' => $options["year"],
+          'controlWrapTemplate' => 'rcg_controlWrap'
+        ]);
+        report_helper::$javascript .= "$('#".$ctrlid."').on('input', function() { window.location.href= '" . $reloadURL . "'+$(this).val(); });" . PHP_EOL;
     }
-    $r .= "</td><td></td><td></td></tr></thead>\n";
+    }
+    $r .= '</th>';
+    $r .= "</tr></thead>\n";
+    
     // don't need a separate "Add survey" button as they just need to click the day....
     // Not implementing a download.
     $r .= "<tbody>\n";
-    $date_from = array('year'=>$options["year"], 'month'=>1, 'day'=>1);
+    $date_from = ['year'=>$options["year"], 'month'=>1, 'day'=>1];
     $weekno=0;
     // ISO Date - Mon=1, Sun=7
     // Week 1 = the week with date_from in
@@ -3062,7 +3123,7 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue, removeparam) {
     $weeknumberfilter=explode(':',$options['weekNumberFilter']);
     if(count($weeknumberfilter)!=2){
       $warnings .= "Week number filter unrecognised {".$options['weekNumberFilter']."} defaulting to all<br />";
-      $weeknumberfilter=array('','');
+      $weeknumberfilter = ['',''];
     } else {
       if($weeknumberfilter[0] != '' && (intval($weeknumberfilter[0])!=$weeknumberfilter[0] || $weeknumberfilter[0]>52)){
         $warnings .= "Week number filter start unrecognised or out of range {".$weeknumberfilter[0]."} defaulting to year start<br />";
@@ -3078,7 +3139,9 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue, removeparam) {
       if(!$weekstart_date){
         $warnings .= "Weekstart month-day combination unrecognised {".$weekstart[1]."} defaulting to weekday=7 - Sunday<br />";
         $weekstart[1]=7;
-      } else $weekstart[1]=$weekstart_date->format('N');
+      } else {
+        $weekstart[1] = $weekstart_date->format('N');
+      }
     }
     if(intval($weekstart[1])!=$weekstart[1] || $weekstart[1]<1 || $weekstart[1]>7) {
       $warnings .= "Weekstart unrecognised or out of range {".$weekstart[1]."} defaulting to 7 - Sunday<br />";
@@ -3091,7 +3154,7 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue, removeparam) {
     $header_date=clone $consider_date;
     $r .= "<tr>".($options['includeWeekNumber'] ? "<td></td>" : "")."<td></td>";
 
-    require_once 'prebuilt_forms/includes/language_utils.php';
+    require_once('prebuilt_forms/includes/language_utils.php');
     $lang = iform_lang_iso_639_2(hostsite_get_user_field('language'));
     setlocale (LC_TIME, $lang);
 
@@ -3108,8 +3171,9 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue, removeparam) {
         $warnings .= "Week one month-day combination unrecognised {".$options['weekOneContains']."} defaulting to Jan-01<br />";
         $weekOne_date = date_create($date_from['year'].'-Jan-01');
       }
-    } else
+    } else {
       $weekOne_date = date_create($date_from['year'].'-Jan-01');
+    }
     while($weekOne_date->format('N')!=$weekstart[1]){
       $weekOne_date->modify('-1 day'); // scan back to start of week
     }
@@ -3126,13 +3190,13 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue, removeparam) {
     $now = new DateTime();
     if($now < $consider_date && $options["viewPreviousIfTooEarly"]){
       $options["year"]--;
-      $options["viewPreviousIfTooEarly"]=false;
+      $options["viewPreviousIfTooEarly"] = FALSE;
       unset($options['extraParams']['date_from']);
       unset($options['extraParams']['date_to']);
       return self::report_calendar_grid($options);
     }
-    $options["newURL"] .= (strpos($options["newURL"] , '?')===false) ? '?' : '&';
-    $options["existingURL"] .= (strpos($options["existingURL"] , '?')===false) ? '?' : '&';
+    $options["newURL"] .= (strpos($options["newURL"] , '?') === FALSE) ? '?' : '&';
+    $options["existingURL"] .= (strpos($options["existingURL"] , '?') === FALSE) ? '?' : '&';
 
     while($consider_date->format('Y') <= $options["year"] && ($weeknumberfilter[1]=='' || $consider_date->format('N')!=$weekstart[1] || $weekno < $weeknumberfilter[1])){
       if($consider_date->format('N')==$weekstart[1]) {
@@ -3151,15 +3215,16 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue, removeparam) {
         if(isset($options['buildLinkFunc'])){
           $options['consider_date'] = $consider_date->format('d/m/Y');
           $callbackVal = call_user_func_array($options['buildLinkFunc'],
-              array(isset($dateRecords[$consider_date->format('d/m/Y')]) ? $dateRecords[$consider_date->format('d/m/Y')] : [],
-                    $options, $cellContents));
+              [isset($dateRecords[$consider_date->format('d/m/Y')]) ? $dateRecords[$consider_date->format('d/m/Y')] : [],
+                    $options, $cellContents]);
           $cellclass=$callbackVal['cellclass'];
           $cellContents=$callbackVal['cellContents'];
         } else if(isset($dateRecords[$consider_date->format('d/m/Y')])){ // check if there is a record on this date
           $cellclass="existingLink";
           $cellContents .= ' <a href="'.$options["newURL"].'date='.$consider_date->format('d/m/Y').'" class="newLink" title="Create a new sample on '.$consider_date->format('d/m/Y').'" ><div class="ui-state-default add-button">&nbsp;</div></a> ';
-          foreach($dateRecords[$consider_date->format('d/m/Y')] as $record)
+          foreach ($dateRecords[$consider_date->format('d/m/Y')] as $record) {
             $cellContents.='<a href="'.$options["existingURL"].'sample_id='.$record["sample_id"].'" title="View existing sample for '.$record["location_name"].' on '.$consider_date->format('d/m/Y').'" ><div class="ui-state-default view-button">&nbsp;</div></a>';
+          }
         } else {
           $cellclass="newLink";
           $cellContents .= ' <a href="'.$options["newURL"].'date='.$consider_date->format('d/m/Y').'" class="newLink" title="Create a new sample on '.$consider_date->format('d/m/Y').'" ><div class="ui-state-default add-button">&nbsp;</div></a>';
@@ -3181,7 +3246,7 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue, removeparam) {
     if (isset($options['footer']) && !empty($options['footer'])) {
       $rootFolder = self::getRootfolder();
       $currentUrl = self::get_reload_link_parts();
-      $footer = str_replace(array('{rootFolder}',
+      $footer = str_replace(['{rootFolder}',
                 '{currentUrl}',
                 '{sep}',
                 '{warehouseRoot}',
@@ -3191,8 +3256,8 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue, removeparam) {
                 '{iUserID}',
                 '{website_id}',
       			'{startDate}',
-      			'{endDate}'),
-          array($rootFolder,
+            '{endDate}'],
+          [$rootFolder,
                 $currentUrl['path'],
                 strpos($rootFolder, '?')===FALSE ? '?' : '&',
                 self::$base_url,
@@ -3203,10 +3268,10 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue, removeparam) {
                 self::$website_id,
                 $options['extraParams']['date_from'],
                 $options['extraParams']['date_to']
-          ), $options['footer']);
+          ], $options['footer']);
       // Merge in any references to the parameters sent to the report: could extend this in the future to pass in the extraParams
       foreach($currentParamValues as $key=>$param){
-        $footer = str_replace(array('{'.$key.'}'), array($param), $footer);
+        $footer = str_replace(['{'.$key.'}'], [$param], $footer);
       }
       $extraFooter .= '<div class="left">'.$footer.'</div>';
     }
@@ -3221,26 +3286,32 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue, removeparam) {
    * @param array $options Options array passed to the control.
    */
   private static function get_report_calendar_grid_options($options) {
+    if (function_exists('hostsite_get_config_value')) {
+      $baseTheme = hostsite_get_config_value('iform.settings', 'base_theme', 'generic');
+    } else {
+      $baseTheme = 'generic';
+    }
+      
     $userId = hostsite_get_user_field('id');
-    $options = array_merge(array(
+    $options = array_merge([
       'mode' => 'report',
       'id' => 'calendar-report-output', // this needs to be set explicitly when more than one report on a page
-      'class' => 'ui-widget ui-widget-content report-grid',
-      'thClass' => 'ui-widget-header',
+      'class' => $baseTheme === 'generic' ? 'ui-widget ui-widget-content report-grid' : 'table report-grid',
+      'thClass' => $baseTheme === 'generic' ? 'ui-widget-header' : '',
       'extraParams' => [],
       'year' => date('Y'),
-      'viewPreviousIfTooEarly' => true, // if today is before the start of the calendar, display last year.
+      'viewPreviousIfTooEarly' => TRUE, // if today is before the start of the calendar, display last year.
         // it is possible to create a partial calendar.
-      'includeWeekNumber' => false,
+      'includeWeekNumber' => FALSE,
       'weekstart' => 'weekday=7', // Default Sunday
       'weekNumberFilter' => ':'
-    ), $options);
-    $options["extraParams"] = array_merge(array(
+    ], $options);
+    $options["extraParams"] = array_merge([
       'date_from' => $options["year"].'-01-01',
       'date_to' => $options["year"].'-12-31',
       'user_id' => $userId, // Initially CMS User, changed to Indicia User later if in Easy Login mode.
       'cms_user_id' => $userId, // CMS User, not Indicia User.
-      'smpattrs' => ''), $options["extraParams"]);
+      'smpattrs' => ''], $options["extraParams"]);
     $options['my_user_id'] = $userId; // Initially CMS User, changed to Indicia User later if in Easy Login mode.
     // Note for the calendar reports, the user_id is assumed to be the CMS user id as recorded in the CMS User ID attribute,
     // not the Indicia user id.
@@ -3250,7 +3321,7 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue, removeparam) {
         $options["extraParams"]['user_id'] = $indicia_user_id;
       }
       if ($options['my_user_id']) { // false switches this off.
-        $user_id = hostsite_get_user_field('indicia_user_id', false, false, $options['my_user_id']);
+        $user_id = hostsite_get_user_field('indicia_user_id', FALSE, FALSE, $options['my_user_id']);
         if(!empty($user_id)) {
           $options['my_user_id'] = $user_id;
         }
@@ -3266,12 +3337,12 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue, removeparam) {
    */
   private static function get_report_calendar_grid_page_url_params() {
     $yearKey = 'year';
-    return array(
-      'year' => array(
+    return [
+      'year' => [
         'name' => $yearKey,
         'value' => isset($_GET[$yearKey]) ? $_GET[$yearKey] : null
-      )
-    );
+      ]
+    ];
   }
   /**
    * Build a url suitable for inclusion in the links for the report calendar grid column pagination
@@ -3293,7 +3364,7 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue, removeparam) {
     }
     foreach ($reloadUrl['params'] as $key => $value) {
       if (!in_array($key, $excludedParams)){
-        $reloadUrl['path'] .= (strpos($reloadUrl['path'],'?')===false ? '?' : '&')."$key=$value";
+        $reloadUrl['path'] .= (strpos($reloadUrl['path'],'?') === FALSE ? '?' : '&')."$key=$value";
       }
     }
     return $reloadUrl['path'];
