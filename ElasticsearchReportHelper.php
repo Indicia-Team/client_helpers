@@ -867,9 +867,6 @@ JS;
     ], $options['extraParams'], $options['readAuth']);
     $baseId = $options['id'];
     $selectClass = $options['class'];
-    if (!empty($options['emptyOptionDoesNothing'])) {
-      $options['class'] .= ' empty-option-does-nothing';
-    }
     foreach ($typeIds as $idx => $typeId) {
       $options['extraParams']['location_type_id'] = $typeId;
       if (count($typeIds) > 1) {
