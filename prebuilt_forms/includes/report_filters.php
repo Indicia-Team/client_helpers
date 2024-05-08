@@ -859,8 +859,13 @@ class filter_quality extends FilterBase {
           $qualityOptions['OV'] = lang::get('Verified by other verifiers');
         }
       }
+      $lang = [
+        'cancel' => lang::get('Cancel'),
+        'ok' => lang::get('Ok'),
+        'recordStatus' => lang::get('Record status'),
+      ];
       $options = array_merge([
-        'label' => lang::get('Record status'),
+        'label' => $lang['recordStatus'],
       ], $options);
       $includeExcludeRadios = data_entry_helper::radio_group([
         'fieldname' => 'quality_op',
@@ -876,13 +881,8 @@ class filter_quality extends FilterBase {
         'id' => 'quality' . (empty($options['standalone']) ? '' : '--standalone'),
         'lookupValues' => $qualityOptions,
       ]);
-      $lang = [
-        'cancel' => lang::get('Cancel'),
-        'ok' => lang::get('Ok'),
-        'recordStatus' => lang::get('Record status'),
-      ];
       $qualityInput = data_entry_helper::text_input([
-        'label' => $lang['recordStatus'],
+        'label' => $options['label'],
         'fieldname' => 'quality-filter',
         'class' => 'quality-filter',
       ]);
