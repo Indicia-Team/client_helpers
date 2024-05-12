@@ -4214,14 +4214,14 @@ jQuery('#".$options['chartID']."-series-disable').click(function(){
         }
         $r .= "</tbody></table>\n";
       }
-      $summaryDataDownloadGrid="";
+      $summaryDataDownloadGrid = "";
       $r .= "\n<table id=\"".$options['tableID']."\" class=\"".$options['tableClass']."\" style=\"".($format['table']['display']?'':'display:none;')."\">";
       $r .= "\n<thead class=\"$thClass\">";
       if($options['tableHeaders'] == 'both' || $options['tableHeaders'] == 'number'){
         $r .= '<tr><td>Week</td>'.$tableNumberHeaderRow.($options['includeTableTotalColumn']
-        		                                         ?($options['includeSummaryData'] ? '<td>Total</td>' : '').
-        		                                          ($options['includeEstimatesData'] ? '<td class="estimates">Total with<br />estimates</td>' : '')
-        		                                         :'').'</tr>';
+                                                         ? ($options['includeSummaryData'] ? '<td>Total</td>' : '') .
+                                                           ($options['includeEstimatesData'] ? '<td class="estimates">Total with<br />estimates</td>' : '')
+                                                         : '') . '</tr>';
         $summaryDataDownloadGrid .= 'Week'.$downloadNumberHeaderRow.($options['includeTableTotalColumn']
         		                                         ?($options['includeSummaryData'] ? ',Total' : '')
         		                                         :'')."\n";
@@ -4604,20 +4604,22 @@ jQuery('#".$options['chartID']."-series-disable').click(function(){
    * @return array The processed options array.
    */
   private static function get_report_calendar_summary_options($options) {
-    $options = array_merge(array(
+    $options = array_merge([
       'mode' => 'report',
       'id' => 'calendar-report-output', // this needs to be set explicitly when more than one report on a page
       'tableContainerID' => 'tablediv-container',
       'tableID' => 'report-table',
       'tableClass' => 'ui-widget ui-widget-content report-grid',
+      'theadClass' => 'ui-widget-header',
       'thClass' => 'ui-widget-header',
       'altRowClass' => 'odd',
       'extraParams' => [],
-      'viewPreviousIfTooEarly' => true, // if today is before the start of the calendar, display last year.
+      'viewPreviousIfTooEarly' => TRUE, // if today is before the start of the calendar, display last year.
         // it is possible to create a partial calendar.
-      'includeWeekNumber' => false,
+      'includeWeekNumber' => FALSE,
       'weekstart' => 'weekday=7', // Default Sunday
       'weekNumberFilter' => ':',
+      'inSeasonFilter' => '',
       'rowGroupColumn' => 'taxon',
       'rowGroupID' => 'taxa_taxon_list_id',
       'chartContainerID' => 'chartdiv-container',
@@ -4630,11 +4632,11 @@ jQuery('#".$options['chartID']."-series-disable').click(function(){
       'rendererOptions' => [],
       'legendOptions' => [],
       'axesOptions' => [],
-      'includeRawData' => true,
-      'includeSummaryData' => true,
-      'includeEstimatesData' => false,
-      'includeTableTotalColumn' => true,
-      'includeTableTotalRow' => true,
+      'includeRawData' => TRUE,
+      'includeSummaryData' => TRUE,
+      'includeEstimatesData' => FALSE,
+      'includeTableTotalColumn' => TRUE,
+      'includeTableTotalRow' => TRUE,
       'tableHeaders' => 'date',
       'rawDataCombining' => 'add',
       'dataRound' => 'nearest',
@@ -4644,30 +4646,40 @@ jQuery('#".$options['chartID']."-series-disable').click(function(){
       'interpolation' => 'linear',
       'firstValue' => 'none',
       'lastValue' => 'none',
-      'highlightEstimates' => false,
-      'includeRawGridDownload' => false,
-      'includeRawListDownload' => true,
-      'includeSummaryGridDownload' => false,
-      'includeEstimatesGridDownload' => false,
-      'includeListDownload' => true,
-      'downloadFilePrefix' => ''
-    ), $options);
-    $options["extraParams"] = array_merge(array(
-      'date_from' => $options['date_start'],
-      'date_to' => $options['date_end'],
+      'highlightEstimates' => FALSE,
+      'includeRawGridDownload' => FALSE,
+      'includeRawListDownload' => TRUE,
+      'includeSummaryGridDownload' => FALSE,
+      'includeEstimatesGridDownload' => FALSE,
+      'includeListDownload' => TRUE,
+      'downloadFilePrefix' => '',
+      'training' => FALSE
+    ], $options);
+    $options["extraParams"] = array_merge([
+        'date_from' => $options['date_start'],
+        'date_to' => $options['date_end'],
 //      'user_id' => '', // CMS User, not Indicia User.
 //      'smpattrs' => '',
-      'occattrs' => ''), $options["extraParams"]);
+        'occattrs' => '',
+        'training' => 'f'
+      ],
+      $options["extraParams"]
+    );
 
     // Note for the calendar reports, the user_id is initially assumed to be the CMS user id as recorded in the CMS User ID attribute,
     // not the Indicia user id: we do the conversion here.
     if (isset($options["extraParams"]['user_id'])) {
       $options["extraParams"]['cms_user_id'] = $options["extraParams"]['user_id'];
       if (function_exists('hostsite_get_user_field') && $options["extraParams"]['user_id']!='') {
-        $user_id = hostsite_get_user_field('indicia_user_id', false, false, $options["extraParams"]['user_id']);
-        if(!empty($user_id))
+        $user_id = hostsite_get_user_field('indicia_user_id', FALSE, FALSE, $options["extraParams"]['user_id']);
+        if (!empty($user_id)) {
           $options["extraParams"]['user_id'] = $user_id;
+        }
       }
+    }
+    if (function_exists('hostsite_get_user_field') && hostsite_get_user_field('training', FALSE)) {
+      $options['training'] = TRUE;
+      $options['extraParams']['training'] = 't';
     }
 
     // Note for the calendar reports, the user_id is assumed to be the CMS user id as recorded in the CMS User ID attribute,
@@ -4712,6 +4724,10 @@ jQuery('#".$options['chartID']."-series-disable').click(function(){
    * Examples: "1:30" - Weeks one to thirty inclusive.
    * "4:" - Week four onwards.
    * ":5" - Upto and including week five.</li>
+   * <li><b>inSeasonFilter</b>
+   * Optional colon separated number pair. Used to produce an additional In-season total column in Estimates grid.
+   * Leave blank to omit the column. If provided, both numbers must be given.
+   * Examples: "1:26" - Weeks one to twemty-six inclusive.</li>
    * <li><b>rowGroupColumn</b>
    * The column in the report which is used as the label for the vertical axis on the grid.</li>
    * <li><b>rowGroupID</b>
@@ -4720,383 +4736,468 @@ jQuery('#".$options['chartID']."-series-disable').click(function(){
    * OPTIONAL: The column in the report which contains the count for this occurrence. If omitted then the default
    * is to assume one occurrence = count of 1</li>
    * <li><b>includeChartItemSeries</b>
-   * Defaults to true. Include a series for each item in the report output.
+   * Defaults to TRUE. Include a series for each item in the report output.
    * </li>
    * <li><b>includeChartTotalSeries</b>
-   * Defaults to true. Include a series for the total of each item in the report output.
+   * Defaults to TRUE. Include a series for the total of each item in the report output.
    * </li>
    * </ul>
    * @todo: Future Enhancements? Allow restriction to month.
    */
   public static function report_calendar_summary2($options) {
-  	$r="";
-  	// I know that there are better ways to approach some of the date manipulation, but they are PHP 5.3+.
-  	// We support back to PHP 5.2
-  	// TODO put following JS into a control JS file.
+    $r = "";
+    // I know that there are better ways to approach some of the date manipulation, but they are PHP 5.3+.
+    // We support back to PHP 5.2
+    // TODO put following JS into a control JS file.
 
-  	self::add_resource('jquery_ui');
+    self::add_resource('jquery_ui');
 
-    $extraParams = $options['readAuth'] + array('survey_id'=>$options['survey_id']);
-    $definition = data_entry_helper::get_population_data(array(
-        'table' => 'summariser_definition',
-        'extraParams'=>$extraParams,
-    ));
-    if (isset($records['error'])) return $records['error'];
-    if(count($definition) != 1) {
-      return 'ERROR: could not find a single summariser_definition records for survey_id ' . $options['survey_id'] . "\n".print_r($definition,true);
+    $definition = data_entry_helper::get_population_data([
+      'table' => 'summariser_definition',
+      'extraParams' => $options['readAuth'] + ['survey_id' => $options['survey_id']],
+    ]);
+    if (isset($records['error'])) {
+      return $records['error'];
+    }
+    if (count($definition) != 1) {
+      return 'ERROR: could not find a single summariser_definition records for survey_id ' .
+        $options['survey_id'] . PHP_EOL .
+        print_r($definition, TRUE);
     }
 
-  	$options = self::get_report_calendar_summary_options($options); // don't use all of these now, eg. extraParams: this is used later for raw data
-  	$extraParams = $options['readAuth'] + array('year'=>$options['year'], 'survey_id'=>$options['survey_id']);
-  	// at the moment the summary_builder module indexes the user_id on the created_by_id field on the parent sample.
-  	// this effectively means that it assumes easy_login.
-  	// Also means we have to use the converted Indicia user_id, stored by options function above in the extraParams.
+    $options = self::get_report_calendar_summary_options($options);
+    $options['caching'] = isset($options['caching']) ? $options['caching'] : TRUE;
+    // Don't use all of these now, eg. extraParams: this is used later for raw data
+    // At the moment the summary_builder module indexes the user_id on the created_by_id field on the parent sample.
+    // This effectively means that it assumes easy_login.
     // user_id and location_ids values of '0' imply "all"
-    $extraParams['user_id'] = $options['extraParams']['user_id'];
-  	if(isset($options['taxon_list_id']) && $options['taxon_list_id']!="")
-  		$extraParams['taxon_list_id'] = $options['taxon_list_id'];
 
-    if(!empty($options['location_id']))
-  		$extraParams['location_id'] = $options['location_id'];
-    else if(!empty($options['location_list']))
-      $extraParams['query'] = urlencode(json_encode(array('in'=>array('location_id', $options['location_list']))));
-    else $extraParams['location_id'] = 0; // default to 'all'
-
+    // set up extra params for the summary_occurrence fetch: options extra params is for Raw data report
+    $extraParams = $options['readAuth'] + [
+      'year' => $options['year'],
+      'survey_id' => $options['survey_id'],
+      'user_id' => $options['summary_user_id'],
+      'training' => $options['training']
+    ];
+    if (!empty($options['extraParams']['taxon_list_id'])) {
+      $extraParams['taxon_list_id'] = $options['extraParams']['taxon_list_id'];
+    }
+    if (isset($options['summary_location_id'])) {
+      $extraParams['location_id'] = $options['summary_location_id'];
+      $options['extraParams']['location_id'] = $options['summary_location_id'];
+    }
+    else if (isset($options['extraParams']['location_list'])) {
+      $extraParams['query'] = urlencode(json_encode(['in' => ['location_id', explode(',', $options['extraParams']['location_list'])]]));
+    }
+    else {
+      $options['valid'] = FALSE; // default to none
+    }
     $extraParams['columns'] = 'type,taxa_taxon_list_id,taxonomic_sort_order,taxon,preferred_taxon,' .
                               'default_common_name,taxon_meaning_id,summarised_data';
-    $options['caching'] = isset($options['caching']) ? $options['caching'] : true;
-  	$records = data_entry_helper::get_population_data(array(
-  			'table' => 'summary_occurrence',
-  			'extraParams'=>$extraParams,
-  			'caching'=> $options['caching']
-  	));
-  	if (isset($records['error'])) return $records['error'];
-  	self::$javascript .= "
-var pageURI = \"".$_SERVER['REQUEST_URI']."\";
-function rebuild_page_url(oldURL, overrideparam, overridevalue) {
+
+    $records = $options['valid'] ?
+      data_entry_helper::get_population_data([
+        'table' => 'summary_occurrence',
+        'extraParams'=>$extraParams,
+        'caching'=> $options['caching']
+        ]) :
+        [];
+    if (isset($records['error'])) {
+        hostsite_show_message(print_r($records,true));
+        return $records['error'];
+    }
+
+    self::$javascript .= "
+var pageURI = '" . $_SERVER['REQUEST_URI'] . "';
+function rebuild_page_url(oldURL, overrideparam, overridevalue, removeparam) {
   var parts = oldURL.split('?');
   var params = [];
-  if(overridevalue!=='') params.push(overrideparam+'='+overridevalue);
+  if (overridevalue!=='') {
+    params.push(overrideparam+'='+overridevalue);
+  }
   if(parts.length > 1) {
     var oldparams = parts[1].split('&');
     for(var i = 0; i < oldparams.length; i++){
       var bits = oldparams[i].split('=');
-      if(bits[0] != overrideparam) params.push(oldparams[i]);
+      if (bits[0] != overrideparam && removeparam.indexOf(bits[0])<0) {
+        params.push(oldparams[i]);
+      }
     }
   }
-  return parts[0]+(params.length > 0 ? '?'+params.join('&') : '');
+  return parts[0] + (params.length > 0 ? '?' + (params.join('&')) : '');
 };
-  $('#year-control-previous').attr('href',rebuild_page_url(pageURI,'year',".$options['year']."-1));
-  $('#year-control-next').attr('href',rebuild_page_url(pageURI,'year',".$options['year']."+1));
+$('#year-control-previous').attr('href',rebuild_page_url(pageURI,'year',".$options['year']."-1, []));
+$('#year-control-next').attr('href',rebuild_page_url(pageURI,'year',".$options['year']."+1, []));
 // user and location ids are dealt with in the main form. Their change functions look at pageURI
 ";
 
-  	// ISO Date - Mon=1, Sun=7
-  	// Week 1 = the week with date_from in
+    // ISO Date - Mon=1, Sun=7
+    // Week 1 = the week with date_from in
     // The summariser_definition period_start is mandatory
     $options['weekNumberFilter'] = empty($options['weekNumberFilter']) ? ':' : $options['weekNumberFilter'];
     $periodNumberFilter=explode(':',$options['weekNumberFilter']);
-    if(count($periodNumberFilter)!=2){
+    if (count($periodNumberFilter)!=2) {
       return "Period number filter unrecognised {".$options['weekNumberFilter']."}";
-  	}
-    if($periodNumberFilter[0] != '' && (intval($periodNumberFilter[0])!=$periodNumberFilter[0] || $periodNumberFilter[0]>52)){
-      return "Period number filter start unrecognised or out of range {".$periodNumberFilter[0]."}";
-  	}
-    if($periodNumberFilter[1] != '' && (intval($periodNumberFilter[1])!=$periodNumberFilter[1] || $periodNumberFilter[1]<$periodNumberFilter[0] || $periodNumberFilter[1]>52)){
-      return "Period number filter end unrecognised or out of range {".$periodNumberFilter[1]."}";
-  		}
-    $periodStart=explode('=',$definition[0]['period_start']);
-    if($periodStart[0] == 'date'){
-      if(!($periodStartDate = date_create($options['year']."-".$periodStart[1]))){
-        return "Period start unrecognised {".$definition[0]['period_start']."}";
-  		}
+    }
+    if ($periodNumberFilter[0] != '' && (intval($periodNumberFilter[0]) != $periodNumberFilter[0] || $periodNumberFilter[0] > 52)) {
+      return "Period number filter start unrecognised or out of range {" . $periodNumberFilter[0] . "}";
+    }
+    if ($periodNumberFilter[1] != '' && (intval($periodNumberFilter[1]) != $periodNumberFilter[1] || $periodNumberFilter[1] < $periodNumberFilter[0] || $periodNumberFilter[1] > 52)) {
+      return "Period number filter end unrecognised or out of range {" . $periodNumberFilter[1] . "}";
+    }
+
+    if (empty($options['inSeasonFilter'])) {
+      $inSeason = FALSE;
+    } else {
+      $inSeason = explode(':', $options['inSeasonFilter']);
+      if (count($inSeason) != 2) {
+        return "In-season specification format unrecognised {".$options['weekNumberFilter']."}";
+      }
+      if ($inSeason[0] != '' && (intval($inSeason[0]) != $inSeason[0] || $inSeason[0] > 52)) {
+        return "In-season specification start unrecognised or out of range {" . $inSeason[0] . "}";
+      }
+      if ($inSeason[1] != '' && (intval($inSeason[1]) != $inSeason[1] || $inSeason[1] < $inSeason[0] || $inSeason[1] > 52)) {
+        return "In-season specification end unrecognised or out of range {" . $periodNumberFilter[1] . "}";
+      }
+    }
+
+    $periodStart = explode('=',$definition[0]['period_start']);
+    if ($periodStart[0] == 'date') {
+      if(!($periodStartDate = date_create($options['year'] . "-" . $periodStart[1]))){
+        return "Period start unrecognised {" . $definition[0]['period_start']  ."}";
+      }
       $periodStart = $periodStartDate->format('N');
-    } else $periodStart = $periodStart[1];
-    if(intval($periodStart)!=$periodStart || $periodStart<1 || $periodStart>7) {
-        return "Period start unrecognised or out of range {".$periodStart."}";
-  	}
-    if(!($periodOneDate = date_create($options['year'].'-'.$definition[0]['period_one_contains']))) {
-      return "Period one unrecognised {".$definition[0]['period_one_contains']."}";
-  	}
+    } else {
+      $periodStart = $periodStart[1];
+    }
+    if (intval($periodStart) != $periodStart || $periodStart < 1 || $periodStart > 7) {
+        return "Period start unrecognised or out of range {" . $periodStart . "}";
+    }
+    if (!($periodOneDate = date_create($options['year'] . '-' . $definition[0]['period_one_contains']))) {
+      return "Period one unrecognised {" . $definition[0]['period_one_contains'] . "}";
+    }
     $periodOneDateWeekday = $periodOneDate->format('N');
-    if($periodOneDateWeekday > $periodStart) // scan back to start of week
-      $periodOneDate->modify('-'.($periodOneDateWeekday-$periodStart).' day');
-    else if($periodOneDateWeekday < $periodStart)
-      $periodOneDate->modify('-'.(7+$periodOneDateWeekday-$periodStart).' day');
+    if ($periodOneDateWeekday > $periodStart) { // scan back to start of week
+      $periodOneDate->modify('-' . ($periodOneDateWeekday-$periodStart) . ' day');
+    }
+    else if ($periodOneDateWeekday < $periodStart) {
+      $periodOneDate->modify('-' . (7+$periodOneDateWeekday-$periodStart) . ' day');
+    }
     $firstPeriodDate = clone $periodOneDate; // date we start providing data for
     $periodOneDateYearDay = $periodOneDate->format('z'); // day within year note year_start_yearDay is by definition 0
-    $minPeriodNo = $periodNumberFilter[0]!='' ? $periodNumberFilter[0] : 1;
+    $minPeriodNo = $periodNumberFilter[0] != '' ? $periodNumberFilter[0] : 1;
     $numPeriods = ceil($periodOneDateYearDay/7); // number of periods in year prior to $periodOneDate - 1st Jan gives zero, 2nd-8th Jan gives 1, etc
-    if($minPeriodNo-1 < (-1 * $numPeriods)) $minPeriodNo=(-1 * $numPeriods)+1; // have to allow for period zero
-    if($minPeriodNo < 1)
+    if ($minPeriodNo-1 < (-1 * $numPeriods)) {
+      $minPeriodNo=(-1 * $numPeriods)+1; // have to allow for period zero
+    }
+    if ($minPeriodNo < 1) {
       $firstPeriodDate->modify((($minPeriodNo-1)*7).' days'); // have to allow for period zero
-    else if($minPeriodNo > 1)
+    }
+    else if ($minPeriodNo > 1) {
       $firstPeriodDate->modify('+'.(($minPeriodNo-1)*7).' days');
+    }
 
-    if($periodNumberFilter[1]!=''){
+    if ($periodNumberFilter[1]!='') {
       $maxPeriodNo = $periodNumberFilter[1];
-  	} else {
-      $yearEnd = date_create($options['year'].'-Dec-25'); // don't want to go beyond the end of year: this is 1st Jan minus 1 week: it is the start of the last full week
+    } else {
+      $yearEnd = date_create($options['year'] . '-Dec-25'); // don't want to go beyond the end of year: this is 1st Jan minus 1 week: it is the start of the last full week
       $yearEndYearDay = $yearEnd->format('z'); // day within year
       $maxPeriodNo = 1+ceil(($yearEndYearDay-$periodOneDateYearDay)/7);
-  	}
+    }
 
     // Initialise data
     $tableNumberHeaderRow = $tableDateHeaderRow = $downloadNumberHeaderRow = $downloadDateHeaderRow = "";
     $summaryDataDownloadGrid = $estimateDataDownloadGrid = $rawDataDownloadGrid = '';
-  	$chartNumberLabels=[];
-  	$chartDateLabels=[];
-  	$fullDates=[];
-  	$summaryArray=[]; // this is used for the table output format
-  	$rawArray=[]; // this is used for the table output format
-  	// In order to apply the data combination and estmation processing, we assume that the the records are in taxon, location_id, sample_id order.
-  	$locationArray=[]; // this is for a single species at a time.
-  	$lastLocation=false;
-  	$seriesLabels=[];
-  	$lastTaxonID=false;
-  	$lastSample=false;
-  	$locationSamples = [];
+    $chartNumberLabels = [];
+    $chartDateLabels = [];
+    $fullDates = [];
+    $summaryArray = []; // this is used for the table output format
+    $rawArray = []; // this is used for the table output format
+    // In order to apply the data combination and estmation processing, we assume that the the records are in taxon, location_id, sample_id order.
+    $locationArray = []; // this is for a single species at a time.
+    $lastLocation = FALSE;
+    $seriesLabels = [];
+    $lastTaxonID = FALSE;
+    $lastSample = FALSE;
+    $locationSamples = [];
     $periodList = [];
     $grandTotal=0;
     $totalRow = [];
-    $estimatesGrandTotal=0;
+    $estimatesGrandTotal = $inSeasonEstimatesGrandTotal = 0;
     $totalEstimatesRow = [];
-    $seriesIDs=[];
-    $summarySeriesData=[];
-    $estimatesSeriesData=[];
-    $seriesOptions=[];
+    $seriesIDs = [];
+    $summarySeriesData = [];
+    $estimatesSeriesData = [];
+    $seriesOptions = [];
 
-    for($i= $minPeriodNo; $i <= $maxPeriodNo; $i++){
-        $tableNumberHeaderRow.= '<th class="week">'.$i.'</th>';
-        $tableDateHeaderRow.= '<th class="week">'.$firstPeriodDate->format('M').'<br/>'.$firstPeriodDate->format('d').'</th>';
-        $downloadNumberHeaderRow.= ','.$i;
-        $downloadDateHeaderRow.= ','.$firstPeriodDate->format('d/m/Y');
-        $chartNumberLabels[] = "".$i;
-        $chartDateLabels[] = $firstPeriodDate->format('M-d');
-        $fullDates[$i] = $firstPeriodDate->format('d/m/Y');
-        $firstPeriodDate->modify('+7 days');
+    for ($i= $minPeriodNo; $i <= $maxPeriodNo; $i++) {
+      $tableNumberHeaderRow.= '<th class="' . $options['thClass'] . ' week">' . $i . '</th>';
+      $tableDateHeaderRow.= '<th class="' . $options['thClass'] . ' week">' . $firstPeriodDate->format('M') . '<br/>' . $firstPeriodDate->format('d') . '</th>';
+      $downloadNumberHeaderRow.= ',' . $i;
+      $downloadDateHeaderRow.= ',' . $firstPeriodDate->format('d/m/Y');
+      $chartNumberLabels[] = "" . $i;
+      $chartDateLabels[] = $firstPeriodDate->format('M-d');
+      $fullDates[$i] = $firstPeriodDate->format('d/m/Y');
+      $firstPeriodDate->modify('+7 days');
     }
 
-  	$sampleFieldList = !empty($options['sampleFields']) ? explode(',',$options['sampleFields']) : false;
-    if(empty($sampleFieldList))
-      $sampleFields = false;
-  	else {
-  		$sampleFields = [];
-  		foreach($sampleFieldList as $sampleField) {
-  			$parts = explode(':',$sampleField);
-  			$field = array('caption'=>$parts[0], 'field'=>$parts[1], 'attr'=>false);
-  			if(count($parts)==3 && $parts[1]='smpattr') {
-  				$smpAttribute=data_entry_helper::get_population_data(array(
-  						'table' => 'sample_attribute',
-  						'extraParams'=>$options['readAuth'] + array('view' => 'list', 'id'=>$parts[2])
-  				));
-  				if(count($smpAttribute)>=1){ // may be assigned to more than one survey on this website. This is not relevant to info we want.
-  					$field['id'] = $parts[2];
-  					$field['attr'] = $smpAttribute[0];
-  				}
-  			}
-  			$sampleFields[] = $field;
-  		}
-  	}
-
-  	$count = count($records);
-  	$sortData=[];
-    foreach($records as $index => $record){
-      $taxonMeaningID=$record['taxon_meaning_id'];
-      if(empty($seriesLabels[$taxonMeaningID])) {
-        if($options['taxon_column'] === 'common_name' && !empty($record['default_common_name'])) {
-          $seriesLabels[$taxonMeaningID]=array('label'=>$record['default_common_name']);
-          if(!empty($record['preferred_taxon'])) $seriesLabels[$taxonMeaningID]['tip']=$record['preferred_taxon'];
-        } else if(!empty($record['preferred_taxon'])) {
-          $seriesLabels[$taxonMeaningID]=array('label'=>$record['preferred_taxon']);
-          if(!empty($record['default_common_name'])) $seriesLabels[$taxonMeaningID]['tip']=$record['default_common_name'];
-        } else if(!empty($record['taxon'])) {
-          $seriesLabels[$taxonMeaningID]=array('label'=>$record['taxon']); // various fall backs.
-        } else {
-          $seriesLabels[$taxonMeaningID]=array('label' => '['.$record['taxa_taxon_list_id'].']');
+    $sampleFieldList = !empty($options['sampleFields']) ? explode(',',$options['sampleFields']) : FALSE;
+    if (empty($sampleFieldList)) {
+      $sampleFields = FALSE;
+    } else {
+      $sampleFields = [];
+      foreach ($sampleFieldList as $sampleField) {
+        $parts = explode(':', $sampleField);
+        $field = ['caption' => $parts[0], 'field' => $parts[1], 'attr' => FALSE];
+        if (count($parts) == 3 && $parts[1] == 'smpattr') {
+          $smpAttribute=data_entry_helper::get_population_data([
+              'table' => 'sample_attribute',
+              'extraParams' => $options['readAuth'] + ['view' => 'list', 'id' => $parts[2]]
+          ]);
+          if (count($smpAttribute) >= 1) { // may be assigned to more than one survey on this website. This is not relevant to info we want.
+            $field['id'] = $parts[2];
+            $field['attr'] = $smpAttribute[0];
+          }
         }
-        $summaryArray[$taxonMeaningID]=[];
-        $sortData[$taxonMeaningID]=array($record['taxonomic_sort_order'],$taxonMeaningID);
+        $sampleFields[] = $field;
       }
-      $summarisedData = json_decode($record['summarised_data'], false);
-      foreach($summarisedData as $summary) {
+    }
+
+    $count = count($records);
+    $sortData=[];
+    // EBMS Only. Override taxon name display depending on scheme
+    if (\Drupal::moduleHandler()->moduleExists('ebms_scheme') &&
+          !empty($options['taxon_column_overrides'])) {
+      $records = self::injectLanguageIntoDefaultCommonName($options['readAuth'], $records, $options['taxon_column_overrides']);
+    }
+    foreach ($records as $index => $record) {
+      $taxonMeaningID = $record['taxon_meaning_id'];
+      if (empty($seriesLabels[$taxonMeaningID])) {
+        if($options['taxon_column'] === 'common_name' && !empty($record['default_common_name'])) {
+          $seriesLabels[$taxonMeaningID] = ['label'=>$record['default_common_name']];
+          if (!empty($record['preferred_taxon'])) {
+            $seriesLabels[$taxonMeaningID]['tip'] = $record['preferred_taxon'];
+          }
+        } else if(!empty($record['preferred_taxon'])) {
+          $seriesLabels[$taxonMeaningID] = ['label'=>$record['preferred_taxon']];
+          if(!empty($record['default_common_name'])) {
+            $seriesLabels[$taxonMeaningID]['tip'] = $record['default_common_name'];
+          }
+        } else if(!empty($record['taxon'])) {
+          $seriesLabels[$taxonMeaningID] = ['label' => $record['taxon']]; // various fall backs.
+        } else {
+          $seriesLabels[$taxonMeaningID] = ['label' => '[' . $record['taxa_taxon_list_id'] . ']'];
+        }
+        $summaryArray[$taxonMeaningID] = [];
+        $sortData[] = [
+          'order' => $record['taxonomic_sort_order'],
+          'label' => $seriesLabels[$taxonMeaningID]['label'],
+          'meaning' => $taxonMeaningID
+        ];
+      }
+      $summarisedData = json_decode($record['summarised_data'], FALSE);
+      foreach ($summarisedData as $summary) {
         $periodNo = $summary->period;
-        if($periodNo >= $minPeriodNo && $periodNo <= $maxPeriodNo){
-          if(!isset($summaryArray[$taxonMeaningID][$periodNo])) {
-            $summaryArray[$taxonMeaningID][$periodNo] = array('total'=>null,'estimate'=>0);
-        }
-          if($summary->summary !== null && $summary->summary !== "NULL") {
-            $summaryArray[$taxonMeaningID][$periodNo]['total'] = ($summaryArray[$taxonMeaningID][$periodNo]['total'] == null
+        if ($periodNo >= $minPeriodNo && $periodNo <= $maxPeriodNo) {
+          if (!isset($summaryArray[$taxonMeaningID][$periodNo])) {
+            $summaryArray[$taxonMeaningID][$periodNo] = ['total' => NULL,'estimate' => 0];
+          }
+          if ($summary->summary !== NULL && $summary->summary !== "NULL") {
+            $summaryArray[$taxonMeaningID][$periodNo]['total'] = ($summaryArray[$taxonMeaningID][$periodNo]['total'] == NULL
                 ? 0 : $summaryArray[$taxonMeaningID][$periodNo]['total']) + $summary->summary;
-        }
+          }
           $summaryArray[$taxonMeaningID][$periodNo]['estimate'] += $summary->estimate;
-  		}
-  		}
-  	}
-  	usort($sortData, array('report_helper', 'report_calendar_summary_sort1'));
-  	// will storedata in an array[Y][X]
-  	self::add_resource('jqplot');
-  	switch ($options['chartType']) {
-  		case 'bar' :
-  			self::add_resource('jqplot_bar');
-  			$renderer='$.jqplot.BarRenderer';
-  			break;
-  		case 'pie' :
-  			self::add_resource('jqplot_pie');
-  			$renderer='$.jqplot.PieRenderer';
-  			break;
-  		default : // default is line
-  			$renderer='$.jqplot.LineRenderer';
-  			break;
-  	}
-  	self::add_resource('jqplot_category_axis_renderer');
-    $opts = ["seriesDefaults:{\n".(isset($renderer) ? "  renderer:$renderer,\n" : '') .
-                " rendererOptions:".json_encode($options['rendererOptions'])."}"];
-  	$seriesToDisplay=(isset($options['outputSeries']) ? explode(',', $options['outputSeries']) : 'all');
-    $summaryTab = '<table id="'.$options['tableID'].'-summary" class="'.$options['tableClass'].'">' .
-                '<thead class="'.$options['thClass'].'">' .
+        }
+      }
+    }
+    usort($sortData, ['report_helper', 'report_calendar_summary_sort1']);
+    // will storedata in an array[Y][X]
+    self::add_resource('jqplot');
+    switch ($options['chartType']) {
+      case 'bar' :
+        self::add_resource('jqplot_bar');
+        $renderer='$.jqplot.BarRenderer';
+        break;
+      case 'pie' :
+        self::add_resource('jqplot_pie');
+        $renderer='$.jqplot.PieRenderer';
+        break;
+      default : // default is line
+        $renderer='$.jqplot.LineRenderer';
+        break;
+    }
+    self::add_resource('jqplot_category_axis_renderer');
+    $opts = ["seriesDefaults:{\n" . (isset($renderer) ? "  renderer:$renderer,\n" : '') .
+                " rendererOptions:" . json_encode($options['rendererOptions']) . "}"];
+    $seriesToDisplay = (isset($options['outputSeries']) ? explode(',', $options['outputSeries']) : (empty($options['includeChartTotalSeries']) ? 'all' : ['0']));
+    $summaryTab = 
+              '<div><a class="btn btn-small btn-info" onClick="indiciaData.copyClipboard(\'' . $options['tableID'] . '-summary\');">' .
+                lang::get('Copy summary table to clipboard') . '</a></div>' .
+              '<table id="'.$options['tableID'].'-summary" class="'.$options['tableClass'].'">' .
+                '<thead class="' . $options['theadClass'] . '">' .
                   '<tr>' .
-                    '<th>'.lang::get('Week').'</th>'.
-                    $tableNumberHeaderRow.
-                    '<th>'.lang::get('Total').'</th>' .
+                    '<th class="' . $options['thClass'] . '">' . lang::get('Week') . '</th>' .
+                    $tableNumberHeaderRow .
+                    '<th class="' . $options['thClass'] . '">' . lang::get('Total') . '</th>' .
                   '</tr>' .
                   '<tr>' .
-                    '<th>'.lang::get('Date').'</th>'.
-                    $tableDateHeaderRow.
-                    '<th></th>' .
-                  '</tr>' .
-                '</thead>' .
-                '<tbody>';
-    $estimateTab = '<table id="'.$options['tableID'].'-estimate" class="'.$options['tableClass'].'">' .
-                '<thead class="'.$options['thClass'].'">' .
-                  '<tr>' .
-                    '<th>'.lang::get('Week').'</th>'.
-                    $tableNumberHeaderRow.
-                    '<th>'.lang::get('Total').'</th>' .
-                  '</tr>' .
-                  '<tr>' .
-                    '<th>'.lang::get('Date').'</th>'.
-                    $tableDateHeaderRow.
-                    '<th>'.lang::get('(with<br/>estimates)').'</th>' .
+                    '<th class="' . $options['thClass'] . '">' . lang::get('Date') . '</th>' .
+                    $tableDateHeaderRow .
+                    '<th class="' . $options['thClass'] . '"></th>' .
                   '</tr>' .
                 '</thead>' .
                 '<tbody>';
-    $summaryDataDownloadGrid .= lang::get('Week').','.$downloadNumberHeaderRow.','.lang::get('Total')."\n".
-                                lang::get('Date').','.$downloadDateHeaderRow.",\n";
-    $estimateDataDownloadGrid .= lang::get('Week').','.$downloadNumberHeaderRow.','.lang::get('Estimates Total')."\n".
-                                lang::get('Date').','.$downloadDateHeaderRow.",\n";
-  	$altRow=false;
+    $estimateTab =
+              '<div><a class="btn btn-small btn-info" onClick="indiciaData.copyClipboard(\'' . $options['tableID'] . '-estimate\');">' .
+                lang::get('Copy estimates table to clipboard') . '</a></div>' .
+              '<table id="' . $options['tableID'] . '-estimate" class="' . $options['tableClass'] . '">' .
+                '<thead class="' . $options['theadClass'] . '">' .
+                  '<tr>' .
+                    '<th class="' . $options['thClass'] . '">' . lang::get('Week') . '</th>' .
+                    $tableNumberHeaderRow .
+                    ($inSeason ? '<th class="' . $options['thClass'] . '">' . lang::get('In-season total') . '</th>' : '') .
+                    '<th class="' . $options['thClass'] . '">' . lang::get('Total') . '</th>' .
+                  '</tr>' .
+                  '<tr>' .
+                    '<th class="' . $options['thClass'] . '">' . lang::get('Date') . '</th>' .
+                    $tableDateHeaderRow .
+                    ($inSeason ? '<th class="' . $options['thClass'] . '">(wks ' . $inSeason[0] . ' > '.  $inSeason[1] . ')</th>' : '') .
+                    '<th class="' . $options['thClass'] . '">' . lang::get('(with<br/>estimates)') . '</th>' .
+                  '</tr>' .
+                '</thead>' .
+                '<tbody>';
+    $summaryDataDownloadGrid .= lang::get('Week') . ',' . $downloadNumberHeaderRow . ',' . lang::get('Total') . "\n" .
+                                lang::get('Date') . ',' . $downloadDateHeaderRow . ",\n";
+    $estimateDataDownloadGrid .= lang::get('Week') . ',' . $downloadNumberHeaderRow . ',' . 
+                                ($inSeason ? lang::get('In-season estimates total') . ',' : '') .
+                                lang::get('Estimates Total') . "\n" .
+                                lang::get('Date') . ',' . $downloadDateHeaderRow . ($inSeason ? ',' : '') . ",\n";
+    $altRow = FALSE;
     for($i = $minPeriodNo; $i <= $maxPeriodNo; $i++) {
       $totalRow[$i] = $totalEstimatesRow[$i] = 0;
-  	}
-  	foreach($sortData as $sortedTaxon){
-  		$seriesID=$sortedTaxon[1];
-  		$summaryRow=$summaryArray[$seriesID];
-  		$summaryValues=[];
-  		$estimatesValues=[];
-  		if (!empty($seriesLabels[$seriesID])) {
-        $total = $estimatesTotal = 0;  // row totals
+    }
+    foreach ($sortData as $sortedTaxon) {
+      $seriesID = $sortedTaxon['meaning'];
+      $summaryRow = $summaryArray[$seriesID];
+      $summaryValues = [];
+      $estimatesValues = [];
+      if (!empty($seriesLabels[$seriesID])) {
+        $total = $estimatesTotal = $inSeasonEstimatesTotal = 0;  // row totals
         $summaryTab .= '<tr class="datarow ' . ($altRow ? $options['altRowClass'] : '') . '">' .
-                '<td'.(isset($seriesLabels[$seriesID]['tip']) ? ' title="'.$seriesLabels[$seriesID]['tip'].'"' : '').'>' .
-                    $seriesLabels[$seriesID]['label'].'</td>';
-        $estimateTab .= '<tr class="datarow '  .($altRow ? $options['altRowClass'] : '') . '">' .
-                '<td'.(isset($seriesLabels[$seriesID]['tip']) ? ' title="'.$seriesLabels[$seriesID]['tip'].'"' : '').'>' .
-                    $seriesLabels[$seriesID]['label'].'</td>';
+                '<td' . (isset($seriesLabels[$seriesID]['tip']) ? ' title="' . $seriesLabels[$seriesID]['tip'] . '"' : '') . '>' .
+                    $seriesLabels[$seriesID]['label'] . '</td>';
+        $estimateTab .= '<tr class="datarow ' . ($altRow ? $options['altRowClass'] : '') . '">' .
+                '<td' . (isset($seriesLabels[$seriesID]['tip']) ? ' title="' . $seriesLabels[$seriesID]['tip'] . '"' : '') . '>' .
+                    $seriesLabels[$seriesID]['label'] . '</td>';
         $summaryDataDownloadGrid .= '"' . $seriesLabels[$seriesID]['label'] . '","' .
                 (isset($seriesLabels[$seriesID]['tip']) ? $seriesLabels[$seriesID]['tip'] : '') . '"';
         $estimateDataDownloadGrid .= '"' . $seriesLabels[$seriesID]['label'] . '","' .
                 (isset($seriesLabels[$seriesID]['tip']) ? $seriesLabels[$seriesID]['tip'] : '') . '"';
-        for($i = $minPeriodNo; $i <= $maxPeriodNo; $i++){
-  				$summaryDataDownloadGrid .= ',';
-  				$estimateDataDownloadGrid .= ',';
-  				if(isset($summaryRow[$i])){
-  					$summaryValue = $summaryRow[$i]['total'];
-  					$estimateValue = $summaryRow[$i]['estimate'];
+        for ($i = $minPeriodNo; $i <= $maxPeriodNo; $i++) {
+          $summaryDataDownloadGrid .= ',';
+          $estimateDataDownloadGrid .= ',';
+          if (isset($summaryRow[$i])) {
+            $summaryValue = $summaryRow[$i]['total'];
+            $estimateValue = $summaryRow[$i]['estimate'];
             $class = ($summaryValue===0 ? 'forcedZero' : '');
-            if($summaryValue === 0 && $estimateValue === 0)
+            if ($summaryValue === 0 && $estimateValue === 0) {
               $estimatesClass='forcedZero';
-            else
-  					$estimatesClass = ($summaryValue===null || $summaryValue!=$estimateValue ? 'highlight-estimates' : '');
-  					$summaryDataDownloadGrid .= $summaryValue;
-  					$estimateDataDownloadGrid .= $estimateValue;
-            $summaryTab .= '<td class="'.$class.'">'.($summaryValue !== null ? $summaryValue : '').'</td>';
-  					$estimateTab .= '<td class="'.$estimatesClass.'">'.$estimateValue.'</td>';
-            if($summaryValue !== null) {
-						$total += $summaryValue;
-						$totalRow[$i] += $summaryValue; // = $summaryTotalRow
-						$grandTotal += $summaryValue;
-					  	$summaryValues[]=$summaryValue;
-  					} else {
-  						$summaryValues[]=0;
-  					}
-  					$estimatesValues[] = $estimateValue;
-					$estimatesTotal += $estimateValue;
-					$totalEstimatesRow[$i] += $estimateValue; // = $estimatesTotalRow
-					$estimatesGrandTotal += $estimateValue;
-  				} else {
-  					$summaryTab .= '<td></td>';
-  					$estimateTab .= '<td></td>';
-  					$summaryValues[]=0;
-  					$estimatesValues[]=0;
-  				}
-			}
-			if ($options['includeChartItemSeries']) {
-				$seriesIDs[] = $seriesID;
-				$summarySeriesData[] = '['.implode(',', $summaryValues).']';
-				$estimatesSeriesData[] = '['.implode(',', $estimatesValues).']';
-          $seriesOptions[] = '{"show":'.($seriesToDisplay == 'all' || in_array($seriesID, $seriesToDisplay) ? 'true' : 'false') .
-                ',"label":"'.$seriesLabels[$seriesID]['label'].'","showlabel":true}';
-			}
-  			$summaryTab .= '<td class="total-column">'.$total.'</td></tr>';
-			$summaryDataDownloadGrid .= ','.$total."\n";
-  			$estimateTab .= '<td class="total-column estimates">'.$estimatesTotal.'</td></tr>';
-			$estimateDataDownloadGrid .= ','.$estimatesTotal."\n";
-  			$altRow=!$altRow;
-  		}
-  	}
-    if(!empty($options['includeChartTotalSeries'])){ // totals are put at the start
-  		array_unshift($seriesIDs,0); // Total has ID 0
-  		array_unshift($summarySeriesData, '['.implode(',', $totalRow).']');
-  		array_unshift($estimatesSeriesData, '['.implode(',', $totalEstimatesRow).']');
-      array_unshift($seriesOptions, '{"show":'.($seriesToDisplay == 'all' || in_array(0, $seriesToDisplay) ? 'true' : 'false') .
-            ',"label":"'.lang::get('Total').'","showlabel":true}');
-  	}
-  	$opts[] = 'series:['.implode(',', $seriesOptions).']';
-  	$options['axesOptions']['xaxis']['renderer'] = '$.jqplot.CategoryAxisRenderer';
-  	if(isset($options['chartLabels']) && $options['chartLabels'] == 'number')
-  		$options['axesOptions']['xaxis']['ticks'] = $chartNumberLabels;
-  	else
-  		$options['axesOptions']['xaxis']['ticks'] = $chartDateLabels;
-  	// We need to fudge the json so the renderer class is not a string
-  	$axesOpts = str_replace('"$.jqplot.CategoryAxisRenderer"', '$.jqplot.CategoryAxisRenderer',
-  			'axes:'.json_encode($options['axesOptions']));
-  	$opts[] = $axesOpts;
+            } else {
+              $estimatesClass = ($summaryValue===null || $summaryValue!=$estimateValue ? 'highlight-estimates' : '');
+            }
+            $summaryDataDownloadGrid .= $summaryValue;
+            $estimateDataDownloadGrid .= $estimateValue;
+            $summaryTab .= '<td class="' . $class . '">' . ($summaryValue !== NULL ? $summaryValue : '') . '</td>';
+            $estimateTab .= '<td class="' . $estimatesClass . '">' . $estimateValue . '</td>';
+            if ($summaryValue !== NULL) {
+              $total += $summaryValue;
+              $totalRow[$i] += $summaryValue; // = $summaryTotalRow
+              $grandTotal += $summaryValue;
+              $summaryValues[]=$summaryValue;
+            } else {
+              $summaryValues[]=0;
+            }
+            $estimatesValues[] = $estimateValue;
+            $estimatesTotal += $estimateValue;
+            if ($inSeason && $i >= $inSeason[0] && $i <= $inSeason[1]) {
+              $inSeasonEstimatesTotal += $estimateValue;
+              $inSeasonEstimatesGrandTotal += $estimateValue;
+            }
+            $totalEstimatesRow[$i] += $estimateValue; // = $estimatesTotalRow
+            $estimatesGrandTotal += $estimateValue;
+          } else {
+            $summaryTab .= '<td></td>';
+            $estimateTab .= '<td></td>';
+            $summaryValues[] = 0;
+            $estimatesValues[] = 0;
+          }
+        }
+        if ($options['includeChartItemSeries']) {
+          $seriesIDs[] = $seriesID;
+          $summarySeriesData[] = '[' . implode(',', $summaryValues) . ']';
+          $estimatesSeriesData[] = '[' . implode(',', $estimatesValues) . ']';
+          $seriesOptions[] = '{"show":' . ($seriesToDisplay == 'all' || in_array($seriesID, $seriesToDisplay) ? 'true' : 'false') .
+                  ',"label":"' . htmlspecialchars ($seriesLabels[$seriesID]['label']) . '","showlabel":true}';
+        }
+        $summaryTab .= '<td class="total-column">' . $total . '</td></tr>';
+        $summaryDataDownloadGrid .= ',' . $total."\n";
+        if ($inSeason) {
+          $estimateTab .= '<td class="total-column estimates">' . $inSeasonEstimatesTotal . '</td>';
+          $estimateDataDownloadGrid .= ',' . $inSeasonEstimatesTotal;
+        }
+        $estimateTab .= '<td class="total-column estimates">' . $estimatesTotal . '</td></tr>';
+        $estimateDataDownloadGrid .= ',' . $estimatesTotal . "\n";
+        $altRow = !$altRow;
+      }
+    }
+    if (!empty($options['includeChartTotalSeries'])) { // totals are put at the start
+      array_unshift($seriesIDs,0); // Total has ID 0
+      array_unshift($summarySeriesData, '[' . implode(',', $totalRow) . ']');
+      array_unshift($estimatesSeriesData, '[' . implode(',', $totalEstimatesRow) . ']');
+      array_unshift($seriesOptions, '{"show":' . ($seriesToDisplay == 'all' || in_array(0, $seriesToDisplay) ? 'true' : 'false') .
+            ',"label":"' . lang::get('Total') . '","showlabel":true}');
+    }
+    $opts[] = 'series:[' . implode(',', $seriesOptions) . ']';
+    $options['axesOptions']['xaxis']['renderer'] = '$.jqplot.CategoryAxisRenderer';
+    if(isset($options['chartLabels']) && $options['chartLabels'] == 'number') {
+      $options['axesOptions']['xaxis']['ticks'] = $chartNumberLabels;
+    } else {
+      $options['axesOptions']['xaxis']['ticks'] = $chartDateLabels;
+    }
+    // We need to fudge the json so the renderer class is not a string
+    $axesOpts = str_replace('"$.jqplot.CategoryAxisRenderer"', '$.jqplot.CategoryAxisRenderer',
+        'axes:'.json_encode($options['axesOptions']));
+    $opts[] = $axesOpts;
 
     $summaryTab .= '<tr class="totalrow"><td>' . lang::get('Total (Summary)') . '</td>';
     $estimateTab .= '<tr class="totalrow estimates"><td>' . lang::get('Total inc Estimates') . '</td>';
-   	$summaryDataDownloadGrid .= '"'.lang::get('Total (Summary)').'",';
-  	$estimateDataDownloadGrid .= '"'.lang::get('Total').'",';
-    for($i= $minPeriodNo; $i <= $maxPeriodNo; $i++) {
-  		$summaryTab .= '<td>'.$totalRow[$i].'</td>';
-  		$estimateTab.= '<td>'.$totalEstimatesRow[$i].'</td>';
-  		$estimateDataDownloadGrid .= ','.$totalEstimatesRow[$i];
-  		$summaryDataDownloadGrid .= ','.$totalRow[$i];
-  	}
-  	$summaryTab .= '<td class="total-column grand-total">'.$grandTotal.'</td></tr>';
-	$summaryDataDownloadGrid .= ','.$grandTotal."\n";
-  	$estimateTab .= '<td class="total-column grand-total estimates">'.$estimatesGrandTotal.'</td></tr>';
-	$estimateDataDownloadGrid .= ','.$estimatesGrandTotal."\n";
-  	$summaryTab .= "</tbody></table>\n";
-  	$estimateTab .= "</tbody></table>\n";
-  	self::$javascript .= "
-var seriesData = {ids: [".implode(',', $seriesIDs)."], summary: [".implode(',', $summarySeriesData)."], estimates: [".implode(',', $estimatesSeriesData)."]};
+    $summaryDataDownloadGrid .= '"' . lang::get('Total (Summary)') . '",';
+    $estimateDataDownloadGrid .= '"' . lang::get('Total') . '",';
+    for ($i= $minPeriodNo; $i <= $maxPeriodNo; $i++) {
+      $summaryTab .= '<td>' . $totalRow[$i] . '</td>';
+      $estimateTab.= '<td>' . $totalEstimatesRow[$i] . '</td>';
+      $estimateDataDownloadGrid .= ',' . $totalEstimatesRow[$i];
+      $summaryDataDownloadGrid .= ',' . $totalRow[$i];
+    }
+    $summaryTab .= '<td class="total-column grand-total">' . $grandTotal . '</td></tr>';
+    $summaryDataDownloadGrid .= ',' . $grandTotal . "\n";
+    if ($inSeason) {
+      $estimateTab .= '<td class="total-column in-season-grand-total estimates">' . $inSeasonEstimatesGrandTotal . '</td>';
+      $estimateDataDownloadGrid .= ',' . $inSeasonEstimatesGrandTotal;
+    }
+    $estimateTab .= '<td class="total-column grand-total estimates">' . $estimatesGrandTotal . '</td></tr>';
+    $estimateDataDownloadGrid .= ',' . $estimatesGrandTotal . "\n";
+    $summaryTab .= "</tbody></table>\n";
+    $estimateTab .= "</tbody></table>\n";
+    self::$javascript .= "
+var seriesData = {ids: [" . implode(',', $seriesIDs) . "], summary: [" . implode(',', $summarySeriesData) . "], estimates: [" . implode(',', $estimatesSeriesData) . "]};
 function replot(type){
   // there are problems with the coloring of series when added to a plot: easiest just to completely redraw.
   var max=0;
   $('#{$options['chartID']}-' + type).empty();
-".
-(!isset($options['width']) || $options['width'] == '' ? "  jQuery('#{$options['chartID']}-'+type).width(jQuery('#{$options['chartID']}-'+type).width());\n" : '').
-"  var opts = {".implode(",\n", $opts)."};
+" .
+(!isset($options['width']) || $options['width'] == '' ? "  jQuery('#{$options['chartID']}-'+type).width(jQuery('#{$options['chartID']}-'+type).width());\n" : '') .
+"  var opts = {" . implode(",\n", $opts) . "};
   // copy series from checkboxes.
   $('#{$options['chartID']}-'+type).parent().find('[name={$options['chartID']}-series]').each(function(idx, elem){
       opts.series[idx].show = (jQuery(elem).filter(':checked').length > 0);
@@ -5112,10 +5213,10 @@ function replot(type){
   if($('#{$options['chartID']}-'+type).parent().find('[name={$options['chartID']}-series]').filter(':checked').length == 0) return;
   var plot = $.jqplot('{$options['chartID']}-'+type, seriesData[type], opts);
   for(var i=0; i<plot.series.length; i++){
-  	if(plot.series[i].show==true) {
+    if(plot.series[i].show === true) {
       var elem = $('#{$options['chartID']}-'+type).parent().find('[name={$options['chartID']}-series]').eq(i);
-    	elem.after('<div class=\"legend-colours\"><div class=\"legend-colours-inner\" style=\"background:'+plot.series[i].color+';\">&nbsp;</div></div>');
-	}
+      elem.after('<div class=\"legend-colours\"><div class=\"legend-colours-inner\" style=\"background:'+plot.series[i].color+';\">&nbsp;</div></div>');
+    }
   }
 };
 indiciaFns.bindTabsActivate($('#controls'), function(event, ui) {
@@ -5124,250 +5225,285 @@ indiciaFns.bindTabsActivate($('#controls'), function(event, ui) {
   if (panel.id==='estimateChart') { replot('estimates'); }
 });
 ";
-	$summarySeriesPanel="";
-    if(!empty($options['disableableSeries']) &&
+    $summarySeriesPanel="";
+    if (!empty($options['disableableSeries']) &&
           (count($summaryArray)>(!empty($options['includeChartTotalSeries']) ? 0 : 1)) &&
           !empty($options['includeChartItemSeries'])) {
-  		$class='series-fieldset';
-  		if (function_exists('hostsite_add_library') && (!defined('DRUPAL_CORE_COMPATIBILITY') || DRUPAL_CORE_COMPATIBILITY!=='7.x')) {
-  			hostsite_add_library('collapse');
-  			$class.=' collapsible collapsed';
-  		}
-      $summarySeriesPanel .= '<fieldset id="'.$options['chartID'].'-series" class="'.$class.'">' .
-            '<legend>'.lang::get('Display Series')."</legend><span>" .
-            '<input type="button" class="disable-button" value="'.lang::get('Hide all '.$options['rowGroupColumn'])."\"/>\n";
-  		$idx=0;
-      if(!empty($options['includeChartTotalSeries'])){
-  			// use series ID = 0 for Total
-        $summarySeriesPanel .= '<span class="chart-series-span"><input type="checkbox" checked="checked" id="'.
-                $options['chartID'].'-series-'.$idx.'" name="'.$options['chartID'].'-series" value="'.$idx.'"/>'.
-                '<label for="'.$options['chartID'].'-series-'.$idx.'">'.lang::get('Total')."</label></span>\n";
-  			$idx++;
+      $class = 'series-fieldset';
+      if (function_exists('hostsite_add_library') && (!defined('DRUPAL_CORE_COMPATIBILITY') || DRUPAL_CORE_COMPATIBILITY!=='7.x')) {
+        hostsite_add_library('collapse');
+        $class.=' collapsible collapsed';
+      }
+      $summarySeriesPanel .= '<fieldset id="' . $options['chartID'] . '-series" class="' . $class . '">' .
+            '<legend>' . lang::get('Display Series') . "</legend><span>" .
+            '<input type="button" class="disable-button cleared" value="' . lang::get('Show all') . "\"/>\n";
+      $idx = 0;
+      if (!empty($options['includeChartTotalSeries'])) {
+        // use series ID = 0 for Total
+        $summarySeriesPanel .= '<span class="chart-series-span"><input type="checkbox" id="' .
+                $options['chartID'] . '-series-' . $idx . '" name="' . $options['chartID'] . '-series" value="' . $idx . '"/>'.
+                '<label for="' . $options['chartID'] . '-series-' . $idx . '">' . lang::get('Total') . "</label></span>\n";
+        $idx++;
         self::$javascript .= "jQuery('[name={$options['chartID']}-series]').filter('[value=0]')." .
-            ($seriesToDisplay == 'all' || in_array(0, $seriesToDisplay) ? 'attr("checked","checked");' : 'removeAttr("checked");') .
+            ($seriesToDisplay == 'all' || in_array(0, $seriesToDisplay) ? 'prop("checked","checked");' : 'removeProp("checked");') .
             "\n";
-  		}
-  		foreach($sortData as $sortedTaxon){
-  			$seriesID=$sortedTaxon[1];
-  			$summaryRow=$summaryArray[$seriesID];
+      }
+      foreach ($sortData as $sortedTaxon) {
+        $seriesID = $sortedTaxon['meaning'];
+        $summaryRow = $summaryArray[$seriesID];
         $summarySeriesPanel .= '<span class="chart-series-span">' .
-                '<input type="checkbox" checked="checked" id="'.$options['chartID'].'-series-'.$idx.
-                '" name="'.$options['chartID'].'-series" value="'.$seriesID.'"/>' .
-                '<label for="'.$options['chartID'].'-series-'.$idx.'"'.
-                (isset($seriesLabels[$seriesID]['tip']) ? ' title="'.$seriesLabels[$seriesID]['tip'].'"' : '').'>'.
-                $seriesLabels[$seriesID]['label']."</label></span>\n";
-  			$idx++;
-        self::$javascript .= "jQuery('[name=".$options['chartID']."-series]').filter('[value=".$seriesID."]').".
-            ($seriesToDisplay == 'all' || in_array($seriesID, $seriesToDisplay) ? 'attr("checked","checked");' : 'removeAttr("checked");') .
+                '<input type="checkbox" id="' . $options['chartID'] . '-series-' . $idx .
+                '" name="' . $options['chartID'] . '-series" value="' . $seriesID . '"/>' .
+                '<label for="' . $options['chartID'] . '-series-' . $idx . '"' .
+                (isset($seriesLabels[$seriesID]['tip']) ? ' title="' . $seriesLabels[$seriesID]['tip'] . '"' : '') . '>' .
+                $seriesLabels[$seriesID]['label'] . "</label></span>\n";
+        $idx++;
+        self::$javascript .= "jQuery('[name=" . $options['chartID']  ."-series]').filter('[value=" . $seriesID . "]').".
+            ($seriesToDisplay == 'all' || in_array($seriesID, $seriesToDisplay) ? 'prop("checked","checked");' : 'removeProp("checked");') .
             "\n";
-  		}
-  		$summarySeriesPanel .= "</span></fieldset>\n";
-  		// Known issue: jqplot considers the min and max of all series when drawing on the screen, even those which are not displayed
-  		// so replotting doesn't scale to the displayed series!
-  		// Note we are keeping the 2 charts in sync.
-  		self::$javascript .= "
+      }
+      $summarySeriesPanel .= "</span></fieldset>\n";
+      // Known issue: jqplot considers the min and max of all series when drawing on the screen, even those which are not displayed
+      // so replotting doesn't scale to the displayed series!
+      // Note we are keeping the 2 charts in sync.
+      self::$javascript .= "
 jQuery('#summaryChart [name={$options['chartID']}-series]').change(function(){
-  $('#estimateChart [name={$options['chartID']}-series]').filter('[value='+$(this).val()+']').attr('checked',$(this).attr('checked'));
+  $('#estimateChart [name={$options['chartID']}-series]').filter('[value='+$(this).val()+']').prop('checked',!!$(this).prop('checked'));
   replot('summary');
 });
 jQuery('#estimateChart [name={$options['chartID']}-series]').change(function(){
-  $('#summaryChart [name={$options['chartID']}-series]').filter('[value='+$(this).val()+']').attr('checked',$(this).attr('checked'));
+  $('#summaryChart [name={$options['chartID']}-series]').filter('[value='+$(this).val()+']').prop('checked',!!$(this).prop('checked'));
   replot('estimates');
 });
 jQuery('#summaryChart .disable-button').click(function(){
   if(jQuery(this).is('.cleared')){ // button is to show all
-    jQuery('[name={$options['chartID']}-series]').not('[value=0]').attr('checked','checked');
-    jQuery('.disable-button').removeClass('cleared').val(\"".lang::get('Hide all '.$options['rowGroupColumn'])."\");
+    jQuery('[name={$options['chartID']}-series]').not('[value=0]').prop('checked','checked');
+    jQuery('.disable-button').removeClass('cleared').val(\"" . lang::get('Hide all') . "\");
   } else {
-    jQuery('[name={$options['chartID']}-series]').not('[value=0]').removeAttr('checked');
-    jQuery('.disable-button').addClass('cleared').val(\"".lang::get('Show all '.$options['rowGroupColumn'])."\");
+    jQuery('[name={$options['chartID']}-series]').not('[value=0]').prop('checked',false);
+    jQuery('.disable-button').addClass('cleared').val(\"" . lang::get('Show all') . "\");
   }
   replot('summary');
 });
 jQuery('#estimateChart .disable-button').click(function(){
   if(jQuery(this).is('.cleared')){ // button is to show all
-    jQuery('[name={$options['chartID']}-series]').not('[value=0]').attr('checked','checked');
-    jQuery('.disable-button').removeClass('cleared').val(\"".lang::get('Hide all '.$options['rowGroupColumn'])."\");
+    jQuery('[name={$options['chartID']}-series]').not('[value=0]').prop('checked','checked');
+    jQuery('.disable-button').removeClass('cleared').val(\"" . lang::get('Hide all') . "\");
   } else {
-    jQuery('[name={$options['chartID']}-series]').not('[value=0]').removeAttr('checked');
-    jQuery('.disable-button').addClass('cleared').val(\"".lang::get('Show all '.$options['rowGroupColumn'])."\");
+    jQuery('[name={$options['chartID']}-series]').not('[value=0]').prop('checked',false);
+    jQuery('.disable-button').addClass('cleared').val(\"" . lang::get('Show all') . "\");
   }
   replot('estimates');
 });
 ";
-  	}
-  	$hasRawData = false;
-  	if(isset($options['location_id']) && $options['location_id']!=""){
-  		// get the raw data for a single location.
-  		$options['extraParams']['orderby'] = 'date';
-  		self::request_report($response, $options, $currentParamValues, false, '');
-  		if (isset($response['error'])) {
-  			$rawTab = "ERROR RETURNED FROM request_report:<br />".(print_r($response,true));
-  		} else if (isset($response['parameterRequest'])) {
-  			// We're not even going to bother with asking the user to populate a partially filled in report parameter set.
-        $rawTab = '<p>INTERNAL ERROR: Report request parameters not set up correctly.<br />'.(print_r($response,true)).'<p>';
-  		} else {
-	  		// convert records to a date based array so it can be used when generating the grid.
-  			$altRow=false;
-  			$records = $response['records'];
-  			$rawTab = (isset($options['linkMessage']) ? $options['linkMessage'] : '');
-  			$rawDataDownloadGrid = lang::get('Week').',';
-  			$rawArray = [];
-  			$sampleList=[];
-  			$sampleDateList=[];
-  			$smpIdx=0;
-  			$hasRawData = (count($records) > 0);
-  			if(!$hasRawData)
-          $rawTab .= '<p>'.lang::get('No raw data available for this location/period/user combination.').'</p>';
- 			else {
- 				foreach($records as $occurrence){
-  					if(!in_array($occurrence['sample_id'], $sampleList)) {
-  						$sampleList[] = $occurrence['sample_id'];
-  						$sampleData = array('id'=>$occurrence['sample_id'], 'date'=>$occurrence['date'], 'location'=>$occurrence['location_name']);
-	  					$rawArray[$occurrence['sample_id']] = [];
-  						if($sampleFields){
-  							foreach($sampleFields as $sampleField) {
-  								if($sampleField['attr'] === false)
-  									$sampleData[$sampleField['caption']] = $occurrence[$sampleField['field']];
-  								else if($sampleField['attr']['data_type']=='L')
-  									$sampleData[$sampleField['caption']] = $occurrence['attr_sample_term_'.$sampleField['id']];
-  								else
-  									$sampleData[$sampleField['caption']] = $occurrence['attr_sample_'.$sampleField['id']];
-	   						}
-  						}
-  						$sampleDateList[] = $sampleData;
-  					}
-  					if($occurrence['taxon_meaning_id']!==null && $occurrence['taxon_meaning_id']!=''){
-	  					$count = (isset($options['countColumn']) && $options['countColumn']!='') ?
+    }
+    $hasRawData = FALSE;
+    if (!empty($options['extraParams']['location_id'])) {
+      // only get the raw data if a single location is specified.
+      $options['extraParams']['orderby'] = 'date';
+      if (!isset($options['extraParams']['user_id'])) {
+        $options['extraParams']['user_id'] = 0;
+      }
+      self::request_report($response, $options, $currentParamValues, FALSE, '');
+      if (isset($response['error'])) {
+        $rawTab = "ERROR RETURNED FROM request_report:<br />" . (print_r($response, TRUE));
+      } else if (isset($response['parameterRequest'])) {
+        // We're not even going to bother with asking the user to populate a partially filled in report parameter set.
+        $rawTab = '<p>INTERNAL ERROR: Report request parameters not set up correctly.<br />' . (print_r($response, TRUE)) . '<p>';
+      } else {
+        // convert records to a date based array so it can be used when generating the grid.
+        $altRow = FALSE;
+        $records = $response['records'];
+        $rawTab = (isset($options['linkMessage']) ? $options['linkMessage'] : '');
+        $rawDataDownloadGrid = lang::get('Week') . ',';
+        $rawArray = [];
+        $sampleList = [];
+        $sampleDateList = [];
+        $smpIdx = 0;
+        $hasRawData = (count($records) > 0);
+        if (!$hasRawData) {
+          $rawTab .= '<p>' . lang::get('No raw data available for this location/period/user combination.') . '</p>';
+        } else {
+          foreach ($records as $occurrence) {
+            if (!in_array($occurrence['sample_id'], $sampleList)) {
+              $sampleList[] = $occurrence['sample_id'];
+              $sampleData = ['id' => $occurrence['sample_id'], 'date' => $occurrence['date'], 'location' => $occurrence['location_name']];
+              $rawArray[$occurrence['sample_id']] = [];
+              if ($sampleFields) {
+                foreach ($sampleFields as $sampleField) {
+                  if ($sampleField['attr'] === FALSE) {
+                    $sampleData[$sampleField['caption']] = $occurrence[$sampleField['field']];
+                  } else if ($sampleField['attr']['data_type']=='L') {
+                    $sampleData[$sampleField['caption']] = $occurrence['attr_sample_term_'.$sampleField['id']];
+                  } else {
+                    $sampleData[$sampleField['caption']] = $occurrence['attr_sample_'.$sampleField['id']];
+                  }
+                }
+              }
+              $sampleDateList[] = $sampleData;
+            }
+            if ($occurrence['taxon_meaning_id'] !== NULL && $occurrence['taxon_meaning_id'] != '') {
+              $count = (isset($options['countColumn']) && $options['countColumn'] != '') ?
                         (isset($occurrence[$options['countColumn']]) ? $occurrence[$options['countColumn']] : 0) : 1;
-              if(!isset($rawArray[$occurrence['sample_id']][$occurrence['taxon_meaning_id']]))
+              if (!isset($rawArray[$occurrence['sample_id']][$occurrence['taxon_meaning_id']])) {
                 $rawArray[$occurrence['sample_id']][$occurrence['taxon_meaning_id']] = $count;
-  						else $rawArray[$occurrence['sample_id']][$occurrence['taxon_meaning_id']] += $count;
-  					}
-  				}
-          $rawTab .= '<table class="'.$options['tableClass'].'"><thead class="'.$options['thClass'].'">' .
-                '<tr><th>'.lang::get('Week').'</th>';
-	  			foreach($sampleDateList as $sample){
+              } else {
+                $rawArray[$occurrence['sample_id']][$occurrence['taxon_meaning_id']] += $count;
+              }
+            }
+          }
+          $rawTab .= '<div><a class="btn btn-small btn-info" onClick="indiciaData.copyClipboard(\'' . $options['tableID'] . '-raw\');">' .
+               lang::get('Copy raw table to clipboard') . '</a></div>' .
+              '<table id="' . $options['tableID'] . '-raw" class="' . $options['tableClass'] . '"><thead class="' . $options['theadClass'] . '">' .
+                '<tr><th class="' . $options['thClass'] . '">' . lang::get('Week') . '</th>';
+          foreach ($sampleDateList as $sample) {
             $sampleDate = date_create($sample['date']);
-//  					$this_index = $this_date->format('z');
+//          $this_index = $this_date->format('z');
             $thisYearDay = $sampleDate->format('N');
-            if($thisYearDay > $periodStart) // scan back to start of week
-              $sampleDate->modify('-'.($thisYearDay-$periodStart).' day');
-            else if($thisYearDay < $periodStart)
-              $sampleDate->modify('-'.(7+$thisYearDay-$periodStart).' day');
+            if ($thisYearDay > $periodStart) { // scan back to start of week
+              $sampleDate->modify('-' . ($thisYearDay-$periodStart) . ' day');
+            } else if($thisYearDay < $periodStart) {
+              $sampleDate->modify('-' . (7+$thisYearDay-$periodStart) . ' day');
+            }
             $thisYearDay = $sampleDate->format('z');
             $periodNo = (int)floor(($thisYearDay-$periodOneDateYearDay)/7)+1;
-            $rawTab .= '<th>'.$periodNo.'</th>';
-            $rawDataDownloadGrid .= ','.$periodNo;
-  				}
-          $rawTab .= '</tr><tr><th>'.lang::get('Date').'</th>';
-  				$rawDataDownloadGrid .= "\n".lang::get('Date').',';
-	  			foreach($sampleDateList as $sample){
-  					$sample_date = date_create($sample['date']);
-  					$rawTab .= '<th>'.
-  							(isset($options['linkURL']) && $options['linkURL']!= '' ? '<a href="'.$options['linkURL'].$sample['id'].'" target="_blank" title="Link to data entry form for '.$sample['location'].' on '.$sample['date'].' (Sample ID '.$sample['id'].')">' : '').
-    						$sample_date->format('M').'<br/>'.$sample_date->format('d').
-  							(isset($options['linkURL']) && $options['linkURL']!= '' ? '</a>' : '').
-    						'</th>';
-	  				$rawDataDownloadGrid .= ','.$sample['date'];
-  				}
+            $rawTab .= '<th class="' . $options['theadClass'] . '">' . $periodNo . '</th>';
+            $rawDataDownloadGrid .= ',' . $periodNo;
+          }
+          $rawTab .= '</tr><tr><th class="' . $options['theadClass'] . '">' . lang::get('Date') . '</th>';
+          $rawDataDownloadGrid .= "\n" . lang::get('Date') . ',';
+          foreach ($sampleDateList as $sample) {
+            $sample_date = date_create($sample['date']);
+            $rawTab .= '<th class="' . $options['theadClass'] . '">' .
+                (isset($options['linkURL']) && $options['linkURL']!= '' ? '<a href="' . $options['linkURL'] . $sample['id'] . '" target="_blank" title="Link to data entry form for ' . $sample['location'] . ' on ' . $sample['date'] .' (Sample ID ' . $sample['id'] . ')">' : '').
+                $sample_date->format('M') . '<br/>' . $sample_date->format('d') .
+                (isset($options['linkURL']) && $options['linkURL'] != '' ? '</a>' : '') .
+                '</th>';
+            $rawDataDownloadGrid .= ',' . $sample['date'];
+          }
           $rawTab .= '</tr></thead><tbody>';
-  				$rawDataDownloadGrid .= "\n";
-  				if($sampleFields){
-  					foreach($sampleFields as $sampleField) { // last-sample-datarow
-  						$rawTab .= '<tr class="sample-datarow '.($altRow?$options['altRowClass']:'').'"><td>'.$sampleField['caption'].'</td>';
-	  				  	$rawDataDownloadGrid .= '"'.$sampleField['caption'].'",';
-  					  	foreach($sampleDateList as $sample){
-  							$rawTab .= '<td>'.($sample[$sampleField['caption']]===null || $sample[$sampleField['caption']]=='' ? '&nbsp;' : $sample[$sampleField['caption']]).'</td>';
-  							$rawDataDownloadGrid .= ','.$sample[$sampleField['caption']];
-  						}
-  				  		$rawTab .= '</tr>';
-	  					$rawDataDownloadGrid .= "\n";
-  						$altRow=!$altRow;
-  					}
+          $rawDataDownloadGrid .= "\n";
+          if ($sampleFields) {
+            foreach ($sampleFields as $sampleField) { // last-sample-datarow
+              $rawTab .= '<tr class="sample-datarow ' . ($altRow?$options['altRowClass']:'') . '"><td>' . $sampleField['caption'] . '</td>';
+              $rawDataDownloadGrid .= '"' . $sampleField['caption'] . '",';
+              foreach ($sampleDateList as $sample) {
+                $rawTab .= '<td>' . ($sample[$sampleField['caption']] === NULL || $sample[$sampleField['caption']]=='' ? '&nbsp;' : $sample[$sampleField['caption']]) . '</td>';
+                $rawDataDownloadGrid .= ',' . $sample[$sampleField['caption']];
+              }
+              $rawTab .= '</tr>';
+              $rawDataDownloadGrid .= "\n";
+              $altRow = !$altRow;
+            }
             self::$javascript .= "
 var sampleDatarows = $('#rawData .sample-datarow').length;
 $('#rawData .sample-datarow').eq(sampleDatarows-1).addClass('last-sample-datarow');\n";
-	  			}
-  				foreach($sortData as $sortedTaxon){
-  					$seriesID=$sortedTaxon[1]; // this is the meaning id
-  					if (!empty($seriesLabels[$seriesID])) {
-	   					$rawTab .= '<tr class="datarow '.($altRow?$options['altRowClass']:'').'"><td'.(isset($seriesLabels[$seriesID]['tip']) ? ' title="'.$seriesLabels[$seriesID]['tip'].'"' : '').'>'.$seriesLabels[$seriesID]['label'].'</td>';
-  						$rawDataDownloadGrid .= '"'.$seriesLabels[$seriesID]['label'].'","'.(isset($seriesLabels[$seriesID]['tip']) ? $seriesLabels[$seriesID]['tip'] : '').'"';
-	  					foreach($sampleList as $sampleID){
-  							$rawTab .= '<td>'.(isset($rawArray[$sampleID][$seriesID]) ? $rawArray[$sampleID][$seriesID] : '&nbsp;').'</td>';
-  							$rawDataDownloadGrid .= ','.(isset($rawArray[$sampleID][$seriesID]) ? $rawArray[$sampleID][$seriesID] : '');
-  						}
-	   					$rawTab .= '</tr>';
-  						$rawDataDownloadGrid .= "\n";
-	  					$altRow=!$altRow;
-  					}
-  				}
-  				$rawTab .= '</tbody></table>';
- 			}
-  		}
-    } else $rawTab = '<p>'.lang::get('Raw Data is only available when a location is specified.').'</p>';
-  	$hasData = (count($summaryArray)>0);
-
-    if($hasData) {
-        $tabs = array(
-            '#summaryData'=>lang::get('Summary Table'),
-            '#summaryChart'=>lang::get('Summary Chart'),
-            '#estimateData'=>lang::get('Estimate Table'),
-            '#estimateChart'=>lang::get('Estimate Chart'));
+          }
+          foreach ($sortData as $sortedTaxon) {
+            $seriesID = $sortedTaxon['meaning'];
+            if (!empty($seriesLabels[$seriesID])) {
+              $rawTab .= '<tr class="datarow ' . ($altRow?$options['altRowClass'] : '') . '"><td' . (isset($seriesLabels[$seriesID]['tip']) ? ' title="' . $seriesLabels[$seriesID]['tip'] . '"' : '').'>' . $seriesLabels[$seriesID]['label'] . '</td>';
+              $rawDataDownloadGrid .= '"'.$seriesLabels[$seriesID]['label'] . '","' . (isset($seriesLabels[$seriesID]['tip']) ? $seriesLabels[$seriesID]['tip'] : '') . '"';
+              foreach ($sampleList as $sampleID) {
+                $rawTab .= '<td>' . (isset($rawArray[$sampleID][$seriesID]) ? $rawArray[$sampleID][$seriesID] : '&nbsp;') . '</td>';
+                $rawDataDownloadGrid .= ',' . (isset($rawArray[$sampleID][$seriesID]) ? $rawArray[$sampleID][$seriesID] : '');
+              }
+              $rawTab .= '</tr>';
+              $rawDataDownloadGrid .= "\n";
+              $altRow = !$altRow;
+            }
+          }
+          $rawTab .= '</tbody></table>';
+        }
+      }
     } else {
-        $tabs = array('#summaryData'=>lang::get('No Summary Data'));
+      $rawTab = '<p>' . lang::get('Raw Data is only available when a location is specified.') . '</p>';
+    }
+    $hasData = (count($summaryArray)>0);
+
+    if ($hasData) {
+      $tabs = [
+        '#summaryData' => lang::get('Summary Table'),
+        '#summaryChart' => lang::get('Summary Chart'),
+        '#estimateData' => lang::get('Estimate Table'),
+        '#estimateChart' => lang::get('Estimate Chart')
+      ];
+    } else {
+      $tabs = ['#summaryData' => lang::get('No Summary Data')];
     }
     $tabs['#rawData'] = lang::get('Raw Data');
-    $downloadTab="";
-    $timestamp = (isset($options['includeReportTimeStamp']) && $options['includeReportTimeStamp'] ? '_'.date('YmdHis') : '');
-    unset($options['extraParams']['orderby']); // may have been set for raw data
+    $downloadTab = "";
+    $timestamp = (isset($options['includeReportTimeStamp']) && $options['includeReportTimeStamp'] ? '_' . date('YmdHis') : '');
     // No need for saved reports to be atomic events.
     // purging??
     global $base_url;
-    $downloadsFolder = hostsite_get_public_file_path(). '/reportsDownloads/';
-    if (!is_dir($downloadsFolder) || !is_writable($downloadsFolder)) {
-      $downloadTab .= '<tr><td>'.lang::get('Internal Config error: directory does not exist or is not writeable '.$downloadsFolder).'</td></tr>'."\n";
-    } else {
-      if ($hasData && $options['includeSummaryGridDownload']) {
-        $cacheFile = $options['downloadFilePrefix'].'summaryDataGrid'.$timestamp.'.csv';
-        $handle = fopen($downloadsFolder.$cacheFile, 'wb');
-        fwrite($handle, $summaryDataDownloadGrid);
-        fclose($handle);
-        $downloadTab .= '<tr><td>'.lang::get('Download Summary Grid (CSV Format)').' : </td><td><a target="_blank" href="'.$base_url.'/'.$downloadsFolder.$cacheFile.'" download type="text/csv"><button type="button">'.lang::get('Download').'</button></a></td></tr>'."\n";
+    $downloadsFolder = hostsite_get_public_file_path() . '/reportsDownloads/';
+    if ($hasData && $options['includeSummaryGridDownload']) {
+      if (!is_dir($downloadsFolder) || !is_writable($downloadsFolder)) {
+        return lang::get('Internal Config error: directory {1} does not exist or is not writeable', $downloadsFolder);
       }
-      if ($hasData && $options['includeEstimatesGridDownload']) {
-        $cacheFile = $options['downloadFilePrefix'].'estimateDataGrid'.$timestamp.'.csv';
-        $handle = fopen($downloadsFolder.$cacheFile, 'wb');
-        fwrite($handle, $estimateDataDownloadGrid);
-        fclose($handle);
-        $downloadTab .= '<tr><td>'.lang::get('Download Estimates Grid (CSV Format)').' : </td><td><a target="_blank" href="'.$base_url.'/'.$downloadsFolder.$cacheFile.'" download type="text/csv"><button type="button">'.lang::get('Download').'</button></a></td></tr>'."\n";
+      $cacheFile = $options['downloadFilePrefix'] . 'summaryDataGrid' . $timestamp . '.csv';
+      $handle = fopen($downloadsFolder.$cacheFile, 'wb');
+      fwrite($handle, $summaryDataDownloadGrid);
+      fclose($handle);
+      $downloadTab .= '<tr><td>' . lang::get('Download Summary Grid (CSV Format)') . ' : </td><td><a target="_blank" href="' . $base_url . '/' . $downloadsFolder . $cacheFile . '" download type="text/csv"><button type="button">' . lang::get('Download') . '</button></a></td></tr>' . "\n";
+    }
+    if ($hasData && $options['includeEstimatesGridDownload']) {
+      if (!is_dir($downloadsFolder) || !is_writable($downloadsFolder)) {
+        return lang::get('Internal Config error: directory {1} does not exist or is not writeable', $downloadsFolder);
       }
-      if ($hasRawData && $options['includeRawGridDownload']) {
-        $cacheFile = $options['downloadFilePrefix'].'rawDataGrid'.$timestamp.'.csv';
-        $handle = fopen($downloadsFolder.$cacheFile, 'wb');
-        fwrite($handle, $rawDataDownloadGrid);
-        fclose($handle);
-        $downloadTab .= '<tr><td>'.lang::get('Download Raw Data Grid (CSV Format)').' : </td><td><a target="_blank" href="'.$base_url.'/'.$downloadsFolder.$cacheFile.'" download type="text/csv"><button type="button">'.lang::get('Download').'</button></a></td></tr>'."\n";
+      $cacheFile = $options['downloadFilePrefix'] . 'estimateDataGrid' . $timestamp.'.csv';
+      $handle = fopen($downloadsFolder.$cacheFile, 'wb');
+      fwrite($handle, $estimateDataDownloadGrid);
+      fclose($handle);
+      $downloadTab .= '<tr><td>' . lang::get('Download Estimates Grid (CSV Format)') . ' : </td><td><a target="_blank" href="' . $base_url . '/' . $downloadsFolder . $cacheFile . '" download type="text/csv"><button type="button">' . lang::get('Download') . '</button></a></td></tr>' . "\n";
+    }
+    if ($hasRawData && $options['includeRawGridDownload']) {
+      if (!is_dir($downloadsFolder) || !is_writable($downloadsFolder)) {
+        return lang::get('Internal Config error: directory {1} does not exist or is not writeable', $downloadsFolder);
       }
+      $cacheFile = $options['downloadFilePrefix'].'rawDataGrid' . $timestamp . '.csv';
+      $handle = fopen($downloadsFolder.$cacheFile, 'wb');
+      fwrite($handle, $rawDataDownloadGrid);
+      fclose($handle);
+      $downloadTab .= '<tr><td>' . lang::get('Download Raw Data Grid (CSV Format)')  .' : </td><td><a target="_blank" href="' . $base_url . '/' . $downloadsFolder . $cacheFile . '" download type="text/csv"><button type="button">' . lang::get('Download') . '</button></a></td></tr>' . "\n";
     }
     if ($hasData && count($options['downloads'])>0) {
       // format is assumed to be CSV
       global $indicia_templates;
       $indicia_templates['report_download_link'] = '<a target="_blank" href="{link}" download ><button type="button">' . lang::get('Download') . '</button></a>';
 
+      $downloadExtraParams = [];
+      // copy if set
+      foreach(['survey_id', 'user_id', 'taxon_list_id', 'location_id', 'location_list', 'location_type_id', 'occattrs'] as $parameter) {
+        if (isset($options['extraParams'][$parameter])) {
+          $downloadExtraParams[$parameter] = $options['extraParams'][$parameter];
+        }
+      }
+      foreach(['year', 'summary_user_id', 'summary_location_id'] as $parameter) {
+        if (isset($options[$parameter])) {
+          $downloadExtraParams[$parameter] = $options[$parameter];
+        }
+      }
+      // 'date_to' and 'date_from' Deprecated
+      foreach(['date_start' => 'date_from', 'date_end' => 'date_to'] as $key => $parameter) {
+        if (isset($options[$key])) {
+          $downloadExtraParams[$parameter] = $options[$key];
+        }
+      }
+      // locattrs and smpattrs etc for download reports are all set in download specific presets
+      $downloadOptions = [
+        'readAuth' => $options['readAuth'],
+        'itemsPerPage' => FALSE
+      ];
+      if (!isset($downloadExtraParams['user_id'])) {
+        $downloadExtraParams['user_id'] = '';
+      }
       foreach ($options['downloads'] as $download) {
-        $downloadOptions = array('readAuth'=>$options['readAuth'],
-            'extraParams'=>array_merge($options['extraParams'], array('date_from' => $options['date_start'], 'date_to' => $options['date_end'])),
-            'itemsPerPage' => false);
-        // there are problems dealing with location_list as an array if empty, so connvert
-        if ($downloadOptions['extraParams']['location_list'] == "")
-          $downloadOptions['extraParams']['location_list'] = "(-1)";
-        else $downloadOptions['extraParams']['location_list'] = '(' . $downloadOptions['extraParams']['location_list'] . ')';
-
-        if (isset($download['param_presets']))
-          $downloadOptions['extraParams'] = array_merge($downloadOptions['extraParams'], $download['param_presets']);
-
+        $downloadOptions['extraParams'] = array_merge(
+            $downloadExtraParams,
+            (isset($download['param_presets']) ? $download['param_presets'] : [])
+        );
         $downloadOptions['dataSource'] = $download['dataSource'];
         $downloadOptions['filename'] = $download['filename'];
         $downloadTab .= '<tr><td>' . $download['caption'] . ' : </td><td>' .
@@ -5375,27 +5511,106 @@ $('#rawData .sample-datarow').eq(sampleDatarows-1).addClass('last-sample-datarow
       }
     }
 
-    if($downloadTab!="")
+    if ($downloadTab !== "") {
       $tabs['#dataDownloads'] = lang::get('Downloads');
-    $r .= '<div id="controls">'.
-        data_entry_helper::tab_header(array('tabs'=>$tabs)).
+    }
+    $r .= '<div id="controls">' .
+        data_entry_helper::tab_header(['tabs' => $tabs]) .
           ($hasData ?
-              '<div id="summaryData">'.$summaryTab.'</div>'.
-              '<div id="summaryChart"><div id="'.$options['chartID'].'-summary" style="height:'.$options['height'].'px;'.(isset($options['width']) && $options['width'] != '' ? 'width:'.$options['width'].'px;':'').'"></div>'.$summarySeriesPanel.'</div>'.
-              '<div id="estimateData">'.$estimateTab.'</div>'.
-              '<div id="estimateChart"><div id="'.$options['chartID'].'-estimates" style="height:'.$options['height'].'px;'.(isset($options['width']) && $options['width'] != '' ? 'width:'.$options['width'].'px;':'').'"></div>'.$summarySeriesPanel.'</div>'
-            : '<div id="summaryData"><p>'.lang::get('No data available for this period with these filter values.').'</p></div>').
-          '<div id="rawData">'.$rawTab.'</div>'.
-          ($downloadTab!="" ? '<div id="dataDownloads"><table><tbody style="border:none;">'.$downloadTab.'</tbody></table></div>' : '').
+              '<div id="summaryData">' . $summaryTab . '</div>' .
+              '<div id="summaryChart">' .
+                '<div>' .
+                  '<a class="btn btn-small btn-info copyCanvas" onClick="indiciaData.copyImageToClipboard(this, \'' . $options['chartID'] . '-summary\');">' .
+                    lang::get('Copy summary chart to clipboard') .
+                  '</a>' .
+                '</div>' .
+                '<div id="' . $options['chartID'] .'-summary" style="height:' . $options['height'] . 'px;' . (isset($options['width']) && $options['width'] != '' ? 'width:' . $options['width'] . 'px;'  :'') . '"></div>' .
+                $summarySeriesPanel .
+              '</div>' .
+              '<div id="estimateData">' . $estimateTab . '</div>'.
+              '<div id="estimateChart">' .
+                '<div>' .
+                  '<a class="btn btn-small btn-info copyCanvas" onClick="indiciaData.copyImageToClipboard(this, \'' . $options['chartID'] . '-estimates\');">' .
+                    lang::get('Copy estimates chart to clipboard') .
+                  '</a>' .
+                '</div>' .
+                '<div id="' . $options['chartID'] . '-estimates" style="height:' . $options['height'] . 'px;' . (isset($options['width']) && $options['width'] != '' ? 'width:' . $options['width'] . 'px;' : '').'"></div>' .
+                $summarySeriesPanel .
+              '</div>'
+            : '<div id="summaryData"><p>' . lang::get('No data available for this period with these filter values.') . '</p></div>') .
+          '<div id="rawData">' . $rawTab . '</div>'.
+          ($downloadTab !== "" ? '<div id="dataDownloads"><table><tbody style="border:none;">' . $downloadTab . '</tbody></table></div>' : '').
         '</div>';
-    data_entry_helper::enable_tabs(array('divId' => 'controls'));
+    data_entry_helper::enable_tabs(['divId' => 'controls']);
     return $r;
+  }
+
+  /**
+   * Override the type of taxon label for some EBMS schemes
+   * 
+   * EBMS ONLY. If user is member of scheme that specifies it should use common names
+   * then override the taxon names to use common names in the specified language.
+   * 
+   * @param array $readAuth Authorisation tokens.
+   * @param array $records Records for report to display.
+   * @param array $taxonColumnOverrides Configuration for which EBMS schemes should show
+   * names in which language.
+   * @return array Records array with altered names.
+   */
+  private static function injectLanguageIntoDefaultCommonName($readAuth, $records, $taxonColumnOverrides) {
+    $taxonColumnOverrides = json_decode($taxonColumnOverrides, TRUE);
+    $myId = hostsite_get_user_field('id');
+    $schemes = ebms_scheme_list_user_schemes($myId);
+    $mySchemeOverrideLangId = FALSE;
+    if (count($schemes) > 0) {
+      $userSchemeId = $schemes[0]['id'];
+      // If we identify user as a scheme member then get the Warehouse language ID specified for the scheme
+      if (!empty($userSchemeId) && !empty($taxonColumnOverrides[$userSchemeId])) {
+        $mySchemeOverrideLangId = $taxonColumnOverrides[$userSchemeId];
+      }
+    }
+    // Only override taxon labels if there is configuration for my scheme to do so
+    if ($mySchemeOverrideLangId) {
+      $recordsTaxonMeaningIds = [];
+      // For all the records shown on the report, create an taxon meaning id array to pass to the Warehouse
+      foreach ($records as $record) {
+        $recordsTaxonMeaningIds[] = $record['taxon_meaning_id'];
+      }
+      if (!empty($recordsTaxonMeaningIds)) {
+        // Get taxon rows associated with the report in the language we want
+        $taxonRowsInDetail = data_entry_helper::get_population_data([
+          'table' => 'taxa_taxon_list',
+          'nocache' => TRUE,
+          'extraParams' => $readAuth + [
+            'query' => json_encode(['in' => [
+              'taxon_meaning_id' => $recordsTaxonMeaningIds,
+              'language_id' => [$mySchemeOverrideLangId]
+              ]]),
+            'view' => 'detail'
+          ]
+        ]);
+        // Process the data so that the meaning id is the array key, and the name
+        // in the language we want is the value
+        foreach($taxonRowsInDetail as $taxonRowInDetail) {
+          $meaningsWithLangCommonNames[$taxonRowInDetail['taxon_meaning_id']] = $taxonRowInDetail['taxon'];
+        }
+        // Now simply ovewrite the names in the report
+        foreach ($records as $recordIdx => $record) {
+          $records[$recordIdx]['preferred_taxon'] = $meaningsWithLangCommonNames[$record['taxon_meaning_id']]; 
+          $records[$recordIdx]['default_common_name'] = $meaningsWithLangCommonNames[$record['taxon_meaning_id']];
+        }
+      }
+    }
+    return $records;
   }
 
   static function report_calendar_summary_sort1($a, $b)
   {
-  	return ($a[0] > $b[0]) ;
+    // No sort order > end of list, sorted by label
+    if (empty($a['order'])) {
+      return empty($b['order']) ? strnatcasecmp($a['label'], $b['label']) : 1;
+    }
+    return empty($b['order']) ? -1 : ($a['order'] <= $b['order'] ? -1 : 1);
   }
-
 
 }
