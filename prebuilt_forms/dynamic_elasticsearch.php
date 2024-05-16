@@ -347,6 +347,8 @@ TXT;
   /**
    * A button that displays a form for performing bulk edit operations.
    *
+   * Currently this feature is experimental and subject to change.
+   *
    * @return string
    *   HTML for the container element.
    *
