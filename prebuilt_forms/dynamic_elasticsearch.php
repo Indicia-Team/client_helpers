@@ -275,7 +275,7 @@ TXT;
    * @return string
    *   Select HTML.
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-userFilters
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-userfilters
    */
   protected static function get_control_userFilters($auth, $args, $tabalias, $options) {
     return ElasticsearchReportHelper::userFilters(array_merge($options, [
@@ -286,7 +286,7 @@ TXT;
   /**
    * Output a selector for filtering on survey.
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-surveyFilter
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-surveyfilter
    */
   protected static function get_control_surveyFilter($auth, $args, $tabalias, $options) {
     return ElasticsearchReportHelper::surveyFilter(array_merge($options, [
@@ -297,7 +297,7 @@ TXT;
   /**
    * Output a selector for various high level permissions filtering options.
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-permissionFilters
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-permissionfilters
    */
   protected static function get_control_permissionFilters($auth, $args, $tabalias, $options) {
     return ElasticsearchReportHelper::permissionFilters(array_merge($options, [
@@ -311,7 +311,7 @@ TXT;
   /**
    * Output simple summary of currently defined filters.
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-filterSummary
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-filtersummary
    */
   protected static function get_control_filterSummary($auth, $args, $tabalias, $options) {
     return ElasticsearchReportHelper::filterSummary(array_merge($options, [
@@ -322,7 +322,7 @@ TXT;
   /**
    * Output a selector for records with or without media.
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-mediaFilter
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-mediafilter
    */
   protected static function get_control_mediaFilter($auth, $args, $tabalias, $options) {
     return ElasticsearchReportHelper::mediaFilter(array_merge($options, [
@@ -336,7 +336,7 @@ TXT;
    * Output a selector for a general record access contexts based on permission
    * filters and group permissions etc.
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-statusFilters
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-statusfilters
    */
   protected static function get_control_statusFilters($auth, $args, $tabalias, $options) {
     return ElasticsearchReportHelper::statusFilters(array_merge($options, [
@@ -345,12 +345,26 @@ TXT;
   }
 
   /**
+   * A button that displays a form for performing bulk edit operations.
+   *
+   * Currently this feature is experimental and subject to change.
+   *
+   * @return string
+   *   HTML for the container element.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-bulkeditor
+   */
+  protected static function get_control_bulkEditor($auth, $args, $tabalias, $options) {
+    return ElasticsearchReportHelper::bulkEditor($options);
+  }
+
+  /**
    * A control for outputting a gallery of record cards.
    *
    * @return string
    *   HTML for the container element.
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-cardGallery
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-cardgallery
    */
   protected static function get_control_cardGallery($auth, $args, $tabalias, $options) {
     return ElasticsearchReportHelper::cardGallery($options);
@@ -372,7 +386,7 @@ TXT;
    * @return string
    *   HTML for the container element.
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-customScript
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-customscript
    */
   protected static function get_control_customScript($auth, $args, $tabalias, $options) {
     return ElasticsearchReportHelper::customScript($options);
@@ -396,7 +410,7 @@ TXT;
    * @return string
    *   Report container HTML.
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-dataGrid
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-datagrid
    */
   protected static function get_control_dataGrid($auth, $args, $tabalias, $options) {
     return ElasticsearchReportHelper::dataGrid($options);
@@ -405,7 +419,7 @@ TXT;
   /**
    * A scale for showing relationship between square opacity and record count.
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-gridSquareOpacityScale
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-gridgquareopacityscale
    *
    * @return string
    *   Control HTML
@@ -417,7 +431,7 @@ TXT;
   /**
    * Integrates the page with groups (activities).
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-groupIntegration
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-groupintegration
    *
    * @return string
    *   Control HTML
@@ -431,7 +445,7 @@ TXT;
   /**
    * A select box for choosing from a list of higher geography boundaries.
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-higherGeographySelect
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-highergeographyselect
    *
    * @return string
    *   Control HTML
@@ -445,7 +459,7 @@ TXT;
   /**
    * A select box for choosing from a list of unindexed location boundaries.
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-locationSelect
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-locationselect
    *
    * @return string
    *   Control HTML
@@ -464,7 +478,7 @@ TXT;
    * @return string
    *   Map container HTML.
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-leafletMap
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-leafletmap
    */
   protected static function get_control_map($auth, $args, $tabalias, $options) {
     return ElasticsearchReportHelper::leafletMap($options);
@@ -476,7 +490,7 @@ TXT;
    * @return string
    *   Map container HTML.
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-leafletMap
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-leafletmap
    */
   protected static function get_control_leafletMap($auth, $args, $tabalias, $options) {
     return ElasticsearchReportHelper::leafletMap($options);
@@ -488,7 +502,7 @@ TXT;
    * @return string
    *   Panel container HTML.
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-recordDetails
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-recorddetails
    */
   protected static function get_control_recordDetails($auth, $args, $tabalias, $options) {
     return ElasticsearchReportHelper::recordDetails(array_merge($options, [
@@ -502,7 +516,7 @@ TXT;
    * @return string
    *   Panel container HTML.
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-recordsMover
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-recordsmover
    */
   protected static function get_control_recordsMover($auth, $args, $tabalias, $options) {
     return ElasticsearchReportHelper::recordsMover($options);
@@ -528,7 +542,7 @@ TXT;
    * @return string
    *   Params toolbar HTML.
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-standardParams
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-standardparams
    */
   protected static function get_control_standardParams($auth, $args, $tabalias, $options) {
     return ElasticsearchReportHelper::standardParams(array_merge($options, [
@@ -542,7 +556,7 @@ TXT;
    * @return string
    *   Report container HTML.
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-templatedOutput
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-templatedoutput
    */
   protected static function get_control_templatedOutput($auth, $args, $tabalias, $options) {
     return ElasticsearchReportHelper::templatedOutput($options);
@@ -551,7 +565,7 @@ TXT;
   /**
    * A panel containing buttons for record verification actions.
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-verificationButtons
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-verificationbuttons
    *
    * @return string
    *   Panel container HTML;
@@ -565,7 +579,7 @@ TXT;
   /**
    * Retrieve parameters from the URL and add to the ES requests.
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-urlParams
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-urlparams
    *
    * @return string
    *   Hidden input HTML which defines the appropriate filters.

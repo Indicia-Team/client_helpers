@@ -349,9 +349,107 @@ class ElasticsearchReportHelper {
       }
       catch (Exception $e) {
         self::$proxyEnableFailed = TRUE;
+        \Drupal::logger('iform')->error('Elasticsearch proxy enable failed: ' . $e->getMessage());
       }
     }
     return self::$proxyEnabled;
+  }
+
+  /**
+   * An Elasticsearch bulk editor tool.
+   *
+   * @return string
+   *   Button container HTML.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-bulkeditor
+   */
+  public static function bulkEditor(array $options) {
+    self::checkOptions(
+      'bulkEditor',
+      $options,
+      ['linkToDataControl'],
+      []
+    );
+    $options = array_merge([
+      'caption' => 'Bulk edit records',
+      'restrictToOwnData' => TRUE,
+    ], $options);
+    $dataOptions = helper_base::getOptionsForJs($options, [
+      'id',
+      'linkToDataControl',
+      'restrictToOwnData',
+    ], TRUE);
+    helper_base::addLanguageStringsToJs('bulkEditor', [
+      'bulkEditorDialogMessageAll' => 'You are about to edit the entire list of {1} records.',
+      'bulkEditorDialogMessageSelected' => 'You are about to edit {1} selected records.',
+      'bulkEditProgress' => 'Edited {samples} samples and {occurrences} occurrences.',
+      'cannotProceed' => 'Cannot proceed',
+      'done' => 'Records successfully edited. They will now be processed so they are available with their new values shortly.',
+      'error' => 'An error occurred whilst trying to edit the records.',
+      'errorEditNotFilteredToCurrentUser' => 'The records cannot be edited because the current page is not filtered to limit the records to only your data.',
+      'preparing' => 'Preparing to edit the records...',
+      'warningNoChanges' => 'Please define at least one field value that you would like to change when bulk editing the records.',
+      'warningNothingToDo' => 'There are no selected records to edit.',
+    ]);
+    $lang = [
+      'bulkEditRecords' => lang::get($options['caption']),
+      'cancel' => lang::get('Cancel'),
+      'close' => lang::get('Close'),
+      'editing' => lang::get('Editing records'),
+      'editInstructions' => 'Specify values to apply to all the edited records in the following controls, or leave blank for the data values to remain unchanged.',
+      'proceed' => lang::get('Proceed'),
+    ];
+    helper_base::add_resource('fancybox');
+    $recorderNameControl = data_entry_helper::text_input([
+      'fieldname' => 'edit-recorder-name',
+      'label' => lang::get('Recorder name'),
+      'attributes' => ['placeholder' => lang::get('value not changed')],
+    ]);
+    $dateControl = data_entry_helper::text_input([
+      'fieldname' => 'edit-date',
+      'label' => lang::get('Date'),
+      'attributes' => ['placeholder' => lang::get('value not changed')],
+    ]);
+    $locationNameControl = data_entry_helper::text_input([
+      'fieldname' => 'edit-location-name',
+      'label' => lang::get('Location name'),
+      'attributes' => ['placeholder' => lang::get('value not changed')],
+    ]);
+    $srefControl = data_entry_helper::sref_and_system([
+      'fieldname' => 'edit-sref',
+      'label' => lang::get('Spatial reference'),
+      'attributes' => ['placeholder' => lang::get('value not changed')],
+      'findMeButton' => FALSE,
+    ]);
+    global $indicia_templates;
+    $html = <<<HTML
+<button type="button" class="bulk-edit-records-btn $indicia_templates[buttonHighlightedClass]">$lang[bulkEditRecords]</button>
+<div style="display: none">
+  <div id="$options[id]-dlg" class="bulk-editor-dlg">
+    <div class="pre-bulk-edit-info">
+      <h2>$lang[bulkEditRecords]</h2>
+      <p class="message"></p>
+      <p>$lang[editInstructions]</p>
+      $recorderNameControl
+      $dateControl
+      $locationNameControl
+      $srefControl
+      <div class="form-buttons">
+        <button type="button" class="$indicia_templates[buttonHighlightedClass] proceed-bulk-edit">$lang[proceed]</button>
+        <button type="button" class="$indicia_templates[buttonHighlightedClass] close-bulk-edit-dlg">$lang[cancel]</button>
+      </div>
+    </div>
+    <div class="post-bulk-edit-info">
+      <h2>$lang[editing]</h2>
+      <div class="output"></div>
+      <div class="form-buttons">
+        <button type="button" class="$indicia_templates[buttonHighlightedClass] close-bulk-edit-dlg" disabled="disabled">$lang[close]</button>
+      </div>
+    </div>
+  </div>
+</div>
+HTML;
+    return self::getControlContainer('bulkEditor', $options, $dataOptions, $html);
   }
 
   /**
@@ -1357,15 +1455,15 @@ HTML;
     ], TRUE);
     helper_base::addLanguageStringsToJs('recordsMover', [
       'cannotProceed' => 'Cannot proceed',
-      'done' => 'Records successfully moved. They will be processed so they are available in their new location shortly.',
+      'done' => 'Records successfully moved. They will now be processed so they are available in their new location shortly.',
       'error' => 'An error occurred whilst trying to move the records.',
       'errorNotFilteredToCurrentUser' => 'The records cannot be moved because the current page is not filtered to limit the records to only your data.',
       'moveProgress' => 'Moved {samples} samples and {occurrences} occurrences.',
       'moving' => 'Moving the records...',
       'precheckProgress' => 'Checked {samples} samples and {occurrences} occurrences.',
       'preparing' => 'Preparing to move the records...',
-      'recordsMoverDialogMessageSelected' => 'You are about to move {1} selected records.',
       'recordsMoverDialogMessageAll' => 'You are about to move the entire list of {1} records.',
+      'recordsMoverDialogMessageSelected' => 'You are about to move {1} selected records.',
       'warningNothingToDo' => 'There are no selected records to move.',
     ]);
     $lang = [
@@ -1380,7 +1478,7 @@ HTML;
     $html = <<<HTML
 <button type="button" class="move-records-btn $indicia_templates[buttonHighlightedClass]">$lang[moveRecords]</button>
 <div style="display: none">
-  <div id="$options[id]-dlg">
+  <div id="$options[id]-dlg" class="records-mover-dlg">
     <div class="pre-move-info">
       <h2>$lang[moveRecords]</h2>
       <p class="message"></p>

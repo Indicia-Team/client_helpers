@@ -1225,6 +1225,7 @@ class helper_base {
             self::$js_path . 'indicia.datacomponents/idc.pager.js',
             self::$js_path . 'indicia.datacomponents/jquery.idc.customScript.js',
             self::$js_path . 'indicia.datacomponents/jquery.idc.runCustomVerificationRulesets.js',
+            self::$js_path . 'indicia.datacomponents/jquery.idc.bulkEditor.js',
             self::$js_path . 'indicia.datacomponents/jquery.idc.cardGallery.js',
             self::$js_path . 'indicia.datacomponents/jquery.idc.dataGrid.js',
             self::$js_path . 'indicia.datacomponents/jquery.idc.esDownload.js',
@@ -1266,10 +1267,10 @@ class helper_base {
             'd3',
           ],
           'stylesheets' => [
-            'https://cdn.jsdelivr.net/gh/biologicalrecordscentre/brc-charts@0.15.0/dist/brccharts.umd.css',
+            'https://cdn.jsdelivr.net/gh/biologicalrecordscentre/brc-charts/dist/brccharts.umd.css',
           ],
           'javascript' => [
-            'https://cdn.jsdelivr.net/gh/biologicalrecordscentre/brc-charts@0.15.0/dist/brccharts.umd.min.js',
+            'https://cdn.jsdelivr.net/gh/biologicalrecordscentre/brc-charts/dist/brccharts.umd.js',
           ],
         ],
         'd3' => [
