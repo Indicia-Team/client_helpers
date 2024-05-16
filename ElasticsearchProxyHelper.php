@@ -133,6 +133,12 @@ class ElasticsearchProxyHelper {
       case 'bulkmoveids':
         return self::proxyBulkMoveIds($nid);
 
+      case 'bulkeditall':
+        return self::proxyBulkEditAll($nid);
+
+      case 'bulkeditids':
+        return self::proxyBulkEditIds($nid);
+
       case 'clearcustomresults':
         return self::proxyClearCustomResults($nid);
 
@@ -2728,6 +2734,33 @@ HTML;
   }
 
   /**
+   * Either bulk move or edit a list of IDs.
+   *
+   * @return string
+   *   Response from the data_utils/bulk_move or bulk_edit service.
+   */
+  private static function bulkProcessIds($nid, array $ids, $service, array $data) {
+    // Now do the move on the warehouse.
+    iform_load_helpers(['helper_base']);
+    $request = helper_base::$base_url . "index.php/services/data_utils/$service";
+    $conn = iform_get_connection_details($nid);
+    $auth = helper_base::get_read_write_auth($conn['website_id'], $conn['password']);
+    $postargs = helper_base::array_to_query_string(array_merge([
+      'occurrence:ids' => implode(',', $ids),
+    ], $data, $auth['write_tokens']), TRUE);
+    $response = helper_base::http_post($request, $postargs, FALSE);
+    // The response should be in JSON.
+    header('Content-type: application/json');
+    $output = json_decode($response['output']);
+    if (!($data['precheck'] ?? 'f' === 't') && isset($output->code) && $output->code === 200) {
+      // Set website ID to 0, basically disabling the ES copy of the record
+      // until a proper update with correct information comes through.
+      self::internalModifyListOnEs($ids, [], 0);
+    }
+    return $response['output'];
+  }
+
+  /**
    * Receives a list of IDs to move between websites/datasets.
    *
    * Used by the recordsMover button.
@@ -2736,26 +2769,10 @@ HTML;
    *   Response from the data_utils/bulk_move service.
    */
   private static function bulkMoveIds($nid, array $ids, $datasetMappings, $precheck) {
-    // Now do the move on the warehouse.
-    iform_load_helpers(['helper_base']);
-    $request = helper_base::$base_url . "index.php/services/data_utils/bulk_move";
-    $conn = iform_get_connection_details($nid);
-    $auth = helper_base::get_read_write_auth($conn['website_id'], $conn['password']);
-    $postargs = helper_base::array_to_query_string(array_merge([
-      'occurrence:ids' => implode(',', $ids),
+    return self::bulkProcessIds($nid, $ids, 'bulk_move', [
       'datasetMappings' => $datasetMappings,
       'precheck' => $precheck ? 't' : 'f',
-    ], $auth['write_tokens']), TRUE);
-    $response = helper_base::http_post($request, $postargs, FALSE);
-    // The response should be in JSON.
-    header('Content-type: application/json');
-    $output = json_decode($response['output']);
-    if (!$precheck && $output->code === 200) {
-      // Set website ID to 0, basically disabling the ES copy of the record
-      // until a proper update with correct taxonomy information comes through.
-      self::internalModifyListOnEs($ids, [], 0);
-    }
-    return $response['output'];
+    ]);
   }
 
   /**
@@ -2794,6 +2811,71 @@ HTML;
    */
   private static function proxyBulkMoveIds($nid) {
     return self::bulkMoveIds($nid, explode(',', $_POST['occurrence:ids']), $_POST['datasetMappings'], !empty($_POST['precheck']));
+  }
+
+  /**
+   * Bulk edit a list of occurrence IDs.
+   *
+   * @param int $nid
+   *   Node ID.
+   * @param array $ids
+   *   List of occurrence IDs to edit.
+   * @param array $updates
+   *   Key/value pairs for fields to change. Currently supports recorder_name,
+   *   location_name, date and sref + sref_system.
+   *
+   * @return array
+   *   Response data containing information about affected records.
+   */
+  private static function bulkEditIds($nid, array $ids, array $updates) {
+    $response = self::bulkProcessIds($nid, $ids, 'bulk_edit', [
+      'updates' => json_encode($updates)
+    ]);
+    return json_decode($response, TRUE);
+  }
+
+  /**
+   * Bulk edit all records in the current filter.
+   *
+   * @param int $nid
+   *   Node ID.
+   *
+   * @return array
+   *   Response data containing information about affected records or next
+   *   batch to fetch if paging.
+   */
+  private static function proxyBulkEditAll($nid) {
+    $batchInfo = self::getOccurrenceIdPageFromFilter(
+      $nid,
+      $_POST['occurrence:idsFromElasticFilter'],
+      $_POST['search_after'] ?? NULL,
+    );
+    if (empty($batchInfo['ids'])) {
+      return [
+        'code' => 204,
+        'message' => 'No Content',
+      ];
+    }
+    $response = self::bulkEditIds($nid, $batchInfo['ids'], $_POST['updates']);
+    // Attach the search_after pagination info to the response.
+    if ($response['code'] === 200 && !empty($batchInfo['search_after'])) {
+      // Set pagination info, but not if empty array returned (which implies
+      // all done).
+      $response['search_after'] = $batchInfo['search_after'];
+    }
+    return $response;
+  }
+
+/**
+   * Bulk edit a list of selected records.
+   *
+   * @param int $nid
+   *   Node ID.
+   *
+   * @return array
+   *   Response data containing information about affected records.
+   */  private static function proxyBulkEditIds($nid) {
+    return self::bulkEditIds($nid, explode(',', $_POST['occurrence:ids']), $_POST['updates']);
   }
 
   /**
