@@ -122,9 +122,9 @@ class iform_map_explorer {
               },
               "class": {"type":"str","desc":"CSS class to attach to the action link."},
               "javascript": {"type":"str","desc":"JavaScript that will be run when the link is clicked. Can contain field value substitutions '.
-                  'such as {id} which is replaced by the value of the id field for the current row. Because the javascript may pass the field values as parameters to functions, '.
-                  'there are escaped versions of each of the replacements available for the javascript action type. Add -escape-quote or '.
-                  '-escape-dblquote to the fieldname. For example this would be valid in the action javascript: foo(\"{bar-escape-dblquote}\"); '.
+                  'such as {id} which is replaced by the value of the id field for the current row. Because the javascript may pass the field values as parameters to functions '.
+                  'or URL paths, there are escaped versions of each of the replacements available for the javascript action type. Add -escape-quote, -escape-dblquote or '.
+                  '-escape-urlpath to the fieldname. For example this would be valid in the action javascript: foo(\"{bar-escape-dblquote}\"); '.
                   'even if the field value contains a double quote which would have broken the syntax."}
             }
           }]

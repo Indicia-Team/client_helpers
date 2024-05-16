@@ -964,6 +964,7 @@ JS;
       'orderby' => 'name',
     ], $options['extraParams'], $options['readAuth']);
     $baseId = $options['id'];
+    $selectClass = $options['class'];
     foreach ($typeIds as $idx => $typeId) {
       $options['extraParams']['location_type_id'] = $typeId;
       if (count($typeIds) > 1) {
@@ -972,7 +973,9 @@ JS;
       }
       if ($idx > 0) {
         $options['parentControlId'] = "$baseId-" . ($idx - 1);
-        // We don't want the query to apply to the child drop-downs ($idx > 0), as the query can't apply to both parent/child, as they are very different.
+        // We don't want the query to apply to the child drop-downs ($idx > 0),
+        // as the query can't apply to both parent/child, as they are very
+        // different.
         unset($options['extraParams']['query']);
         if ($idx === 1) {
           $options['parentControlLabel'] = $options['label'];
@@ -984,7 +987,7 @@ JS;
       // If locations are unindexed we need a place to store the geometry for
       // filtering.
       if ($addGeomHiddenInput) {
-        $r .= "<input type=\"hidden\" id=\"$options[id]-geom\" class=\"es-filter-param $options[class]-geom\" data-es-bool-clause=\"must\">";
+        $r .= "<input type=\"hidden\" id=\"$options[id]-geom\" class=\"es-filter-param $selectClass-geom\" data-es-bool-clause=\"must\">";
       }
     }
     return "<div class=\"location-select-cntr\">$r</div>";

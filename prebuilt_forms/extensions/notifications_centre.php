@@ -314,6 +314,10 @@ JS;
         'visibility_field' => 'editable_flag',
       ]
     ];
+    $urlParams = ['occurrence_id' => '{occurrence_id}'];
+    if (!empty($_GET['group_id'])) {
+      $urlParams['group_id'] = $_GET['group_id'];
+    }
     if (!empty($options['view_record_page_path'])) {
       $availableActions[] = [
         'caption' => lang::get('View this record'),

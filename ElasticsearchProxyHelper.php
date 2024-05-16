@@ -1636,11 +1636,11 @@ HTML;
    *   Bool clauses that filters can be added to (e.g. $bool['must']).
    */
   private static function applyUserFiltersSearchArea($definition, array &$bool) {
-    if (!empty($definition['searchArea'])) {
+    if (!empty($definition['searchArea']) || !empty($definition['bufferedSearchArea'])) {
       $bool['must'][] = [
         'geo_shape' => [
           'location.geom' => [
-            'shape' => $definition['searchArea'],
+            'shape' => $definition['bufferedSearchArea'] ?? $definition['searchArea'],
             'relation' => 'intersects',
           ],
         ],
