@@ -2103,7 +2103,7 @@ HTML;
         </div>
         <div class="form-group">
           <label for="email-subject">$lang[emailSubject]:</label>
-          <input id="email-subject" class="form-control required">
+          <input id="email-subject" class="form-control subject required">
         </div>
         <div class="form-group">
           <label for="email-body">$lang[emailBody]:</label>
