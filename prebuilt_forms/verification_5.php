@@ -1316,16 +1316,6 @@ HTML
       $fromEmail = $params['email_from_address'];
       $fromName = $fromEmail;
     }
-    $replyTo = hostsite_get_user_field('mail');
-    $headers = [
-      'MIME-Version: 1.0',
-      'Content-type: text/html; charset=UTF-8;',
-      "From: \"$fromName\" <$fromEmail>",
-      "Reply-To: \"$replyTo\" <$replyTo>",
-      'Date: ' . date(DateTime::RFC2822),
-      'Message-ID: <' . time() . '-' . md5($replyTo . $_POST['to']) . '@' . $_SERVER['SERVER_NAME'] . '>',
-    ];
-    $headers = implode("\r\n", $headers) . PHP_EOL;
     $emailBody = str_replace("\n", "<br/>", $_POST['body']);
     $emailBodyHtml = <<<HTML
 <html>
@@ -1338,7 +1328,10 @@ HTML
 </html>
 HTML;
     // Send email. Depends upon settings in php.ini being correct.
-    $success = mail("\"$_POST[to]\" <$_POST[to]>", $_POST['subject'], wordwrap($emailBodyHtml, 80), $headers);
+    $success = hostsite_send_email($_POST['to'], $_POST['subject'], $emailBodyHtml, [
+      'from' => $fromEmail,
+      'fromName' => $fromName,
+    ]);
     return $success ? 'OK' : 'Fail';
   }
 
