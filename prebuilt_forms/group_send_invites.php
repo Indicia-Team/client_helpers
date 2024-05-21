@@ -204,21 +204,14 @@ class iform_group_send_invites {
         $clean = strpos($rootFolder, '?') === FALSE;
         $acceptUrl = $protocol . $_SERVER['HTTP_HOST'] . $rootFolder . $args['accept_invite_path'] . ($clean ? '?' : '&') . 'token=' . $base . $idx;
         $messageHtml = str_replace("\n", '<br/>', $_POST['invite_message']);
-        $emailBodyHtml = <<<HTML
-<html>
-  <head>
-    <title>$lang[invitationToJoinRecordingGroup]</title>
-  </head>
-  <body>
-    $messageHtml
-    <br/>
-    <br/>
-    <a href="$acceptUrl">$lang[acceptInvitiation]</a>
-  </body>
-</html>
+        $emailHtml = <<<HTML
+          $messageHtml
+          <br/>
+          <br/>
+          <a href="$acceptUrl">$lang[acceptInvitiation]</a>
 HTML;
         // Send email. Depends upon settings in php.ini being correct.
-        $thismailsuccess = hostsite_send_email($trimmedEmail, $lang['invitationToJoinRecordingGroup'], $emailBodyHtml);
+        $thismailsuccess = hostsite_send_email($trimmedEmail, $lang['invitationToJoinRecordingGroup'], $emailHtml);
         if (!$thismailsuccess) {
           $failedRecipients[$trimmedEmail] = $acceptUrl;
         }

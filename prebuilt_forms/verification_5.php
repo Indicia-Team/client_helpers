@@ -1317,18 +1317,8 @@ HTML
       $fromName = $fromEmail;
     }
     $emailBody = str_replace("\n", "<br/>", $_POST['body']);
-    $emailBodyHtml = <<<HTML
-<html>
-  <head>
-    <title>$lang[verification]</title>
-  </head>
-  <body>
-    $emailBody
-  </body>
-</html>
-HTML;
     // Send email. Depends upon settings in php.ini being correct.
-    $success = hostsite_send_email($_POST['to'], $_POST['subject'], $emailBodyHtml, [
+    $success = hostsite_send_email($_POST['to'], $_POST['subject'], $emailBody, [
       'from' => $fromEmail,
       'fromName' => $fromName,
     ]);
