@@ -475,7 +475,7 @@ indiciaData.rowIdToReselect = false;
               '{1}',
               email.subtype === 'R' ? indiciaData.commentTranslations.recorder : indiciaData.commentTranslations.expert
             );
-            email.body = email.body.replace(/\[Photos]/g, response.media);
+            email.body = email.body.replace(/\[Photos]/g, response.media.replace(/data-media-info=\"(.*?)\"/g, ''));
             email.body = email.body.replace(/\[Comments]/g, response.comments);
             // save a comment to indicate that the mail was sent
             indiciaFns.saveComment(
