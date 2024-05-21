@@ -1843,13 +1843,13 @@ HTML;
       'commentReplyInstruct' => 'Click here to add a publicly visible comment to the record on iRecord.',
       'csvDisallowedMessage' => 'Uploading verification decisions is only allowed when there is a filter that defines the scope of the records you can verify.',
       'duplicateTemplateMsg' => 'A template with that name already exists. Please specify a unique name for your template then save it again, or click Overwrite to update the existing template details.',
-      'emailExpertBodyHeader' => 'The following record requires your assistance. Please could you reply to this email ' .
+      'emailExpertBodyHeader' => "Verification query\n\nThe following record requires your assistance. Please could you reply to this email " .
         'with your opininion on whether the record is correct or not. You can reply to this message and it will be ' .
         'forwarded direct to the verifier.',
       'emailExpertInstruct' => 'Enter the email of an expert to request their assistance with this record.',
       'emailExpertLoggedAsComment' => 'This record was emailed to an expert for checking.',
       'emailExpertSubject' => 'Record of {{ taxon.taxon_name }} requires your assistance (ID:{{ id }})',
-      'emailQueryBodyHeader' => 'The following record requires confirmation. Please could you reply to this email ' .
+      'emailQueryBodyHeader' => "Verification query\n\nThe following record requires confirmation. Please could you reply to this email " .
         'stating how confident you are that the record is correct and any other information you have which may help ' .
         'to confirm this. You can reply to this message and it will be forwarded direct to the verifier.',
       'emailQueryLoggedAsComment' => 'This record was emailed to the recorder for checking.',
