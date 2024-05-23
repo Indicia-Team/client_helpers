@@ -1237,6 +1237,7 @@ class helper_base {
             self::$js_path . 'indicia.datacomponents/jquery.idc.verificationButtons.js',
             self::$js_path . 'indicia.datacomponents/jquery.idc.filterSummary.js',
             self::$js_path . 'indicia.datacomponents/jquery.idc.permissionFilters.js',
+            self::$js_path . 'proj4js.js',
             'https://unpkg.com/@ungap/url-search-params',
           ],
         ],
@@ -2036,7 +2037,7 @@ HTML;
           array_push($replaceValues, str_replace('"', '\"', $value ?? ''));
           array_push($replaceValues, str_replace("'", "&#39;", $value ?? ''));
           array_push($replaceValues, str_replace('"', '&quot;', $value ?? ''));
-          array_push($replaceValues, trim(preg_replace('/[^a-z0-9\-]/', '', str_replace(' ', '-', strtolower($value))), '-'));
+          array_push($replaceValues, trim(preg_replace('/[^a-z0-9\-]/', '', str_replace(' ', '-', strtolower($value ?? ''))), '-'));
         }
       }
     }
