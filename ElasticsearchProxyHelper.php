@@ -2799,13 +2799,16 @@ class ElasticsearchProxyHelper {
    * @param array $updates
    *   Key/value pairs for fields to change. Currently supports recorder_name,
    *   location_name, date and sref + sref_system.
+   * @param array $options
+   *   Key/value pairs for any options to pass through.
    *
    * @return array
    *   Response data containing information about affected records.
    */
-  private static function bulkEditIds($nid, array $ids, array $updates) {
+  private static function bulkEditIds($nid, array $ids, array $updates, array $options) {
     $response = self::bulkProcessIds($nid, $ids, 'bulk_edit', [
-      'updates' => json_encode($updates)
+      'updates' => json_encode($updates),
+      'options' => json_encode($options),
     ]);
     return json_decode($response, TRUE);
   }
@@ -2832,7 +2835,7 @@ class ElasticsearchProxyHelper {
         'message' => 'No Content',
       ];
     }
-    $response = self::bulkEditIds($nid, $batchInfo['ids'], $_POST['updates']);
+    $response = self::bulkEditIds($nid, $batchInfo['ids'], $_POST['updates'], $_POST['options'] ?? []);
     // Attach the search_after pagination info to the response.
     if ($response['code'] === 200 && !empty($batchInfo['search_after'])) {
       // Set pagination info, but not if empty array returned (which implies
@@ -2851,7 +2854,7 @@ class ElasticsearchProxyHelper {
    * @return array
    *   Response data containing information about affected records.
    */  private static function proxyBulkEditIds($nid) {
-    return self::bulkEditIds($nid, explode(',', $_POST['occurrence:ids']), $_POST['updates']);
+    return self::bulkEditIds($nid, explode(',', $_POST['occurrence:ids']), $_POST['updates'], $_POST['options'] ?? []);
   }
 
   /**

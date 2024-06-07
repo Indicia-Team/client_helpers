@@ -380,14 +380,19 @@ class ElasticsearchReportHelper {
       'restrictToOwnData',
     ], TRUE);
     helper_base::addLanguageStringsToJs('bulkEditor', [
+      'allowSampleSplitting' => 'Allow sample splitting?',
       'bulkEditorDialogMessageAll' => 'You are about to edit the entire list of {1} records.',
       'bulkEditorDialogMessageSelected' => 'You are about to edit {1} selected records.',
       'bulkEditProgress' => 'Edited {samples} samples and {occurrences} occurrences.',
       'cannotProceed' => 'Cannot proceed',
+      'confirm' => 'Confirm',
       'done' => 'Records successfully edited. They will now be processed so they are available with their new values shortly.',
       'error' => 'An error occurred whilst trying to edit the records.',
       'errorEditNotFilteredToCurrentUser' => 'The records cannot be edited because the current page is not filtered to limit the records to only your data.',
       'preparing' => 'Preparing to edit the records...',
+      'promptAllowSampleSplit' => '<p>The list of records to update contains occurrences which belong to samples that contain other occurrences which are not being updated. ' .
+        'For example, sample {1} contains an occurrence {2} which is being updated, but it also contains occurrence {3} which is not being updated.</p>' .
+        '<p>Please confirm that you would like to split the samples so that the data values for the list of records you are editing can be updated without affecting other occurrences in the same samples.</p>',
       'warningNoChanges' => 'Please define at least one field value that you would like to change when bulk editing the records.',
       'warningNothingToDo' => 'There are no selected records to edit.',
     ]);
