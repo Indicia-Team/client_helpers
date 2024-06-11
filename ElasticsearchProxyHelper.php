@@ -2853,7 +2853,8 @@ class ElasticsearchProxyHelper {
    *
    * @return array
    *   Response data containing information about affected records.
-   */  private static function proxyBulkEditIds($nid) {
+   */
+  private static function proxyBulkEditIds($nid) {
     return self::bulkEditIds($nid, explode(',', $_POST['occurrence:ids']), $_POST['updates'], $_POST['options'] ?? []);
   }
 
