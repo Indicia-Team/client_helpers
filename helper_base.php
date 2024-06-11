@@ -427,7 +427,10 @@ class helper_base {
    *
    * @var array
    */
-  public static $indiciaData = [];
+  public static $indiciaData = [
+    'lang' => [],
+    'templates' => [],
+  ];
 
   /**
    * Inline JavaScript to be added to the page.
@@ -729,9 +732,6 @@ class helper_base {
     $translations = [];
     foreach ($strings as $key => $text) {
       $translations[$key] = lang::get($text);
-    }
-    if (!isset(self::$indiciaData['lang'])) {
-      self::$indiciaData['lang'] = [];
     }
     self::$indiciaData['lang'][$group] = $translations;
   }
@@ -2389,13 +2389,13 @@ HTML;
     require_once 'prebuilt_forms/includes/language_utils.php';
     global $indicia_templates;
     // Add some useful templates.
-    self::$indiciaData['templates'] = [
+    self::$indiciaData['templates'] = array_merge([
       'warningBox' => $indicia_templates['warningBox'],
       'buttonDefaultClass' => $indicia_templates['buttonDefaultClass'],
       'buttonHighlightedClass' => $indicia_templates['buttonHighlightedClass'],
       'buttonSmallClass' => 'btn-xs',
       'jQueryValidateErrorClass' => $indicia_templates['error_class'],
-    ];
+    ], self::$indiciaData['templates']);
     self::$indiciaData['formControlClass'] = $indicia_templates['formControlClass'];
     self::$indiciaData['inlineErrorClass'] = $indicia_templates['error_class'];
     self::$indiciaData['dateFormat'] = self::$date_format;
