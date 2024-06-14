@@ -808,6 +808,7 @@ class helper_base {
    *   * jqplot_canvas_axis_label_renderer
    *   * jqplot_trendline
    *   * reportgrid
+   *   * freeformReport
    *   * tabs
    *   * wizardprogress
    *   * spatialReports
@@ -1087,6 +1088,11 @@ class helper_base {
           'deps' => ['jquery_ui', 'jquery_cookie'],
           'javascript' => [
             self::$js_path . 'jquery.reportgrid.js',
+          ]
+        ],
+        'freeformReport' => [
+          'javascript' => [
+            self::$js_path . 'jquery.freeformReport.js',
           ]
         ],
         'reportfilters' => [

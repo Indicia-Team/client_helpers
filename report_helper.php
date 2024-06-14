@@ -1667,56 +1667,69 @@ JS;
   }
 
  /**
-  * Outputs the content of a report using freeform text templates to create output as required,
-  * as opposed to the report_grid which forces a table based output. Has a header and footer
-  * plus any number of bands which are output once per row, or once each time a particular
-  * field value changes (i.e. acting as a header band).
+  * A flexible "freeform" report output control.
   *
-  * @param array $options Options array with the following possibilities:<ul>
-  * <li><b>mode</b><br/>
-  * Pass report to retrieve the underlying data from a report, or direct for an Indicia table or view. Default is report.</li>
-  * <li><b>readAuth</b><br/>
-  * Read authorisation tokens.</li>
-  * <li><b>dataSource</b><br/>
-  * Name of the report file or table/view(s) to retrieve underlying data.</li>
-  * <li><b>id</b><br/>
-  * CSS id to apply to the outer div. Default is banded-report-n where n is a unique number.</li>
-  * <li><b>class</b><br/>
-  * CSS class to apply to the outer div. Default is banded-report.</li>
-  * <li><b>reportGroup</b><br/>
-  * When joining multiple reports together, this can be used on a report that has autoParamsForm set to false to bind the report to the
-  * parameters form from a different report by giving both report controls the same reportGroup string. This will only work when all
-  * parameters required by this report are covered by the other report's parameters form.</li>
-  * <li><b>rememberParamsReportGroup</b><br/>
-  * Enter any value in this parameter to allow the report to save its parameters for the next time the report is loaded.
-  * The parameters are saved site wide, so if several reports share the same value and the same report group then the parameter
-  * settings will be shared across the reports even if they are on different pages of the site. For example if several reports on the
-  * site have an ownData boolean parameter which filters the data to the user's own data, this can be set so that the reports all
-  * share the setting. This functionality requires cookies to be enabled on the browser.</li>
-  * <li><b>header</b><br/>
-  * Text to output as the header of the report.</li>
-  * <li><b>footer</b><br/>
-  * Text to output as the footer of the report.</li>
-  * <li><b>bands</b><br/>
-  * Array of bands to output per row. Each band is itself an array, with at least an
-  * item called 'content' which contains an HTML template for the output of the band. The
-  * template can contain replacements for each field value in the row, e.g. the
-  * replacement {survey} is replaced with the value of the field called survey. In
-  * addition, the band array can contain a triggerFields element, which contains an
-  * array of the names of fields which act as triggers for the band to be output.
-  * The band will then only be output once at the beginning of the report, then once
-  * each time one of the named trigger fields' values change. Therefore when using
-  * trigger fields the band acts as a group header band.</li>
-  * <li><b>emptyText</b><br/>
-  * Text to output in the event of no data being available.</li>
-  * <li><b>sharing</b>
-  * Assuming the report has been written to take account of website sharing agreements, set this to define the task
-  * you are performing with the report and therefore the type of sharing to allow. Options are reporting (default),
-  * verification, moderation, peer_review, data_flow, editing, website (this website only) or me (my data only).</li>
-  * <li><b>UserId</b>
-  * If sharing=me, then this must contain the Indicia user ID of the user to return data for.
-  * </li>
-  * </ul>
+  * Outputs the content of a report using freeform text templates to create
+  * output as required, as opposed to the report_grid which forces a table
+  * based output. Has a header and footer plus any number of bands which are
+  * output once per row, or once each time a particular field value changes
+  * (i.e. acting as a header band).
+  *
+  * @param array $options
+  *   Options array with the following possibilities:
+  *   * *mode* - Pass 'report' to retrieve the underlying data from a report,
+  *     or 'direct' for an Indicia table or view. Default is report.
+  *   * *readAuth* - Read authorisation tokens.
+  *   * *dataSource* - Name of the report file or table/view(s) to retrieve
+  *     underlying data.
+  *   * *id* - CSS id to apply to the outer div. Default is banded-report-n
+  *     where n is a unique number.
+  *   * *class* - CSS class to apply to the outer div. Default is
+  *     banded-report.
+  *   * *ajax* - defaults to false. Set to TRUE to enable loading of data on
+  *     the client side using AJAX.
+  *   * *reportGroup* - When joining multiple reports together, this can be
+  *     used on a report that has autoParamsForm set to false to bind the
+  *     report to the parameters form from a different report by giving both
+  *     report controls the same reportGroup string. This will only work when
+  *     all parameters required by this report are covered by the other
+  *     report's parameters form.
+  *   * *rememberParamsReportGroup* - Enter any value in this parameter to
+  *     allow  the report to save its parameters for the next time the report
+  *     is loaded. The parameters are saved site wide, so if several reports
+  *     share the same value and the same report group then the parameter
+  *     settings will be shared across the reports even if they are on
+  *     different pages of the site. For example if several reports on the site
+  *     have an ownData boolean parameter which filters the data to the user's
+  *     own data, this can be set so that the reports all share the setting.
+  *     This functionality requires cookies to be enabled on the browser.
+  *   * *header* - Text to output as the header of the report.
+  *   * *footer* - Text to output as the footer of the report.
+  *   * *bands* - Array of bands to output per row. Each band is itself an
+  *     array, with at least an item called 'content' which contains an HTML
+  *     template for the output of the band. The template can contain
+  *     replacements for each field value in the row, e.g. the replacement
+  *     {survey} is replaced with the value of the field called survey. In
+  *     addition, the band array can contain a triggerFields element, which
+  *     contains an array of the names of fields which act as triggers for the
+  *     band to be output. The band will then only be output once at the
+  *     beginning of the report, then once each time one of the named trigger
+  *     fields' values change. Therefore when using trigger fields the band
+  *     acts as a group header band.
+  *   * *emptyText* - Text to output in the event of no data being available.
+  *   * *sharing* - Assuming the report has been written to take account of
+  *     website sharing agreements, set this to define the task you are
+  *     performing with the report and therefore the type of sharing to allow.
+  *     Options are reporting (default), verification, moderation, peer_review,
+  *     data_flow, editing, website (this website only) or me (my data only).
+  *   * *UserId* - If sharing=me, then this must contain the Indicia user ID of
+  *     the user to return data for.
+  *   * *customFieldFns* - works for AJAX mode only. An array of function names
+  *     which are added to `indiciaFns` by custom page JavaScript. Each
+  *     function takes the data for a row as a parameter and returns formatted
+  *     content. The formatted content will then be used to replace any tokens
+  *     in a band's content HTML template where the token is `{fn:name}`,
+  *     replacing name with the name of the function.
   */
   public static function freeform_report($options) {
     static $freeform_report_idx = 1;
@@ -1724,67 +1737,91 @@ JS;
       'id' => 'banded-report-' . $freeform_report_idx,
       'class' => 'banded-report',
       'emptyText' => '',
+      'ajax' => FALSE,
     ), $options);
     $freeform_report_idx++;
     if (empty($options['class']))
       // prevent default report grid classes as this is not a grid
       $options['class'] = 'banded-report';
     $options = self::getReportGridOptions($options);
-    self::request_report($response, $options, $currentParamValues, false);
-    if (isset($response['error'])) return $response['error'];
-    $r = self::paramsFormIfRequired($response, $options, $currentParamValues);
-    // return the params form, if that is all that is being requested, or the parameters are not complete.
-    if ($options['paramsOnly'] || !isset($response['records'])) return $r;
-    $records = $response['records'];
-
-    $options = array_merge(array(
-      'header' => '',
-      'footer' => '',
-      'bands' => []
-    ), $options);
-
-    if (!isset($records) || count($records)===0) {
-      return $r . $options['emptyText'];
+    if ($options['ajax']) {
+      self::add_resource('freeformReport');
+      if (!isset(self::$indiciaData['freeformReports'])) {
+        self::$indiciaData['freeformReports'] = [];
+      }
+      self::$indiciaData['freeformReports'][$options['id']] = [
+        'id' => $options['id'],
+        'dataSource' => $options['dataSource'],
+        'bands' => $options['bands'],
+        'extraParams' => $options['extraParams'] ?? [],
+        'customFieldFns' => $options['customFieldFns'] ?? [],
+      ];
+      return <<<HTML
+        <div id="$options[id]" class="$options[class]">
+          $options[header]
+          <a class="freeform-row-placeholder"></a>
+          $options[footer]
+        </div>
+HTML;
     }
-    // add a header
-    $r .= "<div id=\"$options[id]\" class=\"$options[class]\">$options[header]";
-    $rootFolder = self::getRootfolder(true);
-    $sep = strpos($rootFolder, '?')===FALSE ? '?' : '&';
-    // output each row
-    foreach ($records as $row) {
-      // add some extra replacements for handling links
-      $row['rootFolder'] = $rootFolder;
-      $row['sep'] = $sep;
-      // for each row, check through the list of report bands
-      foreach ($options['bands'] as &$band) {
-        // default is to output a band
-        $outputBand = true;
-        // if the band has fields which trigger it to be output when they change value between rows,
-        // we need to check for changes to see if the band is to be output
-        if (isset($band['triggerFields'])) {
-          $outputBand = false;
-          // Make sure we have somewhere to store the current field values for checking against
-          if (!isset($band['triggerValues']))
-            $band['triggerValues']=[];
-          // look for changes in each trigger field
-          foreach ($band['triggerFields'] as $triggerField) {
-            if (!isset($band['triggerValues'][$triggerField]) || $band['triggerValues'][$triggerField]!=$row[$triggerField])
-              // one of the trigger fields has changed value, so it means the band gets output
-              $outputBand=true;
-            // store the last value to compare against next time
-            $band['triggerValues'][$triggerField] = $row[$triggerField];
+    else {
+      self::request_report($response, $options, $currentParamValues, false);
+      if (isset($response['error'])) return $response['error'];
+      $r = self::paramsFormIfRequired($response, $options, $currentParamValues);
+      // return the params form, if that is all that is being requested, or the parameters are not complete.
+      if ($options['paramsOnly'] || !isset($response['records'])) return $r;
+      $records = $response['records'];
+
+      $options = array_merge(array(
+        'header' => '',
+        'footer' => '',
+        'bands' => []
+      ), $options);
+
+      if (!isset($records) || count($records)===0) {
+        return $r . $options['emptyText'];
+      }
+      // add a header
+      $r .= "<div id=\"$options[id]\" class=\"$options[class]\">$options[header]";
+      $rootFolder = self::getRootfolder(true);
+      $sep = strpos($rootFolder, '?')===FALSE ? '?' : '&';
+      // output each row
+      foreach ($records as $row) {
+        // Add some extra replacements for handling links.
+        $row['rootFolder'] = $rootFolder;
+        $row['sep'] = $sep;
+        // For each row, check through the list of report bands.
+        foreach ($options['bands'] as &$band) {
+          // default is to output a band
+          $outputBand = true;
+          // if the band has fields which trigger it to be output when they change value between rows,
+          // we need to check for changes to see if the band is to be output
+          if (isset($band['triggerFields'])) {
+            $outputBand = false;
+            // Make sure we have somewhere to store the current field values for checking against
+            if (!isset($band['triggerValues'])) {
+              $band['triggerValues'] = [];
+            }
+            // look for changes in each trigger field
+            foreach ($band['triggerFields'] as $triggerField) {
+              if (!isset($band['triggerValues'][$triggerField]) || $band['triggerValues'][$triggerField]!=$row[$triggerField])
+                // one of the trigger fields has changed value, so it means the band gets output
+                $outputBand=true;
+              // store the last value to compare against next time
+              $band['triggerValues'][$triggerField] = $row[$triggerField];
+            }
+          }
+          // output the band only if it has been triggered, or has no trigger fields specified.
+          if ($outputBand) {
+            $row['imageFolder'] = self::get_uploaded_image_folder();
+            $r .= self::apply_replacements_to_template($band['content'], $row);
           }
         }
-        // output the band only if it has been triggered, or has no trigger fields specified.
-        if ($outputBand) {
-          $row['imageFolder'] = self::get_uploaded_image_folder();
-          $r .= self::apply_replacements_to_template($band['content'], $row);
-        }
       }
+      // add a footer
+      $r .= $options['footer'].'</div>';
+      return $r;
     }
-    // add a footer
-    $r .= $options['footer'].'</div>';
-    return $r;
   }
 
  /**
@@ -3039,7 +3076,7 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue, removeparam) {
       ($options['includeWeekNumber'] ?
         '<th class="' . $thClass . '" colspan=2>' . lang::get('Week Number') . '</th><th class="' . $thClass . '" colspan=4></th>' :
         '<th class="' . $thClass . '" colspan=5></th>');
-    
+
     $baseTheme = hostsite_get_config_value('iform.settings', 'base_theme', 'generic');
     $reloadURL = $pageUrl . $pageUrlParams['year']['name']."=";
     $firstYear = (!empty($options["first_year"]) && $options["year"] >= $options["first_year"] ? $options["first_year"] : $options["year"]);
@@ -3072,7 +3109,7 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue, removeparam) {
         '</div>' .
         '</div>' . PHP_EOL;
     }
-    
+
     global $indicia_templates;
     $r .= '<th class="' . $thClass . '" colspan=3 class="year-picker">';
     $indicia_templates['rcg_controlWrap'] = $template;
@@ -3105,7 +3142,7 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue, removeparam) {
     }
     $r .= '</th>';
     $r .= "</tr></thead>\n";
-    
+
     // don't need a separate "Add survey" button as they just need to click the day....
     // Not implementing a download.
     $r .= "<tbody>\n";
@@ -3291,7 +3328,7 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue, removeparam) {
     } else {
       $baseTheme = 'generic';
     }
-      
+
     $userId = hostsite_get_user_field('id');
     $options = array_merge([
       'mode' => 'report',
@@ -5030,7 +5067,7 @@ $('#year-control-next').attr('href',rebuild_page_url(pageURI,'year',".$options['
     $opts = ["seriesDefaults:{\n" . (isset($renderer) ? "  renderer:$renderer,\n" : '') .
                 " rendererOptions:" . json_encode($options['rendererOptions']) . "}"];
     $seriesToDisplay = (isset($options['outputSeries']) ? explode(',', $options['outputSeries']) : (empty($options['includeChartTotalSeries']) ? 'all' : ['0']));
-    $summaryTab = 
+    $summaryTab =
               '<div><a class="btn btn-small btn-info" onClick="indiciaData.copyClipboard(\'' . $options['tableID'] . '-summary\');">' .
                 lang::get('Copy summary table to clipboard') . '</a></div>' .
               '<table id="'.$options['tableID'].'-summary" class="'.$options['tableClass'].'">' .
@@ -5068,7 +5105,7 @@ $('#year-control-next').attr('href',rebuild_page_url(pageURI,'year',".$options['
                 '<tbody>';
     $summaryDataDownloadGrid .= lang::get('Week') . ',' . $downloadNumberHeaderRow . ',' . lang::get('Total') . "\n" .
                                 lang::get('Date') . ',' . $downloadDateHeaderRow . ",\n";
-    $estimateDataDownloadGrid .= lang::get('Week') . ',' . $downloadNumberHeaderRow . ',' . 
+    $estimateDataDownloadGrid .= lang::get('Week') . ',' . $downloadNumberHeaderRow . ',' .
                                 ($inSeason ? lang::get('In-season estimates total') . ',' : '') .
                                 lang::get('Estimates Total') . "\n" .
                                 lang::get('Date') . ',' . $downloadDateHeaderRow . ($inSeason ? ',' : '') . ",\n";
@@ -5547,10 +5584,10 @@ $('#rawData .sample-datarow').eq(sampleDatarows-1).addClass('last-sample-datarow
 
   /**
    * Override the type of taxon label for some EBMS schemes
-   * 
+   *
    * EBMS ONLY. If user is member of scheme that specifies it should use common names
    * then override the taxon names to use common names in the specified language.
-   * 
+   *
    * @param array $readAuth Authorisation tokens.
    * @param array $records Records for report to display.
    * @param array $taxonColumnOverrides Configuration for which EBMS schemes should show
@@ -5596,7 +5633,7 @@ $('#rawData .sample-datarow').eq(sampleDatarows-1).addClass('last-sample-datarow
         }
         // Now simply ovewrite the names in the report
         foreach ($records as $recordIdx => $record) {
-          $records[$recordIdx]['preferred_taxon'] = $meaningsWithLangCommonNames[$record['taxon_meaning_id']]; 
+          $records[$recordIdx]['preferred_taxon'] = $meaningsWithLangCommonNames[$record['taxon_meaning_id']];
           $records[$recordIdx]['default_common_name'] = $meaningsWithLangCommonNames[$record['taxon_meaning_id']];
         }
       }
