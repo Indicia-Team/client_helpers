@@ -52,7 +52,7 @@ class iform_group_locations {
       [
         'name' => 'edit_location_path',
         'caption' => 'Path to edit location page',
-        'description' => 'Path to a page allowing locations to be edited and created. Should be a page built using the Dynamic Locaiton prebuilt form.',
+        'description' => 'Path to a page allowing locations to be edited and created. Should be a page built using the Dynamic Location prebuilt form.',
         'type' => 'string',
         'required' => FALSE,
       ],

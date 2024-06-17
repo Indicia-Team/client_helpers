@@ -297,8 +297,8 @@ class iform_report_calendar_grid {
         self::$SurveyKey => array('name' => self::$SurveyKey,'value' => ''),
         self::$URLExtensionKey => array('name' => self::$URLExtensionKey,'value' => '')
       );
-      if (isset($_COOKIE['providedParams']) && !empty($args['remember_params_report_group'])) {
-        $cookieData = json_decode($_COOKIE['providedParams'], TRUE);
+      if (hostsite_get_cookie('providedParams') && !empty($args['remember_params_report_group'])) {
+        $cookieData = json_decode(hostsite_get_cookie('providedParams'), TRUE);
         // guard against a corrupt cookie
         if (is_array($cookieData) && !empty($cookieData[$args['remember_params_report_group']])) {
           $cookieParams = $cookieData[$args['remember_params_report_group']];
@@ -408,6 +408,12 @@ jQuery('#".$ctrlid."').change(function(){
     }
     elseif (!empty($presets['location_type_id'])) {
       $params['location_type_id'] = $presets['location_type_id'];
+    }
+    // There should only be one (or none)
+    if (!empty($presets['locattrs'])) {
+      $params['allocation_attribute_id'] = $presets['locattrs'];
+    } else {
+      $params['allocation_attribute_caption'] = 'CMS User ID';
     }
     $locationList = report_helper::get_report_data([
       'dataSource' => $args['location_selector_report_name'],

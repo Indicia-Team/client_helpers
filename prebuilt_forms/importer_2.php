@@ -133,7 +133,7 @@ sample:privacy_precision
 sample:record_status
 sample:sensitivity_precision
 TXT;
-    return [
+    $params = [
       [
         'name' => 'fixedValues',
         'caption' => 'Fixed values',
@@ -176,7 +176,7 @@ TXT;
       [
         'name' => 'fileSelectFormIntro',
         'caption' => 'File select form introduction',
-        'category' => 'Instruction texts',
+        'group' => 'Instruction texts',
         'type' => 'textarea',
         'default' => $default_terms['import2fileSelectFormIntro'],
         'required' => FALSE,
@@ -184,7 +184,7 @@ TXT;
       [
         'name' => 'globalValuesFormIntro',
         'caption' => 'Global values form introduction',
-        'category' => 'Instruction texts',
+        'group' => 'Instruction texts',
         'type' => 'textarea',
         'default' => $default_terms['import2globalValuesFormIntro'],
         'required' => FALSE,
@@ -192,7 +192,7 @@ TXT;
       [
         'name' => 'mappingsFormIntro',
         'caption' => 'Mappings form introduction',
-        'category' => 'Instruction texts',
+        'group' => 'Instruction texts',
         'type' => 'textarea',
         'default' => $default_terms['import2mappingsFormIntro'],
         'required' => FALSE,
@@ -200,7 +200,7 @@ TXT;
       [
         'name' => 'lookupMatchingFormIntro',
         'caption' => 'Mappings form introduction',
-        'category' => 'Instruction texts',
+        'group' => 'Instruction texts',
         'type' => 'textarea',
         'default' => $default_terms['import2lookupMatchingFormIntro'],
         'required' => FALSE,
@@ -208,7 +208,7 @@ TXT;
       [
         'name' => 'preprocessPageIntro',
         'caption' => 'Validation form introduction',
-        'category' => 'Instruction texts',
+        'group' => 'Instruction texts',
         'type' => 'textarea',
         'default' => $default_terms['import2preprocessPageIntro'],
         'required' => FALSE,
@@ -216,7 +216,7 @@ TXT;
       [
         'name' => 'summaryPageIntro',
         'caption' => 'Summary page introduction',
-        'category' => 'Instruction texts',
+        'group' => 'Instruction texts',
         'type' => 'textarea',
         'default' => $default_terms['import2summaryPageIntro'],
         'required' => FALSE,
@@ -224,7 +224,7 @@ TXT;
       [
         'name' => 'doImportPageIntro',
         'caption' => 'Process the import page introduction',
-        'category' => 'Instruction texts',
+        'group' => 'Instruction texts',
         'type' => 'textarea',
         'default' => $default_terms['import2doImportPageIntro'],
         'required' => FALSE,
@@ -232,12 +232,43 @@ TXT;
       [
         'name' => 'requiredFieldsIntro',
         'caption' => 'Required fields introduction',
-        'category' => 'Instruction texts',
+        'group' => 'Instruction texts',
         'type' => 'textarea',
         'default' => $default_terms['import2requiredFieldsIntro'],
         'required' => FALSE,
       ],
     ];
+    // Dynamically add any warehouse import plugins as options.
+    $connection = iform_get_connection_details();
+    $requestParams = helper_base::get_read_auth($connection['website_id'], $connection['password']);
+    $requestParams['entity'] = 'occurrence';
+    $request = helper_base::$base_url . 'index.php/services/import_2/get_plugins?' . http_build_query($requestParams);
+    $pluginsResponse = helper_base::http_post($request);
+    if (isset($pluginsResponse['output'])) {
+      $plugins = json_decode($pluginsResponse['output'], TRUE);
+      if (count($plugins) > 0) {
+        // Add a checkbox plus a parameters input for each.
+        foreach ($plugins as $name => $description) {
+          $pluginLabel = preg_replace('/(?<!\ )[A-Z]/', ' $0', $name);
+          $params[] = [
+            'name' => "plugin-$name",
+            'caption' => "Enable plugin <em>$pluginLabel</em>",
+            'description' => $description,
+            'type' => 'checkbox',
+            'required' => FALSE,
+          ];
+          $params[] = [
+            'name' => "pluginparams-$name",
+            'caption' => "Parameters for plugin <em>$pluginLabel</em>",
+            'description' => 'Comma separated list of parameters for the plugin.',
+            'type' => 'text_input',
+            'required' => FALSE,
+          ];
+        }
+      }
+    }
+
+    return $params;
   }
 
   /**
@@ -386,10 +417,20 @@ TXT;
   public static function ajax_init_server_config($website_id, $password, $nid) {
     $writeAuth = self::getAuthFromHeaders();
     iform_load_helpers(['import_helper_2']);
+    // Pass the settings for enabled plugins and params.
+    $plugins = [];
+    $nodeParams = hostsite_get_node_field_value($nid, 'params');
+    foreach ($nodeParams as $param => $value) {
+      if (substr($param, 0, 7) === 'plugin-' && $value === '1') {
+        $paramCsv = $nodeParams['pluginparams-' . substr($param, 7)];
+        $plugins[substr($param, 7)] = empty($paramCsv) ? [] : explode(',', $paramCsv);
+      }
+    }
     return import_helper_2::initServerConfig(
       $_GET['data-file'],
       isset($_GET['import_template_id']) ? $_GET['import_template_id'] : NULL,
-      $writeAuth
+      $writeAuth,
+      $plugins
     );
   }
 

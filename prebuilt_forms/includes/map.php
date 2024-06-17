@@ -179,9 +179,12 @@ function iform_map_get_map_parameters() {
     array(
       'name' => 'standard_controls',
       'caption' => 'Controls to add to map',
-      'description' => 'List of map controls, one per line. Select from layerSwitcher, zoomBox, panZoom, panZoomBar, drawPolygon, drawPoint, drawLine, '.
-         'hoverFeatureHighlight, clearEditLayer, modifyFeature, graticule, fullscreen. If using a data entry form and you add drawPolygon or drawLine controls then your '.
-         'form will support recording against polygons and lines as well as grid references and points.',
+      'description' => 'List of map controls, one per line. Select from layerSwitcher, zoom (+/- buttons), zoomBox ' .
+         '(shift drag to zoom), panZoom (pan and zoom using buttons), panZoomBar (pan and zoom using buttons with a ' .
+         'zoom level slider), drawPolygon, drawPoint, drawLine, hoverFeatureHighlight, clearEditLayer, ' .
+         'modifyFeature, graticule (grid square lines), fullscreen (button for showing the map in fullscreen mode). ' .
+         'If using a data entry form and you add drawPolygon or drawLine controls then your form will support ' .
+         'recording against polygons and lines as well as grid references and points.',
       'type' => 'textarea',
       'group' => 'Other Map Settings',
       'required' => FALSE,

@@ -157,7 +157,7 @@ class iform_group_admin {
     // Only allow removal of users if page is configured to allow this.
     if (isset($args['allow_remove']) && $args['allow_remove'] == true)
       $actions[] = array(
-        'caption' => 'Remove from group',
+        'caption' => lang::get('Remove from group'),
         'javascript' => 'removeMember({groups_user_id},\'{name}\');',
       );
     // Allow change of user access level page setup to allow this.

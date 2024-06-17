@@ -313,7 +313,7 @@ class submission_builder {
       $sa['fields']['training'] = ['value' => 'on'];
     }
     // UseLocationName is a special flag to indicate that an unmatched location
-    // can go in the locaiton_name field.
+    // can go in the location_name field.
     if (isset($array['useLocationName'])) {
       if ($entity === 'sample') {
         if ((empty($sa['fields']['location_id']) || empty($sa['fields']['location_id']['value']))

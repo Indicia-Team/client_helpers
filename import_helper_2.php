@@ -243,15 +243,18 @@ class import_helper_2 extends helper_base {
    *   Template ID if one was selected.
    * @param array $writeAuth
    *   Write authorisation tokens.
+   * @param array $plugins
+   *   List of enabled plugins as keys, with parameter arrays as values.
    *
    * @return array
    *   Output of the web service request.
    */
-  public static function initServerConfig($fileName, $importTemplateId, array $writeAuth) {
+  public static function initServerConfig($fileName, $importTemplateId, array $writeAuth, array $plugins = []) {
     $serviceUrl = self ::$base_url . 'index.php/services/import_2/init_server_config';
     $data = $writeAuth + [
       'data-file' => $fileName,
       'import_template_id' => $importTemplateId,
+      'plugins' => json_encode($plugins),
     ];
     $response = self::http_post($serviceUrl, $data, FALSE);
     $output = json_decode($response['output'], TRUE);
@@ -530,7 +533,7 @@ HTML;
       'value' => lang::get('Value'),
     ];
     $template = self::loadSelectedTemplate($options);
-    if ($template && !empty($template['global_values'])) {
+    if (!empty($template) && !empty($template['global_values'])) {
       // Merge the template global values into the configuration's fixed
       // values.
       $globalValuesFromTemplate = json_decode($template['global_values'], TRUE);
@@ -769,9 +772,10 @@ HTML;
       'incompleteFieldGroupSelected' => 'You have selected a mapping for the following field(s): {1}',
       'suggestions' => 'Suggestions',
     ]);
+    $fileName = $_POST['data-file'];
     // Load the config for this import.
     $request = parent::$base_url . "index.php/services/import_2/get_config";
-    $request .= '?' . http_build_query($options['readAuth'] + ['data-file' => $_POST['data-file']]);
+    $request .= '?' . http_build_query($options['readAuth'] + ['data-file' => $fileName]);
 
     $response = self::http_post($request, []);
     $config = json_decode($response['output'], TRUE);
@@ -783,9 +787,9 @@ HTML;
       throw new Exception('Service call to get_config failed.');
     }
     self::$indiciaData['globalValues'] = $globalValues;
-    $availableFields = self::getAvailableDbFields($options, $globalValues);
+    $availableFields = self::getAvailableDbFields($options, $fileName, $globalValues);
     self::hideCoreFieldsIfReplaced($options, $globalValues['survey_id'], $availableFields);
-    $requiredFields = self::getAvailableDbFields($options, $globalValues, TRUE);
+    $requiredFields = self::getAvailableDbFields($options, $fileName, $globalValues, TRUE);
     // Only include required fields that are available for selection. Others
     // get populated by some other means.
     $requiredFields = array_intersect_key($requiredFields, $availableFields);
@@ -1172,6 +1176,7 @@ HTML;
    */
   private static function preprocessPage($options) {
     self::addLanguageStringsToJs('import_helper_2', [
+      'downloadPreprocessingErrorsExplanationsFile' => 'Download preprocessing errors explanations',
       'importCannotProceed' => 'The import cannot proceed due to problems found in the data:',
       'preprocessingError' => 'Preprocessing error',
       'preprocessingErrorInfo' => 'An error occurred on the server whilst preprocessing your data:',
@@ -1300,15 +1305,16 @@ HTML;
       'title' => lang::get('Import summary'),
       'value' => lang::get('Value'),
     ];
+    $fileName = $_POST['data-file'];
     $request = parent::$base_url . "index.php/services/import_2/get_config";
-    $request .= '?' . http_build_query($options['readAuth'] + ['data-file' => $_POST['data-file']]);
+    $request .= '?' . http_build_query($options['readAuth'] + ['data-file' => $fileName]);
     $response = self::http_post($request, []);
     $config = json_decode($response['output'], TRUE);
     if (!is_array($config)) {
       throw new Exception('Service call to get_config failed.');
     }
     $ext = pathinfo($config['fileName'], PATHINFO_EXTENSION);
-    $availableFields = self::getAvailableDbFields($options, $config['global-values']);
+    $availableFields = self::getAvailableDbFields($options, $fileName, $config['global-values']);
     $mappingRows = [];
     $existingMatchFields = [];
     foreach ($config['columns'] as $columnLabel => $info) {
@@ -1471,11 +1477,11 @@ HTML;
     ]);
     $lang = [
       'checkingData' => lang::get('Checking data'),
+      'importAnother' => lang::get('Import another file'),
       'importingDone' => lang::get('Import complete'),
       'importingTitle' => lang::get('Importing the data...'),
       'precheckDone' => 'Checking complete',
       'precheckTitle' => 'Checking the import data for validation errors...',
-      'precheckDone' => 'Checking complete',
       'specifyUniqueTemplateName' => 'Please specify a unique name for the import template',
     ];
     self::$indiciaData['readyToImport'] = TRUE;
@@ -1487,6 +1493,8 @@ HTML;
       // Force a cache reload so the new template is instantly available.
       self::clearTemplateCache($options);
     }
+    $urlInfo = self::get_reload_link_parts();
+    $restartUrl = $urlInfo['path'] . '?' . self::array_to_query_string($urlInfo['params']);
     return <<<HTML
 <h3 id="current-task">$lang[checkingData]</h3>
 <progress id="file-progress" class="progress" value="0" max="100"></progress>
@@ -1501,6 +1509,7 @@ HTML;
     <p id="import-details-importing-title" style="display: none">$lang[importingTitle]</p>
     <p id="import-details-importing-details" style="display: none"></p>
     <p id="import-details-importing-done" style="display: none"><i class="fas fa-check"></i>$lang[importingDone]</p>
+    <p id="import-details-import-another" style="display: none"><a href="$restartUrl" class="btn btn-primary">$lang[importAnother]</a></p>
   </div>
 </div>
 <div class="alert alert-danger clearfix" id="error-info" style="display: none">
@@ -1593,6 +1602,8 @@ HTML;
    *
    * @param array $options
    *   Options array for the control.
+   * @param string $fileName
+   *   Import file name, allows the server to lookup config.
    * @param array $globalValues
    *   Values that apply to every import row, including website_id and
    *   survey__id where available.
@@ -1602,7 +1613,7 @@ HTML;
    * @return array
    *   Associated array with key/value pairs of field names and captions.
    */
-  private static function getAvailableDbFields(array $options, array $globalValues, $requiredOnly = FALSE) {
+  private static function getAvailableDbFields(array $options, $fileName, array $globalValues, $requiredOnly = FALSE) {
     $url = "index.php/services/import_2/get_fields/$options[entity]";
     $get = array_merge($options['readAuth']);
     // Include survey and website information in the request if available, as
@@ -1631,7 +1642,7 @@ HTML;
     if ($requiredOnly) {
       $get['required'] = 'true';
     }
-    $r = self::getCachedGenericCall($url, $get, [], [
+    $r = self::getCachedGenericCall($url, $get, ['data-file' => $fileName], [
       'caching' => TRUE,
       'cachePerUser' => FALSE,
     ]);
@@ -1702,7 +1713,7 @@ HTML;
         throw new Exception('Failed to load selected template');
       }
     }
-    return NULL;
+    return [];
   }
 
 }

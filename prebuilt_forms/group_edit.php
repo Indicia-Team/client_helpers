@@ -574,7 +574,7 @@ $('#entry_form').submit(function() {
       "</button>\n";
       $r .= "<p><em><small>" . $groupDeletionHelpText . "</small></em></p>\n";
       data_entry_helper::$javascript .= "$('#delete-button').click(function(e) {
-        if (!confirm(\"Are you sure you want to delete this group?\")) {
+        if (!confirm(\"" . lang::get('Are you sure you want to delete this {1}?', self::$groupType) . "\")) {
           e.preventDefault();
           return false;
         }

@@ -427,7 +427,10 @@ class helper_base {
    *
    * @var array
    */
-  public static $indiciaData = [];
+  public static $indiciaData = [
+    'lang' => [],
+    'templates' => [],
+  ];
 
   /**
    * Inline JavaScript to be added to the page.
@@ -730,9 +733,6 @@ class helper_base {
     foreach ($strings as $key => $text) {
       $translations[$key] = lang::get($text);
     }
-    if (!isset(self::$indiciaData['lang'])) {
-      self::$indiciaData['lang'] = [];
-    }
     self::$indiciaData['lang'][$group] = $translations;
   }
 
@@ -808,6 +808,7 @@ class helper_base {
    *   * jqplot_canvas_axis_label_renderer
    *   * jqplot_trendline
    *   * reportgrid
+   *   * freeformReport
    *   * tabs
    *   * wizardprogress
    *   * spatialReports
@@ -1089,6 +1090,11 @@ class helper_base {
             self::$js_path . 'jquery.reportgrid.js',
           ]
         ],
+        'freeformReport' => [
+          'javascript' => [
+            self::$js_path . 'jquery.freeformReport.js',
+          ]
+        ],
         'reportfilters' => [
           'deps' => ['reportgrid'],
           'stylesheets' => [self::$css_path . 'report-filters.css'],
@@ -1225,9 +1231,11 @@ class helper_base {
             self::$js_path . 'indicia.datacomponents/idc.pager.js',
             self::$js_path . 'indicia.datacomponents/jquery.idc.customScript.js',
             self::$js_path . 'indicia.datacomponents/jquery.idc.runCustomVerificationRulesets.js',
+            self::$js_path . 'indicia.datacomponents/jquery.idc.bulkEditor.js',
             self::$js_path . 'indicia.datacomponents/jquery.idc.cardGallery.js',
             self::$js_path . 'indicia.datacomponents/jquery.idc.dataGrid.js',
             self::$js_path . 'indicia.datacomponents/jquery.idc.esDownload.js',
+            self::$js_path . 'indicia.datacomponents/jquery.idc.gridSquareOpacityScale.js',
             self::$js_path . 'indicia.datacomponents/jquery.idc.leafletMap.js',
             self::$js_path . 'indicia.datacomponents/jquery.idc.recordsMover.js',
             self::$js_path . 'indicia.datacomponents/jquery.idc.recordDetailsPane.js',
@@ -1235,6 +1243,7 @@ class helper_base {
             self::$js_path . 'indicia.datacomponents/jquery.idc.verificationButtons.js',
             self::$js_path . 'indicia.datacomponents/jquery.idc.filterSummary.js',
             self::$js_path . 'indicia.datacomponents/jquery.idc.permissionFilters.js',
+            self::$js_path . 'proj4js.js',
             'https://unpkg.com/@ungap/url-search-params',
           ],
         ],
@@ -1254,7 +1263,7 @@ class helper_base {
             'leaflet',
           ],
           'stylesheets' => [
-            'https://cdn.jsdelivr.net/gh/biologicalrecordscentre/brc-atlas@0.25.1/dist/brcatlas.umd.css',
+            'https://cdn.jsdelivr.net/gh/biologicalrecordscentre/brc-atlas@0.25.1/dist/brcatlas.umd.min.css',
           ],
           'javascript' => [
             'https://cdn.jsdelivr.net/gh/biologicalrecordscentre/brc-atlas@0.25.1/dist/brcatlas.umd.min.js',
@@ -1265,10 +1274,10 @@ class helper_base {
             'd3',
           ],
           'stylesheets' => [
-            'https://cdn.jsdelivr.net/gh/biologicalrecordscentre/brc-charts@0.15.0/dist/brccharts.umd.css',
+            'https://cdn.jsdelivr.net/gh/biologicalrecordscentre/brc-charts/dist/brccharts.umd.min.css',
           ],
           'javascript' => [
-            'https://cdn.jsdelivr.net/gh/biologicalrecordscentre/brc-charts@0.15.0/dist/brccharts.umd.min.js',
+            'https://cdn.jsdelivr.net/gh/biologicalrecordscentre/brc-charts/dist/brccharts.umd.min.js',
           ],
         ],
         'd3' => [
@@ -2020,6 +2029,7 @@ HTML;
           array_push($replaceTags, '{' . $param . '-escape-dblquote}');
           array_push($replaceTags, '{' . $param . '-escape-htmlquote}');
           array_push($replaceTags, '{' . $param . '-escape-htmldblquote}');
+          array_push($replaceTags, '{' . $param . '-escape-urlpath}');
         }
         // Allow sep to have <br/>.
         $value = ($param == 'sep' || $allowHtml) ? $value : htmlspecialchars($value ?? '', ENT_QUOTES, "UTF-8");
@@ -2033,6 +2043,7 @@ HTML;
           array_push($replaceValues, str_replace('"', '\"', $value ?? ''));
           array_push($replaceValues, str_replace("'", "&#39;", $value ?? ''));
           array_push($replaceValues, str_replace('"', '&quot;', $value ?? ''));
+          array_push($replaceValues, trim(preg_replace('/[^a-z0-9\-]/', '', str_replace(' ', '-', strtolower($value ?? ''))), '-'));
         }
       }
     }
@@ -2384,13 +2395,13 @@ HTML;
     require_once 'prebuilt_forms/includes/language_utils.php';
     global $indicia_templates;
     // Add some useful templates.
-    self::$indiciaData['templates'] = [
+    self::$indiciaData['templates'] = array_merge([
       'warningBox' => $indicia_templates['warningBox'],
       'buttonDefaultClass' => $indicia_templates['buttonDefaultClass'],
       'buttonHighlightedClass' => $indicia_templates['buttonHighlightedClass'],
       'buttonSmallClass' => 'btn-xs',
       'jQueryValidateErrorClass' => $indicia_templates['error_class'],
-    ];
+    ], self::$indiciaData['templates']);
     self::$indiciaData['formControlClass'] = $indicia_templates['formControlClass'];
     self::$indiciaData['inlineErrorClass'] = $indicia_templates['error_class'];
     self::$indiciaData['dateFormat'] = self::$date_format;
