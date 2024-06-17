@@ -1263,7 +1263,7 @@ class helper_base {
             'leaflet',
           ],
           'stylesheets' => [
-            'https://cdn.jsdelivr.net/gh/biologicalrecordscentre/brc-atlas@0.25.1/dist/brcatlas.umd.css',
+            'https://cdn.jsdelivr.net/gh/biologicalrecordscentre/brc-atlas@0.25.1/dist/brcatlas.umd.min.css',
           ],
           'javascript' => [
             'https://cdn.jsdelivr.net/gh/biologicalrecordscentre/brc-atlas@0.25.1/dist/brcatlas.umd.min.js',
@@ -1274,10 +1274,10 @@ class helper_base {
             'd3',
           ],
           'stylesheets' => [
-            'https://cdn.jsdelivr.net/gh/biologicalrecordscentre/brc-charts/dist/brccharts.umd.css',
+            'https://cdn.jsdelivr.net/gh/biologicalrecordscentre/brc-charts/dist/brccharts.umd.min.css',
           ],
           'javascript' => [
-            'https://cdn.jsdelivr.net/gh/biologicalrecordscentre/brc-charts/dist/brccharts.umd.js',
+            'https://cdn.jsdelivr.net/gh/biologicalrecordscentre/brc-charts/dist/brccharts.umd.min.js',
           ],
         ],
         'd3' => [
