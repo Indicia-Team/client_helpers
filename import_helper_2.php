@@ -768,7 +768,8 @@ HTML;
       'title' => lang::get('Map import columns to destination database fields'),
     ];
     self::addLanguageStringsToJs('import_helper_2', [
-      'incompleteFieldGroupRequired' => 'In order to complete the group of related fields, please also map the following: {2}',
+      'fieldSelectionConflict' => 'You have selected the following fields which conflict, please only select one: {1}',
+      'incompleteFieldGroupRequired' => 'In order to complete the group of related fields, please also map the following: {1}',
       'incompleteFieldGroupSelected' => 'You have selected a mapping for the following field(s): {1}',
       'suggestions' => 'Suggestions',
     ]);
@@ -859,7 +860,7 @@ HTML;
           <p>$lang[requiredFieldsInstructions]</p>
           <ul>
           </ul>
-          <p class="alert alert-info" id="required-messages" style="display: none"></p>
+          <p class="alert alert-info" id="selected-field-messages" style="display: none"></p>
         </div>
       </div>
     </div>
