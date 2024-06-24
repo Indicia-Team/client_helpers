@@ -3612,8 +3612,6 @@ RIJS;
   *     row on the species grid. Comma separated list of column titles,
   *     non-case or white space sensitive. Any unrecognised columns are ignored
   *     and the images column cannot be copied.
-  *   * **sticky** - Optional, defaults to true. Enables sticky table headers
-  *     if supported by the host site (e.g. Drupal).
   *   * **numValues** - Optional. Number of requested values in the species
   *     autocomplete drop down list. Defaults to 20. Note that, because items
   *     with matching taxon_meaning are filtered out by the parse function in
@@ -3678,12 +3676,6 @@ RIJS;
     $classlist = ['ui-widget', 'ui-widget-content', 'species-grid'];
     if (!empty($options['class'])) {
       $classlist[] = $options['class'];
-    }
-    if ($options['sticky']) {
-      $stickyHeaderClass = self::addStickyHeaders($options);
-      if (!empty($stickyHeaderClass)) {
-        $classlist[] = $stickyHeaderClass;
-      }
     }
     if ($options['subSamplePerRow']) {
       // we'll track 1 sample per grid row.
@@ -4744,17 +4736,6 @@ JS;
   }
 
   /**
-   * Add sticky table headers, if supported by the host site. Returns the class to add to the table.
-   */
-  private static function addStickyHeaders($options) {
-    if (function_exists('drupal_add_js')) {
-      drupal_add_js('misc/tableheader.js');
-      return 'sticky-enabled';
-    }
-    return '';
-  }
-
-  /**
    * For each subSample found in the entity to load, output a block of hidden inputs which contain the required
    * values for the subSample.
    */
@@ -5650,7 +5631,6 @@ JS;
       'attributeTermlistLanguageFilter' => '0',
       'previousRowColumnsToInclude' => '',
       'editTaxaNames' => FALSE,
-      'sticky' => TRUE,
       'includeSpeciesGridLinkPage' => FALSE,
       'speciesGridPageLinkUrl' => '',
       'speciesGridPageLinkParameter' => '',
