@@ -83,6 +83,10 @@ class extension_notifications_centre {
    * separated list. Removing the @sourceType option will display a filter
    * drop-down that the user can select from.
    *
+   * Use option @defaultSourceFilter to set the notification type the grid shows
+   * on initial load. Choose from - all, queries, rejections, redets,
+   * record_comments, verifications, record_cleaner, pending_groups_users.
+   *
    * Set @manage_members_page_path to specify the path to a page for managing
    * activity/group members, which will be used for notifications to group
    * admins when there is a pending membership request.
@@ -413,6 +417,9 @@ JS;
         }
       }
     }
+    if (empty($options['defaultSourceFilter'])) {
+      $options['defaultSourceFilter'] = 'all';
+    }
     $r = report_helper::report_grid([
       'id' => "notifications-$options[id]",
       'readAuth' => $auth['read'],
@@ -422,7 +429,7 @@ JS;
       'ajax' => TRUE,
       'mode' => 'report',
       'extraParams' => $extraParams,
-      'paramDefaults' => ['source_filter' => 'all'],
+      'paramDefaults' => ['source_filter' => $options['defaultSourceFilter']],
       'paramsFormButtonCaption' => lang::get('Filter'),
       'columns' => array_values($columns),
       'fieldsetClass' => 'filter-bar',
