@@ -125,10 +125,10 @@ HTML;
       ],
     ];
     $suggestedGroupsGrid = report_helper::freeform_report(array_merge([
-      'dataSource' => 'library/groups/groups_discovery',
+      'proxy' => hostsite_get_url("iform/ajax/group_discovery/suggested_groups/$nid"),
     ], $reportOptions));
     $recentAndActiveGroupsGrid = report_helper::freeform_report(array_merge([
-      'dataSource' => 'library/groups/recent_and_active_groups',
+      'proxy' => hostsite_get_url("iform/ajax/group_discovery/active_recent_groups/$nid"),
     ], $reportOptions));
     $r = <<<HTML
       $searchControl
@@ -142,6 +142,64 @@ HTML;
       $recentAndActiveGroupsGrid
 HTML;
     return $r;
+  }
+
+  /**
+   * Fetch suggested groups report output.
+   *
+   * Use a proxy for grid population to allow request caching.
+   *
+   * @param int $website_id
+   *   Website ID.
+   * @param string $password
+   *   Password.
+   * @param int $nid
+   *   Node ID.
+   *
+   * @return array
+   *   Report response.
+   */
+  public static function ajax_suggested_groups($website_id, $password, $nid) {
+    iform_load_helpers(['report_helper']);
+    $readAuth = report_helper::get_read_auth($website_id, $password);
+    $options = [
+      'dataSource' => 'library/groups/groups_discovery',
+      'readAuth' => $readAuth,
+      'extraParams' => $_GET,
+      'caching' => TRUE,
+      // This report is per user.
+      'cachePerUser' => TRUE,
+    ];
+    return report_helper::get_report_data($options);
+  }
+
+  /**
+   * Fetch active / recent groups report output.
+   *
+   * Use a proxy for grid population to allow request caching.
+   *
+   * @param int $website_id
+   *   Website ID.
+   * @param string $password
+   *   Password.
+   * @param int $nid
+   *   Node ID.
+   *
+   * @return array
+   *   Report response.
+   */
+  public static function ajax_active_recent_groups($website_id, $password, $nid) {
+    iform_load_helpers(['report_helper']);
+    $readAuth = report_helper::get_read_auth($website_id, $password);
+    $options = [
+      'dataSource' => 'library/groups/recent_and_active_groups',
+      'readAuth' => $readAuth,
+      'extraParams' => $_GET,
+      'caching' => TRUE,
+      // This report is global, not per user.
+      'cachePerUser' => FALSE,
+    ];
+    return report_helper::get_report_data($options);
   }
 
 }
