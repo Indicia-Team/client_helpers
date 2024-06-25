@@ -1688,6 +1688,9 @@ JS;
   *     banded-report.
   *   * *ajax* - defaults to false. Set to TRUE to enable loading of data on
   *     the client side using AJAX.
+  *   * *proxy* - path to a local proxy which will fetch the report data,
+  *     instead of directly accessing the warehouse. Allows extra data handling
+  *     steps, e.g. caching, to be implemented.
   *   * *reportGroup* - When joining multiple reports together, this can be
   *     used on a report that has autoParamsForm set to false to bind the
   *     report to the parameters form from a different report by giving both
@@ -1751,7 +1754,8 @@ JS;
       }
       self::$indiciaData['freeformReports'][$options['id']] = [
         'id' => $options['id'],
-        'dataSource' => $options['dataSource'],
+        'dataSource' => $options['dataSource'] ?? NULL,
+        'proxy' => $options['proxy'] ?? NULL,
         'bands' => $options['bands'],
         'extraParams' => $options['extraParams'] ?? [],
         'customFieldFns' => $options['customFieldFns'] ?? [],

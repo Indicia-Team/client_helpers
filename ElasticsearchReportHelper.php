@@ -819,11 +819,11 @@ HTML;
     ], $options);
     if (isset($options['group_id'])) {
       $group_id = $options['group_id'];
-      $implicit = $options['implicit'] ?? FALSE;
+      $implicit = array_key_exists('implicit', $options) ? $options['implicit'] : FALSE;
     }
     elseif (!empty($_GET['group_id'])) {
       $group_id = $_GET['group_id'];
-      $implicit = $_GET['implicit'] ?? 'f';
+      $implicit = array_key_exists('implicit', $_GET) ? $_GET['implicit'] : FALSE;
     }
     if (empty($group_id) && $options['missingGroupIdBehaviour'] !== 'showAll') {
       hostsite_show_message(lang::get('The link you have followed is invalid.'), 'warning', TRUE);
@@ -905,7 +905,9 @@ JS;
    * @param array $group
    *   Group data loaded from the database.
    * @param array $options
-   *   [groupIntegration] control options.
+   *   [groupIntegration] control options. Can include joinLink=true to add a
+   *   link for joining for non-members and a class name for the links in
+   *   linkClass.
    * @param bool $member
    *   True if member of the group.
    *
@@ -922,7 +924,13 @@ JS;
       ],
     ]);
     $pageLinks = [];
-    $thisPage = empty($options['nid']) ? '' : hostsite_get_alias($options['nid']);;
+    $linkClassAttr = empty($options['linkClass']) ? '' : " class=\"$options[linkClass]\"";
+    if ($member === FALSE && ($group['joining_method'] === 'P' || $group['joining_method'] === 'I')) {
+      $titleForLink = preg_replace('/[^a-z0-9-]/', '', str_replace(' ', '-', strtolower($group['title'])));
+      $titleEscaped = htmlspecialchars($group['title']);
+      $pageLinks[] = "<li><a href=\"/join/$titleForLink\"$linkClassAttr>Join $titleEscaped</a></li>";
+    }
+    $thisPage = empty($options['nid']) ? '' : hostsite_get_alias($options['nid']);
     foreach ($pageData as $page) {
       // Don't link to the current page, plus block member-only pages for
       // non-members.
@@ -932,7 +940,7 @@ JS;
             'group_id' => $group['id'],
             'implicit' => $group['implicit_record_inclusion'],
           ]) .
-          '">' . lang::get($page['caption']) . '</a></li>';
+          "\"$linkClassAttr>" . lang::get($page['caption']) . '</a></li>';
       }
     }
     if (!empty($pageLinks)) {
