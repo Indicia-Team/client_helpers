@@ -11,7 +11,6 @@
   margin: 1%;
   width: 90%;
   box-sizing: border-box;
-  background-color: #f7f7f7;
   position: relative;
   list-style-type: none;
   flex-basis: 23%;
@@ -29,6 +28,7 @@
   object-fit: cover;
   max-height: 120px;
   width: 100%;
+  margin: 0;
 }
 /* Missing image fallback icon */
 .card-gallery ul li .panel-heading i {
