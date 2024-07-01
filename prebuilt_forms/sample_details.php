@@ -716,13 +716,6 @@ STRUCT;
   }
 
   /**
-   * Override some default behaviour in dynamic.
-   */
-  protected static function getFirstTabAdditionalContent($args, $auth, &$attributes) {
-    return '';
-  }
-
-  /**
    * Retrieve the HTML required for an edit record button.
    *
    * @param array $auth
