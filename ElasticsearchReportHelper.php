@@ -1880,6 +1880,7 @@ HTML;
     $options = array_merge([
       'redeterminerNameAttributeHandling' => 'overwriteOnRedet',
       'taxon_list_id' => hostsite_get_config_value('iform', 'master_checklist_id'),
+      'useLocalFormPaths' => FALSE,
       'verificationTemplates' => FALSE,
     ], $options);
     $dataOptions = helper_base::getOptionsForJs($options, [
@@ -1889,6 +1890,7 @@ HTML;
       'showSelectedRow',
       'speciesPath',
       'uploadButtonContainerElement',
+      'useLocalFormPaths',
       'verificationTemplates',
       'viewPath',
     ], TRUE);
@@ -2038,7 +2040,7 @@ HTML;
     $btnClassDefault = $indicia_templates['buttonDefaultClass'];
     // Work out any extra buttons we need for provided links.
     $optionalLinkArray = [];
-    if (!empty($options['editPath'])) {
+    if (!empty($options['editPath']) || $options['useLocalFormPaths'] !== 'never') {
       $optionalLinkArray[] = "<a class=\"edit $btnClassDefault\" title=\"$lang[editThisRecord]\" target=\"_blank\"><span class=\"fas fa-edit\"></span></a>";
     }
     if (!empty($options['viewPath'])) {
