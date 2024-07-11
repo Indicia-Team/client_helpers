@@ -428,11 +428,11 @@ class iform_my_dot_map {
     }
     if (!empty($args['add_another_link'])) {
       $path = $args['add_another_link'];
-      if (count($occurrence) === 1) {
+      if (isset($occurrence) && count($occurrence) === 1) {
         $path = str_replace(array('#taxon_meaning_id#', '#external_key#'),
             array($occurrence[0]['taxon_meaning_id'], $occurrence[0]['external_key']), $path);
         $parts = explode('?', $path, 2);
-        $parts[0] = url($parts[0]);
+        $parts[0] = hostsite_get_url($parts[0]);
         $path = implode('?', $parts);
       }
       $r .= '<a class="' . $indicia_templates['anchorButtonClass'] . '" href="' . $path . '">' .
