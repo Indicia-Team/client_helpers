@@ -204,6 +204,7 @@ jQuery(document).ready(function($) {
   function addSpeciesPanelsFromList(config, sectionIdx, section, taxaList) {
     var sectionBody = $(section).find('.panel-body');
     var resize = null;
+    var panels = [];
     if (config.resizeWidth && config.resizeHeight) {
       resize = {
         width: config.resizeWidth,
@@ -230,8 +231,15 @@ jQuery(document).ready(function($) {
       ).appendTo(sectionBody);
       // Initial load of existing sample must style panels to show which are counted.
       setPanelStyle(photoPanel);
-      enableUpload(photoPanel, resize);
+      panels.push(photoPanel);
     });
+    // Enable upload on a timeout to avoid problems if FontAwesome converts <i>
+    // to <svg> mid-way.
+    window.setTimeout(function() {
+      $.each(panels, function() {
+        enableUpload(this, resize);
+      });
+    }, 500);
     // Set a class to visually indicate which photo panes have a count value.
     $(sectionBody).find('input[type="number"]').change(function(e) {
       var panel = $(e.currentTarget).closest('.photo-checklist-item');
