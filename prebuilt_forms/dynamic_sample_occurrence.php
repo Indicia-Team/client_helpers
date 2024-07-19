@@ -2452,7 +2452,6 @@ JS;
     $params = [
       'survey_id' => $surveyId,
       'taxa_taxon_list_id' => $ttlId,
-      'master_checklist_id' => hostsite_get_config_value('iform', 'master_checklist_id', 0),
       'language' => $language,
     ];
     if (!empty($stageTermlistsTermIds)) {
