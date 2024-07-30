@@ -878,7 +878,7 @@ class ElasticsearchProxyHelper {
         'post' => json_encode($data),
         'get' => json_encode($getParams),
       ];
-      $curlResponse = helper_base::cache_get($cacheKey);
+      $curlResponse = helper_base::cacheGet($cacheKey);
       if ($curlResponse) {
         $curlResponse = json_decode($curlResponse, TRUE);
       }
@@ -921,7 +921,7 @@ class ElasticsearchProxyHelper {
     }
     elseif ($cacheTimeout) {
       helper_base::array_to_query_string($cacheKey);
-      helper_base::cache_set($cacheKey, json_encode($curlResponse), $cacheTimeout);
+      helper_base::cacheSet($cacheKey, json_encode($curlResponse), $cacheTimeout);
     }
     return $curlResponse['output'];
   }

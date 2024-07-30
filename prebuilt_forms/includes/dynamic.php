@@ -244,7 +244,7 @@ class iform_dynamic {
     data_entry_helper::$website_id = $args['website_id'];
     if (!empty($args['high_volume']) && $args['high_volume']) {
       // Node level caching for most page hits.
-      $cached = data_entry_helper::cache_get(['node' => $nid], HIGH_VOLUME_CACHE_TIMEOUT);
+      $cached = data_entry_helper::cacheGet(['node' => $nid]);
       if ($cached !== FALSE) {
         $cached = explode('|!|', $cached);
         data_entry_helper::$javascript = $cached[1];
@@ -303,7 +303,7 @@ class iform_dynamic {
     if (!empty($args['high_volume']) && $args['high_volume']) {
       $c = $r . '|!|' . data_entry_helper::$javascript . '|!|' . data_entry_helper::$late_javascript . '|!|' .
           data_entry_helper::$onload_javascript . '|!|' . json_encode(data_entry_helper::$required_resources);
-      data_entry_helper::cache_set(['node' => $nid], $c, HIGH_VOLUME_CACHE_TIMEOUT);
+      data_entry_helper::cacheSet(['node' => $nid], $c, HIGH_VOLUME_CACHE_TIMEOUT);
     }
     return $r;
   }

@@ -341,6 +341,16 @@ class helper_base {
   public static $delegate_translation_to_hostsite = FALSE;
 
   /**
+   * Setting which allows the host site (e.g. Drupal) handle caching.
+   *
+   * Defaults to true but only delegates if there are hostsite_cache_get() and
+   * hostsite_cache_get() functions available.
+   *
+   * @var bool
+   */
+  public static $delegate_caching_to_hostsite = TRUE;
+
+  /**
    * Check on maximum file size for image uploads.
    *
    * @var string
@@ -579,7 +589,7 @@ class helper_base {
    *
    * @var int
    */
-  public static $cache_timeout = 3600;
+  public static $cache_timeout = 60;
 
   /**
    * Chance of a cached file being refreshed after expiry.
@@ -2215,12 +2225,10 @@ HTML;
   public static function get_read_auth($website_id, $password) {
     // Store this for use with data caching.
     self::$website_id = $website_id;
-    // Keep a non-random cache for 10 minutes. It MUST be shorter than the
-    // normal cache lifetime so this expires more frequently.
     $cacheKey = [
       'readauth-wid' => $website_id,
     ];
-    $r = self::cache_get($cacheKey, 600, FALSE);
+    $r = self::cacheGet($cacheKey);
     if ($r === FALSE) {
       if (empty(self::$base_url)) {
         throw new Exception(lang::get('Indicia configuration is incorrect. Warehouse URL is not configured.'));
@@ -2243,7 +2251,9 @@ HTML;
       $r = [
         'nonce' => $nonce,
       ];
-      self::cache_set($cacheKey, json_encode($r));
+      // Keep in cache for max 10 minutes. It MUST be shorter than the normal
+      // cache lifetime so this expires more frequently.
+      self::cacheSet($cacheKey, json_encode($r), 600);
     }
     else {
       $r = json_decode($r, TRUE);
@@ -3411,21 +3421,13 @@ if (typeof validator!=='undefined') {
    * @param array $cacheOpts
    *   Options array which defines the cache "key", i.e. the unique set of
    *   options being cached.
-   * @param integer $cacheTimeout
-   *   Timeout in seconds, if overriding the default cache timeout.
-   * @param boolean $random
-   *   Should a random element be introduced to prevent simultaneous expiry of
-   *   multiple caches? Default true.
    *
    * @return mixed
    *   String read from the cache, or false if not read.
    */
-  public static function cache_get($cacheOpts, $cacheTimeout = 0, $random = TRUE) {
-    if (!$cacheTimeout)
-      $cacheTimeout = self::getCacheTimeOut([]);
-    $cacheFolder = self::$cache_folder ? self::$cache_folder : self::relative_client_helper_path() . 'cache/';
-    $cacheFile = self::getCacheFileName($cacheFolder, $cacheOpts, $cacheTimeout);
-    $r = self::getCachedResponse($cacheFile, $cacheTimeout, $cacheOpts, $random);
+  public static function cacheGet(array $cacheOpts) {
+    $key = self::getCacheKey($cacheOpts);
+    $r = self::getCachedResponse($key, $cacheOpts);
     return $r === FALSE ? $r : $r['output'];
   }
 
@@ -3436,12 +3438,12 @@ if (typeof validator!=='undefined') {
    * @param string $toCache String data to cache.
    * @param integer $cacheTimeout Timeout in seconds, if overriding the default cache timeout.
    */
-  public static function cache_set($cacheOpts, $toCache, $cacheTimeout=0) {
-    if (!$cacheTimeout)
+  public static function cacheSet($cacheOpts, $toCache, $cacheTimeout = 0) {
+    if (!$cacheTimeout) {
       $cacheTimeout = self::getCacheTimeOut([]);
-    $cacheFolder = self::$cache_folder ? self::$cache_folder : self::relative_client_helper_path() . 'cache/';
-    $cacheFile = self::getCacheFileName($cacheFolder, $cacheOpts, $cacheTimeout);
-    self::cacheResponse($cacheFile, array('output' => $toCache), $cacheOpts);
+    }
+    $cacheKey = self::getCacheKey($cacheOpts);
+    self::cacheResponse($cacheKey, ['output' => $toCache], $cacheOpts, $cacheTimeout);
   }
 
   /**
@@ -3475,15 +3477,20 @@ if (typeof validator!=='undefined') {
       if (isset($options['cachePerUser']) && !$options['cachePerUser']) {
         unset($cacheOpts['user_id']);
       }
-      $cacheFolder = self::$cache_folder ? self::$cache_folder : self::relative_client_helper_path() . 'cache/';
-      $cacheTimeOut = self::getCacheTimeOut($options);
-      $cacheFile = self::getCacheFileName($cacheFolder, $cacheOpts, $cacheTimeOut);
+      $cacheTimeout = self::getCacheTimeOut($options);
+      $cacheKey = self::getCacheKey($cacheOpts);
       if ($options['caching'] === 'expire') {
-        unlink($cacheFile);
+        if (self::$delegate_caching_to_hostsite && function_exists('hostsite_cache_expire_entry')) {
+          hostsite_cache_expire_entry($cacheKey);
+        }
+        else {
+          $cacheFolder = self::$cache_folder ? self::$cache_folder : self::relative_client_helper_path() . 'cache/';
+          unlink($cacheFolder.$cacheKey);
+        }
         return [];
       }
       if ($options['caching'] !== 'store' && !isset($_GET['refreshcache'])) {
-        $response = self::getCachedResponse($cacheFile, $cacheTimeOut, $cacheOpts);
+        $response = self::getCachedResponse($cacheKey, $cacheOpts);
         if ($response !== FALSE)
           $cacheLoaded = TRUE;
       }
@@ -3547,7 +3554,7 @@ if (typeof validator!=='undefined') {
     }
     // Only cache valid responses and when not already cached
     if ($useCache && !isset($r['error']) && !$cacheLoaded) {
-      self::cacheResponse($cacheFile, $response, $cacheOpts);
+      self::cacheResponse($cacheKey, $response, $cacheOpts, $cacheTimeout);
     }
     self::purgeCache();
     self::purgeImages();
@@ -3586,13 +3593,11 @@ if (typeof validator!=='undefined') {
       if (isset($options['cachePerUser']) && !$options['cachePerUser']) {
         $excludedParams[] = 'user_id';
       }
-      $cacheOpts = array_intersect_key(array_merge($get, $post), array_combine($excludedParams, $excludedParams));
+      $cacheOpts = array_diff_key(array_merge($get, $post), array_combine($excludedParams, $excludedParams));
       $cacheOpts['serviceCallPath'] = self::$base_url . $url;
-      $cacheFolder = self::$cache_folder ? self::$cache_folder : self::relative_client_helper_path() . 'cache/';
-      $cacheTimeOut = self::getCacheTimeOut($options);
-      $cacheFile = self::getCacheFileName($cacheFolder, $cacheOpts, $cacheTimeOut);
+      $cacheKey = self::getCacheKey($cacheOpts);
       if ($options['caching'] !== 'store' && !isset($_GET['refreshcache'])) {
-        $response = self::getCachedResponse($cacheFile, $cacheTimeOut, $cacheOpts);
+        $response = self::getCachedResponse($cacheKey, $cacheOpts);
         if ($response !== FALSE) {
           $cacheLoaded = TRUE;
         }
@@ -3607,7 +3612,8 @@ if (typeof validator!=='undefined') {
     }
     // Only cache valid responses and when not already cached;
     if ($useCache && !empty($response['success']) && !$cacheLoaded) {
-      self::cacheResponse($cacheFile, $response, $cacheOpts);
+      $cacheTimeout = self::getCacheTimeOut($options);
+      self::cacheResponse($cacheKey, $response, $cacheOpts, $cacheTimeout);
     }
     $r = json_decode($response['output'], TRUE);
     if (!is_array($r)) {
@@ -3648,37 +3654,24 @@ if (typeof validator!=='undefined') {
   }
 
   /**
-   * Protected function to generate a filename to be used for a cache file.
+   * Protected function to generate a key to be used for a cache enttrye.
    *
-   * @param string $path
-   *   Directory path for file.
    * @param array $options
    *   Options array : contents are used along with md5 to generate the
    *   filename.
-   * @param integer $timeout
-   *   Will be false if no caching to take place.
    *
    * @return string
    *   Filename, else FALSE if data is not to be cached.
    */
-  private static function getCacheFileName($path, $options, $timeout) {
-    /* If timeout is not set, we're not caching */
-    if (!$timeout)
-      return FALSE;
-    if (!is_dir($path) || !is_writeable($path))
-      return FALSE;
-
-    $cacheFileName = $path.'cache_'.self::$website_id.'_';
-    $cacheFileName .= md5(self::array_to_query_string($options));
-
-    return $cacheFileName;
+  private static function getCacheKey(array $options) {
+    return self::$website_id . '_' . md5(self::array_to_query_string($options));
   }
 
   /**
    * Protected function to return the cached data stored in the specified local file.
    *
-   * @param string $file
-   *   Cache file to be used, includes path.
+   * @param string $key
+   *   Cache key to be used.
    * @param integer $timeout
    *   Will be false if no caching to take place.
    * @param array $options
@@ -3687,80 +3680,131 @@ if (typeof validator!=='undefined') {
    *   Should a random element be introduced to prevent simultaneous expiry of multiple
    *   caches? Default true.
    *
-   * @return array
+   * @return bool|array
    *   Equivalent of call to http_post, else FALSE if data not read from the
    *   cache.
    */
-  private static function getCachedResponse($file, $timeout, $options, $random = TRUE) {
-    // Note the random element, we only timeout a cached file sometimes.
-    $wantToCache = $timeout !== FALSE;
-    $haveFile = $file && is_file($file);
-    $fresh = $haveFile && filemtime($file) >= (time() - $timeout);
-    if ($haveFile && filemtime($file) < (time() - $timeout * 3)) {
-      $randomSurvival = FALSE;
+  private static function getCachedResponse($key, $options) {
+
+    if (self::$delegate_caching_to_hostsite && function_exists('hostsite_cache_get')) {
+      return hostsite_cache_get($key, $options);
     }
     else {
-      $randomSurvival = $random && (rand(1, self::$cache_chance_refresh_file) !== 1);
-    }
-    if ($wantToCache && $haveFile && ($fresh || $randomSurvival)) {
-      $response = [];
-      $handle = fopen($file, 'rb');
-      if (!$handle) {
+      $cacheFolder = self::$cache_folder ? self::$cache_folder : self::relative_client_helper_path() . 'cache/';
+      if (!is_dir($cacheFolder) || !is_writeable($cacheFolder)) {
         return FALSE;
       }
-      $tags = fgets($handle);
-      $response['output'] = fread($handle, filesize($file));
-      fclose($handle);
-      if ($tags == self::array_to_query_string($options)."\n") {
-        return($response);
+      $cacheFile = $cacheFolder . "iform_cache_$key";
+      if (is_file($cacheFile)) {
+
+        $handle = fopen($cacheFile, 'rb');
+        if (!$handle) {
+          return FALSE;
+        }
+        // Make double sure this cache entry was for the same request options.
+        $tags = fgets($handle);
+        if ($tags !== http_build_query($options)."\n") {
+          return FALSE;
+        }
+        // Check not expired.
+        $expiry = trim(fgets($handle));
+        if ($expiry < time()) {
+          return FALSE;
+        }
+        if (self::getProbabilisticEarlyExpiration($expiry)) {
+          return FALSE;
+        }
+        return [
+          'output' => fread($handle, filesize($cacheFile)),
+        ];
       }
     }
     return FALSE;
   }
 
   /**
-   * Protected function to create a cache file if it doesn't already exist.
+   * Decide if a cache entry should expire early.
    *
-   * @param string $file
-   *   Cache file to be removed, includes path - will be false if no caching to
-   *   take place
+   * Check for probabilistic early expiration to avoid cache stampede, see
+   * https://en.wikipedia.org/wiki/Cache_stampede#Probabilistic_early_expiration.
+   *
+   * @param int $expiry
+   *   Unix timestamp the entry is due to expire.
+   *
+   * @return bool
+   *   Return true if the entry should be expired early.
+   */
+  private static function getProbabilisticEarlyExpiration($expiry) {
+    return time() - 10 * log(mt_rand() / mt_getrandmax()) >= $expiry;
+  }
+
+  /**
+   * Protected function to create a cache entry.
+   *
+   * @param string $key
+   *   Cache key to save into.
    * @param array $response
    *   Http_post return value.
    * @param array $options
    *   Options array : contents used to tag what this data is.
    */
-  private static function cacheResponse($file, $response, $options) {
-    // need to create the file as a binary event - so create a temp file and move across.
-    if ($file && isset($response['output'])) {
-      $handle = fopen($file.getmypid(), 'wb');
-      fputs($handle, self::array_to_query_string($options)."\n");
-      fwrite($handle, $response['output']);
-      fclose($handle);
-      rename($file.getmypid(),$file);
+  private static function cacheResponse($key, $response, array $options, $expiry) {
+    if ($key && isset($response['output'])) {
+      if (self::$delegate_caching_to_hostsite && function_exists('hostsite_cache_set')) {
+        hostsite_cache_set($key, $response['output'], $options, $expiry);
+      }
+      else {
+        $cacheFolder = self::$cache_folder ? self::$cache_folder : self::relative_client_helper_path() . 'cache/';
+        if (!is_dir($cacheFolder) || !is_writeable($cacheFolder)) {
+          return;
+        }
+        $cacheFile = $cacheFolder . "iform_cache_$key";
+        // Need to finish building the file before making the old one
+        // unavailable - so create a temp file and move across.
+        $handle = fopen($cacheFile . getmypid(), 'wb');
+        // Add a line for the request options, for double checking on get.
+        fputs($handle, http_build_query($options)."\n");
+        // Add a line for the expiry.
+        fputs($handle, (time() + $expiry) . "\n");
+        // Add the data.
+        fwrite($handle, $response['output']);
+        fclose($handle);
+        rename($cacheFile . getmypid(), $cacheFile);
+      }
     }
   }
 
   /**
    * Helper function to clear the Indicia cache files.
    */
-  public static function clear_cache() {
-    $cacheFolder = self::$cache_folder ? self::$cache_folder : self::relative_client_helper_path() . 'cache/';
-    if (!$dh = @opendir($cacheFolder)) {
-      return;
+  public static function clearCache() {
+    if (self::$delegate_caching_to_hostsite && function_exists('hostsite_cache_clear')) {
+      hostsite_cache_clear();
     }
-    while (FALSE !== ($obj = readdir($dh))) {
-      if ($obj != '.' && $obj != '..')
-        @unlink($cacheFolder . '/' . $obj);
+    else {
+      $cacheFolder = self::$cache_folder ? self::$cache_folder : self::relative_client_helper_path() . 'cache/';
+      if (!$dh = @opendir($cacheFolder)) {
+        return;
+      }
+      while (FALSE !== ($obj = readdir($dh))) {
+        if ($obj != '.' && $obj != '..')
+          @unlink($cacheFolder . '/' . $obj);
+      }
+      closedir($dh);
     }
-    closedir($dh);
   }
 
   /**
    * Internal function to ensure old cache files are purged periodically.
    */
   private static function purgeCache() {
-    $cacheFolder = self::$cache_folder ? self::$cache_folder : self::relative_client_helper_path() . 'cache/';
-    self::purgeFiles($cacheFolder, self::$cache_timeout * 5, self::$cache_allowed_file_count);
+    if (self::$delegate_caching_to_hostsite && function_exists('hostsite_cache_purge')) {
+      hostsite_cache_purge();
+    }
+    else {
+      $cacheFolder = self::$cache_folder ? self::$cache_folder : self::relative_client_helper_path() . 'cache/';
+      self::purgeFiles($cacheFolder, self::$cache_timeout * 5, self::$cache_allowed_file_count);
+    }
   }
 
   /**
@@ -3940,6 +3984,9 @@ if (class_exists('helper_config')) {
   }
   if (isset(helper_config::$delegate_translation_to_hostsite)) {
     helper_base::$delegate_translation_to_hostsite = helper_config::$delegate_translation_to_hostsite;
+  }
+  if (isset(helper_config::$delegate_caching_to_hostsite)) {
+    helper_base::$delegate_caching_to_hostsite = helper_config::$delegate_caching_to_hostsite;
   }
   if (isset(helper_config::$upload_max_filesize)) {
     helper_base::$upload_max_filesize = helper_config::$upload_max_filesize;

@@ -27,7 +27,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/Indicia-Team/client_helpers
  */
@@ -105,6 +104,16 @@ class helper_config {
    * @var bool
    */
   public static $delegate_translation_to_hostsite = FALSE;
+
+  /**
+   * Setting which allows the host site (e.g. Drupal) handle caching.
+   *
+   * Defaults to true but only delegates if there are hostsite_cache_get() and
+   * hostsite_cache_get() functions available.
+   *
+   * @var bool
+   */
+  public static $delegate_caching_to_hostsite = TRUE;
 
   /**
    * Allow the check on maximum file size for image uploads to be set.
