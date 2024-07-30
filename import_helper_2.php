@@ -579,13 +579,13 @@ HTML;
    *   List of control info.
    */
   private static function getGlobalValuesFormControlArray($options) {
-    $response = self::cache_get(['entityImportSettings' => $options['entity']]);
+    $response = self::cacheGet(['entityImportSettings' => $options['entity']]);
     if ($response === FALSE) {
       $request = parent::$base_url . "index.php/services/import_2/get_globalvalues_form/" . $options['entity'];
       $request .= '?' . self::array_to_query_string($options['readAuth']);
       $response = self::http_post($request, []);
       if (!isset($response['error'])) {
-        self::cache_set(['entityImportSettings' => $options['entity']], json_encode($response));
+        self::cacheSet(['entityImportSettings' => $options['entity']], json_encode($response));
       }
     }
     else {
