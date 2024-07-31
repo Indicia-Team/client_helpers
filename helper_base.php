@@ -3802,8 +3802,11 @@ if (typeof validator!=='undefined') {
       hostsite_cache_purge();
     }
     else {
-      $cacheFolder = self::$cache_folder ? self::$cache_folder : self::relative_client_helper_path() . 'cache/';
-      self::purgeFiles($cacheFolder, self::$cache_timeout * 5, self::$cache_allowed_file_count);
+      // Don't do this every time and skip if running inside Drupal as we use hook_cron.
+      if (rand(1, self::$cache_chance_purge) === 1 && !function_exists('iform_cron')) {
+        $cacheFolder = self::$cache_folder ? self::$cache_folder : self::relative_client_helper_path() . 'cache/';
+        self::purgeFiles($cacheFolder, self::$cache_timeout * 5, self::$cache_allowed_file_count);
+      }
     }
   }
 
@@ -3811,7 +3814,10 @@ if (typeof validator!=='undefined') {
    * Internal function to ensure old image files are purged periodically.
    */
   private static function purgeImages() {
-    self::purgeFiles(self::getInterimImageFolder(), self::$interim_image_expiry);
+    // Don't do this every time and skip if running inside Drupal as we use hook_cron.
+    if (rand(1, self::$cache_chance_purge) === 1 && !function_exists('iform_cron')) {
+      self::purgeFiles(self::getInterimImageFolder(), self::$interim_image_expiry);
+    }
   }
 
   /**
@@ -3824,37 +3830,34 @@ if (typeof validator!=='undefined') {
    * @param integer $allowedFileCount
    *   Number of most recent files to not bother purging from the cache.
    */
-  private static function purgeFiles($folder, $timeout, $allowedFileCount=0) {
-    // Don't do this every time.
-    if (rand(1, self::$cache_chance_purge) === 1) {
-      // First, get an array of files sorted by date
-      $files = [];
-      $dir =  opendir($folder);
-      // Skip certain file names
-      $exclude = array('.', '..', '.htaccess', 'web.config', '.gitignore');
-      if ($dir) {
-        while ($filename = readdir($dir)) {
-          if (in_array($filename, $exclude) || !is_file($folder . $filename)) {
-            continue;
-          }
-          $lastModified = filemtime($folder . $filename);
-          $files[] = array($folder . $filename, $lastModified);
+  public static function purgeFiles($folder, $timeout, $allowedFileCount = 0) {
+    // First, get an array of files sorted by date.
+    $files = [];
+    $dir =  opendir($folder);
+    // Skip certain file names.
+    $exclude = ['.', '..', '.htaccess', 'web.config', '.gitignore'];
+    if ($dir) {
+      while ($filename = readdir($dir)) {
+        if (in_array($filename, $exclude) || !is_file($folder . $filename)) {
+          continue;
         }
+        $lastModified = filemtime($folder . $filename);
+        $files[] = array($folder . $filename, $lastModified);
       }
-      // Sort the file array by date, oldest first.
-      usort($files, array('helper_base', 'DateCmp'));
-      // Iterate files, ignoring the number of files we allow in the cache
-      // without caring.
-      for ($i=0; $i<count($files)-$allowedFileCount; $i++) {
-        // If we have reached a file that is not old enough to expire, don't go
-        // any further.
-        if ($files[$i][1] > (time() - $timeout)) {
-          break;
-        }
-        // Clear out the old file.
-        if (is_file($files[$i][0])) {
-          unlink($files[$i][0]);
-        }
+    }
+    // Sort the file array by date, oldest first.
+    usort($files, ['helper_base', 'DateCmp']);
+    // Iterate files, ignoring the number of files we allow in the cache
+    // without caring.
+    for ($i = 0; $i < count($files) - $allowedFileCount; $i++) {
+      // If we have reached a file that is not old enough to expire, don't go
+      // any further.
+      if ($files[$i][1] > (time() - $timeout)) {
+        break;
+      }
+      // Clear out the old file.
+      if (is_file($files[$i][0])) {
+        unlink($files[$i][0]);
       }
     }
   }
