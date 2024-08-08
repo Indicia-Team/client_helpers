@@ -179,6 +179,14 @@ class iform_group_edit {
         'required' => FALSE,
       ],
       [
+        'name' => 'include_blogging_options',
+        'caption' => 'Include blogging options ',
+        'description' => 'Include the option to enable blogging and to select whether admin or members can post blogs? Works alongside the blogging tools added by the Group Landing Pages module.',
+        'type' => 'checkbox',
+        'default' => FALSE,
+        'required' => FALSE,
+      ],
+      [
         'name' => 'include_report_filter',
         'caption' => 'Include report filter',
         'description' => 'Include the optional panel for defining a report filter?',
@@ -355,6 +363,7 @@ class iform_group_edit {
       'include_dates' => FALSE,
       'include_logo_controls' => TRUE,
       'include_sensitivity_controls' => TRUE,
+      'include_blogging_options' => FALSE,
       'include_report_filter' => TRUE,
       'include_linked_pages' => TRUE,
       'include_page_access_levels' => FALSE,
@@ -490,6 +499,18 @@ class iform_group_edit {
         'fieldname' => 'group:view_full_precision',
         'helpText' => lang::get('Any sensitive records added to the system are normally shown blurred to a lower grid reference precision. If this box ' .
             'is checked, then group members can see sensitive records explicitly posted for the {1} at full precision.', self::$groupType),
+      ]);
+    }
+    if ($args['include_blogging_options']) {
+      $r .= data_entry_helper::select([
+        'label' => lang::get('Blogging'),
+        'fieldname' => 'group:post_blog_permission',
+        'helpText' => lang::get('Select the role of the user required in order to be able to post blog entries to this group.', self::$groupType),
+        'lookupValues' => [
+          '' => lang::get('Blogging is disabled'),
+          'A' => lang::get('Group admins can post blogs'),
+          'M' =>  lang::get('All group members can post blogs'),
+        ],
       ]);
     }
     $r .= self::dateControls($args);
@@ -681,26 +702,26 @@ $('#entry_form').submit(function() {
       else {
         $default = self::getGroupPages($auth);
       }
-      $columns = array(
-        array(
+      $columns = [
+        [
           'label' => lang::get('Form'),
           'datatype' => 'lookup',
           'lookupValues' => $pages,
           'validation' => array('unique'),
-        ), array(
+        ], [
           'label' => lang::get('Link caption'),
           'datatype' => 'text',
-        ), array(
+        ], [
           'label' => lang::get('Who can access the page?'),
           'datatype' => 'lookup',
-          'lookupValues' => array(
+          'lookupValues' => [
             '' => lang::get('Available to anyone'),
             'f' => lang::get('Available only to group members'),
             't' => lang::get('Available only to group admins'),
-          ),
+          ],
           'default' => 'f',
-        ),
-      );
+        ],
+      ];
       if ($args['include_page_access_levels']) {
         $values = array(
           '0' => lang::get('0 - no additional access level required'),
@@ -1238,6 +1259,7 @@ $('#entry_form').submit(function() {
       'group:logo_path' => $group['logo_path'],
       'group:implicit_record_inclusion' => $group['implicit_record_inclusion'],
       'group:licence_id' => $group['licence_id'],
+      'group:post_blog_permission' => $group['post_blog_permission'],
       'filter:id' => $group['filter_id'],
     ];
     if ($args['include_report_filter']) {
