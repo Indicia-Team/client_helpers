@@ -743,7 +743,7 @@ idlist=';
    *
    * @param array $args
    *   Input parameters.
-   * @param array $nid
+   * @param int $nid
    *   Drupal node object's ID.
    * @param array $response
    *   Response from Indicia services after posting a verification.
@@ -760,8 +760,9 @@ idlist=';
       'report_row_class' => 'zero-{zero_abundance}',
     ], $args);
     $auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
-    if (group_authorise_form($args, $auth['read'])) {
-      $group = group_apply_report_limits($args, $auth['read'], $nid, TRUE);
+    $membership = group_authorise_form($args, $auth['read']);
+    if ($membership !== GroupMembership::NonMember) {
+      $group = group_apply_report_limits($args, $auth['read'], $nid, $membership);
       if (!empty($args['group_type_ids']) && !in_array($group['group_type_id'], $args['group_type_ids'])) {
         // Group type is not authorised for verification.
         hostsite_show_message(lang::get('This group is not allowed to perform verification tasks.'), 'alert', TRUE);

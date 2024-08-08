@@ -270,10 +270,10 @@ Record ID',
         return 'This page needs a group_id URL parameter.';
       }
       $readAuth = data_entry_helper::get_read_auth($args['website_id'], $args['password']);
-      $isMember = group_authorise_form($args, $readAuth);
+      $membership = group_authorise_form($args, $readAuth);
       // If groups support is enabled, then do a count report to check access.
       $argArray = [];
-      group_apply_report_limits($argArray, $readAuth, $nid, $isMember);
+      group_apply_report_limits($argArray, $readAuth, $nid, $membership);
       $accessCheck = report_helper::get_report_data([
         'readAuth' => $readAuth,
         'dataSource' => 'library/occurrences/filterable_explore_list',

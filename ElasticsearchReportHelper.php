@@ -476,6 +476,9 @@ HTML;
         'rowsPerPageOptions',
       ]
     );
+    $options = array_merge([
+      'class' => 'flexgrid',
+    ], $options);
     helper_base::addLanguageStringsToJs('cardGallery', [
       'checkToIncludeInList' => 'Check this box to include the record in the list which any verification actions will be applied to.',
       'collapseCard' => 'Return card to normal size (C or +)',
@@ -497,6 +500,7 @@ HTML;
     $dataOptions = helper_base::getOptionsForJs($options, [
       'actions',
       'columns',
+      'class',
       'includeFieldCaptions',
       'includeFullScreenTool',
       'includeMultiSelectTool',
@@ -831,7 +835,7 @@ HTML;
       return '';
     }
     require_once 'prebuilt_forms/includes/groups.php';
-    $member = group_authorise_group_id($group_id, $options['readAuth'], $checkPage);
+    $membership = group_get_user_membership($group_id, $options['readAuth'], $checkPage);
     $output = '';
     if (!empty($group_id)) {
       // Apply filtering by group.
@@ -858,7 +862,7 @@ HTML;
           $output .= self::getGroupSummaryHtml($group);
         }
         if ($options['showGroupPages']) {
-          $output .= self::getGroupPageLinks($group, $options, $member);
+          $output .= self::getGroupPageLinks($group, $options, $membership);
         }
       }
       $filterBoundaries = helper_base::get_population_data([
@@ -907,14 +911,16 @@ JS;
    * @param array $options
    *   [groupIntegration] control options. Can include joinLink=true to add a
    *   link for joining for non-members and a class name for the links in
-   *   linkClass.
-   * @param bool $member
-   *   True if member of the group.
+   *   linkClass. Provide an option called editPath with a path to the group
+   *   edit page, this will generate a link for admins to edit the group
+   *   metadata.
+   * @param GroupMembership $membership
+   *   Current user's membership or admin status.
    *
    * @return string
    *   HTML for the list of links.
    */
-  public static function getGroupPageLinks(array $group, array $options, $member) {
+  public static function getGroupPageLinks(array $group, array $options, GroupMembership $membership) {
     $pageData = data_entry_helper::get_population_data([
       'table' => 'group_page',
       'extraParams' => $options['readAuth'] + [
@@ -925,16 +931,20 @@ JS;
     ]);
     $pageLinks = [];
     $linkClassAttr = empty($options['linkClass']) ? '' : " class=\"$options[linkClass]\"";
-    if ($member === FALSE && ($group['joining_method'] === 'P' || $group['joining_method'] === 'I')) {
+    if ($membership === GroupMembership::NonMember && ($group['joining_method'] === 'P' || $group['joining_method'] === 'I')) {
       $titleForLink = preg_replace('/[^a-z0-9-]/', '', str_replace(' ', '-', strtolower($group['title'])));
       $titleEscaped = htmlspecialchars($group['title']);
       $pageLinks[] = "<li><a href=\"/join/$titleForLink\"$linkClassAttr>Join $titleEscaped</a></li>";
+    }
+    elseif ($membership === GroupMembership::Admin && isset($options['editPath'])) {
+      $editLink = helper_base::getRootFolder() . $options['editPath'] . "?group_id=$group[id]&redirect_on_success=" . hostsite_get_current_page_path();
+      $pageLinks[] = "<li><a href=\"$editLink\"$linkClassAttr><i class=\"fas fa-pen\"></i> Edit</a></li>";
     }
     $thisPage = empty($options['nid']) ? '' : hostsite_get_alias($options['nid']);
     foreach ($pageData as $page) {
       // Don't link to the current page, plus block member-only pages for
       // non-members.
-      if ($page['path'] !== $thisPage && ($member || $page['administrator'] === NULL)) {
+      if ($page['path'] !== $thisPage && ($membership !== GroupMembership::NonMember || $page['administrator'] === NULL)) {
         $pageLinks[] = '<li><a href="' .
           hostsite_get_url($page['path'], [
             'group_id' => $group['id'],
