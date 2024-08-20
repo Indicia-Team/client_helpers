@@ -658,7 +658,33 @@ HTML;
 $('#$options[id]').idcDataGrid('bindControls');
 
 JS;
-    return self::getControlContainer('dataGrid', $options, $dataOptions);
+    $lang = [
+      'cancel' => lang::get('Cancel'),
+      'columnConfigIntro' => lang::get('The following columns are available for this table. Tick the ones you want to include. Drag and drop the columns into your preferred order.'),
+      'columnConfiguration' => lang::get('Column configuration'),
+      'restoreDefaults' => lang::get('Restore defaults'),
+      'save' => lang::get('Save'),
+      'toggleTick' => lang::get('Tick/untick all'),
+    ];
+    $content = <<<HTML
+    <div class="loading-spinner" style="display: none">
+      <div>Loading...</div>
+    </div>
+    <div class="data-grid-settings-cntr" style="display: none">
+      <div class="data-grid-settings" data-el="$options[id]">
+        <h3>$lang[columnConfiguration]</h3>
+        <p>$lang[columnConfigIntro]</p>
+        <div>
+          <button class="btn btn-default toggle">$lang[toggleTick]</button>
+          <button class="btn btn-default restore">$lang[restoreDefaults]</button>
+          <button class="btn btn-default cancel">$lang[cancel]</button>
+          <button class="btn btn-primary save">$lang[save]</button>
+        </div>
+        <ol></ol>
+      </div>
+    </div>
+HTML;
+    return self::getControlContainer('dataGrid', $options, $dataOptions, $content);
   }
 
   /**
@@ -1876,6 +1902,9 @@ HTML;
    */
   public static function verificationButtons(array $options) {
     global $indicia_templates;
+    if (!function_exists('iform_ajaxproxy_url')) {
+      return 'The AJAX Proxy module must be enabled to use the [verificationButtons] control.';
+    }
     $requiredOptions = ['showSelectedRow'];
     $config = hostsite_get_es_config($options['nid']);
     helper_base::$indiciaData['idPrefix'] = $config['es']['warehouse_prefix'];
