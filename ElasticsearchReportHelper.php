@@ -616,6 +616,7 @@ HTML;
       }
     }
     helper_base::add_resource('sortable');
+    helper_base::add_resource('font_awesome');
     helper_base::add_resource('indiciaFootableReport');
     // Add footableSort for simple aggregation tables.
     if (!empty($options['aggregation']) && $options['aggregation'] === 'simple') {
@@ -628,6 +629,7 @@ HTML;
       'columnSettingsToolHint' => 'Click to show grid column settings',
       'fullScreenToolHint' => 'Click to view grid in full screen mode',
       'noHeading' => 'no heading',
+      'siteNameWitheld' => 'Site name witheld as record is sensitive or private.',
       'status' => 'Status',
     ]);
     $dataOptions = helper_base::getOptionsForJs($options, [
