@@ -1695,6 +1695,7 @@ HTML;
       'mode',
       'proxyCacheTimeout',
       'sortAggregation',
+      'shard_size',
       'size',
       'sort',
       'switchToGeomsAt',
