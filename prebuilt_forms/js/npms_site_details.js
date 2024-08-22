@@ -3,8 +3,8 @@ window.npmsFns = {};
 (function ($) {
 
   let map, taxaByYearChart, optsTaxaByYear
-  let sampleImages, pSampleImages, sampleGallery, sampleGalleryOpen
-  let sampleImagesMod = []
+  let squareImages, pSquareImages, squareGallery
+  let squareImagesMod = []
   let toggleComment = false
   const flds = [
     ['samples', 'Plot samples'], 
@@ -472,7 +472,7 @@ window.npmsFns = {};
     // So the gallery is first loaded with all images, including those it can't find
     // and then updated to remove the ones that can't be found.
 
-    pSampleImages = indiciaData.npmsCoreSquareLocationSampleMedia
+    pSquareImages = indiciaData.npmsCoreSquareLocationSampleMedia
       // This is used after the gallery is generated in order to remove any images
       // which cannot be found on server.
       .sort(dateSort)
@@ -485,14 +485,14 @@ window.npmsFns = {};
         })
       })
 
-    sampleImages = indiciaData.npmsCoreSquareLocationSampleMedia
+    squareImages = indiciaData.npmsCoreSquareLocationSampleMedia
       .sort(dateSort)
       .map(img => {
         let caption 
         const date = img.created_on.split(" ")[0]
         const plot = `${img.plot}${img.plotnumber ? ` (${img.plotnumber})` : ''}`
         const imgcap = `${img.caption ? ` (Original caption: ${img.caption})` : ''}`
-        if (img.image_type === "sample") {
+        if (img.image_type === "sample" || img.image_type=== "location") {
           caption = `${date} ${plot}${imgcap}`
         } else if (img.image_type === "occurrence") {
           let taxon = `<i>${img.preferred_taxon}</i>${img.common_name ? ` (${img.common_name})` : ''}`
@@ -540,15 +540,18 @@ window.npmsFns = {};
       updateGalleries()
     })
     let $optImgSel = $('<option>').appendTo($imgSel)
-    $optImgSel.text('Images of plots')
+    $optImgSel.text('Plot sample images')
     $optImgSel.attr('value', 'sample')
     $optImgSel = $('<option>').appendTo($imgSel)
-    $optImgSel.text('Images from records')
+    $optImgSel.text('Plot location images')
+    $optImgSel.attr('value', 'location')
+    $optImgSel = $('<option>').appendTo($imgSel)
+    $optImgSel.text('Record images')
     $optImgSel.attr('value', 'occurrence')
 
     // Gallery
     // After https://www.lightgalleryjs.com/demos/inline/ & https://codepen.io/sachinchoolur/pen/zYZqaGm
-    sampleGallery = lightGallery(lgContainer, { // eslint-disable-line no-undef
+    squareGallery = lightGallery(lgContainer, { // eslint-disable-line no-undef
       container: lgContainer,
       dynamic: true,
       // Turn off hash plugin in case if you are using it
@@ -562,14 +565,14 @@ window.npmsFns = {};
       showMaximizeIcon: true,
       // Add plugins
       plugins: [lgZoom, lgThumbnail], // eslint-disable-line no-undef
-      dynamicEl: sampleImages.length ? sampleImages.map(i => {return {...i}}) : [{src: '/modules/custom/npms_vis/images/no-image.jpg'}],
+      dynamicEl: squareImages.length ? squareImages.map(i => {return {...i}}) : [{src: '/modules/custom/npms_vis/images/no-image.jpg'}],
       thumbWidth: 90,
       thumbHeight: "60px",
       thumbMargin: 4
     })
     // Since we are using dynamic mode, we need to programmatically open lightGallery
     setTimeout(() => {
-      sampleGallery.openGallery()
+      squareGallery.openGallery()
       updateGalleries()
     }, 500)
   }
@@ -580,40 +583,41 @@ window.npmsFns = {};
     const imageType = $('#gallery-type-select').find(":selected").val();
     //console.log('update gallery', plotName, imageType)
 
-    // Only run this once pSampleImages is settled which means that
+    // Only run this once pSquareImages is settled which means that
     // the results of attempting to fetch all images is known. 
-    Promise.allSettled(pSampleImages).then(data => {
+    Promise.allSettled(pSquareImages).then(data => {
       // Dynamically update gallery to remove any images that
       // can't be loaded.
       // Also filter to currently selected subplot or no
       // filter if core square is selected.
-      // console.log(sampleImages)
+      // console.log(squareImages)
 
-      sampleImagesMod = sampleImages
+      squareImagesMod = squareImages
         .filter((img, i) => data[i].value)
         .filter(img => img.image_type === imageType)
         .filter(img => plotName !== indiciaData.npmsCoreSquareDetails.gr ? img.plot === plotName : true)
         .map(img => {return {...img}})
-      // If sampleImagesMod is empty, set to standard no images image
+
+      // If squareImagesMod is empty, set to standard no images image
       // otherwise gallery won't clear.
-      if (!sampleImagesMod.length) {
-        sampleImagesMod = [{
+      if (!squareImagesMod.length) {
+        squareImagesMod = [{
           src: '/modules/custom/npms_vis/images/no-image.jpg', 
           thumb: '/modules/custom/npms_vis/images/no-image.jpg',
           caption: ''
         }]
       }
-      //sampleGallery.updateSlides(sampleImagesMod, sampleGallery.index)
-      sampleGallery.updateSlides(sampleImagesMod, 0)
+      //squareGallery.updateSlides(squareImagesMod, squareGallery.index)
+      squareGallery.updateSlides(squareImagesMod, 0)
       displayCaption(0)
     })
   }
 
   function displayCaption(i) {
     // console.log(i)
-    // console.log(sampleImagesMod)
-    if (sampleImagesMod.length) {
-      let img = sampleImagesMod[i]
+    // console.log(squareImagesMod)
+    if (squareImagesMod.length) {
+      let img = squareImagesMod[i]
       $('#gal-cap-div').html(img.caption) 
     } else {
       $('#gal-cap-div').html('') 
