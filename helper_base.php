@@ -1284,10 +1284,10 @@ class helper_base {
             'd3',
           ],
           'stylesheets' => [
-            'https://cdn.jsdelivr.net/gh/biologicalrecordscentre/brc-charts/dist/brccharts.umd.min.css',
+            'https://cdn.jsdelivr.net/gh/biologicalrecordscentre/brc-charts@latest/dist/brccharts.umd.min.css',
           ],
           'javascript' => [
-            'https://cdn.jsdelivr.net/gh/biologicalrecordscentre/brc-charts/dist/brccharts.umd.min.js',
+            'https://cdn.jsdelivr.net/gh/biologicalrecordscentre/brc-charts@latest/dist/brccharts.umd.min.js',
           ],
         ],
         'd3' => [
