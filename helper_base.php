@@ -118,7 +118,7 @@ $indicia_templates = [
     '<div id="imp-georef-output-div"></div> ' .
     '{closeButton}' .
     '</div>',
-  'tab_header' => "<ul>{tabs}</ul>\n",
+  'tab_header' => "<ul class=\"tab-header\">{tabs}</ul>\n",
   'taxon_label' => '<div class="biota"><span class="nobreak sci binomial"><em class="taxon-name">{taxon}</em></span> {authority} '.
       '<span class="nobreak vernacular">{default_common_name}</span></div>',
   'single_species_taxon_label' => '{taxon}',
@@ -2556,6 +2556,7 @@ if (typeof indiciaFns.initDataSources !== 'undefined') {
 }
 $javascript
 $late_javascript
+indiciaFns.setupTabLazyLoad();
 // Elasticsearch source population.
 if (typeof indiciaFns.hookupDataSources !== 'undefined') {
   indiciaFns.hookupDataSources();
