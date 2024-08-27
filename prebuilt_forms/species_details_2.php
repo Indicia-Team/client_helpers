@@ -563,8 +563,13 @@ class iform_species_details_2 extends BaseDynamicDetails {
         $esFilter .= self::createEsFilterHtml('identification.verification_status', '', 'term', 'must_not');
         $esFilter .= self::createEsFilterHtml('identification.verification_status', 'C', 'term', 'must_not');
       }
+      $groupIntegration = !empty($_GET['group_id']) ? ElasticsearchReportHelper::groupIntegration(array_merge([
+        'missingGroupIdBehaviour' => 'showAll',
+      ], [
+        'readAuth' => $auth['read'],
+      ]), FALSE) : '';
 
-      return $taxonNames . $esFilter . parent::get_form_html($args, $auth, $attributes);
+      return $taxonNames . $esFilter . $groupIntegration . parent::get_form_html($args, $auth, $attributes);
     }
   }
 
