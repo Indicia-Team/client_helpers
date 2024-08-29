@@ -218,6 +218,7 @@ class iform_timed_count {
   public static function get_sample_form($args, $nid, $response) {
   	global $user;
   	iform_load_helpers(array('map_helper'));
+  	data_entry_helper::add_resource('indiciaMapPanel');
   	$auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
   	// either looking at existing, creating a new one, or an error occurred: no successful posts...
   	// first check some conditions are met
@@ -557,6 +558,14 @@ mapInitialisationHooks.push(function(mapdiv) {
 ").
 "   delete indiciaData['zoomToAfterFetchingGoogleApiScript-' + mapdiv.map.id];
     mapdiv.map.events.triggerEvent('zoomend');
+  $('.olControlEditingToolbar').append('<span id=\"mousePos\"></span>');
+  mapdiv.map.mousePosCtrl = new MyMousePositionControl({
+      div: document.getElementById('mousePos'),
+      displayProjection: new OpenLayers.Projection('EPSG:4326'),
+      emptyString: '',
+      numDigits: 10 // indiciaData.formOptions.routeMapMousePositionPrecision
+  });
+  mapdiv.map.addControl(mapdiv.map.mousePosCtrl);
 });
 ";
 
@@ -761,16 +770,28 @@ indiciaData.indiciaSvc = '".data_entry_helper::$base_url."';\n";
 
     if ($existing) {
       // Only need to load the occurrences for a pre-existing sample
-      $o = data_entry_helper::get_population_data(array(
-        'report' => 'library/occurrences/occurrences_list_for_parent_sample',
-        'extraParams' => $auth['read'] + array('view' => 'detail','sample_id'=>$parentSampleId,'survey_id' => '','date_from' => '','date_to' => '','taxon_group_id' => '',
-            'smpattrs' => '', 'occattrs'=>$args['occurrence_attribute_id']),
+      $o = data_entry_helper::get_population_data([
+          'report' => 'projects/ukbms/ukbms_occurrences_list_for_parent_sample',
+          'extraParams' => $auth['read'] + [
+              'sample_id' => $parentSampleId,
+              'survey_id' => $args['survey_id'],
+              'smpattrs' => '',
+              'occattrs' => $args['occurrence_attribute_id']
+          ],
         // don't cache as this is live data
         'nocache' => true
-      ));
-      // the report is ordered id desc. REverse it
-      $o = array_reverse($o);
-    } else $o = []; // empty array of occurrences when no creating a new sample.
+      ]);
+      for ($i = 0; $i < count($o); $i++) {
+          $taxon = data_entry_helper::get_population_data([
+              'table' => 'taxa_taxon_list',
+              'extraParams' => $auth['read'] + ['id' => $o[$i]['taxa_taxon_list_id'],
+                  'view' => 'cache']
+          ]);
+          $o[$i]['taxon'] = $taxon[0]['preferred_taxon'];
+          $o[$i]['common'] = $taxon[0]['default_common_name'];
+      }
+      // this report is ordered id asc.
+    } else $o = array(); // empty array of occurrences when no creating a new sample.
 
     // we pass through the read auth. This makes it possible for the get_submission method to authorise against the warehouse
     // without an additional (expensive) warehouse call.
@@ -852,6 +873,7 @@ indiciaData.indiciaSvc = '".data_entry_helper::$base_url."';\n";
       $r .= '<table id="timed-counts-input-'.$i.'" class="ui-widget">';
       $r .= '<thead><tr><th class="ui-widget-header">' . lang::get('Species') . '</th><th class="ui-widget-header">' . lang::get('Count') . '</th><th class="ui-widget-header"></th></tr></thead>';
       $r .= '<tbody class="ui-widget-content">';
+      // Occurrences need subsample sample_id, all attributes, ttl_id, common  name, preferred, occurrence_id
       $occs = [];
       // not very many occurrences so no need to optimise.
       if (isset($subSampleId) && $existing && count($o)>0)
