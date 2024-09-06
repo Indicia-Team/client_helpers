@@ -704,7 +704,7 @@ HTML;
     }
     self::checkOptions('esDownload', $options,
       [['source', 'linkToDataControl']],
-      ['addColumns', 'removeColumns']
+      ['addColumns', 'removeColumns', 'sort']
     );
     if (empty($options['source']) && !empty($options['columnsTemplate'])) {
       throw new Exception('Download control @source option must be specified if @columnsTemplate option is used (cannot be used with @linkToDataControl).');
@@ -767,8 +767,6 @@ HTML;
             style="stroke-dashoffset:503px;"
             stroke-dasharray="503"
             transform="rotate(-90)" />
-      </g>
-      </text>
   </svg>
   <div class="progress-text"></div>
 </div>
@@ -795,6 +793,7 @@ HTML;
       'columnsSurveyId',
       'linkToDataControl',
       'removeColumns',
+      'sort',
       'source',
     ], TRUE);
     return self::getControlContainer('esDownload', $options, $dataOptions, $html);
