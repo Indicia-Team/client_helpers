@@ -13,9 +13,77 @@
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  */
 
-var bindSpeciesAutocomplete, initButtons, _getCentroid, getCentroid, processDeleted;
+var bindSpeciesAutocomplete, initButtons, _getCentroid, getCentroid, processDeleted, MyMousePositionControl;
 
 (function ($) {
+
+  if (typeof OpenLayers != 'undefined') {
+    MyMousePositionControl=OpenLayers.Class(
+      OpenLayers.Control.MousePosition,
+      {
+        formatOutput: function(lonLat) {
+
+          var digits = parseInt(this.numDigits),
+              newHtml, lat, latDeg, latMin, latSec, long, longDeg, longMin, longSec; // 'D' = Decimal degrees, 'DM' = Degrees + Decimal Minutes, 'DMS' = Degrees, Minutes + Decimal Seconds TODO as form option
+
+          // Get the system for the main sref
+          var system = original_system = $("#imp-sref-system").val().toLowerCase();
+          if (typeof indiciaData.srefHandlers[original_system.toLowerCase()] !== 'undefined') {
+            system = indiciaData.srefHandlers[original_system.toLowerCase()].srid.toString(10);
+          }
+          system = "EPSG:" + system;
+          // Convert the lonlat to a geometry: srefHandlers pointToGridNotation needs a Geom {x, y}
+          geom = new OpenLayers.Geometry.Point(lonLat.lon, lonLat.lat);
+          if (this.displayProjection.getCode() !== system) {
+            geom.transform(this.displayProjection.getCode(), system);
+          }
+
+          if (original_system == '4326') {
+            latDeg = Math.abs(geom.y);
+            latMin = (latDeg - Math.floor(latDeg))*60;
+            latSec = (latMin - Math.floor(latMin))*60;
+            longDeg = Math.abs(geom.x);
+            longMin = (longDeg - Math.floor(longDeg))*60;
+            longSec = (longMin - Math.floor(longMin))*60;
+            // Approx 1m resolution
+            switch ('DM' /* mapMousePositionFormat */) {
+              case 'DM' :
+                lat = Math.floor(latDeg)+'&#176;' +
+                      (latMin.toFixed(3) < 10 ? '0' : '') + latMin.toFixed(3);
+                long = Math.floor(longDeg)+'&#176;' +
+                      (longMin.toFixed(3) < 10 ? '0' : '') + longMin.toFixed(3);
+                break;
+              case 'DMS' :
+                lat = Math.floor(latDeg)+'&#176;' +
+                      (latMin < 10 ? '0' : '') + Math.floor(latMin) + '&apos;' +
+                      (latSec.toFixed(1) < 10 ? '0' : '') +latSec.toFixed(1) ;
+                long = Math.floor(longDeg)+'&#176;' +
+                      (longMin < 10 ? '0' : '') + Math.floor(longMin) + '&apos;' +
+                      (longSec.toFixed(1) < 10 ? '0' : '') +longSec.toFixed(1) ;
+                break;
+              default : // 'D'
+                lat = latDeg.toFixed(5);
+                long = longtDeg.toFixed(5);
+                break;
+            }
+            newHtml =
+                (geom.y > 0 ? 'N' : 'S') +
+                lat +
+                ' ' +
+                (geom.x > 0 ? 'E' : 'W') +
+                long;
+          } else if (typeof indiciaData.srefHandlers[original_system.toLowerCase()] !== 'undefined') {
+            newHtml = indiciaData.srefHandlers[original_system.toLowerCase()].pointToGridNotation(geom, 10 /* mapMousePositionPrecision */);
+          } else {
+            newHtml =  system + ' ' + geom.x + ', ' + geom.y;
+          }
+          return newHtml;
+        },
+        CLASS_NAME:'MyMousePositionControl'
+      }
+    );
+  };
+
 bindSpeciesAutocomplete = function (selectorID, target, url, lookupListId, lookupListFilterField, lookupListFilterValues, readAuth, max) {
   // inner function to handle a selection of a taxon from the autocomplete
   var handleSelectedTaxon = function(event, data) {

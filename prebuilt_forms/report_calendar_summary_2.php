@@ -1650,7 +1650,7 @@ class iform_report_calendar_summary_2 {
       'isFormControl' => TRUE
     ];
     $ctrl .= data_entry_helper::apply_template('select', $ctrlOptions);
-    self::set_up_control_change($ctrlid, self::$dataSet, [self::$locationKey]);
+    self::set_up_control_change($ctrlid, self::$dataSet, []);
 
     // If a normal user, switch off the links if not my Data.
     if (!$isSuperManager && !$isBranchManager && !$isSchemeManager && self::$siteUrlParams[self::$dataSet]['value'] !== "user:$myId") {
@@ -1865,7 +1865,7 @@ jQuery('#".$ctrlid."').change(function(){
               'lookupValues' => $lookUpValues,
               'default' => self::$siteUrlParams[self::$yearKey]['value']
             ]) . '</div></th>';
-            self::set_up_control_change($ctrlid, self::$yearKey, [self::$locationKey]);
+            self::set_up_control_change($ctrlid, self::$yearKey, []);
         }
 
         if ($baseTheme === 'generic') {
