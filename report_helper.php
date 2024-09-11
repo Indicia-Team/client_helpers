@@ -1840,156 +1840,174 @@ HTML;
   * single column which is configured as a mappable column or the report must
   * specify a parameterised CQL query to draw the map using WMS.
   *
-  * @param array $options Options array with the following possibilities:<ul>
-  * <li><b>id</b><br/>
-  * Optional unique identifier for the report. This is required if there is more than
-  * one different report (grid, chart or map) on a single web page to allow separation
-  * of the page and sort $_GET parameters in the URLs
-  * generated.</li>
-  * <li><b>reportGroup</b><br/>
-  * When joining multiple reports together, this can be used on a report that has autoParamsForm set to false to bind the report to the
-  * parameters form from a different report by giving both report controls the same reportGroup string. This will only work when all
-  * parameters required by this report are covered by the other report's parameters form.</li>
-  * <li><b>rememberParamsReportGroup</b><br/>
-  * Enter any value in this parameter to allow the report to save its parameters for the next time the report is loaded.
-  * The parameters are saved site wide, so if several reports share the same value and the same report group then the parameter
-  * settings will be shared across the reports even if they are on different pages of the site. For example if several reports on the
-  * site have an ownData boolean parameter which filters the data to the user's own data, this can be set so that the reports all
-  * share the setting. This functionality requires cookies to be enabled on the browser.</li>
-  * <li><b>mode</b><br/>
-  * Pass report for a report, or direct for an Indicia table or view. Default is report.</li>
-  * <li><b>readAuth</b><br/>
-  * Read authorisation tokens.</li>
-  * <li><b>dataSource</b><br/>
-  * Name of the report file or table/view.</li>
-  * <li><b>dataSourceLoRes</b><br/>
-  * Name of the report file or table/view to use when zoomed out. For example this might aggregate records to 1km or 10km grid squares.</li>
-  * <li><b>autoParamsForm</b>
-  * Defaults to true. If true, then if a report requires parameters, a parameters input form will be auto-generated
-  * at the top of the grid. If set to false, then it is possible to manually build a parameters entry HTML form if you
-  * follow the following guidelines. First, you need to specify the id option for the report grid, so that your
-  * grid has a reproducable id. Next, the form you want associated with the grid must itself have the same id, but with
-  * the addition of params on the end. E.g. if the call to report_grid specifies the option 'id' to be 'my-grid' then
-  * the parameters form must be called 'my-grid-params'. Finally the input controls which define each parameter must have
-  * the name 'param-id-' followed by the actual parameter name, replacing id with the grid id. So, in our example,
-  * a parameter called survey will need an input or select control with the name attribute set to 'param-my-grid-survey'.
-  * The submit button for the form should have the method set to "get" and should post back to the same page.
-  * As a final alternative, if parameters are required by the report but some can be hard coded then
-  * those may be added to the filters array.</li>
-  * <li><b>filters</b><br/>
-  * Array of key value pairs to include as a filter against the data.
-  * </li>
-  * <li><b>extraParams</b><br/>
-  * Array of additional key value pairs to attach to the request.
-  * </li>
-  * <li><b>paramDefaults</b>
-  * Optional associative array of parameter default values.</li>
-  * <li><b>paramsOnly</b>
-  * Defaults to false. If true, then this method will only return the parameters form, not the grid content. autoParamsForm
-  * is ignored if this flag is set.</li>
-  * <li><b>ignoreParams</b>
-  * Array that can be set to a list of the report parameter names that should not be included in the parameters form. Useful
-  * when using paramsOnly=true to display a parameters entry form, but the system has default values for some of the parameters
-  * which the user does not need to be asked about.</li>
-  * <li><b>completeParamsForm</b>
-  * Defaults to true. If false, the control HTML is returned for the params form without being wrapped in a <form> and
-  * without the Run Report button, allowing it to be embedded into another form.</li>
-  * <li><b>paramsFormButtonCaption</b>
-  * Caption of the button to run the report on the report parameters form. Defaults to Run Report. This caption
-  * is localised when appropriate.
-  * <li><b>geoserverLayer</b>
-  * For improved mapping performance, specify a layer on GeoServer which
-  * has the same attributes and output as the report file. Then the report map can output
-  * the contents of this layer filtered by the report parameters, rather than build a layer
-  * from the report data.</li>
-  * <li><b>geoserverLayerStyle</b>
-  * Optional name of the SLD file available on GeoServer which is to be applied to the GeoServer layer.
-  * </li>
-  * <li><b>cqlTemplate</b>
-  * Use with the geoserver_layer to provide a template for the CQL to filter the layer
-  * according to the parameters of the report. For example, if you are using the report called
-  * <em>map_occurrences_by_survey</em> then you can set the geoserver_layer to the indicia:detail_occurrences
-  * layer and set this to <em>INTERSECTS(geom, #searchArea#) AND survey_id=#survey#</em>.</li>
-  * <li>proxy<br/>
-  * URL of a proxy on the local server to direct GeoServer WMS requests to. This proxy must be able to
-  * cache filters in the same way as the iform_proxy Drupal module.</li>
-  * <li>locationParams<br/>
-  * Set to a comma seperated list of report parameters that are associated with locations. For instance, this might
-  * be location_id,region_id. The system then knows to zoom the map when these parameters are supplied.
-  * The bigger locations should always appear to the right in the list so that if multiple parameters are filled in by the user
-  * the system will always zoom to the biggest one. Default location_id.</li>
-  * <li>clickable<br/>
-  * Set to true to enable clicking on the data points to see the underlying data. Default true.</li>
-  * <li>clickableLayersOutputMode<br/>
-  * Set popup, div or report to display popups, output data to a div, or filter associated reports when clicking on data points
-  * with the query tool selected.</li>
-  * <li>clickableLayersOutputDiv<br/>
-  * Set to the id of a div to display the clicked data in, or leave blank to display a popup.</li>
-  * <li>clickableLayersOutputColumns<br/>
-  * An associated array of column field names with column titles as the values which defines the columns that are output when clicking on a data point.
-  * If ommitted, then all available columns are output using their original field names.</li>
-  * <li>displaySymbol</li>
-  * Symbol to display instead of the actual polygon. The symbol is displayed at the centre of the polygon.
-  * If not set then defaults to output the original polygon. Allowed values are circle,
-  * square, star, x, cross, triangle.</li>
-  * <li>valueOutput
-  * Allows definition of how a data value in the report output is used to change the output of each symbol.
-  * This allows symbol size, colour and/or opacity to be used to provide an indication of data values.
-  * Provide an array of entries. The key of the entries should match the style parameter you want to
-  * control which should be one of fillOpacity, fillColor, strokeOpacity, strokeWidth or strokeColor. If using
-  * displaySymbol to render symbols rather than polygons then pointRadius (the symbol size) and rotation are also
-  * available. If the report defines labels (using the feature_style attribute of a column to define a
-  * column that outputs labels), then fontSize, fontColor and fontOpacity are also available.
-  * Each array entry is a sub-array with associative array values set for the following:
-  *   "from" is the start value of the range of output values (e.g. the minimum opacity or first colour in a range).
-  *   "to" is the end value of the range of output values (e.g. the maximum opacity or last colour in a range).
-  *   "valueField" is the name of the numeric field in the report output to be used to control display.
-  *   "minValue" is the data value that equates to the output value specified by "from". This can be a
-  *     fieldname if wrapped in braces.
-  *   "maxValue" is the data value that equates to the output value specified by "from". This can be a
-  *     fieldname if wrapped in braces.
-  * The following example maps a field called value (with minvalue and maxvalue also output by the report)
-  * to a range of colours from blue to red.
-  * array(
-  *   'fillColor'=>array(
-  *     'from' => '#0000ff',
-  *     'to' => '#ff0000',
-  *     'valueField' => 'value',
-  *     'minValue'=> '{minvalue}',
-  *     'maxValue'=> '{maxvalue}'
-  *   )
-  * )
-  * </li>
-  * <li><b>sharing</b>
-  * Assuming the report has been written to take account of website sharing agreements, set this to define the task
-  * you are performing with the report and therefore the type of sharing to allow. Options are reporting (default),
-  * verification, moderation, peer_review, data_flow, editing, website (this website only) or me (my data only).</li>
-  * <li><b>UserId</b>
-  * If sharing=me, then this must contain the Indicia user ID of the user to return data for.
-  * </li>
-  * <li><b>rowId</b>
-  * Optional. Set this to the name of a field in the report to define which field is being used to define the feature ID created on the map
-  * layer. For example this can be used in conjunction with rowId on a report grid to allow a report's rows to be linked to the associated
-  * features. Note that the row ID can point to either an integer value, or a list of integers separated by commas if the rows returned
-  * by the report map to features which are shared by multiple records.
-  * </li>
-  * <li><b>ajax</b>
-  * Optional. Set to true to load the records onto the map using an AJAX request after the initial page load. Not relevant for
-  * GeoServer layers. Note that when ajax loading the map, the map will not automatically zoom to the layer extent.
-  * </li>
-  * <li><b>zoomMapToOutput</b>
-  * Default true. Defines that the map will automatically zoom to show the records. If using AJAX then note that the
-  * zoom will happen after initial page load and the map will zoom again if several pages of records are loaded.
-  * </li>
-  * <li><b>minMapReportZoom</b>
-  * If set to a map zoom level (typically from 1-18) then the map does not show
-  * the report output until zoomed to this level.
-  * </li>
-  * <li><b>featureDoubleOutlineColour</b>
-  * If set to a CSS colour class, then feature outlines will be doubled up, for example a 1 pixel dark outline
-  * over a 3 pixel light outline, creating a line halo effect which can make the map clearer.
-  * </li>
-  * </ul>
+  * @param array $options Options array with the following possibilities:
+  * * *id* - Optional unique identifier for the report. This is required if
+  *   there is more than one different report (grid, chart or map) on a single
+  *   web page to allow separation of the page and sort $_GET parameters in the
+  *   URLs generated.
+  * * *reportGroup* - When joining multiple reports together, this can be used
+  *   on a report that has autoParamsForm set to false to bind the report to
+  *   the parameters form from a different report by giving both report
+  *   controls the same reportGroup string. This will only work when all
+  *   parameters required by this report are covered by the other report's
+  *   parameters form.
+  * * *rememberParamsReportGroup* - Enter any value in this parameter to allow
+  *   the report to save its parameters for the next time the report is loaded.
+  *   The parameters are saved site wide, so if several reports share the same
+  *   value and the same report group then the parameter settings will be
+  *   shared across the reports even if they are on different pages of the
+  *   site. For example if several reports on the site have an ownData boolean
+  *   parameter which filters the data to the user's own data, this can be set
+  *   so that the reports all share the setting. This functionality requires
+  *   cookies to be enabled on the browser.
+  * * *mode* - Pass report for a report, or direct for an Indicia table or
+  *   view. Default is report.
+  * * *readAuth* - Read authorisation tokens.
+  * * *dataSource* - Name of the report file or table/view.
+  * * *dataSourceLoRes* - Name of the report file or table/view to use when
+  *   zoomed out. For example this might aggregate records to 1km or 10km grid
+  *   squares.
+  * * *autoParamsForm* - Defaults to true. If true, then if a report requires
+  *   parameters, a parameters input form will be auto-generated at the top of
+  *   the grid. If set to false, then it is possible to manually build a
+  *   parameters entry HTML form if you follow the following guidelines.
+  *   First, you need to specify the id option for the report grid, so that
+  *   your grid has a reproducable id. Next, the form you want associated with
+  *   the grid must itself have the same id, but with the addition of params on
+  *   the end. E.g. if the call to report_grid specifies the option 'id' to be
+  *   'my-grid' then the parameters form must be called 'my-grid-params'.
+  *   Finally the input controls which define each parameter must have the name
+  *   'param-id-' followed by the actual parameter name, replacing id with the
+  *   grid id. So, in our example, a parameter called survey will need an input
+  *   or select control with the name attribute set to 'param-my-grid-survey'.
+  *   The submit button for the form should have the method set to "get" and
+  *   should post back to the same page. As a final alternative, if parameters
+  *   are required by the report but some can be hard coded then those may be
+  *   added to the filters array.
+  * * *filters* - Array of key value pairs to include as a filter against the
+  *   data.
+  * * *extraParams* - Array of additional key value pairs to attach to the
+  *   request.
+  * * *paramDefaults* - Optional associative array of parameter default values.
+  * * *paramsOnly* - Defaults to false. If true, then this method will only
+  *   return the parameters form, not the grid content. autoParamsForm is
+  *   ignored if this flag is set.
+  * * *ignoreParams* - Array that can be set to a list of the report parameter
+  *   names that should not be included in the parameters form. Useful when
+  *   using paramsOnly=true to display a parameters entry form, but the system
+  *   has default values for some of the parameters which the user does not
+  *   need to be asked about.
+  * * *completeParamsForm* - Defaults to true. If false, the control HTML is
+  *   returned for the params form without being wrapped in a <form> and
+  *   without the Run Report button, allowing it to be embedded into another
+  *   form.
+  * * *paramsFormButtonCaption* - Caption of the button to run the report on
+  *   the report parameters form. Defaults to Run Report. This caption is
+  *   localised when appropriate.
+  * * *geoserverLayer* - For improved mapping performance, specify a layer on
+  *   GeoServer which has the same attributes and output as the report file.
+  *   Then the report map can output the contents of this layer filtered by the
+  *   report parameters, rather than build a layer from the report data.
+  * * *geoserverLayerStyle* - Optional name of the SLD file available on
+  *   GeoServer which is to be applied to the GeoServer layer.  *
+  * * *cqlTemplate* - Use with the geoserver_layer to provide a template for
+  *   the CQL to filter the layer according to the parameters of the report.
+  *   For example, if you are using the report called
+  *   <em>map_occurrences_by_survey</em> then you can set the geoserver_layer
+  *   to the indicia:detail_occurrences layer and set this to
+  *   <em>INTERSECTS(geom, #searchArea#) AND survey_id=#survey#</em>.
+  * * *proxy* - URL of a proxy on the local server to direct GeoServer WMS
+  *   requests to. This proxy must be able to cache filters in the same way as
+  *   the iform_proxy Drupal module.
+  * * *locationParams* - Set to a comma seperated list of report parameters
+  *   that are associated with locations. For instance, this might be
+  *   `location_id,region_id`. The system then knows to zoom the map when these
+  *   parameters are supplied. The bigger locations should always appear to the
+  *   right in the list so that if multiple parameters are filled in by the
+  *   user the system will always zoom to the biggest one. Default location_id.
+  * * *clickable* - Set to true to enable clicking on the data points to see
+  *   the underlying data. Default true.
+  * * *clickableLayersOutputMode* - Set popup, div or report to display popups,
+  *   output data to a div, or filter associated reports when clicking on data
+  *   points with the query tool selected.
+  * * *clickableLayersOutputDiv* - Set to the id of a div to display the
+  *   clicked data in, or leave blank to display a popup.
+  * * *clickableLayersOutputColumns* - An associated array of column field
+  *   names with column titles as the values which defines the columns that are
+  *   output when clicking on a data point. If ommitted, then all available
+  *   columns are output using their original field names.
+  * * *displaySymbol* - Symbol to display instead of the actual polygon. The
+  *   symbol is displayed at the centre of the polygon. If not set then
+  *   defaults to output the original polygon. Allowed values are circle,
+  *   square, star, x, cross, triangle.
+  * * *valueOutput* - Allows definition of how a data value in the report
+  *   output is used to change the output of each symbol. This allows symbol
+  *   size, colour and/or opacity to be used to provide an indication of data
+  *   values. Provide an array of entries. The key of the entries should match
+  *   the style parameter you want to control which should be one of
+  *   fillOpacity, fillColor, strokeOpacity, strokeWidth or strokeColor. If
+  *   using displaySymbol to render symbols rather than polygons then
+  *   pointRadius (the symbol size) and rotation are also available. If the
+  *   report defines labels (using the feature_style attribute of a column to
+  *   define a column that outputs labels), then fontSize, fontColor and
+  *   fontOpacity are also available. Each array entry is a sub-array with
+  *   associative array values set for the following:
+  *   * "from" is the start value of the range of output values (e.g. the
+  *     minimum opacity or first colour in a range).
+  *   * "to" is the end value of the range of output values (e.g. the maximum
+  *     opacity or last colour in a range).
+  *   * "valueField" is the name of the numeric field in the report output to
+  *     be used to control display.
+  *   * "minValue" is the data value that equates to the output value specified
+  *     by "from". This can be a fieldname if wrapped in braces.
+  *   * "maxValue" is the data value that equates to the output value specified
+  *     by "from". This can be a fieldname if wrapped in braces.
+  *   The following example maps a field called value (with minvalue and
+  *   maxvalue also output by the report) to a range of colours from blue to
+  *   red.
+  *   ```php
+  *   [
+  *     'fillColor' => [
+  *       'from' => '#0000ff',
+  *       'to' => '#ff0000',
+  *       'valueField' => 'value',
+  *       'minValue'=> '{minvalue}',
+  *       'maxValue'=> '{maxvalue}',
+  *     ],
+  *   ]
+  *   ```
+  * * *sharing* - Assuming the report has been written to take account of
+  *   website sharing agreements, set this to define the task you are
+  *   performing with the report and therefore the type of sharing to allow.
+  *   Options are reporting (default), verification, moderation, peer_review,
+  *   data_flow, editing, website (this website only) or me (my data only).
+  * * *UserId* - If sharing=me, then this must contain the Indicia user ID of
+  *   the user to return data for.  *
+  * * *rowId* - Optional. Set this to the name of a field in the report to
+  *   define which field is being used to define the feature ID created on the
+  *   map layer. For example this can be used in conjunction with rowId on a
+  *   report grid to allow a report's rows to be linked to the associated
+  *   features. Note that the row ID can point to either an integer value, or a
+  *   list of integers separated by commas if the rows returned by the report
+  *   map to features which are shared by multiple records.
+  * * *ajax* - Optional. Set to true to load the records onto the map using an
+  *   AJAX request after the initial page load. Not relevant for GeoServer
+  *   layers. Note that when ajax loading the map, the map will not
+  *   automatically zoom to the layer extent.
+  * * *zoomMapToOutput* - Default true. Defines that the map will
+  *   automatically zoom to show the records. If using AJAX then note that the
+  *   zoom will happen after initial page load and the map will zoom again if
+  *   several pages of records are loaded.
+  * * populateOnPageLoad - set to false to disable population of the map when
+  *   the page initially loads. Should be used alongside a report_grid control
+  *   which has the rowId option set, enabling the use of this report grid to
+  *   output it's data to the map once a filter has been applied.
+  * * *minMapReportZoom* - If set to a map zoom level (typically from 1-18)
+  *   then the map does not show the report output until zoomed to this level.
+  * * *featureDoubleOutlineColour* - If set to a CSS colour class, then feature
+  *   outlines will be doubled up, for example a 1 pixel dark outline over a 3
+  *   pixel light outline, creating a line halo effect which can make the map
+  *   clearer.
   */
   public static function report_map($options) {
     $options = array_merge(array(
@@ -2002,6 +2020,7 @@ HTML;
       'featureDoubleOutlineColour' => '',
       'dataSourceLoRes' => '',
       'minMapReportZoom' => 'false',
+      'populateOnPageLoad' => TRUE,
     ), $options);
     $options = self::getReportGridOptions($options);
 
@@ -2237,7 +2256,7 @@ HTML;
             }
           }
         }
-
+        $populateOnPageLoad = $options['populateOnPageLoad'] ? 'true' : 'false';
         if ($options['ajax']) {
           // Output scripts to get map loading by Ajax.
           $mapDataSource = json_encode([
@@ -2264,7 +2283,7 @@ mapInitialisationHooks.push(function(div) {
       }
     });
   }
-  if (wantToMap && typeof indiciaData.mapReportControllerGrid !== 'undefined') {
+  if ($populateOnPageLoad && wantToMap && typeof indiciaData.mapReportControllerGrid !== 'undefined') {
     indiciaData.mapReportControllerGrid.mapRecords();
   }
   if (indiciaData.mapDataSource.loRes !== '') {
