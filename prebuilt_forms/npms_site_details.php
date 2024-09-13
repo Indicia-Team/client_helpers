@@ -13,7 +13,7 @@
  * GNU General Public License for more details.
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
- * 
+ *
  * ## DOCUMENTATION FOR NPMS DEVELOPERS #####################################
  * This pre-built form provides functionality that is specific to the NPMS
  * website. The form consists of:
@@ -24,25 +24,23 @@
  * It depends on libraries loaded by that module when the module detects that
  * an iForm page of this type (npms_site_details) is loaded. The npms_vis
  * module also includes a image resource used by this form.
- * Development of this custom form functionality was made easier by adding 
+ * Development of this custom form functionality was made easier by adding
  * resources to the npms_vis module rather than the client_helpers module.
  * ##########################################################################
  *
- * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link http://code.google.com/p/indicia/
  */
 
-    require_once('includes/report.php');
+use IForm\prebuilt_forms\PageType;
+use IForm\prebuilt_forms\PrebuiltFormInterface;
 
-class iform_npms_site_details {
+require_once('includes/report.php');
+
+class iform_npms_site_details implements PrebuiltFormInterface {
 
   /**
    * Return the form metadata.
-   *
-   * Note the title of this method includes the name of the form file. This
-   * ensures that if inheritance is used in the forms, subclassed forms don't
-   * return their parent's form definition.
    *
    * @return array
    *   The definition of the form.
@@ -53,6 +51,13 @@ class iform_npms_site_details {
       'category' => 'NPMS Specific forms',
       'description' => 'Implements an NPMS core square summary page',
     );
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function getPageType(): PageType {
+    return PageType::Utility;
   }
 
   /**
@@ -108,8 +113,8 @@ class iform_npms_site_details {
     // Note that BRC charts library is added from the NPMS custom module
     // because a newer version is needed than the one in iform and it
     // it is easier to control and update from NPMS custom module.
-    // The npms_vis module also loads the lightgallery & assciated plugin 
-    // libraries. Again it is easier to add these to the npms_vis module 
+    // The npms_vis module also loads the lightgallery & assciated plugin
+    // libraries. Again it is easier to add these to the npms_vis module
     // than to the iForm client_helpers module.
 
     iform_load_helpers(array('report_helper'));
@@ -170,7 +175,7 @@ class iform_npms_site_details {
     $core_square_id = array_column($nonNullIDs, null, 'name')[$_GET['gr']]['id'];
     $opts['dataSource'] = 'projects/npms/get_layers_for_square';
     $opts['extraParams'] = array(
-      'location_id' => $core_square_id, 
+      'location_id' => $core_square_id,
       'core_square_location_type_id' => '4009',
       'layer_location_types' => '15,2412,5702,2187,17555,17558,17581'
     );

@@ -14,10 +14,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link http://code.google.com/p/indicia/
  */
+
+use IForm\prebuilt_forms\PageType;
 
 require_once 'includes/dynamic.php';
 //require_once 'includes/BaseDynamicDetails.php';
@@ -63,15 +64,6 @@ class iform_ebms_atlas_map extends iform_dynamic {
   private static $dataYearFilter;
 
   /**
-   * Disable form element wrapped around output.
-   *
-   * @return bool
-   */
-  protected static function isDataEntryForm() {
-    return FALSE;
-  }
-
-  /**
    * Return the form metadata.
    *
    * @return array
@@ -84,6 +76,13 @@ class iform_ebms_atlas_map extends iform_dynamic {
       'description' => 'eBMS atlas map.',
       'recommended' => TRUE,
     );
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function getPageType(): PageType {
+    return PageType::Report;
   }
 
   /**

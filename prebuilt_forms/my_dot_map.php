@@ -13,10 +13,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers/
  */
+
+use IForm\prebuilt_forms\PageType;
+use IForm\prebuilt_forms\PrebuiltFormInterface;
 
 require_once 'includes/map.php';
 require_once 'includes/language_utils.php';
@@ -24,12 +26,30 @@ require_once 'includes/language_utils.php';
  *@todo Provide form description in this comment block.
  * @todo Rename the form class to iform_...
  */
-class iform_my_dot_map {
+class iform_my_dot_map implements PrebuiltFormInterface {
+
+  /**
+   * Return the form title.
+   *
+   * @return string
+   *   The title of the form.
+   */
+  public static function get_title() {
+    return 'My dot map';
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function getPageType(): PageType {
+    return PageType::Report;
+  }
 
   /**
    * Get the list of parameters for this form.
-   * @return array List of parameters that this form requires.
-   * @todo: Implement this method
+   *
+   * @return array
+   *   List of parameters that this form requires.
    */
   public static function get_parameters() {
     $filters = array(
@@ -328,16 +348,6 @@ class iform_my_dot_map {
         ),
       )
     );
-  }
-
-  /**
-   * Return the form title.
-   *
-   * @return string
-   *   The title of the form.
-   */
-  public static function get_title() {
-    return 'My dot map';
   }
 
   /**

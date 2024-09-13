@@ -13,32 +13,41 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers/
  */
 
-
+use IForm\prebuilt_forms\PageType;
+use IForm\prebuilt_forms\PrebuiltFormInterface;
 
 require_once 'includes/report_filters.php';
 
 /**
  * A page for receiving invitation responses from invited users.
  */
-class iform_group_receive_invite_response {
+class iform_group_receive_invite_response implements PrebuiltFormInterface {
 
   /**
    * Return the form metadata.
-   * @return array The definition of the form.
+   *
+   * @return array
+   *   The definition of the form.
    */
   public static function get_group_receive_invite_response_definition() {
-    return array(
+    return [
       'title' => 'Receive responses from invites',
       'category' => 'Recording groups',
       'description' => 'A page that is hit when the user clicks on a link to accept an email invite to a group. Use the Drupal Blocks '.
           'system to ensure that a login block is present on this page for non-logged in users.',
       'recommended' => true
-    );
+    ];
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function getPageType(): PageType {
+    return PageType::Utility;
   }
 
   /**

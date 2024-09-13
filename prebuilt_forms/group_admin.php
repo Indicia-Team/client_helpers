@@ -13,15 +13,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers/
  */
 
+use IForm\prebuilt_forms\PageType;
+use IForm\prebuilt_forms\PrebuiltFormInterface;
+
 /**
  * A page for managing the list of members of a group.
  */
-class iform_group_admin {
+class iform_group_admin implements PrebuiltFormInterface {
 
   private static $groupType='group';
 
@@ -36,6 +38,13 @@ class iform_group_admin {
       'description' => 'A form for administering a group, in particular the members list. Should be passed a parameter called group_id.',
       'recommended' => true
     );
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function getPageType(): PageType {
+    return PageType::Utility;
   }
 
   /**

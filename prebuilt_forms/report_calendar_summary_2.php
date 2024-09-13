@@ -14,10 +14,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers/
  */
+
+use IForm\prebuilt_forms\PageType;
+use IForm\prebuilt_forms\PrebuiltFormInterface;
 
 /*
  * Future enhancements:
@@ -35,7 +37,7 @@ require_once 'includes/user.php';
 /**
  * Prebuilt Indicia data form that lists the output of any report.
  */
-class iform_report_calendar_summary_2 {
+class iform_report_calendar_summary_2 implements PrebuiltFormInterface {
 
   /* This is the URL parameter used to pass the user_id filter through */
   private static $dataSet = 'dataSet';
@@ -66,7 +68,9 @@ class iform_report_calendar_summary_2 {
 
   /**
    * Return the form metadata.
-   * @return string The definition of the form.
+   *
+   * @return array
+   *   The definition of the form.
    */
   public static function get_report_calendar_summary_2_definition() {
     return [
@@ -74,6 +78,13 @@ class iform_report_calendar_summary_2 {
       'category' => 'Reporting',
       'description' => 'Outputs a grid of sumary data loaded from the Summary Builder Module. Can be displayed as a table, or a line or bar chart.',
     ];
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function getPageType(): PageType {
+    return PageType::Report;
   }
 
   /* Installation/configuration notes
@@ -157,7 +168,7 @@ class iform_report_calendar_summary_2 {
           'group' => 'Data Inclusion'
         ],
 
-          
+
         [
           'name' => 'manager_permission',
           'caption' => 'Drupal Permission for Super Manager mode',
@@ -850,7 +861,7 @@ class iform_report_calendar_summary_2 {
   // Alter summary_builder module to handle training flag.
   // Capture the SQL required to do a full rebuild
   // Alter all the reports for training
-  
+
   // Order of options: mine, region, branch, country/scheme, all
   // Descriptions                                                                                             Control Values                  Data filters (User, location)                         Download Prefix
   // Normal user: Recorder Control = My Data (user=me); "Combine data for all recorders" (user=all)
@@ -877,7 +888,7 @@ class iform_report_calendar_summary_2 {
   //       any site assigned to me (including sensitive); (optgroup)                                           (location = site:<M>)          U=0     L=<M>                                         Site_M_
   //       "Combine all sites together"                                                                        (location = all)               U=0     L=0                                           All_
   //       any other site (including sensitive); (optgroup)                                                    (location = site:<M>)          U=0     L=<M>                                         Site_M_
-  // 
+  //
   // EBMS Region user: My Data; N x Region Data; "Combine data for all recorders" (user=all)
   //   My Data: Available options in sites list:                                                              (dataSet = user:<N>)
   //       "Combine all my sites together"                                                                     (location = user:<N>)          U=<N>   L=0                                           User_N_
@@ -894,7 +905,7 @@ class iform_report_calendar_summary_2 {
   //       any site assigned to me (including sensitive); (optgroup)                                           (location = site:<M>)          U=0     L=<M>                                         Site_M_
   //       Configurable: "combine all country/scheme <Y> sites together" (scheme allocated to me)              (location = scheme:<S>)        U=0     L=[Scheme sites]                              Scheme_S_
   //       Configurable: any site in my country/scheme (excluding sensitive) (optgroup)                        (location = site:<M>)          U=0     L=<M>                                         Site_M_
-  // 
+  //
   // EBMS Country/Scheme user: My Data; Region Data; "Combine data for all recorders" (user=all); specific user
   //   My Data: Available options in sites list:                                                              (dataSet = user:<N>)
   //       "Combine all my sites together"                                                                     (location = user:<N>)          U=<N>   L=0                                           User_N_
@@ -917,7 +928,7 @@ class iform_report_calendar_summary_2 {
   //       N x user's sites in region <Xn> (including sensitive) (optgroup)                                    (location = site:<M>)          U=<N>   L=<M>                                         User_N_Site_M_
   //       user's other sites (not in my regions) (including sensitive); (optgroup)                            (location = site:<M>)          U=<N>   L=<M>                                         User_N_Site_M_
   //       FUTURE: any other site that user has recorded data against (including sensitive) (optgroup)
-  // 
+  //
   // UKBMS Branch user: My Data; Branch Data (UKBMS); All Data
   //   My Data: Available options in sites list:                                                              (dataSet = user:<N>)
   //       "Combine all my sites together";                                                                    (location = user:<N>)          U=<N>   L=0                                           User_N_
@@ -931,7 +942,7 @@ class iform_report_calendar_summary_2 {
   //       any site assigned to me (including sensitive); (optgroup)                                           (location = site:<M>)          U=0     L=<M>                                         Site_M_
   //       Configurable: "Combine all sites together"                                                          (location = all)               U=0     L=0                                           All_
   //       Configurable: any other site (excluding sensitive); (optgroup)                                      (location = site:<M>)          U=0     L=<M>                                         Site_M_
-  // 
+  //
   // Supermanager user: My Data; Branch Data (UKBMS); All Data; Specific User
   //   My Data: Available options in sites list:                                                              (dataSet = user:<N>)
   //       "Combine all my sites together";                                                                    (location = user:<N>)          U=<N>   L=0                                           User_N_
@@ -966,7 +977,7 @@ class iform_report_calendar_summary_2 {
   //       (EBMS) user's other sites (not in my regions) (including sensitive); (optgroup)                     (location = site:<M>)          U=<N>   L=<M>                                         User_N_Site_M_
   //       (UKBMS) any site assigned to user (including sensitive) (optgroup)                                  (location = site:<M>)          U=<N>   L=<M>                                         User_N_Site_M_
   //       FUTURE: any other site that user has recorded data against (including sensitive) (optgroup)
-  
+
   // Configuration
   // 'see' determines what is in the data set control.
   // 'summarised' determines what is available as 'combined' in the location control
@@ -984,10 +995,10 @@ class iform_report_calendar_summary_2 {
   // Max level Scheme user can see summarized data from all: scheme, all                            : UKBMS=NA  : EBMS=scheme
   // Max level Scheme user can see other sites: scheme, all sites                                   : UKBMS=NA  : EBMS=scheme
   // Superuser can access full data lists: yes, no                                                  : UKBMS=yes : EBMS=no
-  
+
   // TODO Go through UKBMS normal user, branch user (T.Munro), superuser, admin: check each option combination for data set/location, and the downloads: filename and data is produced (no errors)
   // TODO Go through EBMS normal user, region user, scheme user, superuser, admin: check each option combination for data set/location, and the downloads
-  
+
   private static function location_control($args, $readAuth, $nid, &$options)
   {
     // note that when in user specific mode it returns the list currently assigned to the user: it does not give
@@ -1060,13 +1071,13 @@ class iform_report_calendar_summary_2 {
         $options['downloadFilePrefix']['type'] = preg_replace('/[^A-Za-z0-9]/i', '', $lookUpValues[self::$siteUrlParams[self::$locationTypeKey]['value']]);
       }
     }
-    
+
     $locationAttributes = data_entry_helper::getAttributes($attrArgs, FALSE);
     $cmsAttr = extract_cms_user_attr($locationAttributes,FALSE);
     if (!$cmsAttr) {
       return lang::get('Location control: CMS User ID Attribute missing from locations.');
     }
-    
+
     $dataSet = self::$siteUrlParams[self::$dataSet]['value'];
     $ctrlValue = self::$siteUrlParams[self::$locationKey]['value'];
     $parts = explode(':', $dataSet);
@@ -1198,7 +1209,7 @@ class iform_report_calendar_summary_2 {
             "index" => count($optionList)
           ];
         }
-      } else { 
+      } else {
         if ($dataSet === 'branch') {
           $optionList[] = [
             "value" => "branch",
@@ -1373,7 +1384,7 @@ class iform_report_calendar_summary_2 {
     unset($options['summary_location_id']);
     unset($options['extraParams']['location_list']);
     $options['valid'] = TRUE;
-    
+
     switch ($locValueParts[0]) {
       case 'user' :
         $options['summary_location_id'] = 0;
@@ -1444,7 +1455,7 @@ class iform_report_calendar_summary_2 {
     self::set_up_control_change($ctrlid, self::$locationKey, []);
     return $ctrl;
   }
-  
+
   private static function data_set_access($args, $isSuperManager, $isSchemeManager, $isBranchManager, $type, $level) {
     if ($isSuperManager) {
       return TRUE;
@@ -1673,7 +1684,7 @@ class iform_report_calendar_summary_2 {
 
     return $ctrl;
   }
-  
+
   /**
    * Get the parameters required for the current filter.
    */
@@ -1826,7 +1837,7 @@ jQuery('#".$ctrlid."').change(function(){
           }
         }
         $param=(strpos($reloadUrl['path'],'?') === FALSE ? '?' : '&') . self::$yearKey.'=';
-        
+
         if ($baseTheme === 'generic') {
           $r = '<th><a id="year-control-previous" title="' . (self::$siteUrlParams[self::$yearKey]['value']-1) . '" rel="nofollow" href="' . $reloadUrl['path'] . $param.(self::$siteUrlParams[self::$yearKey]['value']-1) . '" class="ui-datepicker-prev ui-corner-all"><span class="ui-icon ui-icon-circle-triangle-w">' . lang::get('Prev') . '</span></a></th>';
         } else {
@@ -1925,7 +1936,7 @@ jQuery('#".$ctrlid."').change(function(){
       return('<p>Please contact the site administrator. This version of the form uses a different method of specifying the location types.</p>');
     }
     //EBMS only
-    if (\Drupal::moduleHandler()->moduleExists('ebms_scheme')  && 
+    if (\Drupal::moduleHandler()->moduleExists('ebms_scheme')  &&
           !empty($args['taxon_column_overrides'])) {
       $args = self::forceCommonNameLanguageOptionIfNeeded($args);
     }
@@ -1955,7 +1966,7 @@ jQuery('#".$ctrlid."').change(function(){
     if (!empty($args['taxon_column_overrides'])) {
       $reportOptions['taxon_column_overrides'] = $args['taxon_column_overrides'];
     }
-    
+
     // Chart options
     if (isset($_GET['outputSeries'])) {
       $reportOptions['outputSeries']=$_GET['outputSeries']; // default is all
@@ -1980,7 +1991,7 @@ jQuery('#".$ctrlid."').change(function(){
       report_helper::$javascript .= 'indiciaData.informationDialogTitle = "' . lang::get("Report information") . '";';
       report_helper::$javascript .= 'indiciaData.informationCloseButton = "' . lang::get("Close") . '";';
     }
-    
+
     // Add controls first: set up a control bar
     $baseTheme = hostsite_get_config_value('iform.settings', 'base_theme', 'generic');
     if ($baseTheme === 'generic') {
@@ -2004,7 +2015,7 @@ jQuery('#".$ctrlid."').change(function(){
             'default' => $checked,
             'labelPosition' => 'after'
         ]);
-        
+
         if ($checked) {
           $reportOptions['downloadFilePrefix'][$param] = 'RM'.preg_replace('/[^A-Za-z0-9]/i', '', $param);
         }
@@ -2024,7 +2035,7 @@ jQuery('#".$ctrlid."').change(function(){
         'labelTemplate' => 'labelNoColon'
     ]);
     $retVal .= '</th></tr></thead></table>';
-    
+
     $reportOptions['caching'] = self::$siteUrlParams[self::$cacheKey]['value'];
     self::set_up_control_change('cachingParam', self::$cacheKey, [], TRUE);
     // are there any params that should be set to blank using one of the removable params tickboxes?
@@ -2078,7 +2089,7 @@ jQuery('#".$ctrlid."').change(function(){
         }
       }
     }
-    
+
     $retVal .= report_helper::report_calendar_summary2($reportOptions);
 
     return $retVal;
@@ -2086,9 +2097,9 @@ jQuery('#".$ctrlid."').change(function(){
 
   /**
    * Override the type of taxon label to make sure it is common name for some EBMS schemes
-   * 
+   *
    * @param array $args Argument options for the page.
-   * 
+   *
    * @return array Altered page arguments.
    */
   private static function forceCommonNameLanguageOptionIfNeeded($args) {
@@ -2108,7 +2119,7 @@ jQuery('#".$ctrlid."').change(function(){
           }
         }
       }
-    } 
+    }
     return $args;
   }
 }

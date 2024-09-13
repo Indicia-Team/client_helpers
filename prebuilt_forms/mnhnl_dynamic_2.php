@@ -59,7 +59,9 @@ class iform_mnhnl_dynamic_2 extends iform_mnhnl_dynamic_1 {
 
    /**
    * Return the form metadata.
-   * @return string The definition of the form.
+   *
+   * @return array
+   *   The definition of the form.
    */
   public static function get_mnhnl_dynamic_2_definition() {
     return array(

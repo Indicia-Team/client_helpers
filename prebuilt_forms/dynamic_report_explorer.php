@@ -14,10 +14,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers/
  */
+
+use IForm\prebuilt_forms\PageType;
 
 require_once 'includes/dynamic.php';
 require_once 'includes/report.php';
@@ -54,15 +55,6 @@ class iform_dynamic_report_explorer extends iform_dynamic {
   private static $applyUserPrefs = TRUE;
 
   /**
-   * Disable form element wrapped around output.
-   *
-   * @return bool
-   */
-  protected static function isDataEntryForm() {
-    return FALSE;
-  }
-
-  /**
    * Return the form metadata.
    */
   public static function get_dynamic_report_explorer_definition() {
@@ -73,6 +65,13 @@ class iform_dynamic_report_explorer extends iform_dynamic {
           'organised onto several tabs.',
       'recommended' => TRUE
     );
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function getPageType(): PageType {
+    return PageType::Report;
   }
 
   /**

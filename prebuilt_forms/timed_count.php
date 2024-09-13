@@ -14,10 +14,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers/
  */
+
+use IForm\prebuilt_forms\PageType;
+use IForm\prebuilt_forms\PrebuiltFormInterface;
 
 require_once 'includes/map.php';
 require_once 'includes/user.php';
@@ -34,19 +36,27 @@ function iform_timed_count_subsample_cmp($a, $b)
 // TODO Check if OS Map number is to be included.
 // TODO Check validation rules to be applied to each field.
 
-class iform_timed_count {
+class iform_timed_count implements PrebuiltFormInterface {
 
   /**
-   * Return the form metadata. Note the title of this method includes the name of the form file. This ensures
-   * that if inheritance is used in the forms, subclassed forms don't return their parent's form definition.
-   * @return array The definition of the form.
+   * Return the form metadata.
+   *
+   * @return array
+   *   The definition of the form.
    */
   public static function get_timed_count_definition() {
-    return array(
+    return [
       'title' => 'Timed Count',
       'category' => 'Forms for specific surveying methods',
-      'description' => 'A form for inputting the counts of species during a timed period. Can be called with sample=<id> to edit an existing sample.'
-    );
+      'description' => 'A form for inputting the counts of species during a timed period. Can be called with sample=<id> to edit an existing sample.',
+    ];
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function getPageType(): PageType {
+    return PageType::DataEntry;
   }
 
   /**

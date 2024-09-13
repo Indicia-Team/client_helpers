@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Indicia, the OPAL Online Recording Toolkit.
  *
@@ -21,26 +22,34 @@
 require_once 'includes/map.php';
 require_once 'includes/user.php';
 
+use IForm\prebuilt_forms\PageType;
+use IForm\prebuilt_forms\PrebuiltFormInterface;
+
 /**
  * A form for entering ad-hoc observations of cetaceans.
- *
- * @subpackage PrebuiltForms
- * @todo Provide form description in this comment block.
- * @todo Rename the form class to iform_...
  */
-class iform_ad_hoc_cetaceans {
+class iform_ad_hoc_cetaceans implements PrebuiltFormInterface {
 
   /**
    * Return the form metadata.
-   * @return string The definition of the form.
+   *
+   * @return array
+   *   The definition of the form.
    */
   public static function get_ad_hoc_cetaceans_definition() {
-    return array(
+    return [
       'title' => 'Ad-hoc cetacean records',
       'category' => 'Forms for specific surveying methods',
       'description' => 'A form designed for input of ad-hoc records of cetaceans or other marine wildlife. '.
           'Records can be entered via a map if the sighting was from the shore, or via GPS coordinates for sightings at sea.'
-    );
+    ];
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function getPageType(): PageType {
+    return PageType::DataEntry;
   }
 
   /**

@@ -14,31 +14,42 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers/
  */
+
+use IForm\prebuilt_forms\PageType;
+use IForm\prebuilt_forms\PrebuiltFormInterface;
 
 require_once 'includes/report.php';
 
 /**
  * Prebuilt Indicia data form that lists the output of any report.
  */
-class iform_report_grid {
+class iform_report_grid implements PrebuiltFormInterface {
 
   /**
    * Return the form metadata.
-   * @return string The definition of the form.
+   *
+   * @return array
+   *   The definition of the form.
    */
   public static function get_report_grid_definition() {
-    return array(
+    return [
       'title' => 'Report Grid',
       'category' => 'Reporting',
       'description' => 'Outputs a grid of data loaded from an Indicia report. Can automatically include the report parameters form required for the '.
           'generation of the report.',
       'helpLink' => 'https://github.com/Indicia-Team/client_helperswiki/PrebuiltFormReportGrid',
-      'recommended' => true
-    );
+      'recommended' => TRUE,
+    ];
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function getPageType(): PageType {
+    return PageType::Report;
   }
 
   /**

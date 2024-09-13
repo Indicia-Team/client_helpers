@@ -17,10 +17,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/Indicia-Team/client_helpers
  */
+
+use IForm\prebuilt_forms\PageType;
 
 require_once 'includes/dynamic.php';
 
@@ -44,6 +45,13 @@ class iform_dynamic_generic_edit extends iform_dynamic {
       'category' => 'Data entry forms',
       'description' => 'A form for creating or editing records in any entity that you specify in the configuration. To edit a record pass a query string parameter called `id`.',
     ];
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function getPageType(): PageType {
+    return PageType::DataEntry;
   }
 
   /**

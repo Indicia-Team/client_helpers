@@ -28,18 +28,21 @@ require_once 'dynamic_sample_occurrence.php';
 require_once 'includes/shorewatch_grid_reference_processor.php';
 
 class iform_dynamic_shorewatch extends iform_dynamic_sample_occurrence {
+
   /**
    * Return the form metadata.
-   * @return string The definition of the form.
+   *
+   * @return array
+   *   The definition of the form.
    */
   public static function get_dynamic_shorewatch_definition() {
-    return array(
+    return [
       'title' => 'Shorewatch sample with occurrences form',
       'category' => 'Forms for specific surveying methods',
       'description' => 'A sample and occurrence entry form with a grid listing the user\'s occurrences.' .
         'The form supports an "adhoc mode" which is more geared to use by the general public.' .
         'The attributes on the form are dynamically generated from the survey setup on the Indicia Warehouse.'
-    );
+    ];
   }
 
   /**

@@ -30,16 +30,18 @@ class iform_mnhnl_dynamic_1 extends iform_dynamic_sample_occurrence {
 
   /**
    * Return the form metadata.
-   * @return string The definition of the form.
+   *
+   * @return array
+   *   The definition of the form.
    */
   public static function get_mnhnl_dynamic_1_definition() {
-    return array(
+    return [
       'title' => 'MNHNL Dynamic 1 - dynamically generated data entry form',
       'category' => 'MNHNL forms',
       'helpLink' => 'https://github.com/Indicia-Team/client_helperswiki/TutorialDynamicForm',
       'description' => 'Derived from the Dynamic Sample Occurrence Form with custom headers and footers.',
-      'supportsGroups'=>true
-    );
+      'supportsGroups' => TRUE,
+    ];
   }
 
   /**

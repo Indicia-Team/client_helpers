@@ -13,7 +13,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers/
  */
@@ -36,15 +35,17 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
 
   /**
    * Return the form metadata.
-   * @return string The definition of the form.
+   *
+   * @return array
+   *   The definition of the form.
    */
   public static function get_dynamic_progressive_seasearch_survey_definition() {
-    return array(
+    return [
       'title' => 'Progressive survey form for Seasearch',
       'category' => 'Forms for specific surveying methods',
       'description' => 'A form based on Dynamic Sample Occurrence where habitats are sub-samples and occurrences are  ' .
         'attached to a third sample layer. Images are loaded onto the form first.',
-    );
+    ];
   }
 
   /**

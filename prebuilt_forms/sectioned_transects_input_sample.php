@@ -13,10 +13,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers/
  */
+
+use IForm\prebuilt_forms\PageType;
+use IForm\prebuilt_forms\PrebuiltFormInterface;
 
 require_once 'includes/map.php';
 require_once 'includes/form_generation.php';
@@ -38,20 +40,28 @@ function sectionSort($a, $b)
 /**
  * A form for data entry of transect data by entering counts of each for sections along the transect.
  */
-class iform_sectioned_transects_input_sample {
+class iform_sectioned_transects_input_sample implements PrebuiltFormInterface {
 
   /**
-   * Return the form metadata. Note the title of this method includes the name of the form file. This ensures
-   * that if inheritance is used in the forms, subclassed forms don't return their parent's form definition.
-   * @return array The definition of the form.
+   * Return the form metadata.
+   *
+   * @return array
+   *   The definition of the form.
    */
   public static function get_sectioned_transects_input_sample_definition() {
-    return array(
+    return [
       'title' => 'Sectioned Transects Sample Input',
       'category' => 'Sectioned Transects',
       'description' => 'A form for inputting the counts of species observed at each section along a transect. Can be called with site=<id> in the URL to force the '.
           'selection of a fixed site, or sample=<id> to edit an existing sample.'
-    );
+    ];
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function getPageType(): PageType {
+    return PageType::DataEntry;
   }
 
   /**

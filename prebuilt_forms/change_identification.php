@@ -18,28 +18,42 @@
  * @link https://github.com/indicia-team/client_helpers/
  */
 
+use IForm\prebuilt_forms\PageType;
+use IForm\prebuilt_forms\PrebuiltFormInterface;
+
 require_once 'includes/form_generation.php' ;
 
 /**
- * Prebuilt Indicia data entry form that presents taxon search box, date control, map picker,
- * survey selector and comment entry controls.
+ * A form allowing updating of the identification of an existing record.
+ *
+ * The form should be accessed by calling the url with a parameter
+ * occurrence_id set to the ID of the occurrence being changed. Displays a
+ * summary of the record with a list of the sample and occurrence attributes
+ * and a control for changing the identification.
  */
-class iform_change_identification {
+class iform_change_identification implements PrebuiltFormInterface {
 
   /**
    * Return the form metadata.
    *
-   * @return string
+   * @return array
    *   The definition of the form.
    */
   public static function get_change_identification_definition() {
-    return array(
+    return [
       'title' => 'Change identification of a record',
       'category' => 'Utilities',
       'description' => 'A form allowing updating of the identification of an existing record. The form should be accessed '.
           'by calling the url with a parameter occurrence_id set to the ID of the occurrence being changed. Displays a summary '.
           'of the record with a list of the sample and occurrence attributes and a control for changing the identification. '
-    );
+    ];
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function getPageType(): PageType {
+    return PageType::Utility;
   }
 
   /**

@@ -14,18 +14,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/Indicia-Team/client_helpers
  */
 
-/**
- * Prebuilt Indicia data entry form.
- * NB has Drupal specific code.
- */
+use IForm\prebuilt_forms\PageType;
 
 require_once 'includes/dynamic.php';
 
+/**
+ * Flexible form for data entry of locations.
+ */
 class iform_dynamic_location extends iform_dynamic {
 
   /**
@@ -45,6 +44,13 @@ class iform_dynamic_location extends iform_dynamic {
       'on the Indicia Warehouse.',
       'recommended' => TRUE,
     ];
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function getPageType(): PageType {
+    return PageType::DataEntry;
   }
 
   /**

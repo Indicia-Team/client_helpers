@@ -14,25 +14,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/Indicia-Team/client_helpers
  */
 
+use IForm\prebuilt_forms\PageType;
+use IForm\prebuilt_forms\PrebuiltFormInterface;
+
 /**
  * A form for uploading custom verification rules into a ruleset.
  */
-class iform_custom_verification_rules_upload {
-
-  /**
-   * Disable form element wrapped around output.
-   *
-   * @return bool
-   *   False as not a standard data entry form.
-   */
-  protected static function isDataEntryForm() {
-    return FALSE;
-  }
+class iform_custom_verification_rules_upload implements PrebuiltFormInterface {
 
   /**
    * Return the form metadata.
@@ -47,6 +39,13 @@ class iform_custom_verification_rules_upload {
       'description' => 'A tool for uploading spreadsheets of verification rules.',
       'helpLink' => 'https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/custom-verification-rules-upload.html',
     ];
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function getPageType(): PageType {
+    return PageType::Utility;
   }
 
   /**

@@ -14,15 +14,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers/
  */
 
+use IForm\prebuilt_forms\PageType;
+use IForm\prebuilt_forms\PrebuiltFormInterface;
+
 /**
  * A form for providing a way of selecting and running one of a catalogue of reports.
  */
-class iform_report_selector {
+class iform_report_selector implements PrebuiltFormInterface {
 
   /**
    * Set a cache refresh time for reports that don't need to update often to 1 day (in seconds)
@@ -36,9 +38,10 @@ class iform_report_selector {
   const FAST_CACHE_REFRESH = 300;
 
   /**
-   * Return the form metadata. Note the title of this method includes the name of the form file. This ensures
-   * that if inheritance is used in the forms, subclassed forms don't return their parent's form definition.
-   * @return array The definition of the form.
+   * Return the form metadata.
+   *
+   * @return array
+   *   The definition of the form.
    */
   public static function get_report_selector_definition() {
     return array(
@@ -46,6 +49,13 @@ class iform_report_selector {
       'category' => 'Reporting',
       'description' => 'Provides a library of ready made reports that the user can browse through and run.'
     );
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function getPageType(): PageType {
+    return PageType::Utility;
   }
 
   /**

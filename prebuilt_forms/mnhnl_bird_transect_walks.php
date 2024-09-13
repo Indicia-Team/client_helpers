@@ -13,10 +13,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/Indicia-Team/client_helpers
  */
+
+use IForm\prebuilt_forms\PageType;
+use IForm\prebuilt_forms\PrebuiltFormInterface;
 
 require_once 'includes/map.php';
 require_once 'includes/language_utils.php';
@@ -27,7 +29,7 @@ require_once 'includes/user.php';
  * NB has Drupal specific code. Relies on presence of IForm Proxy.
  */
 
-class iform_mnhnl_bird_transect_walks {
+class iform_mnhnl_bird_transect_walks implements PrebuiltFormInterface {
 
   /* TODO
    * Future Enhancements
@@ -56,7 +58,9 @@ class iform_mnhnl_bird_transect_walks {
 
   /**
    * Return the form metadata.
-   * @return string The definition of the form.
+   *
+   * @return array
+   *   The definition of the form.
    */
   public static function get_mnhnl_bird_transect_walks_definition() {
     return array(
@@ -64,6 +68,13 @@ class iform_mnhnl_bird_transect_walks {
       'category' => 'MNHNL forms',
       'description' => 'For input of bird records captured during repeated transect walks. Developed for the COBIMO project in Luxembourg.'
     );
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function getPageType(): PageType {
+    return PageType::DataEntry;
   }
 
   public static function get_perms($nid, $args) {

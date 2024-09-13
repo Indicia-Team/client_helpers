@@ -14,10 +14,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers
  */
+
+use IForm\prebuilt_forms\PageType;
+use IForm\prebuilt_forms\PrebuiltFormInterface;
 
 require_once 'includes/map.php';
 require_once 'includes/report.php';
@@ -30,7 +32,7 @@ require_once 'includes/groups.php';
  * Prebuilt Indicia data form that lists the output of an occurrences report with an option
  * to verify, reject or flag dubious each record.
  */
-class iform_verification_5 {
+class iform_verification_5 implements PrebuiltFormInterface {
 
   /**
    * Flag that can be set when the user's permissions filters are to be ignored.
@@ -54,6 +56,13 @@ class iform_verification_5 {
       'recommended' => TRUE,
       'supportsGroups' => TRUE,
     );
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function getPageType(): PageType {
+    return PageType::Utility;
   }
 
   /**

@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/Indicia-Team/client_helpers
  */
@@ -110,16 +109,6 @@ class iform_species_details_2 extends BaseDynamicDetails {
    * @var externalKey
    */
   private static $externalKey;
-
-  /**
-   * Disable form element wrapped around output.
-   *
-   * @return bool
-   *   Indicates that this is not a data entry form.
-   */
-  protected static function isDataEntryForm() {
-    return FALSE;
-  }
 
   /**
    * The definition of the form.

@@ -13,35 +13,47 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers/
  */
+
+use IForm\prebuilt_forms\PageType;
+use IForm\prebuilt_forms\PrebuiltFormInterface;
 
 require_once 'includes/map.php';
 require_once 'includes/language_utils.php';
 /**
  * A simple distribution map.
  */
-class iform_distribution_map_3 {
+class iform_distribution_map_3 implements PrebuiltFormInterface {
 
   /**
    * Return the form metadata.
-   * @return string The definition of the form.
+   *
+   * @return array
+   *   The definition of the form.
    */
   public static function get_distribution_map_3_definition() {
-    return array(
+    return [
       'title' => 'Distribution Map 3',
       'category' => 'Reporting',
       'description' => 'Outputs a distribution map using Indicia data from GeoServer. '.
         'Can output a map with up to three layers, each for a single species '
-    );
+    ];
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function getPageType(): PageType {
+    return PageType::Report;
   }
 
   /**
    * Get the list of parameters for this form.
-   * @return array List of parameters that this form requires.
-   * @todo: Implement this method
+   *
+   * @return array
+   *   List of parameters that this form requires.
    */
   public static function get_parameters() {
     return array_merge(

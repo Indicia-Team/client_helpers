@@ -13,7 +13,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/Indicia-Team/client_helpers
  */
@@ -35,9 +34,12 @@ require_once 'mnhnl_dynamic_1.php';
 require_once 'includes/mnhnl_common.php';
 
 class iform_mnhnl_reptiles extends iform_mnhnl_dynamic_1 {
+
   /**
    * Return the form metadata.
-   * @return array The definition of the form.
+   *
+   * @return array
+   *   The definition of the form.
    */
   public static function get_mnhnl_reptiles_definition() {
     return array(

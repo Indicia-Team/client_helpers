@@ -14,10 +14,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/Indicia-Team/client_helpers
  */
+
+use IForm\prebuilt_forms\PageType;
+use IForm\prebuilt_forms\PrebuiltFormInterface;
 
 require_once 'includes/report.php';
 require_once 'includes/map.php';
@@ -25,7 +27,7 @@ require_once 'includes/map.php';
 /**
  * A list of species, with simple distribution mapping capability.
  */
-class iform_quick_species_maps {
+class iform_quick_species_maps implements PrebuiltFormInterface {
   /**
    * Return the form metadata.
    *
@@ -37,13 +39,20 @@ class iform_quick_species_maps {
    *   The definition of the form.
    */
   public static function get_quick_species_maps_definition() {
-    return array(
+    return [
       'title' => 'Quick Species Maps',
       'category' => 'Reporting',
       'description' => 'A list of species that can quickly be added to a distribution map.',
       'helpLink' => 'https://indicia-docs.readthedocs.org/en/latest/site-building/iform/prebuilt-forms/quick-species-maps.html',
       'recommended' => TRUE,
-    );
+    ];
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function getPageType(): PageType {
+    return PageType::Report;
   }
 
   /**

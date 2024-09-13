@@ -14,10 +14,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers/
  */
+
+use IForm\prebuilt_forms\PageType;
+use IForm\prebuilt_forms\PrebuiltFormInterface;
 
 /*
  * Future enhancements:
@@ -33,7 +35,7 @@ require_once 'includes/user.php';
 /**
  * Prebuilt Indicia data form that lists the output of any report
  */
-class iform_report_calendar_summary {
+class iform_report_calendar_summary implements PrebuiltFormInterface {
 
   /* This is the URL parameter used to pass the user_id filter through */
   private static $userKey = 'userID';
@@ -64,7 +66,9 @@ class iform_report_calendar_summary {
 
   /**
    * Return the form metadata.
-   * @return string The definition of the form.
+   *
+   * @return array
+   *   The definition of the form.
    */
   public static function get_report_calendar_summary_definition() {
     return array(
@@ -73,6 +77,13 @@ class iform_report_calendar_summary {
       'description' => 'Outputs a grid of sumary data loaded from an Indicia report, arranged by week. Can be displayed as a table, or a line or bar chart.',
       'helpLink' => 'https://github.com/Indicia-Team/client_helperswiki/PrebuiltFormReportCalendarSummary'
     );
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function getPageType(): PageType {
+    return PageType::Report;
   }
 
   /**

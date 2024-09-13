@@ -18,13 +18,13 @@
  * @link https://github.com/indicia-team/client_helpers/
  */
 
-/**
- * Prebuilt Indicia data entry form.
- * NB has Drupal specific code.
- */
+use IForm\prebuilt_forms\PageType;
 
 require_once 'includes/dynamic.php';
 
+/**
+ * Flexible form for data entry of information about people.
+ */
 class iform_dynamic_person extends iform_dynamic {
 
   /**
@@ -32,12 +32,19 @@ class iform_dynamic_person extends iform_dynamic {
    * @return array The definition of the form.
    */
   public static function get_dynamic_person_definition() {
-    return array(
+    return [
       'title' => 'Person entry form',
       'category' => 'General Purpose Data Entry Forms',
       'description' => 'A data entry form allowing people to be entered directly into the person table without needing a drupal account. '.
           'An example use might be for people wishing to register interest in events without needing a formal account.'
-    );
+    ];
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function getPageType(): PageType {
+    return PageType::DataEntry;
   }
 
 //Programmer note - Currently this form inherits quite a lot of redundant fields from dynamic.php suh as the map.

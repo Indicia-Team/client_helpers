@@ -18,10 +18,13 @@
  * @link https://github.com/indicia-team/client_helpers
  */
 
+use IForm\prebuilt_forms\PageType;
+use IForm\prebuilt_forms\PrebuiltFormInterface;
+
 /**
  * A report page for assisting users in discovering relevant recording groups.
  */
-class iform_group_discovery {
+class iform_group_discovery implements PrebuiltFormInterface {
 
   /**
    * Return the form metadata.
@@ -36,6 +39,13 @@ class iform_group_discovery {
       'description' => 'A report page for assisting users in discovering relevant recording groups. Requires the Group Landing Pages Drupal module.',
       'recommended' => TRUE,
     ];
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function getPageType(): PageType {
+    return PageType::Utility;
   }
 
   public static function get_parameters() {

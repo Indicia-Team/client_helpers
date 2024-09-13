@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers
  */
@@ -31,11 +30,9 @@
  *   comments.
  */
 
-
 require_once 'includes/BaseDynamicDetails.php';
 require_once 'includes/report.php';
 require_once 'includes/groups.php';
-
 
 class iform_sample_details extends BaseDynamicDetails {
 
@@ -45,16 +42,6 @@ class iform_sample_details extends BaseDynamicDetails {
    * @var array
    */
   protected static $sample;
-
-  /**
-   * Disable form element wrapped around output.
-   *
-   * @return bool
-   *   Always FALSE.
-   */
-  protected static function isDataEntryForm() {
-    return FALSE;
-  }
 
   /**
    * Return the form metadata.
