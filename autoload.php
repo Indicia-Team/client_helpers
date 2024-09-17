@@ -18,7 +18,7 @@ function iform_psr4_autoloader($class) {
     $class_path = str_replace('\\', '/', substr($class, 6));
     $file = __DIR__ . '/' . $class_path . '.php';
     if (file_exists($file)) {
-      require $file;
+      require_once $file;
     }
   }
 }
