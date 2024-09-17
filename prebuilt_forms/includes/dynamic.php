@@ -29,10 +29,14 @@ require_once 'user.php';
 require_once 'language_utils.php';
 require_once 'form_generation.php';
 
+use IForm\prebuilt_forms\PageType;
+use IForm\prebuilt_forms\PrebuiltFormInterface;
+
 define('HIGH_VOLUME_CACHE_TIMEOUT', 30);
 define('HIGH_VOLUME_CONTROL_CACHE_TIMEOUT', 5);
 
-class iform_dynamic {
+abstract class iform_dynamic implements PrebuiltFormInterface {
+
   // Hold the single species name to be shown on the page to the user.
   // Inherited by dynamic_sample_occurrence.
   protected static $singleSpeciesName;
@@ -60,15 +64,6 @@ class iform_dynamic {
   const MODE_EXISTING = 2;
   const MODE_EXISTING_RO = 3;
   const MODE_CLONE = 4;
-
-  /**
-   * Controls whether a form element wrapped around output.
-   *
-   * @return bool
-   */
-  protected static function isDataEntryForm() {
-    return TRUE;
-  }
 
   /**
    * Function get_parameters()
@@ -269,7 +264,7 @@ class iform_dynamic {
     // generated, or we are on a data entry form without write auth (which can
     // happen when loading multiple pages using a view), then fetch read write
     // auth.
-    if (!self::$auth || (empty(self::$auth['write']) && call_user_func([self::$called_class, 'isDataEntryForm']))) {
+    if (!self::$auth || (empty(self::$auth['write']) && call_user_func([self::$called_class, 'getPageType']) === PageType::DataEntry)) {
       $auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
       self::$auth = $auth;
     }
@@ -381,6 +376,7 @@ class iform_dynamic {
   protected static function get_form_html($args, $auth, $attributes) {
     global $indicia_templates;
     $params = [$args, $auth, &$attributes];
+    $pageType = call_user_func([self::$called_class, 'getPageType']);
     $r = call_user_func([self::$called_class, 'getHeader'], $args);
     $r .= call_user_func_array([self::$called_class, 'getFormHiddenInputs'], $params);
     if (self::$mode === self::MODE_CLONE) {
@@ -477,7 +473,7 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
         if (isset($args['verification_panel']) && $args['verification_panel']) {
           $r .= '<button type="button" class="' . $indicia_templates['buttonDefaultClass'] . '" id="verify-btn">' . lang::get('Precheck my records') . "</button>\n";
         }
-        if (call_user_func([self::$called_class, 'isDataEntryForm']) && method_exists(self::$called_class, 'getSubmitButtons')
+        if ($pageType === PageType::DataEntry && method_exists(self::$called_class, 'getSubmitButtons')
             && !($args['interface'] === 'tabs' && !empty($args['save_button_below_all_pages']))) {
           // Last part of a non wizard interface must insert a save button,
           // unless it is tabbed interface with save button beneath all pages.
@@ -490,7 +486,7 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
 
     // Add a save button for a one-page form with no =tabs= in form structure.
     if (
-      call_user_func([self::$called_class, 'isDataEntryForm']) &&
+      $pageType === PageType::DataEntry &&
       method_exists(self::$called_class, 'getSubmitButtons') &&
       $args['interface'] === 'one_page' &&
       $pageIdx === 0
@@ -514,7 +510,7 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
    *   Form parameters.
    */
   protected static function getHeader(array $args) {
-    if (call_user_func([self::$called_class, 'isDataEntryForm'])) {
+    if (call_user_func([self::$called_class, 'getPageType']) === PageType::DataEntry) {
       // Make sure the form action points back to this page.
       $reloadPath = call_user_func([self::$called_class, 'getReloadPath'], $args['available_for_groups']);
       // Request automatic JS validation.
@@ -534,7 +530,7 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
    */
   protected static function getFooter($args) {
     $r = '';
-    if (call_user_func([self::$called_class, 'isDataEntryForm'])) {
+    if (call_user_func([self::$called_class, 'getPageType']) === PageType::DataEntry) {
       // Add a single submit button outside the tabs if a button needs to be
       // visible all the time.
       if ($args['interface'] === 'tabs' && $args['save_button_below_all_pages'] && method_exists(self::$called_class, 'getSubmitButtons')) {
@@ -559,7 +555,7 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
    */
   protected static function getFormHiddenInputs($args, $auth, &$attributes) {
     $r = '';
-    if (call_user_func([self::$called_class, 'isDataEntryForm'])) {
+    if (call_user_func([self::$called_class, 'getPageType']) === PageType::DataEntry) {
       // Get authorisation tokens to update the Warehouse, plus any other hidden data.
       $r = $auth['write'] .
             "<input type=\"hidden\" id=\"website_id\" name=\"website_id\" value=\"$args[website_id]\" />\n" .
