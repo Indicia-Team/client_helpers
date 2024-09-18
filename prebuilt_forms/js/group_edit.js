@@ -107,4 +107,98 @@ jQuery(document).ready(function($) {
       $('.parent-checkbox').removeAttr('checked');
     }
   });
+
+  /**
+   * Retrieve options that can't be selected when in reports only mode.
+   *
+   * For a container group.
+   *
+   * @returns array
+   *   Options elements that are not for report pages.
+   */
+  function getUnselectableNonReportOptions() {
+    const selectablePageSelectors = [];
+    $.each(indiciaData.reportingPages, function(path, title) {
+      selectablePageSelectors.push('[value="' + path + '\\:' + title.replace(':', '\\:') + '"]')
+    });
+    return $('#complex-attr-grid-group-pages tbody tr td:first-child option').not('[value=""],' + selectablePageSelectors.join(','));
+  }
+
+  /**
+   * Switch UI to container group mode.
+   */
+  function convertToContainerGroup() {
+    const joinRadios = $('[name="group:joining_method"]');
+    const unselectablePageOptions = getUnselectableNonReportOptions();
+    // Container project, so admins manage membership.
+    joinRadios.not('[value="A"]').closest('li').slideUp();
+    joinRadios.not('[value="A"]').prop('checked', false);
+    joinRadios.filter('[value="A"]').prop('checked', true);
+    $('#ctrl-wrap-groups_user-user_id').slideUp();
+    $('#ctrl-wrap-groups_user-user_id li').remove();
+    $.each(unselectablePageOptions.filter(':selected'), function() {
+      $(this).closest('tr').find('.action-delete').click();
+    });
+    unselectablePageOptions.prop('disabled', true);
+  }
+
+  /**
+   * Switch UI to normal (non-container) group mode.
+   */
+  function convertToNormalGroup() {
+    // Not container project, revert to default options.
+    $('[name="group:joining_method"]').not('[value="A"]').closest('li').slideDown();
+    $('#ctrl-wrap-groups_user-user_id').slideDown();
+    const unselectablePageOptions = getUnselectableNonReportOptions();
+    $.each(unselectablePageOptions.filter(':selected'), function() {
+      var row = $(this).closest('tr');
+      $(row).css('opacity', 1);
+      $(row).removeClass('row-deleted');
+      $(row).find(':input:visible').css('text-decoration', 'none');
+      $(row).find('.delete-flag').val('f');
+      $(row).find(':input:visible').attr('disabled', false);
+    });
+  }
+
+  /**
+   * Container activities disallow certain form options.
+   */
+  $('#group\\:container').change(function() {
+    const joinRadios = $('[name="group:joining_method"]');
+    if ($('#group\\:container').is(':checked')) {
+      let warnings = [];
+      const unselectablePageOptions = getUnselectableNonReportOptions();
+      // If existing non-admin members, need to warn they will be removed.
+      if ($('#ctrl-wrap-groups_user-user_id li').length > 0) {
+        warnings.push(indiciaData.lang.group_edit.warnMembersRemoved);
+      }
+      // If existing non-reporting linked pages, need to warn they will be
+      // removed.
+      if (unselectablePageOptions.filter(':selected').closest('select').filter(':enabled').length > 0) {
+        warnings.push(indiciaData.lang.group_edit.warnNonReportPagesRemoved);
+      }
+      // Check that not existing group, or members list empty, otherwise warn
+      // and confirm.
+      if (warnings.length > 0) {
+        $.fancyDialog({
+          title: indiciaData.lang.group_edit.convertToContainer.replace('{1}', indiciaData.groupTypeLabel),
+          message: indiciaData.lang.group_edit.areYouSureConvertToContainer.replace('{1}', indiciaData.groupTypeLabel) +
+            '<ul><li>' + warnings.join('</li><li>') + '</li></ul>',
+          callbackOk: convertToContainerGroup,
+          callbackCancel: function() {
+            $('#group\\:container').prop('checked', false);
+          }
+        });
+      } else {
+        convertToContainerGroup();
+      }
+    } else {
+      convertToNormalGroup();
+    }
+  });
+
+  if ($('#group\\:container').is(':checked')) {
+    convertToContainerGroup();
+  }
+
 });
