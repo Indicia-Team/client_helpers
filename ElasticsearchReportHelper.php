@@ -966,7 +966,7 @@ JS;
     if ($membership === GroupMembership::NonMember && ($group['joining_method'] === 'P' || $group['joining_method'] === 'I')) {
       $titleForLink = trim(preg_replace('/[^a-z0-9\-]/', '', preg_replace('/[ ]/', '-', strtolower($group['title']))), '-');
       $titleEscaped = htmlspecialchars($group['title']);
-      $links["/join/$titleForLink"] = ['label' => "Join $titleEscaped"];
+      $links["/join/$titleForLink"] = ['label' => "Join $titleEscaped", 'icon' => '<i class="fas fa-file-signature"></i>'];
     }
     if ($membership === GroupMembership::Admin && isset($options['editPath'])) {
       $editLink = helper_base::getRootFolder() . $options['editPath'] . "?group_id=$group[id]&redirect_on_success=" . hostsite_get_current_page_path();
