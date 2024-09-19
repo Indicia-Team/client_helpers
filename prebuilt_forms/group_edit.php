@@ -500,6 +500,18 @@ class iform_group_edit implements PrebuiltFormInterface {
         'fieldname' => 'group:contained_by_group_id',
         'default' => $_GET['container_group_id'],
       ]);
+      // Add a message.
+      $containerGroup = data_entry_helper::get_population_data([
+        'table' => 'group',
+        'extraParams' => $auth['read'] + ['id' => $_GET['container_group_id'], 'columns' => 'title'],
+        'cachePerUser' => FALSE,
+      ]);
+      if (empty($containerGroup)) {
+        hostsite_show_message('Invalid link');
+        hostsite_goto_page('<front>');
+      }
+      hostsite_show_message(lang::get('You are adding this {1} to the {2} {1}.', self::$groupType, $containerGroup[0]['title']));
+
     }
     if (count($args['group_type']) !== 1) {
       $params = [
