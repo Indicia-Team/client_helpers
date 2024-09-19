@@ -17,6 +17,7 @@
  * @link https://github.com/Indicia-Team/client_helpers
  */
 
+use IForm\IndiciaConversions;
 use IForm\prebuilt_forms\PageType;
 use IForm\prebuilt_forms\PrebuiltFormInterface;
 
@@ -790,7 +791,7 @@ idlist=';
       $commentTime = strtotime($comment['updated_on']);
       // Output the comment time. Skip if in future (i.e. server/client date settings don't match)
       if ($commentTime < time()) {
-        $r .= helper_base::ago($commentTime);
+        $r .= IndiciaConversions::timestampToTimeAgoString($commentTime);
       }
       $r .= '</div>';
       $c = str_replace("\n", '<br/>', $comment['comment']);

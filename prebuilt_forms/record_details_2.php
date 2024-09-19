@@ -18,6 +18,8 @@
  * @link https://github.com/indicia-team/client_helpers
  */
 
+use IForm\IndiciaConversions;
+
 /**
  * Displays the details of a single record.
  *
@@ -659,7 +661,7 @@ JS;
         // Output the comment time. Skip if in future (i.e. server/client date
         // settings don't match).
         if ($commentTime < time()) {
-          $r .= '<span class="comment-date">' . helper_base::ago($commentTime) . '</span>';
+          $r .= '<span class="comment-date">' . IndiciaConversions::timestampToTimeAgoString($commentTime) . '</span>';
         }
         $r .= '</div>';
         $icons = '';

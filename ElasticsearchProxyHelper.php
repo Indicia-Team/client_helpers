@@ -22,6 +22,7 @@
  */
 
 use Firebase\JWT\JWT;
+use IForm\IndiciaConversions;
 
 /**
  * Exception class for request abort.
@@ -1290,12 +1291,19 @@ class ElasticsearchProxyHelper {
 
   /**
    * For group filter where implicit=true, apply a members filter.
+   *
+   * @param array $readAuth
+   *   Read authentication tokens.
+   * @param array $groupIds
+   *   IDs of groups to fetch members for, can be multiple.
+   * @param array $bool
+   *   Query bool clauses to add the filter to.
    */
-  private static function applyGroupMembersFilter(array $readAuth, $groupFilter, array &$bool) {
+  private static function applyGroupMembersFilter(array $readAuth, array $groupIds, array &$bool) {
     $groupUsersData = helper_base::get_population_data([
       'table' => 'groups_user',
       'extraParams' => $readAuth + [
-        'group_id' => $groupFilter['id'],
+        'query' => json_encode(['in' => ['group_id' => $groupIds]]),
         'columns' => 'user_id',
       ],
       'cachePerUser' => FALSE,
@@ -1321,21 +1329,48 @@ class ElasticsearchProxyHelper {
      * Bool implicit value may be read from URL, or code, so need to be
      * flexible.
      */
-    if ($groupFilter['implicit'] === FALSE || $groupFilter['implicit'] == 'f' || $groupFilter['implicit'] == 'false') {
-      // Records added to group linked form.
+    // Filtering needs to be aware of contained/container groups.
+    $groupIdsIncludingChildren = [$groupFilter['id']];
+    $groupIdsIncludingParent = [$groupFilter['id']];
+    if (IndiciaConversions::toBool($groupFilter['implicit']) !== NULL && IndiciaConversions::toBool($groupFilter['container'] ?? NULL)) {
+      // If a container group, then add the child groups to the list we will
+      // filter using.
+      $containedGroups = helper_base::get_population_data([
+        'table' => 'group',
+        'extraParams' => $readAuth + [
+          'contained_by_group_id' => $groupFilter['id'],
+          'columns' => 'id',
+        ],
+        'cachePerUser' => FALSE,
+      ]);
+      foreach($containedGroups as $g) {
+        $groupIdsIncludingChildren[] = $g['id'];
+      }
+    }
+    if (!empty($groupFilter['contained_by_group_id'])) {
+      // If a contained group, add the parent group ID.
+      $groupIdsIncludingParent[] = $groupFilter['contained_by_group_id'];
+    }
+    if (IndiciaConversions::toBool($groupFilter['implicit']) === FALSE) {
+      // Include only records added to group linked form (with group_id set),
+      // including contained groups.
       $bool['must'][] = [
-        'term' => ['metadata.group.id' => $groupFilter['id']],
+        'terms' => ['metadata.group.id' => $groupIdsIncludingChildren],
       ];
     }
-    elseif ($groupFilter['implicit'] === TRUE || $groupFilter['implicit'] == 't' || $groupFilter['implicit'] == 'true') {
-      // Records added by group members.
-      self::applyGroupMembersFilter($readAuth, $groupFilter, $bool);
+    elseif (IndiciaConversions::toBool($groupFilter['implicit']) === TRUE) {
+      // Records added by group members, including contained groups.
+      self::applyGroupMembersFilter($readAuth, $groupIdsIncludingChildren, $bool);
     }
-    // Apply the filter.
+    // Apply the filter, including the container group filter.
     $groupData = helper_base::get_population_data([
       'table' => 'group',
       'extraParams' => $readAuth + [
-        'id' => $groupFilter['id'],
+        'query' => json_encode([
+          'in' => [
+            'id' => $groupIdsIncludingParent,
+          ],
+        ]),
       ],
       'cachePerUser' => FALSE,
     ]);
@@ -1343,8 +1378,10 @@ class ElasticsearchProxyHelper {
       throw new exception("Group $groupFilter[id] not found");
     }
     // Load the filter into user filters, so it gets applied with the rest.
-    if (!empty($groupData[0]['filter_id'])) {
-      $query['user_filters'][] = $groupData[0]['filter_id'];
+    foreach ($groupData as $g) {
+      if (!empty($g['filter_id'])) {
+        $query['user_filters'][] = $g['filter_id'];
+      }
     }
   }
 

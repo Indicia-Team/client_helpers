@@ -18,6 +18,7 @@
  * @link https://github.com/indicia-team/client_helpers
  */
 
+use IForm\IndiciaConversions;
 use IForm\prebuilt_forms\PageType;
 use IForm\prebuilt_forms\PrebuiltFormInterface;
 
@@ -995,7 +996,7 @@ HTML
     data_entry_helper::$javascript .= 'indiciaData.popupTranslations.logResponseTitle="' . lang::get('Log a response to a Query') . "\";\n";
     data_entry_helper::$javascript .= 'indiciaData.popupTranslations.logResponse="' . lang::get('Save Response') . "\";\n";
 
-    data_entry_helper::$javascript .= "indiciaData.statusTranslations = " . json_encode(VerificationHelper::getTranslatedStatusTerms()) . ";\n";
+    data_entry_helper::$javascript .= "indiciaData.statusTranslations = " . json_encode(IndiciaConversions::getTranslatedStatusTerms()) . ";\n";
     data_entry_helper::$javascript .= "indiciaData.commentTranslations = {};\n";
     data_entry_helper::$javascript .= 'indiciaData.commentTranslations.emailed = "' . lang::get('I emailed this record to {1} for checking.') . "\";\n";
     data_entry_helper::$javascript .= 'indiciaData.commentTranslations.recorder = "' . lang::get('the recorder') . "\";\n";
@@ -1120,8 +1121,8 @@ HTML
           $data[$caption[0]] = [];
         }
         $val = ($col === 'record_status') ?
-          VerificationHelper::getStatusLabel($record[$col], $record['record_substatus'], $record['query']) : $record[$col];
-        $data[$caption[0]][] = array('caption' => $caption[1], 'value' => $val);
+          IndiciaConversions::statusToLabel($record[$col], $record['record_substatus'], $record['query']) : $record[$col];
+        $data[$caption[0]][] = ['caption' => $caption[1], 'value' => $val];
       }
       if ($col === 'email' && !empty($record[$col])) {
         $email = $record[$col];

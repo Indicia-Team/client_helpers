@@ -17,10 +17,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers
  */
+
+use IForm\IndiciaConversions;
 
 /**
  * A helper class for Elasticsearch reporting code.
@@ -865,26 +866,28 @@ HTML;
     $membership = group_get_user_membership($group_id, $options['readAuth'], $checkPage);
     $output = '';
     if (!empty($group_id)) {
-      // Apply filtering by group.
-      helper_base::$indiciaData['filter_group_id'] = $group_id;
-      if (is_string($implicit)) {
-        $implicit = ['f' => FALSE, 't' => TRUE, '' => NULL][$implicit];
+      $groups = data_entry_helper::get_population_data([
+        'table' => 'group',
+        'extraParams' => $options['readAuth'] + [
+          'view' => 'detail',
+          'id' => $group_id,
+        ]
+      ]);
+      if (!count($groups)) {
+        hostsite_show_message(lang::get('The link you have followed is invalid.'), 'warning', TRUE);
+        hostsite_goto_page('<front>');
+        return '';
       }
-      helper_base::$indiciaData['filter_group_implicit'] = $implicit;
+      $group = $groups[0];
+      // Apply filtering by group.
+      $groupFilterInfo = [
+        'id' => $group['id'],
+        'implicit' => IndiciaConversions::toBool($implicit),
+        'container' => IndiciaConversions::toBool($group['container']),
+        'contained_by_group_id' => $group['contained_by_group_id'],
+      ];
+      helper_base::$indiciaData['applyGroupFilter'] = $groupFilterInfo;
       if ($options['showGroupSummary'] || $options['showGroupPages']) {
-        $groups = data_entry_helper::get_population_data([
-          'table' => 'group',
-          'extraParams' => $options['readAuth'] + [
-            'view' => 'detail',
-            'id' => $group_id,
-          ]
-        ]);
-        if (!count($groups)) {
-          hostsite_show_message(lang::get('The link you have followed is invalid.'), 'warning', TRUE);
-          hostsite_goto_page('<front>');
-          return '';
-        }
-        $group = $groups[0];
         if ($options['showGroupSummary']) {
           $output .= self::getGroupSummaryHtml($group);
         }
@@ -961,11 +964,11 @@ JS;
       'containedGroupLabel' => 'sub-group',
     ], $options);
     if ($membership === GroupMembership::NonMember && ($group['joining_method'] === 'P' || $group['joining_method'] === 'I')) {
-      $titleForLink = preg_replace('/[^a-z0-9-]/', '', str_replace(' ', '-', strtolower($group['title'])));
+      $titleForLink = trim(preg_replace('/[^a-z0-9\-]/', '', preg_replace('/[ ]/', '-', strtolower($group['title']))), '-');
       $titleEscaped = htmlspecialchars($group['title']);
       $links["/join/$titleForLink"] = ['label' => "Join $titleEscaped"];
     }
-    elseif ($membership === GroupMembership::Admin && isset($options['editPath'])) {
+    if ($membership === GroupMembership::Admin && isset($options['editPath'])) {
       $editLink = helper_base::getRootFolder() . $options['editPath'] . "?group_id=$group[id]&redirect_on_success=" . hostsite_get_current_page_path();
       $links[$editLink] = ['label' => lang::get('Edit'), 'icon' => '<i class="fas fa-pen"></i>'];
       if (!empty($group['container'])) {

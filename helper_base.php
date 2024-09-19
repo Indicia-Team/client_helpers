@@ -3864,52 +3864,6 @@ if (typeof validator!=='undefined') {
   }
 
   /**
-   * Convert a timestamp into readable format (... ago) for use on a comment list.
-   *
-   * @param timestamp $timestamp
-   *   The date time to convert.
-   *
-   * @return string
-   *   The output string.
-   */
-  public static function ago($timestamp) {
-    $difference = time() - $timestamp;
-    // Having the full phrase means that it is fully localisable if the phrasing is different.
-    $periods = array(
-      lang::get("{1} second ago"),
-      lang::get("{1} minute ago"),
-      lang::get("{1} hour ago"),
-      lang::get("Yesterday"),
-      lang::get("{1} week ago"),
-      lang::get("{1} month ago"),
-      lang::get("{1} year ago"),
-      lang::get("{1} decade ago")
-    );
-    $periodsPlural = array(
-      lang::get("{1} seconds ago"),
-      lang::get("{1} minutes ago"),
-      lang::get("{1} hours ago"),
-      lang::get("{1} days ago"),
-      lang::get("{1} weeks ago"),
-      lang::get("{1} months ago"),
-      lang::get("{1} years ago"),
-      lang::get("{1} decades ago")
-    );
-    $lengths = array("60", "60", "24", "7", "4.35", "12", "10");
-    for ($j = 0; (($difference >= $lengths[$j]) && ($j < 7)); $j++) {
-      $difference /= $lengths[$j];
-    }
-    $difference = round($difference);
-    if ($difference == 1) {
-      $text = str_replace('{1}', $difference, $periods[$j]);
-    }
-    else {
-      $text = str_replace('{1}', $difference, $periodsPlural[$j]);
-    }
-    return $text;
-  }
-
-  /**
    * A custom PHP sorting function which uses the 2nd element in the compared array to
    * sort by. The sorted array normally contains a list of files, with the first element
    * of each array entry being the file path and the second the file date stamp.

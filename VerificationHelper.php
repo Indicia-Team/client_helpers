@@ -17,50 +17,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers
  */
+
+use IForm\IndiciaConversions;
 
  /**
   * A helper class for Verification related code.
   */
 class VerificationHelper {
-
-  /**
-   * Track if status labels have been translated so we only do it once.
-   *
-   * @var bool
-   */
-  private static $statusTermsTranslated = FALSE;
-
-  /**
-   * Record status term mappings.
-   *
-   * @var array
-   */
-  private static $statusTerms = array(
-    'V' => 'Accepted',
-    'R' => 'Not accepted',
-    // Deprecated.
-    'D' => 'Query',
-    'I' => 'In progress',
-    'T' => 'Test record',
-    'C' => 'Not reviewed',
-  );
-
-  /**
-   * Record substatus term mappings.
-   *
-   * @var array
-   */
-  private static $substatusTerms = array(
-    '1' => 'correct',
-    '2' => 'considered correct',
-    '3' => 'plausible',
-    '4' => 'unable to verify',
-    '5' => 'incorrect',
-  );
 
   /**
    * Determine if a user likely to see any notifications raised.
@@ -160,7 +126,7 @@ class VerificationHelper {
       $r .= '<div class="comment">';
       $r .= '<div class="header">';
       if (!$emailMode) {
-        $r .= self::getStatusIcons($comment['record_status'], $comment['record_substatus'], $imgPath);
+        $r .= IndiciaConversions::statusToIcons($comment['record_status'], $comment['record_substatus'], $imgPath);
         if ($comment['query'] === 't') {
           $hint = lang::get('This is a query');
           $r .= "<img width=\"12\" height=\"12\" src=\"{$imgPath}nuvola/dubious-16px.png\" title=\"$hint\" alt=\"$hint\"/>";
@@ -170,7 +136,7 @@ class VerificationHelper {
       $commentTime = strtotime($comment['updated_on']);
       // Output the comment time. Skip if in future (i.e. server/client date settings don't match).
       if ($commentTime < time()) {
-        $r .= helper_base::ago($commentTime);
+        $r .= IndiciaConversions::timestampToTimeAgoString($commentTime);
       }
       $r .= '</div>';
       $c = str_replace("\n", '<br/>', $comment['comment']);
@@ -285,66 +251,6 @@ class VerificationHelper {
   }
 
   /**
-   * Converts a status and substatus into a readable label.
-   *
-   * E.g. "accepted", or "accepted:considered correct".
-   *
-   * @param string $status
-   *   Status code from database (e.g. 'C').
-   * @param int $substatus
-   *   Substatus value from database.
-   * @param string $query
-   *   Query valid for the record (null, Q or A).
-   *
-   * @return string
-   *   Status label text.
-   */
-  public static function getStatusLabel($status, $substatus, $query) {
-    $labels = [];
-    self::translateStatusTerms();
-    // Grab the term for the status. We don't need to bother with not reviewed status if
-    // substatus is plausible.
-    if (!empty(self::$statusTerms[$status]) && ($status !== 'C' || (int) $substatus !== 3)) {
-      $labels[] = lang::get(self::$statusTerms[$status]);
-    }
-    elseif ((int) $substatus !== 3) {
-      $labels[] = lang::get('Unknown');
-    }
-    if ($substatus && !empty(self::$substatusTerms[$substatus])) {
-      $labels[] = lang::get(self::$substatusTerms[$substatus]);
-    }
-    switch ($query) {
-      case 'Q':
-        $labels[] = lang::get('Queried');
-        break;
-
-      case 'A':
-        $labels[] = lang::get('Query answered');
-        break;
-    }
-    return implode('::', $labels);
-  }
-
-  /**
-   * Returns an array of all translated status terms, keyed by code.
-   *
-   * @return array
-   */
-  public static function getTranslatedStatusTerms() {
-    self::translateStatusTerms();
-    return array_merge(
-      self::$statusTerms,
-      [
-        'V1' => self::getStatusLabel('V', '1', FALSE),
-        'V2' => self::getStatusLabel('V', '2', FALSE),
-        'C3' => self::getStatusLabel('C', '3', FALSE),
-        'R4' => self::getStatusLabel('R', '4', FALSE),
-        'R5' => self::getStatusLabel('R', '5', FALSE),
-      ]
-    );
-  }
-
-  /**
    * Finds the taxon meaning IDs which require fully logged communications.
    *
    * If the workflow_module is enabled then a verification page can call this
@@ -401,71 +307,6 @@ class VerificationHelper {
       data_entry_helper::$indiciaData['workflowEnabled'] = TRUE;
       data_entry_helper::$indiciaData['workflowTaxonMeaningIDsLogAllComms'] =
         array_values(array_unique($workflowTaxonMeaningIDsLogAllComms));
-    }
-  }
-
-  /**
-   * Returns the icon HTML for a given status/substatus.
-   *
-   * @param string $status
-   *   Record status code.
-   * @param string $substatus
-   *   Record substatus number.
-   * @param string $imgPath
-   *   Path to the media/images folder.
-   * @return void
-   */
-  private static function getStatusIcons($status, $substatus, $imgPath) {
-    $r = '';
-    if (!empty($status)) {
-      $hint = self::getStatusLabel($status, $substatus, NULL);
-      $images = [];
-      if ($status === 'V') {
-        $images[] = 'ok-16px';
-      }
-      elseif ($status === 'R') {
-        $images[] = 'cancel-16px';
-      }
-      switch ($substatus) {
-        case '1':
-          $images[] = 'ok-16px';
-          break;
-
-        case '2':
-          break;
-
-        case '3':
-          $images[] = 'quiz-22px';
-          break;
-
-        case '4':
-          break;
-
-        case '5':
-          $images[] = 'cancel-16px';
-          break;
-      }
-      if ($images) {
-        foreach ($images as $image) {
-          $r .= "<img width=\"12\" height=\"12\" src=\"{$imgPath}nuvola/$image.png\" title=\"$hint\" alt=\"$hint\"/>";
-        }
-      }
-    }
-    return $r;
-  }
-
-  /**
-   * Convert the list of status terms and substatus terms into a translated version.
-   */
-  private static function translateStatusTerms() {
-    if (!self::$statusTermsTranslated) {
-      foreach (self::$statusTerms as &$term) {
-        $term = lang::get($term);
-      }
-      foreach (self::$substatusTerms as &$term) {
-        $term = lang::get($term);
-      }
-      self::$statusTermsTranslated = TRUE;
     }
   }
 
