@@ -382,14 +382,16 @@ class ElasticsearchReportHelper {
     ], TRUE);
     helper_base::addLanguageStringsToJs('bulkEditor', [
       'allowSampleSplitting' => 'Allow sample splitting?',
-      'bulkEditorDialogMessageAll' => 'You are about to edit the entire list of {1} records.',
-      'bulkEditorDialogMessageSelected' => 'You are about to edit {1} selected records.',
+      'bulkEditorDialogMessageAll' => 'You are about to edit the entire list of <span>{1}</span> records.',
+      'bulkEditorDialogMessageSelected' => 'You are about to edit <span>{1}</span> selected records.',
       'bulkEditProgress' => 'Edited {samples} samples and {occurrences} occurrences.',
       'cannotProceed' => 'Cannot proceed',
       'confirm' => 'Confirm',
       'done' => 'Records successfully edited. They will now be processed so they are available with their new values shortly.',
       'error' => 'An error occurred whilst trying to edit the records.',
       'errorEditNotFilteredToCurrentUser' => 'The records cannot be edited because the current page is not filtered to limit the records to only your data.',
+      'noUpdatesSpecified' => 'Please specify the values you would like to update using the form before previewing the changes.',
+      'noValue' => '-value not set-',
       'preparing' => 'Preparing to edit the records...',
       'promptAllowSampleSplit' => '<p>The list of records to update contains occurrences which belong to samples that contain other occurrences which are not being updated. ' .
         'For example, sample {1} contains an occurrence {2} which is being updated, but it also contains occurrence {3} which is not being updated.</p>' .
@@ -403,28 +405,26 @@ class ElasticsearchReportHelper {
       'close' => lang::get('Close'),
       'editing' => lang::get('Editing records'),
       'editInstructions' => 'Specify values to apply to all the edited records in the following controls, or leave blank for the data values to remain unchanged.',
+      'preview' => lang::get('Preview'),
+      'previewInfo' => lang::get('The following table shows a selection of the records you are about to bulk edit. This is just a sample of the records about to be updated.'),
       'proceed' => lang::get('Proceed'),
     ];
     helper_base::add_resource('fancybox');
     $recorderNameControl = data_entry_helper::text_input([
       'fieldname' => 'edit-recorder-name',
       'label' => lang::get('Recorder name'),
-      'attributes' => ['placeholder' => lang::get('value not changed')],
     ]);
-    $dateControl = data_entry_helper::text_input([
+    $dateControl = data_entry_helper::date_picker([
       'fieldname' => 'edit-date',
       'label' => lang::get('Date'),
-      'attributes' => ['placeholder' => lang::get('value not changed')],
     ]);
     $locationNameControl = data_entry_helper::text_input([
       'fieldname' => 'edit-location-name',
       'label' => lang::get('Location name'),
-      'attributes' => ['placeholder' => lang::get('value not changed')],
     ]);
     $srefControl = data_entry_helper::sref_and_system([
       'fieldname' => 'edit-sref',
       'label' => lang::get('Spatial reference'),
-      'attributes' => ['placeholder' => lang::get('value not changed')],
       'findMeButton' => FALSE,
     ]);
     global $indicia_templates;
@@ -432,18 +432,37 @@ class ElasticsearchReportHelper {
 <button type="button" class="bulk-edit-records-btn $indicia_templates[buttonHighlightedClass]">$lang[bulkEditRecords]</button>
 <div style="display: none">
   <div id="$options[id]-dlg" class="bulk-editor-dlg">
-    <div class="pre-bulk-edit-info">
-      <h2>$lang[bulkEditRecords]</h2>
-      <p class="message"></p>
-      <p>$lang[editInstructions]</p>
+    <h2>$lang[bulkEditRecords]</h2>
+    <p class="message"></p>
+    <p>$lang[editInstructions]</p>
+    <div class="bulk-edit-form-controls">
       $recorderNameControl
       $dateControl
       $locationNameControl
       $srefControl
-      <div class="form-buttons">
-        <button type="button" class="$indicia_templates[buttonHighlightedClass] proceed-bulk-edit">$lang[proceed]</button>
-        <button type="button" class="$indicia_templates[buttonHighlightedClass] close-bulk-edit-dlg">$lang[cancel]</button>
-      </div>
+    </div>
+    <div class="preview-output" style="display: none">
+      <p class="alert alert-warning"><i class="fas fa-exclamation-triangle fa-2x"></i> $lang[previewInfo]</p>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Species</th>
+            <th>Common name</th>
+            <th>Date</th>
+            <th>Location</th>
+            <th>Grid ref</th>
+            <th>Recorded by</th>
+          </tr>
+        <thead>
+        <tbody>
+        </tbody>
+      </table>
+    </div>
+    <div class="form-buttons bulk-edit-action-buttons">
+      <button type="button" class="$indicia_templates[buttonHighlightedClass] preview-bulk-edit">$lang[preview]</button>
+      <button type="button" class="$indicia_templates[buttonHighlightedClass] proceed-bulk-edit" disabled>$lang[proceed]</button>
+      <button type="button" class="$indicia_templates[buttonHighlightedClass] close-bulk-edit-dlg">$lang[cancel]</button>
     </div>
     <div class="post-bulk-edit-info">
       <h2>$lang[editing]</h2>
