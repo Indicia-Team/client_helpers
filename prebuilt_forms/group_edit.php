@@ -1063,6 +1063,10 @@ $('#entry_form').submit(function() {
    * @todo On resave, clear any unchecked multiple parents
    */
   public static function get_submission($values, $args) {
+    if (!empty($values['group:id'])) {
+      // Ensure cached content based on the group gets refreshed.
+      hostsite_cache_clear_tag("iform:group:{$values['group:id']}");
+    }
     $struct = array(
       'model' => 'group'
     );

@@ -965,11 +965,13 @@ JS;
    *   metadata.
    * @param GroupMembership $membership
    *   Current user's membership or admin status.
+   * @param bool $caching
+   *   Set to false to disable caching (e.g. if in a cached Drupal block).
    *
    * @return array
    *   List of links with label and icon info.
    */
-  public static function getGroupPageLinksArray(array $group, array $options, GroupMembership $membership): array {
+  public static function getGroupPageLinksArray(array $group, array $options, GroupMembership $membership, $caching = TRUE): array {
     $pageData = data_entry_helper::get_population_data([
       'table' => 'group_page',
       'extraParams' => $options['readAuth'] + [
@@ -977,6 +979,8 @@ JS;
         'query' => json_encode(['in' => ['administrator' => ['', 'f']]]),
         'orderby' => 'caption',
       ],
+      'caching' => $caching,
+      'cachePerUser' => FALSE,
     ]);
     $links = [];
     $options = array_merge([
