@@ -13,17 +13,20 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers/
  */
 
+use IForm\prebuilt_forms\PageType;
+use IForm\prebuilt_forms\PrebuiltFormInterface;
+
 require_once 'includes/user.php';
 require_once 'includes/groups.php';
+
 /**
  * Prebuilt Indicia data form that provides an import wizard
  */
-class iform_importer {
+class iform_importer implements PrebuiltFormInterface {
 
   /**
    * Return the form metadata.
@@ -32,14 +35,21 @@ class iform_importer {
    *   The definition of the form.
    */
   public static function get_importer_definition() {
-    return array(
+    return [
       'title' => 'Importer',
       'category' => 'Utilities',
       'description' => 'A page containing a wizard for uploading CSV file data.',
       'helpLink' => 'https://readthedocs.org/projects/indicia-docs/en/latest/site-building/iform/prebuilt-forms/importer.html',
       'supportsGroups' => TRUE,
       'recommended' => TRUE,
-    );
+    ];
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function getPageType(): PageType {
+    return PageType::Utility;
   }
 
   /**

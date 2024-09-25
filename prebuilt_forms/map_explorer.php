@@ -13,10 +13,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers/
  */
+
+use IForm\prebuilt_forms\PageType;
+use IForm\prebuilt_forms\PrebuiltFormInterface;
 
 require_once 'includes/map.php';
 require_once 'includes/report.php';
@@ -24,7 +26,7 @@ require_once 'includes/report.php';
 /**
  * Map Explorer. A prebuilt form integrating a map and grid with various options for exploring the data.
  */
-class iform_map_explorer {
+class iform_map_explorer implements PrebuiltFormInterface {
 
   /**
    * Return the form metadata.
@@ -43,6 +45,13 @@ class iform_map_explorer {
       'description' => 'A map plus grid of data, with various options for exploring the data. This is designed to integrate with the Easy Login feature\'s '.
           'preferred taxon groups and locality for the logged in user and is therefore specific to Drupal.'
     );
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function getPageType(): PageType {
+    return PageType::Report;
   }
 
   /**

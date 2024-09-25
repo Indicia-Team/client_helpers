@@ -986,7 +986,7 @@ HTML;
         'fieldname' => 'licences',
         'lookupValues' => [
           'none' => lang::get('-No licence-'),
-          'open' => lang::get('Open licence (OGL, CCO, CC BY)'),
+          'open' => lang::get('Open licence (OGL, CC0, CC BY)'),
           'restricted' => lang::get('Restricted licence (CC BY-NC)'),
         ],
       ]);
@@ -997,12 +997,11 @@ HTML;
         'fieldname' => 'media_licences',
         'lookupValues' => [
           'none' => lang::get('-No licence-'),
-          'open' => lang::get('Open licence (OGL, CCO, CC BY)'),
+          'open' => lang::get('Open licence (OGL, CC0, CC BY)'),
           'restricted' => lang::get('Restricted licence (CC BY-NC)'),
         ],
       ]);
     }
-    //$r .= var_export($ctls, TRUE);
     if ($licencesCtrl && $mediaLicencesCtrl) {
       $r .= str_replace(
         ['{attrs}', '{col-1}', '{col-2}'],

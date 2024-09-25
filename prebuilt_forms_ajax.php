@@ -25,6 +25,7 @@
  * A simple script to return the params form for an input prebuilt form name.
  */
 
+require_once 'autoload.php';
 // Use iform to load the helpers, so it can set the configuration variables if
 // running in Drupal.
 require_once 'form_helper.php';

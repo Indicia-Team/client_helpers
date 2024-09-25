@@ -22,6 +22,7 @@
  */
 
 use Firebase\JWT\JWT;
+use IForm\IndiciaConversions;
 
 /**
  * Exception class for request abort.
@@ -138,6 +139,9 @@ class ElasticsearchProxyHelper {
 
       case 'bulkeditids':
         return self::proxyBulkEditIds($nid);
+
+      case 'bulkeditpreview':
+        return self::proxyBulkEditPreview();
 
       case 'clearcustomresults':
         return self::proxyClearCustomResults($nid);
@@ -1290,12 +1294,19 @@ class ElasticsearchProxyHelper {
 
   /**
    * For group filter where implicit=true, apply a members filter.
+   *
+   * @param array $readAuth
+   *   Read authentication tokens.
+   * @param array $groupIds
+   *   IDs of groups to fetch members for, can be multiple.
+   * @param array $bool
+   *   Query bool clauses to add the filter to.
    */
-  private static function applyGroupMembersFilter(array $readAuth, $groupFilter, array &$bool) {
+  private static function applyGroupMembersFilter(array $readAuth, array $groupIds, array &$bool) {
     $groupUsersData = helper_base::get_population_data([
       'table' => 'groups_user',
       'extraParams' => $readAuth + [
-        'group_id' => $groupFilter['id'],
+        'query' => json_encode(['in' => ['group_id' => $groupIds]]),
         'columns' => 'user_id',
       ],
       'cachePerUser' => FALSE,
@@ -1321,21 +1332,48 @@ class ElasticsearchProxyHelper {
      * Bool implicit value may be read from URL, or code, so need to be
      * flexible.
      */
-    if ($groupFilter['implicit'] === FALSE || $groupFilter['implicit'] == 'f' || $groupFilter['implicit'] == 'false') {
-      // Records added to group linked form.
+    // Filtering needs to be aware of contained/container groups.
+    $groupIdsIncludingChildren = [$groupFilter['id']];
+    $groupIdsIncludingParent = [$groupFilter['id']];
+    if (IndiciaConversions::toBool($groupFilter['implicit']) !== NULL && IndiciaConversions::toBool($groupFilter['container'] ?? NULL)) {
+      // If a container group, then add the child groups to the list we will
+      // filter using.
+      $containedGroups = helper_base::get_population_data([
+        'table' => 'group',
+        'extraParams' => $readAuth + [
+          'contained_by_group_id' => $groupFilter['id'],
+          'columns' => 'id',
+        ],
+        'cachePerUser' => FALSE,
+      ]);
+      foreach($containedGroups as $g) {
+        $groupIdsIncludingChildren[] = $g['id'];
+      }
+    }
+    if (!empty($groupFilter['contained_by_group_id'])) {
+      // If a contained group, add the parent group ID.
+      $groupIdsIncludingParent[] = $groupFilter['contained_by_group_id'];
+    }
+    if (IndiciaConversions::toBool($groupFilter['implicit']) === FALSE) {
+      // Include only records added to group linked form (with group_id set),
+      // including contained groups.
       $bool['must'][] = [
-        'term' => ['metadata.group.id' => $groupFilter['id']],
+        'terms' => ['metadata.group.id' => $groupIdsIncludingChildren],
       ];
     }
-    elseif ($groupFilter['implicit'] === TRUE || $groupFilter['implicit'] == 't' || $groupFilter['implicit'] == 'true') {
-      // Records added by group members.
-      self::applyGroupMembersFilter($readAuth, $groupFilter, $bool);
+    elseif (IndiciaConversions::toBool($groupFilter['implicit']) === TRUE) {
+      // Records added by group members, including contained groups.
+      self::applyGroupMembersFilter($readAuth, $groupIdsIncludingChildren, $bool);
     }
-    // Apply the filter.
+    // Apply the filter, including the container group filter.
     $groupData = helper_base::get_population_data([
       'table' => 'group',
       'extraParams' => $readAuth + [
-        'id' => $groupFilter['id'],
+        'query' => json_encode([
+          'in' => [
+            'id' => $groupIdsIncludingParent,
+          ],
+        ]),
       ],
       'cachePerUser' => FALSE,
     ]);
@@ -1343,8 +1381,10 @@ class ElasticsearchProxyHelper {
       throw new exception("Group $groupFilter[id] not found");
     }
     // Load the filter into user filters, so it gets applied with the rest.
-    if (!empty($groupData[0]['filter_id'])) {
-      $query['user_filters'][] = $groupData[0]['filter_id'];
+    foreach ($groupData as $g) {
+      if (!empty($g['filter_id'])) {
+        $query['user_filters'][] = $g['filter_id'];
+      }
     }
   }
 
@@ -2856,6 +2896,288 @@ class ElasticsearchProxyHelper {
    */
   private static function proxyBulkEditIds($nid) {
     return self::bulkEditIds($nid, explode(',', $_POST['occurrence:ids']), $_POST['updates'], $_POST['options'] ?? []);
+  }
+
+  /**
+   * Generate a list of 10 records suitable for previewing a bulk edit.
+   *
+   * Note that this returns the records in the dataset to be updated in order
+   * of the least prevalent combinations of changing fields first. I.e. if
+   * there are lots of similar records being updated, but a few are quite
+   * different they should appear top of the list (as most likely to need
+   * checking).
+   *
+   * @return array
+   *   List of record data for the bulk edit preview.
+   */
+  private static function proxyBulkEditPreview() {
+    $url = self::getEsUrl() . '/_search';
+    $query = self::getBulkEditPreviewAggregateDataQuery();
+    $r = self::curlPost($url, $query);
+    $aggResponse = json_decode($r, TRUE);
+    $allKeys = [];
+    $query = self::getBulkEditPreviewRecordsDataQuery($query, $aggResponse, $allKeys);
+    // Limit response for efficiency.
+    $_GET['filter_path'] = implode(',', [
+      'hits.hits._source.id',
+      'hits.hits._source.taxon.accepted_name',
+      'hits.hits._source.taxon.vernacular_name',
+      'hits.hits._source.event.date_start',
+      'hits.hits._source.event.date_end',
+      'hits.hits._source.event.date_type',
+      'hits.hits._source.event.recorded_by',
+      'hits.hits._source.location.verbatim_locality',
+      'hits.hits._source.location.input_sref',
+    ]);
+    $r = self::curlPost($url, $query);
+    return self::organiseBulkEditPreview($r, $allKeys);
+  }
+
+  /**
+   * Build an aggregate query for the bulk edit preview.
+   *
+   * @return array
+   *   An Elasticsearch query definition, based on the filter defined by the
+   *   request, but with data aggregated and counted by the unique field values
+   *   in the fields that are going to be altered by the bulk update. This
+   *   allows us to locate the field combinations that are least prevalent, as
+   *   they are most likely to contain unintended records.
+   */
+  private static function getBulkEditPreviewAggregateDataQuery() {
+    if (!empty($_POST['occurrence:idsFromElasticFilter'])) {
+      $query = self::buildEsQueryFromRequest($_POST['occurrence:idsFromElasticFilter']);
+    }
+    elseif (!empty($_POST['occurrence:ids'])) {
+      $query = [
+        'query' => [
+          'terms' => [
+            'id' => explode(',', $_POST['occurrence:ids']),
+          ],
+        ],
+      ];
+    }
+    $termsToAggregateOn = [];
+    if (!empty($_POST['updates']['recorder_name'])) {
+      $termsToAggregateOn[] = ['field' => 'event.recorded_by.keyword', 'missing' => '~N/A~'];
+    }
+    if (!empty($_POST['updates']['date'])) {
+      $termsToAggregateOn[] = ['field' => 'event.date_start'];
+      $termsToAggregateOn[] = ['field' => 'event.date_end'];
+      $termsToAggregateOn[] = ['field' => 'event.date_type'];
+    }
+    if (!empty($_POST['updates']['location_name'])) {
+      $termsToAggregateOn[] = ['field' => 'location.verbatim_locality.keyword', 'missing' => '~N/A~'];
+    }
+    if (!empty($_POST['updates']['sref'])) {
+      $termsToAggregateOn[] = ['field' => 'location.input_sref.keyword'];
+    }
+    $query['size'] = 0;
+    if (count($termsToAggregateOn) === 1) {
+      $query['aggs'] = [
+        'changedfields' => [
+          'terms' => array_merge([
+            'order' => ['_count' => 'asc'],
+            'size' => 10,
+            'shard_size' => 100,
+          ], $termsToAggregateOn[0]),
+        ],
+      ];
+    }
+    else {
+      $query['aggs'] = [
+        'changedfields' => [
+          'multi_terms' => [
+            'terms' => $termsToAggregateOn,
+            'order' => ['_count' => 'asc'],
+            'size' => 10,
+            'shard_size' => 100,
+          ],
+        ],
+      ];
+    }
+    return $query;
+  }
+
+  /**
+   * Build the query for fetching the preview records.
+   *
+   * Uses the response from the aggregation query to find the records with the
+   * combinations of values in the changing fields that are least prevalent.
+   *
+   * @param array $query
+   *   ES query as defined for the aggregation query.
+   * @param array $aggResponse
+   *   Response from the aggregation query.
+   * @param array $allKeys
+   *   Array which will be updated to contain the aggregation key combinations
+   *   included.
+   *
+   * @return array
+   *   Elasticsearch query definition for fetching record data.
+   */
+  private static function getBulkEditPreviewRecordsDataQuery(array $query, array $aggResponse, array &$allKeys) {
+    $queryWillFetch = 0;
+    unset($query['aggs']);
+    // Set a high size, as we are filtering to only fetch certain combinations
+    // of fields it's unlikely to return many.
+    $query['size'] = 1000;
+    $allKeyQueries = [];
+    $allKeys = [];
+    // Add an OR section to the query so we can fetch each set of records
+    // matching a bucket.
+    foreach ($aggResponse['aggregations']['changedfields']['buckets'] as $bucket) {
+      $boolMust = [];
+      $boolMustNot = [];
+      $keyIndex = 0;
+      // If only a single term in the aggregation, key is a value, not an array
+      // of values. Switch to array so we can treat all the same.
+      if (!is_array($bucket['key'])) {
+        $bucket['key'] = [$bucket['key']];
+      }
+      // Remember the aggregation key.
+      $allKeys[] = $bucket['key'];
+      // Build a filter that matches to each set of data output by the
+      // aggregation query - matching on just the field values that are being
+      // updated.
+      if (!empty($_POST['updates']['recorder_name'])) {
+        if ($bucket['key'][$keyIndex] === '~N/A~') {
+          $boolMustNot[] = ['exists' => ['field' => 'event.recorded_by']];
+        }
+        else {
+          $boolMust[] = ['term' => ['event.recorded_by.keyword' => $bucket['key'][$keyIndex]]];
+        }
+        $keyIndex++;
+      }
+      if (!empty($_POST['updates']['date'])) {
+        $boolMust[] = ['term' => ['event.date_start' => $bucket['key'][$keyIndex]]];
+        $boolMust[] = ['term' => ['event.date_end' => $bucket['key'][$keyIndex + 1]]];
+        $boolMust[] = ['term' => ['event.date_type' => $bucket['key'][$keyIndex + 2]]];
+        $keyIndex += 3;
+      }
+      if (!empty($_POST['updates']['location_name'])) {
+        if ($bucket['key'][$keyIndex] === '~N/A~') {
+          $boolMustNot[] = ['exists' => ['field' => 'location.verbatim_locality']];
+        }
+        else {
+          $boolMust[] = ['term' => ['location.verbatim_locality.keyword' => $bucket['key'][$keyIndex]]];
+        }
+        $keyIndex++;
+      }
+      if (!empty($_POST['updates']['sref'])) {
+        $boolMust[] = ['term' => ['location.input_sref.keyword' => $bucket['key'][$keyIndex]]];
+      }
+      $boolForThisKey = [];
+      if (!empty($boolMust)) {
+        $boolForThisKey['must'] = $boolMust;
+      }
+      if (!empty($boolMustNot)) {
+        $boolForThisKey['must_not'] = $boolMustNot;
+      }
+      $allKeyQueries[] = ['bool' => $boolForThisKey];
+      $queryWillFetch += $bucket['doc_count'];
+      // Only need enough matches for 10 records in the preview.
+      if ($queryWillFetch >= 10) {
+        break;
+      }
+    }
+    if (!isset($query['query']['bool'])) {
+      $query['query']['bool'] = [];
+    }
+    if (!isset($query['query']['bool']['must'])) {
+      $query['query']['bool']['must'] = [];
+    }
+    $query['query']['bool']['must'][] = [
+      'bool' => [
+        'should' => $allKeyQueries,
+      ],
+    ];
+    return $query;
+  }
+
+  /**
+   * Organise the bulk edit preview data into the correct order.
+   *
+   * Because we first find the least prevalent combinations of fields that are
+   * being changed, then fetch records matching as many combinations as
+   * required in order to fetch at least 10 records, it is possible to load
+   * many more than 10 records. We don't want the records for highly prevalent
+   * combinations to appear in the preview grid in preference to the less
+   * prevalent combinations which are more likely to contain errors, so we work
+   * through the aggregation keys (which are in order of doc count ascending,
+   * so least prevalent combinations first) and find the records that match.
+   *
+   * @param object $r
+   *   Elasticsearch response containing matching records.
+   * @param array $allKeys
+   *   The aggregation keys from the multi_terms aggregation that can be used
+   *   to identify records, in order of least prevalent combination first.
+   *
+   * @return array
+   *   List of 10 records in order of least prevalent changing field
+   *   combinations first.
+   *
+   */
+  private static function organiseBulkEditPreview($r, array $allKeys) {
+    $organisedList = [];
+    $data = json_decode($r);
+    foreach ($allKeys as $key) {
+      foreach ($data->hits->hits as $record) {
+        if (self::recordMatchesKey($record, $key, $_POST['updates'])) {
+          $organisedList[] = $record;
+          if (count($organisedList) >= 10) {
+            break 2;
+          }
+        }
+      }
+    }
+    return $organisedList;
+  }
+
+  /**
+   * Checks if a preview record matches an aggregation key.
+   *
+   * @param mixed $record
+   *   Record returned from Elasticsearch.
+   * @param array $key
+   *   Key from a multi_terms aggregation.
+   * @param array $updates
+   *   Updates being applied, used to determine the order of fields in the key.
+   *
+   * @return bool
+   *   True if a match.
+   */
+  private static function recordMatchesKey($record, array $key, array $updates) {
+    $match = TRUE;
+    $keyIndex = 0;
+    if (!empty($updates['recorder_name'])) {
+      if ($key[$keyIndex] === '~N/A~') {
+        $match = $match && empty($record->_source->event->recorded_by);
+      }
+      else {
+        $match = $match && $record->_source->event->recorded_by === $key[$keyIndex];
+      }
+      $keyIndex++;
+    }
+    if ($match && !empty($updates['date'])) {
+      $match = $match && strtotime($record->_source->event->date_start) === strtotime(explode('T', $key[$keyIndex])[0]);
+      $match = $match && strtotime($record->_source->event->date_end) === strtotime(explode('T', $key[$keyIndex + 1])[0]);
+      $match = $match && $record->_source->event->date_type === $key[$keyIndex + 2];
+      $keyIndex += 3;
+    }
+    if ($match && !empty($_POST['updates']['location_name'])) {
+      if ($key[$keyIndex] === '~N/A~') {
+        $match = $match && empty($record->_source->location->verbatim_locality);
+      }
+      else {
+        $match = $match && $record->_source->location->verbatim_locality === $key[$keyIndex];
+      }
+      $keyIndex++;
+    }
+    if ($match && !empty($_POST['updates']['sref'])) {
+      $match = $match && $record->_source->location->input_sref === $key[$keyIndex];
+    }
+
+    return $match;
   }
 
   /**

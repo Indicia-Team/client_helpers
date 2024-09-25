@@ -13,7 +13,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers/
  */
@@ -43,7 +42,9 @@ class iform_seasearch_survey extends iform_dynamic_sample_occurrence {
 
   /**
    * Return the form metadata.
-   * @return string The definition of the form.
+   *
+   * @return array
+   *   The definition of the form.
    */
   public static function get_seasearch_survey_definition() {
     return array(

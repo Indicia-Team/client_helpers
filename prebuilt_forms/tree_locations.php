@@ -14,18 +14,20 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers/
  */
+
+use IForm\prebuilt_forms\PageType;
+use IForm\prebuilt_forms\PrebuiltFormInterface;
 
 require_once 'includes/map.php';
 require_once 'includes/form_generation.php';
 
 /**
- *Form for adding or editing the site details at a location which contains a number of trees.
+ * Form for adding or editing the site details at a location which contains a number of trees.
  */
-class iform_tree_locations {
+class iform_tree_locations implements PrebuiltFormInterface {
 
   /**
    * @var int Contains the id of the location attribute used to store the CMS user ID.
@@ -42,14 +44,23 @@ class iform_tree_locations {
 
   /**
    * Return the form metadata.
-   * @return array The definition of the form.
+   *
+   * @return array
+   *   The definition of the form.
    */
   public static function get_tree_locations_definition() {
-    return array(
+    return [
       'title' => 'Tree Location editor',
       'category' => 'Custom Forms',
       'description' => 'Form for adding or editing the site details at a location which has a number of trees.'
-    );
+    ];
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function getPageType(): PageType {
+    return PageType::DataEntry;
   }
 
   /**
@@ -475,7 +486,7 @@ check_attrs = function(){
     if (!function_exists('iform_ajaxproxy_url')) {
       hostsite_show_message(lang::get('The Indicia AJAX Proxy module must be enabled to use this form. This lets the form save verifications to the '.
           'Indicia Warehouse without having to reload the page.'));
-      $r .= '<form method="post">';
+      $r = '<form method="post">';
       $r .= '<input type="hidden" name="enable" value="t"/>';
       $r .= '<input type="submit" value="'.lang::get('Enable Indicia AJAX Proxy').'">';
       $r .= '</form>';

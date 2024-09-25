@@ -17,10 +17,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers
  */
+
+use IForm\IndiciaConversions;
 
 /**
  * A helper class for Elasticsearch reporting code.
@@ -381,14 +382,16 @@ class ElasticsearchReportHelper {
     ], TRUE);
     helper_base::addLanguageStringsToJs('bulkEditor', [
       'allowSampleSplitting' => 'Allow sample splitting?',
-      'bulkEditorDialogMessageAll' => 'You are about to edit the entire list of {1} records.',
-      'bulkEditorDialogMessageSelected' => 'You are about to edit {1} selected records.',
+      'bulkEditorDialogMessageAll' => 'You are about to edit the entire list of <span>{1}</span> records.',
+      'bulkEditorDialogMessageSelected' => 'You are about to edit <span>{1}</span> selected records.',
       'bulkEditProgress' => 'Edited {samples} samples and {occurrences} occurrences.',
       'cannotProceed' => 'Cannot proceed',
       'confirm' => 'Confirm',
       'done' => 'Records successfully edited. They will now be processed so they are available with their new values shortly.',
       'error' => 'An error occurred whilst trying to edit the records.',
       'errorEditNotFilteredToCurrentUser' => 'The records cannot be edited because the current page is not filtered to limit the records to only your data.',
+      'noUpdatesSpecified' => 'Please specify the values you would like to update using the form before previewing the changes.',
+      'noValue' => '-value not set-',
       'preparing' => 'Preparing to edit the records...',
       'promptAllowSampleSplit' => '<p>The list of records to update contains occurrences which belong to samples that contain other occurrences which are not being updated. ' .
         'For example, sample {1} contains an occurrence {2} which is being updated, but it also contains occurrence {3} which is not being updated.</p>' .
@@ -402,28 +405,26 @@ class ElasticsearchReportHelper {
       'close' => lang::get('Close'),
       'editing' => lang::get('Editing records'),
       'editInstructions' => 'Specify values to apply to all the edited records in the following controls, or leave blank for the data values to remain unchanged.',
+      'preview' => lang::get('Preview'),
+      'previewInfo' => lang::get('The following table shows a selection of the records you are about to bulk edit. This is just a sample of the records about to be updated.'),
       'proceed' => lang::get('Proceed'),
     ];
     helper_base::add_resource('fancybox');
     $recorderNameControl = data_entry_helper::text_input([
       'fieldname' => 'edit-recorder-name',
       'label' => lang::get('Recorder name'),
-      'attributes' => ['placeholder' => lang::get('value not changed')],
     ]);
-    $dateControl = data_entry_helper::text_input([
+    $dateControl = data_entry_helper::date_picker([
       'fieldname' => 'edit-date',
       'label' => lang::get('Date'),
-      'attributes' => ['placeholder' => lang::get('value not changed')],
     ]);
     $locationNameControl = data_entry_helper::text_input([
       'fieldname' => 'edit-location-name',
       'label' => lang::get('Location name'),
-      'attributes' => ['placeholder' => lang::get('value not changed')],
     ]);
     $srefControl = data_entry_helper::sref_and_system([
       'fieldname' => 'edit-sref',
       'label' => lang::get('Spatial reference'),
-      'attributes' => ['placeholder' => lang::get('value not changed')],
       'findMeButton' => FALSE,
     ]);
     global $indicia_templates;
@@ -431,18 +432,37 @@ class ElasticsearchReportHelper {
 <button type="button" class="bulk-edit-records-btn $indicia_templates[buttonHighlightedClass]">$lang[bulkEditRecords]</button>
 <div style="display: none">
   <div id="$options[id]-dlg" class="bulk-editor-dlg">
-    <div class="pre-bulk-edit-info">
-      <h2>$lang[bulkEditRecords]</h2>
-      <p class="message"></p>
-      <p>$lang[editInstructions]</p>
+    <h2>$lang[bulkEditRecords]</h2>
+    <p class="message"></p>
+    <p>$lang[editInstructions]</p>
+    <div class="bulk-edit-form-controls">
       $recorderNameControl
       $dateControl
       $locationNameControl
       $srefControl
-      <div class="form-buttons">
-        <button type="button" class="$indicia_templates[buttonHighlightedClass] proceed-bulk-edit">$lang[proceed]</button>
-        <button type="button" class="$indicia_templates[buttonHighlightedClass] close-bulk-edit-dlg">$lang[cancel]</button>
-      </div>
+    </div>
+    <div class="preview-output" style="display: none">
+      <p class="alert alert-warning"><i class="fas fa-exclamation-triangle fa-2x"></i> $lang[previewInfo]</p>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Species</th>
+            <th>Common name</th>
+            <th>Date</th>
+            <th>Location</th>
+            <th>Grid ref</th>
+            <th>Recorded by</th>
+          </tr>
+        <thead>
+        <tbody>
+        </tbody>
+      </table>
+    </div>
+    <div class="form-buttons bulk-edit-action-buttons">
+      <button type="button" class="$indicia_templates[buttonHighlightedClass] preview-bulk-edit">$lang[preview]</button>
+      <button type="button" class="$indicia_templates[buttonHighlightedClass] proceed-bulk-edit" disabled>$lang[proceed]</button>
+      <button type="button" class="$indicia_templates[buttonHighlightedClass] close-bulk-edit-dlg">$lang[cancel]</button>
     </div>
     <div class="post-bulk-edit-info">
       <h2>$lang[editing]</h2>
@@ -476,6 +496,9 @@ HTML;
         'rowsPerPageOptions',
       ]
     );
+    $options = array_merge([
+      'class' => 'flexgrid',
+    ], $options);
     helper_base::addLanguageStringsToJs('cardGallery', [
       'checkToIncludeInList' => 'Check this box to include the record in the list which any verification actions will be applied to.',
       'collapseCard' => 'Return card to normal size (C or +)',
@@ -497,6 +520,7 @@ HTML;
     $dataOptions = helper_base::getOptionsForJs($options, [
       'actions',
       'columns',
+      'class',
       'includeFieldCaptions',
       'includeFullScreenTool',
       'includeMultiSelectTool',
@@ -612,6 +636,7 @@ HTML;
       }
     }
     helper_base::add_resource('sortable');
+    helper_base::add_resource('font_awesome');
     helper_base::add_resource('indiciaFootableReport');
     // Add footableSort for simple aggregation tables.
     if (!empty($options['aggregation']) && $options['aggregation'] === 'simple') {
@@ -624,6 +649,7 @@ HTML;
       'columnSettingsToolHint' => 'Click to show grid column settings',
       'fullScreenToolHint' => 'Click to view grid in full screen mode',
       'noHeading' => 'no heading',
+      'siteNameWitheld' => 'Site name witheld as record is sensitive or private.',
       'status' => 'Status',
     ]);
     $dataOptions = helper_base::getOptionsForJs($options, [
@@ -654,7 +680,33 @@ HTML;
 $('#$options[id]').idcDataGrid('bindControls');
 
 JS;
-    return self::getControlContainer('dataGrid', $options, $dataOptions);
+    $lang = [
+      'cancel' => lang::get('Cancel'),
+      'columnConfigIntro' => lang::get('The following columns are available for this table. Tick the ones you want to include. Drag and drop the columns into your preferred order.'),
+      'columnConfiguration' => lang::get('Column configuration'),
+      'restoreDefaults' => lang::get('Restore defaults'),
+      'save' => lang::get('Save'),
+      'toggleTick' => lang::get('Tick/untick all'),
+    ];
+    $content = <<<HTML
+    <div class="loading-spinner" style="display: none">
+      <div>Loading...</div>
+    </div>
+    <div class="data-grid-settings-cntr" style="display: none">
+      <div class="data-grid-settings" data-el="$options[id]">
+        <h3>$lang[columnConfiguration]</h3>
+        <p>$lang[columnConfigIntro]</p>
+        <div>
+          <button class="btn btn-default toggle">$lang[toggleTick]</button>
+          <button class="btn btn-default restore">$lang[restoreDefaults]</button>
+          <button class="btn btn-default cancel">$lang[cancel]</button>
+          <button class="btn btn-primary save">$lang[save]</button>
+        </div>
+        <ol></ol>
+      </div>
+    </div>
+HTML;
+    return self::getControlContainer('dataGrid', $options, $dataOptions, $content);
   }
 
   /**
@@ -672,7 +724,7 @@ JS;
     }
     self::checkOptions('esDownload', $options,
       [['source', 'linkToDataControl']],
-      ['addColumns', 'removeColumns']
+      ['addColumns', 'removeColumns', 'sort']
     );
     if (empty($options['source']) && !empty($options['columnsTemplate'])) {
       throw new Exception('Download control @source option must be specified if @columnsTemplate option is used (cannot be used with @linkToDataControl).');
@@ -735,8 +787,6 @@ JS;
             style="stroke-dashoffset:503px;"
             stroke-dasharray="503"
             transform="rotate(-90)" />
-      </g>
-      </text>
   </svg>
   <div class="progress-text"></div>
 </div>
@@ -763,6 +813,7 @@ HTML;
       'columnsSurveyId',
       'linkToDataControl',
       'removeColumns',
+      'sort',
       'source',
     ], TRUE);
     return self::getControlContainer('esDownload', $options, $dataOptions, $html);
@@ -831,34 +882,36 @@ HTML;
       return '';
     }
     require_once 'prebuilt_forms/includes/groups.php';
-    $member = group_authorise_group_id($group_id, $options['readAuth'], $checkPage);
+    $membership = group_get_user_membership($group_id, $options['readAuth'], $checkPage);
     $output = '';
     if (!empty($group_id)) {
-      // Apply filtering by group.
-      helper_base::$indiciaData['filter_group_id'] = $group_id;
-      if (is_string($implicit)) {
-        $implicit = ['f' => FALSE, 't' => TRUE, '' => NULL][$implicit];
+      $groups = data_entry_helper::get_population_data([
+        'table' => 'group',
+        'extraParams' => $options['readAuth'] + [
+          'view' => 'detail',
+          'id' => $group_id,
+        ]
+      ]);
+      if (!count($groups)) {
+        hostsite_show_message(lang::get('The link you have followed is invalid.'), 'warning', TRUE);
+        hostsite_goto_page('<front>');
+        return '';
       }
-      helper_base::$indiciaData['filter_group_implicit'] = $implicit;
+      $group = $groups[0];
+      // Apply filtering by group.
+      $groupFilterInfo = [
+        'id' => $group['id'],
+        'implicit' => IndiciaConversions::toBool($implicit),
+        'container' => IndiciaConversions::toBool($group['container']),
+        'contained_by_group_id' => $group['contained_by_group_id'],
+      ];
+      helper_base::$indiciaData['applyGroupFilter'] = $groupFilterInfo;
       if ($options['showGroupSummary'] || $options['showGroupPages']) {
-        $groups = data_entry_helper::get_population_data([
-          'table' => 'group',
-          'extraParams' => $options['readAuth'] + [
-            'view' => 'detail',
-            'id' => $group_id,
-          ]
-        ]);
-        if (!count($groups)) {
-          hostsite_show_message(lang::get('The link you have followed is invalid.'), 'warning', TRUE);
-          hostsite_goto_page('<front>');
-          return '';
-        }
-        $group = $groups[0];
         if ($options['showGroupSummary']) {
           $output .= self::getGroupSummaryHtml($group);
         }
         if ($options['showGroupPages']) {
-          $output .= self::getGroupPageLinks($group, $options, $member);
+          $output .= self::getGroupPageLinksHtml($group, $options, $membership);
         }
       }
       $filterBoundaries = helper_base::get_population_data([
@@ -900,21 +953,25 @@ JS;
   }
 
   /**
-   * Return the HTML for a list of page links for a group.
+   * Return an array with information required to create a group's page links.
    *
    * @param array $group
    *   Group data loaded from the database.
    * @param array $options
    *   [groupIntegration] control options. Can include joinLink=true to add a
    *   link for joining for non-members and a class name for the links in
-   *   linkClass.
-   * @param bool $member
-   *   True if member of the group.
+   *   linkClass. Provide an option called editPath with a path to the group
+   *   edit page, this will generate a link for admins to edit the group
+   *   metadata.
+   * @param GroupMembership $membership
+   *   Current user's membership or admin status.
+   * @param bool $caching
+   *   Set to false to disable caching (e.g. if in a cached Drupal block).
    *
-   * @return string
-   *   HTML for the list of links.
+   * @return array
+   *   List of links with label and icon info.
    */
-  public static function getGroupPageLinks(array $group, array $options, $member) {
+  public static function getGroupPageLinksArray(array $group, array $options, GroupMembership $membership, $caching = TRUE): array {
     $pageData = data_entry_helper::get_population_data([
       'table' => 'group_page',
       'extraParams' => $options['readAuth'] + [
@@ -922,26 +979,66 @@ JS;
         'query' => json_encode(['in' => ['administrator' => ['', 'f']]]),
         'orderby' => 'caption',
       ],
+      'caching' => $caching,
+      'cachePerUser' => FALSE,
     ]);
-    $pageLinks = [];
-    $linkClassAttr = empty($options['linkClass']) ? '' : " class=\"$options[linkClass]\"";
-    if ($member === FALSE && ($group['joining_method'] === 'P' || $group['joining_method'] === 'I')) {
-      $titleForLink = preg_replace('/[^a-z0-9-]/', '', str_replace(' ', '-', strtolower($group['title'])));
+    $links = [];
+    $options = array_merge([
+      'containedGroupLabel' => 'sub-group',
+    ], $options);
+    if ($membership === GroupMembership::NonMember && ($group['joining_method'] === 'P' || $group['joining_method'] === 'I')) {
+      $titleForLink = trim(preg_replace('/[^a-z0-9\-]/', '', preg_replace('/[ ]/', '-', strtolower($group['title']))), '-');
       $titleEscaped = htmlspecialchars($group['title']);
-      $pageLinks[] = "<li><a href=\"/join/$titleForLink\"$linkClassAttr>Join $titleEscaped</a></li>";
+      $links["/join/$titleForLink"] = ['label' => "Join $titleEscaped", 'icon' => '<i class="fas fa-file-signature"></i>'];
+    }
+    if ($membership === GroupMembership::Admin && isset($options['editPath'])) {
+      $editLink = helper_base::getRootFolder() . $options['editPath'] . "?group_id=$group[id]&redirect_on_success=" . hostsite_get_current_page_path();
+      $links[$editLink] = ['label' => lang::get('Edit'), 'icon' => '<i class="fas fa-pen"></i>'];
+      if (!empty($group['container'])) {
+        $addSubGroupLink = helper_base::getRootFolder() . $options['editPath'] . "?container_group_id=$group[id]&redirect_on_success=" . hostsite_get_current_page_path();
+        $links[$addSubGroupLink] = ['label' => lang::get('Add {1}', $options['containedGroupLabel']), 'icon' => '<i class="fas fa-folder-plus"></i>'];
+      }
     }
     $thisPage = empty($options['nid']) ? '' : hostsite_get_alias($options['nid']);
     foreach ($pageData as $page) {
       // Don't link to the current page, plus block member-only pages for
       // non-members.
-      if ($page['path'] !== $thisPage && ($member || $page['administrator'] === NULL)) {
-        $pageLinks[] = '<li><a href="' .
-          hostsite_get_url($page['path'], [
-            'group_id' => $group['id'],
-            'implicit' => $group['implicit_record_inclusion'],
-          ]) .
-          "\"$linkClassAttr>" . lang::get($page['caption']) . '</a></li>';
+      if ($page['path'] !== $thisPage && ($membership !== GroupMembership::NonMember || $page['administrator'] === NULL)) {
+        $pageLink = hostsite_get_url($page['path'], [
+          'group_id' => $group['id'],
+          'implicit' => $group['implicit_record_inclusion'],
+        ]);
+        $links[$pageLink] = ['label' => lang::get($page['caption'])];
       }
+    }
+    return $links;
+  }
+
+  /**
+   * Return the HTML for a list of page links for a group.
+   *
+   * @param array $group
+   *   Group data loaded from the database.
+   * @param array $options
+   *   [groupIntegration] control options. Can include joinLink=true to add a
+   *   link for joining for non-members and a class name for the links in
+   *   linkClass. Provide an option called editPath with a path to the group
+   *   edit page, this will generate a link for admins to edit the group
+   *   metadata.
+   * @param GroupMembership $membership
+   *   Current user's membership or admin status.
+   *
+   * @return string
+   *   HTML for the list of links.
+   */
+  public static function getGroupPageLinksHtml(array $group, array $options, GroupMembership $membership) {
+    $array = self::getGroupPageLinksArray($group, $options, $membership);
+    $pageLinks = [];
+    $linkClassAttr = empty($options['linkClass']) ? '' : " class=\"$options[linkClass]\"";
+    foreach ($array as $href => $linkInfo) {
+      // Add space after icon.
+      $linkInfo['icon'] = empty($linkInfo['icon']) ? '' : "$linkInfo[icon] ";
+      $pageLinks[] = "<li><a href=\"$href\"$linkClassAttr>$linkInfo[icon]$linkInfo[label]</a></li>";
     }
     if (!empty($pageLinks)) {
       return '<ul>' . implode('', $pageLinks) . '</ul>';
@@ -1657,6 +1754,7 @@ HTML;
       'mode',
       'proxyCacheTimeout',
       'sortAggregation',
+      'shardSize',
       'size',
       'sort',
       'switchToGeomsAt',
@@ -1866,6 +1964,9 @@ HTML;
    */
   public static function verificationButtons(array $options) {
     global $indicia_templates;
+    if (!function_exists('iform_ajaxproxy_url')) {
+      return 'The AJAX Proxy module must be enabled to use the [verificationButtons] control.';
+    }
     $requiredOptions = ['showSelectedRow'];
     $config = hostsite_get_es_config($options['nid']);
     helper_base::$indiciaData['idPrefix'] = $config['es']['warehouse_prefix'];
@@ -1880,6 +1981,7 @@ HTML;
     $options = array_merge([
       'redeterminerNameAttributeHandling' => 'overwriteOnRedet',
       'taxon_list_id' => hostsite_get_config_value('iform', 'master_checklist_id'),
+      'useLocalFormPaths' => FALSE,
       'verificationTemplates' => FALSE,
     ], $options);
     $dataOptions = helper_base::getOptionsForJs($options, [
@@ -1889,6 +1991,7 @@ HTML;
       'showSelectedRow',
       'speciesPath',
       'uploadButtonContainerElement',
+      'useLocalFormPaths',
       'verificationTemplates',
       'viewPath',
     ], TRUE);
@@ -2038,7 +2141,7 @@ HTML;
     $btnClassDefault = $indicia_templates['buttonDefaultClass'];
     // Work out any extra buttons we need for provided links.
     $optionalLinkArray = [];
-    if (!empty($options['editPath'])) {
+    if (!empty($options['editPath']) || $options['useLocalFormPaths'] !== 'never') {
       $optionalLinkArray[] = "<a class=\"edit $btnClassDefault\" title=\"$lang[editThisRecord]\" target=\"_blank\"><span class=\"fas fa-edit\"></span></a>";
     }
     if (!empty($options['viewPath'])) {
@@ -2179,7 +2282,7 @@ HTML;
   <form id="verification-form" class="verification-popup comment-popup">
     <fieldset>
       <legend><span></span><span></span></legend>
-      <p class="alert alert-warning multiple-warning">$lang[updatingMultipleWarning]</p>
+      <p class="alert alert-warning multiple-warning"><i class="fas fa-exclamation-triangle"></i>$lang[updatingMultipleWarning]</p>
       <p class="alert alert-warning multiple-in-parent-sample-warning"></p>
       <p class="alert alert-info"></p>
       <div class="comment-cntr form-group">
@@ -2197,7 +2300,7 @@ HTML;
 
 <div id="redet-panel-wrap" style="display: none">
   <form id="redet-form" class="verification-popup" data-status="DT">
-    <p class="alert alert-warning multiple-warning">$lang[updatingMultipleWarning]</p>
+    <p class="alert alert-warning multiple-warning"><i class="fas fa-exclamation-triangle"></i>$lang[updatingMultipleWarning]</p>
     <div class="alt-taxon-list-controls alt-taxon-list-message">$indicia_templates[messageBox]</div>
     $speciesInput
     $altListCheckbox

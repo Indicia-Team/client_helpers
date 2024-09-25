@@ -13,10 +13,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
  * @licence http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/Indicia-Team/client_helpers
  */
+
+use IForm\IndiciaConversions;
+use IForm\prebuilt_forms\PageType;
+use IForm\prebuilt_forms\PrebuiltFormInterface;
 
 require_once 'includes/map.php';
 require_once 'includes/report.php';
@@ -26,7 +29,7 @@ require_once 'includes/report_filters.php';
  * Prebuilt Indicia data form that lists the output of a samples report with an option
  * to accept or reject.
  */
-class iform_verification_samples {
+class iform_verification_samples implements PrebuiltFormInterface {
 
   private static $statusTermsTranslated = false;
 
@@ -41,7 +44,9 @@ class iform_verification_samples {
 
   /**
    * Return the form metadata.
-   * @return array The definition of the form.
+   *
+   * @return array
+   *   The definition of the form.
    */
   public static function get_verification_samples_definition() {
     return array(
@@ -49,6 +54,13 @@ class iform_verification_samples {
       'category' => 'Verification',
       'description' => 'Verification form supporting verification of samples/submitted forms.'
     );
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function getPageType(): PageType {
+    return PageType::Utility;
   }
 
   /**
@@ -779,7 +791,7 @@ idlist=';
       $commentTime = strtotime($comment['updated_on']);
       // Output the comment time. Skip if in future (i.e. server/client date settings don't match)
       if ($commentTime < time()) {
-        $r .= helper_base::ago($commentTime);
+        $r .= IndiciaConversions::timestampToTimeAgoString($commentTime);
       }
       $r .= '</div>';
       $c = str_replace("\n", '<br/>', $comment['comment']);

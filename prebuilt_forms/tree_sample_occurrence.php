@@ -13,7 +13,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/Indicia-Team/client_helpers
  */
@@ -29,20 +28,24 @@ class iform_tree_sample_occurrence extends iform_dynamic_sample_occurrence {
 
   /**
    * Return the form metadata.
-   * @return string The definition of the form.
+   *
+   * @return array
+   *   The definition of the form.
    */
   public static function get_tree_sample_occurrence_definition() {
-    return array(
+    return [
       'title' => 'Track a Tree : Visit data entry form',
       'category' => 'Custom Forms',
       'description' => 'Track a Tree specific visit (sample and occurrences) entry form based on the generic dynamic_sample_occurrence form. ' .
         'The attributes on the form are dynamically generated from the survey setup on the Indicia Warehouse.'
-    );
+    ];
   }
 
   /**
    * Get the list of parameters for this form.
-   * @return array List of parameters that this form requires.
+   *
+   * @return array
+   *   List of parameters that this form requires.
    */
   public static function get_parameters() {
     $retVal = array_merge(

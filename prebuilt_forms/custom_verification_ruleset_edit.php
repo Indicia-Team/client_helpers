@@ -14,15 +14,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/Indicia-Team/client_helpers
  */
 
+use IForm\prebuilt_forms\PageType;
+use IForm\prebuilt_forms\PrebuiltFormInterface;
+
 /**
  * An edit form for custom verification rulesets and the contained rules.
  */
-class iform_custom_verification_ruleset_edit {
+class iform_custom_verification_ruleset_edit implements PrebuiltFormInterface {
 
   /**
    * Return the form metadata.
@@ -37,6 +39,13 @@ class iform_custom_verification_ruleset_edit {
       'description' => 'A form for editing a custom verification ruleset.',
       'helpLink' => 'https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/custom-verification-rulesets-edit.html',
     ];
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function getPageType(): PageType {
+    return PageType::DataEntry;
   }
 
   /**

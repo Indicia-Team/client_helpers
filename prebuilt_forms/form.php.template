@@ -14,10 +14,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/Indicia-Team/client_helpers
  */
+
+use IForm\prebuilt_forms\PageType;
+use IForm\prebuilt_forms\PrebuiltFormInterface;
 
 /**
  *
@@ -25,18 +27,7 @@
  * @todo Provide form description in this comment block.
  * @todo Rename the form class to iform_...
  */
-class iform_form_name {
-
-  /**
-   * Disable form element wrapped around output.
-   *
-   * @return bool
-   *
-   * @todo Remove this if the page type is for data entry.
-   */
-  protected static function isDataEntryForm() {
-    return FALSE;
-  }
+class iform_form_name implements PrebuiltFormInterface {
 
   /**
    * Return the form metadata.
@@ -57,6 +48,20 @@ class iform_form_name {
       'helpLink' => '<optional help URL>',
       'description' => '<description>',
     ];
+  }
+
+  /**
+   * Declare this page's type, e.g. Report, DataEntry or Utility.
+   *
+   * @todo Change the type if not a report.
+   * @todo Change the comment to just:
+   * {@inheritDoc}
+   *
+   * @return PageType
+   *   Page type.
+   */
+  public static function getPageType(): PageType {
+    return PageType::Report;
   }
 
   /**

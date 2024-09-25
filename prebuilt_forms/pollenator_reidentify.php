@@ -13,10 +13,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/Indicia-Team/client_helpers
  */
+
+use IForm\prebuilt_forms\PageType;
+use IForm\prebuilt_forms\PrebuiltFormInterface;
 
 /**
  * Prebuilt Indicia data entry form.
@@ -26,7 +28,7 @@
 require_once 'includes/language_utils.php';
 require_once 'includes/user.php';
 
-class iform_pollenator_reidentify {
+class iform_pollenator_reidentify implements PrebuiltFormInterface {
 
  /**
    * Get the list of parameters for this form.
@@ -100,6 +102,14 @@ class iform_pollenator_reidentify {
       'description' => 'Pollenators: Re-identifier of insects following taxa reorganisations.'
     );
   }
+
+	/**
+   * {@inheritDoc}
+   */
+  public static function getPageType(): PageType {
+    return PageType::Utility;
+  }
+
 
   /**
    * Return the form title.

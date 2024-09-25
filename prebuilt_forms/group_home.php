@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers
  */
@@ -27,6 +26,23 @@ require_once 'includes/groups.php';
  * A page for editing or creating a user group report page.
  */
 class iform_group_home extends iform_dynamic_report_explorer {
+
+  /**
+   * Return the form metadata.
+   *
+   * @return array
+   *   The definition of the form.
+   */
+  public static function get_group_home_definition() {
+    return [
+      'title' => 'Group report page',
+      'category' => 'Recording groups',
+      'description' => 'A report page for recording groups. This is based on a dynamic report explorer, but it applies '.
+          'an automatic filter to the page output based on a group_id URL parameter.',
+      'supportsGroups' => TRUE,
+      'recommended' => TRUE,
+    ];
+  }
 
   public static function get_parameters() {
     $retVal = array_merge(
@@ -44,23 +60,6 @@ class iform_group_home extends iform_dynamic_report_explorer {
       )
     );
     return $retVal;
-  }
-
-  /**
-   * Return the form metadata.
-   *
-   * @return array
-   *   The definition of the form.
-   */
-  public static function get_group_home_definition() {
-    return array(
-      'title' => 'Group report page',
-      'category' => 'Recording groups',
-      'description' => 'A report page for recording groups. This is based on a dynamic report explorer, but it applies '.
-          'an automatic filter to the page output based on a group_id URL parameter.',
-      'supportsGroups' => TRUE,
-      'recommended' => TRUE,
-    );
   }
 
   /**
@@ -89,8 +88,8 @@ class iform_group_home extends iform_dynamic_report_explorer {
     data_entry_helper::$javascript .= 'indiciaData.verifiedTranslation = "' . lang::get('Verified') . "\";\n";
     data_entry_helper::$javascript .= 'indiciaData.rejectedTranslation = "' . lang::get('Rejected') . "\";\n";
     self::$auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
-    $isMember = group_authorise_form($args, self::$auth['read']);
-    group_apply_report_limits($args, self::$auth['read'], $nid, $isMember);
+    $membership = group_authorise_form($args, self::$auth['read']);
+    group_apply_report_limits($args, self::$auth['read'], $nid, $membership);
     if (!empty($args['hide_standard_param_filter'])) {
       data_entry_helper::$javascript .= "$('#standard-params').hide();\n";
     }

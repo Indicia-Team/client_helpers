@@ -14,10 +14,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers
  */
+
+use IForm\IndiciaConversions;
 
 /**
  * Displays the details of a single record.
@@ -31,11 +32,9 @@
  *   comments.
  */
 
-
 require_once 'includes/BaseDynamicDetails.php';
 require_once 'includes/report.php';
 require_once 'includes/groups.php';
-
 
 class iform_record_details_2 extends BaseDynamicDetails {
 
@@ -45,16 +44,6 @@ class iform_record_details_2 extends BaseDynamicDetails {
    * @var array
    */
   protected static $record;
-
-  /**
-   * Disable form element wrapped around output.
-   *
-   * @return bool
-   *   Always FALSE.
-   */
-  protected static function isDataEntryForm() {
-    return FALSE;
-  }
 
   /**
    * Return the form metadata.
@@ -270,10 +259,10 @@ Record ID',
         return 'This page needs a group_id URL parameter.';
       }
       $readAuth = data_entry_helper::get_read_auth($args['website_id'], $args['password']);
-      $isMember = group_authorise_form($args, $readAuth);
+      $membership = group_authorise_form($args, $readAuth);
       // If groups support is enabled, then do a count report to check access.
       $argArray = [];
-      group_apply_report_limits($argArray, $readAuth, $nid, $isMember);
+      group_apply_report_limits($argArray, $readAuth, $nid, $membership);
       $accessCheck = report_helper::get_report_data([
         'readAuth' => $readAuth,
         'dataSource' => 'library/occurrences/filterable_explore_list',
@@ -672,7 +661,7 @@ JS;
         // Output the comment time. Skip if in future (i.e. server/client date
         // settings don't match).
         if ($commentTime < time()) {
-          $r .= '<span class="comment-date">' . helper_base::ago($commentTime) . '</span>';
+          $r .= '<span class="comment-date">' . IndiciaConversions::timestampToTimeAgoString($commentTime) . '</span>';
         }
         $r .= '</div>';
         $icons = '';

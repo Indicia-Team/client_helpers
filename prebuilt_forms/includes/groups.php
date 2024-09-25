@@ -21,14 +21,22 @@
  */
 
 /**
+ * Group membership statuses.
+ */
+enum GroupMembership {
+  case NonMember;
+  case Member;
+  case Admin;
+}
+/**
  * Authorise the current page.
  *
  * If accessing a page for a group you don't belong to, or a page via a group
  * which is not linked to the page then a message is shown and you are
  * redirected to home.
  *
- * @return bool
- *   True if the user is a member of the group associated with the page.
+ * @return GroupMembership
+ *   Current user's group membership status.
  */
 function group_authorise_form($args, $readAuth) {
   if (!empty($args['limit_to_group_id']) && $args['limit_to_group_id'] !== (empty($_GET['group_id']) ? '' : $_GET['group_id'])) {
@@ -43,9 +51,9 @@ function group_authorise_form($args, $readAuth) {
   }
 
   if (!empty($_GET['group_id'])) {
-    return group_authorise_group_id($_GET['group_id'], $readAuth);
+    return group_get_user_membership($_GET['group_id'], $readAuth);
   }
-  return FALSE;
+  return GroupMembership::NonMember;
 }
 
 /**
@@ -58,8 +66,11 @@ function group_authorise_form($args, $readAuth) {
  * @param bool $checkPage
  *   Set to false to disable checking that the current page path is an iform
  *   page linked to the group.
+ *
+ * @return GroupMembership
+ *   Group membership status.
  */
-function group_authorise_group_id($group_id, $readAuth, $checkPage = TRUE) {
+function group_get_user_membership($group_id, $readAuth, $checkPage = TRUE) {
   $gu = [];
   // Loading data into a recording group. Are they a member or is the page
   // public?
@@ -98,14 +109,22 @@ function group_authorise_group_id($group_id, $readAuth, $checkPage = TRUE) {
     elseif (isset($gu[0]['administrator']) && isset($gp[0]['administrator'])) {
       // Use isn't an administrator, and page is administration
       // Note: does not work if using TRUE as bool test, only string 't'
-      if ($gu[0]['administrator'] != 't' && $gp[0]['administrator'] == 't') {
+      if ($gu[0]['administrator'] !== 't' && $gp[0]['administrator'] === 't') {
         hostsite_show_message(lang::get('You are trying to open a group page that you do not have permission to access.'));
         hostsite_goto_page('<front>');
         return FALSE;
       }
     }
   }
-  return count($gu) > 0;
+  if (count($gu) === 0) {
+    return GroupMembership::NonMember;
+  }
+  elseif ($gu[0]['administrator'] === 't') {
+    return GroupMembership::Admin;
+  }
+  else {
+    return GroupMembership::Member;
+  }
 }
 
 /**
@@ -119,12 +138,13 @@ function group_authorise_group_id($group_id, $readAuth, $checkPage = TRUE) {
  *   Read authorisation tokens.
  * @param int $nid
  *   Node ID.
- * @param bool $isMember
+ * @param GroupMembership $membership
+ *   Current user group membership info.
  *
  * @return array
  *   Group field values loaded from the database.
  */
-function group_apply_report_limits(array &$args, $readAuth, $nid, $isMember) {
+function group_apply_report_limits(array &$args, $readAuth, $nid, GroupMembership $membership) {
   $group = helper_base::get_population_data([
     'table' => 'group',
     'extraParams' => $readAuth + ['id' => $_GET['group_id'], 'view' => 'detail']
@@ -155,7 +175,7 @@ function group_apply_report_limits(array &$args, $readAuth, $nid, $isMember) {
         elseif (($key === 'taxon_group_id' || $key === 'taxon_group_list') && !empty($value) && strpos($value, ',') === FALSE) {
           // If the report is locked to a single taxon group, then we don't
           // need taxonomy columns.
-          $args['skipped_report_columns'] = array('taxon_group', 'taxonomy');
+          $args['skipped_report_columns'] = ['taxon_group', 'taxonomy'];
         }
       }
     }
@@ -163,12 +183,12 @@ function group_apply_report_limits(array &$args, $readAuth, $nid, $isMember) {
   // If records private, need to show them on a group report but only if user
   // is group member, which might not be the case if page accidentally made
   // fully public.
-  if ($isMember && $group['private_records'] === 't') {
+  if ($membership !== GroupMembership::NonMember && $group['private_records'] === 't') {
     $defstring .= "release_status=A\n";
   }
   if (empty($_GET['implicit'])) {
     // No need for a group user filter.
-    $args['param_presets'] = implode("\n", array($args['param_presets'], $defstring));
+    $args['param_presets'] = implode("\n", [$args['param_presets'], $defstring]);
   }
   else {
     // Filter to group users - either implicitly, or only if they explicitly

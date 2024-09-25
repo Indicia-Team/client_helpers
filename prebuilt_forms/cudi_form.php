@@ -23,10 +23,13 @@
  * NB has Drupal specific code.
  */
 
+use IForm\prebuilt_forms\PageType;
+
 require_once 'includes/dynamic.php';
 require_once 'includes/report.php';
 global $fieldsToHoldInCountUnitBoundary;
 $fieldsToHoldInCountUnitBoundary = array('boundary_geom','geom','comment');
+
 class iform_cudi_form extends iform_dynamic {
   /**
    * Return the form metadata.
@@ -39,6 +42,13 @@ class iform_cudi_form extends iform_dynamic {
 //      'helpLink' => '',
       'description' => 'TODO. '
     );
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function getPageType(): PageType {
+    return PageType::DataEntry;
   }
 
   /**

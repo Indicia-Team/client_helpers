@@ -13,18 +13,27 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/Indicia-Team/client_helpers
  */
+
+use IForm\prebuilt_forms\PageType;
+use IForm\prebuilt_forms\PrebuiltFormInterface;
 
 /**
  * Prebuilt Indicia data entry form based on the Orthoptera and Allied Insects site
  * survey recording form.
  */
-class iform_site_survey_recording_form {
+class iform_site_survey_recording_form implements PrebuiltFormInterface {
 
-/**
+  /**
+   * {@inheritDoc}
+   */
+  public static function getPageType(): PageType {
+    return PageType::DataEntry;
+  }
+
+  /**
    * Get the list of parameters for this form.
    * @return array List of parameters that this form requires.
    */

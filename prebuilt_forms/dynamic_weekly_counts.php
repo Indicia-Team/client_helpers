@@ -31,14 +31,16 @@ class iform_dynamic_weekly_counts extends iform_dynamic_sample_occurrence {
 
   /**
    * Return the form metadata.
-   * @return array The definition of the form.
+   *
+   * @return array
+   *   The definition of the form.
    */
   public static function get_dynamic_weekly_counts_definition() {
-    return array(
+    return [
       'title' => 'Weekly counts',
       'category' => 'General Purpose Data Entry Forms',
       'description' => 'A dynamic form which supports a grid of species counts per week.'
-    );
+    ];
   }
 
   /**

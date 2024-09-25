@@ -14,10 +14,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers
  */
+
+use IForm\IndiciaConversions;
+use IForm\prebuilt_forms\PageType;
+use IForm\prebuilt_forms\PrebuiltFormInterface;
 
 require_once 'includes/map.php';
 require_once 'includes/report.php';
@@ -30,7 +33,7 @@ require_once 'includes/groups.php';
  * Prebuilt Indicia data form that lists the output of an occurrences report with an option
  * to verify, reject or flag dubious each record.
  */
-class iform_verification_5 {
+class iform_verification_5 implements PrebuiltFormInterface {
 
   /**
    * Flag that can be set when the user's permissions filters are to be ignored.
@@ -54,6 +57,13 @@ class iform_verification_5 {
       'recommended' => TRUE,
       'supportsGroups' => TRUE,
     );
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function getPageType(): PageType {
+    return PageType::Utility;
   }
 
   /**
@@ -743,7 +753,7 @@ idlist=';
    *
    * @param array $args
    *   Input parameters.
-   * @param array $nid
+   * @param int $nid
    *   Drupal node object's ID.
    * @param array $response
    *   Response from Indicia services after posting a verification.
@@ -760,8 +770,9 @@ idlist=';
       'report_row_class' => 'zero-{zero_abundance}',
     ], $args);
     $auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
-    if (group_authorise_form($args, $auth['read'])) {
-      $group = group_apply_report_limits($args, $auth['read'], $nid, TRUE);
+    $membership = group_authorise_form($args, $auth['read']);
+    if ($membership !== GroupMembership::NonMember) {
+      $group = group_apply_report_limits($args, $auth['read'], $nid, $membership);
       if (!empty($args['group_type_ids']) && !in_array($group['group_type_id'], $args['group_type_ids'])) {
         // Group type is not authorised for verification.
         hostsite_show_message(lang::get('This group is not allowed to perform verification tasks.'), 'alert', TRUE);
@@ -985,7 +996,7 @@ HTML
     data_entry_helper::$javascript .= 'indiciaData.popupTranslations.logResponseTitle="' . lang::get('Log a response to a Query') . "\";\n";
     data_entry_helper::$javascript .= 'indiciaData.popupTranslations.logResponse="' . lang::get('Save Response') . "\";\n";
 
-    data_entry_helper::$javascript .= "indiciaData.statusTranslations = " . json_encode(VerificationHelper::getTranslatedStatusTerms()) . ";\n";
+    data_entry_helper::$javascript .= "indiciaData.statusTranslations = " . json_encode(IndiciaConversions::getTranslatedStatusTerms()) . ";\n";
     data_entry_helper::$javascript .= "indiciaData.commentTranslations = {};\n";
     data_entry_helper::$javascript .= 'indiciaData.commentTranslations.emailed = "' . lang::get('I emailed this record to {1} for checking.') . "\";\n";
     data_entry_helper::$javascript .= 'indiciaData.commentTranslations.recorder = "' . lang::get('the recorder') . "\";\n";
@@ -1110,8 +1121,8 @@ HTML
           $data[$caption[0]] = [];
         }
         $val = ($col === 'record_status') ?
-          VerificationHelper::getStatusLabel($record[$col], $record['record_substatus'], $record['query']) : $record[$col];
-        $data[$caption[0]][] = array('caption' => $caption[1], 'value' => $val);
+          IndiciaConversions::statusToLabel($record[$col], $record['record_substatus'], $record['query']) : $record[$col];
+        $data[$caption[0]][] = ['caption' => $caption[1], 'value' => $val];
       }
       if ($col === 'email' && !empty($record[$col])) {
         $email = $record[$col];

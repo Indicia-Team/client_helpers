@@ -14,17 +14,19 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers/
  */
+
+use IForm\prebuilt_forms\PageType;
+use IForm\prebuilt_forms\PrebuiltFormInterface;
 
 require_once ('includes/report_filters.php');
 
 /**
  * A quick and easy way to download data you have access to.
  */
-class iform_easy_download_2 {
+class iform_easy_download_2 implements PrebuiltFormInterface {
 
   /**
    * @var array List of sets of filters loaded from the db, one per sharing type code.
@@ -44,6 +46,13 @@ class iform_easy_download_2 {
       'supportsGroups'=>true,
       'recommended' => true
     );
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function getPageType(): PageType {
+    return PageType::Utility;
   }
 
   /**

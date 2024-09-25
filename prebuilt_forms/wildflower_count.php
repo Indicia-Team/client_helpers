@@ -13,26 +13,37 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers/
  */
 
+use IForm\prebuilt_forms\PageType;
+use IForm\prebuilt_forms\PrebuiltFormInterface;
+
 /**
  * Prebuilt form for the Plantlife Wildflower Count.
  */
-class iform_wildflower_count {
+class iform_wildflower_count implements PrebuiltFormInterface {
 
   /**
    * Return the form metadata.
-   * @return array The definition of the form.
+   *
+   * @return array
+   *   The definition of the form.
    */
   public static function get_wildflower_count_definition() {
-    return array(
+    return [
       'title' => 'Wildflower Count',
       'category' => 'Forms for specific surveying methods',
       'description' => 'A form for inputting data against the Plantlife Wildflower Count survey.'
-    );
+    ];
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function getPageType(): PageType {
+    return PageType::DataEntry;
   }
 
   /**

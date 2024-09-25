@@ -14,34 +14,22 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/Indicia-Team/client_helpers
  */
+
+use IForm\prebuilt_forms\PageType;
+use IForm\prebuilt_forms\PrebuiltFormInterface;
 
 require_once 'includes/user.php';
 
 /**
  * Second generation import data tool.
  */
-class iform_importer_2 {
-
-  /**
-   * Disable form element wrapped around output.
-   *
-   * @return bool
-   *   Always false.
-   */
-  protected static function isDataEntryForm() {
-    return FALSE;
-  }
+class iform_importer_2 implements PrebuiltFormInterface {
 
   /**
    * Return the form metadata.
-   *
-   * Note the title of this method includes the name of the form file. This
-   * ensures that if inheritance is used in the forms, subclassed forms don't
-   * return their parent's form definition.
    *
    * @return array
    *   The definition of the form.
@@ -54,6 +42,13 @@ class iform_importer_2 {
       'supportsGroups' => TRUE,
       'recommended' => TRUE,
     ];
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function getPageType(): PageType {
+    return PageType::Utility;
   }
 
   /**

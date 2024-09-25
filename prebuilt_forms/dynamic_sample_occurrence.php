@@ -17,10 +17,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers/
  */
+
+use IForm\prebuilt_forms\PageType;
 
 /**
  * Prebuilt Indicia data entry form.
@@ -78,7 +79,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
   /**
    * Return the form metadata.
    *
-   * @return string
+   * @return array
    *   The definition of the form.
    */
   public static function get_dynamic_sample_occurrence_definition() {
@@ -92,6 +93,13 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
       'supportsGroups' => TRUE,
       'recommended' => TRUE,
     ];
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function getPageType(): PageType {
+    return PageType::DataEntry;
   }
 
   /* TODO
@@ -2452,7 +2460,6 @@ JS;
     $params = [
       'survey_id' => $surveyId,
       'taxa_taxon_list_id' => $ttlId,
-      'master_checklist_id' => hostsite_get_config_value('iform', 'master_checklist_id', 0),
       'language' => $language,
     ];
     if (!empty($stageTermlistsTermIds)) {

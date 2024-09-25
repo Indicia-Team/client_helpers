@@ -5,3 +5,12 @@ div.olControlEditingToolbar .olControlUndoItemInactive {
   margin: 8px 6px;
   background-position: 0px 0px;
 }
+#mousePos {
+  background-color: #FFFFFF;
+  float: right;
+  margin-top: 7px;
+  margin-right: 20px;
+  padding-right: 5px;
+  padding-left: 5px;
+  font-size: 1.5em;
+}

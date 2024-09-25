@@ -32,9 +32,12 @@ require_once 'includes/mnhnl_common.php';
 class iform_mnhnl_butterflies2 extends iform_mnhnl_dynamic_1 {
   protected static $svcUrl;
   protected static $locationsInGrid;
+
   /**
    * Return the form metadata.
-   * @return array The definition of the form.
+   *
+   * @return array
+   *   The definition of the form.
    */
   public static function get_mnhnl_butterflies2_definition() {
     return array(
@@ -43,6 +46,7 @@ class iform_mnhnl_butterflies2 extends iform_mnhnl_dynamic_1 {
       'description' => 'Luxembourg Butterfly Biomonitoring (site based) form. Inherits from Dynamic 1.'
     );
   }
+
   /**
    * Return the form title.
    * @return string The title of the form.

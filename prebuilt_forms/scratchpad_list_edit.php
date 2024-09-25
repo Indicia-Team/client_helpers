@@ -14,28 +14,39 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers/
  */
 
+use IForm\prebuilt_forms\PageType;
+use IForm\prebuilt_forms\PrebuiltFormInterface;
+
 /**
  * Form for editing a scratchpad list (a list of pointers to entities in the database, e.g. a list of species or locations).
  */
-class iform_scratchpad_list_edit {
+class iform_scratchpad_list_edit implements PrebuiltFormInterface {
 
   /**
    * Return the form metadata.
-   * @return array The definition of the form.
+   *
+   * @return array
+   *   The definition of the form.
    */
   public static function get_scratchpad_list_edit_definition() {
-    return array(
+    return [
       'title' => 'Enter a scratchpad list',
       'category' => 'Data entry forms',
       'description' => 'Form for creating or editing an existing scratchpad list. This allows creation of a list of ' .
           'pointers to entities in the database, e.g. a list of species or locations',
       'recommended' => true
-    );
+    ];
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function getPageType(): PageType {
+    return PageType::Utility;
   }
 
   /**

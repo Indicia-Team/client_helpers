@@ -13,17 +13,19 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers/
  */
+
+use IForm\prebuilt_forms\PageType;
+use IForm\prebuilt_forms\PrebuiltFormInterface;
 
 /**
  * A page allowing a user to join a group. Takes a group_id parameter. If the group is public, then joining is immediate, else the
  * user is added to the pending queue. Example use would be to link to this page using the actions column of a report listing
  * available recording groups.
  */
-class iform_group_join {
+class iform_group_join implements PrebuiltFormInterface {
 
   /**
    * Return the form metadata.
@@ -36,6 +38,13 @@ class iform_group_join {
       'description' => 'A page for joining or requesting membership of a group.',
       'recommended' => true
     );
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function getPageType(): PageType {
+    return PageType::Utility;
   }
 
   /**

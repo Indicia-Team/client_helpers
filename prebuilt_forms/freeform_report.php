@@ -13,10 +13,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers/
  */
+
+use IForm\prebuilt_forms\PageType;
+use IForm\prebuilt_forms\PrebuiltFormInterface;
 
 require_once 'includes/report.php';
 
@@ -24,7 +26,7 @@ require_once 'includes/report.php';
  * A prebuilt form which wraps the freeform_report control, allowing report output to be displayed as a flexible
  * freeform banded output.
  */
-class iform_freeform_report {
+class iform_freeform_report implements PrebuiltFormInterface {
 
   /**
    * Return the form metadata. Note the title of this method includes the name of the form file. This ensures
@@ -32,12 +34,19 @@ class iform_freeform_report {
    * @return array The definition of the form.
    */
   public static function get_freeform_report_definition() {
-    return array(
+    return [
       'title' => 'Freeform report',
       'category' => 'Reporting',
       //'helpLink' => '<optional help URL>',
       'description' => 'Report which allows output to be displayed as a flexible freeform banded output.'
-    );
+    ];
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function getPageType(): PageType {
+    return PageType::Report;
   }
 
   /**

@@ -45,3 +45,30 @@
           line-clamp: 6;
   -webkit-box-orient: vertical;
 }
+
+#group-list-container {
+  position: relative;
+}
+
+/* Prevent search button being slightly too high */
+.ctrl-addons button .fas {
+  margin: 0;
+}
+
+.form-inline label, .form-inline ul, .form-inline li {
+  display: inline-block;
+  vertical-align: middle;
+  margin-bottom: 0;
+}
+.form-inline label {
+  margin-right: 8px;
+}
+.form-inline ul {
+  padding-left: 0;
+}
+#group-search {
+  min-width: 300px;
+}
+#ctrl-wrap-group-search {
+  margin-right: 15px;
+}

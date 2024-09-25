@@ -13,10 +13,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers/
  */
+
+use IForm\prebuilt_forms\PageType;
 
 require_once 'includes/dynamic.php';
 require_once 'includes/groups.php';
@@ -27,12 +28,26 @@ require_once 'includes/groups.php';
 class iform_group_link_to_pages_from_single_group extends iform_dynamic {
 
   /**
-   * Disable form element wrapped around output.
+   * Return the form metadata.
    *
-   * @return bool
+   * @return array
+   *   The definition of the form.
    */
-  protected static function isDataEntryForm() {
-    return FALSE;
+  public static function get_group_link_to_pages_from_single_group_definition() {
+    return [
+      'title' => 'Group link to pages from single group',
+      'category' => 'Recording groups',
+      'description' => 'Display a list of page links on a page for a single recording group.',
+      'supportsGroups'=>true,
+      'recommended' => true
+    ];
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function getPageType(): PageType {
+    return PageType::Utility;
   }
 
   public static function get_parameters() {
@@ -71,20 +86,6 @@ class iform_group_link_to_pages_from_single_group extends iform_dynamic {
       )
     );
     return $retVal;
-  }
-
-  /**
-   * Return the form metadata.
-   * @return array The definition of the form.
-   */
-  public static function get_group_link_to_pages_from_single_group_definition() {
-    return array(
-      'title' => 'Group link to pages from single group',
-      'category' => 'Recording groups',
-      'description' => 'Display a list of page links on a page for a single reporting group.',
-      'supportsGroups'=>true,
-      'recommended' => true
-    );
   }
 
   /**

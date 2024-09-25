@@ -17,10 +17,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/Indicia-Team/client_helpers
  */
+
+use IForm\prebuilt_forms\PageType;
+use IForm\prebuilt_forms\PrebuiltFormInterface;
 
 require_once 'includes/report_filters.php';
 
@@ -30,7 +32,7 @@ require_once 'includes/report_filters.php';
  * Any grouping of people can be defined for any purpose, e.g. as a recording
  * group, organisation or project.
  */
-class iform_group_edit {
+class iform_group_edit implements PrebuiltFormInterface {
 
   private static $groupType = 'group';
 
@@ -47,6 +49,13 @@ class iform_group_edit {
       'description' => 'A form for creating or editing groups of recorders.',
       'recommended' => TRUE,
     ];
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function getPageType(): PageType {
+    return PageType::DataEntry;
   }
 
   /**
@@ -125,6 +134,14 @@ class iform_group_edit {
         'required' => FALSE,
       ],
       [
+        'name' => 'container_control_permission',
+        'caption' => 'Permission for container flag control',
+        'description' => 'Permission the user must have to include a control for defining a group which is a container of other sub-groups.',
+        'type' => 'text_input',
+        'default' => '',
+        'required' => FALSE,
+      ],
+      [
         'name' => 'inherit_admin_privileges',
         'caption' => 'Inherit admin privileges from parents',
         'description' => 'If this option is set then you can edit the group if you are an admin of the group or any of ' .
@@ -176,6 +193,14 @@ class iform_group_edit {
         'description' => 'Include the options for controlling viewing of sensitive records within the group?',
         'type' => 'checkbox',
         'default' => TRUE,
+        'required' => FALSE,
+      ],
+      [
+        'name' => 'include_blogging_options',
+        'caption' => 'Include blogging options ',
+        'description' => 'Include the option to enable blogging and to select whether admin or members can post blogs? Works alongside the blogging tools added by the Group Landing Pages module.',
+        'type' => 'checkbox',
+        'default' => FALSE,
         'required' => FALSE,
       ],
       [
@@ -355,6 +380,7 @@ class iform_group_edit {
       'include_dates' => FALSE,
       'include_logo_controls' => TRUE,
       'include_sensitivity_controls' => TRUE,
+      'include_blogging_options' => FALSE,
       'include_report_filter' => TRUE,
       'include_linked_pages' => TRUE,
       'include_page_access_levels' => FALSE,
@@ -461,6 +487,32 @@ class iform_group_edit {
         (!empty($_REQUEST['from_group_id']) || !empty($_REQUEST['group_id']))) {
       $r .= self::chooseParentsFromHierarchyBlock($args, $auth);
     }
+    if (!empty($args['container_control_permission']) && hostsite_user_has_permission($args['container_control_permission']) && empty($_GET['container_group_id'])) {
+      $r .= data_entry_helper::checkbox([
+        'label' => lang::get('Container {1}', self::$groupType),
+        'fieldname' => 'group:container',
+        'helpText' => lang::get('Tick this box if the {1} defines a parent container for other sub-{1}s, e.g. a range of related projects for different years or taxonomic groups.', self::$groupType),
+      ]);
+    }
+    if (!empty($_GET['container_group_id']) && empty($_GET['group_id'])) {
+      // Creating a group inside a container group.
+      $r .= data_entry_helper::hidden_text([
+        'fieldname' => 'group:contained_by_group_id',
+        'default' => $_GET['container_group_id'],
+      ]);
+      // Add a message.
+      $containerGroup = data_entry_helper::get_population_data([
+        'table' => 'group',
+        'extraParams' => $auth['read'] + ['id' => $_GET['container_group_id'], 'columns' => 'title'],
+        'cachePerUser' => FALSE,
+      ]);
+      if (empty($containerGroup)) {
+        hostsite_show_message('Invalid link');
+        hostsite_goto_page('<front>');
+      }
+      hostsite_show_message(lang::get('You are adding this {1} to the {2} {1}.', self::$groupType, $containerGroup[0]['title']));
+
+    }
     if (count($args['group_type']) !== 1) {
       $params = [
         'termlist_external_key' => 'indicia:group_types',
@@ -490,6 +542,18 @@ class iform_group_edit {
         'fieldname' => 'group:view_full_precision',
         'helpText' => lang::get('Any sensitive records added to the system are normally shown blurred to a lower grid reference precision. If this box ' .
             'is checked, then group members can see sensitive records explicitly posted for the {1} at full precision.', self::$groupType),
+      ]);
+    }
+    if ($args['include_blogging_options']) {
+      $r .= data_entry_helper::select([
+        'label' => lang::get('Blogging'),
+        'fieldname' => 'group:post_blog_permission',
+        'helpText' => lang::get('Select the role of the user required in order to be able to post blog entries to this group.', self::$groupType),
+        'lookupValues' => [
+          '' => lang::get('Blogging is disabled'),
+          'A' => lang::get('Group admins can post blogs'),
+          'M' =>  lang::get('All group members can post blogs'),
+        ],
       ]);
     }
     $r .= self::dateControls($args);
@@ -541,7 +605,14 @@ $('#entry_form').submit(function() {
       data_entry_helper::$javascript .= "$('#groups_user\\\\:admin_user_id\\\\:sublist input[value=" .
         hostsite_get_user_field('indicia_user_id') . "]').closest('li').children('span').remove();\n";
     }
-    data_entry_helper::$javascript .= 'indiciaData.ajaxUrl="' . hostsite_get_url('iform/ajax/group_edit') . "\";\n";
+    data_entry_helper::$indiciaData['ajaxUrl'] = hostsite_get_url('iform/ajax/group_edit');
+    data_entry_helper::$indiciaData['groupTypeLabel'] = self::$groupType;
+    helper_base::addLanguageStringsToJs('group_edit', [
+      'areYouSureConvertToContainer' => 'Are you sure you want to convert this {1} to a container?',
+      'convertToContainer' => 'Convert {1} to a container?',
+      'warnMembersRemoved' => 'Existing non-admin members will be removed as containers can only have admins.',
+      'warnNonReportPagesRemoved' => 'Linked pages that are not reports will be removed.',
+    ]);
     return $r;
   }
 
@@ -662,7 +733,9 @@ $('#entry_form').submit(function() {
     if ($args['include_linked_pages']) {
       $r = '<fieldset id="group-pages-fieldset"><legend>' . lang::get('{1} pages', ucfirst(self::$groupType)) . '</legend>';
       $r .= '<p>' . lang::get('LANG_Pages_Instruct', self::$groupType, lang::get('groups')) . '</p>';
-      $pages = hostsite_get_group_compatible_pages(empty($_GET['group_id']) ? NULL : $_GET['group_id']);
+      $pages = hostsite_get_group_compatible_pages($_GET['group_id'] ?? NULL);
+      $reportingPages = hostsite_get_group_compatible_pages($_GET['group_id'] ?? NULL, PageType::Report);
+      helper_base::$indiciaData['reportingPages'] = $reportingPages;
       if (empty($_GET['group_id'])) {
         $default = [];
         if (isset($args['default_linked_pages'])) {
@@ -681,26 +754,26 @@ $('#entry_form').submit(function() {
       else {
         $default = self::getGroupPages($auth);
       }
-      $columns = array(
-        array(
+      $columns = [
+        [
           'label' => lang::get('Form'),
           'datatype' => 'lookup',
           'lookupValues' => $pages,
           'validation' => array('unique'),
-        ), array(
+        ], [
           'label' => lang::get('Link caption'),
           'datatype' => 'text',
-        ), array(
+        ], [
           'label' => lang::get('Who can access the page?'),
           'datatype' => 'lookup',
-          'lookupValues' => array(
+          'lookupValues' => [
             '' => lang::get('Available to anyone'),
             'f' => lang::get('Available only to group members'),
             't' => lang::get('Available only to group admins'),
-          ),
+          ],
           'default' => 'f',
-        ),
-      );
+        ],
+      ];
       if ($args['include_page_access_levels']) {
         $values = array(
           '0' => lang::get('0 - no additional access level required'),
@@ -990,6 +1063,10 @@ $('#entry_form').submit(function() {
    * @todo On resave, clear any unchecked multiple parents
    */
   public static function get_submission($values, $args) {
+    if (!empty($values['group:id'])) {
+      // Ensure cached content based on the group gets refreshed.
+      hostsite_cache_clear_tag("iform:group:{$values['group:id']}");
+    }
     $struct = array(
       'model' => 'group'
     );
@@ -1160,17 +1237,21 @@ $('#entry_form').submit(function() {
       foreach ($userData as $value) {
         if (is_array($value)) {
           foreach ($value as $item) {
-            if (in_array($item, $foundUsers)) {
-              $duplicate = TRUE;
+            if (!empty($item)) {
+              if (in_array($item, $foundUsers)) {
+                $duplicate = TRUE;
+              }
+              $foundUsers[] = $item;
             }
-            $foundUsers[] = $item;
           }
         }
         else {
-          if (in_array($value, $foundUsers)) {
-            $duplicate = TRUE;
+          if (!empty($value)) {
+            if (in_array($value, $foundUsers)) {
+              $duplicate = TRUE;
+            }
+            $foundUsers[] = $value;
           }
-          $foundUsers[] = $value;
         }
       }
       if ($duplicate) {
@@ -1238,6 +1319,8 @@ $('#entry_form').submit(function() {
       'group:logo_path' => $group['logo_path'],
       'group:implicit_record_inclusion' => $group['implicit_record_inclusion'],
       'group:licence_id' => $group['licence_id'],
+      'group:post_blog_permission' => $group['post_blog_permission'],
+      'group:container' => $group['container'],
       'filter:id' => $group['filter_id'],
     ];
     if ($args['include_report_filter']) {

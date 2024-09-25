@@ -14,10 +14,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers/
  */
+
+use IForm\prebuilt_forms\PageType;
+use IForm\prebuilt_forms\PrebuiltFormInterface;
 
 require_once 'includes/map.php';
 require_once 'includes/user.php';
@@ -34,19 +36,27 @@ function iform_timed_count_subsample_cmp($a, $b)
 // TODO Check if OS Map number is to be included.
 // TODO Check validation rules to be applied to each field.
 
-class iform_timed_count {
+class iform_timed_count implements PrebuiltFormInterface {
 
   /**
-   * Return the form metadata. Note the title of this method includes the name of the form file. This ensures
-   * that if inheritance is used in the forms, subclassed forms don't return their parent's form definition.
-   * @return array The definition of the form.
+   * Return the form metadata.
+   *
+   * @return array
+   *   The definition of the form.
    */
   public static function get_timed_count_definition() {
-    return array(
+    return [
       'title' => 'Timed Count',
       'category' => 'Forms for specific surveying methods',
-      'description' => 'A form for inputting the counts of species during a timed period. Can be called with sample=<id> to edit an existing sample.'
-    );
+      'description' => 'A form for inputting the counts of species during a timed period. Can be called with sample=<id> to edit an existing sample.',
+    ];
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function getPageType(): PageType {
+    return PageType::DataEntry;
   }
 
   /**
@@ -218,6 +228,7 @@ class iform_timed_count {
   public static function get_sample_form($args, $nid, $response) {
   	global $user;
   	iform_load_helpers(array('map_helper'));
+  	data_entry_helper::add_resource('indiciaMapPanel');
   	$auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
   	// either looking at existing, creating a new one, or an error occurred: no successful posts...
   	// first check some conditions are met
@@ -557,6 +568,14 @@ mapInitialisationHooks.push(function(mapdiv) {
 ").
 "   delete indiciaData['zoomToAfterFetchingGoogleApiScript-' + mapdiv.map.id];
     mapdiv.map.events.triggerEvent('zoomend');
+  $('.olControlEditingToolbar').append('<span id=\"mousePos\"></span>');
+  mapdiv.map.mousePosCtrl = new MyMousePositionControl({
+      div: document.getElementById('mousePos'),
+      displayProjection: new OpenLayers.Projection('EPSG:4326'),
+      emptyString: '',
+      numDigits: 10 // indiciaData.formOptions.routeMapMousePositionPrecision
+  });
+  mapdiv.map.addControl(mapdiv.map.mousePosCtrl);
 });
 ";
 
@@ -761,16 +780,28 @@ indiciaData.indiciaSvc = '".data_entry_helper::$base_url."';\n";
 
     if ($existing) {
       // Only need to load the occurrences for a pre-existing sample
-      $o = data_entry_helper::get_population_data(array(
-        'report' => 'library/occurrences/occurrences_list_for_parent_sample',
-        'extraParams' => $auth['read'] + array('view' => 'detail','sample_id'=>$parentSampleId,'survey_id' => '','date_from' => '','date_to' => '','taxon_group_id' => '',
-            'smpattrs' => '', 'occattrs'=>$args['occurrence_attribute_id']),
+      $o = data_entry_helper::get_population_data([
+          'report' => 'projects/ukbms/ukbms_occurrences_list_for_parent_sample',
+          'extraParams' => $auth['read'] + [
+              'sample_id' => $parentSampleId,
+              'survey_id' => $args['survey_id'],
+              'smpattrs' => '',
+              'occattrs' => $args['occurrence_attribute_id']
+          ],
         // don't cache as this is live data
         'nocache' => true
-      ));
-      // the report is ordered id desc. REverse it
-      $o = array_reverse($o);
-    } else $o = []; // empty array of occurrences when no creating a new sample.
+      ]);
+      for ($i = 0; $i < count($o); $i++) {
+          $taxon = data_entry_helper::get_population_data([
+              'table' => 'taxa_taxon_list',
+              'extraParams' => $auth['read'] + ['id' => $o[$i]['taxa_taxon_list_id'],
+                  'view' => 'cache']
+          ]);
+          $o[$i]['taxon'] = $taxon[0]['preferred_taxon'];
+          $o[$i]['common'] = $taxon[0]['default_common_name'];
+      }
+      // this report is ordered id asc.
+    } else $o = array(); // empty array of occurrences when no creating a new sample.
 
     // we pass through the read auth. This makes it possible for the get_submission method to authorise against the warehouse
     // without an additional (expensive) warehouse call.
@@ -852,6 +883,7 @@ indiciaData.indiciaSvc = '".data_entry_helper::$base_url."';\n";
       $r .= '<table id="timed-counts-input-'.$i.'" class="ui-widget">';
       $r .= '<thead><tr><th class="ui-widget-header">' . lang::get('Species') . '</th><th class="ui-widget-header">' . lang::get('Count') . '</th><th class="ui-widget-header"></th></tr></thead>';
       $r .= '<tbody class="ui-widget-content">';
+      // Occurrences need subsample sample_id, all attributes, ttl_id, common  name, preferred, occurrence_id
       $occs = [];
       // not very many occurrences so no need to optimise.
       if (isset($subSampleId) && $existing && count($o)>0)

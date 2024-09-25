@@ -14,10 +14,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/Indicia-Team
  */
+
+use IForm\prebuilt_forms\PageType;
+use IForm\prebuilt_forms\PrebuiltFormInterface;
 
 require_once 'includes/map.php';
 require_once 'includes/report.php';
@@ -32,20 +34,27 @@ require_once 'includes/report.php';
 /**
  * Prebuilt Indicia data form that lists the output of any report on a map.
  */
-class iform_time_lapse_map {
+class iform_time_lapse_map implements PrebuiltFormInterface {
 
   /**
    * Return the form metadata.
    *
-   * @return string
+   * @return array
    *   The definition of the form.
    */
   public static function get_time_lapse_map_definition() {
-    return array(
+    return [
       'title' => 'Time-lapse map',
       'category' => 'Reporting',
-      'description' => 'Outputs data from a report onto a map which can show the spread of a species population over time.'
-    );
+      'description' => 'Outputs data from a report onto a map which can show the spread of a species population over time.',
+    ];
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function getPageType(): PageType {
+    return PageType::Report;
   }
 
   /**

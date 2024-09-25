@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/Indicia-Team/client_helpers
  */
@@ -110,16 +109,6 @@ class iform_species_details_2 extends BaseDynamicDetails {
    * @var externalKey
    */
   private static $externalKey;
-
-  /**
-   * Disable form element wrapped around output.
-   *
-   * @return bool
-   *   Indicates that this is not a data entry form.
-   */
-  protected static function isDataEntryForm() {
-    return FALSE;
-  }
 
   /**
    * The definition of the form.
@@ -563,8 +552,13 @@ class iform_species_details_2 extends BaseDynamicDetails {
         $esFilter .= self::createEsFilterHtml('identification.verification_status', '', 'term', 'must_not');
         $esFilter .= self::createEsFilterHtml('identification.verification_status', 'C', 'term', 'must_not');
       }
+      $groupIntegration = !empty($_GET['group_id']) ? ElasticsearchReportHelper::groupIntegration(array_merge([
+        'missingGroupIdBehaviour' => 'showAll',
+      ], [
+        'readAuth' => $auth['read'],
+      ]), FALSE) : '';
 
-      return $taxonNames . $esFilter . parent::get_form_html($args, $auth, $attributes);
+      return $taxonNames . $esFilter . $groupIntegration . parent::get_form_html($args, $auth, $attributes);
     }
   }
 

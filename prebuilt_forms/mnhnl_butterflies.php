@@ -49,8 +49,10 @@ class iform_mnhnl_butterflies extends iform_mnhnl_dynamic_1 {
       'description' => 'MNHNL Butterflies form. Inherits from Dynamic 1.'
     );
   }
+
   /**
    * Return the form title.
+   *
    * @return string The title of the form.
    */
   public static function get_title() {

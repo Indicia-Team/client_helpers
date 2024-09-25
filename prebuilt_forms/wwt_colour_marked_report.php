@@ -13,10 +13,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
- * ' => ''
+ * @link https://github.com/indicia-team/client_helpers/
  */
+
+use IForm\prebuilt_forms\PageType;
+use IForm\prebuilt_forms\PrebuiltFormInterface;
 
 /**
  * Prebuilt Indicia data entry form for WWT Colour-marked wildfowl.
@@ -30,7 +32,7 @@ require_once 'includes/map.php';
 require_once 'includes/language_utils.php';
 require_once 'includes/form_generation.php';
 
-class iform_wwt_colour_marked_report {
+class iform_wwt_colour_marked_report implements PrebuiltFormInterface {
 
   // A list of the subject observation ids we are loading if editing existing data
   protected static $subjectObservationIds = [];
@@ -42,9 +44,12 @@ class iform_wwt_colour_marked_report {
   protected static $node;
 
   protected static $submission = [];
+
   /**
    * Return the form metadata.
-   * @return string The definition of the form.
+   *
+   * @return array
+   *   The definition of the form.
    */
   public static function get_wwt_colour_marked_report_definition() {
     return array(
@@ -53,6 +58,13 @@ class iform_wwt_colour_marked_report {
       'helpLink' => 'https://github.com/Indicia-Team/client_helperswiki/PrebuiltFormWWTColourMarkedRecords',
       'description' => 'A data entry form reporting observations of colour-marked individuals.'
     );
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function getPageType(): PageType {
+    return PageType::DataEntry;
   }
 
   /* TODO

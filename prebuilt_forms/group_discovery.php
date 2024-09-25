@@ -18,10 +18,13 @@
  * @link https://github.com/indicia-team/client_helpers
  */
 
+use IForm\prebuilt_forms\PageType;
+use IForm\prebuilt_forms\PrebuiltFormInterface;
+
 /**
  * A report page for assisting users in discovering relevant recording groups.
  */
-class iform_group_discovery {
+class iform_group_discovery implements PrebuiltFormInterface {
 
   /**
    * Return the form metadata.
@@ -36,6 +39,13 @@ class iform_group_discovery {
       'description' => 'A report page for assisting users in discovering relevant recording groups. Requires the Group Landing Pages Drupal module.',
       'recommended' => TRUE,
     ];
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function getPageType(): PageType {
+    return PageType::Utility;
   }
 
   public static function get_parameters() {
@@ -83,13 +93,27 @@ class iform_group_discovery {
     helper_base::add_resource('font_awesome');
     $readAuth = data_entry_helper::get_read_auth($args['website_id'], $args['password']);
     $lang = [
+      'loading' => lang::get('Loading'),
       'recentAndActiveGroups' => lang::get("Recent and active $args[default_group_label_plural]"),
+      'showMore' => lang::get('Show more'),
       'suggestedGroups' => lang::get("Suggested $args[default_group_label_plural]"),
     ];
     $searchControl = data_entry_helper::text_input([
       'label' => lang::get('Search'),
       'fieldname' => 'group-search',
+      'afterControl' => '<button type="button" id="group-search-go"><i class="fas fa-search"></i></button>'
     ]);
+    $scopeSwitchControl = data_entry_helper::radio_group([
+      'label' => lang::get('Show'),
+      'fieldname' => 'group-scope',
+      'lookupValues' => [
+        'joinable' => lang::get(ucfirst("$args[default_group_label_plural] I can join")),
+        'member' => lang::get(ucfirst("$args[default_group_label_plural] I am a member of")),
+      ],
+      'default' => 'joinable',
+    ]);
+    // Wrap in a 50% col to limit width.
+    $formControls = "<div class=\"form-inline\">$searchControl $scopeSwitchControl</div>";
     $rootFolder = helper_base::getRootFolder(TRUE);
     $itemPanel = <<<HTML
       <li>
@@ -131,15 +155,25 @@ HTML;
       'proxy' => hostsite_get_url("iform/ajax/group_discovery/active_recent_groups/$nid"),
     ], $reportOptions));
     $r = <<<HTML
-      $searchControl
+      $formControls
+      <div id="group-list-container">
+        <div id="suggested-groups">
+          <h3>$lang[suggestedGroups]</h3>
 
-      <h3>$lang[suggestedGroups]</h3>
+          $suggestedGroupsGrid
 
-      $suggestedGroupsGrid
+          <h3>$lang[recentAndActiveGroups]</h3>
 
-      <h3>$lang[recentAndActiveGroups]</h3>
-
-      $recentAndActiveGroupsGrid
+          $recentAndActiveGroupsGrid
+        </div>
+        <div id="search-groups" style="display: none">
+          <div class="card-gallery">
+            <ul>
+          </div>
+        </div>
+        <a id="show-more" style="display: none">$lang[showMore]</a>
+        <div class="loading-spinner" style="display: none;"><div>$lang[loading]...</div></div>
+      </div>
 HTML;
     return $r;
   }

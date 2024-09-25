@@ -14,12 +14,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/Indicia-Team/client_helpers
  */
 
 require_once 'includes/dynamic.php';
+
+use IForm\prebuilt_forms\PageType;
 
 /**
  * A prebuilt form for dynamically construction Elasticsearch content.
@@ -27,15 +28,6 @@ require_once 'includes/dynamic.php';
  * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-elasticsearch.html
  */
 class iform_dynamic_elasticsearch extends iform_dynamic {
-
-  /**
-   * Disable form element wrapped around output.
-   *
-   * @return bool
-   */
-  protected static function isDataEntryForm() {
-    return FALSE;
-  }
 
   /**
    * Return the page metadata.
@@ -59,13 +51,20 @@ Elasticsearch</a> cluster.</p>
 <p>Note that although this page supports linking to groups, you should build in any appropriate filtering manually rather
 than assume the Elasticsearch requests will automatically filter to the viewed group.</p>
 HTML;
-    return array(
+    return [
       'title' => 'Elasticsearch outputs (customisable)',
       'category' => 'Experimental',
       'description' => $description,
       'helpLink' => 'https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-elasticsearch.html',
       'supportsGroups' => TRUE,
-    );
+    ];
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function getPageType(): PageType {
+    return PageType::Report;
   }
 
   /**

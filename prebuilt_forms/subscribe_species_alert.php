@@ -14,17 +14,19 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/Indicia-Team/client_helpers
  */
+
+use IForm\prebuilt_forms\PageType;
+use IForm\prebuilt_forms\PrebuiltFormInterface;
 
 require_once 'includes/map.php';
 
 /**
  * A form for subscribing to notifications when a certain species is recorded.
  */
-class iform_subscribe_species_alert {
+class iform_subscribe_species_alert implements PrebuiltFormInterface {
 
   /**
    * Return the form metadata.
@@ -39,6 +41,13 @@ class iform_subscribe_species_alert {
       'description' => 'Provides a simple form for picking a species and optional geographic filter to subscribe to receive an alert notification ' .
           'when that species is recorded or verified.'
     ];
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function getPageType(): PageType {
+    return PageType::Utility;
   }
 
   /**

@@ -13,10 +13,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers/
  */
+
+use IForm\prebuilt_forms\PageType;
+use IForm\prebuilt_forms\PrebuiltFormInterface;
 
 /**
  * @todo Provide form description in this comment block.
@@ -48,7 +50,7 @@ data-role="controlgroup" data-type="horizontal"><a href="#" onclick="app.navigat
 $list_templates['picture_link'] = '<a href="{url}"><img src="{url}" /></a>';
 
 
-class iform_mobile_species_list{
+class iform_mobile_species_list implements PrebuiltFormInterface {
 
 
   /**
@@ -90,6 +92,13 @@ class iform_mobile_species_list{
       'helpLink' => '<optional help URL>',
       'description' => 'Generates a species list.'
     );
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function getPageType(): PageType {
+    return PageType::Utility;
   }
 
   /**

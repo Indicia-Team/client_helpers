@@ -118,7 +118,7 @@ $indicia_templates = [
     '<div id="imp-georef-output-div"></div> ' .
     '{closeButton}' .
     '</div>',
-  'tab_header' => "<ul>{tabs}</ul>\n",
+  'tab_header' => "<ul class=\"tab-header\">{tabs}</ul>\n",
   'taxon_label' => '<div class="biota"><span class="nobreak sci binomial"><em class="taxon-name">{taxon}</em></span> {authority} '.
       '<span class="nobreak vernacular">{default_common_name}</span></div>',
   'single_species_taxon_label' => '{taxon}',
@@ -1284,10 +1284,10 @@ class helper_base {
             'd3',
           ],
           'stylesheets' => [
-            'https://cdn.jsdelivr.net/gh/biologicalrecordscentre/brc-charts/dist/brccharts.umd.min.css',
+            'https://cdn.jsdelivr.net/gh/biologicalrecordscentre/brc-charts@latest/dist/brccharts.umd.min.css',
           ],
           'javascript' => [
-            'https://cdn.jsdelivr.net/gh/biologicalrecordscentre/brc-charts/dist/brccharts.umd.min.js',
+            'https://cdn.jsdelivr.net/gh/biologicalrecordscentre/brc-charts@latest/dist/brccharts.umd.min.js',
           ],
         ],
         'd3' => [
@@ -2556,6 +2556,7 @@ if (typeof indiciaFns.initDataSources !== 'undefined') {
 }
 $javascript
 $late_javascript
+indiciaFns.setupTabLazyLoad();
 // Elasticsearch source population.
 if (typeof indiciaFns.hookupDataSources !== 'undefined') {
   indiciaFns.hookupDataSources();
@@ -3860,52 +3861,6 @@ if (typeof validator!=='undefined') {
         unlink($files[$i][0]);
       }
     }
-  }
-
-  /**
-   * Convert a timestamp into readable format (... ago) for use on a comment list.
-   *
-   * @param timestamp $timestamp
-   *   The date time to convert.
-   *
-   * @return string
-   *   The output string.
-   */
-  public static function ago($timestamp) {
-    $difference = time() - $timestamp;
-    // Having the full phrase means that it is fully localisable if the phrasing is different.
-    $periods = array(
-      lang::get("{1} second ago"),
-      lang::get("{1} minute ago"),
-      lang::get("{1} hour ago"),
-      lang::get("Yesterday"),
-      lang::get("{1} week ago"),
-      lang::get("{1} month ago"),
-      lang::get("{1} year ago"),
-      lang::get("{1} decade ago")
-    );
-    $periodsPlural = array(
-      lang::get("{1} seconds ago"),
-      lang::get("{1} minutes ago"),
-      lang::get("{1} hours ago"),
-      lang::get("{1} days ago"),
-      lang::get("{1} weeks ago"),
-      lang::get("{1} months ago"),
-      lang::get("{1} years ago"),
-      lang::get("{1} decades ago")
-    );
-    $lengths = array("60", "60", "24", "7", "4.35", "12", "10");
-    for ($j = 0; (($difference >= $lengths[$j]) && ($j < 7)); $j++) {
-      $difference /= $lengths[$j];
-    }
-    $difference = round($difference);
-    if ($difference == 1) {
-      $text = str_replace('{1}', $difference, $periods[$j]);
-    }
-    else {
-      $text = str_replace('{1}', $difference, $periodsPlural[$j]);
-    }
-    return $text;
   }
 
   /**

@@ -14,10 +14,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers/
  */
+
+use IForm\prebuilt_forms\PageType;
+use IForm\prebuilt_forms\PrebuiltFormInterface;
 
 require_once 'includes/map.php';
 require_once 'includes/form_generation.php';
@@ -25,7 +27,7 @@ require_once 'includes/form_generation.php';
 /**
  * Form for adding or editing the site details on a transect which contains a number of sections.
  */
-class iform_sectioned_transects_edit_transect {
+class iform_sectioned_transects_edit_transect implements PrebuiltFormInterface {
 
   /**
    * @var int Contains the id of the location attribute used to store the CMS user ID.
@@ -46,7 +48,9 @@ class iform_sectioned_transects_edit_transect {
 
   /**
    * Return the form metadata.
-   * @return array The definition of the form.
+   *
+   * @return array
+   *   The definition of the form.
    */
   public static function get_sectioned_transects_edit_transect_definition() {
     return array(
@@ -54,6 +58,13 @@ class iform_sectioned_transects_edit_transect {
       'category' => 'Sectioned Transects',
       'description' => 'Form for adding or editing the site details on a transect which has a number of sub-sections.'
     );
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function getPageType(): PageType {
+    return PageType::DataEntry;
   }
 
   /**

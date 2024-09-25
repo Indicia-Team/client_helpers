@@ -14,16 +14,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers/
  */
+
+use IForm\prebuilt_forms\PageType;
+use IForm\prebuilt_forms\PrebuiltFormInterface;
 
 /**
  * Prebuilt Indicia data entry form that presents taxon search box, date control, map picker,
  * survey selector and comment entry controls.
  */
-class iform_basic_1 {
+class iform_basic_1 implements PrebuiltFormInterface {
 
   /**
    * Return the form metadata.
@@ -37,6 +39,13 @@ class iform_basic_1 {
       'category' => 'Training/Testing forms',
       'description' => 'A very simple form designed to illustrate the prebuilt form development and setup process.'
     ];
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function getPageType(): PageType {
+    return PageType::DataEntry;
   }
 
   /**

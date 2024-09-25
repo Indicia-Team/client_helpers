@@ -13,10 +13,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers/
  */
+
+use IForm\prebuilt_forms\PageType;
+use IForm\prebuilt_forms\PrebuiltFormInterface;
 
 require_once 'includes/map.php';
 require_once 'includes/report.php';
@@ -31,18 +33,27 @@ require_once 'includes/report.php';
 /**
  * Prebuilt Indicia data form that lists the output of any report on a map.
  */
-class iform_tree_map_2 {
+class iform_tree_map_2 implements PrebuiltFormInterface {
 
   /**
    * Return the form metadata.
-   * @return string The definition of the form.
+   *
+   * @return array
+   *   The definition of the form.
    */
   public static function get_tree_map_2_definition() {
-    return array(
+    return [
       'title' => 'Overview 2',
       'category' => 'Custom Forms',
-      'description' => 'Outputs data from a report onto a map. To work, the report must include a column containing spatial data.'
-    );
+      'description' => 'Outputs data from a report onto a map. To work, the report must include a column containing spatial data.',
+    ];
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function getPageType(): PageType {
+    return PageType::Report;
   }
 
   /**

@@ -13,10 +13,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/Indicia-Team/client_helpers
  */
+
+use IForm\prebuilt_forms\PageType;
+use IForm\prebuilt_forms\PrebuiltFormInterface;
 
 require_once 'includes/form_generation.php';
 require_once 'includes/map.php';
@@ -25,19 +27,28 @@ require_once 'includes/map.php';
  * Prebuilt Indicia data entry form that presents taxon search box, date control, map picker,
  * survey selector and comment entry controls.
  */
-class iform_record_details {
+class iform_record_details implements PrebuiltFormInterface {
 
   /**
    * Return the form metadata.
-   * @return string The definition of the form.
+   *
+   * @return array
+   *   The definition of the form.
    */
   public static function get_record_details_definition() {
-    return array(
+    return [
       'title' => 'View details of a record',
       'category' => 'Utilities',
       'description' => 'A summary view of a record. Pass a parameter in the URL called occurrence_id to '.
           'define which occurrence to show.'
-    );
+    ];
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function getPageType(): PageType {
+    return PageType::Utility;
   }
 
   /**

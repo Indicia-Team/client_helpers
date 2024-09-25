@@ -13,35 +13,45 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers/
  */
 
+use IForm\prebuilt_forms\PageType;
+use IForm\prebuilt_forms\PrebuiltFormInterface;
+
 /**
  * A page for editing or creating a user trust for verification.
  */
-class iform_user_trust_edit {
+class iform_user_trust_edit implements PrebuiltFormInterface {
 
   /**
    * Return the form metadata.
    * @return array The definition of the form.
    */
   public static function get_user_trust_edit_definition() {
-    return array(
+    return [
       'title' => 'Create or edit a user trust',
       'category' => 'Verification',
       'description' => 'A form for creating or editing user trusts.'
-    );
+    ];
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function getPageType(): PageType {
+    return PageType::Utility;
   }
 
   /**
    * Get the list of parameters for this form.
-   * @return array List of parameters that this form requires.
+   *
+   * @return array
+   *   List of parameters that this form requires.
    */
   public static function get_parameters() {
-    return array(
-    );
+    return [];
   }
 
   /**

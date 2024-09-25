@@ -14,10 +14,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/Indicia-Team/client_helpers
  */
+
+use IForm\prebuilt_forms\PageType;
 
 require_once 'includes/dynamic.php';
 require_once 'includes/report.php';
@@ -40,28 +41,26 @@ class iform_species_details extends iform_dynamic {
   private static $taxon_meaning_id;
 
   /**
-   * Disable form element wrapped around output.
-   *
-   * @return bool
-   */
-  protected static function isDataEntryForm() {
-    return FALSE;
-  }
-
-  /**
    * Return the form metadata.
    *
    * @return array
    *   The definition of the form.
    */
   public static function get_species_details_definition() {
-    return array(
+    return [
       'title' => 'View details of a species',
       'category' => 'Utilities',
       'description' => 'A summary view of a species including records. Pass a parameter in the URL called taxon, ' .
         'containing a taxa_taxon_list_id which defines which species to show.',
       'recommended' => TRUE,
-    );
+    ];
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function getPageType(): PageType {
+    return PageType::Utility;
   }
 
   /**

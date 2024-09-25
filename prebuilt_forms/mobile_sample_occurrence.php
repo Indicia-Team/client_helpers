@@ -28,6 +28,9 @@
  * This also requires the mobile_indicia theme.
  */
 
+use IForm\prebuilt_forms\PageType;
+use IForm\prebuilt_forms\PrebuiltFormInterface;
+
 require_once 'includes/map.php';
 require_once 'includes/user.php';
 require_once 'includes/language_utils.php';
@@ -47,7 +50,7 @@ define("JQM_ATTR", "attr");
  */
 global $remembered;
 
-class iform_mobile_sample_occurrence {
+class iform_mobile_sample_occurrence implements PrebuiltFormInterface {
 
   // Hold the single species name to be shown on the page to the user.
   protected static $singleSpeciesName;
@@ -101,7 +104,9 @@ class iform_mobile_sample_occurrence {
 
   /**
    * Return the form metadata.
-   * @return string The definition of the form.
+   *
+   * @return array
+   *   The definition of the form.
    */
   public static function get_mobile_sample_occurrence_definition() {
     return array(
@@ -113,6 +118,13 @@ class iform_mobile_sample_occurrence {
         . 'form are dynamically generated from the survey setup on the Indicia '
         . 'Warehouse.'
     );
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function getPageType(): PageType {
+    return PageType::DataEntry;
   }
 
   /**
