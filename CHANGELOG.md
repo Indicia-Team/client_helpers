@@ -26,3 +26,6 @@ complete feature change log. The full change log is available in the GitHub rele
   `IForm\IndiciaConversions::getTranslatedStatusTerms`.
 * The function `VerificationHelper::getStatusIcons` has been replaced by
   `IForm\IndiciaConversions::statusToIcons`.
+* The `/prebuilt_forms/includes/groups.php` form has some changes to use a GroupMembership enum,
+  rather than a boolean for whether the user is a member. Function calls to this file should
+  therefore review their parameters.
