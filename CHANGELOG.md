@@ -15,7 +15,9 @@ complete feature change log. The full change log is available in the GitHub rele
 * Prebuilt forms can remove the `isDataEntryForm()` as it is replaced by the
   `IForm\prebuilt_forms\PrebuiltFormInterface::getPageType()` method.
 * There is a new autoloader - include the `autoload.php` file in the root folder to use it. This
-  is currently only needed to load the `IForm\IndiciaConversions` class.
+  is currently only needed to load the `IForm\IndiciaConversions`, `IForm\prebuilt_forms\PageType`
+  and `IForm\prebuilt_forms\PrebuiltFormInterface` but further classes will use the autoloader in
+  future.
 * The function `helper_base::ago` has been replaced by
   `IForm\IndiciaConversions::timestampToTimeAgoString`.
 * The function `VerificationHelper::getStatusLabel` has been replaced by
