@@ -43,70 +43,70 @@ class iform_species_details_2 extends BaseDynamicDetails {
   /**
    * Stores a value to indicate of no taxon identified.
    *
-   * @var notaxon
+   * @var bool
    */
   private static $notaxon;
 
   /**
    * Stores the preferred name of the taxon with markup and authority.
    *
-   * @var preferred
+   * @var string
    */
   private static $preferred;
 
   /**
    * Stores the preferred name of the taxon.
    *
-   * @var preferredPlain
+   * @var string
    */
   private static $preferredPlain;
 
   /**
    * Stores the default common name of the taxon.
    *
-   * @var defaultCommonName
+   * @var string
    */
   private static $defaultCommonName;
 
   /**
    * Stores the synonyms of the taxon.
    *
-   * @var synonyms
+   * @var array
    */
   private static $synonyms = [];
 
   /**
    * Stores the common names of the taxon.
    *
-   * @var commonNames
+   * @var array
    */
   private static $commonNames = [];
 
   /**
    * Stores the taxonomy of the taxon.
    *
-   * @var taxonomy
+   * @var array
    */
   private static $taxonomy = [];
 
   /**
    * Stores the taxa_taxon_list_id of the taxon.
    *
-   * @var taxaTaxonListId
+   * @var int
    */
   private static $taxaTaxonListId;
 
   /**
    * Stores the taxon_meaning_id of the taxon.
    *
-   * @var taxonMeaningId
+   * @var int
    */
   private static $taxonMeaningId;
 
   /**
    * Stores the exter_key of the taxon.
    *
-   * @var externalKey
+   * @var string
    */
   private static $externalKey;
 
@@ -1093,7 +1093,7 @@ HTML;
       'source' => 'recsthroughyearSource',
       'functionName' => 'populateRecsThroughYearChart',
     ];
-    $customScript .= ElasticsearchReportHelper::customScript($optionsCustomScript);
+    $customScript = ElasticsearchReportHelper::customScript($optionsCustomScript);
     $r = <<<HTML
       <div class="detail-panel" id="detail-panel-recsthroughyear">
         <h3>$title</h3>
@@ -1595,7 +1595,6 @@ HTML;
     $params = [
       'taxa_taxon_list_id' => empty($_GET['taxa_taxon_list_id']) ? '' : $_GET['taxa_taxon_list_id'],
       'taxon_meaning_id' => empty($_GET['taxon_meaning_id']) ? '' : $_GET['taxon_meaning_id'],
-      'sharing' => 'reporting',
       'reportGroup' => 'dynamic',
       'autoParamsForm' => FALSE,
       'sharing' => $sharing,
@@ -1760,7 +1759,6 @@ HTML;
   /**
    * Returns a control for picking a species.
    *
-   * @global type $indicia_templates
    * @param array $auth
    *   Read authorisation tokens.
    * @param array $args
