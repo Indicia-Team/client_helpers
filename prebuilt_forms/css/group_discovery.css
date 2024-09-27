@@ -15,6 +15,9 @@
   list-style-type: none;
   flex-basis: 23%;
 }
+.card-gallery ul li:hover {
+  box-shadow: 0px 0px 21px 5px #aaaaaa;
+}
 .card-gallery ul li a {
   color: initial;
 }
