@@ -3596,6 +3596,7 @@ if (typeof validator!=='undefined') {
       ];
       if (isset($options['cachePerUser']) && !$options['cachePerUser']) {
         $excludedParams[] = 'user_id';
+        $excludedParams[] = 'currentUser';
       }
       $cacheOpts = array_diff_key(array_merge($get, $post), array_combine($excludedParams, $excludedParams));
       $cacheOpts['serviceCallPath'] = self::$base_url . $url;
