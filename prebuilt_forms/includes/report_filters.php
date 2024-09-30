@@ -1247,7 +1247,6 @@ HTML;
   $surveysFilterInput
   $surveysOpSelect
   $selectWebsiteFirstInfo
-  <p class="alert alert-info" style="display: none">$lang[selectWebsiteToLoadSurveys]</p>
   <ul id="survey-list-checklist">
   </ul>
 </div>
