@@ -589,7 +589,7 @@ class helper_base {
    *
    * @var int
    */
-  public static $cache_timeout = 60;
+  public static $cache_timeout = 3600;
 
   /**
    * Chance of a cached file being refreshed after expiry.
@@ -3476,7 +3476,9 @@ if (typeof validator!=='undefined') {
       unset($cacheOpts['nonce']);
       $cacheOpts['serviceCallPath'] = $parsedURL['path'];
       if (isset($options['cachePerUser']) && !$options['cachePerUser']) {
+        // Don't want to include any user ID int the cache key.
         unset($cacheOpts['user_id']);
+        unset($cacheOpts['currentUser']);
       }
       $cacheTimeout = self::getCacheTimeOut($options);
       $cacheKey = self::getCacheKey($cacheOpts);
@@ -3492,8 +3494,9 @@ if (typeof validator!=='undefined') {
       }
       if ($options['caching'] !== 'store' && !isset($_GET['refreshcache'])) {
         $response = self::getCachedResponse($cacheKey, $cacheOpts);
-        if ($response !== FALSE)
+        if ($response !== FALSE) {
           $cacheLoaded = TRUE;
+        }
       }
     }
     if (!isset($response) || $response === FALSE) {

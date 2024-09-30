@@ -169,7 +169,7 @@ class IndiciaConversions {
    *   Boolean equivalent.
    */
   public static function toBool($value) {
-    if ($value === '') {
+    if (in_array($value, ['', 'null', 'NULL', NULL])) {
       return NULL;
     }
     elseif (in_array($value, ['t', 'f'])) {

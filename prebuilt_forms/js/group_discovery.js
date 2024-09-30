@@ -70,7 +70,7 @@ jQuery(document).ready(function($) {
           }
           $.each(data, function(idx) {
             const title = indiciaFns.escapeHtml(this.title);
-            const description = this.description === null ? '' : indiciaFns.escapeHtml(this.description);
+            const description = this.description === null ? '' : this.description;
             if (idx >= searchLimit) {
               // We have more items than we want in the first page, so skip the
               // last item as it's just used as an indicator.
