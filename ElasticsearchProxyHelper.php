@@ -149,6 +149,9 @@ class ElasticsearchProxyHelper {
       case 'runcustomruleset':
         return self::proxyRunCustomRuleset($nid);
 
+      case 'getLocationBoundaryGeom':
+        return self::getLocationBoundaryGeom($nid);
+
       default:
         throw new ElasticsearchProxyAbort('Method not found', 404);
     }
@@ -3220,6 +3223,48 @@ class ElasticsearchProxyHelper {
     $url = self::$config['indicia']['base_url'] . "index.php/services/rest/custom_verification_rulesets/$rulesetId/run-request?alias=$alias&user_id=$userId";
     $query = self::buildEsQueryFromRequest($_POST);
     return self::curlPost($url, $query);
+  }
+
+  /**
+   * Proxy method for fetching a locations' boundary geom.
+   *
+   * Used when the `locationBoundaryId` option is set for a `leafletMap`
+   * control. The response is cached.
+   *
+   * @param int $nid
+   *   Node ID.
+   *
+   * @return array
+   *   Array containing HTTP status and response message, plus boundary_geom
+   *   if it worked.
+   */
+  private static function getLocationBoundaryGeom($nid) {
+    if (empty($_GET['location_id']) || !preg_match('/^\d+$/', $_GET['location_id'])) {
+      http_response_code(400);
+      return ['status' => 400, 'msg' => 'Bad Request'];
+    }
+    iform_load_helpers(['report_helper']);
+    $conn = iform_get_connection_details($nid);
+    $readAuth = helper_base::get_read_auth($conn['website_id'], $conn['password']);
+
+    $response = report_helper::get_report_data([
+      'dataSource' => '/library/locations/locations_combined_boundary_transformed',
+      'extraParams' => [
+        'location_ids' => $_GET['location_id'],
+      ],
+      'readAuth' => $readAuth,
+      'caching' => TRUE,
+      'cachePerUser' => FALSE,
+    ]);
+    if (empty($response)) {
+      http_response_code(404);
+      return ['status' => 404, 'msg' => 'Not Found'];
+    }
+    return [
+      'status' => 200,
+      'msg' => 'OK',
+      'boundary_geom' => $response[0]['geom'],
+    ];
   }
 
 }
