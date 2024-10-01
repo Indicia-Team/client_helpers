@@ -2871,12 +2871,6 @@ class ElasticsearchProxyHelper {
    *   batch to fetch if paging.
    */
   private static function proxyBulkEditAll($nid) {
-    return [
-      'code' => 409,
-      'message' => 'Conflict',
-      'info' => 'Shared sample',
-      'errorCode' => 'SAMPLES_CONTAIN_OTHER_OCCURRENCES',
-    ];
     $batchInfo = self::getOccurrenceIdPageFromFilter(
       $nid,
       $_POST['occurrence:idsFromElasticFilter'],
@@ -2898,7 +2892,7 @@ class ElasticsearchProxyHelper {
     return $response;
   }
 
-/**
+  /**
    * Bulk edit a list of selected records.
    *
    * @param int $nid
@@ -3249,7 +3243,6 @@ class ElasticsearchProxyHelper {
    *   if it worked.
    */
   private static function getLocationBoundaryGeom($nid) {
-    return ['code' => 400, 'message' => 'Bad Request'];
     if (empty($_GET['location_id']) || !preg_match('/^\d+$/', $_GET['location_id'])) {
       http_response_code(400);
       return ['code' => 400, 'message' => 'Bad Request'];
