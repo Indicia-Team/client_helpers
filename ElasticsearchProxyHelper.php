@@ -286,7 +286,10 @@ class ElasticsearchProxyHelper {
     iform_load_helpers(['VerificationHelper']);
     $conn = iform_get_connection_details($nid);
     $readAuth = helper_base::get_read_auth($conn['website_id'], $conn['password']);
-    return ['msg' => VerificationHelper::doesUserSeeNotifications($readAuth, $_GET['user_id'])];
+    return [
+      'message' => 'OK',
+      'result' => VerificationHelper::doesUserSeeNotifications($readAuth, $_GET['user_id']),
+    ];
   }
 
   /**
@@ -660,7 +663,8 @@ class ElasticsearchProxyHelper {
     $success = hostsite_send_email($_POST['to'], $_POST['subject'], $emailBody);
 
     return [
-      'status' => $success ? 'OK' : 'Fail',
+      'message' => $success ? 'OK' : 'Fail',
+      'code' => $success ? 200 : 500,
     ];
   }
 
@@ -2867,6 +2871,12 @@ class ElasticsearchProxyHelper {
    *   batch to fetch if paging.
    */
   private static function proxyBulkEditAll($nid) {
+    return [
+      'code' => 409,
+      'message' => 'Conflict',
+      'info' => 'Shared sample',
+      'errorCode' => 'SAMPLES_CONTAIN_OTHER_OCCURRENCES',
+    ];
     $batchInfo = self::getOccurrenceIdPageFromFilter(
       $nid,
       $_POST['occurrence:idsFromElasticFilter'],
@@ -3239,9 +3249,10 @@ class ElasticsearchProxyHelper {
    *   if it worked.
    */
   private static function getLocationBoundaryGeom($nid) {
+    return ['code' => 400, 'message' => 'Bad Request'];
     if (empty($_GET['location_id']) || !preg_match('/^\d+$/', $_GET['location_id'])) {
       http_response_code(400);
-      return ['status' => 400, 'msg' => 'Bad Request'];
+      return ['code' => 400, 'message' => 'Bad Request'];
     }
     iform_load_helpers(['report_helper']);
     $conn = iform_get_connection_details($nid);
@@ -3258,11 +3269,10 @@ class ElasticsearchProxyHelper {
     ]);
     if (empty($response)) {
       http_response_code(404);
-      return ['status' => 404, 'msg' => 'Not Found'];
+      return ['code' => 404, 'message' => 'Not Found'];
     }
     return [
-      'status' => 200,
-      'msg' => 'OK',
+      'message' => 'OK',
       'boundary_geom' => $response[0]['geom'],
     ];
   }
