@@ -2081,8 +2081,6 @@ HTML;
   /**
    * Returns a control for picking a single species.
    *
-   * @global type $indicia_templates
-   *
    * @param array $auth
    *   Read authorisation tokens.
    * @param array $args
@@ -2530,7 +2528,6 @@ JS;
       if (!empty($r)) {
         $data = json_encode($r);
         $typeAbbr = $_GET['type'] === 'occurrence' ? 'occ' : 'smp';
-        $langExpected = lang::get('Expected values for {1}');
         helper_base::addLanguageStringsToJs('dynamicattrs', ['expected' => 'Expected values for {1}']);
         report_helper::$javascript .= <<<JS
 indiciaData.{$typeAbbr}TaxonValidationRules = $data;
