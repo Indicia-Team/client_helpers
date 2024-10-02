@@ -2325,38 +2325,6 @@ HTML;
   }
 
   /**
-   * Returns JS and CSS links that can be placed into the page header.
-   *
-   * This method allows JavaScript and CSS links to be created and placed in
-   * the <head> of the HTML file rather than using dump_javascript which must
-   * be called after the form is built. The advantage of dump_javascript is
-   * that it intelligently builds the required links depending on what is on
-   * your form. dump_header is not intelligent because the form is not built
-   * yet, but placing links in the header leads to cleaner code which validates
-   * better.
-   *
-   * @param array $resources
-   *   List of resources to include in the header. The available options are
-   *   described in the documentation for the add_resource method. The default
-   *   for this is jquery_ui and defaultStylesheet.
-   *
-   * @return string
-   *   Text to place in the head section of the html file.
-   */
-  public static function dump_header($resources = NULL) {
-    if (!$resources) {
-      $resources = ['jquery_ui', 'defaultStylesheet'];
-    }
-    foreach ($resources as $resource) {
-      self::add_resource($resource);
-    }
-    // Place a css class on the body if JavaScript enabled. And output the
-    // resources.
-    return self::internal_dump_resources(self::$required_resources) .
-        self::get_scripts('$("body").addClass("js");', '', '', TRUE);
-  }
-
-  /**
    * Collects all inline JavaScript.
    *
    * Helper function to collect javascript code in a single location. Should be
@@ -2404,6 +2372,12 @@ HTML;
   public static function getIndiciaData() {
     require_once 'prebuilt_forms/includes/language_utils.php';
     global $indicia_templates;
+    self::$indiciaData['imagesPath'] = self::$images_path;
+    self::$indiciaData['warehouseUrl'] = self::$base_url;
+    $proxyUrl = self::getRootFolder() . self::relative_client_helper_path() . 'proxy.php';
+    self::$indiciaData['proxyUrl'] = $proxyUrl;
+    $protocol = empty($_SERVER['HTTPS']) || $_SERVER['HTTPS'] === 'off' ? 'http' : 'https';
+    self::$indiciaData['protocol'] = $protocol;
     // Add some useful templates.
     self::$indiciaData['templates'] = array_merge([
       'warningBox' => $indicia_templates['warningBox'],
@@ -2444,14 +2418,21 @@ HTML;
       else {
         $value = $data;
       }
-      if (preg_match('/^[a-zA-Z0-9_$]$/', $key)) {
+      if (preg_match('/^[a-zA-Z0-9_]+$/', $key)) {
         $r[] = "indiciaData.$key = $value;";
       }
       else {
         $r[] = "indiciaData['$key'] = $value;";
       }
     }
-    return implode("\n", $r) . "\n";
+    $dataJs = implode("\n", $r) . "\n";
+    return <<<JS
+if (typeof indiciaData === 'undefined') {
+  indiciaData = {};
+}
+$dataJs
+
+JS;
   }
 
   /**
@@ -2520,17 +2501,7 @@ HTML;
    */
   public static function get_scripts($javascript, $late_javascript, $onload_javascript, $includeWrapper = FALSE, $closure = FALSE) {
     if (!empty($javascript) || !empty($late_javascript) || !empty($onload_javascript)) {
-      $proxyUrl = self::getRootFolder() . self::relative_client_helper_path() . 'proxy.php';
-      $protocol = empty($_SERVER['HTTPS']) || $_SERVER['HTTPS'] === 'off' ? 'http' : 'https';
-      $script = $includeWrapper ? "<script type='text/javascript'>/* <![CDATA[ */\n" : "";
-      $script .= $closure ? "(function ($) {\n" : "";
-      $script .= "
-indiciaData.imagesPath='" . self::$images_path . "';
-indiciaData.warehouseUrl='" . self::$base_url . "';
-indiciaData.proxyUrl='$proxyUrl';
-indiciaData.protocol='$protocol';
-indiciaData.jQuery = jQuery; //saving the current version of jQuery
-";
+      $script = $closure ? "(function ($) {\n" : "";
       if (!empty(self::$website_id)) {
         // Not on warehouse.
         $script .= "indiciaData.website_id = " . self::$website_id . ";\n";
