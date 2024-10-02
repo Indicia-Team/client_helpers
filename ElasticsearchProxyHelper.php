@@ -3267,6 +3267,10 @@ class ElasticsearchProxyHelper {
     return [
       'message' => 'OK',
       'boundary_geom' => $response[0]['geom'],
+      '#cache' => [
+        'max-age' => 3600,
+        'contexts' => ['route'],
+      ],
     ];
   }
 
