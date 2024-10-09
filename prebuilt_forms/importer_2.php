@@ -54,10 +54,13 @@ class iform_importer_2 implements PrebuiltFormInterface {
   /**
    * Get the list of parameters for this form.
    *
+   * @param array $readAuth
+   *   Read authorisation tokens.
+   *
    * @return array
    *   List of parameters that this form requires.
    */
-  public static function get_parameters() {
+  public static function get_parameters(array $readAuth) {
     // @todo Entity
     // @todo Nested samples
 
@@ -233,10 +236,7 @@ TXT;
         'required' => FALSE,
       ],
     ];
-    // Dynamically add any warehouse import plugins as options.
-    $connection = iform_get_connection_details();
-    $requestParams = helper_base::get_read_auth($connection['website_id'], $connection['password']);
-    $requestParams['entity'] = 'occurrence';
+    $requestParams = $readAuth + ['entity' => 'occurrence'];
     $request = helper_base::$base_url . 'index.php/services/import_2/get_plugins?' . http_build_query($requestParams);
     $pluginsResponse = helper_base::http_post($request);
     if (isset($pluginsResponse['output'])) {

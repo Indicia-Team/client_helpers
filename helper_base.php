@@ -2501,7 +2501,7 @@ JS;
    */
   public static function get_scripts($javascript, $late_javascript, $onload_javascript, $includeWrapper = FALSE, $closure = FALSE) {
     if (!empty($javascript) || !empty($late_javascript) || !empty($onload_javascript)) {
-      $script = $closure ? "(function ($) {\n" : "";
+      $script = '';
       if (!empty(self::$website_id)) {
         // Not on warehouse.
         $script .= "indiciaData.website_id = " . self::$website_id . ";\n";
@@ -2578,8 +2578,22 @@ window.onload = function() {
 }
 
 JS;
-      $script .= $closure ? "})(jQuery);\n" : "";
-      $script .= $includeWrapper ? "/* ]]> */</script>\n" : "";
+      if ($closure) {
+        $script = <<<JS
+(function ($) {
+  $script
+})(jQuery);
+
+JS;
+      }
+      if ($includeWrapper) {
+        $script = <<<JS
+<script type='text/javascript'>/* <![CDATA[ */
+  $script
+/* ]]> */</script>
+
+JS;
+      }
     }
     else {
       $script = '';

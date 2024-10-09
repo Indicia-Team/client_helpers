@@ -67,12 +67,16 @@ class iform_form_name implements PrebuiltFormInterface {
   /**
    * Get the list of parameters for this form.
    *
+   * @param array $readAuth
+   *   Read authorisation tokens, only required if the parameters form needs to
+   *   access warehouse web-services.
+   *
    * @return array
    *   List of parameters that this form requires.
    *
    * @todo: Implement this method
    */
-  public static function get_parameters() {
+  public static function get_parameters(array $readAuth) {
     return [];
   }
 

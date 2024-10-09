@@ -44,7 +44,7 @@ form_helper::$is_ajax = TRUE;
 form_helper::$base_url = $_POST['base_url'];
 $readAuth = form_helper::get_read_auth($_POST['website_id'], $_POST['password']);
 
-echo form_helper::prebuilt_form_params_form([
+echo form_helper::prebuiltFormParamsForm([
   'form' => $_POST['form'],
   'readAuth' => $readAuth,
   'expandFirst' => TRUE,
