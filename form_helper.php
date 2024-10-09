@@ -510,8 +510,9 @@ JS;
    *     sites (e.g. when installing a Drupal feature).
    *   * generator - Optional. A string which, if it contains 'Drupal 7' is
    *     used to output html specific to that CMS.
+   *   * readAuth - read authorisation tokens.
    */
-  public static function prebuilt_form_params_form(array $options) {
+  public static function prebuiltFormParamsForm(array $options) {
     if (function_exists('hostsite_add_library')) {
       hostsite_add_library('collapse');
     }
@@ -523,7 +524,7 @@ JS;
       $options['siteSpecific'] = FALSE;
     }
     self::$nocache = TRUE;
-    $formparams = self::get_form_parameters($options['form']);
+    $formparams = self::getFormParameters($options['form'], $options['readAuth']);
     $fieldsets = [];
     $r = '';
     foreach ($formparams as $control) {
@@ -680,11 +681,13 @@ JS;
    *
    * @param string $form
    *   The name of the form we are retrieving the parameters for.
+   * @param array $readAuth
+   *   Read authorisation tokens.
    *
    * @return array
    *   List of parameter definitions.
    */
-  public static function get_form_parameters($form) {
+  public static function getFormParameters($form, array $readAuth) {
 
     // In a CMS context, a module may supply additional custom forms so make
     // sure these are available.
@@ -723,7 +726,7 @@ JS;
     }
     $formParams = self::mapControlOptions(call_user_func([
       "iform_$form", 'get_parameters',
-    ]));
+    ], $readAuth));
     $params = array_merge($params, $formParams);
     // Add in a standard parameter for specifying a redirection.
     $redirectInstruct = <<<TXT

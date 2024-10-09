@@ -1287,7 +1287,8 @@ HTML;
     $r .= '<option value="oldest">' . lang::get('Oldest on top') . '</option>';
     $r .= '</select>';
     if ($options['download'] === TRUE) {
-      $r .= '<button style="margin-left: 0.5em" class="button brc-hectad-map-image-download">' . lang::get('Download') . '</button>';
+      global $indicia_templates;
+      $r .= "<button style=\"margin-left: 0.5em\" class=\"$indicia_templates[buttonDefaultClass] $indicia_templates[buttonSmallClass] brc-hectad-map-image-download\">" . lang::get('Download') . '</button>';
     }
     $r .= '</div>';
     $r .= '<div class="brc-hectad-map"></div>';
@@ -1673,7 +1674,13 @@ HTML;
       $url = str_replace('{rootFolder}', data_entry_helper::getRootFolder(TRUE), $url);
       $url .= (strpos($url, '?') === FALSE) ? '?' : '&';
       $url .= $args['explore_param_name'] . '=' . self::$taxonMeaningId;
-      $r = '<div id="taxon-explore-records"><a class="button"  href="' . $url . '">' . lang::get('Explore records of {1}', self::get_best_name()) . '</a></div>';
+      global $indicia_templates;
+      $btnLabel = lang::get('Explore records of {1}', self::get_best_name());
+      $r = <<<HTML
+<div id="taxon-explore-records">
+  <a class="$indicia_templates[buttonHighlightedClass]"  href="$url">$btnLabel</a>
+</div>
+HTML;
     }
     else {
       throw new exception('The page has been setup to use an explore records button, but an "Explore URL" or "Explore Parameter Name" has not been specified.');
@@ -1804,7 +1811,8 @@ HTML;
     }
     $r .= '<input type="hidden" id="taxa_taxon_list_id" name="taxa_taxon_list_id"></input>';
     $r .= '</form>';
-    $r .= '<button id="submit-taxon-search-form" type="button" onclick="indiciaFns.speciesDetailsSub()">Get details</button>';
+    global $indicia_templates;
+    $r .= "<button id=\"submit-taxon-search-form\" type=\"button\" onclick=\"indiciaFns.speciesDetailsSub()\" class=\"$indicia_templates[buttonHighlightedClass]\">Get details</button>";
     return $r;
   }
 
