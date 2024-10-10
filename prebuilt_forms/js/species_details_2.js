@@ -223,7 +223,7 @@ jQuery(document).ready(function($) {
         if (existing) {
           existing.recs += h.recs;
           existing.minYear = h.minYear < existing.minYear ? h.minYear : existing.minYear;
-          existing.maxYear = h.maxYear < existing.maxYear ? h.maxYear : existing.maxYear;
+          existing.maxYear = h.maxYear > existing.maxYear ? h.maxYear : existing.maxYear;
         } else {
           a.push({gr: h.gr, recs: h.recs, minYear: h.minYear, maxYear: h.maxYear});
         }
