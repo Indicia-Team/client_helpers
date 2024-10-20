@@ -619,9 +619,13 @@ HTML;
       'dataSource' => 'library/imports/changed_smps_since_import',
       'extraParams' => $options['readAuth'] + $extraParams,
     ]);
+    $occsChangedSinceImport = report_helper::get_report_data([
+      'dataSource' => 'library/imports/changed_occs_since_import',
+      'extraParams' => $options['readAuth'] + $extraParams,
+    ]);
     // If no changes have been made to the imported data,
     // then we can skip straight to the result page.
-    if (empty($smpsChangedSinceImport)) {
+    if (empty($smpsChangedSinceImport) && empty($occsChangedSinceImport)) {
       return self::reversalResult($options);
     }
     // If import data has been changed since import, then give the user
