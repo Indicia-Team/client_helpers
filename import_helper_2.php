@@ -130,7 +130,13 @@ class import_helper_2 extends helper_base {
     self::$indiciaData['step'] = $nextImportStep;
     switch ($nextImportStep) {
       case 'fileSelectForm':
-        return self::fileSelectForm($options);
+        $r = self::fileSelectForm($options);
+        // The reverser currently assumes occurrence entity.
+        if ($options['entity'] === 'occurrence' &&
+            (!empty($options['allow_import_reverse']) && $options['allow_import_reverse'] == TRUE)) {
+          $r .= self::importToReverseDropDown($options);
+        }
+        return $r;
 
       case 'globalValuesForm':
         return self::globalValuesForm($options);
@@ -149,6 +155,12 @@ class import_helper_2 extends helper_base {
 
       case 'doImportPage':
         return self::doImportPage($options);
+
+      case 'reversalModeWarning':
+        return self::reversalModeWarning($options);
+
+      case 'reversalResult':
+        return self::reversalResult($options);
 
       default:
         throw new exception('Invalid next-import-step parameter');
@@ -493,6 +505,206 @@ class import_helper_2 extends helper_base {
 </form>
 HTML;
     self::$indiciaData['importerDropArea'] = '.dm-uploader';
+    return $r;
+  }
+
+  /**
+   * Fetch the HTML for the import reversal drop-down.
+   *
+   * @param array $options
+   *   Options array for the control.
+   *
+   * @return string
+   *   HTML.
+   */
+  private static function importToReverseDropDown(array $options) {
+    iform_load_helpers(['report_helper']);
+    if (!function_exists('hostsite_get_user_field') || !hostsite_get_user_field('indicia_user_id')) {
+      return '';
+    }
+    // We only show user their own imports.
+    $indiciaUserID = hostsite_get_user_field('indicia_user_id');
+    $extraParams = [
+      'currentUser' => $indiciaUserID,
+    ];
+    // This will be empty if importer is running on Warehouse.
+    // In that case all imports for the logged-in user will be shown.
+    if (!empty($options['website_id'])) {
+      $extraParams = array_merge(
+        $extraParams, ['website_id' => $options['website_id']]
+      );
+    }
+    // Get a list of imports that are reversible.
+    $lookupData = report_helper::get_report_data([
+      'dataSource' => 'library/imports/reversible_imports_list',
+      'extraParams' => $options['readAuth'] + $extraParams,
+    ]);
+    // Construct label for the drop-down from the date/time and import_guid.
+    $reversableImports = [];
+    foreach ($lookupData as $importRow) {
+      $reversableImports[$importRow['import_guid']] = 'Date: ' . $importRow['import_date_time'] . ' (Import ID: ' . $importRow['import_guid'] . ')';
+    }
+    $r = '<hr>';
+    $r .= '<div>Or select a previous import to reverse</div><br>';
+    if (empty($reversableImports)) {
+      $r .= '<div><em>There are no previous imports available for you to reverse</em></div>';
+    }
+    // If there are some reversible imports, show user a drop-down of imports
+    // and a run the reverse button.
+    else {
+      $r .= '<form id="reverse-import-form" method="POST">';
+      $r .= data_entry_helper::select([
+        'id' => 'reverse-guid',
+        'fieldname' => 'reverse-guid',
+        'label' => lang::get('Import to reverse'),
+        'lookupValues' => $reversableImports,
+        'blankText' => lang::get('<please select>'),
+      ]);
+      $r .= '<p><small><em>Please note that imports are not always reversible.<br>
+        This may include old imports, imports that have been updated by another import, 
+        or imports where a reversal has already been attempted.</em></small></p>';
+      $r .= '<input type="submit" class="btn btn-primary" id="run-reverse" value="' . lang::get('Reverse import') . '" disabled />';
+      $r .= '<p style="display:none;" class="reverse-instructions-1">' .
+        '<strong>Only new records created by the original import will be reversed.<br>' .
+        'Any records that were selected for an update or deletion during that import will not be reversed.</strong></p>';
+      $r .= '<input type="hidden" name="next-import-step" value="reversalModeWarning" />';
+      $r .= '</form>';
+    }
+    // Don't allow reverse to be run until an import has been selected.
+    data_entry_helper::$javascript = "
+    $('#reverse-guid').on('change', function() {
+      if ($(this).val()) {
+        $('#run-reverse').prop('disabled', false);
+        $('.reverse-instructions-1').show();
+      }
+      else {
+        $('#run-reverse').prop('disabled', true);
+        $('.reverse-instructions-1').hide();
+      }
+    });
+    
+    $('#run-reverse').on('click', function() {
+      if (confirm('Are you sure you want to reverse the selected import?') == true) {
+        return true;
+      } else {
+        return false;
+      }
+    });";
+    return $r;
+  }
+
+  /**
+   * Allow user to select import reverse options.
+   *
+   * If applicable, allow the user to select whether to reverse all data,
+   * or just data that has not been changed since importing.
+   *
+   * @param array $options
+   *   Options array for the control.
+   *
+   * @return string
+   *   HTML.
+   */
+  private static function reversalModeWarning(array $options) {
+    iform_load_helpers(['report_helper']);
+    $extraParams = [];
+    if (!empty($_POST['reverse-guid'])) {
+      $extraParams['import_guid'] = $_POST['reverse-guid'];
+    }
+    else {
+      $extraParams['import_guid'] = '';
+    }
+    // Has any of the data been changed since the import was done.
+    $smpsChangedSinceImport = report_helper::get_report_data([
+      'dataSource' => 'library/imports/changed_smps_since_import',
+      'extraParams' => $options['readAuth'] + $extraParams,
+    ]);
+    $occsChangedSinceImport = report_helper::get_report_data([
+      'dataSource' => 'library/imports/changed_occs_since_import',
+      'extraParams' => $options['readAuth'] + $extraParams,
+    ]);
+    // If no changes have been made to the imported data,
+    // then we can skip straight to the result page.
+    if (empty($smpsChangedSinceImport) && empty($occsChangedSinceImport)) {
+      return self::reversalResult($options);
+    }
+    // If import data has been changed since import, then give the user
+    // the following options.
+    // Reverse all data, reverse only unchanged data, or abort reverse.
+    $r .= '<form id="reversal-mode-warning-form" method="POST">';
+    $r .= '<h3>Changes have been made to the data since it was imported.</h3>';
+    $r .= '<h4>How do you wish to proceed?</h4>';
+    $r .= '<div>';
+    $r .= '<p><label for="reverse_all" style="display: inline-flex; align-items: center;">' .
+          '<input style="margin: 0 0.5em 0;" type="radio" id="reverse_all" name="reverse-mode" value="reverse_all">' .
+          '<em>Reverse all rows</em></label></p>';
+    $r .= '<p><label for="do_not_reverse_updated" style="display: inline-flex; align-items: center;">' .
+          '<input style="margin: 0 0.5em 0;" type="radio" id="do_not_reverse_updated" name="reverse-mode" value="do_not_reverse_updated">' .
+          '<em>Reverse unchanged rows</em></label></p>';
+    $r .= '<p><label for="abort_reverse" style="display: inline-flex; align-items: center;">' .
+          '<input style="margin: 0 0.5em 0;" type="radio" id="abort_reverse" name="reverse-mode" value="abort_reverse">' .
+          '<em>Abort the reverse</em></label></p><br>';
+    $r .= '<input type="submit" class="btn btn-primary" id="run-reverse" value="' . lang::get('Continue') . '" />';
+    $r .= '<input type="hidden" name="next-import-step" value="reversalResult" />';
+    $r .= '<input type="hidden" name="reverse-guid" value="' . $_POST['reverse-guid'] . '" />';
+    $r .= '</div>';
+    $r .= '</form>';
+    // Change the button label depending if user has chosen to abort.
+    // Also change the next import step to be the first step again.
+    data_entry_helper::$javascript .= "
+      $('[name=\"reverse-mode\"').on('change', function() {
+        if ($(this).val() == 'abort_reverse') {
+          $('[name=\"next-import-step\"').val('fileSelectForm');
+          $('#run-reverse').prop('value','Abort');
+        }
+        else {
+          $('[name=\"next-import-step\"').val('reversalResult');
+          $('#run-reverse').prop('value','Continue');
+        };
+      });
+    ";
+    return $r;
+  }
+
+  /**
+   * Send reversal information to the Warehouse, and display result.
+   *
+   * @param array $options
+   *   Options array for the control.
+   *
+   * @return string
+   *   HTML.
+   */
+  private static function reversalResult(array $options) {
+    $indiciaUserID = hostsite_get_user_field('indicia_user_id');
+    $extraParams = [
+      'currentUser' => $indiciaUserID,
+    ];
+    $data['warehouse_user_id'] = $indiciaUserID;
+    $serviceUrl = self ::$base_url . 'index.php/services/import_2/importreverse';
+    if (!empty($_POST['reverse-guid'])) {
+      $data['guid_to_reverse'] = $_POST['reverse-guid'];
+    }
+    if (!empty($_POST['reverse-mode'])) {
+      $data['reverse_mode'] = $_POST['reverse-mode'];
+    }
+    $response = self::http_post($serviceUrl, $data, FALSE);
+    $output = json_decode($response['output'], TRUE);
+    $r .= '<form id="reversal-result-form" method="POST">';
+    if (!$response['result']) {
+      $r .= '<h4>An error has occurred during the import reversal.</h4>';
+      $r .= '<p><em>The response from the database is:</em></p>';
+      $r .= '<p style="color:red;">' . print_r($response, TRUE) . '</p>';
+    }
+    else {
+      // Result includes links to files which contain
+      // changed and unchanged sample/occurrence rows.
+      $r .= '<h4>The reversal of import ' . $_POST['reverse-guid'] . ' is complete</h4>';
+      $r .= '<p>' . $response['output'] . '</p>';
+    }
+    $r .= '<br><div><input type="submit" class="btn btn-primary" id="return-to-start" value="Return to start" />';
+    $r .= '<input type="hidden" name="next-import-step" value="fileSelectForm" /></div>';
+    $r .= '</form>';
     return $r;
   }
 

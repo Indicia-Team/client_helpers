@@ -128,6 +128,7 @@ sample:fk_location:external_key
 sample:fk_location:id
 sample:input_form
 sample:privacy_precision
+sample:import_guid
 sample:record_status
 sample:sensitivity_precision
 TXT;
@@ -233,6 +234,14 @@ TXT;
         'group' => 'Instruction texts',
         'type' => 'textarea',
         'default' => $default_terms['import2requiredFieldsIntro'],
+        'required' => FALSE,
+      ],
+      [
+        'name' => 'allow_import_reverse',
+        'caption' => 'Allow import reversals?',
+        'group' => 'Import reverser',
+        'type' => 'boolean',
+        'default' => TRUE,
         'required' => FALSE,
       ],
     ];
