@@ -156,8 +156,8 @@ class import_helper_2 extends helper_base {
       case 'doImportPage':
         return self::doImportPage($options);
 
-      case 'reversalModeWarning':
-        return self::reversalModeWarning($options);
+      case 'reversalModeWarningOrSkipToResult':
+        return self::reversalModeWarningOrSkipToResult($options);
 
       case 'reversalResult':
         return self::reversalResult($options);
@@ -603,7 +603,7 @@ HTML;
             $lang[updated_records_will_not_be_reversed]
           </strong>
         </p>
-        <input type="hidden" name="next-import-step" value="reversalModeWarning" />
+        <input type="hidden" name="next-import-step" value="reversalModeWarningOrSkipToResult" />
       </form>
       HTML;
     }
@@ -615,6 +615,7 @@ HTML;
    *
    * If applicable, allow the user to select whether to reverse all data,
    * or just data that has not been changed since importing.
+   * Skips directly to result page if there is nothing to ask the user.
    *
    * @param array $options
    *   Options array for the control.
@@ -622,7 +623,7 @@ HTML;
    * @return string
    *   HTML.
    */
-  private static function reversalModeWarning(array $options) {
+  private static function reversalModeWarningOrSkipToResult(array $options) {
     iform_load_helpers(['report_helper']);
     self::addLanguageStringsToJs('import_helper_2', [
       'abort' => 'Abort',
