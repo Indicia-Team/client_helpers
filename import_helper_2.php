@@ -133,7 +133,7 @@ class import_helper_2 extends helper_base {
         $r = self::fileSelectForm($options);
         // The reverser currently assumes occurrence entity.
         if ($options['entity'] === 'occurrence' &&
-            (!empty($options['allow_import_reverse']) && $options['allow_import_reverse'] == TRUE)) {
+            (!empty($options['allowImportReverse']) && $options['allowImportReverse'] == TRUE)) {
           $r .= self::importToReverseDropDown($options);
         }
         return $r;

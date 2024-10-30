@@ -237,7 +237,7 @@ TXT;
         'required' => FALSE,
       ],
       [
-        'name' => 'allow_import_reverse',
+        'name' => 'allowImportReverse',
         'caption' => 'Allow import reversals?',
         'group' => 'Import reverser',
         'type' => 'boolean',
