@@ -1262,7 +1262,7 @@ HTML;
    *   labels.
    *
    */
-  private static function getWarehouseFieldLabel($field, array $availableFields) {
+  private static function getWarehouseFieldLabel($field, array $availableFields, $includeTablePrefix = FALSE) {
     $label = lang::get($field);
     if ($label === $field) {
       // No translation provided.
@@ -1273,7 +1273,14 @@ HTML;
         $label = self::getReadableWarehouseField($field);
       }
     }
-    return $label;
+    if ($includeTablePrefix) {
+      $fieldParts = explode(':', $field);
+      $tablePrefix = lang::get("optionGroup-$fieldParts[0]-shortLabel");
+      if (substr($tablePrefix, 0, 12) !== 'optionGroup-') {
+        $label = "$tablePrefix $label";
+      }
+    }
+    return str_replace(' id', ' ID', ucfirst(strtolower($label)));
   }
 
   /**
@@ -1320,7 +1327,7 @@ HTML;
     $existingMatchFields = [];
     foreach ($config['columns'] as $columnLabel => $info) {
       $arrow = self::getSummaryColumnArrow($info);
-      $warehouseFieldLabel = self::getWarehouseFieldLabel($info['warehouseField'], $availableFields);
+      $warehouseFieldLabel = self::getWarehouseFieldLabel($info['warehouseField'], $availableFields, TRUE);
       $mappingRows[] = "<tr><td><em>$columnLabel</td></em><td>$arrow</td><td>$warehouseFieldLabel</td></tr>";
       if (preg_match('/:(id|external_key)$/', $info['warehouseField'])) {
         $existingMatchFields[] = $warehouseFieldLabel;
@@ -1448,8 +1455,9 @@ HTML;
       // Foreign key filters were used during matching, not actually for import.
       // Also exclude settings such as allowUpdates/deletes.
       if (strpos($field, 'fkFilter') === FALSE && strpos($field, 'config:') !== 0) {
-        $field = $availableFields[$field] ?? $field;
-        $globalRows[] = "<tr><td>$displayLabel</td><td>$arrow</td><td>$field</td></tr>";
+        $displayField = self::getWarehouseFieldLabel($field, $availableFields, TRUE);
+
+        $globalRows[] = "<tr><td>$displayLabel</td><td>$arrow</td><td>$displayField</td></tr>";
       }
     }
     return $globalRows;
