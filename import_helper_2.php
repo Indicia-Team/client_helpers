@@ -1498,7 +1498,7 @@ HTML;
       $arrow = "<i class=\"fas fa-stop\" title=\"$lang[dataValuesIgnored]\"></i>";
     }
     elseif (!empty($info['isFkField'])) {
-      $arrow = "<i class=\"fas fa-random\" title=\"$lang[dataValuesMatched]\"></i>";
+      $arrow = "<i class=\"fas fa-list\" title=\"$lang[dataValuesMatched]\"></i>";
     }
     else {
       $arrow = "<i class=\"fas fa-play\" title=\"$lang[dataValuesCopied]\"></i>";
