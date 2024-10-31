@@ -96,6 +96,8 @@ class import_helper_2 extends helper_base {
    *   ID or external key field mapping. Only affects the user's own data.
    * * allowDeletes = set to true to enable mapping to a deleted flag for the
    *   user's own data. Requires the allowUpdates option to be set.
+   * * allowImportReverse - adds a control to the file upload page which allows
+   *   a previous export to be selected and reversed.
    */
   public static function importer($options) {
     if (empty($options['entity'])) {
@@ -588,7 +590,7 @@ HTML;
       $r .= <<<HTML
         <p>
           <small>
-            <em>      
+            <em>
               $lang[imports_are_not_always_reversible]
             <br>
               $lang[non_reversible_import_reasons]
