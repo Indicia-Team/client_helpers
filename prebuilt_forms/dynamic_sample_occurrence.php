@@ -1967,9 +1967,17 @@ HTML;
       }
       $r .= '</select>';
 
+      // For dynamic building of the checklist according to user selection at
+      // runtime we need to ensure that extra_list_id is set and list_id is not.
+      if ($args['list_id']) {
+        if (!$args['extra_list_id']) {
+          $args['extra_list_id'] = $args['list_id'];
+        }
+        unset($args['list_id']);
+      }
+
       // Make taxonListId available for filtering the Ajax query.
-      data_entry_helper::$javascript .= 'indiciaData.taxonListId=' . $args['list_id'] . ";\n";
-      unset($args['list_id']);
+      data_entry_helper::$javascript .= 'indiciaData.taxonListId=' . $args['extra_list_id'] . ";\n";
 
       // Make training mode available for filtering the Ajax query.
       data_entry_helper::$javascript .= 'indiciaData.training=' . $trainingJS . ";\n";

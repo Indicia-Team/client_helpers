@@ -43,70 +43,70 @@ class iform_species_details_2 extends BaseDynamicDetails {
   /**
    * Stores a value to indicate of no taxon identified.
    *
-   * @var bool
+   * @var notaxon
    */
   private static $notaxon;
 
   /**
    * Stores the preferred name of the taxon with markup and authority.
    *
-   * @var string
+   * @var preferred
    */
   private static $preferred;
 
   /**
    * Stores the preferred name of the taxon.
    *
-   * @var string
+   * @var preferredPlain
    */
   private static $preferredPlain;
 
   /**
    * Stores the default common name of the taxon.
    *
-   * @var string
+   * @var defaultCommonName
    */
   private static $defaultCommonName;
 
   /**
    * Stores the synonyms of the taxon.
    *
-   * @var array
+   * @var synonyms
    */
   private static $synonyms = [];
 
   /**
    * Stores the common names of the taxon.
    *
-   * @var array
+   * @var commonNames
    */
   private static $commonNames = [];
 
   /**
    * Stores the taxonomy of the taxon.
    *
-   * @var array
+   * @var taxonomy
    */
   private static $taxonomy = [];
 
   /**
    * Stores the taxa_taxon_list_id of the taxon.
    *
-   * @var int
+   * @var taxaTaxonListId
    */
   private static $taxaTaxonListId;
 
   /**
    * Stores the taxon_meaning_id of the taxon.
    *
-   * @var int
+   * @var taxonMeaningId
    */
   private static $taxonMeaningId;
 
   /**
    * Stores the exter_key of the taxon.
    *
-   * @var string
+   * @var externalKey
    */
   private static $externalKey;
 
@@ -527,7 +527,13 @@ class iform_species_details_2 extends BaseDynamicDetails {
     } else {
       // Get information on species names
       self::getNames($auth);
-
+      if (is_null(self::$externalKey)){
+        // Some lists have no TVKs
+        self::$notaxon = TRUE;
+        \Drupal::messenger()->addMessage('There is no external key corresponding to this taxon.');
+        return parent::get_form_html($args, $auth, $attributes);
+      }
+      
       // In Drupal 9, markup cannot be used in page title, so remove em tags.
       $repArray = ['<em>', '</em>'];
       $preferredClean = str_replace($repArray, '', self::$preferred);
@@ -1596,6 +1602,7 @@ HTML;
     $params = [
       'taxa_taxon_list_id' => empty($_GET['taxa_taxon_list_id']) ? '' : $_GET['taxa_taxon_list_id'],
       'taxon_meaning_id' => empty($_GET['taxon_meaning_id']) ? '' : $_GET['taxon_meaning_id'],
+      'sharing' => 'reporting',
       'reportGroup' => 'dynamic',
       'autoParamsForm' => FALSE,
       'sharing' => $sharing,
@@ -1766,6 +1773,7 @@ HTML;
   /**
    * Returns a control for picking a species.
    *
+   * @global type $indicia_templates
    * @param array $auth
    *   Read authorisation tokens.
    * @param array $args
