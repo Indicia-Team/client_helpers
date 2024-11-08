@@ -5066,6 +5066,7 @@ JS;
           data_entry_helper::$entity_to_load['sc:' . $idx . ':' . $subSample['id'] . ':sample:geom'] = $subSample['wkt'];
           data_entry_helper::$entity_to_load['sc:' . $idx . ':' . $subSample['id'] . ':sample:wkt'] = $subSample['wkt'];
           data_entry_helper::$entity_to_load['sc:' . $idx . ':' . $subSample['id'] . ':sample:location_id'] = $subSample['location_id'];
+          data_entry_helper::$entity_to_load['sc:' . $idx . ':' . $subSample['id'] . ':sample:location_name'] = $subSample['location_name'];
           data_entry_helper::$entity_to_load['sc:' . $idx . ':' . $subSample['id'] . ':sample:entered_sref'] = $subSample['entered_sref'];
           data_entry_helper::$entity_to_load['sc:' . $idx . ':' . $subSample['id'] . ':sample:entered_sref_system'] = $subSample['entered_sref_system'];
           if ($spatialRefPrecisionAttrId) {
@@ -6042,6 +6043,8 @@ HTML;
    *   the default. Options same as sampleOnClusterButtonContents.
    * * **samplePhotos** - set to true to add a photos upload control for each
    *   sub-sample.
+   * * **location_name** - set to true to add a location name input control for
+   *   each sub-sample.
    */
   public static function multiple_places_species_checklist($options) {
     if (empty($options['spatialSystem'])) {
@@ -6074,7 +6077,14 @@ HTML;
         $attr['fieldname'] = "sc:n::$attr[fieldname]";
         $attr['id'] = "sc:n::$attr[id]";
       }
-      $sampleCtrls = get_attribute_html($sampleAttrs, [], ['extraParams' => $options['readAuth']], NULL, $attrOptions);
+      $sampleCtrls = '';
+      if (!empty($options['locationName'])) {
+        $sampleCtrls .= self::text_input([
+          'label' => lang::get('Location name at this position'),
+          'fieldname' => "sc:n::sample:location_name",
+        ]);
+      }
+      $sampleCtrls .= get_attribute_html($sampleAttrs, [], ['extraParams' => $options['readAuth']], NULL, $attrOptions);
       // Add a template for the form section for a new subsample.
       $r .= "<div id=\"$options[id]-subsample-ctrls\" style=\"display: none\" class=\"subsample-ctrl-cntr\">$sampleCtrls</div>";
     }
@@ -6269,7 +6279,16 @@ HTML;
               $attr['id'] = "sc:$a[1]:$a[2]:$attr[id]";
             }
             $attrOptions = self::getAttrSpecificOptions($options);
-            $sampleCtrls = get_attribute_html($sampleAttrs, [], ['extraParams' => $options['readAuth']], NULL, $attrOptions);
+            $sampleCtrls = '';
+            if (!empty($options['locationName'])) {
+              $locationName = data_entry_helper::$entity_to_load["$a[0]:$a[1]:$sampleId:sample:location_name"] ?? '';
+              $sampleCtrls .= self::text_input([
+                'label' => lang::get('Location name at this position'),
+                'fieldname' => "$a[0]:$a[1]:$sampleId:sample:location_name",
+                'default' => $locationName,
+              ]);
+            }
+            $sampleCtrls .= get_attribute_html($sampleAttrs, [], ['extraParams' => $options['readAuth']], NULL, $attrOptions);
             $blocks .= <<<HTML
 <div class="subsample-ctrl-cntr">
   $sampleCtrls
