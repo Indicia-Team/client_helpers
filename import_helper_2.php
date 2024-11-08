@@ -538,8 +538,9 @@ HTML;
     }
     // Get a list of imports that are reversible.
     $lookupData = report_helper::get_report_data([
+      'readAuth' => $options['readAuth'],
       'dataSource' => 'library/imports/reversible_imports_list',
-      'extraParams' => $options['readAuth'] + $extraParams,
+      'extraParams' => $extraParams,
     ]);
     self::addLanguageStringsToJs('import_helper_2', [
       'are_you_sure_reverse' => 'Are you sure you want to reverse the selected import?',
@@ -559,7 +560,7 @@ HTML;
     foreach ($lookupData as $importRow) {
       $reversableImports[$importRow['import_guid']] = 'Date: ' . $importRow['import_date_time'] . ' (Import ID: ' . $importRow['import_guid'] . ')';
     }
-    $r .= <<<HTML
+    $r = <<<HTML
       <hr>
       <p>
         $lang[select_a_previous_import_to_reverse]
@@ -1401,7 +1402,7 @@ HTML;
       'matchesToLocation' => 'Matches to location',
       'matchesToTaxon' => 'Matches to species or taxon name',
       'matchesToTerm' => 'Matches to term',
-      'matchingPanelFor' => 'List of values to match for {1}',
+      'matchingPanelFor' => 'List of values to match for {1} column',
       'pleaseMatchAllValues' => 'Matches saved, but there are more matches required for {1}.',
       'pleaseMatchValues' => 'Please match the values in the list before saving them.',
       'pleaseSelect' => '- Please select -',
