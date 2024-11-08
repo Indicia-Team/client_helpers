@@ -643,11 +643,13 @@ HTML;
     // Has any of the data been changed since the import was done.
     $smpsChangedSinceImport = report_helper::get_report_data([
       'dataSource' => 'library/imports/changed_smps_since_import',
-      'extraParams' => $options['readAuth'] + $extraParams,
+      'readAuth' => $options['readAuth'],
+      'extraParams' => $extraParams,
     ]);
     $occsChangedSinceImport = report_helper::get_report_data([
       'dataSource' => 'library/imports/changed_occs_since_import',
-      'extraParams' => $options['readAuth'] + $extraParams,
+      'readAuth' => $options['readAuth'],
+      'extraParams' => $extraParams,
     ]);
     // If no changes have been made to the imported data,
     // then we can skip straight to the result page.
@@ -734,7 +736,7 @@ HTML;
     $response = self::http_post($serviceUrl, $data, FALSE);
     $output = json_decode($response['output'], TRUE);
     $reverseGuid = $_POST['reverse-guid'];
-    $r .= <<<HTML
+    $r = <<<HTML
       <form id="reversal-result-form" method="POST">
     HTML;
     if (!$response['result']) {
