@@ -2717,7 +2717,7 @@ class ElasticsearchProxyHelper {
         require_once 'report_helper.php';
         // Convert the IDs to external keys, stored in ES as taxon_ids.
         $taxonData = report_helper::get_report_data([
-          'dataSource' => '/library/taxa/external_keys_for_scratchpad',
+          'dataSource' => '/library/taxa/external_keys_for_scratchpad_no_hierarchy',
           'extraParams' => [
             'scratchpad_list_id' => $filter['value'],
           ],
