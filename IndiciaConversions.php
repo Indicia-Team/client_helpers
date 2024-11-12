@@ -169,10 +169,10 @@ class IndiciaConversions {
    *   Boolean equivalent.
    */
   public static function toBool($value) {
-    if (in_array($value, ['', 'null', 'NULL', NULL])) {
+    if (in_array($value, ['', 'null', 'NULL', NULL], TRUE)) {
       return NULL;
     }
-    elseif (in_array($value, ['t', 'f'])) {
+    elseif (in_array($value, ['t', 'f'], TRUE)) {
       // Filter_var() doesn't handle 't' & 'f'.
       return $value === 't';
     }
