@@ -149,6 +149,9 @@ class ElasticsearchProxyHelper {
       case 'runcustomruleset':
         return self::proxyRunCustomRuleset($nid);
 
+      case 'getLocationBoundaryGeom':
+        return self::getLocationBoundaryGeom($nid);
+
       default:
         throw new ElasticsearchProxyAbort('Method not found', 404);
     }
@@ -283,7 +286,10 @@ class ElasticsearchProxyHelper {
     iform_load_helpers(['VerificationHelper']);
     $conn = iform_get_connection_details($nid);
     $readAuth = helper_base::get_read_auth($conn['website_id'], $conn['password']);
-    return ['msg' => VerificationHelper::doesUserSeeNotifications($readAuth, $_GET['user_id'])];
+    return [
+      'message' => 'OK',
+      'result' => VerificationHelper::doesUserSeeNotifications($readAuth, $_GET['user_id']),
+    ];
   }
 
   /**
@@ -657,7 +663,8 @@ class ElasticsearchProxyHelper {
     $success = hostsite_send_email($_POST['to'], $_POST['subject'], $emailBody);
 
     return [
-      'status' => $success ? 'OK' : 'Fail',
+      'message' => $success ? 'OK' : 'Fail',
+      'code' => $success ? 200 : 500,
     ];
   }
 
@@ -2885,7 +2892,7 @@ class ElasticsearchProxyHelper {
     return $response;
   }
 
-/**
+  /**
    * Bulk edit a list of selected records.
    *
    * @param int $nid
@@ -3220,6 +3227,51 @@ class ElasticsearchProxyHelper {
     $url = self::$config['indicia']['base_url'] . "index.php/services/rest/custom_verification_rulesets/$rulesetId/run-request?alias=$alias&user_id=$userId";
     $query = self::buildEsQueryFromRequest($_POST);
     return self::curlPost($url, $query);
+  }
+
+  /**
+   * Proxy method for fetching a locations' boundary geom.
+   *
+   * Used when the `locationBoundaryId` option is set for a `leafletMap`
+   * control. The response is cached.
+   *
+   * @param int $nid
+   *   Node ID.
+   *
+   * @return array
+   *   Array containing HTTP status and response message, plus boundary_geom
+   *   if it worked.
+   */
+  private static function getLocationBoundaryGeom($nid) {
+    if (empty($_GET['location_id']) || !preg_match('/^\d+$/', $_GET['location_id'])) {
+      http_response_code(400);
+      return ['code' => 400, 'message' => 'Bad Request'];
+    }
+    iform_load_helpers(['report_helper']);
+    $conn = iform_get_connection_details($nid);
+    $readAuth = helper_base::get_read_auth($conn['website_id'], $conn['password']);
+
+    $response = report_helper::get_report_data([
+      'dataSource' => '/library/locations/locations_combined_boundary_transformed',
+      'extraParams' => [
+        'location_ids' => $_GET['location_id'],
+      ],
+      'readAuth' => $readAuth,
+      'caching' => TRUE,
+      'cachePerUser' => FALSE,
+    ]);
+    if (empty($response)) {
+      http_response_code(404);
+      return ['code' => 404, 'message' => 'Not Found'];
+    }
+    return [
+      'message' => 'OK',
+      'boundary_geom' => $response[0]['geom'],
+      '#cache' => [
+        'max-age' => 3600,
+        'contexts' => ['route'],
+      ],
+    ];
   }
 
 }

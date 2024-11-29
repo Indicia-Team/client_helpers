@@ -96,6 +96,8 @@ class import_helper_2 extends helper_base {
    *   ID or external key field mapping. Only affects the user's own data.
    * * allowDeletes = set to true to enable mapping to a deleted flag for the
    *   user's own data. Requires the allowUpdates option to be set.
+   * * allowImportReverse - adds a control to the file upload page which allows
+   *   a previous export to be selected and reversed.
    */
   public static function importer($options) {
     if (empty($options['entity'])) {
@@ -130,7 +132,13 @@ class import_helper_2 extends helper_base {
     self::$indiciaData['step'] = $nextImportStep;
     switch ($nextImportStep) {
       case 'fileSelectForm':
-        return self::fileSelectForm($options);
+        $r = self::fileSelectForm($options);
+        // The reverser currently assumes occurrence entity.
+        if ($options['entity'] === 'occurrence' &&
+            (!empty($options['allowImportReverse']) && $options['allowImportReverse'] == TRUE)) {
+          $r .= self::importToReverseDropDown($options);
+        }
+        return $r;
 
       case 'globalValuesForm':
         return self::globalValuesForm($options);
@@ -149,6 +157,12 @@ class import_helper_2 extends helper_base {
 
       case 'doImportPage':
         return self::doImportPage($options);
+
+      case 'reversalModeWarningOrSkipToResult':
+        return self::reversalModeWarningOrSkipToResult($options);
+
+      case 'reversalResult':
+        return self::reversalResult($options);
 
       default:
         throw new exception('Invalid next-import-step parameter');
@@ -493,6 +507,268 @@ class import_helper_2 extends helper_base {
 </form>
 HTML;
     self::$indiciaData['importerDropArea'] = '.dm-uploader';
+    return $r;
+  }
+
+  /**
+   * Fetch the HTML for the import reversal drop-down.
+   *
+   * @param array $options
+   *   Options array for the control.
+   *
+   * @return string
+   *   HTML.
+   */
+  private static function importToReverseDropDown(array $options) {
+    iform_load_helpers(['report_helper']);
+    if (!function_exists('hostsite_get_user_field') || !hostsite_get_user_field('indicia_user_id')) {
+      return '';
+    }
+    // We only show user their own imports.
+    $indiciaUserID = hostsite_get_user_field('indicia_user_id');
+    $extraParams = [
+      'currentUser' => $indiciaUserID,
+    ];
+    // This will be empty if importer is running on Warehouse.
+    // In that case all imports for the logged-in user will be shown.
+    if (!empty($options['website_id'])) {
+      $extraParams = array_merge(
+        $extraParams, ['website_id' => $options['website_id']]
+      );
+    }
+    // Get a list of imports that are reversible.
+    $lookupData = report_helper::get_report_data([
+      'readAuth' => $options['readAuth'],
+      'dataSource' => 'library/imports/reversible_imports_list',
+      'extraParams' => $extraParams,
+    ]);
+    self::addLanguageStringsToJs('import_helper_2', [
+      'are_you_sure_reverse' => 'Are you sure you want to reverse the selected import?',
+    ]);
+    $lang = [
+      'select_a_previous_import_to_reverse' => lang::get('Or select a previous import to reverse'),
+      'no_previous_imports_available_for_you_to_reverse' => lang::get('There are no previous imports available for you to reverse'),
+      'imports_are_not_always_reversible' => lang::get('Please note that imports are not always reversible.'),
+      'non_reversible_import_reasons' => lang::get('This may include old imports, imports that have been updated by another import,
+                or imports where a reversal has already been attempted.'),
+      'reverse_import' => lang::get('Reverse import'),
+      'new_records_will_be_reversed' => lang::get('Only new records created by the original import will be reversed.'),
+      'updated_records_will_not_be_reversed' => lang::get('Any records that were selected for an update or deletion during that import will not be reversed.'),
+    ];
+    // Construct label for the drop-down from the date/time and import_guid.
+    $reversableImports = [];
+    foreach ($lookupData as $importRow) {
+      $affected = $importRow['inserted'] + $importRow['updated'];
+      $reversableImports[$importRow['import_guid']] = lang::get('{1}, {2} rows (Import ID: {3}', $importRow['import_date_time'], $affected, $importRow['import_guid']);
+    }
+    $r = <<<HTML
+      <hr>
+      <p>
+        $lang[select_a_previous_import_to_reverse]
+      </p>
+    HTML;
+    if (empty($reversableImports)) {
+      $r .= <<<HTML
+      <div>
+        <em>
+          $lang[no_previous_imports_available_for_you_to_reverse]
+        </em>
+      </div>
+      HTML;
+    }
+    // If there are some reversible imports, show user a drop-down of imports
+    // and a run the reverse button.
+    else {
+      $r .= <<<HTML
+      <form id="reverse-import-form" method="POST">
+      HTML;
+      $r .= data_entry_helper::select([
+        'id' => 'reverse-guid',
+        'fieldname' => 'reverse-guid',
+        'label' => lang::get('Import to reverse'),
+        'lookupValues' => $reversableImports,
+        'blankText' => lang::get('<please select>'),
+      ]);
+      $r .= <<<HTML
+        <p>
+          <small>
+            <em>
+              $lang[imports_are_not_always_reversible]
+            <br>
+              $lang[non_reversible_import_reasons]
+            </em>
+          </small>
+        </p>
+        <input type="submit" class="btn btn-primary" id="run-reverse" value="$lang[reverse_import]" disabled />
+        <p style="display:none;" class="reverse-instructions-1">
+          <strong>
+            $lang[new_records_will_be_reversed]
+          <br>
+            $lang[updated_records_will_not_be_reversed]
+          </strong>
+        </p>
+        <input type="hidden" name="next-import-step" value="reversalModeWarningOrSkipToResult" />
+      </form>
+      HTML;
+    }
+    return $r;
+  }
+
+  /**
+   * Allow user to select import reverse options.
+   *
+   * If applicable, allow the user to select whether to reverse all data,
+   * or just data that has not been changed since importing.
+   * Skips directly to result page if there is nothing to ask the user.
+   *
+   * @param array $options
+   *   Options array for the control.
+   *
+   * @return string
+   *   HTML.
+   */
+  private static function reversalModeWarningOrSkipToResult(array $options) {
+    iform_load_helpers(['report_helper']);
+    self::addLanguageStringsToJs('import_helper_2', [
+      'abort' => 'Abort',
+      'continue' => 'Continue',
+      'are_you_sure_reverse' => 'Are you sure you wish to continue?',
+    ]);
+    $extraParams = [];
+    if (!empty($_POST['reverse-guid'])) {
+      $extraParams['import_guid'] = $_POST['reverse-guid'];
+    }
+    else {
+      $extraParams['import_guid'] = '';
+    }
+    // Has any of the data been changed since the import was done.
+    $smpsChangedSinceImport = report_helper::get_report_data([
+      'dataSource' => 'library/imports/changed_smps_since_import',
+      'readAuth' => $options['readAuth'],
+      'extraParams' => $extraParams,
+    ]);
+    $occsChangedSinceImport = report_helper::get_report_data([
+      'dataSource' => 'library/imports/changed_occs_since_import',
+      'readAuth' => $options['readAuth'],
+      'extraParams' => $extraParams,
+    ]);
+    // If no changes have been made to the imported data,
+    // then we can skip straight to the result page.
+    if (empty($smpsChangedSinceImport) && empty($occsChangedSinceImport)) {
+      return self::reversalResult($options);
+    }
+    $lang = [
+      'changes_have_been_made' => lang::get('Changes have been made to the data since it was imported.'),
+      'how_do_you_wish_to_proceed' => lang::get('How do you wish to proceed?'),
+      'reverse_all_rows' => lang::get('Reverse all rows'),
+      'reverse_unchanged_rows' => lang::get('Reverse unchanged rows'),
+      'abort_the_reverse' => lang::get('Abort the reverse'),
+      'continue' => lang::get('Continue'),
+    ];
+    // If import data has been changed since import, then give the user
+    // the following options.
+    // Reverse all data, reverse only unchanged data, or abort reverse.
+    $reverseGuid = $_POST['reverse-guid'];
+    $r = <<<HTML
+    <form id="reversal-mode-warning-form" method="POST">
+      <h3>
+        $lang[changes_have_been_made]
+      </h3>
+      <h4>
+        $lang[how_do_you_wish_to_proceed]
+      </h4>
+      <div>
+        <p>
+          <label for="reverse_all" style="display: inline-flex; align-items: center;">
+          <input style="margin: 0 0.5em 0;" type="radio" id="reverse_all" name="reverse-mode" value="reverse_all">
+          <em>
+            $lang[reverse_all_rows]
+          </em>
+          </label>
+        </p>
+        <p>
+          <label for="do_not_reverse_updated" style="display: inline-flex; align-items: center;">
+            <input style="margin: 0 0.5em 0;" type="radio" id="do_not_reverse_updated" name="reverse-mode" value="do_not_reverse_updated">
+            <em>
+              $lang[reverse_unchanged_rows]
+            </em>
+          </label>
+        </p>
+        <p>
+          <label for="abort_reverse" style="display: inline-flex; align-items: center;">
+            <input style="margin: 0 0.5em 0;" type="radio" id="abort_reverse" name="reverse-mode" value="abort_reverse">
+            <em>
+              $lang[abort_the_reverse]
+            </em>
+          </label>
+        </p>
+        <br>
+        <input type="submit" class="btn btn-primary" id="run-reverse" value="$lang[continue]" />
+        <input type="hidden" name="next-import-step" value="reversalResult" />
+        <input type="hidden" name="reverse-guid" value="$reverseGuid" />
+      </div>
+    </form>
+    HTML;
+    return $r;
+  }
+
+  /**
+   * Send reversal information to the Warehouse, and display result.
+   *
+   * @param array $options
+   *   Options array for the control.
+   *
+   * @return string
+   *   HTML.
+   */
+  private static function reversalResult(array $options) {
+    $indiciaUserID = hostsite_get_user_field('indicia_user_id');
+    $data['warehouse_user_id'] = $indiciaUserID;
+    $serviceUrl = self ::$base_url . 'index.php/services/import_2/import_reverse';
+    if (!empty($_POST['reverse-guid'])) {
+      $data['guid_to_reverse'] = $_POST['reverse-guid'];
+    }
+    if (!empty($_POST['reverse-mode'])) {
+      $data['reverse_mode'] = $_POST['reverse-mode'];
+    }
+    $response = self::http_post($serviceUrl, $data, FALSE);
+    $output = json_decode($response['output'], TRUE);
+    $reverseGuid = $_POST['reverse-guid'];
+    $r = <<<HTML
+      <form id="reversal-result-form" method="POST">
+    HTML;
+    global $indicia_templates;
+    if (!isset($response['result']) || $output['status'] !== 'OK') {
+      $printedResponse = empty($output['msg']) ? print_r($response, TRUE) : $output['msg'];
+      $r .= str_replace('{message}', 'An error has occurred during the import reversal.', $indicia_templates['warningBox']);
+      $r .= <<<HTML
+        <p>
+          <em>The response from the database is:</em>
+        </p>
+        <pre>$printedResponse</pre>
+      HTML;
+    }
+    else {
+      // Result includes links to files which contain changed and unchanged
+      // sample/occurrence rows.
+      $samplesDetails = '<p>' . implode('</p><p>', $output['samplesDetails']);
+      $occurrencesDetails = '<p>' . implode('</p><p>', $output['occurrencesDetails']);
+      $r .= <<<HTML
+        <h3>The reversal of import $reverseGuid is complete</h3>
+        <h4>$output[samplesOutcome]</h4>
+        $samplesDetails
+        <h4>$output[occurrencesOutcome]</h4>
+        $occurrencesDetails
+      HTML;
+    }
+    $r .= <<<HTML
+        <br>
+        <div>
+          <input type="submit" class="btn btn-primary" id="return-to-start" value="Return to start" />
+          <input type="hidden" name="next-import-step" value="fileSelectForm" />
+        </div>
+      </form>
+    HTML;
     return $r;
   }
 
@@ -1131,7 +1407,7 @@ HTML;
       'matchesToLocation' => 'Matches to location',
       'matchesToTaxon' => 'Matches to species or taxon name',
       'matchesToTerm' => 'Matches to term',
-      'matchingPanelFor' => 'List of values to match for {1}',
+      'matchingPanelFor' => 'List of values to match for {1} column',
       'pleaseMatchAllValues' => 'Matches saved, but there are more matches required for {1}.',
       'pleaseMatchValues' => 'Please match the values in the list before saving them.',
       'pleaseSelect' => '- Please select -',
@@ -1228,7 +1504,7 @@ HTML;
       $arrow = "<i class=\"fas fa-stop\" title=\"$lang[dataValuesIgnored]\"></i>";
     }
     elseif (!empty($info['isFkField'])) {
-      $arrow = "<i class=\"fas fa-random\" title=\"$lang[dataValuesMatched]\"></i>";
+      $arrow = "<i class=\"fas fa-list\" title=\"$lang[dataValuesMatched]\"></i>";
     }
     else {
       $arrow = "<i class=\"fas fa-play\" title=\"$lang[dataValuesCopied]\"></i>";
@@ -1262,7 +1538,7 @@ HTML;
    *   labels.
    *
    */
-  private static function getWarehouseFieldLabel($field, array $availableFields) {
+  private static function getWarehouseFieldLabel($field, array $availableFields, $includeTablePrefix = FALSE) {
     $label = lang::get($field);
     if ($label === $field) {
       // No translation provided.
@@ -1273,7 +1549,14 @@ HTML;
         $label = self::getReadableWarehouseField($field);
       }
     }
-    return $label;
+    if ($includeTablePrefix) {
+      $fieldParts = explode(':', $field);
+      $tablePrefix = lang::get("optionGroup-$fieldParts[0]-shortLabel");
+      if (substr($tablePrefix, 0, 12) !== 'optionGroup-') {
+        $label = "$tablePrefix $label";
+      }
+    }
+    return str_replace(' id', ' ID', ucfirst(strtolower($label)));
   }
 
   /**
@@ -1320,7 +1603,7 @@ HTML;
     $existingMatchFields = [];
     foreach ($config['columns'] as $columnLabel => $info) {
       $arrow = self::getSummaryColumnArrow($info);
-      $warehouseFieldLabel = self::getWarehouseFieldLabel($info['warehouseField'], $availableFields);
+      $warehouseFieldLabel = self::getWarehouseFieldLabel($info['warehouseField'], $availableFields, TRUE);
       $mappingRows[] = "<tr><td><em>$columnLabel</td></em><td>$arrow</td><td>$warehouseFieldLabel</td></tr>";
       if (preg_match('/:(id|external_key)$/', $info['warehouseField'])) {
         $existingMatchFields[] = $warehouseFieldLabel;
@@ -1448,8 +1731,9 @@ HTML;
       // Foreign key filters were used during matching, not actually for import.
       // Also exclude settings such as allowUpdates/deletes.
       if (strpos($field, 'fkFilter') === FALSE && strpos($field, 'config:') !== 0) {
-        $field = $availableFields[$field] ?? $field;
-        $globalRows[] = "<tr><td>$displayLabel</td><td>$arrow</td><td>$field</td></tr>";
+        $displayField = self::getWarehouseFieldLabel($field, $availableFields, TRUE);
+
+        $globalRows[] = "<tr><td>$displayLabel</td><td>$arrow</td><td>$displayField</td></tr>";
       }
     }
     return $globalRows;

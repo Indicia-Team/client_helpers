@@ -51,13 +51,6 @@ class iform_group_discovery implements PrebuiltFormInterface {
   public static function get_parameters() {
     return [
       [
-        'name' => 'group_home_path',
-        'caption' => 'Path to the group home page',
-        'description' => 'Path to the Drupal page which hosts group home pages.',
-        'type' => 'text_input',
-        'required' => FALSE,
-      ],
-      [
         'name' => 'default_group_label_plural',
         'caption' => 'Default group label (plural)',
         'description' => 'What should a group be referred to as? E.g. project, activity etc.',

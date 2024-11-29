@@ -527,7 +527,13 @@ class iform_species_details_2 extends BaseDynamicDetails {
     } else {
       // Get information on species names
       self::getNames($auth);
-
+      if (is_null(self::$externalKey)){
+        // Some lists have no TVKs
+        self::$notaxon = TRUE;
+        \Drupal::messenger()->addMessage('There is no external key corresponding to this taxon.');
+        return parent::get_form_html($args, $auth, $attributes);
+      }
+      
       // In Drupal 9, markup cannot be used in page title, so remove em tags.
       $repArray = ['<em>', '</em>'];
       $preferredClean = str_replace($repArray, '', self::$preferred);

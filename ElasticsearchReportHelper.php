@@ -1180,6 +1180,7 @@ JS;
     }
     $dataOptions = helper_base::getOptionsForJs($options, [
       'baseLayerConfig',
+      'boundaryLocationId',
       'cookies',
       'initialLat',
       'initialLng',

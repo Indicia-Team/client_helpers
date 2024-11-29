@@ -128,6 +128,7 @@ sample:fk_location:external_key
 sample:fk_location:id
 sample:input_form
 sample:privacy_precision
+sample:import_guid
 sample:record_status
 sample:sensitivity_precision
 TXT;
@@ -233,6 +234,15 @@ TXT;
         'group' => 'Instruction texts',
         'type' => 'textarea',
         'default' => $default_terms['import2requiredFieldsIntro'],
+        'required' => FALSE,
+      ],
+      [
+        'name' => 'allowImportReverse',
+        'caption' => 'Allow import reversals?',
+        'description' => 'Provides an option for a user to select one of their previous imports to reverse, i.e. remove the added records.',
+        'group' => 'Import reverser',
+        'type' => 'boolean',
+        'default' => FALSE,
         'required' => FALSE,
       ],
     ];
