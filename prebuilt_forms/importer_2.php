@@ -239,9 +239,10 @@ TXT;
       [
         'name' => 'allowImportReverse',
         'caption' => 'Allow import reversals?',
+        'description' => 'Provides an option for a user to select one of their previous imports to reverse, i.e. remove the added records.',
         'group' => 'Import reverser',
         'type' => 'boolean',
-        'default' => TRUE,
+        'default' => FALSE,
         'required' => FALSE,
       ],
     ];

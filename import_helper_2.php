@@ -558,7 +558,8 @@ HTML;
     // Construct label for the drop-down from the date/time and import_guid.
     $reversableImports = [];
     foreach ($lookupData as $importRow) {
-      $reversableImports[$importRow['import_guid']] = 'Date: ' . $importRow['import_date_time'] . ' (Import ID: ' . $importRow['import_guid'] . ')';
+      $affected = $importRow['inserted'] + $importRow['updated'];
+      $reversableImports[$importRow['import_guid']] = lang::get('{1}, {2} rows (Import ID: {3}', $importRow['import_date_time'], $affected, $importRow['import_guid']);
     }
     $r = <<<HTML
       <hr>
@@ -722,11 +723,8 @@ HTML;
    */
   private static function reversalResult(array $options) {
     $indiciaUserID = hostsite_get_user_field('indicia_user_id');
-    $extraParams = [
-      'currentUser' => $indiciaUserID,
-    ];
     $data['warehouse_user_id'] = $indiciaUserID;
-    $serviceUrl = self ::$base_url . 'index.php/services/import_2/importreverse';
+    $serviceUrl = self ::$base_url . 'index.php/services/import_2/import_reverse';
     if (!empty($_POST['reverse-guid'])) {
       $data['guid_to_reverse'] = $_POST['reverse-guid'];
     }
@@ -739,23 +737,28 @@ HTML;
     $r = <<<HTML
       <form id="reversal-result-form" method="POST">
     HTML;
-    if (!$response['result']) {
-      $printedResponse = print_r($response, TRUE);
+    global $indicia_templates;
+    if (!isset($response['result']) || $output['status'] !== 'OK') {
+      $printedResponse = empty($output['msg']) ? print_r($response, TRUE) : $output['msg'];
+      $r .= str_replace('{message}', 'An error has occurred during the import reversal.', $indicia_templates['warningBox']);
       $r .= <<<HTML
-        <h4>An error has occurred during the import reversal.</h4>
         <p>
           <em>The response from the database is:</em>
         </p>
-        <p style="color:red;">$printedResponse</p>
+        <pre>$printedResponse</pre>
       HTML;
     }
     else {
-      $printedResponseOutput = print_r($response['output'], TRUE);
-      // Result includes links to files which contain
-      // changed and unchanged sample/occurrence rows.
+      // Result includes links to files which contain changed and unchanged
+      // sample/occurrence rows.
+      $samplesDetails = '<p>' . implode('</p><p>', $output['samplesDetails']);
+      $occurrencesDetails = '<p>' . implode('</p><p>', $output['occurrencesDetails']);
       $r .= <<<HTML
-        <h4>The reversal of import $reverseGuid is complete</h4>
-        <p>$printedResponseOutput</p>
+        <h3>The reversal of import $reverseGuid is complete</h3>
+        <h4>$output[samplesOutcome]</h4>
+        $samplesDetails
+        <h4>$output[occurrencesOutcome]</h4>
+        $occurrencesDetails
       HTML;
     }
     $r .= <<<HTML
