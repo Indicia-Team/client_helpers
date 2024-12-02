@@ -1072,7 +1072,6 @@ class helper_base {
           'stylesheets' => [self::$js_path . 'jqplot/jquery.jqplot.min.css'],
           'javascript' => [
             self::$js_path . 'jqplot/jquery.jqplot.min.js',
-            '[IE]' . self::$js_path . 'jqplot/excanvas.js'
           ],
         ],
         'jqplot_bar' => [
@@ -2463,13 +2462,7 @@ JS;
           }
           if (isset($resourceList[$resource]['javascript'])) {
             foreach ($resourceList[$resource]['javascript'] as $j) {
-              // Look out for a condition that this script is IE only.
-              if (substr($j, 0, 4) === '[IE]') {
-              	$libraries .= "<!--[if IE]><script type=\"text/javascript\" src=\"" . substr($j, 4) . "\"></script><![endif]-->\n";
-              }
-              else {
-                $libraries .= "<script type=\"text/javascript\" src=\"$j\"></script>\n";
-              }
+              $libraries .= "<script type=\"text/javascript\" src=\"$j\"></script>\n";
             }
           }
           // Record the resource as being dumped, so we don't do it again.
