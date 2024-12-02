@@ -269,6 +269,18 @@ class ElasticsearchReportHelper {
       'caption' => 'Parent location ID',
       'description' => 'Unique ID of the parent location associated with the record where the record was linked to a defined location which has a hierarchical parent.',
     ],
+    'location.supplied_higher_geography.id' => [
+      'caption' => 'Supplied region location ID',
+      'description' => 'The ID of the location which defines the region of the record, selected by the user when inputting the record. For example, this may be the ID of a Vice County location.',
+    ],
+    'location.supplied_higher_geography.code' => [
+      'caption' => 'Supplied region location code',
+      'description' => 'The code of the location which defines the region of the record, selected by the user when inputting the record. For example, this may be the code of a Vice County location.',
+    ],
+    'location.supplied_higher_geography.name' => [
+      'caption' => 'Supplied region location name',
+      'description' => 'The name of the location which defines the region of the record, selected by the user when inputting the record. For example, this may be the name of a Vice County location.',
+    ],
     'location.output_sref' => [
       'caption' => 'Display spatial reference',
       'description' => 'Spatial reference in the recommended local grid system.',
