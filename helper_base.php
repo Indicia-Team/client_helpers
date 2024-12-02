@@ -923,13 +923,18 @@ class helper_base {
         'sortable' => [
           'javascript' => ['https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.js'],
         ],
+        'proj4' => [
+          'javascript' => [
+            self::$js_path . 'proj4js.js',
+            self::$js_path . 'proj4defs.js',
+          ],
+        ],
         'openlayers' => [
           'javascript' => [
             self::$js_path . (function_exists('iform_openlayers_get_file') ? iform_openlayers_get_file() : 'OpenLayers.js'),
-            self::$js_path . 'proj4js.js',
-            self::$js_path . 'proj4defs.js',
             self::$js_path . 'lang/en.js',
           ],
+          'deps' => ['proj4'],
         ],
         'graticule' => [
           'deps' => ['openlayers'],
@@ -1233,6 +1238,7 @@ class helper_base {
             'font_awesome',
             'indiciaFootableReport',
             'jquery_cookie',
+            'proj4',
           ],
           'javascript' => [
             self::$js_path . 'indicia.datacomponents/idc.core.js',
@@ -1253,7 +1259,6 @@ class helper_base {
             self::$js_path . 'indicia.datacomponents/jquery.idc.verificationButtons.js',
             self::$js_path . 'indicia.datacomponents/jquery.idc.filterSummary.js',
             self::$js_path . 'indicia.datacomponents/jquery.idc.permissionFilters.js',
-            self::$js_path . 'proj4js.js',
             'https://unpkg.com/@ungap/url-search-params',
           ],
         ],
