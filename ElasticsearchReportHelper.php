@@ -910,6 +910,7 @@ HTML;
         return '';
       }
       $group = $groups[0];
+      helper_base::$indiciaData['group'] = $group;
       // Apply filtering by group.
       $groupFilterInfo = [
         'id' => $group['id'],
