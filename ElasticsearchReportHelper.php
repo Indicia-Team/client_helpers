@@ -356,6 +356,9 @@ class ElasticsearchReportHelper {
         helper_base::$indiciaData['esSources'] = [];
         helper_base::$indiciaData['esMappings'] = $mappings;
         helper_base::$indiciaData['gridMappingFields'] = self::MAPPING_FIELDS;
+        foreach (helper_base::$indiciaData['gridMappingFields'] as &$field) {
+          $field['caption'] = lang::get($field['caption']);
+        }
         helper_base::$indiciaData['esVersion'] = (int) $config['es']['version'];
         helper_base::$indiciaData['esScope'] = $config['es']['scope'];
         self::$proxyEnabled = TRUE;
@@ -639,6 +642,9 @@ HTML;
         }
         if (!isset($columnDef['caption'])) {
           $columnDef['caption'] = '';
+        }
+        else {
+          $columnDef['caption'] = lang::get($columnDef['caption']);
         }
         // To aid transition from older code versions, auto-enable the media
         // special field handling. This may be removed in future.
