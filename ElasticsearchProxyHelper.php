@@ -2367,7 +2367,7 @@ class ElasticsearchProxyHelper {
       $boolClause = !empty($filter['op']) && $filter['op'] === 'not in' ? 'must_not' : 'must';
       $bool[$boolClause][] = [
         'terms' => [
-          'metadata.import_guid' => explode(',', str_replace("'", '', $filter['value'])),
+          'metadata.import_guid.keyword' => explode(',', str_replace("'", '', $filter['value'])),
         ],
       ];
     }
