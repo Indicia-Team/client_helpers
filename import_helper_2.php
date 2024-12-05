@@ -96,8 +96,14 @@ class import_helper_2 extends helper_base {
    *   ID or external key field mapping. Only affects the user's own data.
    * * allowDeletes = set to true to enable mapping to a deleted flag for the
    *   user's own data. Requires the allowUpdates option to be set.
-   * * allowImportReverse - adds a control to the file upload page which allows
-   *   a previous export to be selected and reversed.
+   * * importReverse - Form mode with respect to allowing import reversal. If
+   *   reversal is allowed, the previous import can either be selected via a
+   *   control on the form or by passing a URL parameter called
+   *   "reverse_import_guid". Options are:
+   *     * import - only importing new files allowed
+   *     * import_and_reverse - allow either importing new files or reversal of
+   *       previous imports allowed.
+   *     * reverse - only reversal of previous imports allowed.
    */
   public static function importer($options) {
     if (empty($options['entity'])) {
@@ -128,14 +134,13 @@ class import_helper_2 extends helper_base {
     self::$indiciaData['getErrorFileUrl'] = $options['getErrorFileUrl'];
     self::$indiciaData['write'] = $options['writeAuth'];
     self::$indiciaData['advancedFields'] = $options['advancedFields'];
-    $nextImportStep = empty($_POST['next-import-step']) ? 'fileSelectForm' : $_POST['next-import-step'];
+    $nextImportStep = $_POST['next-import-step'] ?? (empty($_GET['reverse_import_guid']) ? 'fileSelectForm' : 'reversalModeWarningOrSkipToResult');
     self::$indiciaData['step'] = $nextImportStep;
     switch ($nextImportStep) {
       case 'fileSelectForm':
         $r = self::fileSelectForm($options);
         // The reverser currently assumes occurrence entity.
-        if ($options['entity'] === 'occurrence' &&
-            (!empty($options['allowImportReverse']) && $options['allowImportReverse'] == TRUE)) {
+        if ($options['entity'] === 'occurrence' && $options['importReverse'] !== 'import') {
           $r .= self::importToReverseDropDown($options);
         }
         return $r;
@@ -628,19 +633,29 @@ HTML;
    *   HTML.
    */
   private static function reversalModeWarningOrSkipToResult(array $options) {
+    $reverseGuid = $_POST['reverse-guid'] ?? $_GET['reverse_import_guid'];
+    if (empty($reverseGuid)) {
+      throw new Exception('Reversal GUID not found.');
+    }
     iform_load_helpers(['report_helper']);
     self::addLanguageStringsToJs('import_helper_2', [
       'abort' => 'Abort',
       'continue' => 'Continue',
       'are_you_sure_reverse' => 'Are you sure you wish to continue?',
     ]);
-    $extraParams = [];
-    if (!empty($_POST['reverse-guid'])) {
-      $extraParams['import_guid'] = $_POST['reverse-guid'];
-    }
-    else {
-      $extraParams['import_guid'] = '';
-    }
+    $lang = [
+      'abort_the_reverse' => lang::get('Abort the reverse'),
+      'cancel' => lang::get('Cancel'),
+      'changes_have_been_made' => lang::get('Changes have been made to the data since it was imported.'),
+      'confirm_reverse' => 'Are you sure you want to reverse the following import?',
+      'continue' => lang::get('Continue'),
+      'how_do_you_wish_to_proceed' => lang::get('How do you wish to proceed?'),
+      'reverse_all_rows' => lang::get('Reverse all rows'),
+      'reverse_unchanged_rows' => lang::get('Reverse unchanged rows'),
+    ];
+    $extraParams = [
+      'import_guid' => $reverseGuid,
+    ];
     // Has any of the data been changed since the import was done.
     $smpsChangedSinceImport = report_helper::get_report_data([
       'dataSource' => 'library/imports/changed_smps_since_import',
@@ -652,31 +667,63 @@ HTML;
       'readAuth' => $options['readAuth'],
       'extraParams' => $extraParams,
     ]);
-    // If no changes have been made to the imported data,
-    // then we can skip straight to the result page.
-    if (empty($smpsChangedSinceImport) && empty($occsChangedSinceImport)) {
-      return self::reversalResult($options);
+    $imports = report_helper::get_report_data([
+      'dataSource' => 'library/imports/occurrence_imports_list',
+      'readAuth' => $options['readAuth'],
+      'extraParams' => $extraParams + ['currentUser' => hostsite_get_user_field('indicia_user_id')],
+    ]);
+    if (count($imports) !== 1) {
+      throw new exception('Failed to find unique import using provided GUID.');
     }
-    $lang = [
-      'changes_have_been_made' => lang::get('Changes have been made to the data since it was imported.'),
-      'how_do_you_wish_to_proceed' => lang::get('How do you wish to proceed?'),
-      'reverse_all_rows' => lang::get('Reverse all rows'),
-      'reverse_unchanged_rows' => lang::get('Reverse unchanged rows'),
-      'abort_the_reverse' => lang::get('Abort the reverse'),
-      'continue' => lang::get('Continue'),
-    ];
+    $importToReverse = $imports[0];
+    $recordDetails = lang::get('{1} (IDs between {2} and {3})', $importToReverse['records'], $importToReverse['from_id'], $importToReverse['to_id']);
+    $importDetails = <<<HTML
+      <dl class="dl-horizontal">
+        <dt>Import ID:</dt>
+        <dd>$importToReverse[import_guid]<dd>
+        <dt>Date/time:</dt>
+        <dd>$importToReverse[date_time]<dd>
+        <dt>By:</dt>
+        <dd>$importToReverse[imported_by]<dd>
+        <dt>Records:</dt>
+        <dd>$recordDetails<dd>
+      </dl>
+    HTML;
+    if (empty($smpsChangedSinceImport) && empty($occsChangedSinceImport)) {
+      // If the reversal was triggered via selecting a GUID in the UI and no
+      // changes have been made to the imported data, then we can skip
+      // straight to the result page.
+      if (empty($_GET['reverse_import_guid'])) {
+        return self::reversalResult($options);
+      }
+      // If we get here, then the user followed a link containing the GUID to
+      // reverse in the URL, so won't have had a chance to confirm the action.
+      // Therefore show a confirmation form. We can add a button for cancel if
+      // we know where we were referred from.
+      $cancelButton = empty($_SERVER['HTTP_REFERER']) ? '' : "<a class=\"btn btn-primary\" href=\"$_SERVER[HTTP_REFERER]\">$lang[cancel]</a>";
+      return <<<HTML
+        <form id="reversal-mode-warning-form" method="POST">
+          <p>$lang[confirm_reverse]</p>
+          $importDetails
+          <input type="submit" class="btn btn-primary" id="run-reverse" value="$lang[continue]" />
+          $cancelButton
+          <input type="hidden" name="next-import-step" value="reversalResult" />
+          <input type="hidden" name="reverse-guid" value="$reverseGuid" />
+        </form>
+      HTML;
+    }
     // If import data has been changed since import, then give the user
     // the following options.
     // Reverse all data, reverse only unchanged data, or abort reverse.
-    $reverseGuid = $_POST['reverse-guid'];
     $r = <<<HTML
     <form id="reversal-mode-warning-form" method="POST">
       <h3>
         $lang[changes_have_been_made]
       </h3>
-      <h4>
+      $importDetails
+      <p>
         $lang[how_do_you_wish_to_proceed]
-      </h4>
+      </p>
       <div>
         <p>
           <label for="reverse_all" style="display: inline-flex; align-items: center;">
@@ -722,18 +769,18 @@ HTML;
    *   HTML.
    */
   private static function reversalResult(array $options) {
+    if (empty($_POST['reverse-guid'])) {
+      throw new exception('POST should contain a value for reverse-guid.');
+    }
     $indiciaUserID = hostsite_get_user_field('indicia_user_id');
     $data['warehouse_user_id'] = $indiciaUserID;
     $serviceUrl = self ::$base_url . 'index.php/services/import_2/import_reverse';
-    if (!empty($_POST['reverse-guid'])) {
-      $data['guid_to_reverse'] = $_POST['reverse-guid'];
-    }
+    $data['guid_to_reverse'] = $_POST['reverse-guid'];
     if (!empty($_POST['reverse-mode'])) {
       $data['reverse_mode'] = $_POST['reverse-mode'];
     }
     $response = self::http_post($serviceUrl, $data, FALSE);
     $output = json_decode($response['output'], TRUE);
-    $reverseGuid = $_POST['reverse-guid'];
     $r = <<<HTML
       <form id="reversal-result-form" method="POST">
     HTML;
@@ -754,7 +801,7 @@ HTML;
       $samplesDetails = '<p>' . implode('</p><p>', $output['samplesDetails']);
       $occurrencesDetails = '<p>' . implode('</p><p>', $output['occurrencesDetails']);
       $r .= <<<HTML
-        <h3>The reversal of import $reverseGuid is complete</h3>
+        <h3>The reversal of import {$_POST['reverse-guid']} is complete</h3>
         <h4>$output[samplesOutcome]</h4>
         $samplesDetails
         <h4>$output[occurrencesOutcome]</h4>
@@ -1862,6 +1909,7 @@ HTML;
       ],
       'allowUpdates' => FALSE,
       'allowDeletes' => FALSE,
+      'importReverse' => 'import',
     ];
     $options = array_merge($defaults, $options);
     $requiredOptions = [
