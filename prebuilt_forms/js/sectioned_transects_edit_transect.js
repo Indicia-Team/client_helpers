@@ -631,12 +631,13 @@ $(document).ready(function() {
           }
           // post the new or edited section to the db
           var data = {
-            'location:code':current,
-            'location:name':$('#location\\:name').val() + ' - ' + current,
-            'location:parent_id':$('#location\\:id').val(),
-            'location:boundary_geom':evt.feature.geometry.toString(),
-            'location:location_type_id':indiciaData.sectionTypeId,
-            'website_id':indiciaData.website_id
+            'location:code': current,
+            'location:name': $('#location\\:name').val() + ' - ' + current,
+            'location:parent_id': $('#location\\:id').val(),
+            'location:boundary_geom': evt.feature.geometry.toString(),
+            'location:location_type_id': indiciaData.sectionTypeId,
+            'website_id': indiciaData.website_id,
+            'survey_id': $('[name="survey_id"]').val()
           };
           if (typeof indiciaData.sections[current] === 'undefined') {
             // First save, so need to link website.
