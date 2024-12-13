@@ -6045,6 +6045,9 @@ HTML;
    *   sub-sample.
    * * **location_name** - set to true to add a location name input control for
    *   each sub-sample.
+   * * **hideMapWhenEditingSubsample** - defaults to true. Set to false to
+   *   leave the map visible whilst a sub-sample's create/update form is
+   *   visible.
    */
   public static function multiple_places_species_checklist($options) {
     if (empty($options['spatialSystem'])) {
@@ -6061,6 +6064,7 @@ HTML;
       'id' => "species-grid-$code",
       'buttonsId' => "species-grid-buttons-$code",
       'speciesControlToUseSubSamples' => TRUE,
+      'hideMapWhenEditingSubsample' => TRUE,
       'base_url' => self::$base_url,
       'samplePhotos' => FALSE,
     ], $options);
