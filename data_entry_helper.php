@@ -8107,17 +8107,22 @@ if (errors$uniq.length>0) {
       $occs = $sampleRecord['occurrences'];
       unset($sampleRecord['occurrences']);
       $sampleRecord['website_id'] = $website_id;
-      // copy essentials down to each subSample
-      if (!empty($arr['survey_id']))
-        $sampleRecord['survey_id'] = $arr['survey_id'];
-      if (!empty($arr['sample:date']))
-        $sampleRecord['date'] = $arr['sample:date'];
-      if (!empty($arr['sample:entered_sref_system']))
-        $sampleRecord['entered_sref_system'] = $arr['sample:entered_sref_system'];
-      if (!empty($arr['sample:location_name']) && empty($sampleRecord['location_name']))
-        $sampleRecord['location_name'] = $arr['sample:location_name'];
-      if (!empty($arr['sample:input_form']))
-        $sampleRecord['input_form'] = $arr['sample:input_form'];
+      // Copy missing essentials down from parent to each subSample.
+      if (!empty($arr['survey_id'])) {
+        $sampleRecord['sample:survey_id'] = $arr['survey_id'];
+      }
+      if (!empty($arr['sample:date'])) {
+        $sampleRecord['sample:date'] = $arr['sample:date'];
+      }
+      if (!empty($arr['sample:entered_sref_system'])) {
+        $sampleRecord['sample:entered_sref_system'] = $arr['sample:entered_sref_system'];
+      }
+      if (!empty($arr['sample:location_name']) && empty($sampleRecord['sample:location_name'])) {
+        $sampleRecord['sample:location_name'] = $arr['sample:location_name'];
+      }
+      if (!empty($arr['sample:input_form'])) {
+        $sampleRecord['sample:input_form'] = $arr['sample:input_form'];
+      }
       $subSample = submission_builder::wrap_with_images($sampleRecord, 'sample');
       // Add the subSample/soccurrences in as subModels without overwriting others such as a sample image
       if (array_key_exists('subModels', $subSample)) {
