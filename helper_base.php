@@ -1781,6 +1781,7 @@ HTML;
       'helpText' => $options['helpText'] ? $info['description'] : '',
       'fieldname' => $fieldPrefix . $key,
       'nocache' => isset($options['nocache']) && $options['nocache'],
+      'validation' => $info['validation'] ?? NULL,
     ];
     // If this parameter is in the URL or post data, put it in the control
     // instead of the original default.
