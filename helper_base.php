@@ -909,7 +909,6 @@ class helper_base {
         'jquery' => [
           'javascript' => [
             self::$js_path . 'jquery.js',
-            self::$js_path . 'ie_vml_sizzlepatch_2.js',
           ],
         ],
         'datepicker' => [
@@ -923,13 +922,23 @@ class helper_base {
         'sortable' => [
           'javascript' => ['https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.js'],
         ],
+        'proj4-lib' => [
+          'javascript' => [
+            self::$js_path . 'proj4js.js',
+          ],
+        ],
+        'proj4' => [
+          'javascript' => [
+            self::$js_path . 'proj4defs.js',
+          ],
+          'deps' => ['proj4-lib'],
+        ],
         'openlayers' => [
           'javascript' => [
             self::$js_path . (function_exists('iform_openlayers_get_file') ? iform_openlayers_get_file() : 'OpenLayers.js'),
-            self::$js_path . 'proj4js.js',
-            self::$js_path . 'proj4defs.js',
             self::$js_path . 'lang/en.js',
           ],
+          'deps' => ['proj4'],
         ],
         'graticule' => [
           'deps' => ['openlayers'],
@@ -1012,8 +1021,18 @@ class helper_base {
           'deps' => ['treeview', 'fancybox'],
           'javascript' => [self::$js_path . "reportPicker.js"],
         ],
-        'treeview' => ['deps' => ['jquery'], 'stylesheets' => [self::$css_path."jquery.treeview.css"], 'javascript' => [self::$js_path."jquery.treeview.js"]],
-        'treeview_async' => ['deps' => ['treeview'], 'javascript' => [self::$js_path."jquery.treeview.async.js", self::$js_path."jquery.treeview.edit.js"]],
+        'treeview' => [
+          'deps' => ['jquery'],
+          'stylesheets' => [self::$css_path."jquery.treeview.css"],
+          'javascript' => [self::$js_path."jquery.treeview.js"],
+        ],
+        'treeview_async' => [
+          'deps' => ['treeview'],
+          'javascript' => [
+            self::$js_path."jquery.treeview.async.js",
+            self::$js_path."jquery.treeview.edit.js",
+          ],
+        ],
         'googlemaps' => [
           'javascript' => ["https://maps.google.com/maps/api/js?v=3" . (empty(self::$google_maps_api_key) ? '' : '&key=' . self::$google_maps_api_key)],
         ],
@@ -1027,18 +1046,21 @@ class helper_base {
           'javascript' => [self::$js_path . 'jquery.treebrowser.js']
         ],
         'defaultStylesheet' => [
-          'deps' => [''],
           'stylesheets' => [
             self::$css_path . 'default_site.css',
             self::$css_path . 'theme-generic.css'
           ],
-          'javascript' => []
         ],
-        'validation' => [
+        'validation-lib' => [
           'deps' => ['jquery'],
           'javascript' => [
             self::$js_path . 'jquery.metadata.js',
             self::$js_path . 'jquery.validate.js',
+          ],
+        ],
+        'validation' => [
+          'deps' => ['validation-lib'],
+          'javascript' => [
             self::$js_path . 'additional-methods.js',
           ],
         ],
@@ -1233,6 +1255,7 @@ class helper_base {
             'font_awesome',
             'indiciaFootableReport',
             'jquery_cookie',
+            'proj4',
           ],
           'javascript' => [
             self::$js_path . 'indicia.datacomponents/idc.core.js',
@@ -1253,7 +1276,6 @@ class helper_base {
             self::$js_path . 'indicia.datacomponents/jquery.idc.verificationButtons.js',
             self::$js_path . 'indicia.datacomponents/jquery.idc.filterSummary.js',
             self::$js_path . 'indicia.datacomponents/jquery.idc.permissionFilters.js',
-            self::$js_path . 'proj4js.js',
             'https://unpkg.com/@ungap/url-search-params',
           ],
         ],
