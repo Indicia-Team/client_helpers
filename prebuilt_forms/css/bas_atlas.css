@@ -1,0 +1,131 @@
+#bas-atlas-main {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+}
+
+#bas-atlas-other-controls {
+  flex: 1;
+  margin-top: 1em;
+}
+
+#bas-atlas-tabs {
+  flex: 1;
+  margin-left: 0.5em;
+}
+
+.helpText {
+  margin-left: 0 !important;
+}
+
+#ctrl-wrap-occurrence-taxa_taxon_list_id .deh-required {
+  display: none
+}
+
+/* #ctrl-wrap-occurrence-taxa_taxon_list_id {
+  width: 250px
+} */
+
+@media screen and (max-width: 767px) {
+  #bas-atlas-main {
+    flex-direction: column;
+  }
+}
+
+#download-controls label {
+  margin-top: 0;
+  width: 60px;
+}
+
+#dot-type-control label {
+  width: 80px;
+}
+
+#dataset-cbs {
+  margin-top: 0.5em;
+}
+
+#dataset-cbs label {
+  width: 30px;
+  font-weight: 500;
+  margin-left: 0.2em;
+  margin-top: 0;
+
+}
+
+#dataset-cbs input {
+  margin-left: 0.7em;
+}
+
+#dataset-warning {
+  margin-top: 0.25em;
+  color: red;
+  font-size: 0.8em;
+}
+
+#species-group-switch label {
+  font-weight: 500;
+  margin-left: 0.2em;
+  margin-top: 0;
+}
+
+#map-area-selector {
+  margin-bottom: 0.5em;
+}
+
+#taxon-list-selection {
+  margin-bottom: 0.5em;
+}
+
+#atlas-tab-account {
+  padding: 0 1em;
+}
+
+#bas-atlas-controls {
+  min-width: 250px;
+}
+
+/* #bas-atlas-tabs {
+  max-width: 597px;
+} */
+
+/* I can't work out why this transformation is necessary - I think it must be something */
+/* to do with a transformation that's being applied in the context of this website */
+/* I can't track it down. */
+.leaflet-vcpane-pane, .leaflet-atlaspane-pane{
+  transform: translate(5px, 5px);
+}
+
+.div-desgination {
+  margin: 1em;
+}
+
+.span-designation {
+  font-weight: 900;
+}
+
+.span-showhide {
+  font-size: 0.9em;
+  cursor: pointer;
+}
+
+.div-source {
+  font-style: italic;
+}
+
+#table-conservation {
+  margin: 0.5em 0;
+}
+
+#table-conservation td {
+  border: 1px solid lightgrey;
+  padding: 0.5em;
+}
+
+.row-conservation-field {
+  font-weight: 800;
+}
+
+.row-conservation-info {
+  font-weight: 500;
+}

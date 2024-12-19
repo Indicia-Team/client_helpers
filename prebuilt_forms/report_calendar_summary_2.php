@@ -1765,9 +1765,9 @@ class iform_report_calendar_summary_2 implements PrebuiltFormInterface {
       if (hostsite_get_cookie('providedParams') && !empty($args['remember_params_report_group'])) {
         $cookieData = json_decode(hostsite_get_cookie('providedParams'), TRUE);
         // guard against a corrupt cookie
-        if (in_array($cookieData) && !empty($cookieData[$args['remember_params_report_group']])) {
+        if (is_array($cookieData) && !empty($cookieData[$args['remember_params_report_group']])) {
           $cookieParams = $cookieData[$args['remember_params_report_group']];
-          if (in_array($cookieParams) && isset($cookieParams[$locationTypeKey]) && self::$siteUrlParams[self::$locationTypeKey]['value'] == '') {
+          if (is_array($cookieParams) && isset($cookieParams[$locationTypeKey]) && self::$siteUrlParams[self::$locationTypeKey]['value'] == '') {
             self::$siteUrlParams[self::$locationTypeKey]['value'] = $cookieParams[$locationTypeKey];
           }
         }
