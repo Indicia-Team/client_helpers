@@ -965,10 +965,11 @@ class helper_base {
           'javascript' => [self::$js_path . "jquery.indiciaMapPanel.js"],
         ],
         'indiciaMapEdit' => [
-          'deps' => ['indiciaMap'],
+          'deps' => ['indiciaMapPanel'],
           'javascript' => [self::$js_path . "jquery.indiciaMap.edit.js"],
         ],
         'postcode_search' => [
+          'deps' => ['indiciaMapPanel'],
           'javascript' => [self::$js_path . "postcode_search.js"],
         ],
         'locationFinder' => [
@@ -1208,15 +1209,19 @@ class helper_base {
         ],
         'georeference_default_geoportal_lu' => [
           'javascript' => [self::$js_path . 'drivers/georeference/geoportal_lu.js'],
+          'deps' => ['indiciaMapPanel'],
         ],
         'georeference_default_nominatim' => [
           'javascript' => [self::$js_path . 'drivers/georeference/nominatim.js'],
+          'deps' => ['indiciaMapPanel'],
         ],
         'georeference_default_google_places' => [
           'javascript' => [self::$js_path . 'drivers/georeference/google_places.js'],
+          'deps' => ['indiciaMapPanel'],
         ],
         'georeference_default_indicia_locations' => [
           'javascript' => [self::$js_path . 'drivers/georeference/indicia_locations.js'],
+          'deps' => ['indiciaMapPanel'],
         ],
         'sref_handlers_2169' => [
           'javascript' => [self::$js_path . 'drivers/sref/2169.js'],
