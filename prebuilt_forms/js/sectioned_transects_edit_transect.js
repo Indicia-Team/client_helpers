@@ -138,17 +138,18 @@ selectSection = function(section, doFeature) {
   $('.section-select li').removeClass('selected');
   $('#section-select-route-'+section).addClass('selected');
   $('#section-select-'+section).addClass('selected');
-  // don't select the feature if this was triggered by selecting the feature (as opposed to the button) otherwise we recurse.
+  // Don't select the feature if this was triggered by selecting the feature
+  // (as opposed to the button) otherwise we recurse.
   if (typeof indiciaData.mapdiv !== "undefined") {
     if (doFeature && typeof indiciaData.selectFeature !== "undefined") {
       $.each(indiciaData.mapdiv.map.editLayer.features, function(idx, feature) {
-        if (feature.attributes.section===section) {
+        if (feature.attributes.section === section && feature.attributes.type === 'boundary') {
           indiciaData.selectFeature.select(feature);
           selectedFeature = feature;
         }
       });
     }
-    if (indiciaData.mapdiv.map.editLayer.selectedFeatures.length===0 && typeof indiciaData.drawFeature !== "undefined") {
+    if (indiciaData.mapdiv.map.editLayer.selectedFeatures.length === 0 && typeof indiciaData.drawFeature !== 'undefined') {
       indiciaData.drawFeature.activate();
     }
     indiciaData.mapdiv.map.editLayer.redraw();
@@ -557,58 +558,128 @@ $(document).ready(function() {
       });
 
       div.map.editLayer.style = null;
-      var baseStyle = {
+      const baseStyle = {
         strokeWidth: 4,
-        strokeDashstyle: "dash"
-      }, defaultRule = new OpenLayers.Rule({
-        symbolizer: $.extend({strokeColor: "#0000FF"}, baseStyle)
-      }), selectedRule = new OpenLayers.Rule({
-        symbolizer: $.extend({strokeColor: "#FFFF00"}, baseStyle)
+        strokeDashstyle: 'dash',
+        labelOutlineColor: 'white',
+        labelOutlineWidth: 3,
+        fontFamily: 'Verdana, Arial, Helvetica,sans-serif',
+        fontColor: '#FF0000',
+      };
+      const defaultRule = new OpenLayers.Rule({
+        symbolizer: $.extend({strokeColor: '#0000FF'}, baseStyle)
       });
-      // restrict the label style to the type boundary lines, as this excludes the virtual edges created during a feature modify
-      var labelRule = new OpenLayers.Rule({
+      const selectedRule = new OpenLayers.Rule({
+        symbolizer: $.extend({strokeColor: '#FFFF00'}, baseStyle)
+      });
+      const labelRule = new OpenLayers.Rule({
         filter: new OpenLayers.Filter.Comparison({
-            type: OpenLayers.Filter.Comparison.EQUAL_TO,
-            property: "type",
-            value: "boundary"
+          type: OpenLayers.Filter.Comparison.EQUAL_TO,
+          property: 'type',
+          value: 'sectionMidpoint'
         }),
-        symbolizer: {
-          label : "${section}",
-          fontSize: "16px",
-          fontFamily: "Verdana, Arial, Helvetica,sans-serif",
-          fontWeight: "bold",
-          fontColor: "#FF0000",
-          labelAlign: "cm"
-        }
+        symbolizer: $.extend({
+          fontSize: '16px',
+          fontWeight: 'bold',
+          label : '${section}',
+          labelAlign: 'cm',
+        }, baseStyle)
       });
-      var defaultStyle = new OpenLayers.Style(), selectedStyle = new OpenLayers.Style();
-
+      const startLabelRule = new OpenLayers.Rule({
+        // Restrict the label style to the type boundary lines, as this
+        // excludes the virtual edges created during a feature modify.
+        filter: new OpenLayers.Filter.Comparison({
+          type: OpenLayers.Filter.Comparison.EQUAL_TO,
+          property: 'type',
+          value: 'sectionStart'
+        }),
+        symbolizer: $.extend(baseStyle, {
+          pointRadius: 5,
+          strokeWidth: 3,
+          strokeDashstyle: 'solid',
+          fontSize: '12px',
+          label : '${section} start',
+          labelAlign: 'l',
+          labelXOffset: 10
+        })
+      });
+      const defaultStyle = new OpenLayers.Style();
+      const selectedStyle = new OpenLayers.Style();
       defaultStyle.addRules([defaultRule, labelRule]);
       selectedStyle.addRules([selectedRule, labelRule]);
+      defaultStyle.addRules([defaultRule, startLabelRule]);
+      selectedStyle.addRules([selectedRule, startLabelRule]);
       div.map.editLayer.styleMap = new OpenLayers.StyleMap({
         'default': defaultStyle,
-        'select':selectedStyle
+        'select': selectedStyle
       });
-      // add the loaded section geoms to the map. Do this before hooking up to the featureadded event.
-      var f = [];
+      let sectionsDrawn = 0;
+      // Add the loaded section geoms to the map. Do this before hooking up to the featureadded event.
       $.each(indiciaData.sections, function(idx, section) {
-        f.push(new OpenLayers.Feature.Vector(OpenLayers.Geometry.fromWKT(section.geom), {section:'S'+idx.substr(1), type:"boundary"}));
+        const sectionFeature = new OpenLayers.Feature.Vector(OpenLayers.Geometry.fromWKT(section.geom), {
+          section: 'S' + idx.substr(1),
+          type: 'boundary'
+        });
+        div.map.editLayer.addFeatures([sectionFeature]);
+        addSectionLabelFeatures(sectionFeature);
+        sectionsDrawn++;
       });
-      div.map.editLayer.addFeatures(f);
-      // select the first section
+
+      // Select the first section and zoom to show the sections.
       confirmSelectSection('S1', true, false);
-      if (f.length>0) {
+      if (sectionsDrawn > 0) {
         div.map.zoomToExtent(div.map.editLayer.getDataExtent());
+      }
+
+      /**
+       * Add features to attach section label and start marker to a section.
+       */
+      function addSectionLabelFeatures(sectionFeature) {
+        let measuredLength = 0;
+        // Measure each edge in a section's line to find the half-way point, so
+        // we can attach the main section label.
+        var geomToCentreLabelOn;
+        for (var i = 0; i < sectionFeature.geometry.components.length - 1; i++) {
+          var thisLineLength = sectionFeature.geometry.components[i].distanceTo(sectionFeature.geometry.components[i + 1]);
+          if (measuredLength + thisLineLength >= sectionFeature.geometry.getLength() / 2) {
+            // Calculate ratio along this line that the half way crossing point is.
+            var ratioAlongThisLine = ((sectionFeature.geometry.getLength() / 2) - measuredLength) / thisLineLength;
+            var x = sectionFeature.geometry.components[i].x + ratioAlongThisLine * (sectionFeature.geometry.components[i + 1].x - sectionFeature.geometry.components[i].x);
+            var y = sectionFeature.geometry.components[i].y + ratioAlongThisLine * (sectionFeature.geometry.components[i + 1].y - sectionFeature.geometry.components[i].y);
+            geomToCentreLabelOn = OpenLayers.Geometry.fromWKT('POINT(' + x + ' ' + y + ')');
+            break;
+          }
+          measuredLength += thisLineLength;
+        }
+        // Main label attached to mid-point geometry.
+        const label = new OpenLayers.Feature.Vector(geomToCentreLabelOn, {
+          section: sectionFeature.attributes.section,
+          type: 'sectionMidpoint'
+        });
+        // Start marker can attach to first component in section geom.
+        const startMarker = new OpenLayers.Feature.Vector(sectionFeature.geometry.components[0], {
+          section: sectionFeature.attributes.section,
+          type: 'sectionStart'
+        });
+        div.map.editLayer.addFeatures([
+          label,
+          startMarker
+        ]);
       }
 
       function featureChangeEvent(evt) {
         // Only handle lines - as things like the sref control also trigger feature change events
         if (evt.feature.geometry.CLASS_NAME==="OpenLayers.Geometry.LineString") {
           var oldSection = [];
-          // Find section attribute if existing, or selected section button if new
-          const current = (typeof evt.feature.attributes.section==="undefined") ? $('#section-select-route li.selected').html() : evt.feature.attributes.section;
-          // label a new feature properly (and remove the undefined that appears)
-          evt.feature.attributes = {section:current, type:"boundary"};
+          // Find section attribute if existing, or selected section button if
+          // new.
+          const current = (typeof evt.feature.attributes.section === 'undefined') ? $('#section-select-route li.selected').html() : evt.feature.attributes.section;
+          // Label a new feature properly (and remove the undefined that
+          // appears).
+          evt.feature.attributes = {
+            section: current,
+            type: 'boundary'
+          };
           $.each(evt.feature.layer.features, function(idx, feature) {
             if (feature.attributes.section===current && feature !== evt.feature) {
               oldSection.push(feature);
@@ -622,9 +693,11 @@ $(document).ready(function() {
               evt.feature.layer.removeFeatures(oldSection, {});
             }
           }
-          // make sure the feature is selected: this ensures that it can be modified straight away
-          // note that selecting or unselecting the feature triggers the afterfeaturemodified event
-          if(selectedFeature != evt.feature) {
+          addSectionLabelFeatures(evt.feature);
+          // Make sure the feature is selected: this ensures that it can be
+          // modified straight away. Note that selecting or unselecting the
+          // feature triggers the afterfeaturemodified event.
+          if (selectedFeature != evt.feature) {
             indiciaData.selectFeature.select(evt.feature);
             selectedFeature = evt.feature;
             div.map.editLayer.redraw();
@@ -715,7 +788,10 @@ $(document).ready(function() {
           );
         }
       }
-      div.map.editLayer.events.on({'featureadded': featureChangeEvent, 'afterfeaturemodified': featureChangeEvent});
+      div.map.editLayer.events.on({
+        'featureadded': featureChangeEvent,
+        'afterfeaturemodified': featureChangeEvent
+      });
     }
   });
 
