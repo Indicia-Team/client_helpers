@@ -51,43 +51,43 @@ loadSectionDetails = function(section) {
         function(data) {
           var attrname;
           $.each(data, function(idx, attr) {
-            attrname = 'locAttr:'+attr.location_attribute_id;
+            attrname = 'locAttr:' + attr.location_attribute_id;
             if (attr.id!==null) {
-              attrname += ':'+attr.id;
+              attrname += ':' + attr.id;
             }
             // special handling for checking radios
-            if ($('input:radio#locAttr\\:'+attr.location_attribute_id+'\\:0').length>0) {
+            if ($('input:radio#locAttr\\:' + attr.location_attribute_id + '\\:0').length>0) {
               var radioidx=0;
               // name the radios with the existing value id
-              while ($('#section-form #locAttr\\:'+attr.location_attribute_id+'\\:'+radioidx).length>0) {
-                $('#section-form #locAttr\\:'+attr.location_attribute_id+'\\:'+radioidx).attr('name',attrname);
+              while ($('#section-form #locAttr\\:' + attr.location_attribute_id + '\\:' + radioidx).length>0) {
+                $('#section-form #locAttr\\:' + attr.location_attribute_id + '\\:' + radioidx).attr('name',attrname);
                 radioidx++;
               }
               radioidx=0;
               // check the correct radio
-              while ($('#section-form #locAttr\\:'+attr.location_attribute_id+'\\:'+radioidx).length>0 &&
-                  $('#section-form #locAttr\\:'+attr.location_attribute_id+'\\:'+radioidx).val()!==attr.raw_value) {
+              while ($('#section-form #locAttr\\:' + attr.location_attribute_id + '\\:' + radioidx).length>0 &&
+                  $('#section-form #locAttr\\:' + attr.location_attribute_id + '\\:' + radioidx).val()!==attr.raw_value) {
                 radioidx++;
               }
-              if ($('#section-form #locAttr\\:'+attr.location_attribute_id+'\\:'+radioidx).length>0 &&
-                  $('#section-form #locAttr\\:'+attr.location_attribute_id+'\\:'+radioidx).val()===attr.raw_value) {
-                $('#section-form #locAttr\\:'+attr.location_attribute_id+'\\:'+radioidx).attr('checked', true);
+              if ($('#section-form #locAttr\\:' + attr.location_attribute_id + '\\:' + radioidx).length>0 &&
+                  $('#section-form #locAttr\\:' + attr.location_attribute_id + '\\:' + radioidx).val()===attr.raw_value) {
+                $('#section-form #locAttr\\:' + attr.location_attribute_id + '\\:' + radioidx).attr('checked', true);
               }
-            } else if ($('#section-form #fld-locAttr\\:'+attr.location_attribute_id).length>0) {
+            } else if ($('#section-form #fld-locAttr\\:' + attr.location_attribute_id).length>0) {
               // a hierarchy select outputs a fld control, which needs a special case
-              $('#section-form #fld-locAttr\\:'+attr.location_attribute_id).val(attr.raw_value);
-              $('#section-form #fld-locAttr\\:'+attr.location_attribute_id).attr('name',attrname);
+              $('#section-form #fld-locAttr\\:' + attr.location_attribute_id).val(attr.raw_value);
+              $('#section-form #fld-locAttr\\:' + attr.location_attribute_id).attr('name',attrname);
               // check the option is already in the drop down.
-              if ($('#section-form #locAttr\\:'+attr.location_attribute_id + " option[value='"+attr.raw_value+"']").length===0) {
+              if ($('#section-form #locAttr\\:' + attr.location_attribute_id + " option[value='"+attr.raw_value+"']").length===0) {
                 // no - we'll just put it in at the top level
                 // @todo - should really now fetch the top level in the hierarchy then select that.
-                $('#section-form #locAttr\\:'+attr.location_attribute_id).append('<option value="' +
+                $('#section-form #locAttr\\:' + attr.location_attribute_id).append('<option value="' +
                     attr.raw_value + '">' + attr.value + '</option>');
               }
-              $('#section-form #locAttr\\:'+attr.location_attribute_id).val(attr.raw_value);
+              $('#section-form #locAttr\\:' + attr.location_attribute_id).val(attr.raw_value);
             } else {
-              $('#section-form #locAttr\\:'+attr.location_attribute_id).val(attr.raw_value);
-              $('#section-form #locAttr\\:'+attr.location_attribute_id).attr('name',attrname);
+              $('#section-form #locAttr\\:' + attr.location_attribute_id).val(attr.raw_value);
+              $('#section-form #locAttr\\:' + attr.location_attribute_id).attr('name',attrname);
             }
           });
         }
@@ -117,7 +117,7 @@ confirmSelectSection = function(section, doFeature, withCancel) {
   }
 
   if(sectionDetailsChanged === true) {
-    var dialog = $('<p>'+indiciaData.sectionChangeConfirm+'</p>').dialog({ title: "Save Data?", buttons: buttons });
+    var dialog = $('<p>' + indiciaData.sectionChangeConfirm + '</p>').dialog({ title: "Save Data?", buttons: buttons });
   } else {
     selectSection(section, doFeature);
   }
@@ -136,19 +136,20 @@ selectSection = function(section, doFeature) {
     }
   }
   $('.section-select li').removeClass('selected');
-  $('#section-select-route-'+section).addClass('selected');
-  $('#section-select-'+section).addClass('selected');
-  // don't select the feature if this was triggered by selecting the feature (as opposed to the button) otherwise we recurse.
+  $('#section-select-route-' + section).addClass('selected');
+  $('#section-select-' + section).addClass('selected');
+  // Don't select the feature if this was triggered by selecting the feature
+  // (as opposed to the button) otherwise we recurse.
   if (typeof indiciaData.mapdiv !== "undefined") {
     if (doFeature && typeof indiciaData.selectFeature !== "undefined") {
       $.each(indiciaData.mapdiv.map.editLayer.features, function(idx, feature) {
-        if (feature.attributes.section===section) {
+        if (feature.attributes.section === section && feature.attributes.type === 'boundary') {
           indiciaData.selectFeature.select(feature);
           selectedFeature = feature;
         }
       });
     }
-    if (indiciaData.mapdiv.map.editLayer.selectedFeatures.length===0 && typeof indiciaData.drawFeature !== "undefined") {
+    if (indiciaData.mapdiv.map.editLayer.selectedFeatures.length === 0 && typeof indiciaData.drawFeature !== 'undefined') {
       indiciaData.drawFeature.activate();
     }
     indiciaData.mapdiv.map.editLayer.redraw();
@@ -177,7 +178,7 @@ syncPost = function(url, data) {
 
 deleteWalks = function(walkIDs) {
   $.each(walkIDs, function(i, walkID) {
-    $('#delete-transect').html('Deleting Walks ' + (Math.round(i/walkIDs.length*100)+'%'));
+    $('#delete-transect').html('Deleting Walks ' + (Math.round(i/walkIDs.length*100) + '%'));
     var data = {
       'sample:id':walkID,
       'sample:deleted':'t',
@@ -200,7 +201,7 @@ deleteLocation = function(ID) {
 // delete a set of sections. Does not re-index the other section codes.
 deleteSections = function(sectionIDs) {
   $.each(sectionIDs, function(i, sectionID) {
-    $('#delete-transect').html('Deleting Sections ' + (Math.round(i/sectionIDs.length*100)+'%'));
+    $('#delete-transect').html('Deleting Sections ' + (Math.round(i/sectionIDs.length*100) + '%'));
     deleteLocation(sectionID);
   });
   $('#delete-transect').html('Deleting Sections 100%');
@@ -248,12 +249,12 @@ deleteSection = function(section) {
   // subsamples are attached to the location and parent, but the location_name is not filled in, so don't need to change that
   // Update the code and the name for the locations.
   // Note that the subsections may not have been saved, so may not exist.
-  var numSections = parseInt($('[name='+indiciaData.numSectionsAttrName.replace(/:/g,'\\:')+']').val(),10);
-  for(var i = parseInt(section.substr(1))+1; i <= numSections; i++){
-    if(typeof indiciaData.sections['S'+i] !== "undefined"){
-      data = {'location:id':indiciaData.sections['S'+i].id,
-                  'location:code':'S'+(i-1),
-                  'location:name':$('#location\\:name').val() + ' - ' + 'S'+(i-1),
+  var numSections = parseInt($('[name=' + indiciaData.numSectionsAttrName.replace(/:/g,'\\:') + ']').val(),10);
+  for(var i = parseInt(section.substr(1)) + 1; i <= numSections; i++){
+    if(typeof indiciaData.sections['S' + i] !== "undefined"){
+      data = {'location:id':indiciaData.sections['S' + i].id,
+                  'location:code':'S' + (i-1),
+                  'location:name':$('#location\\:name').val() + ' - ' + 'S' + (i-1),
                   'website_id':indiciaData.website_id};
       $.post(indiciaData.ajaxFormPostUrl,
             data,
@@ -263,7 +264,7 @@ deleteSection = function(section) {
   }
   // update the attribute value for number of sections.
   data = {'location:id':$('#location\\:id').val(), 'website_id':indiciaData.website_id};
-  data[indiciaData.numSectionsAttrName] = ''+(numSections-1);
+  data[indiciaData.numSectionsAttrName] = '' + (numSections-1);
   // and finally update the total transect length on the transect.
   if (typeof indiciaData.autocalcTransectLengthAttrId != 'undefined' &&
       indiciaData.autocalcTransectLengthAttrId &&
@@ -291,12 +292,12 @@ insertSection = function(section) {
   // subsamples are attached to the location and parent, but the location_name is not filled in, so don't need to change that
   // Update the code and the name for the locations.
   // Note that the subsections may not have been saved, so may not exist.
-  var numSections = parseInt($('[name='+indiciaData.numSectionsAttrName.replace(/:/g,'\\:')+']').val(),10);
-  for(var i = parseInt(section.substr(1))+1; i <= numSections; i++){
-    if(typeof indiciaData.sections['S'+i] !== "undefined"){
-      data = {'location:id':indiciaData.sections['S'+i].id,
-                  'location:code':'S'+(i+1),
-                  'location:name':$('#location\\:name').val() + ' - ' + 'S'+(i+1),
+  var numSections = parseInt($('[name=' + indiciaData.numSectionsAttrName.replace(/:/g,'\\:') + ']').val(),10);
+  for(var i = parseInt(section.substr(1)) + 1; i <= numSections; i++){
+    if(typeof indiciaData.sections['S' + i] !== "undefined"){
+      data = {'location:id':indiciaData.sections['S' + i].id,
+                  'location:code':'S' + (i + 1),
+                  'location:name':$('#location\\:name').val() + ' - ' + 'S' + (i + 1),
                   'website_id':indiciaData.website_id};
       $.post(indiciaData.ajaxFormPostUrl,
             data,
@@ -306,7 +307,7 @@ insertSection = function(section) {
   }
   // update the attribute value for number of sections.
   data = {'location:id':$('#location\\:id').val(), 'website_id':indiciaData.website_id};
-  data[indiciaData.numSectionsAttrName] = ''+(numSections+1);
+  data[indiciaData.numSectionsAttrName] = '' + (numSections + 1);
   // no need to calculate increase in transect length.
   // reload the form when all ajax done.
   $( document ).ajaxStop(function(event){
@@ -331,22 +332,22 @@ reloadSection = function(section) {
   // section comes in like "S1"
   jQuery('.reload-section').addClass('waiting-button');
 
-  numberOfSections = parseInt(jQuery('[name='+indiciaData.numSectionsAttrName.replace(/:/g,'\\:')+']').val(),10) - (parseInt(section.substr(1))+1);
+  numberOfSections = parseInt(jQuery('[name=' + indiciaData.numSectionsAttrName.replace(/:/g,'\\:') + ']').val(),10) - (parseInt(section.substr(1)) + 1);
 
   var dialog = jQuery('<p>Please wait whilst the section is deleted (including the observations recorded against it), and the other sections are renumbered.<br/>' +
 		  			'After the records are updated, the page should reload.<br/>' +
-		  			'<span id="recordCounter">0 of '+(numberOfSections+1)+'</span></p>').dialog({ title: "Outside Site", buttons: { "OK": function() { dialog.dialog('close'); }}});
+		  			'<span id="recordCounter">0 of ' + (numberOfSections + 1) + '</span></p>').dialog({ title: "Outside Site", buttons: { "OK": function() { dialog.dialog('close'); }}});
 		  // plus 1 is for delete
 	if(typeof indiciaData.sections[section] !== "undefined"){
 		jQuery.getJSON(indiciaData.indiciaSvc + "index.php/services/data/sample?location_id=" + indiciaData.sections[section].id +
 	            "&mode=json&view=detail&callback=?&auth_token=" + indiciaData.readAuth.auth_token + "&nonce=" + indiciaData.readAuth.nonce,
 	        function(sdata) {
 				numberOfSamples = sdata.length;
-				jQuery('#recordCounter').html(numberOfRecordsCompleted+' of '+(numberOfSamples+numberOfSections+1));
+				jQuery('#recordCounter').html(numberOfRecordsCompleted + ' of ' + (numberOfSamples+numberOfSections + 1));
 	        	if (typeof sdata.error==="undefined") {
 	        		jQuery.each(sdata, function(idx, sample) {
 	        			numberOfRecordsCompleted++;
-	    				jQuery('#recordCounter').html(numberOfRecordsCompleted+' of '+(numberOfSamples+numberOfSections+1));
+	    				jQuery('#recordCounter').html(numberOfRecordsCompleted + ' of ' + (numberOfSamples+numberOfSections + 1));
 	        			// Would post the delete here
 	        		});
 	        	}
@@ -361,7 +362,7 @@ reloadSection = function(section) {
 
 $(document).ready(function() {
 
-  var doingSelection=false;
+  var doingSelection = false;
 
   $('#section-form').ajaxForm({
     async: false,
@@ -375,7 +376,7 @@ $(document).ready(function() {
       $('#section-form').find('.ui-state-error').removeClass('ui-state-error');
       if(typeof data.errors !== "undefined"){
         for(field in data.errors){
-          var elem = $('#section-form').find('[name='+field+']');
+          var elem = $('#section-form').find('[name=' + field + ']');
           var label = $("<label/>")
 					.attr({"for":  elem[0].id, generated: true})
 					.addClass('inline-error')
@@ -469,8 +470,8 @@ $(document).ready(function() {
             } else {
               // Better way of doing this?
               var current = $('#section-select-route li.selected').html();
-              $('#section-select-route-'+current).addClass('missing');
-              $('#section-select-'+current).addClass('missing');
+              $('#section-select-route-' + current).addClass('missing');
+              $('#section-select-' + current).addClass('missing');
             }
             // recalculate total transect length
             if (typeof indiciaData.autocalcTransectLengthAttrId != 'undefined' &&
@@ -480,7 +481,7 @@ $(document).ready(function() {
             	var transectLen = findTotalSectionLength();
               var ldata = {'location:id':$('#location\\:id').val(), 'website_id':indiciaData.website_id};
             	// load into form.
-              $('#locAttr\\:'+indiciaData.autocalcTransectLengthAttrId).val(transectLen);
+              $('#locAttr\\:' + indiciaData.autocalcTransectLengthAttrId).val(transectLen);
               ldata['locAttr:' + indiciaData.autocalcTransectLengthAttrId] = transectLen;
               $.post(indiciaData.ajaxFormPostUrl, ldata, function(data) {
                 if (typeof(data.error)!=="undefined") {
@@ -525,7 +526,7 @@ $(document).ready(function() {
         }
 
         var div, target = (typeof ui.newPanel==='undefined' ? ui.panel : ui.newPanel[0]);
-        if((div = $('#'+target.id+' #route-map')).length > 0){
+        if((div = $('#' + target.id + ' #route-map')).length > 0){
           copy_over_transects();
           div = div[0];
           // when the route map is initially created it is hidden, so is not rendered, and the calculations of the map size are wrong
@@ -557,58 +558,128 @@ $(document).ready(function() {
       });
 
       div.map.editLayer.style = null;
-      var baseStyle = {
+      const baseStyle = {
         strokeWidth: 4,
-        strokeDashstyle: "dash"
-      }, defaultRule = new OpenLayers.Rule({
-        symbolizer: $.extend({strokeColor: "#0000FF"}, baseStyle)
-      }), selectedRule = new OpenLayers.Rule({
-        symbolizer: $.extend({strokeColor: "#FFFF00"}, baseStyle)
+        strokeDashstyle: 'dash',
+        labelOutlineColor: 'white',
+        labelOutlineWidth: 3,
+        fontFamily: 'Verdana, Arial, Helvetica,sans-serif',
+        fontColor: '#FF0000',
+      };
+      const defaultRule = new OpenLayers.Rule({
+        symbolizer: $.extend({strokeColor: '#0000FF'}, baseStyle)
       });
-      // restrict the label style to the type boundary lines, as this excludes the virtual edges created during a feature modify
-      var labelRule = new OpenLayers.Rule({
+      const selectedRule = new OpenLayers.Rule({
+        symbolizer: $.extend({strokeColor: '#FFFF00'}, baseStyle)
+      });
+      const labelRule = new OpenLayers.Rule({
         filter: new OpenLayers.Filter.Comparison({
-            type: OpenLayers.Filter.Comparison.EQUAL_TO,
-            property: "type",
-            value: "boundary"
+          type: OpenLayers.Filter.Comparison.EQUAL_TO,
+          property: 'type',
+          value: 'sectionMidpoint'
         }),
-        symbolizer: {
-          label : "${section}",
-          fontSize: "16px",
-          fontFamily: "Verdana, Arial, Helvetica,sans-serif",
-          fontWeight: "bold",
-          fontColor: "#FF0000",
-          labelAlign: "cm"
-        }
+        symbolizer: $.extend({
+          fontSize: '16px',
+          fontWeight: 'bold',
+          label : '${section}',
+          labelAlign: 'cm',
+        }, baseStyle)
       });
-      var defaultStyle = new OpenLayers.Style(), selectedStyle = new OpenLayers.Style();
-
+      const startLabelRule = new OpenLayers.Rule({
+        // Restrict the label style to the type boundary lines, as this
+        // excludes the virtual edges created during a feature modify.
+        filter: new OpenLayers.Filter.Comparison({
+          type: OpenLayers.Filter.Comparison.EQUAL_TO,
+          property: 'type',
+          value: 'sectionStart'
+        }),
+        symbolizer: $.extend(baseStyle, {
+          pointRadius: 5,
+          strokeWidth: 3,
+          strokeDashstyle: 'solid',
+          fontSize: '12px',
+          label : '${section} start',
+          labelAlign: 'l',
+          labelXOffset: 10
+        })
+      });
+      const defaultStyle = new OpenLayers.Style();
+      const selectedStyle = new OpenLayers.Style();
       defaultStyle.addRules([defaultRule, labelRule]);
       selectedStyle.addRules([selectedRule, labelRule]);
+      defaultStyle.addRules([defaultRule, startLabelRule]);
+      selectedStyle.addRules([selectedRule, startLabelRule]);
       div.map.editLayer.styleMap = new OpenLayers.StyleMap({
         'default': defaultStyle,
-        'select':selectedStyle
+        'select': selectedStyle
       });
-      // add the loaded section geoms to the map. Do this before hooking up to the featureadded event.
-      var f = [];
+      let sectionsDrawn = 0;
+      // Add the loaded section geoms to the map. Do this before hooking up to the featureadded event.
       $.each(indiciaData.sections, function(idx, section) {
-        f.push(new OpenLayers.Feature.Vector(OpenLayers.Geometry.fromWKT(section.geom), {section:'S'+idx.substr(1), type:"boundary"}));
+        const sectionFeature = new OpenLayers.Feature.Vector(OpenLayers.Geometry.fromWKT(section.geom), {
+          section: 'S' + idx.substr(1),
+          type: 'boundary'
+        });
+        div.map.editLayer.addFeatures([sectionFeature]);
+        addSectionLabelFeatures(sectionFeature);
+        sectionsDrawn++;
       });
-      div.map.editLayer.addFeatures(f);
-      // select the first section
+
+      // Select the first section and zoom to show the sections.
       confirmSelectSection('S1', true, false);
-      if (f.length>0) {
+      if (sectionsDrawn > 0) {
         div.map.zoomToExtent(div.map.editLayer.getDataExtent());
+      }
+
+      /**
+       * Add features to attach section label and start marker to a section.
+       */
+      function addSectionLabelFeatures(sectionFeature) {
+        let measuredLength = 0;
+        // Measure each edge in a section's line to find the half-way point, so
+        // we can attach the main section label.
+        var geomToCentreLabelOn;
+        for (var i = 0; i < sectionFeature.geometry.components.length - 1; i++) {
+          var thisLineLength = sectionFeature.geometry.components[i].distanceTo(sectionFeature.geometry.components[i + 1]);
+          if (measuredLength + thisLineLength >= sectionFeature.geometry.getLength() / 2) {
+            // Calculate ratio along this line that the half way crossing point is.
+            var ratioAlongThisLine = ((sectionFeature.geometry.getLength() / 2) - measuredLength) / thisLineLength;
+            var x = sectionFeature.geometry.components[i].x + ratioAlongThisLine * (sectionFeature.geometry.components[i + 1].x - sectionFeature.geometry.components[i].x);
+            var y = sectionFeature.geometry.components[i].y + ratioAlongThisLine * (sectionFeature.geometry.components[i + 1].y - sectionFeature.geometry.components[i].y);
+            geomToCentreLabelOn = OpenLayers.Geometry.fromWKT('POINT(' + x + ' ' + y + ')');
+            break;
+          }
+          measuredLength += thisLineLength;
+        }
+        // Main label attached to mid-point geometry.
+        const label = new OpenLayers.Feature.Vector(geomToCentreLabelOn, {
+          section: sectionFeature.attributes.section,
+          type: 'sectionMidpoint'
+        });
+        // Start marker can attach to first component in section geom.
+        const startMarker = new OpenLayers.Feature.Vector(sectionFeature.geometry.components[0], {
+          section: sectionFeature.attributes.section,
+          type: 'sectionStart'
+        });
+        div.map.editLayer.addFeatures([
+          label,
+          startMarker
+        ]);
       }
 
       function featureChangeEvent(evt) {
         // Only handle lines - as things like the sref control also trigger feature change events
         if (evt.feature.geometry.CLASS_NAME==="OpenLayers.Geometry.LineString") {
           var oldSection = [];
-          // Find section attribute if existing, or selected section button if new
-          const current = (typeof evt.feature.attributes.section==="undefined") ? $('#section-select-route li.selected').html() : evt.feature.attributes.section;
-          // label a new feature properly (and remove the undefined that appears)
-          evt.feature.attributes = {section:current, type:"boundary"};
+          // Find section attribute if existing, or selected section button if
+          // new.
+          const current = (typeof evt.feature.attributes.section === 'undefined') ? $('#section-select-route li.selected').html() : evt.feature.attributes.section;
+          // Label a new feature properly (and remove the undefined that
+          // appears).
+          evt.feature.attributes = {
+            section: current,
+            type: 'boundary'
+          };
           $.each(evt.feature.layer.features, function(idx, feature) {
             if (feature.attributes.section===current && feature !== evt.feature) {
               oldSection.push(feature);
@@ -622,22 +693,23 @@ $(document).ready(function() {
               evt.feature.layer.removeFeatures(oldSection, {});
             }
           }
-          // make sure the feature is selected: this ensures that it can be modified straight away
-          // note that selecting or unselecting the feature triggers the afterfeaturemodified event
-          if(selectedFeature != evt.feature) {
+          addSectionLabelFeatures(evt.feature);
+          // Make sure the feature is selected: this ensures that it can be
+          // modified straight away. Note that selecting or unselecting the
+          // feature triggers the afterfeaturemodified event.
+          if (selectedFeature != evt.feature) {
             indiciaData.selectFeature.select(evt.feature);
             selectedFeature = evt.feature;
             div.map.editLayer.redraw();
           }
           // post the new or edited section to the db
           var data = {
-            'location:code': current,
-            'location:name': $('#location\\:name').val() + ' - ' + current,
-            'location:parent_id': $('#location\\:id').val(),
-            'location:boundary_geom': evt.feature.geometry.toString(),
-            'location:location_type_id': indiciaData.sectionTypeId,
-            'website_id': indiciaData.website_id,
-            'survey_id': $('[name="survey_id"]').val()
+            'location:code':current,
+            'location:name':$('#location\\:name').val() + ' - ' + current,
+            'location:parent_id':$('#location\\:id').val(),
+            'location:boundary_geom':evt.feature.geometry.toString(),
+            'location:location_type_id':indiciaData.sectionTypeId,
+            'website_id':indiciaData.website_id
           };
           if (typeof indiciaData.sections[current] === 'undefined') {
             // First save, so need to link website.
@@ -661,7 +733,7 @@ $(document).ready(function() {
               } else {
                 pt = jQuery.extend({}, selectedFeature.geometry.components[0]);
               }
-              sref = handler.pointToGridNotation(pt.transform(indiciaData.mapdiv.map.projection, 'EPSG:'+handler.srid), 6);
+              sref = handler.pointToGridNotation(pt.transform(indiciaData.mapdiv.map.projection, 'EPSG:' + handler.srid), 6);
               indiciaData.sections[current].sref = sref;
               indiciaData.sections[current].system = $('#imp-sref-system').val();
             }
@@ -672,7 +744,7 @@ $(document).ready(function() {
           // autocalc section length
           if (indiciaData.autocalcSectionLengthAttrId) {
         	var sectionLen = Math.round(selectedFeature.geometry.clone().transform(indiciaData.mapdiv.map.projection, 'EPSG:27700').getLength());
-            data[$('#locAttr\\:'+indiciaData.autocalcSectionLengthAttrId).attr('name')] = sectionLen;
+            data[$('#locAttr\\:' + indiciaData.autocalcSectionLengthAttrId).attr('name')] = sectionLen;
             indiciaData.sections[current].sectionLen = sectionLen;
           }
           $.post(
@@ -687,8 +759,8 @@ $(document).ready(function() {
                 indiciaData.sections[current].id = data.outer_id;
                 indiciaData.insertingSection = false;
                 $('#section-location-id').val(data.outer_id);
-                $('#section-select-route-'+current).removeClass('missing');
-                $('#section-select-'+current).removeClass('missing');
+                $('#section-select-route-' + current).removeClass('missing');
+                $('#section-select-' + current).removeClass('missing');
                 loadSectionDetails(current); // this will load the newly calculate section length into the form field.
 
                 if (typeof indiciaData.autocalcTransectLengthAttrId != 'undefined' &&
@@ -697,7 +769,7 @@ $(document).ready(function() {
                   // add all sections lengths together
                   var transectLen = findTotalSectionLength();
                   // set the transect length attribute on local form, in case the transect tab is saved
-                  $('#locAttr\\:'+indiciaData.autocalcTransectLengthAttrId).val(transectLen);
+                  $('#locAttr\\:' + indiciaData.autocalcTransectLengthAttrId).val(transectLen);
                   // save the attribute value into the warehouse, in case transect tab is not saved.
                   transectLengthFormData = {
                     'location:id': $('#location\\:id').val(),
@@ -716,15 +788,18 @@ $(document).ready(function() {
           );
         }
       }
-      div.map.editLayer.events.on({'featureadded': featureChangeEvent, 'afterfeaturemodified': featureChangeEvent});
+      div.map.editLayer.events.on({
+        'featureadded': featureChangeEvent,
+        'afterfeaturemodified': featureChangeEvent
+      });
     }
   });
 
   $('#add-user').click(function(evt) {
     var user=($('#cmsUserId')[0]).options[$('#cmsUserId')[0].selectedIndex];
-    if ($('#user-'+user.value).length===0) {
-      $('#user-list').append('<tr><td id="user-'+user.value+'"><input type="hidden" name="locAttr:'+indiciaData.locCmsUsrAttr+'::'+user.value+'" value="'+user.value+'"/>'+
-          user.text+'</td><td><div class="ui-state-default ui-corner-all"><span class="remove-user ui-icon ui-icon-circle-close"></span></div></td></tr>');
+    if ($('#user-' + user.value).length===0) {
+      $('#user-list').append('<tr><td id="user-' + user.value + '"><input type="hidden" name="locAttr:' + indiciaData.locCmsUsrAttr + '::' + user.value + '" value="' + user.value + '"/>' +
+          user.text + '</td><td><div class="ui-state-default ui-corner-all"><span class="remove-user ui-icon ui-icon-circle-close"></span></div></td></tr>');
     }
   });
 
@@ -737,9 +812,9 @@ $(document).ready(function() {
 
   $('#add-branch-coord').click(function(evt) {
     var coordinator=($('#branchCmsUserId')[0]).options[$('#branchCmsUserId')[0].selectedIndex];
-    if ($('#branch-coord-'+coordinator.value).length===0) {
-      $('#branch-coord-list').append('<tr><td id="branch-coord-'+coordinator.value+'">' +
-          '<input type="hidden" name="locAttr:'+indiciaData.locBranchCmsUsrAttr+'::'+coordinator.value+'" value="'+coordinator.value+'"/>'+coordinator.text+'</td>'+
+    if ($('#branch-coord-' + coordinator.value).length===0) {
+      $('#branch-coord-list').append('<tr><td id="branch-coord-' + coordinator.value + '">' +
+          '<input type="hidden" name="locAttr:' + indiciaData.locBranchCmsUsrAttr + '::' + coordinator.value + '" value="' + coordinator.value + '"/>' + coordinator.text + '</td>' +
           '<td><div class="ui-state-default ui-corner-all"><span class="remove-user ui-icon ui-icon-circle-close"></span></div></td></tr>');
     }
   });
