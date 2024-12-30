@@ -1004,7 +1004,7 @@ $('#delete-transect').click(deleteSurvey);
             'id' => 'location',
             'fields' => [
               'id' => $sectionId,
-              'name' => $values['location:name'] . ' - ' . $code,
+              'name' => trim($values['location:name']) . ' - ' . $code,
             ],
           ],
         ];

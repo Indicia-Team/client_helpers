@@ -667,6 +667,19 @@ $(document).ready(function() {
         ]);
       }
 
+      /**
+       * Ensure the section IDs are updated after addition of a new section.
+       *
+       * These are used to ensure name changes are synchronised.
+       */
+      function updateSectionIdsList() {
+        let sectionIds = {};
+        $.each(indiciaData.sections, function(code, obj) {
+          sectionIds[code] = obj.id;
+        });
+        $('[name="section_ids"]').val(JSON.stringify(sectionIds));
+      }
+
       function featureChangeEvent(evt) {
         // Only handle lines - as things like the sref control also trigger feature change events
         if (evt.feature.geometry.CLASS_NAME==="OpenLayers.Geometry.LineString") {
@@ -757,6 +770,7 @@ $(document).ready(function() {
                 // Better way of doing this?
                 // @todo Check not changing if exists
                 indiciaData.sections[current].id = data.outer_id;
+                updateSectionIdsList();
                 indiciaData.insertingSection = false;
                 $('#section-location-id').val(data.outer_id);
                 $('#section-select-route-' + current).removeClass('missing');
