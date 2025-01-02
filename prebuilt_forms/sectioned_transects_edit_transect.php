@@ -299,7 +299,7 @@ class iform_sectioned_transects_edit_transect implements PrebuiltFormInterface {
    *
    * @param array $args
    *   Form configuration array.
-   * @param object $nid
+   * @param int $nid
    *   The Drupal node object's ID.
    * @param array $response
    *   When this form is reloading after saving a submission, contains the
@@ -309,10 +309,11 @@ class iform_sectioned_transects_edit_transect implements PrebuiltFormInterface {
    *   Form HTML.
    */
   public static function get_form($args, $nid, $response=NULL) {
-    $checks=self::check_prerequisites();
+    $checks = self::check_prerequisites();
     $args = self::getArgDefaults($args);
-    if ($checks!==TRUE)
-      return $checks;
+    if ($checks !== TRUE) {
+      return '';
+    }
     iform_load_helpers(['map_helper']);
     data_entry_helper::add_resource('jquery_form');
     data_entry_helper::add_resource('fancybox');
@@ -492,16 +493,6 @@ class iform_sectioned_transects_edit_transect implements PrebuiltFormInterface {
     }
     $r .= '</div>'; // controls
     data_entry_helper::enable_validation('input-form');
-    if (function_exists('drupal_set_breadcrumb')) {
-      $breadcrumb = [];
-      $breadcrumb[] = l(lang::get('Home'), '<front>');
-      $breadcrumb[] = l(lang::get('Sites'), $args['sites_list_path']);
-      if ($settings['locationId'])
-        $breadcrumb[] = data_entry_helper::$entity_to_load['location:name'];
-      else
-        $breadcrumb[] = lang::get('New Site');
-      drupal_set_breadcrumb($breadcrumb);
-    }
     helper_base::addLanguageStringsToJs('sectionedTransectsEditTransect', [
       'duplicateNameWarning' => 'There is already a transect with this name in the system. Please make your transect name unique before saving.',
       'sectionChangeConfirm' => 'Do you wish to save the currently unsaved changes you have made to the Section Details?',
@@ -528,26 +519,17 @@ class iform_sectioned_transects_edit_transect implements PrebuiltFormInterface {
   }
 
   protected static function check_prerequisites() {
-    // check required modules installed
-    if (isset($_POST['enable'])) {
-      module_enable(['iform_ajaxproxy']);
-      hostsite_show_message(lang::get('The Indicia AJAX Proxy module has been enabled.'));
-    }
-    $ok = TRUE;
+    // Check required modules installed.
     if (!hostsite_module_exists('iform_ajaxproxy')) {
        hostsite_show_message('This form must be used in Drupal with the Indicia AJAX Proxy module enabled.');
-       $ok = FALSE;
+       return FALSE;
     }
     if (!function_exists('iform_ajaxproxy_url')) {
       hostsite_show_message(lang::get('The Indicia AJAX Proxy module must be enabled to use this form. This lets the form save verifications to the '.
           'Indicia Warehouse without having to reload the page.'));
-      $r = '<form method="post">';
-      $r .= '<input type="hidden" name="enable" value="t"/>';
-      $r .= '<input type="submit" value="'.lang::get('Enable Indicia AJAX Proxy').'">';
-      $r .= '</form>';
-      return $r;
+      return FALSE;
     }
-    return $ok;
+    return TRUE;
   }
 
   /**
@@ -858,31 +840,16 @@ $('#delete-transect').click(deleteSurvey);
    */
   private static function getUserList() {
     $users = [];
-    // DB handling is different in 7 and 8.
-    if (version_compare(hostsite_get_cms_version(), '7', '<')) {
-      $results = db_query("SELECT uid, name FROM {users} where name <> '' order by name");
-      while ($result = db_fetch_object($results)) {
-        $users[$result->uid] = $result->name;
-      }
-    }
-    elseif (version_compare(hostsite_get_cms_version(), '8', '<')) {
-      $results = db_query("SELECT uid, name FROM {users} where name <> '' order by name");
-      foreach ($results as $result) {
-        $users[$result->uid] = $result->name;
-      }
-    }
-    else {
-      $result = \Drupal::entityTypeManager()
-        ->getStorage('user')
-        ->getQuery()
-        ->sort('name', 'ASC')
-        ->accessCheck(FALSE)
-        ->execute();
-      $userList = \Drupal\user\Entity\User::loadMultiple($result);
-      foreach ($userList as $user) {
-        if ($user->id() != 0) {
-          $users[$user->id()] = $user->getDisplayName();
-        }
+    $result = \Drupal::entityTypeManager()
+      ->getStorage('user')
+      ->getQuery()
+      ->sort('name', 'ASC')
+      ->accessCheck(FALSE)
+      ->execute();
+    $userList = \Drupal\user\Entity\User::loadMultiple($result);
+    foreach ($userList as $user) {
+      if ($user->id() != 0) {
+        $users[$user->id()] = $user->getDisplayName();
       }
     }
     return $users;
