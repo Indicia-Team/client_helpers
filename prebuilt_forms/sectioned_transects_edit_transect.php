@@ -255,6 +255,7 @@ class iform_sectioned_transects_edit_transect implements PrebuiltFormInterface {
           'caption' => 'Check location name is unique',
           'description' => 'If checked, then enforces that the given location name is unique within the list of locations that exist for this website and location type.',
           'type' => 'checkbox',
+          'group' => 'Transects Editor Settings',
           'required' => FALSE,
         ],
       ]
