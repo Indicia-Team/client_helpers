@@ -241,7 +241,14 @@ class iform_sectioned_transects_edit_transect implements PrebuiltFormInterface {
             'type' => 'checkbox',
             'group' => 'Transects Editor Settings',
             'required' => FALSE,
-          )
+          ),
+          [
+            'name' => 'check_location_name_unique',
+            'caption' => 'Check location name is unique',
+            'description' => 'If checked, then enforces that the given location name is unique within the list of locations that exist for this website and location type.',
+            'type' => 'checkbox',
+            'required' => FALSE,
+          ],
         )
     );
   }
@@ -483,21 +490,25 @@ class iform_sectioned_transects_edit_transect implements PrebuiltFormInterface {
         $breadcrumb[] = lang::get('New Site');
       drupal_set_breadcrumb($breadcrumb);
     }
+    helper_base::addLanguageStringsToJs('sectionedTransectsEditTransect', [
+      'duplicateNameWarning' => 'There is already a transect with this name in the system. Please make your transect name unique before saving.',
+      'sectionChangeConfirm' => 'Do you wish to save the currently unsaved changes you have made to the Section Details?',
+      'sectionDeleteConfirm' => 'Are you sure you wish to delete section {1}?',
+      'sectionInsertConfirm' => 'Are you sure you wish to insert a new section after section {1}?',
+    ]);
+
     // Inform JS where to post data to for AJAX form saving.
-    data_entry_helper::$javascript .= 'indiciaData.ajaxFormPostUrl="'.self::$ajaxFormUrl."\";\n";
-    data_entry_helper::$javascript .= 'indiciaData.ajaxFormPostSampleUrl="'.self::$ajaxFormSampleUrl."\";\n";
-    data_entry_helper::$javascript .= "indiciaData.indiciaSvc = '".data_entry_helper::$base_url."';\n";
-    data_entry_helper::$javascript .= "indiciaData.readAuth = {nonce: '".$auth['read']['nonce']."', auth_token: '".$auth['read']['auth_token']."'};\n";
-    data_entry_helper::$javascript .= "indiciaData.currentSection = '';\n";
-    data_entry_helper::$javascript .= "indiciaData.sectionTypeId = '".$settings['locationTypes'][1]['id']."';\n";
-    data_entry_helper::$javascript .= "indiciaData.sectionDeleteConfirm = \"".lang::get('Are you sure you wish to delete section')."\";\n";
-    data_entry_helper::$javascript .= "indiciaData.sectionInsertConfirm = \"".lang::get('Are you sure you wish to insert a new section after section')."\";\n";
-    data_entry_helper::$javascript .= "indiciaData.sectionChangeConfirm = \"".lang::get('Do you wish to save the currently unsaved changes you have made to the Section Details?')."\";\n";
-    data_entry_helper::$javascript .= "indiciaData.numSectionsAttrName = \"".$settings['numSectionsAttr']."\";\n";
-    data_entry_helper::$javascript .= "indiciaData.maxSectionCount = \"".$settings['maxSectionCount']."\";\n";
-    data_entry_helper::$javascript .= "indiciaData.autocalcTransectLengthAttrId = $settings[autocalcTransectLengthAttrId];\n";
-    data_entry_helper::$javascript .= "indiciaData.autocalcSectionLengthAttrId = $settings[autocalcSectionLengthAttrId];\n";
-    data_entry_helper::$javascript .= "indiciaData.defaultSectionGridRef = '".$settings['defaultSectionGridRef']."';\n";
+    data_entry_helper::$indiciaData['ajaxFormPostUrl'] = self::$ajaxFormUrl;
+    data_entry_helper::$indiciaData['ajaxFormPostSampleUrl'] = self::$ajaxFormSampleUrl;
+    data_entry_helper::$indiciaData['indiciaSvc'] = data_entry_helper::$base_url;
+    data_entry_helper::$indiciaData['currentSection'] = '';
+    data_entry_helper::$indiciaData['sectionTypeId'] = $settings['locationTypes'][1]['id'];
+    data_entry_helper::$indiciaData['numSectionsAttrName'] = $settings['numSectionsAttr'];
+    data_entry_helper::$indiciaData['maxSectionCount'] = $settings['maxSectionCount'];
+    data_entry_helper::$indiciaData['autocalcTransectLengthAttrId'] = $settings['autocalcTransectLengthAttrId'];
+    data_entry_helper::$indiciaData['autocalcSectionLengthAttrId'] = $settings['autocalcSectionLengthAttrId'];
+    data_entry_helper::$indiciaData['defaultSectionGridRef'] = $settings['defaultSectionGridRef'];
+    data_entry_helper::$indiciaData['checkLocationNameUnique'] = !empty($args['check_location_name_unique']);
     if ($settings['locationId']) {
       data_entry_helper::$javascript .= "selectSection('S1', true);\n";
     }

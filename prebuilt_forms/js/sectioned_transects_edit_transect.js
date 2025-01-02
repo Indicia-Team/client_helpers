@@ -47,7 +47,7 @@ loadSectionDetails = function(section) {
         $('#section-location-system,#section-location-system-select').val(indiciaData.sections[section].system);
     }
     $.getJSON(indiciaData.indiciaSvc + "index.php/services/data/location_attribute_value?location_id=" + indiciaData.sections[section].id +
-        "&mode=json&view=list&callback=?&auth_token=" + indiciaData.readAuth.auth_token + "&nonce=" + indiciaData.readAuth.nonce,
+        "&mode=json&view=list&callback=?&auth_token=" + indiciaData.read.auth_token + "&nonce=" + indiciaData.read.nonce,
         function(data) {
           var attrname;
           $.each(data, function(idx, attr) {
@@ -117,7 +117,7 @@ confirmSelectSection = function(section, doFeature, withCancel) {
   }
 
   if(sectionDetailsChanged === true) {
-    var dialog = $('<p>' + indiciaData.sectionChangeConfirm + '</p>').dialog({ title: "Save Data?", buttons: buttons });
+    var dialog = $('<p>' + indiciaData.lang.sectionedTransectsEditTransect.sectionChangeConfirm + '</p>').dialog({ title: "Save Data?", buttons: buttons });
   } else {
     selectSection(section, doFeature);
   }
@@ -226,7 +226,7 @@ deleteSection = function(section) {
   // if it has been saved, delete any subsamples lodged against it.
   if(typeof indiciaData.sections[section] !== "undefined"){
     $.getJSON(indiciaData.indiciaSvc + "index.php/services/data/sample?location_id=" + indiciaData.sections[section].id +
-            "&mode=json&view=detail&callback=?&auth_token=" + indiciaData.readAuth.auth_token + "&nonce=" + indiciaData.readAuth.nonce,
+            "&mode=json&view=detail&callback=?&auth_token=" + indiciaData.read.auth_token + "&nonce=" + indiciaData.read.nonce,
       function(sdata) {
         if (typeof sdata.error==="undefined") {
           $.each(sdata, function(idx, sample) {
@@ -340,7 +340,7 @@ reloadSection = function(section) {
 		  // plus 1 is for delete
 	if(typeof indiciaData.sections[section] !== "undefined"){
 		jQuery.getJSON(indiciaData.indiciaSvc + "index.php/services/data/sample?location_id=" + indiciaData.sections[section].id +
-	            "&mode=json&view=detail&callback=?&auth_token=" + indiciaData.readAuth.auth_token + "&nonce=" + indiciaData.readAuth.nonce,
+	            "&mode=json&view=detail&callback=?&auth_token=" + indiciaData.read.auth_token + "&nonce=" + indiciaData.read.nonce,
 	        function(sdata) {
 				numberOfSamples = sdata.length;
 				jQuery('#recordCounter').html(numberOfRecordsCompleted + ' of ' + (numberOfSamples+numberOfSections + 1));
@@ -412,11 +412,13 @@ $(document).ready(function() {
       });
       $('.remove-section').click(function(evt) {
         var current = $('#section-select-route li.selected').html();
-        if(confirm(indiciaData.sectionDeleteConfirm + ' ' + current + '?')) deleteSection(current);
+        if (confirm(indiciaData.lang.sectionedTransectsEditTransect.sectionDeleteConfirm.replace('{1}', current))) {
+          deleteSection(current);
+        }
       });
       $('.insert-section').click(function(evt) {
         var current = $('#section-select-route li.selected').html();
-        if(confirm(indiciaData.sectionInsertConfirm + ' ' + current + '?')) insertSection(current);
+        if(confirm(indiciaData.lang.sectionedTransectsEditTransect.sectionInsertConfirm.replace('{1}', current))) insertSection(current);
       });
       $('.reload-section').click(function(evt) {
           var current = $('#section-select-route li.selected').html();
@@ -832,5 +834,43 @@ $(document).ready(function() {
           '<td><div class="ui-state-default ui-corner-all"><span class="remove-user ui-icon ui-icon-circle-close"></span></div></td></tr>');
     }
   });
+
+  if (indiciaData.checkLocationNameUnique) {
+    // Track location name changes and check for uniqueness.
+    $('#location\\:name').change(function() {
+      // Build report request to find duplicates.
+      const reportApi = indiciaData.warehouseUrl + 'index.php/services/report/requestReport';
+      const report = 'library/locations/find_duplicate_names.xml';
+      const params = {
+        'auth_token': indiciaData.read.auth_token,
+        'nonce': indiciaData.read.nonce,
+        'mode': 'json',
+        'reportSource': 'local',
+        'report': report,
+        'wantCount': 1,
+        'wantRecords': 0,
+        name: $('#location\\:name').val(),
+        location_type_id: $('[name="location\\:location_type_id"]').val(),
+        website_id: indiciaData.website_id
+      };
+      if ($('#location\\:id').val()) {
+        // Existing location, so no need to check self.
+        params.exclude_location_id = $('#location\\:id').val();
+      }
+      $.ajax({
+        'url': reportApi,
+        'data': params,
+        'dataType': 'jsonp',
+      }).done(function(data) {
+        if (data.count > 0) {
+          $('#input-form [type="submit"]').prop('disabled', true);
+          $('<p for="location:name" class="inline-error" id="unique-warning">' + indiciaData.lang.sectionedTransectsEditTransect.duplicateNameWarning + '</p>').insertAfter($('#ctrl-wrap-location-name'));
+        } else {
+          $('#input-form [type="submit"]').prop('disabled', false);
+          $('#unique-warning').remove();
+        }
+      });
+    });
+  }
 });
 }(jQuery));
