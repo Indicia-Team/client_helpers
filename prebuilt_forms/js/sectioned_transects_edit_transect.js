@@ -567,6 +567,7 @@ $(document).ready(function() {
         labelOutlineWidth: 3,
         fontFamily: 'Verdana, Arial, Helvetica,sans-serif',
         fontColor: '#FF0000',
+        fillColor: '#FF0000'
       };
       const defaultRule = new OpenLayers.Rule({
         symbolizer: $.extend({strokeColor: '#0000FF'}, baseStyle)
@@ -587,30 +588,26 @@ $(document).ready(function() {
           labelAlign: 'cm',
         }, baseStyle)
       });
-      const startLabelRule = new OpenLayers.Rule({
+      const sectionEndpointRule = new OpenLayers.Rule({
         // Restrict the label style to the type boundary lines, as this
         // excludes the virtual edges created during a feature modify.
         filter: new OpenLayers.Filter.Comparison({
           type: OpenLayers.Filter.Comparison.EQUAL_TO,
           property: 'type',
-          value: 'sectionStart'
+          value: 'sectionEndpoint'
         }),
-        symbolizer: $.extend(baseStyle, {
-          pointRadius: 5,
-          strokeWidth: 3,
-          strokeDashstyle: 'solid',
-          fontSize: '12px',
-          label : '${section} start',
-          labelAlign: 'l',
-          labelXOffset: 10
-        })
+        symbolizer: {
+          pointRadius: 4,
+          strokeOpacity: 0.4,
+          fillOpacity: 1,
+          strokeWidth: 2,
+          strokeDashstyle: 'solid'
+        }
       });
       const defaultStyle = new OpenLayers.Style();
       const selectedStyle = new OpenLayers.Style();
-      defaultStyle.addRules([defaultRule, labelRule]);
-      selectedStyle.addRules([selectedRule, labelRule]);
-      defaultStyle.addRules([defaultRule, startLabelRule]);
-      selectedStyle.addRules([selectedRule, startLabelRule]);
+      defaultStyle.addRules([defaultRule, labelRule, sectionEndpointRule]);
+      selectedStyle.addRules([selectedRule, labelRule, sectionEndpointRule]);
       div.map.editLayer.styleMap = new OpenLayers.StyleMap({
         'default': defaultStyle,
         'select': selectedStyle
@@ -658,14 +655,20 @@ $(document).ready(function() {
           section: sectionFeature.attributes.section,
           type: 'sectionMidpoint'
         });
-        // Start marker can attach to first component in section geom.
+        // Start marker can attach to first component in section geom. End
+        // marker to the last.
         const startMarker = new OpenLayers.Feature.Vector(sectionFeature.geometry.components[0], {
           section: sectionFeature.attributes.section,
-          type: 'sectionStart'
+          type: 'sectionEndpoint'
+        });
+        const endMarker = new OpenLayers.Feature.Vector(sectionFeature.geometry.components[sectionFeature.geometry.components.length - 1], {
+          section: sectionFeature.attributes.section,
+          type: 'sectionEndpoint'
         });
         div.map.editLayer.addFeatures([
           label,
-          startMarker
+          startMarker,
+          endMarker
         ]);
       }
 
