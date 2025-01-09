@@ -1022,8 +1022,15 @@ indiciaData.indiciaSvc = '".data_entry_helper::$base_url."';\n";
       }
     }
     $sampleMod = submission_builder::build_submission($values, array('model' => 'sample'));
-    if(count($subsampleModels)>0){
-      $sampleMod['subModels'] = $subsampleModels;
+    if(count($subsampleModels)>0) {
+      // $sampleMod['subModels'] could in theory already contain subModels such as sample media.
+      // Merge if already populated.
+      if (!empty($sampleMod['subModels'])) {
+        $sampleMod['subModels'] = array_merge($sampleMod['subModels'], $subsampleModels);
+      }
+      else {
+        $sampleMod['subModels'] = $subsampleModels;
+      }
     }
     return($sampleMod);
   }
