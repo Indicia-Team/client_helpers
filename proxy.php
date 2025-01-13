@@ -1,6 +1,9 @@
 <?php
 
 /**
+ * @file
+ * Proxy for JavaScript cross-domain requests.
+ *
  * Indicia, the OPAL Online Recording Toolkit.
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,8 +21,12 @@
  * @link https://github.com/Indicia-Team/client_helpers
  */
 
-
 $url = $_GET['url'];
+
+// URL must be http.
+if (!preg_match('/^http(s):\/\//', $url)) {
+  die('Invalid URL requested');
+}
 
 if (strpos($url, "?") !== FALSE) {
   $url = $url . "&";
@@ -29,14 +36,13 @@ else {
 }
 
 $found = FALSE;
-$proxyParams = array("url");
 foreach ($_GET as $key => $value) {
-  // Do not copy the url param, only everything after it. Must include blanks in this so that reports know when they
-  // get passed a blank param.
+  // Do not copy the url param, only everything after it. Must include blanks
+  // in this so that reports know when they get passed a blank param.
   if ($found) {
     $value = str_replace('\"', '"', $value);
     $value = urlencode($value);
-    $url = $url . "$key=$value&";
+    $url = "$url$key=$value&";
   }
   if ($key == "url") {
     $found = TRUE;
@@ -78,7 +84,6 @@ if (curl_errno($session)) {
   echo $response;
 }
 else {
-  $offset = strpos($response, "\r\n\r\n");
   $headers = curl_getinfo($session);
 
   if (strpos($headers['content_type'], '/') !== FALSE) {
