@@ -2269,6 +2269,7 @@ HTML;
   <div id="$options[id]-buttons" class="verification-buttons-cntr">
     <div class="selection-buttons-placeholder">
       <div class="all-selected-buttons idc-verificationButtons-row">
+        <button class="$btnClassDefault multi-only multiselect-all">Tick/untick all</button>
         Actions:
         <span class="fas fa-toggle-on toggle fa-2x" title="Toggle additional status levels"></span>
         <button class="verify l1 $btnClassDefault btn-sm" data-status="V" title="$lang[accepted]"><span class="far fa-check-circle status-V"></span></button>
