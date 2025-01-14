@@ -550,7 +550,7 @@ HTML;
 $('#$options[id]').idcCardGallery('bindControls');
 
 JS;
-    return self::getControlContainer('cardGallery', $options, $dataOptions) . <<<HTML
+    return self::getControlContainer('cardGallery', $options, $dataOptions, '<div class="es-card-gallery"></div>') . <<<HTML
 <div id="card-nav-buttons-cntr" style="display: none">
   <div id="card-nav-buttons">
     <button class="nav-prev indicia-button" title="$lang[prev]"><span class="fas fa-caret-left"></span></button>
