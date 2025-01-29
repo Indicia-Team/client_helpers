@@ -1651,6 +1651,7 @@ HTML;
       'clearResultsDoneMessage' => '{1} records had their flags removed.',
       'processComplete' => 'Processing complete',
       'processCompleteMessage' => 'The custom verification rules have been applied. {1} records were checked.',
+      'processNotComplete' => 'Processing was not completed',
     ]);
     $lang = [
       'clearResults' => lang::get('Clear previous results'),
