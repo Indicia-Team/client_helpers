@@ -389,6 +389,8 @@ class import_helper_2 extends helper_base {
    *   List of options passed to the import chunk AJAX proxy. Includes:
    *   * description - Description if saving the import metadata for the first
    *     time.
+   *   * training - training mode flag if saving the import metadata for the
+   *     first time.
    *   * importTemplateTitle - Title if saving the import configuration as a
    *     template for future use.
    *   * forceTemplateOverwrite - Set to true if the template title provided
@@ -404,6 +406,7 @@ class import_helper_2 extends helper_base {
   public static function importChunk($fileName, array $params, array $writeAuth) {
     $params = array_merge([
       'description' => NULL,
+      'training' => FALSE,
       'importTemplateTitle' => NULL,
       'forceTemplateOverwrite' => FALSE,
       'precheck' => FALSE,
@@ -417,6 +420,7 @@ class import_helper_2 extends helper_base {
     if (!empty(trim($params['description'] ?? ''))) {
       $data['save-import-record'] = json_encode([
         'description' => trim($params['description']),
+        'training' => $params['training'] === 'true' || $params['training'] === TRUE,
       ]);
     }
     if (!empty(trim($params['importTemplateTitle'] ?? ''))) {

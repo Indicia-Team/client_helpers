@@ -2422,6 +2422,7 @@ HTML;
       $language = hostsite_get_user_field('language');
       self::$indiciaData['currentLanguage'] = $language;
       self::$indiciaData['currentLanguage3'] = iform_lang_iso_639_2($language);
+      self::$indiciaData['training'] = hostsite_get_user_field('training') === '1';
     }
     // Add language strings used in the indicia.functions.js file.
     self::addLanguageStringsToJs('indiciaFns', [
