@@ -309,7 +309,7 @@ class submission_builder {
         }
       }
     }
-    if (($entity === 'sample' || $entity === 'occurrence') && function_exists('hostsite_get_user_field') && hostsite_get_user_field('training')) {
+    if (in_array($entity, ['sample', 'occurrence', 'import']) && function_exists('hostsite_get_user_field') && hostsite_get_user_field('training')) {
       $sa['fields']['training'] = ['value' => 'on'];
     }
     // UseLocationName is a special flag to indicate that an unmatched location
