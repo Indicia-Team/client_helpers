@@ -2304,11 +2304,36 @@ class ElasticsearchProxyHelper {
       else {
         // Other filter values are rule names.
         $value = str_replace('_', '', $filter['value']);
+        // Map to an alternative version in case the Record Cleaner API being used.
+        $rcValue = self::mapIndiciaRuleTypeToRecordCleaner($value);
         $bool['must'][] = [
-          'term' => ['identification.auto_checks.output.rule_type' => $value],
+          'terms' => ['identification.auto_checks.output.rule_type' => [$value,  $rcValue]],
         ];
       }
     }
+  }
+
+  /**
+   * Maps Indicia rule types to Record Cleaner rule types.
+   *
+   * For use in ES rule filters.
+   *
+   * @param string $indiciaRuleType
+   *   The Indicia rule type.
+   *
+   * @return string
+   *   The corresponding Record Cleaner rule type.
+   */
+  private static function mapIndiciaRuleTypeToRecordCleaner($indiciaRuleType) {
+    // Mappings should be lowercase for ES query to work.
+    $mapping = [
+      'period' => 'recordcleanerperiod',
+      'periodwithinyear' => 'recordcleanerphenology',
+      'identificationdifficulty' => 'recordcleanerdifficulty',
+      'withoutpolygon' => 'recordcleanertenkm',
+    ];
+
+    return $mapping[$indiciaRuleType] ?? $indiciaRuleType;
   }
 
   /**
