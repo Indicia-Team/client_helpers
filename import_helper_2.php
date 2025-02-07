@@ -1226,6 +1226,7 @@ HTML;
         ],
         'cachePerUser' => FALSE,
         'cachetimeout' => 24 * 60 * 60,
+        'sharing' => 'editing',
       ]);
       if (count($attr) > 0) {
         unset($availableFields["$entity:$field"]);
