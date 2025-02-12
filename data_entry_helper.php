@@ -3928,7 +3928,7 @@ RIJS;
         // Find the taxon in our preloaded list data that we want to output for
         // this row.
         $taxonIdx = 0;
-        while ($taxonIdx < count($taxalist) && $taxalist[$taxonIdx]['taxa_taxon_list_id'] != $ttlId) {
+        while ($taxonIdx < count($taxalist) && $taxalist[$taxonIdx]['id'] != $ttlId) {
           $taxonIdx += 1;
         }
         if ($taxonIdx >= count($taxalist)) {
@@ -4039,20 +4039,22 @@ RIJS;
         // If an occurrence does not have its original name available, then an alternative name
         // with same meaning can be used.
         // Switch back to the old taxa_taxon_list_id (but leave the updated name) so we don't fire a redetermination.
-        if (!empty($shiftedTtlIds) && array_key_exists($taxon['taxa_taxon_list_id'], $shiftedTtlIds)) {
-          $taxon['taxa_taxon_list_id'] = $shiftedTtlIds[$taxon['taxa_taxon_list_id']];
+        if (!empty($shiftedTtlIds) && array_key_exists($taxon['id'], $shiftedTtlIds)) {
+          $taxon['id'] = $shiftedTtlIds[$taxon['id']];
+          // For legacy templates.
+          $taxon['taxa_taxon_list_id'] = $taxon['id'];
         }
         if ($options['rowInclusionCheck'] === 'hasData') {
-          $row .= "<input type=\"hidden\" name=\"$fieldname\" id=\"$fieldname\" class=\"presence-checkbox\" value=\"$taxon[taxa_taxon_list_id]\"/>";
+          $row .= "<input type=\"hidden\" name=\"$fieldname\" id=\"$fieldname\" class=\"presence-checkbox\" value=\"$taxon[id]\"/>";
         }
         else {
           // This includes a control to force out a 0 value when the checkbox
           // is unchecked.
           $row .= "<input type=\"hidden\" class=\"scPresence\" name=\"$fieldname\" value=\"0\"/>" .
-            "<input type=\"checkbox\" class=\"scPresence\" name=\"$fieldname\" id=\"$fieldname\" value=\"$taxon[taxa_taxon_list_id]\" $checked />";
+            "<input type=\"checkbox\" class=\"scPresence\" name=\"$fieldname\" id=\"$fieldname\" value=\"$taxon[id]\" $checked />";
         }
         // Store additional useful info about the taxon.
-        $row .= "<input type=\"hidden\" class=\"scTaxaTaxonListId\" name=\"sc:$options[id]-$txIdx:$existingRecordId:ttlId\" value=\"$taxon[taxa_taxon_list_id]\" />";
+        $row .= "<input type=\"hidden\" class=\"scTaxaTaxonListId\" name=\"sc:$options[id]-$txIdx:$existingRecordId:ttlId\" value=\"$taxon[id]\" />";
         $row .= "<input type=\"hidden\" class=\"scTaxonGroupId\" value=\"$taxon[taxon_group_id]\" />";
         // If we have a grid ID attribute, output a hidden.
         if (!empty($options['gridIdAttributeId'])) {
@@ -4488,11 +4490,11 @@ if ($('#$options[id]').parents('.ui-tabs-panel').length) {
    * @return array
    *   Associative array of preferred flag values.
    */
-  private static function getPreferredFlagsByTtlId($taxonListItems) {
+  private static function getPreferredFlagsByTtlId(array $taxonListItems) {
     $preferredFlagsByTtlId = [];
     // Create array where the taxa_taxon_list_id is the key to make processing easier.
     foreach ($taxonListItems as $taxonListRowDetail) {
-      $preferredFlagsByTtlId[$taxonListRowDetail['taxa_taxon_list_id']] = $taxonListRowDetail['preferred'];
+      $preferredFlagsByTtlId[$taxonListRowDetail['id']] = $taxonListRowDetail['preferred'];
     }
     return $preferredFlagsByTtlId;
   }
@@ -4555,12 +4557,12 @@ if ($('#$options[id]').parents('.ui-tabs-panel').length) {
     }
     foreach ($taxonListItems as &$taxonListItem) {
       // If we find a name we are using that is not the original name on the occurrence
-      if (array_key_exists($taxonListItem['taxa_taxon_list_id'], $shiftedTtlIds)) {
+      if (array_key_exists($taxonListItem['id'], $shiftedTtlIds)) {
         // Then we are going make a label displaying the recorded name to the user.
         // To get the name, we need to get the recorded ttl from the $shiftedTtlIds,
         // then simply collect the taxon name from the array containing the taxon details.
         $taxonListItem['previously_recorded_as'] =
-            $fullDetailsRecordedTaxaFormatted[$shiftedTtlIds[$taxonListItem['taxa_taxon_list_id']]]['taxon'];
+            $fullDetailsRecordedTaxaFormatted[$shiftedTtlIds[$taxonListItem['id']]]['taxon'];
       } else {
         $taxonListItem['previously_recorded_as'] = '';
       }
@@ -4795,7 +4797,7 @@ JS;
         'disabled="disabled"' : '';
       // If the taxon has a parent then we need to setup both a child and parent.
       if (!empty($taxon['parent_id'])) {
-        $selectedChildId = $taxon['taxa_taxon_list_id'];
+        $selectedChildId = $taxon['id'];
         $selectedParentId = $taxon['parent']['id'];
         $selectedParentName = $taxon['parent']['taxon'];
       }
@@ -5457,7 +5459,10 @@ JS;
     if (isset($options['listId']) && !empty($options['listId'])) {
       // Apply the species list to the filter.
       $options['extraParams']['taxon_list_id'] = $options['listId'];
+      // Limit the fixed list to non-redundant taxa.
+      $options['extraParams']['allow_data_entry'] = 't';
       $taxalist = self::get_population_data($options);
+      unset($options['extraParams']['allow_data_entry']);
     }
     else {
       $taxalist = [];
@@ -5468,9 +5473,9 @@ JS;
         foreach ($taxalist as $taxon) {
           // Create a list of the rows we are going to add to the grid, with
           // the preloaded species names linked to them.
-          if ($taxonFilter == $taxon['taxa_taxon_list_id']) {
+          if ($taxonFilter == $taxon['id']) {
             $taxonRows[] = [
-              'ttlId' => $taxon['taxa_taxon_list_id'],
+              'ttlId' => $taxon['id'],
               'taxon_meaning_id' => $taxon['taxon_meaning_id'],
             ];
           }
@@ -5481,7 +5486,7 @@ JS;
       foreach ($taxalist as $taxon) {
         // create a list of the rows we are going to add to the grid, with the preloaded species names linked to them
         $taxonRows[] = [
-          'ttlId' => $taxon['taxa_taxon_list_id'],
+          'ttlId' => $taxon['id'],
           'taxon_meaning_id' => $taxon['taxon_meaning_id'],
         ];
       }
@@ -5558,7 +5563,7 @@ JS;
         }
         // Ensure the load of taxa is batched if there are lots to load.
         if (count($taxa_taxon_list_ids) >= 50 && !empty($options['lookupListId'])) {
-          $extraTaxonOptions['extraParams']['taxa_taxon_list_id'] = json_encode($taxa_taxon_list_ids);
+          $extraTaxonOptions['extraParams']['query'] = json_encode(['in' => ['id' => $taxa_taxon_list_ids]]);
           $taxalist = array_merge($taxalist, self::get_population_data($extraTaxonOptions));
           $taxa_taxon_list_ids = [];
         }
@@ -5566,10 +5571,18 @@ JS;
       // Load and append the remaining additional taxa to our list of taxa to
       // use in the grid.
       if (count($taxa_taxon_list_ids) && !empty($options['lookupListId'])) {
-        $extraTaxonOptions['extraParams']['taxa_taxon_list_id'] = json_encode($taxa_taxon_list_ids);
+        $extraTaxonOptions['extraParams']['query'] = json_encode(['in' => ['id' => $taxa_taxon_list_ids]]);
         $taxalist = array_merge($taxalist, self::get_population_data($extraTaxonOptions));
       }
     }
+    // As we now use cache_taxa_taxon_lists to obtain data for initial
+    // population of the grid but used to use cache_taxon_searchterms, provide
+    // aliases to some of the field values so that legacy taxon label templates
+    // still work.
+    array_walk($taxalist, function(&$v) {
+      $v['taxa_taxon_list_id'] = $v['id'];
+      $v['original'] = $v['taxon'];
+    });
     return $taxalist;
   }
 
@@ -5635,7 +5648,7 @@ JS;
       'speciesGridPageLinkUrl' => '',
       'speciesGridPageLinkParameter' => '',
       'speciesGridPageLinkTooltip' => '',
-      'table' => 'taxa_search',
+      'table' => 'cache_taxa_taxon_list',
       // Legacy - occurrenceImages means just local image support.
       'mediaTypes' => !empty($options['occurrenceImages']) && $options['occurrenceImages'] ? ['Image:Local'] : [],
       'mediaLicenceId' => NULL,
