@@ -177,6 +177,14 @@ class ElasticsearchReportHelper {
       'caption' => 'Verification decision source',
       'description' => 'Either M for machine based verification or H for human verification decisions.',
     ],
+    '#identification_classifier_agreement#' => [
+      'caption' => 'Image classifier agreement',
+      'description' => 'If an image classifier was used, does the current determination match the most likely suggestion given by the classifier?',
+    ],
+    '#identification_classifier_suggestion#' => [
+      'caption' => 'Image classifier top suggestion',
+      'description' => 'If an image classifier was used, the name of the most likely suggested taxon.',
+    ],
     'taxon.taxon_name' => [
       'caption' => 'Taxon name',
       'description' => 'Name as recorded for the taxon.',
@@ -714,7 +722,8 @@ JS;
       <div class="data-grid-settings" data-el="$options[id]">
         <h3>$lang[columnConfiguration]</h3>
         <p>$lang[columnConfigIntro]</p>
-        <div>
+        <div class="form-inline">
+          <input class="grid-settings-search form-control" type="text" placeholder="Search" />
           <button class="btn btn-default toggle">$lang[toggleTick]</button>
           <button class="btn btn-default restore">$lang[restoreDefaults]</button>
           <button class="btn btn-default cancel">$lang[cancel]</button>

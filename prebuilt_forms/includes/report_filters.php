@@ -825,6 +825,7 @@ class filter_quality extends FilterBase {
     'certainty',
     'auto',
     'difficulty',
+    'classifier_agreement',
     'photo',
     'licences',
     'media_licences',
@@ -967,12 +968,23 @@ HTML;
       $r .= '<label>' . lang::get('Select records by identification difficulty:') . '</label>';
       $r .= "<div class=\"form-inline\">$s1$s2</div>";
     }
+    if (in_array('classifier_agreement', $ctls)) {
+      $r .= data_entry_helper::select([
+        'label' => lang::get('Select records by agreement with image classifier suggestions'),
+        'fieldname' => 'classifier_agreement',
+        'lookupValues' => [
+          '' => lang::get('Not filtered'),
+          'Y' => lang::get('Only records where the classifier agrees with the current determination'),
+          'N' => lang::get('Only records where the classifier disagrees with the current determination'),
+        ],
+      ]);
+    }
     if (in_array('photo', $ctls)) {
       $r .= data_entry_helper::select([
         'label' => lang::get('Records and photos'),
         'fieldname' => 'has_photos',
         'lookupValues' => [
-          '' => lang::get('-No filter-'),
+          '' => lang::get('Not filtered'),
           '1' => lang::get('With'),
           '0' => lang::get('Without'),
         ],
@@ -2154,6 +2166,8 @@ function report_filters_set_parser_language_strings() {
     'Autochecks_period_within_year' => 'Date range check failed',
     'Autochecks_PC' => 'All custom verification rule checks passed.',
     'Autochecks_without_polygon' => 'Distribution check failed',
+    'ClassifierAgrees' => 'Image classifier agrees with the current determination',
+    'ClassifierDisagrees' => 'Image classifier disagrees with the current determination',
     'IdentificationDifficulty' => 'Identification difficulty',
     'HasPhotos' => 'Only include records which have photos',
     'HasNoPhotos' => 'Exclude records which have photos',

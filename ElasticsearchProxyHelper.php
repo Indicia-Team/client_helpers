@@ -1428,6 +1428,7 @@ class ElasticsearchProxyHelper {
     self::applyUserFiltersQuality($definition, $bool);
     self::applyUserFiltersCertainty($definition, $bool);
     self::applyUserFiltersIdentificationDifficulty($definition, $bool);
+    self::applyUserFiltersIdentificationClassifierAgreement($definition, $bool);
     self::applyUserFiltersRuleChecks($definition, $bool);
     self::applyUserFiltersHasPhotos($definition, $bool);
     self::applyUserFiltersLicences($definition, $bool, $readAuth);
@@ -2252,6 +2253,38 @@ class ElasticsearchProxyHelper {
       else {
         $bool['must'][] = ['term' => ['identification.auto_checks.identification_difficulty' => $filter['value']]];
       }
+    }
+  }
+
+  /**
+   * Converts classifier_agreement filter to an ES filter.
+   *
+   * @param array $definition
+   *   Definition loaded for the Indicia filter.
+   * @param array $bool
+   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   */
+  private static function applyUserFiltersIdentificationClassifierAgreement(array $definition, array &$bool) {
+    $filter = self::getDefinitionFilter($definition, ['classifier_agreement']);
+    if (!empty($filter)) {
+      switch (strtolower($filter['value'])) {
+        case 'y':
+          $chosenFilter = TRUE;
+          break;
+
+        case 'n':
+          $chosenFilter = FALSE;
+          break;
+
+        default:
+          // Filter not recognised so ignored.
+          return;
+      }
+      $bool['must'][] = [
+        'term' => [
+          'identification.classifier.current_determination.classifier_chosen' => $chosenFilter,
+        ],
+      ];
     }
   }
 
