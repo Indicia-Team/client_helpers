@@ -369,6 +369,15 @@ class ElasticsearchReportHelper {
         }
         helper_base::$indiciaData['esVersion'] = (int) $config['es']['version'];
         helper_base::$indiciaData['esScope'] = $config['es']['scope'];
+        helper_base::addLanguageStringsToJs('classifier', [
+          'classifierSuggestions' => 'Classifier suggestions',
+          'imageClassifierAgrees' => 'Image classifier agrees with identification provided.',
+          'imageClassifierDisagrees' => 'Image classifier conflicts with identification provided.',
+          'noClassifierInfoAvailable' => 'No image classifier information is available for this record.',
+          'suggestionClassifierChosen' => 'Classifier chosen',
+          'suggestionHumanChosen' => 'Human chosen',
+          'suggestionNotChosen' => 'Suggestion not chosen',
+        ]);
         self::$proxyEnabled = TRUE;
       }
       catch (Exception $e) {
@@ -1532,41 +1541,53 @@ JS;
       'redetermination' => 'Redetermination',
       'verificationDecision' => 'Verification',
     ]);
+    $lang = [
+      'comments' => lang::get('Comments'),
+      'details' => lang::get('Details'),
+      'imageClassifierInfo' => lang::get('Image classifier info.'),
+      'recorderExperience' => lang::get('Recorder experience'),
+      'selectRoToViewDetails' => lang::get('Select a row to view details'),
+    ];
     // Record details pane must be initialised after the control acting as row
     // data source, so it can hook to events.
     helper_base::$javascript .= <<<JS
-$('#$options[id]').idcRecordDetailsPane();
+      $('#$options[id]').idcRecordDetailsPane();
 
-JS;
+    JS;
     helper_base::$late_javascript .= <<<JS
-$('#$options[id]').idcRecordDetailsPane('bindControls');
+      $('#$options[id]').idcRecordDetailsPane('bindControls');
 
-JS;
+    JS;
     $r = <<<HTML
-<div class="idc-control idc-recordDetails" data-idc-class="idcRecordDetails" id="$options[id]" data-idc-config="$dataOptions">
-  <div class="empty-message alert alert-info"><span class="fas fa-info-circle fa-2x"></span>Select a row to view details</div>
-  <div class="tabs" style="display: none">
-    <ul>
-      <li><a href="#tabs-details">Details</a></li>
-      <li><a href="#tabs-comments">Comments</a></li>
-      <li><a href="#tabs-recorder-experience">Recorder experience</a></li>
-    </ul>
-    <div id="tabs-details">
-      <div class="record-details">
+      <div class="idc-control idc-recordDetails" data-idc-class="idcRecordDetails" id="$options[id]" data-idc-config="$dataOptions">
+        <div class="empty-message alert alert-info"><span class="fas fa-info-circle fa-2x"></span>$lang[selectRoToViewDetails]</div>
+        <div class="tabs" style="display: none">
+          <ul>
+            <li><a href="#tabs-details">$lang[details]</a></li>
+            <li><a href="#tabs-comments">$lang[comments]</a></li>
+            <li><a href="#tabs-recorder-experience">$lang[recorderExperience]</a></li>
+            <li id="classifier-info-tab"><a href="#tabs-classifier-info">$lang[imageClassifierInfo]</a></li>
+          </ul>
+          <div id="tabs-details">
+            <div class="record-details">
+            </div>
+          </div>
+          <div id="tabs-comments">
+            <div class="comments">
+            </div>
+          </div>
+          <div id="tabs-recorder-experience">
+            <div class="recorder-experience"></div>
+            <div class="loading-spinner" style="display: none"><div>Loading...</div></div>
+          </div>
+          <div id="tabs-classifier-info">
+            <div class="classifier-info">
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
-    <div id="tabs-comments">
-      <div class="comments">
-      </div>
-    </div>
-    <div id="tabs-recorder-experience">
-      <div class="recorder-experience"></div>
-      <div class="loading-spinner" style="display: none"><div>Loading...</div></div>
-    </div>
-  </div>
-</div>
 
-HTML;
+    HTML;
     return $r;
   }
 

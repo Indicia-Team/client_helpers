@@ -2407,6 +2407,7 @@ HTML;
     self::$indiciaData['protocol'] = $protocol;
     // Add some useful templates.
     self::$indiciaData['templates'] = array_merge([
+      'messageBox' => $indicia_templates['messageBox'],
       'warningBox' => $indicia_templates['warningBox'],
       'buttonDefaultClass' => $indicia_templates['buttonDefaultClass'],
       'buttonHighlightedClass' => $indicia_templates['buttonHighlightedClass'],
