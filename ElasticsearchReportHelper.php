@@ -371,6 +371,7 @@ class ElasticsearchReportHelper {
         helper_base::$indiciaData['esScope'] = $config['es']['scope'];
         helper_base::addLanguageStringsToJs('classifier', [
           'classifierSuggestions' => 'Classifier suggestions',
+          'clickToRedetermineAs' => 'Click to redetermine the record as this suggestion.',
           'imageClassifierAgrees' => 'Image classifier agrees with identification provided.',
           'imageClassifierDisagrees' => 'Image classifier conflicts with identification provided.',
           'noClassifierInfoAvailable' => 'No image classifier information is available for this record.',
@@ -555,6 +556,7 @@ HTML;
       'class',
       'includeFieldCaptions',
       'includeFullScreenTool',
+      'includeImageClassifierInfo',
       'includeMultiSelectTool',
       'includePager',
       'includeSortTool',
@@ -1530,6 +1532,7 @@ JS;
       'allowRedetermination',
       'exploreUrl',
       'extraLocationTypes',
+      'includeImageClassifierInfo',
       'locationTypes',
       'showSelectedRow',
     ], TRUE);
