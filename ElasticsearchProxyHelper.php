@@ -2269,12 +2269,23 @@ class ElasticsearchProxyHelper {
     if (!empty($filter)) {
       switch (strtolower($filter['value'])) {
         case 'y':
+          // Any record where a classifier used and agrees with the det.
           $chosenFilter = TRUE;
           break;
 
         case 'n':
+          // Any record where a classifier used and disagrees with the det.
           $chosenFilter = FALSE;
           break;
+
+        case 'c':
+          // Any record where a classifier used.
+          $bool['must'][] = [
+            'exists' => [
+              'field' => 'identification.classifier',
+            ],
+          ];
+          return;
 
         default:
           // Filter not recognised so ignored.

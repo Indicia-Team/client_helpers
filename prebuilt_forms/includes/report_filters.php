@@ -976,6 +976,7 @@ HTML;
           '' => lang::get('Not filtered'),
           'Y' => lang::get('Only records where the classifier agrees with the current determination'),
           'N' => lang::get('Only records where the classifier disagrees with the current determination'),
+          'C' => lang::get('Any record where a classifier was used'),
         ],
       ]);
     }
@@ -2168,6 +2169,7 @@ function report_filters_set_parser_language_strings() {
     'Autochecks_without_polygon' => 'Distribution check failed',
     'ClassifierAgrees' => 'Image classifier agrees with the current determination',
     'ClassifierDisagrees' => 'Image classifier disagrees with the current determination',
+    'ClassifierUsed' => 'Any record where an image classifier was used',
     'IdentificationDifficulty' => 'Identification difficulty',
     'HasPhotos' => 'Only include records which have photos',
     'HasNoPhotos' => 'Exclude records which have photos',
