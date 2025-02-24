@@ -7182,10 +7182,13 @@ JS;
   }
 
   /**
-   * Internal function to output either a select or listbox control depending on the templates
-   * passed.
-   * @param array $options Control options array
-   * @access private
+   * Output a select or listbox control.
+   *
+   * Internal function to output either a select or listbox control depending
+   * on the templates passed.
+   *
+   * @param array $options
+   *   Control options array.
    */
   private static function select_or_listbox($options) {
     global $indicia_templates;
@@ -7220,17 +7223,24 @@ JS;
   }
 
   /**
-   * When populating a list control (select, listbox, checkbox or radio group), use either the
-   * table, captionfield and valuefield to build the list of values as an array, or if lookupValues
-   * is in the options array use that instead of making a database call.
+   * Retreive the list items from the database for a control's options.
+   *
+   * When populating a list control (select, listbox, checkbox or radio group),
+   * use either the table, captionfield and valuefield to build the list of
+   * values as an array, or if lookupValues is in the options array use that
+   * instead of making a database call.
+   *
    * @param array $options
    *   Options array for the control. If translate set to TRUE then option
    *   captions are run through translation.
-   * @param string $selectedItemAttribute Name of the attribute that should be set in each list element if the item is selected/checked. For
-   * option elements, pass "selected", for checkbox inputs, pass "checked".
-   * @return array Associative array of the lookup values and templated list items.
+   * @param string $selectedItemAttribute Name of the attribute that should be
+   *   set in each list element if the item is selected/checked. For option
+   *   elements, pass "selected", for checkbox inputs, pass "checked".
+   *
+   * @return array
+   *   Associative array of the lookup values and templated list items.
    */
-  private static function getListItemsFromOptions($options, $selectedItemAttribute) {
+  private static function getListItemsFromOptions(array $options, $selectedItemAttribute) {
     global $indicia_templates;
     if (!isset($options['lookupValues']) && empty($options['report']) && empty($options['table'])) {
       $name = empty($options['id']) ? $options['fieldname'] : $options['id'];
