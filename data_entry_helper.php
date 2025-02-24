@@ -7216,10 +7216,7 @@ JS;
       }
       $options['items'] .= implode((isset($options['optionSeparator']) ? $options['optionSeparator'] : "\n"), $lookupItems);
     }
-    if (isset($response['error']))
-      return $response['error'];
-    else
-      return self::apply_template($options['template'], $options);
+    return self::apply_template($options['template'], $options);
   }
 
   /**
