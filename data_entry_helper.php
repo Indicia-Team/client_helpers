@@ -7210,7 +7210,7 @@ JS;
         $options['blankText'] = lang::get($options['blankText']);
         $options['items'] = str_replace(
             ['{value}', '{caption}', '{selected}', '{attribute_list}'],
-            ['', htmlentities($options['blankText'], ENT_COMPAT, "UTF-8")],
+            ['', htmlentities($options['blankText'] ?? '', ENT_COMPAT, "UTF-8")],
             $indicia_templates[$options['itemTemplate']]
           ) . (isset($options['optionSeparator']) ? $options['optionSeparator'] : "\n");
       }
