@@ -533,13 +533,6 @@ class iform_species_details_2 extends BaseDynamicDetails {
         \Drupal::messenger()->addMessage('There is no external key corresponding to this taxon.');
         return parent::get_form_html($args, $auth, $attributes);
       }
-      
-      // In Drupal 9, markup cannot be used in page title, so remove em tags.
-      $repArray = ['<em>', '</em>'];
-      $preferredClean = str_replace($repArray, '', self::$preferred);
-      $titleName = isset(self::$defaultCommonName) ? self::$defaultCommonName . " ($preferredClean)" : $preferredClean;
-      hostsite_set_page_title(lang::get('Summary details for {1}', $titleName));
-
       // Make the preferred and default common name available via
       // hidden controls.
       $taxonNames = '<input type="hidden" id="species-details-preferred-name" value="' . self::$preferred . '"/>';
@@ -563,6 +556,17 @@ class iform_species_details_2 extends BaseDynamicDetails {
       ], [
         'readAuth' => $auth['read'],
       ]), FALSE) : '';
+
+      // Markup cannot be used in page title, so remove em tags.
+      $repArray = ['<em>', '</em>'];
+      $preferredClean = str_replace($repArray, '', self::$preferred);
+      $titleName = isset(self::$defaultCommonName) ? self::$defaultCommonName . " ($preferredClean)" : $preferredClean;
+      if (isset(helper_base::$indiciaData['group'])) {
+        hostsite_set_page_title(lang::get('Summary of {1} records of {2}', helper_base::$indiciaData['group']['title'], $titleName));
+      }
+      else {
+        hostsite_set_page_title(lang::get('Summary details for {1}', $titleName));
+      }
 
       return $taxonNames . $esFilter . $groupIntegration . parent::get_form_html($args, $auth, $attributes);
     }

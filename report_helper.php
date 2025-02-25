@@ -332,7 +332,8 @@ HTML;
   * for each row. If set, then the &lt;tr&gt; elements have their id attributes
   * set to row + this field value, e.g. row37. This is used to allow
   * synchronisation of the selected table rows with a report map output showing
-  * the same data. Also used to obtain media data (caption and licence info)
+  * the same data - the map should also have its @rowId property set to the
+  * same field. Also used to obtain media data (caption and licence info)
   * when showing a popup after clicking on a media thumbnail.
   * </li>
   * <li><b>entity</b>

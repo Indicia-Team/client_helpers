@@ -177,6 +177,14 @@ class ElasticsearchReportHelper {
       'caption' => 'Verification decision source',
       'description' => 'Either M for machine based verification or H for human verification decisions.',
     ],
+    '#identification_classifier_agreement#' => [
+      'caption' => 'Image classifier agreement',
+      'description' => 'If an image classifier was used, does the current determination match the most likely suggestion given by the classifier?',
+    ],
+    '#identification_classifier_suggestion#' => [
+      'caption' => 'Image classifier top suggestion',
+      'description' => 'If an image classifier was used, the name of the most likely suggested taxon.',
+    ],
     'taxon.taxon_name' => [
       'caption' => 'Taxon name',
       'description' => 'Name as recorded for the taxon.',
@@ -269,6 +277,18 @@ class ElasticsearchReportHelper {
       'caption' => 'Parent location ID',
       'description' => 'Unique ID of the parent location associated with the record where the record was linked to a defined location which has a hierarchical parent.',
     ],
+    'location.supplied_higher_geography.id' => [
+      'caption' => 'Supplied region location ID',
+      'description' => 'The ID of the location which defines the region of the record, selected by the user when inputting the record. For example, this may be the ID of a Vice County location.',
+    ],
+    'location.supplied_higher_geography.code' => [
+      'caption' => 'Supplied region location code',
+      'description' => 'The code of the location which defines the region of the record, selected by the user when inputting the record. For example, this may be the code of a Vice County location.',
+    ],
+    'location.supplied_higher_geography.name' => [
+      'caption' => 'Supplied region location name',
+      'description' => 'The name of the location which defines the region of the record, selected by the user when inputting the record. For example, this may be the name of a Vice County location.',
+    ],
     'location.output_sref' => [
       'caption' => 'Display spatial reference',
       'description' => 'Spatial reference in the recommended local grid system.',
@@ -344,8 +364,21 @@ class ElasticsearchReportHelper {
         helper_base::$indiciaData['esSources'] = [];
         helper_base::$indiciaData['esMappings'] = $mappings;
         helper_base::$indiciaData['gridMappingFields'] = self::MAPPING_FIELDS;
+        foreach (helper_base::$indiciaData['gridMappingFields'] as &$field) {
+          $field['caption'] = lang::get($field['caption']);
+        }
         helper_base::$indiciaData['esVersion'] = (int) $config['es']['version'];
         helper_base::$indiciaData['esScope'] = $config['es']['scope'];
+        helper_base::addLanguageStringsToJs('classifier', [
+          'classifierSuggestions' => 'Classifier suggestions',
+          'clickToRedetermineAs' => 'Click to redetermine the record as this suggestion.',
+          'imageClassifierAgrees' => 'Image classifier agrees with identification provided.',
+          'imageClassifierDisagrees' => 'Image classifier conflicts with identification provided.',
+          'noClassifierInfoAvailable' => 'No image classifier information is available for this record.',
+          'suggestionClassifierChosen' => 'Classifier chosen',
+          'suggestionHumanChosen' => 'Human chosen',
+          'suggestionNotChosen' => 'Suggestion not chosen',
+        ]);
         self::$proxyEnabled = TRUE;
       }
       catch (Exception $e) {
@@ -523,6 +556,7 @@ HTML;
       'class',
       'includeFieldCaptions',
       'includeFullScreenTool',
+      'includeImageClassifierInfo',
       'includeMultiSelectTool',
       'includePager',
       'includeSortTool',
@@ -535,7 +569,7 @@ HTML;
 $('#$options[id]').idcCardGallery('bindControls');
 
 JS;
-    return self::getControlContainer('cardGallery', $options, $dataOptions) . <<<HTML
+    return self::getControlContainer('cardGallery', $options, $dataOptions, '<div class="es-card-gallery"></div>') . <<<HTML
 <div id="card-nav-buttons-cntr" style="display: none">
   <div id="card-nav-buttons">
     <button class="nav-prev indicia-button" title="$lang[prev]"><span class="fas fa-caret-left"></span></button>
@@ -628,6 +662,9 @@ HTML;
         if (!isset($columnDef['caption'])) {
           $columnDef['caption'] = '';
         }
+        else {
+          $columnDef['caption'] = lang::get($columnDef['caption']);
+        }
         // To aid transition from older code versions, auto-enable the media
         // special field handling. This may be removed in future.
         if ($columnDef['field'] === 'occurrence.media') {
@@ -696,7 +733,8 @@ JS;
       <div class="data-grid-settings" data-el="$options[id]">
         <h3>$lang[columnConfiguration]</h3>
         <p>$lang[columnConfigIntro]</p>
-        <div>
+        <div class="form-inline">
+          <input class="grid-settings-search form-control" type="text" placeholder="Search" />
           <button class="btn btn-default toggle">$lang[toggleTick]</button>
           <button class="btn btn-default restore">$lang[restoreDefaults]</button>
           <button class="btn btn-default cancel">$lang[cancel]</button>
@@ -898,6 +936,7 @@ HTML;
         return '';
       }
       $group = $groups[0];
+      helper_base::$indiciaData['group'] = $group;
       // Apply filtering by group.
       $groupFilterInfo = [
         'id' => $group['id'],
@@ -1493,6 +1532,7 @@ JS;
       'allowRedetermination',
       'exploreUrl',
       'extraLocationTypes',
+      'includeImageClassifierInfo',
       'locationTypes',
       'showSelectedRow',
     ], TRUE);
@@ -1504,41 +1544,53 @@ JS;
       'redetermination' => 'Redetermination',
       'verificationDecision' => 'Verification',
     ]);
+    $lang = [
+      'comments' => lang::get('Comments'),
+      'details' => lang::get('Details'),
+      'imageClassifierInfo' => lang::get('Image classifier info.'),
+      'recorderExperience' => lang::get('Recorder experience'),
+      'selectRoToViewDetails' => lang::get('Select a row to view details'),
+    ];
     // Record details pane must be initialised after the control acting as row
     // data source, so it can hook to events.
     helper_base::$javascript .= <<<JS
-$('#$options[id]').idcRecordDetailsPane();
+      $('#$options[id]').idcRecordDetailsPane();
 
-JS;
+    JS;
     helper_base::$late_javascript .= <<<JS
-$('#$options[id]').idcRecordDetailsPane('bindControls');
+      $('#$options[id]').idcRecordDetailsPane('bindControls');
 
-JS;
+    JS;
     $r = <<<HTML
-<div class="idc-control idc-recordDetails" data-idc-class="idcRecordDetails" id="$options[id]" data-idc-config="$dataOptions">
-  <div class="empty-message alert alert-info"><span class="fas fa-info-circle fa-2x"></span>Select a row to view details</div>
-  <div class="tabs" style="display: none">
-    <ul>
-      <li><a href="#tabs-details">Details</a></li>
-      <li><a href="#tabs-comments">Comments</a></li>
-      <li><a href="#tabs-recorder-experience">Recorder experience</a></li>
-    </ul>
-    <div id="tabs-details">
-      <div class="record-details">
+      <div class="idc-control idc-recordDetails" data-idc-class="idcRecordDetails" id="$options[id]" data-idc-config="$dataOptions">
+        <div class="empty-message alert alert-info"><span class="fas fa-info-circle fa-2x"></span>$lang[selectRoToViewDetails]</div>
+        <div class="tabs" style="display: none">
+          <ul>
+            <li><a href="#tabs-details">$lang[details]</a></li>
+            <li><a href="#tabs-comments">$lang[comments]</a></li>
+            <li><a href="#tabs-recorder-experience">$lang[recorderExperience]</a></li>
+            <li id="classifier-info-tab"><a href="#tabs-classifier-info">$lang[imageClassifierInfo]</a></li>
+          </ul>
+          <div id="tabs-details">
+            <div class="record-details">
+            </div>
+          </div>
+          <div id="tabs-comments">
+            <div class="comments">
+            </div>
+          </div>
+          <div id="tabs-recorder-experience">
+            <div class="recorder-experience"></div>
+            <div class="loading-spinner" style="display: none"><div>Loading...</div></div>
+          </div>
+          <div id="tabs-classifier-info">
+            <div class="classifier-info">
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
-    <div id="tabs-comments">
-      <div class="comments">
-      </div>
-    </div>
-    <div id="tabs-recorder-experience">
-      <div class="recorder-experience"></div>
-      <div class="loading-spinner" style="display: none"><div>Loading...</div></div>
-    </div>
-  </div>
-</div>
 
-HTML;
+    HTML;
     return $r;
   }
 
@@ -1632,6 +1684,7 @@ HTML;
       'clearResultsDoneMessage' => '{1} records had their flags removed.',
       'processComplete' => 'Processing complete',
       'processCompleteMessage' => 'The custom verification rules have been applied. {1} records were checked.',
+      'processNotComplete' => 'Processing was not completed',
     ]);
     $lang = [
       'clearResults' => lang::get('Clear previous results'),
@@ -2250,6 +2303,7 @@ HTML;
   <div id="$options[id]-buttons" class="verification-buttons-cntr">
     <div class="selection-buttons-placeholder">
       <div class="all-selected-buttons idc-verificationButtons-row">
+        <button class="$btnClassDefault multi-only multiselect-all">Tick/untick all</button>
         Actions:
         <span class="fas fa-toggle-on toggle fa-2x" title="Toggle additional status levels"></span>
         <button class="verify l1 $btnClassDefault btn-sm" data-status="V" title="$lang[accepted]"><span class="far fa-check-circle status-V"></span></button>

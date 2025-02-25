@@ -6058,6 +6058,9 @@ HTML;
    *   sub-sample.
    * * **location_name** - set to true to add a location name input control for
    *   each sub-sample.
+   * * **hideMapWhenEditingSubsample** - defaults to true. Set to false to
+   *   leave the map visible whilst a sub-sample's create/update form is
+   *   visible.
    */
   public static function multiple_places_species_checklist($options) {
     if (empty($options['spatialSystem'])) {
@@ -6074,6 +6077,7 @@ HTML;
       'id' => "species-grid-$code",
       'buttonsId' => "species-grid-buttons-$code",
       'speciesControlToUseSubSamples' => TRUE,
+      'hideMapWhenEditingSubsample' => TRUE,
       'base_url' => self::$base_url,
       'samplePhotos' => FALSE,
     ], $options);
@@ -7178,10 +7182,13 @@ JS;
   }
 
   /**
-   * Internal function to output either a select or listbox control depending on the templates
-   * passed.
-   * @param array $options Control options array
-   * @access private
+   * Output a select or listbox control.
+   *
+   * Internal function to output either a select or listbox control depending
+   * on the templates passed.
+   *
+   * @param array $options
+   *   Control options array.
    */
   private static function select_or_listbox($options) {
     global $indicia_templates;
@@ -7206,30 +7213,34 @@ JS;
         $options['blankText'] = lang::get($options['blankText']);
         $options['items'] = str_replace(
             ['{value}', '{caption}', '{selected}', '{attribute_list}'],
-            ['', htmlentities($options['blankText'], ENT_COMPAT, "UTF-8")],
+            ['', htmlentities($options['blankText'] ?? '', ENT_COMPAT, "UTF-8")],
             $indicia_templates[$options['itemTemplate']]
           ) . (isset($options['optionSeparator']) ? $options['optionSeparator'] : "\n");
       }
       $options['items'] .= implode((isset($options['optionSeparator']) ? $options['optionSeparator'] : "\n"), $lookupItems);
     }
-    if (isset($response['error']))
-      return $response['error'];
-    else
-      return self::apply_template($options['template'], $options);
+    return self::apply_template($options['template'], $options);
   }
 
   /**
-   * When populating a list control (select, listbox, checkbox or radio group), use either the
-   * table, captionfield and valuefield to build the list of values as an array, or if lookupValues
-   * is in the options array use that instead of making a database call.
+   * Retreive the list items from the database for a control's options.
+   *
+   * When populating a list control (select, listbox, checkbox or radio group),
+   * use either the table, captionfield and valuefield to build the list of
+   * values as an array, or if lookupValues is in the options array use that
+   * instead of making a database call.
+   *
    * @param array $options
    *   Options array for the control. If translate set to TRUE then option
    *   captions are run through translation.
-   * @param string $selectedItemAttribute Name of the attribute that should be set in each list element if the item is selected/checked. For
-   * option elements, pass "selected", for checkbox inputs, pass "checked".
-   * @return array Associative array of the lookup values and templated list items.
+   * @param string $selectedItemAttribute Name of the attribute that should be
+   *   set in each list element if the item is selected/checked. For option
+   *   elements, pass "selected", for checkbox inputs, pass "checked".
+   *
+   * @return array
+   *   Associative array of the lookup values and templated list items.
    */
-  private static function getListItemsFromOptions($options, $selectedItemAttribute) {
+  private static function getListItemsFromOptions(array $options, $selectedItemAttribute) {
     global $indicia_templates;
     if (!isset($options['lookupValues']) && empty($options['report']) && empty($options['table'])) {
       $name = empty($options['id']) ? $options['fieldname'] : $options['id'];
@@ -8116,17 +8127,22 @@ if (errors$uniq.length>0) {
       $occs = $sampleRecord['occurrences'];
       unset($sampleRecord['occurrences']);
       $sampleRecord['website_id'] = $website_id;
-      // copy essentials down to each subSample
-      if (!empty($arr['survey_id']))
-        $sampleRecord['survey_id'] = $arr['survey_id'];
-      if (!empty($arr['sample:date']))
-        $sampleRecord['date'] = $arr['sample:date'];
-      if (!empty($arr['sample:entered_sref_system']))
-        $sampleRecord['entered_sref_system'] = $arr['sample:entered_sref_system'];
-      if (!empty($arr['sample:location_name']) && empty($sampleRecord['location_name']))
-        $sampleRecord['location_name'] = $arr['sample:location_name'];
-      if (!empty($arr['sample:input_form']))
-        $sampleRecord['input_form'] = $arr['sample:input_form'];
+      // Copy missing essentials down from parent to each subSample.
+      if (!empty($arr['survey_id'])) {
+        $sampleRecord['sample:survey_id'] = $arr['survey_id'];
+      }
+      if (!empty($arr['sample:date'])) {
+        $sampleRecord['sample:date'] = $arr['sample:date'];
+      }
+      if (!empty($arr['sample:entered_sref_system'])) {
+        $sampleRecord['sample:entered_sref_system'] = $arr['sample:entered_sref_system'];
+      }
+      if (!empty($arr['sample:location_name']) && empty($sampleRecord['sample:location_name'])) {
+        $sampleRecord['sample:location_name'] = $arr['sample:location_name'];
+      }
+      if (!empty($arr['sample:input_form'])) {
+        $sampleRecord['sample:input_form'] = $arr['sample:input_form'];
+      }
       $subSample = submission_builder::wrap_with_images($sampleRecord, 'sample');
       // Add the subSample/soccurrences in as subModels without overwriting others such as a sample image
       if (array_key_exists('subModels', $subSample)) {

@@ -1428,6 +1428,7 @@ class ElasticsearchProxyHelper {
     self::applyUserFiltersQuality($definition, $bool);
     self::applyUserFiltersCertainty($definition, $bool);
     self::applyUserFiltersIdentificationDifficulty($definition, $bool);
+    self::applyUserFiltersIdentificationClassifierAgreement($definition, $bool);
     self::applyUserFiltersRuleChecks($definition, $bool);
     self::applyUserFiltersHasPhotos($definition, $bool);
     self::applyUserFiltersLicences($definition, $bool, $readAuth);
@@ -2256,6 +2257,49 @@ class ElasticsearchProxyHelper {
   }
 
   /**
+   * Converts classifier_agreement filter to an ES filter.
+   *
+   * @param array $definition
+   *   Definition loaded for the Indicia filter.
+   * @param array $bool
+   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   */
+  private static function applyUserFiltersIdentificationClassifierAgreement(array $definition, array &$bool) {
+    $filter = self::getDefinitionFilter($definition, ['classifier_agreement']);
+    if (!empty($filter)) {
+      switch (strtolower($filter['value'])) {
+        case 'y':
+          // Any record where a classifier used and agrees with the det.
+          $chosenFilter = TRUE;
+          break;
+
+        case 'n':
+          // Any record where a classifier used and disagrees with the det.
+          $chosenFilter = FALSE;
+          break;
+
+        case 'c':
+          // Any record where a classifier used.
+          $bool['must'][] = [
+            'exists' => [
+              'field' => 'identification.classifier',
+            ],
+          ];
+          return;
+
+        default:
+          // Filter not recognised so ignored.
+          return;
+      }
+      $bool['must'][] = [
+        'term' => [
+          'identification.classifier.current_determination.classifier_chosen' => $chosenFilter,
+        ],
+      ];
+    }
+  }
+
+  /**
    * Converts an Indicia filter definition rule checks filter to an ES query.
    *
    * Handles both automatic checks and a user's custom verification rule flags.
@@ -2304,11 +2348,36 @@ class ElasticsearchProxyHelper {
       else {
         // Other filter values are rule names.
         $value = str_replace('_', '', $filter['value']);
+        // Map to an alternative version in case the Record Cleaner API being used.
+        $rcValue = self::mapIndiciaRuleTypeToRecordCleaner($value);
         $bool['must'][] = [
-          'term' => ['identification.auto_checks.output.rule_type' => $value],
+          'terms' => ['identification.auto_checks.output.rule_type' => [$value,  $rcValue]],
         ];
       }
     }
+  }
+
+  /**
+   * Maps Indicia rule types to Record Cleaner rule types.
+   *
+   * For use in ES rule filters.
+   *
+   * @param string $indiciaRuleType
+   *   The Indicia rule type.
+   *
+   * @return string
+   *   The corresponding Record Cleaner rule type.
+   */
+  private static function mapIndiciaRuleTypeToRecordCleaner($indiciaRuleType) {
+    // Mappings should be lowercase for ES query to work.
+    $mapping = [
+      'period' => 'recordcleanerperiod',
+      'periodwithinyear' => 'recordcleanerphenology',
+      'identificationdifficulty' => 'recordcleanerdifficulty',
+      'withoutpolygon' => 'recordcleanertenkm',
+    ];
+
+    return $mapping[$indiciaRuleType] ?? $indiciaRuleType;
   }
 
   /**

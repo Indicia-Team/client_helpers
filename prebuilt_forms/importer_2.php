@@ -237,13 +237,18 @@ TXT;
         'required' => FALSE,
       ],
       [
-        'name' => 'allowImportReverse',
-        'caption' => 'Allow import reversals?',
-        'description' => 'Provides an option for a user to select one of their previous imports to reverse, i.e. remove the added records.',
+        'name' => 'importReverse',
+        'caption' => 'Import reversals',
+        'description' => 'Form mode with respect to allowing import reversal. If reversal is allowed, the previous import can either be selected via a control on the form or by passing a URL parameter called "reverse_import_guid".',
         'group' => 'Import reverser',
-        'type' => 'boolean',
-        'default' => FALSE,
-        'required' => FALSE,
+        'type' => 'select',
+        'options' => [
+          'import' => 'Only importing new files allowed',
+          'import_and_reverse' => 'Allow either importing new files or reversal of previous imports allowed',
+          'reverse' => 'Only reversal of previous imports allowed',
+        ],
+        'default' => 'import',
+        'required' => TRUE,
       ],
     ];
     $requestParams = $readAuth + ['entity' => 'occurrence'];

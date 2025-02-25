@@ -683,7 +683,11 @@ STRUCT;
         'extraParams' => $params,
       ]);
       if (!count($samples)) {
-        hostsite_show_message(lang::get('The sample cannot be found.', 'warning'));
+        $msg = lang::get('The sample cannot be found.');
+        if (hostsite_get_user_field('training')) {
+          $msg .= ' ' . lang::get('If the link you followed was to a non-training sample you will need to turn off training mode on your user account profile then try again.');
+        }
+        hostsite_show_message($msg, 'warning');
         throw new exception('');
       }
       self::$sample = $samples[0];

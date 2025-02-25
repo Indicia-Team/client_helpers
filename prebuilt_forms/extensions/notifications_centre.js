@@ -60,12 +60,12 @@ var createNotifications;
   //javascript to support removal of a single message.
   remove_message = function(id) {
     data = {
-      'website_id':indiciaData.website_id,
+      'website_id': indiciaData.website_id,
       'notification:id': id,
-      'acknowledged':'t'
+      'acknowledged': 't'
     };
     $.post(
-      indiciaData.notification_proxy_url+'&user_id=$user_id',
+      `${indiciaData.notification_proxy_url}&user_id=${indiciaData.user_id}`,
       data,
       function (response) {
         if (typeof response.success==='undefined') {
@@ -75,7 +75,6 @@ var createNotifications;
           //reload grid after notification is deleted
           indiciaData.reports.notifications_notifications_grid.grid_notifications_notifications_grid.removeRecordsFromPage(1);
           indiciaData.reports.notifications_notifications_grid.grid_notifications_notifications_grid.reload(true);
-//          $('tr#row'+id).remove();
         }
       },
       'json'

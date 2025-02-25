@@ -53,11 +53,11 @@ class iform_sectioned_transects_edit_transect implements PrebuiltFormInterface {
    *   The definition of the form.
    */
   public static function get_sectioned_transects_edit_transect_definition() {
-    return array(
+    return [
       'title' => 'Transect editor',
       'category' => 'Sectioned Transects',
       'description' => 'Form for adding or editing the site details on a transect which has a number of sub-sections.'
-    );
+    ];
   }
 
   /**
@@ -74,175 +74,191 @@ class iform_sectioned_transects_edit_transect implements PrebuiltFormInterface {
    */
   public static function get_parameters() {
     return array_merge(
-        iform_map_get_map_parameters(),
-        iform_map_get_georef_parameters(),
-        array(
-          array(
-            'name' => 'managerPermission',
-            'caption' => 'Drupal Permission for Manager mode',
-            'description' => 'Enter the Drupal permission name to be used to determine if this user is a manager. Entering this will allow the identified users to delete or modify the site even there are walks (samples) associated with it.',
-            'type' => 'string',
-            'required' => FALSE,
-          ),
-          array(
-            'name' => 'branch_assignment_permission',
-            'label' => 'Drupal Permission name for Branch Manager',
-            'type' => 'string',
-            'description' => 'If you do not want to use the Branch Manager functionality, leave this blank. '.
-                             'Otherwise, specify the name of a permission to which when assigned to a user determines that the user is a branch manager. '.
-                             '<br />Requires a single-value Branch CMS User ID integer attribute on the locations.',
-            'required' => FALSE,
-            'group' => 'Transects Editor Settings',
-          ), array(
-            'name' => 'maxSectionCount',
-            'label' => 'Max. Section Count',
-            'type' => 'int',
-            'description' => 'The maximum number of sections a user is allowed to create for a transect site. If there is no user selectable attribute to set the number of sections, then the number is fixed at this value and the user will not be able to delete sections.',
-            'group' => 'Transects Editor Settings',
-          ), array(
-            'name' => 'survey_id',
-            'caption' => 'Survey',
-            'description' => 'The survey that data will be posted into.',
-            'type' => 'select',
-            'table' => 'survey',
-            'captionField' => 'title',
-            'valueField' => 'id',
-            'siteSpecific' => TRUE,
-          ), array(
-            'name' => 'sites_list_path',
-            'caption' => 'Site list page path',
-            'description' => 'Enter the path to the page which the site list is on.',
-            'type' => 'string',
-            'required' => TRUE,
-            'group' => 'Transects Editor Settings',
-          ), array(
-            'name' => 'transect_type_term',
-            'caption' => 'Transect type term',
-            'description' => 'Select the term used for transect location types.',
-            'type' => 'select',
-            'table' => 'termlists_term',
-            'captionField' => 'term',
-            'valueField' => 'term',
-            'extraParams' => array('termlist_external_key' => 'indicia:location_types'),
-            'required' => TRUE,
-            'group' => 'Transects Editor Settings',
-          ), array(
-            'name' => 'section_type_term',
-            'caption' => 'Section type term',
-            'description' => 'Select the term used for section location types.',
-            'type' => 'select',
-            'table' => 'termlists_term',
-            'captionField' => 'term',
-            'valueField' => 'term',
-            'extraParams' => array('termlist_external_key' => 'indicia:location_types'),
-            'required' => TRUE,
-            'group' => 'Transects Editor Settings',
-          ), array(
-            'name' => 'bottom_blocks',
-            'caption' => 'Form blocks to place at bottom',
-            'description' => 'A list of the blocks which need to be placed at the bottom of the form, below the map.',
-            'type' => 'textarea',
-            'group' => 'Transects Editor Settings',
-            'siteSpecific' => TRUE,
-            'required' => FALSE,
-          ), array(
-            'name' => 'site_help',
-            'caption' => 'Site Help Text',
-            'description' => 'Help text to be placed on the Site tab, before the attributes.',
-            'type' => 'textarea',
-            'group' => 'Transects Editor Settings',
-            'required' => FALSE,
-          ), array(
-            'name' => 'spatial_systems',
-            'caption' => 'Allowed Spatial Ref Systems',
-            'description' => 'List of allowable spatial reference systems, comma separated. Use the spatial ref system code (e.g. OSGB or the EPSG code number such as 4326).',
-            'type' => 'text_input',
-            'group' => 'Other Map Settings',
-          ),
-          array(
-            'name' => 'maxPrecision',
-            'caption' => 'Max Sref Precision',
-            'description' => 'The maximum precision to be applied when determining the SREF. Leave blank to not set.',
-            'type' => 'int',
-            'required' => FALSE,
-            'group' => 'Other Map Settings',
-          ),
-          array(
-            'name' => 'minPrecision',
-            'caption' => 'Min Sref Precision',
-            'description' => 'The minimum precision to be applied when determining the SREF. Leave blank to not set.',
-            'type' => 'int',
-            'required' => FALSE,
-            'group' => 'Other Map Settings',
-          ),
-          array(
-            'name' => 'route_map_height',
-            'caption' => 'Your Route Map Height (px)',
-            'description' => 'Height in pixels of the map.',
-            'type' => 'int',
-            'group' => 'Initial Map View',
-            'default' => 600,
-          ),
-          array(
-            'name' => 'route_map_buffer',
-            'caption' => 'Your Route Map Buffer',
-            'description' => 'Factor to multiple the size of the site by, in order to generate a margin around the site when displaying the site on the Your Route tab.',
-            'type' => 'string',
-            'group' => 'Initial Map View',
-            'default' => '0.1',
-          ),
-          array(
-            'name' => 'allow_user_assignment',
-            'label' => 'Allow users to be assigned to transects',
-            'type' => 'boolean',
-            'description' => 'Can administrators link users to transects that they are allowed to record at? Requires a multi-value CMS User ID attribute on the locations.',
-            'default' => TRUE,
-            'required' => FALSE,
-            'group' => 'Transects Editor Settings',
-          ),
-          [
-            'name' => 'autocalc_transect_length_attr_id',
-            'caption' => 'Location attribute to autocalc transect length',
-            'description' => 'Location attribute that stores the total transect length: summed from the lengths of the individual sections.',
-            'type' => 'select',
-            'table' => 'location_attribute',
-            'valueField' => 'id',
-            'captionField' => 'caption',
-            'group' => 'Transects Editor Settings',
-            'required' => FALSE,
+      iform_map_get_map_parameters(),
+      iform_map_get_georef_parameters(),
+      [
+        [
+          'name' => 'managerPermission',
+          'caption' => 'Drupal Permission for Manager mode',
+          'description' => 'Enter the Drupal permission name to be used to determine if this user is a manager. Entering this will allow the identified users to delete or modify the site even there are walks (samples) associated with it.',
+          'type' => 'string',
+          'required' => FALSE,
+        ],
+        [
+          'name' => 'branch_assignment_permission',
+          'label' => 'Drupal Permission name for Branch Manager',
+          'type' => 'string',
+          'description' => 'If you do not want to use the Branch Manager functionality, leave this blank. '.
+                            'Otherwise, specify the name of a permission to which when assigned to a user determines that the user is a branch manager. '.
+                            '<br />Requires a single-value Branch CMS User ID integer attribute on the locations.',
+          'required' => FALSE,
+          'group' => 'Transects Editor Settings',
+        ],
+        [
+          'name' => 'maxSectionCount',
+          'label' => 'Max. Section Count',
+          'type' => 'int',
+          'description' => 'The maximum number of sections a user is allowed to create for a transect site. If there is no user selectable attribute to set the number of sections, then the number is fixed at this value and the user will not be able to delete sections.',
+          'group' => 'Transects Editor Settings',
+        ],
+        [
+          'name' => 'survey_id',
+          'caption' => 'Survey',
+          'description' => 'The survey that data will be posted into.',
+          'type' => 'select',
+          'table' => 'survey',
+          'captionField' => 'title',
+          'valueField' => 'id',
+          'siteSpecific' => TRUE,
+        ],
+        [
+          'name' => 'sites_list_path',
+          'caption' => 'Site list page path',
+          'description' => 'Enter the path to the page which the site list is on.',
+          'type' => 'string',
+          'required' => TRUE,
+          'group' => 'Transects Editor Settings',
+        ],
+        [
+          'name' => 'transect_type_term',
+          'caption' => 'Transect type term',
+          'description' => 'Select the term used for transect location types.',
+          'type' => 'select',
+          'table' => 'termlists_term',
+          'captionField' => 'term',
+          'valueField' => 'term',
+          'extraParams' => ['termlist_external_key' => 'indicia:location_types'],
+          'required' => TRUE,
+          'group' => 'Transects Editor Settings',
+        ],
+        [
+          'name' => 'section_type_term',
+          'caption' => 'Section type term',
+          'description' => 'Select the term used for section location types.',
+          'type' => 'select',
+          'table' => 'termlists_term',
+          'captionField' => 'term',
+          'valueField' => 'term',
+          'extraParams' => ['termlist_external_key' => 'indicia:location_types'],
+          'required' => TRUE,
+          'group' => 'Transects Editor Settings',
+        ],
+        [
+          'name' => 'bottom_blocks',
+          'caption' => 'Form blocks to place at bottom',
+          'description' => 'A list of the blocks which need to be placed at the bottom of the form, below the map.',
+          'type' => 'textarea',
+          'group' => 'Transects Editor Settings',
+          'siteSpecific' => TRUE,
+          'required' => FALSE,
+        ],
+        [
+          'name' => 'site_help',
+          'caption' => 'Site Help Text',
+          'description' => 'Help text to be placed on the Site tab, before the attributes.',
+          'type' => 'textarea',
+          'group' => 'Transects Editor Settings',
+          'required' => FALSE,
+        ],
+        [
+          'name' => 'spatial_systems',
+          'caption' => 'Allowed Spatial Ref Systems',
+          'description' => 'List of allowable spatial reference systems, comma separated. Use the spatial ref system code (e.g. OSGB or the EPSG code number such as 4326).',
+          'type' => 'text_input',
+          'group' => 'Other Map Settings',
+        ],
+        [
+          'name' => 'maxPrecision',
+          'caption' => 'Max Sref Precision',
+          'description' => 'The maximum precision to be applied when determining the SREF. Leave blank to not set.',
+          'type' => 'int',
+          'required' => FALSE,
+          'group' => 'Other Map Settings',
+        ],
+        [
+          'name' => 'minPrecision',
+          'caption' => 'Min Sref Precision',
+          'description' => 'The minimum precision to be applied when determining the SREF. Leave blank to not set.',
+          'type' => 'int',
+          'required' => FALSE,
+          'group' => 'Other Map Settings',
+        ],
+        [
+          'name' => 'route_map_height',
+          'caption' => 'Your Route Map Height (px)',
+          'description' => 'Height in pixels of the map.',
+          'type' => 'int',
+          'group' => 'Initial Map View',
+          'default' => 600,
+        ],
+        [
+          'name' => 'route_map_buffer',
+          'caption' => 'Your Route Map Buffer',
+          'description' => 'Factor to multiple the size of the site by, in order to generate a margin around the site when displaying the site on the Your Route tab.',
+          'type' => 'string',
+          'group' => 'Initial Map View',
+          'default' => '0.1',
+        ],
+        [
+          'name' => 'allow_user_assignment',
+          'label' => 'Allow users to be assigned to transects',
+          'type' => 'boolean',
+          'description' => 'Can administrators link users to transects that they are allowed to record at? Requires a multi-value CMS User ID attribute on the locations.',
+          'default' => TRUE,
+          'required' => FALSE,
+          'group' => 'Transects Editor Settings',
+        ],
+        [
+          'name' => 'autocalc_transect_length_attr_id',
+          'caption' => 'Location attribute to autocalc transect length',
+          'description' => 'Location attribute that stores the total transect length: summed from the lengths of the individual sections.',
+          'type' => 'select',
+          'table' => 'location_attribute',
+          'valueField' => 'id',
+          'captionField' => 'caption',
+          'group' => 'Transects Editor Settings',
+          'required' => FALSE,
+        ],
+        [
+          'name' => 'autocalc_section_length_attr_id',
+          'caption' => 'Location attribute to autocalc section length',
+          'description' => 'Location attribute that stores the section length, if you want it to be autocalculated from the geometry.',
+          'type' => 'select',
+          'table' => 'location_attribute',
+          'valueField' => 'id',
+          'captionField' => 'caption',
+          'group' => 'Transects Editor Settings',
+          'required' => FALSE,
+        ],
+        [
+          'name' => 'default_section_grid_ref',
+          'caption' => 'Default grid ref for a section?',
+          'description' => 'Default the grid ref for a section to what?',
+          'type' => 'select',
+          'lookupValues' => [
+            'parent' => 'Same as parent transect',
+            'sectionCentroid100' => '100m grid square covering the centroid of the sect,ion',
+            'sectionStart100' => '100m grid square covering the start of the section'
           ],
-          array(
-            'name' => 'autocalc_section_length_attr_id',
-            'caption' => 'Location attribute to autocalc section length',
-            'description' => 'Location attribute that stores the section length, if you want it to be autocalculated from the geometry.',
-            'type' => 'select',
-            'table' => 'location_attribute',
-            'valueField' => 'id',
-            'captionField' => 'caption',
-            'group' => 'Transects Editor Settings',
-            'required' => FALSE,
-          ),
-          array(
-            'name' => 'default_section_grid_ref',
-            'caption' => 'Default grid ref for a section?',
-            'description' => 'Default the grid ref for a section to what?',
-            'type' => 'select',
-            'lookupValues' => array(
-              'parent' => 'Same as parent transect',
-              'sectionCentroid100' => '100m grid square covering the centroid of the sect,ion',
-              'sectionStart100' => '100m grid square covering the start of the section'
-            ),
-            'default' => 'parent',
-            'group' => 'Transects Editor Settings',
-          ), array(
-            'name' => 'always_show_section_details',
-            'caption' => 'Always show the Section Details tab',
-            'description' => 'If ticked, then the section details tab is shown allowing the section map reference to be set, even when there are no attributes.',
-            'type' => 'checkbox',
-            'group' => 'Transects Editor Settings',
-            'required' => FALSE,
-          )
-        )
+          'default' => 'parent',
+          'group' => 'Transects Editor Settings',
+        ], [
+          'name' => 'always_show_section_details',
+          'caption' => 'Always show the Section Details tab',
+          'description' => 'If ticked, then the section details tab is shown allowing the section map reference to be set, even when there are no attributes.',
+          'type' => 'checkbox',
+          'group' => 'Transects Editor Settings',
+          'required' => FALSE,
+        ],
+        [
+          'name' => 'check_location_name_unique',
+          'caption' => 'Check location name is unique',
+          'description' => 'If checked, then enforces that the given location name is unique within the list of locations that exist for this website and location type.',
+          'type' => 'checkbox',
+          'group' => 'Transects Editor Settings',
+          'required' => FALSE,
+        ],
+      ]
     );
   }
   /**
@@ -281,20 +297,25 @@ class iform_sectioned_transects_edit_transect implements PrebuiltFormInterface {
 
   /**
    * Return the generated form output.
-   * @param array $args List of parameter values passed through to the form depending on how the form has been configured.
-   * This array always contains a value for language.
-   * @param object $nid The Drupal node object's ID.
-   * @param array $response When this form is reloading after saving a submission, contains the response from the service call.
-   * Note this does not apply when redirecting (in this case the details of the saved object are in the $_GET data).
-   * @return Form HTML.
-   * @todo: Implement this method
+   *
+   * @param array $args
+   *   Form configuration array.
+   * @param int $nid
+   *   The Drupal node object's ID.
+   * @param array $response
+   *   When this form is reloading after saving a submission, contains the
+   *   response from the service call.
+   *
+   * @return string
+   *   Form HTML.
    */
   public static function get_form($args, $nid, $response=NULL) {
-    $checks=self::check_prerequisites();
+    $checks = self::check_prerequisites();
     $args = self::getArgDefaults($args);
-    if ($checks!==TRUE)
-      return $checks;
-    iform_load_helpers(array('map_helper'));
+    if ($checks !== TRUE) {
+      return '';
+    }
+    iform_load_helpers(['map_helper']);
     data_entry_helper::add_resource('jquery_form');
     data_entry_helper::add_resource('fancybox');
     self::$ajaxFormUrl = iform_ajaxproxy_url($nid, 'location');
@@ -317,7 +338,7 @@ class iform_sectioned_transects_edit_transect implements PrebuiltFormInterface {
       // The extra check on this for branch managers is done later.
       'canAllocUser' => $args['managerPermission'] == "" || hostsite_user_has_permission($args['managerPermission']),
     ];
-    $settings['attributes'] = data_entry_helper::getAttributes(array(
+    $settings['attributes'] = data_entry_helper::getAttributes([
         'id' => $settings['locationId'],
         'valuetable' => 'location_attribute_value',
         'attrtable' => 'location_attribute',
@@ -327,8 +348,8 @@ class iform_sectioned_transects_edit_transect implements PrebuiltFormInterface {
         'survey_id'=>$args['survey_id'],
         'location_type_id' => $settings['locationTypes'][0]['id'],
         'multiValue' => TRUE
-    ));
-    $settings['section_attributes'] = data_entry_helper::getAttributes(array(
+    ]);
+    $settings['section_attributes'] = data_entry_helper::getAttributes([
         'valuetable' => 'location_attribute_value',
         'attrtable' => 'location_attribute',
         'key' => 'location_id',
@@ -337,9 +358,9 @@ class iform_sectioned_transects_edit_transect implements PrebuiltFormInterface {
         'survey_id'=>$args['survey_id'],
         'location_type_id' => $settings['locationTypes'][1]['id'],
         'multiValue' => TRUE
-    ));
+    ]);
     if ($args['allow_user_assignment']) {
-      if (FALSE== ($settings['cmsUserAttr'] = extract_cms_user_attr($settings['attributes'])))
+      if (FALSE == ($settings['cmsUserAttr'] = extract_cms_user_attr($settings['attributes'])))
         return 'This form is designed to be used with the CMS User ID attribute setup for locations in the survey, or the "Allow users to be assigned to transects" option unticked.';
       // keep a copy of the cms user ID attribute so we can use it later.
       self::$cmsUserAttrId = $settings['cmsUserAttr']['attributeId'];
@@ -364,11 +385,11 @@ class iform_sectioned_transects_edit_transect implements PrebuiltFormInterface {
     $sectionIds = [];
     if ($settings['locationId']) {
       data_entry_helper::load_existing_record($auth['read'], 'location', $settings['locationId']);
-      $settings['walks'] = data_entry_helper::get_population_data(array(
+      $settings['walks'] = data_entry_helper::get_population_data([
         'table' => 'sample',
-        'extraParams' => $auth['read'] + array('view' => 'detail','location_id'=>$settings['locationId'],'deleted' => 'f'),
+        'extraParams' => $auth['read'] + ['view' => 'detail', 'location_id' => $settings['locationId'], 'deleted' => 'f'],
         'nocache' => TRUE
-      ));
+      ]);
       // Work out permissions for this user: note that canAllocBranch setting effectively shows if a manager.
       if(!$settings['canAllocBranch']) {
         // Check whether I am a normal user and it is allocated to me, and also if I am a branch manager and it is allocated to me.
@@ -451,7 +472,7 @@ class iform_sectioned_transects_edit_transect implements PrebuiltFormInterface {
       }
     }
     $r = '<div id="controls">';
-    $headerOptions = array('tabs'=>array('#site-details'=>lang::get('Site Details')));
+    $headerOptions = ['tabs' => ['#site-details' => lang::get('Site Details')]];
     if ($settings['locationId']) {
       $headerOptions['tabs']['#your-route'] = lang::get('Your Route');
       if ($args['always_show_section_details'] || count($settings['section_attributes']) > 0)
@@ -459,11 +480,11 @@ class iform_sectioned_transects_edit_transect implements PrebuiltFormInterface {
     }
     if (count($headerOptions['tabs'])) {
       $r .= data_entry_helper::tab_header($headerOptions);
-      data_entry_helper::enable_tabs(array(
+      data_entry_helper::enable_tabs([
           'divId' => 'controls',
           'style' => 'Tabs',
           'progressBar' => isset($args['tabProgress']) && $args['tabProgress']==TRUE
-      ));
+      ]);
     }
     $r .= self::getSiteTab($auth, $args, $settings, $sectionIds);
     if ($settings['locationId']) {
@@ -473,31 +494,25 @@ class iform_sectioned_transects_edit_transect implements PrebuiltFormInterface {
     }
     $r .= '</div>'; // controls
     data_entry_helper::enable_validation('input-form');
-    if (function_exists('drupal_set_breadcrumb')) {
-      $breadcrumb = [];
-      $breadcrumb[] = l(lang::get('Home'), '<front>');
-      $breadcrumb[] = l(lang::get('Sites'), $args['sites_list_path']);
-      if ($settings['locationId'])
-        $breadcrumb[] = data_entry_helper::$entity_to_load['location:name'];
-      else
-        $breadcrumb[] = lang::get('New Site');
-      drupal_set_breadcrumb($breadcrumb);
-    }
+    helper_base::addLanguageStringsToJs('sectionedTransectsEditTransect', [
+      'duplicateNameWarning' => 'There is already a transect with this name in the system. Please make your transect name unique before saving.',
+      'sectionChangeConfirm' => 'Do you wish to save the currently unsaved changes you have made to the Section Details?',
+      'sectionDeleteConfirm' => 'Are you sure you wish to delete section {1}?',
+      'sectionInsertConfirm' => 'Are you sure you wish to insert a new section after section {1}?',
+    ]);
+
     // Inform JS where to post data to for AJAX form saving.
-    data_entry_helper::$javascript .= 'indiciaData.ajaxFormPostUrl="'.self::$ajaxFormUrl."\";\n";
-    data_entry_helper::$javascript .= 'indiciaData.ajaxFormPostSampleUrl="'.self::$ajaxFormSampleUrl."\";\n";
-    data_entry_helper::$javascript .= "indiciaData.indiciaSvc = '".data_entry_helper::$base_url."';\n";
-    data_entry_helper::$javascript .= "indiciaData.readAuth = {nonce: '".$auth['read']['nonce']."', auth_token: '".$auth['read']['auth_token']."'};\n";
-    data_entry_helper::$javascript .= "indiciaData.currentSection = '';\n";
-    data_entry_helper::$javascript .= "indiciaData.sectionTypeId = '".$settings['locationTypes'][1]['id']."';\n";
-    data_entry_helper::$javascript .= "indiciaData.sectionDeleteConfirm = \"".lang::get('Are you sure you wish to delete section')."\";\n";
-    data_entry_helper::$javascript .= "indiciaData.sectionInsertConfirm = \"".lang::get('Are you sure you wish to insert a new section after section')."\";\n";
-    data_entry_helper::$javascript .= "indiciaData.sectionChangeConfirm = \"".lang::get('Do you wish to save the currently unsaved changes you have made to the Section Details?')."\";\n";
-    data_entry_helper::$javascript .= "indiciaData.numSectionsAttrName = \"".$settings['numSectionsAttr']."\";\n";
-    data_entry_helper::$javascript .= "indiciaData.maxSectionCount = \"".$settings['maxSectionCount']."\";\n";
-    data_entry_helper::$javascript .= "indiciaData.autocalcTransectLengthAttrId = $settings[autocalcTransectLengthAttrId];\n";
-    data_entry_helper::$javascript .= "indiciaData.autocalcSectionLengthAttrId = $settings[autocalcSectionLengthAttrId];\n";
-    data_entry_helper::$javascript .= "indiciaData.defaultSectionGridRef = '".$settings['defaultSectionGridRef']."';\n";
+    data_entry_helper::$indiciaData['ajaxFormPostUrl'] = self::$ajaxFormUrl;
+    data_entry_helper::$indiciaData['ajaxFormPostSampleUrl'] = self::$ajaxFormSampleUrl;
+    data_entry_helper::$indiciaData['indiciaSvc'] = data_entry_helper::$base_url;
+    data_entry_helper::$indiciaData['currentSection'] = '';
+    data_entry_helper::$indiciaData['sectionTypeId'] = $settings['locationTypes'][1]['id'];
+    data_entry_helper::$indiciaData['numSectionsAttrName'] = $settings['numSectionsAttr'];
+    data_entry_helper::$indiciaData['maxSectionCount'] = $settings['maxSectionCount'];
+    data_entry_helper::$indiciaData['autocalcTransectLengthAttrId'] = $settings['autocalcTransectLengthAttrId'];
+    data_entry_helper::$indiciaData['autocalcSectionLengthAttrId'] = $settings['autocalcSectionLengthAttrId'];
+    data_entry_helper::$indiciaData['defaultSectionGridRef'] = $settings['defaultSectionGridRef'];
+    data_entry_helper::$indiciaData['checkLocationNameUnique'] = !empty($args['check_location_name_unique']);
     if ($settings['locationId']) {
       data_entry_helper::$javascript .= "selectSection('S1', true);\n";
     }
@@ -505,26 +520,17 @@ class iform_sectioned_transects_edit_transect implements PrebuiltFormInterface {
   }
 
   protected static function check_prerequisites() {
-    // check required modules installed
-    if (isset($_POST['enable'])) {
-      module_enable(array('iform_ajaxproxy'));
-      hostsite_show_message(lang::get('The Indicia AJAX Proxy module has been enabled.'));
-    }
-    $ok=true;
+    // Check required modules installed.
     if (!hostsite_module_exists('iform_ajaxproxy')) {
        hostsite_show_message('This form must be used in Drupal with the Indicia AJAX Proxy module enabled.');
-       $ok=FALSE;
+       return FALSE;
     }
     if (!function_exists('iform_ajaxproxy_url')) {
       hostsite_show_message(lang::get('The Indicia AJAX Proxy module must be enabled to use this form. This lets the form save verifications to the '.
           'Indicia Warehouse without having to reload the page.'));
-      $r = '<form method="post">';
-      $r .= '<input type="hidden" name="enable" value="t"/>';
-      $r .= '<input type="submit" value="'.lang::get('Enable Indicia AJAX Proxy').'">';
-      $r .= '</form>';
-      return $r;
+      return FALSE;
     }
-    return $ok;
+    return TRUE;
   }
 
   /**
@@ -607,7 +613,7 @@ class iform_sectioned_transects_edit_transect implements PrebuiltFormInterface {
     $bottom = '';
     $bottomBlocks = explode("\n", isset($args['bottom_blocks']) ? $args['bottom_blocks'] : '');
     foreach ($bottomBlocks as $block) {
-      $bottom .= get_attribute_html($settings['attributes'], $args, array('extraParams'=>$auth['read'], 'disabled' => $settings['canEditBody'] ? '' : ' disabled="disabled" '), $block);
+      $bottom .= get_attribute_html($settings['attributes'], $args, ['extraParams'=>$auth['read'], 'disabled' => $settings['canEditBody'] ? '' : ' disabled="disabled" '], $block);
     }
     // Other blocks to go at the top, next to the map.
     if (isset($args['site_help']) && $args['site_help'] != '') {
@@ -754,7 +760,7 @@ $('#delete-transect').click(deleteSurvey);
     $r .= '<fieldset><legend>'.lang::get('Section Details').'</legend>';
     // Output a selector for the current section.
     $r .= self::section_selector($settings, 'section-select')."<br/>";
-    if ($settings['canEditBody']){
+    if ($settings['canEditBody']) {
       $r .= "<input type=\"hidden\" name=\"location:id\" value=\"\" id=\"section-location-id\" />\n";
       $r .= '<input type="hidden" name="website_id" value="'.$args['website_id']."\" />\n";
     }
@@ -766,11 +772,12 @@ $('#delete-transect').click(deleteSurvey);
     foreach($list as $system) {
       $systems[$system] = lang::get("sref:$system");
     }
-    $options = array(
-    		'fieldname' => '',
-    		'systems' => $systems,
-    		'disabled' => ' disabled="disabled"',
-    		'id' => 'section-location-system-select');
+    $options = [
+      'fieldname' => '',
+      'systems' => $systems,
+      'disabled' => ' disabled="disabled"',
+      'id' => 'section-location-system-select',
+    ];
     // Output the hidden system control
     $r .= '<input type="hidden" id="section-location-system" name="location:centroid_sref_system" value="" />';
     if(count($list)>1)
@@ -790,7 +797,7 @@ $('#delete-transect').click(deleteSurvey);
       }
     }
 
-    $r .= get_attribute_html($settings['section_attributes'], $args, array('extraParams'=>$auth['read'], 'disabled' => $settings['canEditBody'] ? '' : ' disabled="disabled" '), NULL, $blockOptions);
+    $r .= get_attribute_html($settings['section_attributes'], $args, ['extraParams'=>$auth['read'], 'disabled' => $settings['canEditBody'] ? '' : ' disabled="disabled" '], NULL, $blockOptions);
     if ($settings['canEditBody']) {
       if (lang::get('LANG_DATA_PERMISSION') !== 'LANG_DATA_PERMISSION') {
         $r .= '<p>' . lang::get('LANG_DATA_PERMISSION') . '</p>';
@@ -834,31 +841,16 @@ $('#delete-transect').click(deleteSurvey);
    */
   private static function getUserList() {
     $users = [];
-    // DB handling is different in 7 and 8.
-    if (version_compare(hostsite_get_cms_version(), '7', '<')) {
-      $results = db_query("SELECT uid, name FROM {users} where name <> '' order by name");
-      while ($result = db_fetch_object($results)) {
-        $users[$result->uid] = $result->name;
-      }
-    }
-    elseif (version_compare(hostsite_get_cms_version(), '8', '<')) {
-      $results = db_query("SELECT uid, name FROM {users} where name <> '' order by name");
-      foreach ($results as $result) {
-        $users[$result->uid] = $result->name;
-      }
-    }
-    else {
-      $result = \Drupal::entityTypeManager()
-        ->getStorage('user')
-        ->getQuery()
-        ->sort('name', 'ASC')
-        ->accessCheck(FALSE)
-        ->execute();
-      $userList = \Drupal\user\Entity\User::loadMultiple($result);
-      foreach ($userList as $user) {
-        if ($user->id() != 0) {
-          $users[$user->id()] = $user->getDisplayName();
-        }
+    $result = \Drupal::entityTypeManager()
+      ->getStorage('user')
+      ->getQuery()
+      ->sort('name', 'ASC')
+      ->accessCheck(FALSE)
+      ->execute();
+    $userList = \Drupal\user\Entity\User::loadMultiple($result);
+    foreach ($userList as $user) {
+      if ($user->id() != 0) {
+        $users[$user->id()] = $user->getDisplayName();
       }
     }
     return $users;
@@ -873,12 +865,12 @@ $('#delete-transect').click(deleteSurvey);
       self::$cmsUserList = $users;
   	} else $users= self::$cmsUserList;
     $r = '<fieldset id="alloc-recorders"><legend>'.lang::get('Allocate recorders to the site').'</legend>';
-    $r .= data_entry_helper::select(array(
+    $r .= data_entry_helper::select([
       'label' => lang::get('Select user'),
       'fieldname' => 'cmsUserId',
       'lookupValues' => $users,
       'afterControl' => '<button id="add-user" type="button">'.lang::get('Add').'</button>'
-    ));
+    ]);
     $r .= '<table id="user-list" style="width: auto">';
     $rows = '';
     // cmsUserAttr needs to be multivalue
@@ -922,14 +914,14 @@ $('#delete-transect').click(deleteSurvey);
       $users = $new_users;
     }
 
-    $r = '<fieldset id="alloc-branch"><legend>'.lang::get('Site Branch Allocation').'</legend>';
+    $r = '<fieldset id="alloc-branch"><legend>' . lang::get('Site Branch Allocation') . '</legend>';
     if($settings['canAllocBranch']) {
-      $r .= data_entry_helper::select(array(
+      $r .= data_entry_helper::select([
         'label' => lang::get('Select Branch Manager'),
         'fieldname' => 'branchCmsUserId',
         'lookupValues' => $users,
         'afterControl' => '<button id="add-branch-coord" type="button">'.lang::get('Add').'</button>'
-      ));
+      ]);
       // tell the javascript which attr to save the user ID into
       data_entry_helper::$javascript .= "indiciaData.locBranchCmsUsrAttr = " . self::$branchCmsUserAttrId . ";\n";
     }
@@ -962,23 +954,23 @@ $('#delete-transect').click(deleteSurvey);
    */
   public static function get_submission($values, $args) {
     $s = submission_builder::build_submission($values,
-      array(
+      [
         'model' => 'location'
-      )
+      ]
     );
     // On first save of a new transect, link it to the website.
     if (empty($values['location:id'])) {
-      $s['subModels'] = array(
-        array(
+      $s['subModels'] = [
+        [
           'fkId' => 'location_id',
-          'model' => array(
+          'model' => [
             'id' => 'locations_website',
-            'fields' => array(
+            'fields' => [
               'website_id' => $args['website_id']
-            )
-          )
-        )
-      );
+            ],
+          ],
+        ],
+      ];
       // Also, on first save we might be linking to a group.
       if (!empty($values['group_id'])) {
         $s['subModels'][] = [
@@ -1004,7 +996,7 @@ $('#delete-transect').click(deleteSurvey);
             'id' => 'location',
             'fields' => [
               'id' => $sectionId,
-              'name' => $values['location:name'] . ' - ' . $code,
+              'name' => trim($values['location:name']) . ' - ' . $code,
             ],
           ],
         ];

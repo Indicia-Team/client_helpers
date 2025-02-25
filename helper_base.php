@@ -1090,7 +1090,6 @@ class helper_base {
           'stylesheets' => [self::$js_path . 'jqplot/jquery.jqplot.min.css'],
           'javascript' => [
             self::$js_path . 'jqplot/jquery.jqplot.min.js',
-            '[IE]' . self::$js_path . 'jqplot/excanvas.js'
           ],
         ],
         'jqplot_bar' => [
@@ -1804,6 +1803,7 @@ HTML;
       'helpText' => $options['helpText'] ? $info['description'] : '',
       'fieldname' => $fieldPrefix . $key,
       'nocache' => isset($options['nocache']) && $options['nocache'],
+      'validation' => $info['validation'] ?? NULL,
     ];
     // If this parameter is in the URL or post data, put it in the control
     // instead of the original default.
@@ -2407,6 +2407,7 @@ HTML;
     self::$indiciaData['protocol'] = $protocol;
     // Add some useful templates.
     self::$indiciaData['templates'] = array_merge([
+      'messageBox' => $indicia_templates['messageBox'],
       'warningBox' => $indicia_templates['warningBox'],
       'buttonDefaultClass' => $indicia_templates['buttonDefaultClass'],
       'buttonHighlightedClass' => $indicia_templates['buttonHighlightedClass'],
@@ -2422,6 +2423,7 @@ HTML;
       $language = hostsite_get_user_field('language');
       self::$indiciaData['currentLanguage'] = $language;
       self::$indiciaData['currentLanguage3'] = iform_lang_iso_639_2($language);
+      self::$indiciaData['training'] = hostsite_get_user_field('training') === '1';
     }
     // Add language strings used in the indicia.functions.js file.
     self::addLanguageStringsToJs('indiciaFns', [
@@ -2485,13 +2487,7 @@ JS;
           }
           if (isset($resourceList[$resource]['javascript'])) {
             foreach ($resourceList[$resource]['javascript'] as $j) {
-              // Look out for a condition that this script is IE only.
-              if (substr($j, 0, 4) === '[IE]') {
-              	$libraries .= "<!--[if IE]><script type=\"text/javascript\" src=\"" . substr($j, 4) . "\"></script><![endif]-->\n";
-              }
-              else {
-                $libraries .= "<script type=\"text/javascript\" src=\"$j\"></script>\n";
-              }
+              $libraries .= "<script type=\"text/javascript\" src=\"$j\"></script>\n";
             }
           }
           // Record the resource as being dumped, so we don't do it again.
