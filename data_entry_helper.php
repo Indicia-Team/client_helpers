@@ -5504,6 +5504,7 @@ JS;
       unset($extraTaxonOptions['extraParams']['preferred']);
       unset($extraTaxonOptions['extraParams']['language_iso']);
       unset($extraTaxonOptions['extraParams']['query']);
+      unset($extraTaxonOptions['extraParams']['taxon_group']);
       // Create an array to hold the IDs, so that get_population_data can
       // construct a single IN query, faster than multiple requests. We'll
       // populate it in a moment.
