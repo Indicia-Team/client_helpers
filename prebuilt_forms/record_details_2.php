@@ -294,6 +294,9 @@ Record ID',
     data_entry_helper::$javascript .= 'indiciaData.username = "' . hostsite_get_user_field('name') . "\";\n";
     data_entry_helper::$javascript .= 'indiciaData.ajaxFormPostUrl="' . iform_ajaxproxy_url(NULL, 'occurrence') .
       "&sharing=$args[sharing]\";\n";
+    if (hostsite_get_user_field('id') === 0 && array_key_exists('commenting', $_GET)) {
+      hostsite_show_message('Please log in to comment.');
+    }
     return parent::get_form($args, $nid);
   }
 
