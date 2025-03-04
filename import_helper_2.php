@@ -909,7 +909,9 @@ HTML;
     $response = self::cacheGet(['entityImportSettings' => $options['entity']]);
     if ($response === FALSE) {
       $request = parent::$base_url . "index.php/services/import_2/get_globalvalues_form/" . $options['entity'];
-      $request .= '?' . self::array_to_query_string($options['readAuth']);
+      $request .= '?' . self::array_to_query_string($options['readAuth'] + [
+        'activate_global_sample_method' => 't',
+      ]);
       $response = self::http_post($request, []);
       if (!isset($response['error'])) {
         self::cacheSet(['entityImportSettings' => $options['entity']], json_encode($response));
