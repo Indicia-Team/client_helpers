@@ -5500,11 +5500,21 @@ JS;
       unset($extraTaxonOptions['extraParams']['orderby']);
       // We don't want to filter the taxa to be added to a specific list, because if they are in the sample,
       // then they must be included whatever.
-      unset($extraTaxonOptions['extraParams']['taxon_list_id']);
-      unset($extraTaxonOptions['extraParams']['preferred']);
-      unset($extraTaxonOptions['extraParams']['language_iso']);
-      unset($extraTaxonOptions['extraParams']['query']);
-      unset($extraTaxonOptions['extraParams']['taxon_group']);
+      $filterFieldsToRemove = [
+        'external_key',
+        'language_iso',
+        'organism_key',
+        'preferred',
+        'preferred_name',
+        'query',
+        'taxon_group',
+        'taxon_list_id',
+        'taxon_meaning_id',
+        'taxa_taxon_list_id',
+      ];
+      foreach ($filterFieldsToRemove as $field) {
+        unset($extraTaxonOptions['extraParams'][$field]);
+      }
       // Create an array to hold the IDs, so that get_population_data can
       // construct a single IN query, faster than multiple requests. We'll
       // populate it in a moment.
