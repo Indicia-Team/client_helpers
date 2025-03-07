@@ -3709,7 +3709,7 @@ RIJS;
       self::$javascript .= "indiciaData['taxonExtraParams-$options[id]'] = $filterParam;\n";
       // Apply a filter to extraParams that can be used when loading the initial species list, to get just the correct names.
       if (isset($options['speciesNameFilterMode']) && !empty($options['listId'])) {
-        $options['extraParams'] += self::parseSpeciesNameFilterMode($options);
+        $options['extraParams'] += self::parseSpeciesNameFilterModeForCacheTaxaTaxonLists($options);
       }
     }
 
@@ -4872,7 +4872,7 @@ JS;
    * @param array $options Options array as passed to the species grid.
    */
   public static function getSpeciesNamesFilter(&$options) {
-    $filterFields = self::parseSpeciesNameFilterMode($options);
+    $filterFields = self::parseSpeciesNameFilterModeForTaxaSearch($options);
     if (isset($options['subSpeciesColumn']) && $options['subSpeciesColumn']) {
       $filterFields['parent_id'] = "null";
     }
@@ -4894,7 +4894,7 @@ JS;
   }
 
   /**
-   * Get species name filtering information.
+   * Get species name filtering information for taxa search API.
    *
    * Utility function to extract the fields which need filtering against, plus
    * any complex SQL where clauses, required to do a species name filter
@@ -4907,7 +4907,7 @@ JS;
    *   Will be populated with the keys and values of any fields than need to be
    *   filtered.
    */
-  private static function parseSpeciesNameFilterMode(array $options) {
+  private static function parseSpeciesNameFilterModeForTaxaSearch(array $options) {
     $filterFields = [];
     if (isset($options['speciesNameFilterMode'])) {
       switch ($options['speciesNameFilterMode']) {
@@ -4928,6 +4928,48 @@ JS;
 
         case 'excludeSynonyms':
           $filterFields['synonyms'] = 'false';
+          break;
+      }
+    }
+    return $filterFields;
+  }
+
+  /**
+   * Get species name filtering information for cache_taxa_taxon_lists.
+   *
+   * Version of parseSpeciesNameFilterModeForTaxaSearch for
+   * cache_taxa_taxon_lists requests which need slightly different parameters
+   * to the taxa search API.
+   *
+   * @param array $options
+   *   Species_checklist options array.
+   *
+   * @return array
+   *   Will be populated with the keys and values of any fields than need to be
+   *   filtered.
+   */
+  private static function parseSpeciesNameFilterModeForCacheTaxaTaxonLists(array $options) {
+    $options['speciesNameFilterMode'] = 'excludeSynonyms';
+    $filterFields = [];
+    if (isset($options['speciesNameFilterMode'])) {
+      switch ($options['speciesNameFilterMode']) {
+        case 'preferred':
+          $filterFields['preferred'] = 't';
+          break;
+
+        case 'currentLanguage':
+          if (isset($options['language'])) {
+            $filterFields['language_iso'] = $options['language'];
+          }
+          elseif (function_exists('hostsite_get_user_field')) {
+            // If in Drupal we can use the user's language.
+            require_once 'prebuilt_forms/includes/language_utils.php';
+            $filterFields['language_iso'] = iform_lang_iso_639_2(hostsite_get_user_field('language'));
+          }
+          break;
+
+        case 'excludeSynonyms':
+          $filterFields['query'] = json_encode(['where' => ["(preferred=true OR language_iso<>'lat')"]]);
           break;
       }
     }
