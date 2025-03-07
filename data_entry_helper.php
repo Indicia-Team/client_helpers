@@ -4969,7 +4969,7 @@ JS;
           break;
 
         case 'excludeSynonyms':
-          $filterFields['query'] = json_encode(['where' => ["(preferred=true OR language_iso<>'lat')"]]);
+          self::addQueryParameter($filterFields, ['where' => ["(preferred=true OR language_iso<>'lat')"]]);
           break;
       }
     }
@@ -5473,6 +5473,23 @@ JS;
   }
 
   /**
+   * Adds or merges a query parameter into an extra params array.
+   *
+   * @param array $extraParams
+   *   Extra parameters array for a data services request.
+   * @param array $query
+   *   Query parameter array (e.g. where, in etc).
+   */
+  private static function addQueryParameter(array &$extraParams, array $query) {
+    if (isset($extraParams['query'])) {
+      $extraParams['query'] = json_encode(array_merge(json_decode($extraParams['query'], TRUE), $query));
+    }
+    else {
+      $extraParams['query'] = json_encode($query);
+    }
+  }
+
+  /**
    * Method to build the list of taxa to add to a species checklist grid.
    *
    * @param array $options
@@ -5495,7 +5512,7 @@ JS;
       if ($options['taxonFilterField'] === 'preferred_name') {
         $options['taxonFilterField'] = 'preferred_taxon';
       }
-      $options['extraParams'][$options['taxonFilterField']] = json_encode($options['taxonFilter']);
+      self::addQueryParameter($options['extraParams'], ['in' => [$options['taxonFilterField'] => $options['taxonFilter']]]);
     }
     // Load the species names that should be initially included in the grid.
     if (isset($options['listId']) && !empty($options['listId'])) {
