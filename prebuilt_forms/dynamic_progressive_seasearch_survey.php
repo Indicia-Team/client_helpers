@@ -1447,16 +1447,6 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
           'at the same time has having the mediaTypes option in use.');
     data_entry_helper::add_resource('autocomplete');
     $filterArray = data_entry_helper::getSpeciesNamesFilter($options);
-    $filterNameTypes = array('all','currentLanguage', 'preferred', 'excludeSynonyms');
-    //make a copy of the options so that we can maipulate it
-    $overrideOptions = $options;
-    //We are going to cycle through each of the name filter types
-    //and save the parameters required for each type in an array so
-    //that the Javascript can quickly access the required parameters
-    foreach ($filterNameTypes as $filterType) {
-      $overrideOptions['speciesNameFilterMode'] = $filterType;
-      $nameFilter[$filterType] = data_entry_helper::getSpeciesNamesFilter($overrideOptions);
-    }
     if (count($filterArray)) {
       $filterParam = json_encode($filterArray);
       data_entry_helper::$javascript .= "indiciaData['taxonExtraParams-".$options['id']."'] = $filterParam;\n";
@@ -1829,9 +1819,7 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
       $options['helpTextClass'] = (isset($options['helpTextClass'])) ? $options['helpTextClass'] : 'helpTextLeft';
       $r = $beforegrid.$grid;
       data_entry_helper::$javascript .= "$('#".$options['id']."').find('input,select').keydown(keyHandler);\n";
-      //nameFilter is an array containing all the parameters required to return data for each of the
-      //"Choose species names available for selection" filter types
-      data_entry_helper::species_checklist_filter_popup($options, $nameFilter);
+      data_entry_helper::speciesChecklistFilterPopup($options);
       if ($options['subSamplePerRow']) {
         // output a hidden block to contain sub-sample hidden input values.
         $r .= '<div id="'.$options['id'].'-blocks">'.
