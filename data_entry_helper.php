@@ -5645,7 +5645,10 @@ JS;
         'taxa_taxon_list_id',
       ];
       foreach ($filterFieldsToRemove as $field) {
-        if (!$options['taxonFilterIgnoredOnEdit'] || $field !== 'query') {
+        // Keep the query if the taxon filter is being applied even to edited
+        // records as the query contains the taxon filter due to the code at
+        // the top of this method.
+        if ($options['taxonFilterIgnoredOnEdit'] || $field !== 'query') {
           unset($extraTaxonOptions['extraParams'][$field]);
         }
       }
@@ -5780,7 +5783,7 @@ JS;
       'id' => 'species-grid-' . rand(0, 1000),
       'colWidths' => [],
       'taxonFilterField' => 'none',
-      'taxonFilterIgnoredOnEdit' => FALSE,
+      'taxonFilterIgnoredOnEdit' => TRUE,
       'reloadExtraParams' => [],
       'useLoadedExistingRecords' => FALSE,
       'subSpeciesColumn' => FALSE,
