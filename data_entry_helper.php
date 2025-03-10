@@ -4949,7 +4949,6 @@ JS;
    *   filtered.
    */
   private static function parseSpeciesNameFilterModeForCacheTaxaTaxonLists(array $options) {
-    $options['speciesNameFilterMode'] = 'excludeSynonyms';
     $filterFields = [];
     if (isset($options['speciesNameFilterMode'])) {
       switch ($options['speciesNameFilterMode']) {
