@@ -5533,17 +5533,17 @@ JS;
   private static function addQueryParameter(array &$extraParams, array $query) {
     if (!empty($extraParams['query'])) {
       $origQuery = json_decode($extraParams['query'], TRUE);
-      if (isset($origQuery['where']) && isset($query['where'])) {
-        $origQuery['where'] = self::convertQueryParamsToAssociative($origQuery['where']) + self::convertQueryParamsToAssociative($query['in']);
+      if (isset($origQuery['where']) || isset($query['where'])) {
+        $origQuery['where'] = self::convertQueryParamsToAssociative($origQuery['where'] ?? []) + self::convertQueryParamsToAssociative($query['where'] ?? []);
       }
-      if (isset($origQuery['orwhere']) && isset($query['orwhere'])) {
-        $origQuery['orwhere'] = self::convertQueryParamsToAssociative($origQuery['orwhere']) + self::convertQueryParamsToAssociative($query['in']);
+      if (isset($origQuery['orwhere']) || isset($query['orwhere'])) {
+        $origQuery['orwhere'] = self::convertQueryParamsToAssociative($origQuery['orwhere'] ?? []) + self::convertQueryParamsToAssociative($query['orwhere'] ?? []);
       }
-      if (isset($origQuery['in']) && isset($query['in'])) {
-        $origQuery['in'] = $origQuery['in'] + $query['in'];
+      if (isset($origQuery['in']) || isset($query['in'])) {
+        $origQuery['in'] = ($origQuery['in'] ?? []) + ($query['in'] ?? []);
       }
-      if (isset($origQuery['notin']) && isset($query['notin'])) {
-        $origQuery['notin'] = $origQuery['notin'] + $query['notin'];
+      if (isset($origQuery['notin']) || isset($query['notin'])) {
+        $origQuery['notin'] = ($origQuery['notin'] ?? []) + ($query['notin'] ?? []);
       }
       // Note that a query can't contain 2 like clauses, so the original takes
       // precedent.
