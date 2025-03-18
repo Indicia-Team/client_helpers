@@ -3129,7 +3129,7 @@ if (typeof validator!=='undefined') {
    */
   protected static function build_validation_class($options) {
     global $custom_terms;
-    $rules = (array_key_exists('validation', $options) ? $options['validation'] : []);
+    $rules = $options['validation'] ?? [];
     if (!is_array($rules)) $rules = array($rules);
     if (array_key_exists($options['fieldname'], self::$default_validation_rules)) {
       $rules = array_merge($rules, self::$default_validation_rules[$options['fieldname']]);
