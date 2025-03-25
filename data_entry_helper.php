@@ -1134,18 +1134,17 @@ JS;
       $file_types = self::$upload_file_types;
     }
     // Allow options to be defaulted and overridden.
-    $protocol = empty($_SERVER['HTTPS']) || $_SERVER['HTTPS'] === 'off' ? 'http' : 'https';
+    $relpath = self::getRootFolder() . self::client_helper_path();
     $defaults = [
       'id' => 'default',
       'upload' => TRUE,
       'maxFileCount' => 4,
-      'autoupload' => FALSE,
       'msgUploadError' => lang::get('upload error'),
       'msgFileTooBig' => lang::get('file too big for warehouse'),
       'runtimes' => ['html5', 'flash', 'silverlight', 'html4'],
       'autoupload' => TRUE,
       'imageWidth' => 200,
-      'uploadScript' => "$protocol://$_SERVER[HTTP_HOST]" . self::getRootFolder() . self::relative_client_helper_path() . 'upload.php',
+      'uploadScript' => "{$relpath}upload.php",
       'destinationFolder' => self::getInterimImageFolder('domain'),
       'relativeImageFolder' => self::getImageRelativePath(),
       'finalImageFolder' => self::get_uploaded_image_folder(),
