@@ -730,7 +730,7 @@ JS;
       <div>Loading...</div>
     </div>
     <div class="data-grid-settings-cntr" style="display: none">
-      <div class="data-grid-settings" data-el="$options[id]">
+      <div class="data-grid-settings" data-el="$options[id]" data-touch="false">
         <h3>$lang[columnConfiguration]</h3>
         <p>$lang[columnConfigIntro]</p>
         <div class="form-inline">
