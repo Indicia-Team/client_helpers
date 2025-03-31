@@ -1780,58 +1780,55 @@ class ElasticsearchProxyHelper {
       'edited' => 'metadata.updated_on',
       'verified' => 'identification.verified_on',
     ];
-    // Default to recorded date.
-    $definition['date_type'] = empty($definition['date_type']) ? 'recorded' : $definition['date_type'];
-    // Check to see if we have a year filter.
-    $fieldName = $definition['date_type'] === 'recorded' ? "date_year" : "$definition[date_type]_date_year";
-    if (!empty($definition[$fieldName]) && !empty($definition[$fieldName . '_op'])) {
-      if ($definition[$fieldName . '_op'] === '=') {
-        $bool['must'][] = [
-          'term' => [
-            'event.year' => $definition[$fieldName],
-          ],
-        ];
-      }
-      else {
-        $esOp = $definition[$fieldName . '_op'] === '>=' ? 'gte' : 'lte';
-        $bool['must'][] = [
-          'range' => [
-            'event.year' => [
-              $esOp => $definition[$fieldName],
-            ],
-          ],
-        ];
-      }
-    }
-    else {
-      // Check for other filters that work off the precise date fields.
-      $dateTypes = [
-        'from' => 'gte',
-        'to' => 'lte',
-        'age' => 'gte',
-      ];
-      foreach ($dateTypes as $type => $esOp) {
-        $fieldName = $definition['date_type'] === 'recorded' ? "date_$type" : "$definition[date_type]_date_$type";
-        if (!empty($definition[$fieldName])) {
-          $value = $definition[$fieldName];
-          // Convert date format.
-          if (preg_match('/^(?P<d>\d{2})\/(?P<m>\d{2})\/(?P<Y>\d{4})$/', $value, $matches)) {
-            $value = "$matches[Y]-$matches[m]-$matches[d]";
-          }
-          elseif ($type === 'age') {
-            $value = 'now-' . str_replace(
-              ['minute', 'hour', 'day', 'week', 'month', 'year', 's', ' '],
-              ['m', 'H', 'd', 'w', 'M', 'y', '', ''],
-              strtolower($value)
-            );
-          }
+    $dateTypes = ['recorded', 'input', 'edited', 'verified'];
+    foreach ($dateTypes as $dateType) {
+      $prefix = $dateType === 'recorded' ? '' : "{$dateType}_";
+      if (!empty($definition["{$prefix}date_year"]) && !empty($definition["{$prefix}date_year_op"])) {
+        $range = [];
+        if ($definition["{$prefix}date_year_op"] === '=' || $definition["{$prefix}date_year_op"] === '>=') {
+          $range['gte'] = $definition["{$prefix}date_year"] . '-01-01';
+        }
+        if ($definition["{$prefix}date_year_op"] === '=' || $definition["{$prefix}date_year_op"] === '<=') {
+          $range['lte'] = $definition["{$prefix}date_year"] . '-12-31';
+        }
+        if (count($range) > 0) {
           $bool['must'][] = [
             'range' => [
-              $esFields[$definition['date_type']] => [
-                $esOp => $value,
-              ],
+              $esFields[$dateType] => $range,
             ],
           ];
+        }
+      }
+      else {
+        // Check for other filters that work off the precise date fields.
+        $dateOperations = [
+          'from' => 'gte',
+          'to' => 'lte',
+          'age' => 'gte',
+        ];
+        foreach ($dateOperations as $fieldSuffix => $esOp) {
+          $fieldName = "{$prefix}date_{$fieldSuffix}";
+          if (!empty($definition[$fieldName])) {
+            $value = $definition[$fieldName];
+            // Convert date format.
+            if (preg_match('/^(?P<d>\d{2})\/(?P<m>\d{2})\/(?P<Y>\d{4})$/', $value, $matches)) {
+              $value = "$matches[Y]-$matches[m]-$matches[d]";
+            }
+            elseif ($type === 'age') {
+              $value = 'now-' . str_replace(
+                ['minute', 'hour', 'day', 'week', 'month', 'year', 's', ' '],
+                ['m', 'H', 'd', 'w', 'M', 'y', '', ''],
+                strtolower($value)
+              );
+            }
+            $bool['must'][] = [
+              'range' => [
+                $esFields[$definition['date_type']] => [
+                  $esOp => $value,
+                ],
+              ],
+            ];
+          }
         }
       }
     }
