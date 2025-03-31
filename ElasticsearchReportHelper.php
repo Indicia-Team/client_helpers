@@ -2355,20 +2355,23 @@ HTML;
 
 <div id="redet-panel-wrap" style="display: none">
   <form id="redet-form" class="verification-popup" data-status="DT">
-    <p class="alert alert-warning multiple-warning"><i class="fas fa-exclamation-triangle"></i>$lang[updatingMultipleWarning]</p>
-    <div class="alt-taxon-list-controls alt-taxon-list-message">$indicia_templates[messageBox]</div>
-    $speciesInput
-    $altListCheckbox
-    $redetNameBehaviourOption
-    <div class="comment-cntr form-group not-full-width-lg">
-      $commentTools
-      $redetCommentInput
-    </div>
-    $loadRedetTemplateDropdown
-    <div class="form-buttons">
-      <button type="button" class="$btnClass" id="apply-redet">$lang[applyRedetermination]</button>
-      <button type="button" class="$btnClassDefault cancel">$lang[cancel]</button>
-    </div>
+    <fieldset>
+      <legend><span class="fas fa-tag"></span><span></span></legend>
+      <p class="alert alert-warning multiple-warning"><i class="fas fa-exclamation-triangle"></i>$lang[updatingMultipleWarning]</p>
+      <div class="alt-taxon-list-controls alt-taxon-list-message">$indicia_templates[messageBox]</div>
+      $speciesInput
+      $altListCheckbox
+      $redetNameBehaviourOption
+      <div class="comment-cntr form-group not-full-width-lg">
+        $commentTools
+        $redetCommentInput
+      </div>
+      $loadRedetTemplateDropdown
+      <div class="form-buttons">
+        <button type="button" class="$btnClass" id="apply-redet">$lang[applyRedetermination]</button>
+        <button type="button" class="$btnClassDefault cancel">$lang[cancel]</button>
+      </div>
+    </fieldset>
   </form>
 </div>
 
