@@ -719,13 +719,14 @@ HTML;
           }
           if (isset($field['visible']) && ($field['visible']==='false' || $field['visible']===false))
             continue; // skip this column as marked invisible
-          if (!empty($row[$field['fieldname']]) && !isset($field['template'])) {
+          if (!empty($row[$field['fieldname'] ?? ''] ?? '') && !isset($field['template'])) {
             if (isset($field['img']) && $field['img']=='true') {
               $imgs = explode(',', $row[$field['fieldname']]);
               $value='';
               $row[$field['fieldname']] = self::mediaToThumbnails($imgs, $options['imageThumbPreset'], $entity, $rowId);
             }
             else {
+              // Fields that are neither images nor templates can be HTML escaped.
               $row[$field['fieldname']] = htmlspecialchars($row[$field['fieldname']]);
             }
           }
