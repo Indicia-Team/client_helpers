@@ -2179,6 +2179,7 @@ HTML;
       'emailSent' => 'The email was sent successfully.',
       'emailTabTitle' => 'Email record details',
       'enterEmailAddress' => 'Enter the email address to send the record to',
+      'forceLinkedLocationError' => 'An error occurred when trying to link the record to the selected location',
       'forceLinkedLocationInfo' => 'This record is currently linked to: {{ location name }}',
       'forceLinkedLocationInfoMultiple' => 'You are altering the location link for {{ count }} records.',
       'forceLinkedLocationInfoNoExisting' => 'There is no existing linked location for this record.',
@@ -2284,7 +2285,7 @@ HTML;
       'default' => '',
     ]);
     $forceLinkedLocationInput = data_entry_helper::autocomplete([
-      'label' => lang::get('Force record to linked to location'),
+      'label' => lang::get('Force record to link to location'),
       'fieldname' => 'force-linked-location',
       'table' => 'location',
       'extraParams' => $options['readAuth'] + [
