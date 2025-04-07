@@ -222,6 +222,8 @@ form.<br/>
   sample map reference.</li>
   <li><strong>[location select]</strong> - a select control for picking a stored location. A
   spatial reference is still required.</li>
+  <li><strong>[group select]</strong> - a select control for picking the recording group (e.g.
+  activity or project) associated with a sample.</li>
   <li><strong>[location map]</strong> - combines location select, map and spatial reference
   controls for recording only at stored locations.</li>
   <li><strong>[occurrence comment]</strong> - a text box for occurrence level comment.
@@ -2842,6 +2844,35 @@ JS;
       'fieldname' => 'sample:location_name',
       'class' => 'control-width-5',
     ], $options));
+  }
+
+  /**
+   * A select control for choosing the group (activity/project) for a sample.
+   *
+   * Contains options for the groups a user is already a member of.
+   *
+   * @param array $options
+   *   Options array with the following possibilities:
+   *     * blankText - Optional. The text to show in the select control when no
+   *       group is selected. Defaults to <please select>.
+   *     * label - Optional. The label to show for the select control.
+   *
+   *   In addition, the options for the select control are inherited.
+   *
+   * @return string
+   *   HTML for the select control.
+   */
+  protected static function get_control_groupselect($auth, $args, $tabAlias, $options) {
+    if (isset($options['extraParams'])) {
+      foreach ($options['extraParams'] as $key => &$value) {
+        $value = apply_user_replacements($value);
+      }
+      $options['extraParams'] = array_merge($auth['read'], $options['extraParams']);
+    }
+    else {
+      $options['extraParams'] = array_merge($auth['read']);
+    }
+    return data_entry_helper::group_select($options);
   }
 
   /**

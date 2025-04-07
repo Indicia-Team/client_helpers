@@ -818,6 +818,43 @@ JS;
   }
 
   /**
+   * A select control for choosing the group (activity/project) for a sample.
+   *
+   * Contains options for the groups a user is already a member of.
+   *
+   * @param array $options
+   *   Options array with the following possibilities:
+   *     * blankText - Optional. The text to show in the select control when no
+   *       group is selected. Defaults to <please select>.
+   *     * label - Optional. The label to show for the select control.
+   *
+   *   In addition, the options for the select control are inherited.
+   *
+   * @return string
+   *   HTML for the select control.
+   */
+  public static function group_select(array $options) {
+    $options = self::check_options($options);
+    $options = array_merge([
+      'fieldname' => 'sample:group_id',
+      'label' => lang::get('Select group'),
+      'table' => 'groups_user',
+      'captionField' => 'group_title',
+      'valueField' => 'group_id',
+      'extraParams' => [],
+      'blankText' => '<please select>',
+      'isFormControl' => TRUE,
+    ], $options);
+    $options['extraParams'] = array_merge([
+      'view' => 'detail',
+      'orderby' => 'group_title',
+      'pending' => 'f',
+      'user_id' => hostsite_get_user_field('indicia_user_id')
+    ], $options['extraParams']);
+    return self::select($options);
+  }
+
+  /**
    * Helper function to generate a list of checkboxes from a Indicia core service query.
    *
    * @param array $options
