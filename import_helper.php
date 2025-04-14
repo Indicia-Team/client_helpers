@@ -975,6 +975,10 @@ uploadChunk = function() {
         $('#fields_to_retain_form').submit();
       }
     }
+  })
+  .fail(function(r) {
+    alert('Error uploading file. More information is in the warehouse logs.');
+    jQuery('#progress-text').html('Error uploading file. More information is in the warehouse logs.');
   });
 };
 var total = 0, filepos = 0;
