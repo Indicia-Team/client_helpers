@@ -1843,7 +1843,7 @@ class ElasticsearchProxyHelper {
             if (preg_match('/^(?P<d>\d{2})\/(?P<m>\d{2})\/(?P<Y>\d{4})$/', $value, $matches)) {
               $value = "$matches[Y]-$matches[m]-$matches[d]";
             }
-            elseif ($type === 'age') {
+            elseif ($fieldSuffix === 'age') {
               $value = 'now-' . str_replace(
                 ['minute', 'hour', 'day', 'week', 'month', 'year', 's', ' '],
                 ['m', 'H', 'd', 'w', 'M', 'y', '', ''],
