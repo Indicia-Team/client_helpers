@@ -2828,7 +2828,7 @@ jQuery(\"#".$options['ChooseParentFieldID']."\").change(function(){
         if($record['name']!=''){
           $item = array('selected' => (data_entry_helper::$entity_to_load['location:id'] == $record['id'] ? 'selected=\"selected\"' : ''),
                       'value' => $record['id'],
-                      'caption' => htmlspecialchars(utf8_decode($record['name'])));
+                      'caption' => htmlspecialchars($record['name']));
           $NameOpts .= data_entry_helper::mergeParamsIntoTemplate($item, $location_list_args['itemTemplate']);
           if($record['code']!=''){
             $usedCodes[] = "\"".$record['code']."\"";
