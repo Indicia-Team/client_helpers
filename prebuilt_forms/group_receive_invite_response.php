@@ -215,10 +215,16 @@ HTML;
 
   /**
    * Performs the action of accepting an invite.
-   * @param array $args Form configuration arguments
-   * @param array $invite Invitation record
-   * @param array $auth Authorisation tokens
-   * @return type
+   *
+   * @param array $args
+   *   Form configuration arguments
+   * @param array $invite
+   *   Invitation record
+   * @param array $auth
+   *   Authorisation tokens
+   *
+   * @return string
+   *   Information to display to the user.
    */
   private static function accept($args, $invite, $auth) {
     // insert a groups_users record
@@ -258,7 +264,7 @@ HTML;
         // probably no point telling the user, as the invite accept worked OK
       }
       hostsite_goto_page($args['group_home_path'], array('group_id'=>$invite['group_id']));
-      module_load_include('inc', 'iform', 'iform.groups');
+      Drupal::moduleHandler()->loadInclude('iform', 'inc', 'iform.groups');
       return iform_show_group_join_success($group[0], $auth, true, $args['group_home_path'], $args['group_page_path']);
     }
     return '';
