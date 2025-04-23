@@ -161,7 +161,7 @@ indiciaData.rowIdToReselect = false;
               thisSpLyrSettings = $.extend({}, layerDef.settings);
               // replace values with the external key if the token is used
               $.each(thisSpLyrSettings, function (prop, value) {
-                if (typeof value === 'string' && $.trim(value) === '{external_key}') {
+                if (typeof value === 'string' && value.trim() === '{external_key}') {
                   thisSpLyrSettings[prop] = data.extra.taxon_external_key;
                 }
               });
