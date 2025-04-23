@@ -9441,16 +9441,16 @@ TXT;
       }
       else {
         // need a proper test, as is_writeable can report true when the cache file can't be created.
-        $handle = @fopen("$cacheFolder/test.txt", 'wb');
-        if ($handle) {
-          fclose($handle);
-          if ($fullInfo)
-            $r .= '<li>Success: Cache directory is present and writeable.</li>';
+        $key = ['test' => 'test'];
+        $t = (string) microtime(TRUE);
+        helper_base::cacheSet($key, $t);
+        $t2 = helper_base::cacheGet($key);
+        if ($t != $t2) {
+          $r .= '<li class="ui-state-error"> Warning: Caching is not functioning correctly.</li>';
         }
-        else {
-          $r .= '<li class="ui-state-error">Warning: The cache path setting points to a directory that I can\'t write a file into (' . $cacheFolder . '). Please change it to writeable.</li>';
+        elseif ($fullInfo) {
+          $r .= '<li>Success: Cache entry read and write OK.</li>';
         }
-
       }
       $interimImageFolder = self::getInterimImageFolder();
       if (!is_writeable($interimImageFolder))
