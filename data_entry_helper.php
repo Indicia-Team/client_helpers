@@ -9907,7 +9907,12 @@ TXT;
     $attrOptions = array_merge($attrOptions, $options);
     // Build validation rule classes from the attribute data.
     $validation = isset($item['validation_rules']) ? explode("\n", $item['validation_rules']) : [];
-    if (empty($options['control_type']) || $options['control_type'] === 'text_input') {
+    // The following two lines are a temporary fix to allow a control_type to
+    // be specified via the form's user interface form structure.
+    if(isset($attrOptions['control_type']) && $attrOptions['control_type']!="") {
+      $item['control_type'] = $attrOptions['control_type'];
+    }
+    if (empty($item['control_type']) || $item['control_type'] === 'text_input') {
       if ($item['data_type'] === 'I' && !in_array('integer', $validation)) {
         $validation[] = 'integer';
       }
@@ -9926,9 +9931,7 @@ TXT;
     }
     if(isset($item['default']) && $item['default']!="")
       $attrOptions['default'] = $item['default'];
-    //the following two lines are a temporary fix to allow a control_type to be specified via the form's user interface form structure
-    if(isset($attrOptions['control_type']) && $attrOptions['control_type']!="")
-      $item['control_type'] = $attrOptions['control_type'];
+
     unset($ctrl);
     switch ($item['data_type']) {
       case 'Text':
@@ -10024,10 +10027,16 @@ TXT;
         }
         else {
           // or specified by the attribute in survey details
-          if (isset($item['control_type']) &&
-            ($item['control_type'] === 'autocomplete' || $item['control_type'] === 'checkbox_group'
-              || $item['control_type'] === 'listbox' || $item['control_type'] === 'radio_group' || $item['control_type'] === 'select'
-              || $item['control_type'] === 'hierarchical_select' || $item['control_type'] === 'sub_list')) {
+          if (isset($item['control_type']) && in_array($item['control_type'], [
+            'autocomplete',
+            'checkbox_group',
+            'listbox',
+            'radio_group',
+            'select',
+            'hierarchical_select',
+            'sub_list',
+            'complex_attr_grid',
+          ])) {
             $ctrl = $item['control_type'];
           }
           else {
