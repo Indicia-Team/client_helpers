@@ -863,7 +863,7 @@ indiciaData.rowIdToReselect = false;
       reportSource: 'local',
       taxon_meaning_id: currRec.extra.taxon_meaning_id,
       template_status: status,
-      website_id: currRec.extra.website_id
+      website_id: indiciaData.website_id
     };
     $.getJSON(
       getTemplatesReport,
