@@ -53,6 +53,7 @@ $default_terms = [
   'upload error' => 'An error occurred uploading the file.',
   'upload_not_available' => 'The uploaded file is no longer available. Please try uploading again.',
   'validation_required' => 'Please enter a value for this field',
+  'validation_autocompleteRequired' => 'The value you have entered has not been recognised. Please select a value from the list of options shown.',
   'validation_email' => 'Please enter a valid email address',
   'validation_url' => 'Please enter a valid URL',
   'validation_dateISO' => 'Please enter a valid date in yyyy-mm-dd format',
@@ -135,7 +136,7 @@ TEXT;
 
 $default_terms['gps_precision_instructions'] = <<<TEXT
 This is the precision (normally given as a radius in metres) reported by most GPS devices or phones. This field is
-only enabled for 10-figure OS grid references and is mandatory for them (specify an integer value). 
+only enabled for 10-figure OS grid references and is mandatory for them (specify an integer value).
 10-figure grid references represent 1 m accuracy, however, this is normally associated with
 some degree of error, which is the GPS precision recorded here. Precise grid references reported to a lower accuracy
 than 10-figures are assumed to represent the corresponding OS square (e.g. a 100 m or 10 m square), and so additional
