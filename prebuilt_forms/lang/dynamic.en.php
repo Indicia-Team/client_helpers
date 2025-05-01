@@ -1,5 +1,9 @@
 <?php
+
 /**
+ * @file
+ * Language terms for dynamic forms.
+ *
  * Indicia, the OPAL Online Recording Toolkit.
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,7 +17,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @license  http://www.gnu.org/licenses/gpl.html GPL 3.0
+ * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers/
  */
 
