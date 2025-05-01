@@ -5635,6 +5635,9 @@ JS;
       $options['extraParams']['taxon_list_id'] = $options['listId'];
       // Limit the fixed list to non-redundant taxa.
       $options['extraParams']['allow_data_entry'] = 't';
+      if (!isset($options['extraParams']['orderby'])) {
+        $options['extraParams']['orderby'] = 'taxonomic_sort_order';
+      }
       $taxalist = self::get_population_data($options);
       unset($options['extraParams']['allow_data_entry']);
     }
