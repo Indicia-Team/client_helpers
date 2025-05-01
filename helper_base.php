@@ -126,7 +126,7 @@ $indicia_templates = [
   'tree_browser' => '<div{outerClass} id="{divId}"></div><input type="hidden" name="{fieldname}" id="{id}" value="{default}"{class}/>',
   'tree_browser_node' => '<span>{caption}</span>',
   'autocomplete' => '<input type="hidden" class="hidden" id="{id}" name="{fieldname}" value="{default}" />' .
-      '<input id="{inputId}" name="{inputId}" type="text" value="{defaultCaption}" {class} {disabled} {title} {attribute_list}/>' . "\n",
+      '<input id="{inputId}" name="{inputId}" type="text" value="{defaultCaption}" {class} {disabled} {title} {attribute_list} data-hiddenvalueinput="{id}" />' . "\n",
   'autocomplete_javascript' => "
 $('input#{escaped_input_id}').change(function() {
   if ($('input#{escaped_id}').data('set-for') !== $('input#{escaped_input_id}').val()) {
@@ -571,7 +571,7 @@ class helper_base {
   public static $default_validation_rules = [
     'sample:date' => ['required', 'date'],
     'sample:entered_sref' => ['required'],
-    'occurrence:taxa_taxon_list_id' => ['required'],
+    'occurrence:taxa_taxon_list_id' => ['required', 'autocompleteRequired'],
     'location:name' => ['required'],
     'location:centroid_sref' => ['required'],
   ];
@@ -2934,6 +2934,9 @@ if (typeof validator!=='undefined') {
     if (lang::get('validation_required') != 'validation_required') {
       self::$late_javascript .= "$.validator.messages.required = \"" . lang::get('validation_required') . "\";\n";
     }
+    if (lang::get('validation_autocompleteRequired') != 'validation_autocompleteRequired') {
+      self::$late_javascript .= "$.validator.messages.autocompleteRequired = \"" . lang::get('validation_autocompleteRequired') . "\";\n";
+    }
     if (lang::get('validation_max') != 'validation_max') {
       self::$late_javascript .= "$.validator.messages.max = $.validator.format(\"" . lang::get('validation_max') . "\");\n";
     }
@@ -2941,13 +2944,13 @@ if (typeof validator!=='undefined') {
       self::$late_javascript .= "$.validator.messages.min = $.validator.format(\"" . lang::get('validation_min') . "\");\n";
     }
     if (lang::get('validation_number') != 'validation_number') {
-      self::$late_javascript .= "$.validator.messages.number = $.validator.format(\"" . lang::get('validation_number') . "\");\n";
+      self::$late_javascript .= "$.validator.messages.number = \"" . lang::get('validation_number') . "\";\n";
     }
     if (lang::get('validation_digits') != 'validation_digits') {
-      self::$late_javascript .= "$.validator.messages.digits = $.validator.format(\"" . lang::get('validation_digits') . "\");\n";
+      self::$late_javascript .= "$.validator.messages.digits = \"" . lang::get('validation_digits') . "\";\n";
     }
     if (lang::get('validation_integer') != 'validation_integer') {
-      self::$late_javascript .= "$.validator.messages.integer = $.validator.format(\"" . lang::get('validation_integer') . "\");\n";
+      self::$late_javascript .= "$.validator.messages.integer = \"" . lang::get('validation_integer') . "\";\n";
     }
   }
 
@@ -3202,6 +3205,7 @@ if (typeof validator!=='undefined') {
       $rule = trim($rule);
       $mappings = [
         'required' => ['jqRule' => 'required'],
+        'autocompleteRequired' => ['jqRule' => 'autocompleteRequired'],
         'dateISO' => ['jqRule' => 'dateISO'],
         'email' => ['jqRule' => 'email'],
         'url' => ['jqRule' => 'url'],
