@@ -3430,22 +3430,34 @@ if (typeof validator!=='undefined') {
    * @param array $cacheOpts
    *   Options array which defines the cache "key", i.e. the unique set of
    *   options being cached.
+   * @param int $expireEarlyIfLoggedIn
+   *   Number of seconds earlier a cached item is treated as expired if the
+   *   user is logged in. This is useful for reducing the load on the server on
+   *   pages that are hit by a high volume of anonymous users where you want
+   *   the data to be more recent for logged in users. I.e. set a large number
+   *   of seconds in the $expireAfter parameter for the hostsite_cache_set
+   *   function, but reduce the time for logged in users by specifying a
+   *   smaller value here.
    *
    * @return mixed
    *   String read from the cache, or false if not read.
    */
-  public static function cacheGet(array $cacheOpts) {
+  public static function cacheGet(array $cacheOpts, int $expireEarlyIfLoggedIn = NULL) {
     $key = self::getCacheKey($cacheOpts);
-    $r = self::getCachedResponse($key, $cacheOpts);
+    $r = self::getCachedResponse($key, $cacheOpts, $expireEarlyIfLoggedIn);
     return $r === FALSE ? $r : $r['output'];
   }
 
   /**
    * Utility function for external writes to the iform cache.
    *
-   * @param array $cacheOpts Options array which defines the cache "key", i.e. the unique set of options being cached.
-   * @param string $toCache String data to cache.
-   * @param integer $cacheTimeout Timeout in seconds, if overriding the default cache timeout.
+   * @param array $cacheOpts
+   *   Options array which defines the cache "key", i.e. the unique set of
+   *   options being cached.
+   * @param string $toCache
+   *   String data to cache.
+   * @param integer $cacheTimeout
+   *   Timeout in seconds, if overriding the default cache timeout.
    */
   public static function cacheSet($cacheOpts, $toCache, $cacheTimeout = 0) {
     if (!$cacheTimeout) {
@@ -3685,22 +3697,25 @@ if (typeof validator!=='undefined') {
    *
    * @param string $key
    *   Cache key to be used.
-   * @param integer $timeout
-   *   Will be false if no caching to take place.
-   * @param array $options
-   *   Options array : contents used to confirm what this data is.
-   * @param boolean $random
-   *   Should a random element be introduced to prevent simultaneous expiry of multiple
-   *   caches? Default true.
+   * @param array $cacheOpts
+   *   Options array which defines the cache "key", i.e. the unique set of
+   *   options being cached.
+   * @param int $expireEarlyIfLoggedIn
+   *   Number of seconds earlier a cached item is treated as expired if the
+   *   user is logged in. This is useful for reducing the load on the server on
+   *   pages that are hit by a high volume of anonymous users where you want
+   *   the data to be more recent for logged in users. I.e. set a large number
+   *   of seconds in the $expireAfter parameter for the hostsite_cache_set
+   *   function, but reduce the time for logged in users by specifying a
+   *   smaller value here.
    *
    * @return bool|array
    *   Equivalent of call to http_post, else FALSE if data not read from the
    *   cache.
    */
-  private static function getCachedResponse($key, $options) {
-
+  private static function getCachedResponse($key, array $cacheOpts, int $expireEarlyIfLoggedIn = NULL) {
     if (self::$delegate_caching_to_hostsite && function_exists('hostsite_cache_get')) {
-      return hostsite_cache_get($key, $options);
+      return hostsite_cache_get($key, $cacheOpts, $expireEarlyIfLoggedIn);
     }
     else {
       $cacheFolder = self::$cache_folder ? self::$cache_folder : self::relative_client_helper_path() . 'cache/';
@@ -3716,13 +3731,13 @@ if (typeof validator!=='undefined') {
         }
         // Make double sure this cache entry was for the same request options.
         $tags = fgets($handle);
-        if ($tags !== http_build_query($options)."\n") {
+        if ($tags !== http_build_query($cacheOpts)."\n") {
           return FALSE;
         }
         // Check not expired.
         $expiry = trim(fgets($handle));
-        if ($expiry < time()) {
-          return FALSE;
+        if (!empty($expireEarlyIfLoggedIn) && hostsite_get_user_field('id') > 0) {
+          $expiry -= $expireEarlyIfLoggedIn;
         }
         if (self::getProbabilisticEarlyExpiration($expiry)) {
           return FALSE;
