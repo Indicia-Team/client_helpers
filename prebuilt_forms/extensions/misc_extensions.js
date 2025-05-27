@@ -67,17 +67,19 @@ jQuery(document).ready(function ($) {
       import_guid: importGuid,
       user_id: indiciaData.user_id
     };
-    $.post(
-      indiciaData.proxyUrl + '?url=' + indiciaData.warehouseUrl + 'index.php/services/data_utils/bulk_delete_occurrences',
-      $.extend({}, params, { trial: 't' }),
-      function (response) {
+    $.ajax({
+      url: indiciaData.warehouseUrl + 'index.php/services/data_utils/bulk_delete_occurrences',
+      dataType: 'jsonp',
+      data: $.extend({}, params, { trial: 't' }),
+      success: function (response) {
         if (typeof response.code !== 'undefined' && response.code === 200) {
           if (confirm(response.affected.occurrences + ' records in ' + response.affected.samples + ' samples will be deleted. ' +
               'Do you want to proceed?')) {
-            $.post(
-              indiciaData.proxyUrl + '?url=' + indiciaData.warehouseUrl + 'index.php/services/data_utils/bulk_delete_occurrences',
-              params,
-              function (response) {
+            $.ajax({
+              url: indiciaData.warehouseUrl + 'index.php/services/data_utils/bulk_delete_occurrences',
+              dataType: 'jsonp',
+              data: params,
+              success: function (response) {
                 if (typeof response.code !== 'undefined' && response.code === 200) {
                   alert(response.affected.occurrences + ' records in ' + response.affected.samples + ' samples were deleted.');
                   indiciaData.reports.imports_grid.grid_imports_grid.reload();
@@ -89,7 +91,7 @@ jQuery(document).ready(function ($) {
                   }
                 }
               }
-            );
+            });
           }
         } else {
           if (typeof response.message === 'undefined') {
@@ -99,7 +101,7 @@ jQuery(document).ready(function ($) {
           }
         }
       }
-    );
+    });
   };
 
   /**
