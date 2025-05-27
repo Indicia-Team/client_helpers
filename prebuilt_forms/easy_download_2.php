@@ -329,15 +329,6 @@ class iform_easy_download_2 implements PrebuiltFormInterface {
         'required' => FALSE,
         'default'=>20000,
       ],
-      [
-        'name' => 'reverse_proxy',
-        'caption' => 'Webite behind reverse proxy',
-        'description' => 'If the website is behind a reverse proxy then the download link is altered by the proxying and doesn\'t work. ' .
-            'Check this box to allow the request to pass through the proxy.',
-        'type' => 'checkbox',
-        'required' => FALSE,
-        'default' => FALSE,
-      ],
     ];
   }
 
@@ -675,18 +666,6 @@ class iform_easy_download_2 implements PrebuiltFormInterface {
       'sharing' => self::expand_sharing_mode($sharing),
       'itemsPerPage' => $limit,
     ]);
-
-    if ($args['reverse_proxy'] == TRUE) {
-      // Rewrite the url to pass through proxy.php.
-      $relative_proxy_path = iform_client_helpers_path() . 'proxy.php?url=' . report_helper::$base_url;
-      global $base_url;
-      $proxy_path = $base_url . substr($relative_proxy_path, 1);
-
-      // remove report_helper::$base_url from $url
-      $url = substr($url, strlen(report_helper::$base_url));
-      // add $proxy_path to $url
-      $url = $proxy_path . $url;
-    }
     header("Location: $url");
     exit;
   }
