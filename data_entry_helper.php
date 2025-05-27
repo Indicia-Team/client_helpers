@@ -1139,7 +1139,6 @@ JS;
       'id' => 'default',
       'upload' => TRUE,
       'maxFileCount' => 4,
-      'autoupload' => FALSE,
       'msgUploadError' => lang::get('upload error'),
       'msgFileTooBig' => lang::get('file too big for warehouse'),
       'runtimes' => ['html5', 'flash', 'silverlight', 'html4'],
@@ -1169,9 +1168,6 @@ JS;
       'msgUseAddLinkBtn' => lang::get('Use the Add link button to add a link to information stored elsewhere on the internet. You can enter links from {1}.')
     ];
     $defaults['caption'] = (!isset($options['mediaTypes']) || $options['mediaTypes'] === ['Image:Local']) ? lang::get('Photos') : lang::get('Media files');
-    if (isset(self::$final_image_folder_thumbs)) {
-      $defaults['finalImageFolderThumbs'] = self::getRootFolder() . self::client_helper_path() . self::$final_image_folder_thumbs;
-    }
     if ($indicia_templates['file_box'] !== '') {
       $defaults['file_boxTemplate'] = $indicia_templates['file_box'];
     }
@@ -7894,35 +7890,27 @@ if (errors$uniq.length>0) {
         }
       }
       // if there are images, we will send them after the main post, so we need to persist the write nonce
-      if (count($media)>0)
+      if (count($media) > 0) {
         $postargs .= '&persist_auth=true';
+      }
       $response = self::http_post($request, $postargs);
       // The response should be in JSON if it worked
       $output = json_decode($response['output'], TRUE);
       // If this is not JSON, it is an error, so just return it as is.
-      if (!$output)
+      if (!$output) {
         $output = $response['output'];
+      }
       if (is_array($output) && array_key_exists('success', $output))  {
-        if (isset(self::$final_image_folder) && self::$final_image_folder!='warehouse') {
-          // moving the files on the local machine. Find out where from and to
-          $interimImageFolder = self::getInterimImageFolder('fullpath');
-          $final_image_folder = dirname($_SERVER['SCRIPT_FILENAME']) . '/' . self::relative_client_helper_path().
-            parent::$final_image_folder;
-        }
-        // submission succeeded. So we also need to move the images to the final location
+        // Submission succeeded. So we also need to move the images to the
+        // final location.
         $image_overall_success = TRUE;
         $image_errors = [];
-        foreach ($media as $item) {
+        foreach ($media as $idx => $item) {
           // no need to resend an existing image, or a media link, just local files.
           if ((empty($item['media_type']) || preg_match('/:Local$/', $item['media_type'])) && (!isset($item['id']) || empty($item['id']))) {
-            if (!isset(self::$final_image_folder) || self::$final_image_folder=='warehouse') {
-              // Final location is the Warehouse
-              // @todo Set PERSIST_AUTH false if last file
-              $success = self::send_file_to_warehouse($item['path'], TRUE, $writeTokens);
-            }
-            else {
-              $success = rename($interimImageFolder.$item['path'], $final_image_folder.$item['path']);
-            }
+            // Final location is the Warehouse. Sets persist_auth to false if
+            // the last file.
+            $success = self::send_file_to_warehouse($item['path'], $idx < count($media) - 1, $writeTokens);
             if ($success !== TRUE) {
               // Record all files that fail to move successfully.
               $image_overall_success = FALSE;

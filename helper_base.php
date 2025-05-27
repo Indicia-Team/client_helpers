@@ -1504,15 +1504,10 @@ class helper_base {
   }
 
   /**
-   * Calculates the folder that submitted images end up in according to the helper_config.
+   * Calculates the folder that submitted images end up in.
    */
   public static function get_uploaded_image_folder() {
-    if (!isset(self::$final_image_folder) || self::$final_image_folder === 'warehouse') {
-      return self::getProxiedBaseUrl() . (isset(self::$indicia_upload_path) ? self::$indicia_upload_path : 'upload/');
-    }
-    else {
-      return self::getRootFolder() . self::client_helper_path() . self::$final_image_folder;
-    }
+    return self::getProxiedBaseUrl() . (isset(self::$indicia_upload_path) ? self::$indicia_upload_path : 'upload/');
   }
 
   /**
