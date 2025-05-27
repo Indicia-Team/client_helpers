@@ -286,7 +286,7 @@ class map_helper extends helper_base {
 
       }
       $options = array_merge([
-        'indiciaSvc' => parent::getProxiedBaseUrl(),
+        'indiciaSvc' => self::$base_url,
         'indiciaGeoSvc' => self::$geoserver_url,
         'divId' => 'map',
         'class' => '',

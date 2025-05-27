@@ -262,16 +262,6 @@ class helper_base {
   public static $base_url = '';
 
   /**
-   * Path to proxy script for calls to the warehouse.
-   *
-   * Allows the warehouse to sit behind a firewall only accessible from the
-   * server.
-   *
-   * @var string
-   */
-  public static $warehouse_proxy = NULL;
-
-  /**
    * Base URL of the GeoServer we are linked to if GeoServer is used.
    *
    * @var string
@@ -688,16 +678,6 @@ class helper_base {
    * @var bool
    */
   protected static $indiciaFnsDone = FALSE;
-
-  /**
-   * Returns the URL to access the warehouse by, respecting proxy settings.
-   *
-   * @return string
-   *   URL.
-   */
-  public static function getProxiedBaseUrl() {
-    return empty(self::$warehouse_proxy) ? self::$base_url : self::$warehouse_proxy;
-  }
 
   /**
    * Returns the folder to store uploaded images in before submission.
@@ -1507,7 +1487,7 @@ class helper_base {
    * Calculates the folder that submitted images end up in.
    */
   public static function get_uploaded_image_folder() {
-    return self::getProxiedBaseUrl() . (isset(self::$indicia_upload_path) ? self::$indicia_upload_path : 'upload/');
+    return self::$base_url . (isset(self::$indicia_upload_path) ? self::$indicia_upload_path : 'upload/');
   }
 
   /**
@@ -2532,7 +2512,7 @@ JS;
       }
 
       if (self::$js_read_tokens) {
-        self::$js_read_tokens['url'] = self::getProxiedBaseUrl();
+        self::$js_read_tokens['url'] = self::$base_url;
         $script .= "indiciaData.read = " . json_encode(self::$js_read_tokens) . ";\n";
       }
       if (!self::$is_ajax) {
@@ -3929,9 +3909,6 @@ if (!function_exists('get_called_class')) {
 if (class_exists('helper_config')) {
   if (isset(helper_config::$base_url)) {
     helper_base::$base_url = helper_config::$base_url;
-  }
-  if (isset(helper_config::$warehouse_proxy)) {
-    helper_base::$warehouse_proxy = helper_config::$warehouse_proxy;
   }
   if (isset(helper_config::$geoserver_url)) {
     helper_base::$geoserver_url = helper_config::$geoserver_url;

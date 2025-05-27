@@ -26,8 +26,6 @@ class extension_notifications_centre {
 
   static $initialised = FALSE;
 
-  static $dataServicesUrl;
-
   /*
    * Draw the control that displays auto-check notifications.
    *
@@ -122,9 +120,6 @@ class extension_notifications_centre {
         // The proxy url used when interacting with the occurrence comment
         // table in the database.
         report_helper::$javascript .= "indiciaData.occurrence_comment_proxy_url = '" . iform_ajaxproxy_url(NULL, 'occ-comment') . "';\n";
-        // The url used for direct access to data services.
-        self::$dataServicesUrl = data_entry_helper::getProxiedBaseUrl() . "index.php/services/data";
-        report_helper::$javascript .= "indiciaData.data_services_url = '" . self::$dataServicesUrl . "';\n";
         // If the user clicks the Acknowlegde Notifications submit button, then a
         // hidden field called acknowledge-notifications is set. We can check for
         // this when the page reloads and then call the remove notifications

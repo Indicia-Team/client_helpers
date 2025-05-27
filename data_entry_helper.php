@@ -234,7 +234,7 @@ class data_entry_helper extends helper_base {
     $options = array_merge([
       'attributes' => [],
       'template' => 'autocomplete',
-      'url' => parent::getProxiedBaseUrl() . 'index.php/services/' .
+      'url' => self::$base_url . 'index.php/services/' .
         (isset($options['report']) ? 'report/requestReport' : "data/$options[table]"),
       // Escape the ids for jQuery selectors.
       'escaped_input_id' => self::jq_esc($options['inputId']),
@@ -6770,7 +6770,7 @@ $('#sensitive-blur').change(function() {
     global $indicia_templates;
     self::add_resource('treeview_async');
     // Declare the data service
-    $url = parent::getProxiedBaseUrl() . 'index.php/services/data';
+    $url = self::$base_url . 'index.php/services/data';
     // Setup some default values
     $options = array_merge(array(
       'valueField'=>$options['captionField'],
@@ -7522,12 +7522,12 @@ HTML;
     // Setup JavaScript to do the population when the parent control changes.
     $parentControlId = str_replace(':', '\\:', $options['parentControlId']);
     if (!empty($options['report'])) {
-      $url = parent::getProxiedBaseUrl() . "index.php/services/report/requestReport";
+      $url = self::$base_url . "index.php/services/report/requestReport";
       $request = "$url?report=" . $options['report'] . ".xml&mode=json&reportSource=local&callback=?";
       $query = $options['filterField'] . '=' . urlencode('"val"');
     }
     else {
-      $url = parent::getProxiedBaseUrl() . "index.php/services/data";
+      $url = self::$base_url . "index.php/services/data";
       $request = "$url/$options[table]?mode=json&callback=?";
       $inArray = array('val');
       if (isset($options['filterIncludesNulls']) && $options['filterIncludesNulls']) {
