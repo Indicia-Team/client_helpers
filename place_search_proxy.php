@@ -23,23 +23,9 @@
 
 $url = $_GET['url'];
 
-// URL must be http.
-if (!preg_match('/^http(s)?:\/\//', $url)) {
-  die('Invalid URL requested ' . $url);
-}
-/*$whiteList = [
-  'https://maps.googleapis.com/maps/api/place/textsearch/json',
-];
-$allowed = FALSE;
-foreach ($whiteList as $allowedUrl) {
-  if (strpos($url, $allowedUrl) === 0) {
-    $allowed = TRUE;
-    break;
-  }
-}
-if (!$allowed) {
+if (strpos($url, 'https://maps.googleapis.com/maps/api/place/textsearch/json') !== 0) {
   die('URL not allowed');
-}*/
+}
 
 if (strpos($url, "?") !== FALSE) {
   $url = $url . "&";
@@ -64,7 +50,7 @@ foreach ($_GET as $key => $value) {
 $url = str_replace('\"', '"', $url);
 $url = str_replace(' ', '%20', $url);
 $session = curl_init($url);
-// Set the POST options.
+/*// Set the POST options.
 $httpHeader = [];
 $postData = file_get_contents('php://input');
 if (empty($postData)) {
@@ -80,7 +66,7 @@ if (!empty($postData)) {
 }
 if (count($httpHeader) > 0) {
   curl_setopt($session, CURLOPT_HTTPHEADER, $httpHeader);
-}
+}*/
 
 curl_setopt($session, CURLOPT_HEADER, TRUE);
 curl_setopt($session, CURLOPT_RETURNTRANSFER, TRUE);

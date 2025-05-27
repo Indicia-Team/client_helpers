@@ -2376,8 +2376,6 @@ HTML;
     global $indicia_templates;
     self::$indiciaData['imagesPath'] = self::$images_path;
     self::$indiciaData['warehouseUrl'] = self::$base_url;
-    $proxyUrl = self::getRootFolder() . self::relative_client_helper_path() . 'proxy.php';
-    self::$indiciaData['proxyUrl'] = $proxyUrl;
     $protocol = empty($_SERVER['HTTPS']) || $_SERVER['HTTPS'] === 'off' ? 'http' : 'https';
     self::$indiciaData['protocol'] = $protocol;
     // Add some useful templates.

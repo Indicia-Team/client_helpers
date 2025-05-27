@@ -1568,9 +1568,10 @@ JS;
         $settings[$key] = $value;
       }
     }
-    // Google driver needs a key.
+    // Google driver needs a key and a proxy.
     if ($options['driver'] === 'google_places') {
       $settings['google_api_key'] = self::$google_api_key;
+      self::$indiciaData['placeSearchProxyUrl'] = self::getRootFolder() . self::relative_client_helper_path() . 'place_search_proxy.php';
     }
     // The indicia_locations driver needs the warehouse URL.
     elseif ($options['driver'] === 'indicia_locations') {
@@ -2530,7 +2531,8 @@ JS;
       $r .= "<input type='hidden' name='".$options['systemField']."' id='imp-sref-system' value='$defaultSystem' />";
     }
     $r .= self::check_errors($options['fieldname']);
-    self::$javascript .= "indiciaData.google_api_key='".self::$google_api_key."';\n";
+    self::$indiciaData['google_api_key'] = self::$google_api_key;
+    self::$indiciaData['placeSearchProxyUrl'] = self::getRootFolder() . self::relative_client_helper_path() . 'place_search_proxy.php';
     return $r;
   }
 
