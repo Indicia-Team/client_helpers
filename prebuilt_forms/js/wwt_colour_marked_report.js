@@ -90,7 +90,7 @@
     ["U", "Brown (Umber)", "umber"]
   ];
   var colourTableLength = colourTable.length;
-  
+
   var hexColours = [
     ["R", "ff0000"],
     ["P", "7f7fff"],
@@ -123,7 +123,7 @@
     var cCode = '?';
     var compactColour = colour.toLowerCase().replace(/[^a-z]/g, '');
     var i;
-    
+
     for (i=0; i<colourTableLength; i++) {
       if (colourTable[i][2]===compactColour) {
         cCode = colourTable[i][0];
@@ -137,7 +137,7 @@
     // finds the hex code for colour character or returns 'ffffff' if not found
     var cHex = 'ffffff';
     var i;
-    
+
     for (i=0; i<hexColoursLength; i++) {
       if (hexColours[i][0]===cCode) {
         cHex = hexColours[i][1];
@@ -157,7 +157,7 @@
     var iText = $('#'+prefix+'idnAttr\\:'+textColourId+' option:selected').text();
     var iPos = $('#'+prefix+'idnAttr\\:'+positionId+' option:selected').text();
     var iSeq = $('#'+prefix+'idnAttr\\:'+sequenceId).val();
-    iSeq = $.trim(iSeq);
+    iSeq = iSeq.trim();
     switch (idnTypeName) {
     case 'neck-collar':
       iCode = 'NC';
@@ -194,10 +194,10 @@
     } else {
       iCode += getColourCode(iBase)+getColourCode(iText)+'('+iSeq.toUpperCase()+')';
     }
-    
+
     return iCode;
   };
-  
+
   var setIdentifierVisualisation = function(ctl) {
     // set the colour identifier visualisation panel to reflect the attributes
     var parts = ctl.id.split(':');
@@ -272,7 +272,7 @@
       return true;
     }
     // if control is an input
-    if ($(ctl).filter('input').length>0 && $.trim(ctl.value).length>0) {
+    if ($(ctl).filter('input').length>0 && ctl.value.trim().length > 0) {
       return true;
     }
     return false;
@@ -293,7 +293,7 @@
       }
     });
     checkbox.checked = setting;
-    // if checked, all identifier values are required except sequence which requires a warning if not set, 
+    // if checked, all identifier values are required except sequence which requires a warning if not set,
     // and conditions which is always optional (but not in the control$ wrapped set anyway)
     // set identifier coded_value
     if (setting) {
@@ -332,7 +332,7 @@
     // hide panel slowly then remove the html and reset the form
     panel$.slideUp('normal',function() {
       panel$.remove();
-      var indCount = $('.individual_panel').length;   
+      var indCount = $('.individual_panel').length;
       setRemoveButtonDisplay();
       // reactivate subject accordion, if used
       if (subjectAccordion) {
@@ -378,7 +378,7 @@
       removeIndividual(this);
     });
   };
-  
+
   var addValidationMethods = function() {
     // add jQuery validation options/methods
     $.validator.addMethod("identifierRequired", function(value, element) {
@@ -388,7 +388,7 @@
     }, "Please record at least one identifier for this bird");
     $.validator.addMethod("confirmIfBlank", function(value, element) {
       // if an identifier is being used, but the sequence is blank we must get confirmation to continue
-      if ($.trim(value)==='' && $(element).data('confirmed')===undefined) {
+      if (value.trim() === '' && $(element).data('confirmed') === undefined) {
         var identifier = $(element).closest('.idn\\:accordion\\:panel').prev('h3').text();
         var confirmation = confirm('You\'ve entered no sequence for the '+identifier+', please choose \'OK\' to continue, or \'Cancel\' to enter a sequence.');
         if (confirmation) {
@@ -436,21 +436,21 @@
       }
       return result;
     }, "This identifier already exists on this form, please check and re-enter.");
-    $.validator.addMethod('collarFormat', function (value, element) { 
+    $.validator.addMethod('collarFormat', function (value, element) {
       if (collarRegex==='') {
         return true;
       }
       var re = new RegExp(collarRegex);
       return this.optional(element) || re.test(value);
     }, 'This is not a known neck collar format, please check the value and re-enter.');
-    $.validator.addMethod('colourRingFormat', function (value, element) { 
+    $.validator.addMethod('colourRingFormat', function (value, element) {
       if (colourRegex==='') {
         return true;
       }
       var re = new RegExp(colourRegex);
       return this.optional(element) || re.test(value);
     }, 'This is not a known colour ring format, please check the value and re-enter.');
-    $.validator.addMethod('metalRingFormat', function (value, element) { 
+    $.validator.addMethod('metalRingFormat', function (value, element) {
       if (metalRegex==='') {
         return true;
       }
@@ -458,7 +458,7 @@
       return this.optional(element) || re.test(value);
     }, 'This is not a known metal ring format, please check the value and re-enter.');
   };
-  
+
   var initIndividuals = function(scope) {
     // colour any colour selects
     $('select.select_colour option', scope).each(function() {
@@ -486,11 +486,11 @@
       $('.idn-accordion', scope).accordion();
     }
   };
-  
+
   var addIndividual = function() {
     // use subjectCount for the incremental number of individuals (not reduced when subjects removed), indCount for the actual number.
     subjectCount++;
-    var indCount = $('.individual_panel').length;      
+    var indCount = $('.individual_panel').length;
     var newInd = window.indicia.wwt.newIndividual.replace(/idn:0:/g, 'idn:'+subjectCount+':')
       .replace(/Colour-marked Individual 1/g, 'Colour-marked Individual '+(subjectCount+1));
     var fromSelector = '#'+esc4jq($('.individual_panel').filter(':last').attr('id'));
@@ -513,7 +513,7 @@
       $('.idn-subject-accordion').accordion('destroy').accordion({'active':indCount});
     }
   };
-  
+
   /*
    * Public functions
    */
@@ -522,8 +522,8 @@
    * initialises settings and set event handlers, called from indicia ready
    * handler.
    */
-  indicia.wwt.initForm = function(pBaseColourId, pTextColourId, 
-      pSequenceId, pPositionId, pVerticalDefault, pCollarRegex, 
+  indicia.wwt.initForm = function(pBaseColourId, pTextColourId,
+      pSequenceId, pPositionId, pVerticalDefault, pCollarRegex,
       pColourRegex, pMetalRegex, pValidate, pSubjectAccordion) {
     // set config from PHP.
     baseColourId = parseInt(pBaseColourId, 10);

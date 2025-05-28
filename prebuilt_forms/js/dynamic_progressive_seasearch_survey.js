@@ -37,12 +37,12 @@ jQuery(window).load(function($) {
       $('#third-level-smp-occ-grid').find('.scClonableRow').hide();
       $('.scAddMediaCell').hide();
     } else {
-      $('[id^="upload-select-btn-"]').show(); 
+      $('[id^="upload-select-btn-"]').show();
       $('.scClonableRow').show();
       $('.scAddMediaCell').show();
     }
   }
-  
+
   //Track progress through wizard by incrementing and decrementing tab number appropriately
   setupClickEvents = function setupClickEvents(getSampleId) {
     // Find the appropriate separator for AJAX url params - depends on clean urls setting.
@@ -52,7 +52,7 @@ jQuery(window).load(function($) {
     if (indiciaData.sample_id) {
       param = 'sample_id=' + indiciaData.sample_id;
     } else {
-      param = ''; 
+      param = '';
     }
     //Hide the Add Photo button on the occurrences tab
     hideOccurrenceAddphoto();
@@ -63,7 +63,7 @@ jQuery(window).load(function($) {
       if (current !==5) {
         $('#messages').hide();
       }
-      //currently selected tab number need incrementing    
+      //currently selected tab number need incrementing
       current++;
       //Make sure all the habitat names and descriptions are filled in.
       if (current===5) {
@@ -108,11 +108,11 @@ jQuery(window).load(function($) {
       if (!indiciaData.existingHabitatSubSamplesIds && current===4) {
         createNewHabitat();
       }
-    });  
+    });
 
     $('.tab-prev').click(function() {
       $('#messages').hide();
-      //currently selected tab number needs decrementing     
+      //currently selected tab number needs decrementing
       current--;
       //Show loading panel as we are reloading page unless we have detected that a habitat name or description is not filled in,
       //in which case the system triggers the previous button click automatically so the user can quickly move back to the previous tab and correct the problem.
@@ -126,7 +126,7 @@ jQuery(window).load(function($) {
       }
     });
   }
-  
+
   /*
    * Setup page saving. Some tabs can be saved as an ajax save instead of a page reload
    */
@@ -136,7 +136,7 @@ jQuery(window).load(function($) {
       //Calls ajax_save function in php file.
       indiciaData.ajaxUrl + '/save/' + indiciaData.nid,
       data,
-      function (response) { 
+      function (response) {
         var responseObject = $.parseJSON(response);
         //If the response is a fatal error message, then display it and reload the previous tab
         if (responseObject.fatalSubmissionError) {
@@ -162,7 +162,7 @@ jQuery(window).load(function($) {
         //"current" has already been incremented, so need to check the last tab to check if it is in the list of tabs to reload.
         //Always reload when going back in the wizard as some pages contain attributes that need reloading with sample_attribute_values.
         //Also need a reload if an fatal submission error message is shown and we want to return to previous tab.
-        if (inArray(current-1,indiciaData.reloadtabs)||backButtonUsed===true||responseObject.fatalSubmissionError) { 
+        if (inArray(current-1,indiciaData.reloadtabs)||backButtonUsed===true||responseObject.fatalSubmissionError) {
           //Ignore anything after # in the URL, like overlay contexts
           var url = window.location.href.toString().split('#');
           url=url[0];
@@ -191,12 +191,12 @@ jQuery(window).load(function($) {
       }
     );
   }
-  
+
   //When creating a new habitat, we make a clone of a hidden cloneable habitat
   //Call the function that will setup the names of the attributes so they are ready for submission
   //Add a hidden field to allow the submission handler to know what the parent of the sub-sample is
   createNewHabitat = function() {
-    var panelId='habitat-panel-'+indiciaData.nextHabitatNum;     
+    var panelId='habitat-panel-'+indiciaData.nextHabitatNum;
     $('#habitats-setup').append('<div id=\"'+panelId+'\" style=\"display:none;\">');
     $('#habitats-setup').append('<hr width=\"50%\">');
     $('.habitat-attr-cloneable').each(function(index) {
@@ -209,11 +209,11 @@ jQuery(window).load(function($) {
     indiciaData.currentHabitatNum++;
     indiciaData.nextHabitatNum++;
   }
-  
+
   /*
    * For all the attributes associated with a habitat, we need to place new_sample_sub_sample:<sub sample idx starting from 0> or existing_sample_sub_sample:<sub sample id in db> at the front of the names and ids so the submission
    * knows that these are to be placed into a sub-sample.
-   */  
+   */
   setupSubSampleAttrsForHabitat = function setupSubSampleAttrsForHabitat(habitatNumToSetup,addNew, existingHabitatSampleId) {
     //Find all fields inside habitat panel
     $('#habitat-panel'+'-'+habitatNumToSetup).find('*').each(function() {
@@ -262,9 +262,9 @@ jQuery(window).load(function($) {
       }
     });
   }
-  
+
   //When linking photos to habitat we use drag and drop. Set this up.
-  setupDroppableItemsForLinkingPhotosToHabitats = function setupDroppableItemsForLinkingPhotosToHabitats() {   
+  setupDroppableItemsForLinkingPhotosToHabitats = function setupDroppableItemsForLinkingPhotosToHabitats() {
     $('.droppable-splitter').droppable({ accept: '.habitat-dragzone',tolerance: 'touch',
       drop: function(event, ui) {
         var splitUpId=$(this).attr('id').split('-');
@@ -276,7 +276,7 @@ jQuery(window).load(function($) {
         var subSampleId=$(ui.draggable).parent().attr('id').split('-').pop();
         var colourToUse=$(ui.draggable).attr('color');
         //The are two kinds of habitat zones the user can drag from.
-        //The override dragzone will always change the photo to be the habitat even 
+        //The override dragzone will always change the photo to be the habitat even
         //if it has already been allocated in this session.
         //The other habitat draggable item will setup the photo to be associated with the habitat but also all
         //previous photos in the list providing they have not already been allocated. This way, the user can allocate
@@ -301,13 +301,13 @@ jQuery(window).load(function($) {
               $(ui.draggable).css('border', '5px solid'+colourToUse);
               $('#sub-sample-holder-for-media-number-'+i).attr('allocated',true);
             }
-          } 
+          }
         }
       }
     });
   }
-  
-  //Some pages we can save without reloading. The problem with this is that the html on pages which contain attributes will not be setup 
+
+  //Some pages we can save without reloading. The problem with this is that the html on pages which contain attributes will not be setup
   //with the sample_attribute_values like in edit mode, this means that when the user saves again on the following tabs a set of new sample_attribute_values
   //will be created instead of saving the existing ones. To get around that, we can remove the contents of the tab once saved until the tab
   //is reloaded correctly in edit mode (like if the user clicks back in the wizard, or reloads the page manually.)
@@ -320,9 +320,9 @@ jQuery(window).load(function($) {
       $('#container-sample_medium-seasearch-sketches').remove();
     }
   }
-  
+
   //Based on the addRowToGrid.js makeSpareRow function (at the time of writing).
-  //Slightly customised for seasearch, but changes not relevant to general code. 
+  //Slightly customised for seasearch, but changes not relevant to general code.
   //To Do: I have only been partially successful at removing general code that might not be needed for Seasearch (without breaking it), however
   //that does not mean that further streamlining of this function is not possible.
   //Makes a row containing an image on the main occurrences grid that is preloaded from second level or third level sample.
@@ -334,19 +334,19 @@ jQuery(window).load(function($) {
       // clear the event handlers
       $(event.target).unbind('result', handleSelectedTaxon);
       $(event.target).unbind('return', returnPressedInAutocomplete);
-      taxonCell=event.target.parentNode; 
+      taxonCell=event.target.parentNode;
       //Create edit icons for taxon cells. Only add the edit icon if the user has this functionality available on the edit tab.
       //Also create Notes and Delete icons when required
       var linkPageIconSource = indiciaData.imagesPath + "nuvola/find-22px.png";
       if (indiciaData['editTaxaNames-'+gridId]==true) {
         deleteAndEditHtml = "<td class='row-buttons'>\n\
-            <img class='action-button remove-row' src=" + indiciaData.imagesPath + "nuvola/cancel-16px.png>\n" 
+            <img class='action-button remove-row' src=" + indiciaData.imagesPath + "nuvola/cancel-16px.png>\n"
         deleteAndEditHtml += "<img class='action-button edit-taxon-name' src=" + indiciaData.imagesPath + "nuvola/package_editors-16px.png>\n";
         if (indiciaData['includeSpeciesGridLinkPage-'+gridId]==true) {
           deleteAndEditHtml += '<img class="species-grid-link-page-icon" title="'+indiciaData.speciesGridPageLinkTooltip+'" alt="Notes icon" src=' + linkPageIconSource + '>';
         }
         deleteAndEditHtml += "</td>";
-      } else {   
+      } else {
         deleteAndEditHtml = "<td class='row-buttons'>\n\
             <img class='action-button action-button remove-row' src=" + indiciaData.imagesPath + "nuvola/cancel-16px.png>\n";
         if (indiciaData['includeSpeciesGridLinkPage-'+gridId]==true) {
@@ -365,8 +365,8 @@ jQuery(window).load(function($) {
         $(taxonCell).parent().addClass('added-row');
       $(taxonCell).parent().removeClass('scClonableRow');
       $(taxonCell).parent().find('input,select,textarea').removeClass('inactive');
-      // Do we use a JavaScript fn, or a standard template, to format the species label?      
-      if ($.isFunction(formatter)) {
+      // Do we use a JavaScript fn, or a standard template, to format the species label?
+      if (typeof formatter === 'function') {
         $(taxonCell).html(formatter(data));
       } else {
         // Just a simple PHP template
@@ -384,7 +384,7 @@ jQuery(window).load(function($) {
       // auto-check the row
       checkbox=$(row).find('.scPresenceCell input.scPresence');
       checkbox.attr('checked', 'checked');
-      // store the ttlId 
+      // store the ttlId
       checkbox.val(data.id);
       // Finally, a blank row is added for the next record
       makeImageRowOrSpareRow(gridId, readAuth, lookupListId, url, null, true);
@@ -393,8 +393,8 @@ jQuery(window).load(function($) {
         fn(data, row);
       });
     };
-    
-    if (typeof formatter==="undefined" || !$.isFunction(formatter)) {
+
+    if (typeof formatter==="undefined" || !typeof formatter === 'function') {
       // provide a default format function
       formatter = function(item) {
         return item.taxon;
@@ -410,7 +410,7 @@ jQuery(window).load(function($) {
       newRow = $('tr#'+gridId + '-scOccImageRow-'+mediaId).clone(true);
       //Remove row after cloning as we don't need it anymore and don't want to pass to submission builder
       $('tr#'+gridId + '-scOccImageRow-'+mediaId).remove();
-    } else {    
+    } else {
       newRow = $('tr#'+gridId + '-scClonableRow').clone(true);
     }
     // build an auto-complete control for selecting the species to add to the bottom of the grid.
@@ -452,7 +452,7 @@ jQuery(window).load(function($) {
       nonce: readAuth.nonce,
       taxon_list_id: lookupListId
     };
-    if (typeof indiciaData['taxonExtraParams-'+gridId]!=="undefined") { 
+    if (typeof indiciaData['taxonExtraParams-'+gridId]!=="undefined") {
       $.extend(extraParams, indiciaData['taxonExtraParams-'+gridId]);
       // a custom query on the list id overrides the standard filter..
       if (typeof extraParams.query!=="undefined" && extraParams.query.indexOf('taxon_list_id')!==-1) {
@@ -479,7 +479,7 @@ jQuery(window).load(function($) {
     indiciaData['gridCounter-'+gridId]++;
     return ctrl;
   };
-  
+
   /*
    * Returns true if an item is found in an array
    */
