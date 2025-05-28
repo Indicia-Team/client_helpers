@@ -262,16 +262,6 @@ class helper_base {
   public static $base_url = '';
 
   /**
-   * Path to proxy script for calls to the warehouse.
-   *
-   * Allows the warehouse to sit behind a firewall only accessible from the
-   * server.
-   *
-   * @var string
-   */
-  public static $warehouse_proxy = NULL;
-
-  /**
    * Base URL of the GeoServer we are linked to if GeoServer is used.
    *
    * @var string
@@ -690,16 +680,6 @@ class helper_base {
   protected static $indiciaFnsDone = FALSE;
 
   /**
-   * Returns the URL to access the warehouse by, respecting proxy settings.
-   *
-   * @return string
-   *   URL.
-   */
-  public static function getProxiedBaseUrl() {
-    return empty(self::$warehouse_proxy) ? self::$base_url : self::$warehouse_proxy;
-  }
-
-  /**
    * Returns the folder to store uploaded images in before submission.
    *
    * When an image has been uploaded on a form but not submitted to the
@@ -728,6 +708,110 @@ class helper_base {
       default:
         return $folder;
     }
+  }
+
+  /**
+   * Checks the extension of a file against the allowed upload file types.
+   *
+   * @param string $fileName
+   *   Name of the file to check, including extension.
+   *
+   * @return bool
+   *   True if the file type is allowed, otherwise false.
+   */
+  public static function checkUploadFileType($fileName) {
+    // Check the file type is allowed.
+    $ext = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+    foreach (self::$upload_file_types as $extensions) {
+      if (in_array($ext, $extensions)) {
+        return TRUE;
+      }
+    }
+    return FALSE;
+  }
+
+  /**
+   * Checks the mime type of a file against the allowed upload mime types.
+   *
+   * @param string $filePath
+   *   Path to the file to check.
+   *
+   * @return bool
+   *   True if the mime type is allowed, otherwise false.
+   */
+  public static function checkUploadMimeType($filePath) {
+    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+    $mimeType = finfo_file($finfo, $filePath);
+    finfo_close($finfo);
+    if ($mimeType) {
+      list ($mainType, $subType) = explode('/', $mimeType);
+      if (in_array($subType, self::$upload_mime_types[$mainType])) {
+        return TRUE;
+      }
+    }
+    return FALSE;
+  }
+
+  /**
+   * Validation rule to test if an uploaded file is allowed by file size.
+   *
+   * File sizes are obtained from the $maxUploadSize setting, and defined as:
+   * SB, where S is the size (1, 15, 300, etc) and
+   * B is the byte modifier: (B)ytes, (K)ilobytes, (M)egabytes, (G)igabytes.
+   * Eg: to limit the size to 1MB or less, you would use "1M".
+   *
+   * @param array $file
+   *   Item from the $_FILES array.
+   *
+   * @return bool
+   *   True if the file size is acceptable, otherwise false.
+   */
+  public static function checkUploadSize(array $file) {
+    if ((int) $file['error'] !== UPLOAD_ERR_OK) {
+      return TRUE;
+    }
+
+    $size = self::$upload_max_filesize;
+
+    if (!preg_match('/[0-9]++[BKMG]/', $size)) {
+      return FALSE;
+    }
+
+    $size = self::convertToBytes($size);
+
+    // Test that the file is under or equal to the max size
+    return $file['size'] <= $size;
+  }
+
+  /**
+   * Convert a memory size string (e.g. 1K, 1M) into the number of bytes.
+   *
+   * @param string $size
+   *   Size string to convert. Valid suffixes as G (gigabytes), M (megabytes),
+   *   K (kilobytes) or nothing.
+   *
+   * @return int
+   *   Number of bytes.
+   */
+  protected static function convertToBytes($size) {
+    // Make the size into a power of 1024
+    switch (substr($size, -1)) {
+      case 'G':
+        $size = intval($size) * pow(1024, 3);
+        break;
+
+      case 'M':
+        $size = intval($size) * pow(1024, 2);
+        break;
+
+      case 'K':
+        $size = intval($size) * pow(1024, 1);
+        break;
+
+      default:
+        $size = intval($size);
+    }
+    return $size;
   }
 
   /**
@@ -1504,15 +1588,10 @@ class helper_base {
   }
 
   /**
-   * Calculates the folder that submitted images end up in according to the helper_config.
+   * Calculates the folder that submitted images end up in.
    */
   public static function get_uploaded_image_folder() {
-    if (!isset(self::$final_image_folder) || self::$final_image_folder === 'warehouse') {
-      return self::getProxiedBaseUrl() . (isset(self::$indicia_upload_path) ? self::$indicia_upload_path : 'upload/');
-    }
-    else {
-      return self::getRootFolder() . self::client_helper_path() . self::$final_image_folder;
-    }
+    return self::$base_url . (isset(self::$indicia_upload_path) ? self::$indicia_upload_path : 'upload/');
   }
 
   /**
@@ -2401,8 +2480,6 @@ HTML;
     global $indicia_templates;
     self::$indiciaData['imagesPath'] = self::$images_path;
     self::$indiciaData['warehouseUrl'] = self::$base_url;
-    $proxyUrl = self::getRootFolder() . self::relative_client_helper_path() . 'proxy.php';
-    self::$indiciaData['proxyUrl'] = $proxyUrl;
     $protocol = empty($_SERVER['HTTPS']) || $_SERVER['HTTPS'] === 'off' ? 'http' : 'https';
     self::$indiciaData['protocol'] = $protocol;
     // Add some useful templates.
@@ -2537,7 +2614,7 @@ JS;
       }
 
       if (self::$js_read_tokens) {
-        self::$js_read_tokens['url'] = self::getProxiedBaseUrl();
+        self::$js_read_tokens['url'] = self::$base_url;
         $script .= "indiciaData.read = " . json_encode(self::$js_read_tokens) . ";\n";
       }
       if (!self::$is_ajax) {
@@ -3934,9 +4011,6 @@ if (!function_exists('get_called_class')) {
 if (class_exists('helper_config')) {
   if (isset(helper_config::$base_url)) {
     helper_base::$base_url = helper_config::$base_url;
-  }
-  if (isset(helper_config::$warehouse_proxy)) {
-    helper_base::$warehouse_proxy = helper_config::$warehouse_proxy;
   }
   if (isset(helper_config::$geoserver_url)) {
     helper_base::$geoserver_url = helper_config::$geoserver_url;

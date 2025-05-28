@@ -758,7 +758,7 @@ class iform_wwt_colour_marked_report implements PrebuiltFormInterface {
 
     // Get authorisation tokens to update and read from the Warehouse.
     $auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
-    $svcUrl = data_entry_helper::getProxiedBaseUrl().'index.php/services';
+    $svcUrl = helper_base::$base_url . 'index.php/services';
     self::$auth = $auth;
 
     drupal_add_js(iform_media_folder_path() . 'js/jquery.form.js', 'module');
@@ -1572,8 +1572,8 @@ class iform_wwt_colour_marked_report implements PrebuiltFormInterface {
       }
       if ($args['species_ctrl']=='tree_browser') {
         // change the node template to include images
-        $indicia_templates['tree_browser_node']='<div>'.
-            '<img src="' . data_entry_helper::getProxiedBaseUrl() . '/upload/thumb-{image_path}" alt="Image of {caption}" width="80" /></div>'.
+        $indicia_templates['tree_browser_node']='<div>' .
+            '<img src="' . helper_base::$base_url . '/upload/thumb-{image_path}" alt="Image of {caption}" width="80" /></div>'.
             '<span>{caption}</span>';
       }
       // Dynamically generate the species selection control required.

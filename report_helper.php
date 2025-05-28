@@ -901,7 +901,7 @@ $callToCallback}";
       // Now AJAXify the grid
       self::add_resource('reportgrid');
       global $indicia_templates;
-      $warehouseUrl = parent::getProxiedBaseUrl();
+      $warehouseUrl = self::$base_url;
       $rootFolder = self::getRootFolder() . (empty($pathParam) ? '' : "?$pathParam=");
       if (isset($options['sharing'])) {
         $options['extraParams']['sharing']=$options['sharing'];
@@ -2542,8 +2542,7 @@ mapSettingsHooks.push(function(opts) { $setLocationJs
     if (isset($options['userId']))
       $request .= '&user_id='.$options['userId'];
     if (isset($options['linkOnly']) && $options['linkOnly']) {
-      // a link must be proxied as can be used client-site
-      return parent::getProxiedBaseUrl() . $request;
+      return self::$base_url . $request;
     }
     return self::getCachedServicesCall($request, $options);
   }
