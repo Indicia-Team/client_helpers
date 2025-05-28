@@ -50,23 +50,6 @@ foreach ($_GET as $key => $value) {
 $url = str_replace('\"', '"', $url);
 $url = str_replace(' ', '%20', $url);
 $session = curl_init($url);
-/*// Set the POST options.
-$httpHeader = [];
-$postData = file_get_contents('php://input');
-if (empty($postData)) {
-  $postData = $_POST;
-}
-if (!empty($postData)) {
-  curl_setopt($session, CURLOPT_POST, 1);
-  curl_setopt($session, CURLOPT_POSTFIELDS, $postData);
-  // Post contains a raw XML document?
-  if (is_string($postData) && substr($postData, 0, 1) === '<') {
-    $httpHeader[] = 'Content-Type: text/xml';
-  }
-}
-if (count($httpHeader) > 0) {
-  curl_setopt($session, CURLOPT_HTTPHEADER, $httpHeader);
-}*/
 
 curl_setopt($session, CURLOPT_HEADER, TRUE);
 curl_setopt($session, CURLOPT_RETURNTRANSFER, TRUE);
