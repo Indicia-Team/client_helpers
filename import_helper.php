@@ -933,7 +933,6 @@ HTML;
     $r .= "<div id='progress-text'>$actionMessage.</div>
     </div>
     ";
-    $baseUrl = parent::getProxiedBaseUrl();
     self::$onload_javascript .= <<<JS
 /**
  * Upload a single chunk of a file, by doing an AJAX get. If there is more, then on receiving the response upload the
@@ -942,7 +941,7 @@ HTML;
 uploadChunk = function() {
   var limit = 50;
   $.ajax({
-    url: '{$baseUrl}index.php/services/import/upload?offset=' + total + '&limit=' + limit +
+    url: indiciaData.warehouseUrl + 'index.php/services/import/upload?offset=' + total + '&limit=' + limit +
          '&filepos=' + filepos + '&uploaded_csv=$filename' +
          '&model=$options[model]&allow_commit_to_db=$options[allowCommitToDB]',
     dataType: 'jsonp',

@@ -1794,7 +1794,7 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
         } else {
           data_entry_helper::$javascript .= "formatter = '".$indicia_templates['taxon_label']."';\n";
         }
-        $url = parent::getProxiedBaseUrl() . 'index.php/services/data';
+        $url = helper_base::$base_url . 'index.php/services/data';
         data_entry_helper::$javascript .= "if (typeof indiciaData.speciesGrid==='undefined') {indiciaData.speciesGrid={};}\n";
         data_entry_helper::$javascript .= "indiciaData.speciesGrid['$options[id]']={};\n";
         data_entry_helper::$javascript .= "indiciaData.speciesGrid['$options[id]'].numValues=".(!empty($options['numValues']) ? $options['numValues'] : 20).";\n";

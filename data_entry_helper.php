@@ -234,7 +234,7 @@ class data_entry_helper extends helper_base {
     $options = array_merge([
       'attributes' => [],
       'template' => 'autocomplete',
-      'url' => parent::getProxiedBaseUrl() . 'index.php/services/' .
+      'url' => self::$base_url . 'index.php/services/' .
         (isset($options['report']) ? 'report/requestReport' : "data/$options[table]"),
       // Escape the ids for jQuery selectors.
       'escaped_input_id' => self::jq_esc($options['inputId']),
@@ -1188,7 +1188,7 @@ JS;
       'jsPath' => self::$js_path,
       'buttonTemplate' => $indicia_templates['button'],
       'table' => 'occurrence_medium',
-      'maxUploadSize' => self::convert_to_bytes(parent::$upload_max_filesize),
+      'maxUploadSize' => self::convertToBytes(parent::$upload_max_filesize),
       'codeGenerated' => 'all',
       'mediaTypes' => !empty($options['subType']) ? [$options['subType']] : ['Image:Local'],
       'mediaLicenceId' => NULL,
@@ -1205,9 +1205,6 @@ JS;
       'msgUseAddLinkBtn' => lang::get('Use the Add link button to add a link to information stored elsewhere on the internet. You can enter links from {1}.')
     ];
     $defaults['caption'] = (!isset($options['mediaTypes']) || $options['mediaTypes'] === ['Image:Local']) ? lang::get('Photos') : lang::get('Media files');
-    if (isset(self::$final_image_folder_thumbs)) {
-      $defaults['finalImageFolderThumbs'] = self::getRootFolder() . self::client_helper_path() . self::$final_image_folder_thumbs;
-    }
     if ($indicia_templates['file_box'] !== '') {
       $defaults['file_boxTemplate'] = $indicia_templates['file_box'];
     }
@@ -1608,9 +1605,10 @@ JS;
         $settings[$key] = $value;
       }
     }
-    // Google driver needs a key.
+    // Google driver needs a key and a proxy.
     if ($options['driver'] === 'google_places') {
       $settings['google_api_key'] = self::$google_api_key;
+      self::$indiciaData['placeSearchProxyUrl'] = self::getRootFolder() . self::relative_client_helper_path() . 'place_search_proxy.php';
     }
     // The indicia_locations driver needs the warehouse URL.
     elseif ($options['driver'] === 'indicia_locations') {
@@ -2570,9 +2568,8 @@ JS;
       $r .= "<input type='hidden' name='".$options['systemField']."' id='imp-sref-system' value='$defaultSystem' />";
     }
     $r .= self::check_errors($options['fieldname']);
-    self::$javascript .= "indiciaData.google_api_key='".self::$google_api_key."';\n";
-    self::$javascript .= "$.fn.indiciaMapPanel.georeferenceLookupSettings.proxy='".
-      self::getRootFolder() . self::client_helper_path() . "proxy.php';\n\n";
+    self::$indiciaData['google_api_key'] = self::$google_api_key;
+    self::$indiciaData['placeSearchProxyUrl'] = self::getRootFolder() . self::relative_client_helper_path() . 'place_search_proxy.php';
     return $r;
   }
 
@@ -6821,7 +6818,7 @@ $('#sensitive-blur').change(function() {
     global $indicia_templates;
     self::add_resource('treeview_async');
     // Declare the data service
-    $url = parent::getProxiedBaseUrl() . 'index.php/services/data';
+    $url = self::$base_url . 'index.php/services/data';
     // Setup some default values
     $options = array_merge([
       'valueField' => $options['captionField'],
@@ -7573,12 +7570,12 @@ HTML;
     // Setup JavaScript to do the population when the parent control changes.
     $parentControlId = str_replace(':', '\\:', $options['parentControlId']);
     if (!empty($options['report'])) {
-      $url = parent::getProxiedBaseUrl() . "index.php/services/report/requestReport";
+      $url = self::$base_url . "index.php/services/report/requestReport";
       $request = "$url?report=" . $options['report'] . ".xml&mode=json&reportSource=local&callback=?";
       $query = $options['filterField'] . '=' . urlencode('"val"');
     }
     else {
-      $url = parent::getProxiedBaseUrl() . "index.php/services/data";
+      $url = self::$base_url . "index.php/services/data";
       $request = "$url/$options[table]?mode=json&callback=?";
       $inArray = array('val');
       if (isset($options['filterIncludesNulls']) && $options['filterIncludesNulls']) {
@@ -7942,35 +7939,27 @@ if (errors$uniq.length>0) {
         }
       }
       // if there are images, we will send them after the main post, so we need to persist the write nonce
-      if (count($media)>0)
+      if (count($media) > 0) {
         $postargs .= '&persist_auth=true';
+      }
       $response = self::http_post($request, $postargs);
       // The response should be in JSON if it worked
       $output = json_decode($response['output'], TRUE);
       // If this is not JSON, it is an error, so just return it as is.
-      if (!$output)
+      if (!$output) {
         $output = $response['output'];
+      }
       if (is_array($output) && array_key_exists('success', $output))  {
-        if (isset(self::$final_image_folder) && self::$final_image_folder!='warehouse') {
-          // moving the files on the local machine. Find out where from and to
-          $interimImageFolder = self::getInterimImageFolder('fullpath');
-          $final_image_folder = dirname($_SERVER['SCRIPT_FILENAME']) . '/' . self::relative_client_helper_path().
-            parent::$final_image_folder;
-        }
-        // submission succeeded. So we also need to move the images to the final location
+        // Submission succeeded. So we also need to move the images to the
+        // final location.
         $image_overall_success = TRUE;
         $image_errors = [];
-        foreach ($media as $item) {
+        foreach ($media as $idx => $item) {
           // no need to resend an existing image, or a media link, just local files.
           if ((empty($item['media_type']) || preg_match('/:Local$/', $item['media_type'])) && (!isset($item['id']) || empty($item['id']))) {
-            if (!isset(self::$final_image_folder) || self::$final_image_folder=='warehouse') {
-              // Final location is the Warehouse
-              // @todo Set PERSIST_AUTH false if last file
-              $success = self::send_file_to_warehouse($item['path'], TRUE, $writeTokens);
-            }
-            else {
-              $success = rename($interimImageFolder.$item['path'], $final_image_folder.$item['path']);
-            }
+            // Final location is the Warehouse. Sets persist_auth to false if
+            // the last file.
+            $success = self::send_file_to_warehouse($item['path'], $idx < count($media) - 1, $writeTokens);
             if ($success !== TRUE) {
               // Record all files that fail to move successfully.
               $image_overall_success = FALSE;
@@ -10208,7 +10197,17 @@ HTML;
             if (self::$validation_errors==NULL) self::$validation_errors = [];
             self::$validation_errors[$key] = lang::get('file too big for warehouse');
           }
-          elseif ($file['error'] == '0') {
+          elseif (!self::checkUploadFileType($file['full_path'])) {
+            // File type not allowed.
+            if (self::$validation_errors==NULL) self::$validation_errors = [];
+            self::$validation_errors[$key] = lang::get('file type not allowed');
+          }
+          elseif (!self::checkUploadMimeType($file['tmp_name'])) {
+            // File type not allowed.
+            if (self::$validation_errors==NULL) self::$validation_errors = [];
+            self::$validation_errors[$key] = lang::get('mime type not allowed');
+          }
+          elseif ($file['error']=='0') {
             // no file upload error
             $fname = isset($file['tmp_name']) ? $file['tmp_name'] : '';
             if ($fname && $moveSimpleFiles) {
@@ -10246,49 +10245,6 @@ HTML;
       }
     }
     return $r;
-  }
-
-  /**
-   * Validation rule to test if an uploaded file is allowed by file size.
-   * File sizes are obtained from the $maxUploadSize setting, and defined as:
-   * SB, where S is the size (1, 15, 300, etc) and
-   * B is the byte modifier: (B)ytes, (K)ilobytes, (M)egabytes, (G)igabytes.
-   * Eg: to limit the size to 1MB or less, you would use "1M".
-   *
-   * @param array $file Item from the $_FILES array.
-   * @return bool True if the file size is acceptable, otherwise false.
-   */
-  public static function checkUploadSize(array $file) {
-    if ((int) $file['error'] !== UPLOAD_ERR_OK)
-      return TRUE;
-
-    $size = parent::$upload_max_filesize;
-
-    if ( ! preg_match('/[0-9]++[BKMG]/', $size))
-      return FALSE;
-
-    $size = self::convert_to_bytes($size);
-
-    // Test that the file is under or equal to the max size
-    return ($file['size'] <= $size);
-  }
-
-  /**
-   * Utility method to convert a memory size string (e.g. 1K, 1M) into the number of bytes.
-   *
-   * @param string $size Size string to convert. Valid suffixes as G (gigabytes), M (megabytes), K (kilobytes) or nothing.
-   * @return integer Number of bytes.
-   */
-  private static function convert_to_bytes($size) {
-    // Make the size into a power of 1024
-    switch (substr($size, -1))
-    {
-      case 'G': $size = intval($size) * pow(1024, 3); break;
-      case 'M': $size = intval($size) * pow(1024, 2); break;
-      case 'K': $size = intval($size) * pow(1024, 1); break;
-      default:  $size = intval($size);                break;
-    }
-    return $size;
   }
 
   /**

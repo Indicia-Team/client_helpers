@@ -38,14 +38,14 @@ class iform_easy_download_2 implements PrebuiltFormInterface {
    * @return array The definition of the form.
    */
   public static function get_easy_download_2_definition() {
-    return array(
+    return [
       'title' => 'Easy download 2',
       'category' => 'Utilities',
       'description' => 'A page for quick and easy download of the data you have access to. Improved integration with record sharing and permissions.',
       'helpLink' => 'https://indicia-docs.readthedocs.org/en/latest/site-building/iform/prebuilt-forms/easy-download.html',
-      'supportsGroups'=>true,
-      'recommended' => true
-    );
+      'supportsGroups' => TRUE,
+      'recommended' => TRUE
+    ];
   }
 
   /**
@@ -60,148 +60,148 @@ class iform_easy_download_2 implements PrebuiltFormInterface {
    * @return array List of parameters that this form requires.
    */
   public static function get_parameters() {
-    return array(
-      array(
+    return [
+      [
         'name' => 'download_my_records',
         'caption' => 'Enable downloading of my records',
         'description' => 'Allow a user to download their own records.',
         'type' => 'checkbox',
-        'required'=>false,
-        'default'=>true
-      ),
-      array(
+        'required' => FALSE,
+        'default' => TRUE
+      ],
+      [
         'name' => 'download_all_users_reporting',
         'caption' => 'Download all users for reporting permission',
         'description' => 'Provide the name of the permission required to allow download of all records for reporting (as opposed to just my records).',
         'type' => 'text_input',
-        'required'=>false,
+        'required' => FALSE,
         'default' => 'indicia data admin'
-      ),
-      array(
+      ],
+      [
         'name' => 'download_administered_groups',
         'caption' => 'Download administered group records permission',
         'description' => 'Provide the name of the permission required to allow download of records contributed ' .
             'to recording groups you are an administrator of using a group recording form.',
         'type' => 'text_input',
-        'required'=>false,
+        'required' => FALSE,
         'default' => 'indicia data admin'
-      ),
-      array(
+      ],
+      [
         'name' => 'download_member_groups',
         'caption' => 'Download any group records permission',
         'description' => 'Provide the name of the permission required to allow download of records contributed ' .
             'to recording groups you are a member of using a group recording form.',
         'type' => 'text_input',
-        'required'=>false,
+        'required' => FALSE,
         'default' => ''
-      ),
-      array(
+      ],
+      [
         'name' => 'download_group_types',
         'caption' => 'Downloadable group type IDs',
         'description' => 'Comma separated list of the IDs of group types that can be downloaded. Leave blank to allow any.',
         'type' => 'text_input',
-        'required'=>false
-      ),
-      array(
+        'required' => FALSE
+      ],
+      [
         'name' => 'reporting_type_permission',
         'caption' => 'Download type permission - reporting',
         'description' => 'Provide the name of the permission required to allow download of reporting recordsets. '.
             'Leave blank to disallow this download type.',
         'type' => 'text_input',
-        'required'=>false,
+        'required' => FALSE,
         'default' => 'access iform content'
-      ),
-      array(
+      ],
+      [
         'name' => 'peer_review_type_permission',
         'caption' => 'Download type permission - peer review',
         'description' => 'Provide the name of the permission required to allow download of peer review recordsets. '.
             'Leave blank to disallow this download type.',
         'type' => 'text_input',
-        'required'=>false,
+        'required' => FALSE,
         'default' => 'access iform content'
-      ),
-      array(
+      ],
+      [
         'name' => 'verification_type_permission',
         'caption' => 'Download type permission - verification',
         'description' => 'Provide the name of the permission required to allow download of verification recordsets. '.
             'Leave blank to disallow this download type.',
         'type' => 'text_input',
-        'required'=>false,
+        'required' => FALSE,
         'default' => 'verification'
-      ),
-      array(
+      ],
+      [
         'name' => 'data_flow_type_permission',
         'caption' => 'Download type permission - data flow',
         'description' => 'Provide the name of the permission required to allow download of data flow recordsets. '.
             'Leave blank to disallow this download type.',
         'type' => 'text_input',
-        'required'=>false,
+        'required' => FALSE,
         'default' => 'indicia data admin'
-      ),
-      array(
+      ],
+      [
         'name' => 'moderation_type_permission',
         'caption' => 'Download type permission - moderation',
         'description' => 'Provide the name of the permission required to allow download of moderation recordsets. '.
             'Leave blank to disallow this download type.',
         'type' => 'text_input',
-        'required'=>false,
+        'required' => FALSE,
         'default' => 'access iform content'
-      ),
-      array(
+      ],
+      [
         'name' => 'editing_type_permission',
         'caption' => 'Download type permission - editing',
         'description' => 'Provide the name of the permission required to allow download of editing recordsets. '.
             'Leave blank to disallow this download type.',
         'type' => 'text_input',
-        'required'=>false,
+        'required' => FALSE,
         'default' => 'access iform content'
-      ),
-      array(
+      ],
+      [
         'name' => 'csv_format_permission',
         'caption' => 'Download format permission - CSV',
         'description' => 'Provide the name of the permission required to allow download of CSV format. '.
             'Leave blank to disallow this download format.',
         'type' => 'text_input',
-        'required'=>false,
+        'required' => FALSE,
         'default' => 'access iform content'
-      ),
-      array(
+      ],
+      [
         'name' => 'tsv_format_permission',
         'caption' => 'Download format permission - TSV',
         'description' => 'Provide the name of the permission required to allow download of TSV format. '.
             'Leave blank to disallow this download format.',
         'type' => 'text_input',
-        'required'=>false,
+        'required' => FALSE,
         'default' => 'access iform content'
-      ),
-      array(
+      ],
+      [
         'name' => 'kml_format_permission',
         'caption' => 'Download format permission - KML',
         'description' => 'Provide the name of the permission required to allow download of KML format. '.
             'Leave blank to disallow this download format.',
         'type' => 'text_input',
-        'required'=>false,
+        'required' => FALSE,
         'default' => 'access iform content'
-      ),
-      array(
+      ],
+      [
         'name' => 'gpx_format_permission',
         'caption' => 'Download format permission - GPX',
         'description' => 'Provide the name of the permission required to allow download of GPX format. '.
             'Leave blank to disallow this download format.',
         'type' => 'text_input',
-        'required'=>false,
+        'required' => FALSE,
         'default' => 'access iform content'
-      ),
-      array(
+      ],
+      [
         'name' => 'nbn_format_permission',
         'caption' => 'Download format permission - NBN',
         'description' => 'Provide the name of the permission required to allow download of NBN format. '.
             'Leave blank to disallow this download format.',
         'type' => 'text_input',
-        'required'=>false,
+        'required' => FALSE,
         'default' => 'access iform content'
-      ),
-      array(
+      ],
+      [
           'name' => 'custom_formats',
           'caption' => 'Custom formats',
           'description' => 'Define a list of custom download formats.',
@@ -224,121 +224,112 @@ class iform_easy_download_2 implements PrebuiltFormInterface {
     }
   ]
 }'
-      ),
-      array(
+      ],
+      [
         'name' => 'survey_id',
         'caption' => 'Survey for download',
         'description' => 'Select the survey to download data for, or leave blank to allow user selection.',
         'type' => 'select',
-        'required'=>false,
+        'required' => FALSE,
         'table' => 'survey',
         'valueField' => 'id',
         'captionField' => 'title',
         'sharing' => 'data_flow',
         'blankText' => '<allow user to choose>',
-        'siteSpecific'=>true
-      ),
-      array(
+        'siteSpecific' => TRUE,
+      ],
+      [
         'name' => 'report_csv',
         'caption' => 'CSV download format report',
         'description' => 'Choose the report used for CSV downloads. Report should be compatible with the standard report parameters.',
         'type' => 'report_helper::report_picker',
-        'required'=>true,
-        'default' => 'library/occurrences/filterable_occurrences_download'
-      ),
-      array(
+        'required' => TRUE,
+        'default' => 'library/occurrences/filterable_occurrences_download',
+      ],
+      [
         'name' => 'report_params_csv',
         'caption' => 'CSV Additional parameters',
         'description' => 'Additional parameters to provide to the report when doing a CSV download. One per line, param=value format.',
         'type' => 'textarea',
-        'required'=>false,
-        'default'=>"smpattrs=\noccattrs=\n"
-      ),
-      array(
+        'required' => FALSE,
+        'default'=>"smpattrs=\noccattrs=\n",
+      ],
+      [
         'name' => 'report_tsv',
         'caption' => 'TSV download format report',
         'description' => 'Choose the report used for TSV downloads. Report should be compatible with the standard report parameters.',
         'type' => 'report_helper::report_picker',
-        'required'=>true,
-        'default' => 'library/occurrences/filterable_occurrences_download'
-      ),
-      array(
+        'required' => TRUE,
+        'default' => 'library/occurrences/filterable_occurrences_download',
+      ],
+      [
         'name' => 'report_params_tsv',
         'caption' => 'TSV Additional parameters',
         'description' => 'Additional parameters to provide to the report when doing a TSV download. One per line, param=value format.',
         'type' => 'textarea',
-        'required'=>false,
-        'default'=>"smpattrs=\noccattrs=\n"
-      ),
-      array(
+        'required' => FALSE,
+        'default'=>"smpattrs=\noccattrs=\n",
+      ],
+      [
         'name' => 'report_kml',
         'caption' => 'KML download format report',
         'description' => 'Choose the report used for KML downloads. Report should be compatible with the standard report parameters and return a WKT for the geometry of the record '.
             'transformed to EPSG:4326.',
         'type' => 'report_helper::report_picker',
-        'required'=>true,
-        'default' => 'library/occurrences/filterable_occurrences_download_gis'
-      ),
-      array(
+        'required' => TRUE,
+        'default' => 'library/occurrences/filterable_occurrences_download_gis',
+      ],
+      [
         'name' => 'report_params_kml',
         'caption' => 'KML Additional parameters',
         'description' => 'Additional parameters to provide to the report when doing a KML download. One per line, param=value format.',
         'type' => 'textarea',
-        'required'=>false,
-        'default'=>"smpattrs=\noccattrs=\n"
-      ),
-      array(
+        'required' => FALSE,
+        'default'=>"smpattrs=\noccattrs=\n",
+      ],
+      [
         'name' => 'report_gpx',
         'caption' => 'GPX download format report',
         'description' => 'Choose the report used for GPX downloads. Report should be compatible with the standard report parameters and return a WKT for the geometry of the record '.
             'transformed to EPSG:4326.',
         'type' => 'report_helper::report_picker',
-        'required'=>true,
-        'default' => 'library/occurrences/filterable_occurrences_download_gis'
-      ),
-      array(
+        'required' => TRUE,
+        'default' => 'library/occurrences/filterable_occurrences_download_gis',
+      ],
+      [
         'name' => 'report_params_gpx',
         'caption' => 'GPX Additional parameters',
         'description' => 'Additional parameters to provide to the report when doing a GPX download. One per line, param=value format.',
         'type' => 'textarea',
-        'required'=>false,
-        'default'=>"smpattrs=\noccattrs=\n"
-      ),
-      array(
+        'required' => FALSE,
+        'default'=>"smpattrs=\noccattrs=\n",
+      ],
+      [
         'name' => 'report_nbn',
         'caption' => 'NBN download format report',
         'description' => 'Choose the report used for NBN downloads. Report should be compatible with the standard report parameters.',
         'type' => 'report_helper::report_picker',
-        'required'=>true,
-        'default' => 'library/occurrences/filterable_nbn_exchange'
-      ),
-      array(
+        'required' => TRUE,
+        'default' => 'library/occurrences/filterable_nbn_exchange',
+      ],
+      [
         'name' => 'report_params_nbn',
         'caption' => 'NBN Additional parameters',
         'description' => 'Additional parameters to provide to the report when doing an NBN download. One per line, param=value format.',
         'type' => 'textarea',
-        'required'=>false,
-        'default'=>"smpattrs=\noccattrs=\n"
-      ),
-      array(
+        'required' => FALSE,
+        'default'=>"smpattrs=\noccattrs=\n",
+      ],
+      [
         'name' => 'limit',
         'caption' => 'Limit to number of records',
         'description' => 'For performance reasons, unlimited downloads are not recommended. Set this to control the number of records '.
             'that can be downloaded at one time, or set to 0 for no limit.',
         'type' => 'text_input',
-        'required'=>false,
-        'default'=>20000
-      ),
-      array(
-        'name' => 'reverse_proxy',
-        'caption' => 'Webite behind reverse proxy',
-        'description' => 'If the website is behind a reverse proxy then the download link is altered by the proxying and doesn\'t work. ' .
-            'Check this box to allow the request to pass through the proxy.',
-        'type' => 'checkbox',
-        'required'=>false,
-        'default'=>false
-      )
-    );
+        'required' => FALSE,
+        'default'=>20000,
+      ],
+    ];
   }
 
   /**
@@ -361,12 +352,12 @@ class iform_easy_download_2 implements PrebuiltFormInterface {
    */
   public static function get_form($args, $nid, $response=null) {
     $conn = iform_get_connection_details($nid);
-    $args = array_merge(array(
-      'download_my_records' => true,
+    $args = array_merge([
+      'download_my_records' => TRUE,
       'download_administered_groups' => 'indicia data admin',
       'download_member_groups' => '',
       'download_group_types' => ''
-    ), $args);
+    ], $args);
     data_entry_helper::get_read_auth($conn['website_id'], $conn['password']);
     if (!empty($_POST) && !empty($_POST['format']))
       self::do_data_services_download($args, $nid);
@@ -386,7 +377,7 @@ class iform_easy_download_2 implements PrebuiltFormInterface {
       hostsite_set_page_title(lang::get('Download {1}', strtolower(implode('', $types))));
     }
     else {
-      $r .= data_entry_helper::select(array(
+      $r .= data_entry_helper::select([
         'fieldname' => 'download-type',
         'label'=>lang::get('Download type'),
         'lookupValues'=>$types,
@@ -394,50 +385,56 @@ class iform_easy_download_2 implements PrebuiltFormInterface {
         'helpText'=>lang::get('Select the type of download you require, i.e. ' .
             'the purpose for the data. This defines which records are ' .
             'available to download.')
-      ));
+      ]);
     }
-    $r .= data_entry_helper::select(array(
+    $r .= data_entry_helper::select([
       'fieldname' => 'download-subfilter',
       'label'=>lang::get('Filter to apply'),
       'lookupValues'=>[],
       'class' => 'control-width-5',
       'helpText'=>lang::get('Optionally select from the available filters. ' .
           'Filters you create on the Explore pages will be available here.')
-    ));
+    ]);
     $r .= "</fieldset>\n";
     $r .= '<fieldset><legend>'.lang::get('Limit the records').'</legend>';
     if (empty($args['survey_id'])) {
       // put up an empty surveys drop down. AJAX will populate it.
-      $r .= data_entry_helper::select(array(
+      $r .= data_entry_helper::select([
         'fieldname' => 'survey_id',
         'label' => lang::get('Survey to include'),
         'helpText' => lang::get('Choose a survey, or &lt;all&gt; to not filter by survey.'),
         'lookupValues' => [],
         'class' => 'control-width-5'
-      ));
-    } else
+      ]);
+    }
+    else {
       $r .= '<input type="hidden" name="survey_id" value="' . $args['survey_id'] . '"/>';
+    }
     // Let the user pick the date range to download.
-    $r .= data_entry_helper::select(array(
+    $r .= data_entry_helper::select([
       'label'=>lang::get('Date field'),
       'fieldname' => 'date_type',
-      'lookupValues' => array('recorded'=>lang::get('Field record date'),'input'=>lang::get('Input date'),
-            'edited' => lang::get('Last changed date'), 'verified' => 'Verification status change date'),
+      'lookupValues' => [
+        'recorded' => lang::get('Field record date'),
+        'input' => lang::get('Input date'),
+        'edited' => lang::get('Last changed date'),
+        'verified' => lang::get('Verification status change date'),
+      ],
       'helpText' => lang::get('If filtering on date, which date field would you ' .
           'like to filter on?'),
-    ));
-    $r .= data_entry_helper::date_picker(array(
+    ]);
+    $r .= data_entry_helper::date_picker([
       'fieldname' => 'date_from',
       'label' => lang::get('Start Date'),
       'helpText' => lang::get('Leave blank for no start date filter'),
       'class' => 'control-width-4',
-    ));
-    $r .= data_entry_helper::date_picker(array(
+    ]);
+    $r .= data_entry_helper::date_picker([
       'fieldname' => 'date_to',
       'label' => lang::get('End Date'),
       'helpText' => lang::get('Leave blank for no end date filter'),
       'class' => 'control-width-4',
-    ));
+    ]);
     $r .= '</fieldset>';
     if (!empty($args['custom_formats'])) {
       $customFormats = json_decode($args['custom_formats'], TRUE);
@@ -449,11 +446,11 @@ class iform_easy_download_2 implements PrebuiltFormInterface {
     if (count($formats) > 1) {
       $r .= '<fieldset><legend>' . lang::get('Select a format to download') . '</legend>';
       $keys = array_keys($formats);
-      $r .= data_entry_helper::radio_group(array(
+      $r .= data_entry_helper::radio_group([
         'fieldname' => 'format',
         'lookupValues' => $formats,
         'default' => $keys[0],
-      ));
+      ]);
       $r .= '</fieldset>';
     } else {
       // Only allowed 1 format, so no need for a selection control.
@@ -608,17 +605,19 @@ class iform_easy_download_2 implements PrebuiltFormInterface {
    *   Survey list.
    */
   public static function ajax_surveys_for_sharing_type($website_id, $password, $nid) {
-    iform_load_helpers(array('data_entry_helper'));
+    iform_load_helpers(['data_entry_helper']);
     // @todo filter by the available context filters if appropriate
-    $readAuth = array(
+    $readAuth = [
       'nonce' => $_GET['nonce'],
       'auth_token' => $_GET['auth_token']
-    );
-    $surveys = data_entry_helper::get_population_data(array(
+    ];
+    $surveys = data_entry_helper::get_population_data([
       'table' => 'survey',
-      'extraParams'=>$readAuth + array('view' => 'detail', 'orderby' => 'website,title'),
-      'sharing'=>self::expand_sharing_mode($_GET['sharing_type'])
-    ));
+      'extraParams' => $readAuth + [
+        'view' => 'detail', 'orderby' => 'website,title',
+      ],
+      'sharing' => self::expand_sharing_mode($_GET['sharing_type'])
+    ]);
     $r = [];
     foreach ($surveys as $survey) {
       $r["survey-$survey[id]"]="$survey[website] &gt; $survey[title]";
@@ -628,12 +627,12 @@ class iform_easy_download_2 implements PrebuiltFormInterface {
 
   /**
    * Performs the download.
-   * @global array $indicia_templates
-   * @param type $args
-   * @param type $nid
+   *
+   * @param array $args
+   * @param int $nid
    */
   private static function do_data_services_download($args, $nid) {
-    iform_load_helpers(array('report_helper'));
+    iform_load_helpers(['report_helper']);
     $format=$_POST['format'];
     $isCustom = preg_match('/^custom-(\d+)$/', $_POST['format'], $matches);
     if ($isCustom) {
@@ -656,29 +655,17 @@ class iform_easy_download_2 implements PrebuiltFormInterface {
     global $indicia_templates;
     // let's just get the URL, not the whole anchor element
     $indicia_templates['report_download_link'] = '{link}';
-    $limit = ($args['limit']==0 ? '' : $args['limit']); // unlimited or limited
+    $limit = ($args['limit'] == 0 ? '' : $args['limit']); // unlimited or limited
     $sharing = substr($_POST['download-type'], 0, 1);
 
-    $url = report_helper::report_download_link(array(
-      'readAuth'=>data_entry_helper::$js_read_tokens,
-      'dataSource'=>$report,
-      'extraParams'=>$params,
-      'format'=>$format,
-      'sharing'=>self::expand_sharing_mode($sharing),
-      'itemsPerPage'=>$limit
-    ));
-
-    if($args['reverse_proxy'] == true) {
-      // Rewrite the url to pass through proxy.php
-      $relative_proxy_path = iform_client_helpers_path() . 'proxy.php?url=' . report_helper::$base_url;
-      global $base_url;
-      $proxy_path = $base_url . substr($relative_proxy_path, 1);
-
-      // remove report_helper::$base_url from $url
-      $url = substr($url, strlen(report_helper::$base_url));
-      // add $proxy_path to $url
-      $url = $proxy_path . $url;
-    }
+    $url = report_helper::report_download_link([
+      'readAuth' => data_entry_helper::$js_read_tokens,
+      'dataSource' => $report,
+      'extraParams' => $params,
+      'format' => $format,
+      'sharing' => self::expand_sharing_mode($sharing),
+      'itemsPerPage' => $limit,
+    ]);
     header("Location: $url");
     exit;
   }
@@ -740,10 +727,13 @@ class iform_easy_download_2 implements PrebuiltFormInterface {
     }
     elseif (preg_match('/^R group (?P<my>(my )?)(?P<id>\d+)$/', $_POST['download-type'], $matches)) {
       // downloading records for a group
-      $group = data_entry_helper::get_population_data(array(
+      $group = data_entry_helper::get_population_data([
         'table' => 'group',
-        'extraParams'=>data_entry_helper::$js_read_tokens + array('id'=>$matches['id'], 'view' => 'detail')
-      ));
+        'extraParams' => data_entry_helper::$js_read_tokens + [
+          'id' => $matches['id'],
+          'view' => 'detail',
+        ],
+      ]);
       $group = $group[0];
       $filter = json_decode($group['filter_definition'] ?? '', TRUE);
       foreach ($filter as $field=>$value) {

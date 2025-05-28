@@ -28,7 +28,7 @@ header("Pragma: no-cache");
 // 5 minutes execution time.
 @set_time_limit(5 * 60);
 
-require 'data_entry_helper.php';
+require_once 'helper_base.php';
 // Settings.
 if (isset($_GET['destination'])) {
   // The upload path should be provided by the client as is configurable.
@@ -64,20 +64,7 @@ else {
 // Clean the fileName for security reasons.
 $fileName = preg_replace('/[^\w\._]+/', '', $fileName);
 
-// Test file extension is one of the allowed types.
-$fileNameParts = explode('.', $fileName);
-if (count($fileNameParts) < 2) {
-  die('{"jsonrpc" : "2.0", "error" : {"code": 107, "message": "File name has no extension."}, "id" : "id"}');
-}
-$extension = strtolower(array_pop($fileNameParts));
-$extensionFound = FALSE;
-foreach (data_entry_helper::$upload_file_types as $mediaTypeFiles) {
-  if (in_array($extension, $mediaTypeFiles)) {
-    $extensionFound = TRUE;
-    break;
-  }
-}
-if (!$extensionFound) {
+if (!helper_base::checkUploadFileType($fileName)) {
   die('{"jsonrpc" : "2.0", "error" : {"code": 108, "message": "File type not allowed."}, "id" : "id"}');
 }
 
@@ -142,7 +129,7 @@ while ($buff = fread($in, 4096)) {
 clearstatcache();
 $file['size'] = filesize("{$filePath}.part");
 $file['error'] = '';
-if (!data_entry_helper::checkUploadSize($file)) {
+if (!helper_base::checkUploadSize($file)) {
   // An upload size fail probably means the limit in moxie.js for not resizing
   // huge images has been hit.
   unlink("{$filePath}.part");
@@ -151,21 +138,10 @@ if (!data_entry_helper::checkUploadSize($file)) {
 
 // Check if file has been uploaded.
 if (!$chunks || $chunk == $chunks - 1) {
-  if (function_exists('finfo_open')) {
-    // Check MIME type of file.
-    $finfo = finfo_open(FILEINFO_MIME_TYPE);
-    $mimeType = finfo_file($finfo, "{$filePath}.part");
-    finfo_close($finfo);
-    if (!$mimeType) {
-      unlink("{$filePath}.part");
-      die('{"jsonrpc" : "2.0", "error" : {"code": 110, "message": "File type not known."}, "id" : "id"}');
-    }
-
-    list($mediaType, $mimeSubType) = explode('/', $mimeType);
-    if (!in_array($mimeSubType, data_entry_helper::$upload_mime_types[$mediaType], TRUE)) {
-      unlink("{$filePath}.part");
-      die('{"jsonrpc" : "2.0", "error" : {"code": 109, "message": "File type not allowed."}, "id" : "id"}');
-    }
+  if (!helper_base::checkUploadMimeType("{$filePath}.part")) {
+    // If the file is not a valid image, then delete it.
+    unlink("{$filePath}.part");
+    die('{"jsonrpc" : "2.0", "error" : {"code": 107, "message": "File Mime type not allowed."}, "id" : "id"}');
   }
 
   // File appears to be valid.

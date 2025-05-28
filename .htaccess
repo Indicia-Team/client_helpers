@@ -5,7 +5,7 @@
 
   RewriteCond %{REQUEST_URI} !/prebuilt_forms_ajax\.php$
   RewriteCond %{REQUEST_URI} !/upload\.php$
-  RewriteCond %{REQUEST_URI} !/proxy\.php$
+  RewriteCond %{REQUEST_URI} !/place_search_proxy\.php$
   RewriteCond %{REQUEST_URI} !.css$
   RewriteCond %{REQUEST_URI} !.js$
   RewriteCond %{REQUEST_URI} !.jpg$
