@@ -1151,7 +1151,7 @@ JS;
       'jsPath' => self::$js_path,
       'buttonTemplate' => $indicia_templates['button'],
       'table' => 'occurrence_medium',
-      'maxUploadSize' => self::convert_to_bytes(parent::$upload_max_filesize),
+      'maxUploadSize' => self::convertToBytes(parent::$upload_max_filesize),
       'codeGenerated' => 'all',
       'mediaTypes' => !empty($options['subType']) ? [$options['subType']] : ['Image:Local'],
       'mediaLicenceId' => NULL,
@@ -10122,7 +10122,7 @@ HTML;
       foreach ($_FILES as $key => $file) {
         if (substr($key, 0, strlen($modelName))==str_replace('_', ':', $modelName)
           || substr($key, 0, strlen($legacyModelName))==str_replace('_', ':', $legacyModelName)) {
-          if ($file['error']=='1') {
+          if ($file['error'] == '1') {
             // file too big error dur to php.ini setting
             if (self::$validation_errors==NULL) self::$validation_errors = [];
             self::$validation_errors[$key] = lang::get('file too big for webserver');
@@ -10131,6 +10131,16 @@ HTML;
             // even if file uploads Ok to interim location, the Warehouse may still block it.
             if (self::$validation_errors==NULL) self::$validation_errors = [];
             self::$validation_errors[$key] = lang::get('file too big for warehouse');
+          }
+          elseif (!self::checkUploadFileType($file['full_path'])) {
+            // File type not allowed.
+            if (self::$validation_errors==NULL) self::$validation_errors = [];
+            self::$validation_errors[$key] = lang::get('file type not allowed');
+          }
+          elseif (!self::checkUploadMimeType($file['tmp_name'])) {
+            // File type not allowed.
+            if (self::$validation_errors==NULL) self::$validation_errors = [];
+            self::$validation_errors[$key] = lang::get('mime type not allowed');
           }
           elseif ($file['error']=='0') {
             // no file upload error
@@ -10170,49 +10180,6 @@ HTML;
       }
     }
     return $r;
-  }
-
-  /**
-   * Validation rule to test if an uploaded file is allowed by file size.
-   * File sizes are obtained from the $maxUploadSize setting, and defined as:
-   * SB, where S is the size (1, 15, 300, etc) and
-   * B is the byte modifier: (B)ytes, (K)ilobytes, (M)egabytes, (G)igabytes.
-   * Eg: to limit the size to 1MB or less, you would use "1M".
-   *
-   * @param array $file Item from the $_FILES array.
-   * @return bool True if the file size is acceptable, otherwise false.
-   */
-  public static function checkUploadSize(array $file) {
-    if ((int) $file['error'] !== UPLOAD_ERR_OK)
-      return TRUE;
-
-    $size = parent::$upload_max_filesize;
-
-    if ( ! preg_match('/[0-9]++[BKMG]/', $size))
-      return FALSE;
-
-    $size = self::convert_to_bytes($size);
-
-    // Test that the file is under or equal to the max size
-    return ($file['size'] <= $size);
-  }
-
-  /**
-   * Utility method to convert a memory size string (e.g. 1K, 1M) into the number of bytes.
-   *
-   * @param string $size Size string to convert. Valid suffixes as G (gigabytes), M (megabytes), K (kilobytes) or nothing.
-   * @return integer Number of bytes.
-   */
-  private static function convert_to_bytes($size) {
-    // Make the size into a power of 1024
-    switch (substr($size, -1))
-    {
-      case 'G': $size = intval($size) * pow(1024, 3); break;
-      case 'M': $size = intval($size) * pow(1024, 2); break;
-      case 'K': $size = intval($size) * pow(1024, 1); break;
-      default:  $size = intval($size);                break;
-    }
-    return $size;
   }
 
   /**
