@@ -719,11 +719,18 @@ HTML;
           }
           if (isset($field['visible']) && ($field['visible']==='false' || $field['visible']===false))
             continue; // skip this column as marked invisible
-          if (isset($field['img']) && $field['img']=='true' && !empty($row[$field['fieldname']]) && !isset($field['template'])) {
-            $imgs = explode(',', $row[$field['fieldname']]);
-            $value='';
-            $row[$field['fieldname']] = self::mediaToThumbnails($imgs, $options['imageThumbPreset'], $entity, $rowId);
+          if (!empty($row[$field['fieldname'] ?? ''] ?? '') && !isset($field['template'])) {
+            if (isset($field['img']) && $field['img']=='true') {
+              $imgs = explode(',', $row[$field['fieldname']]);
+              $value='';
+              $row[$field['fieldname']] = self::mediaToThumbnails($imgs, $options['imageThumbPreset'], $entity, $rowId);
+            }
+            else {
+              // Fields that are neither images nor templates can be HTML escaped.
+              $row[$field['fieldname']] = htmlspecialchars($row[$field['fieldname']]);
+            }
           }
+
           if (isset($field['img']) && $field['img']=='true')
             $classes[] = 'table-gallery';
           if (isset($field['actions'])) {
@@ -782,7 +789,7 @@ JS;
             $class = ' class="'.implode(' ', $classes).'"';
           else
             $class = '';
-          $tr .= str_replace(array('{class}','{content}'), array($class, $value), $indicia_templates['report-tbody-td']);
+          $tr .= str_replace(array('{class}','{content}'), [$class, $value], $indicia_templates['report-tbody-td']);
         }
         if ($rowIdx % $options['galleryColCount']==$options['galleryColCount']-1) {
           $rowInProgress=false;

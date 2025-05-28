@@ -128,6 +128,9 @@ class ElasticsearchProxyHelper {
       case 'redetids':
         return self::proxyRedetIds();
 
+      case 'saveLinkedLocation':
+        return self::proxySaveLinkedLocation($nid);
+
       case 'bulkmoveall':
         return self::proxyBulkMoveAll($nid);
 
@@ -650,6 +653,32 @@ class ElasticsearchProxyHelper {
     return [
       'updated' => self::processWholeEsFilter($nid, [], 0),
     ];
+  }
+
+  /**
+   * Proxy method allowing verifiers to link a record to a specified boundary.
+   */
+  private static function proxySaveLinkedLocation($nid) {
+    iform_load_helpers(['helper_base']);
+    if ($_POST['mode'] === 'table') {
+      $ids = self::getOccurrenceIdsFromFilter($nid, $_POST['idsFromElasticFilter']);
+    }
+    else {
+      $ids = $_POST['todoListInfo']['ids'];
+    }
+    $conn = iform_get_connection_details($nid);
+    $data = [
+      'website_id' => $conn['website_id'],
+      'user_id' => hostsite_get_user_field('indicia_user_id'),
+      'occurrence_ids' => implode(',', $ids),
+      'location_id' => $_POST['location_id'],
+      'location_type_id' => $_POST['location_type_id'],
+    ];
+    $auth = helper_base::get_read_write_auth($conn['website_id'], $conn['password']);
+    $request = helper_base::$base_url . "index.php/services/data_utils/force_linked_location";
+    $postargs = helper_base::array_to_query_string(array_merge($data, $auth['write_tokens']), TRUE);
+    $response = helper_base::http_post($request, $postargs, FALSE);
+    return json_decode($response['output'], TRUE);
   }
 
   /**

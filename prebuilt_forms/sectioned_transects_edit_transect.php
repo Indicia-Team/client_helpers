@@ -387,7 +387,7 @@ class iform_sectioned_transects_edit_transect implements PrebuiltFormInterface {
       data_entry_helper::load_existing_record($auth['read'], 'location', $settings['locationId']);
       $settings['walks'] = data_entry_helper::get_population_data([
         'table' => 'sample',
-        'extraParams' => $auth['read'] + ['view' => 'detail', 'location_id' => $settings['locationId'], 'deleted' => 'f'],
+        'extraParams' => $auth['read'] + ['location_id' => $settings['locationId'], 'deleted' => 'f'],
         'nocache' => TRUE
       ]);
       // Work out permissions for this user: note that canAllocBranch setting effectively shows if a manager.
@@ -684,8 +684,7 @@ class iform_sectioned_transects_edit_transect implements PrebuiltFormInterface {
         $sectionIDs[] = $section['id'];
       data_entry_helper::$javascript .= "
 deleteSurvey = function(){
-  if(confirm(\"" . (count($settings['walks']) > 0 ? count($settings['walks']) . ' ' . lang::get('walks will also be deleted when you delete this location.').' ' : '').lang::get('Are you sure you wish to delete this location?')."\")){
-    deleteWalks([" . implode(',', $walkIDs) . "]);
+  if(confirm(\"" . lang::get('Are you sure you wish to delete this location?') . "\")){
     deleteSections([" . implode(',', $sectionIDs) . "]);
     $('#delete-transect').html('Deleting Transect');
     deleteLocation(" . $settings['locationId'] . ");

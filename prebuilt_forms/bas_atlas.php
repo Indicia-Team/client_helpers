@@ -51,7 +51,7 @@ class iform_bas_atlas extends BaseDynamicDetails {
 
   /**
    * Stores the groups (orders) array
-   * 
+   *
    * @var orders
    */
 
@@ -60,7 +60,7 @@ class iform_bas_atlas extends BaseDynamicDetails {
     'harvestman' => ['tcFilter' => 'harvestman (Opiliones)', 'esFilter' => 'Opiliones'],
     'pseudoscorpion' => ['tcFilter' => 'false scorpion (Pseudoscorpiones)', 'esFilter' => 'Pseudoscorpiones'],
   ];
-  
+
 
   /**
    * Disable form element wrapped around output.
@@ -510,7 +510,7 @@ class iform_bas_atlas extends BaseDynamicDetails {
     // and are set here.
     $args['interface'] = 'one_page';
     $args['structure'] = '[atlas]';
-    
+
     // In Drupal 9, markup cannot be used in page title, so remove em tags.
     // $repArray = ['<em>', '</em>'];
     // $preferredClean = str_replace($repArray, '', self::$preferred);
@@ -576,7 +576,7 @@ class iform_bas_atlas extends BaseDynamicDetails {
       } else {
         $esFilter .= self::createEsFilterHtml('taxon.accepted_taxon_id', self::$externalKey, 'match_phrase', 'must');
       }
-      
+
       // Filter to exclude zero abundance records
       $esFilter .= self::createEsFilterHtml('occurrence.zero_abundance', 'false', 'term', 'must');
 
@@ -650,7 +650,6 @@ class iform_bas_atlas extends BaseDynamicDetails {
       'readAuth' => $auth['read'],
       'class' => 'species-details-fields',
       'dataSource' => 'library/taxa/taxon_names_2',
-      'useCache' => FALSE,
       'extraParams' => $extraParams,
     ]);
 
@@ -742,7 +741,7 @@ class iform_bas_atlas extends BaseDynamicDetails {
     $r.='</div>'; // bas-atlas-main
 
     $r.=self::get_atlas_data($args, $options);
-   
+
     iform_load_helpers(array('report_helper'));
     report_helper::$javascript.="indiciaFns.createAtlas();";
 
@@ -796,7 +795,7 @@ class iform_bas_atlas extends BaseDynamicDetails {
       // For national hectad maps, count the number of tetrads in each hectad
       $optionsSourceMap['aggregation']['tetrads'] = ['cardinality' => ['field' => 'location.grid_square.2km.centre']];
     }
-    
+
     ElasticsearchReportHelper::source($optionsSourceMap);
     $optionsCustomScriptMap = [
       'extraParams' => $options['extraParams'],
@@ -805,7 +804,7 @@ class iform_bas_atlas extends BaseDynamicDetails {
       'functionName' => 'populateMap',
     ];
     $r = ElasticsearchReportHelper::customScript($optionsCustomScriptMap);
-    
+
     if(str_contains($args['tab_types'], 'temporal')) {
 
       data_entry_helper::add_resource('brc_charts');
@@ -891,12 +890,12 @@ class iform_bas_atlas extends BaseDynamicDetails {
 
     // Filter the taxon list based on the selected group
     $tg = $_GET['tg'] ? $tg = $_GET['tg'] : 'spider';
-    $species_ctrl_opts['taxonFilterField']='taxon_group'; 
-    $species_ctrl_opts['taxonFilter']=[self::$orders[$tg]['tcFilter']]; 
+    $species_ctrl_opts['taxonFilterField']='taxon_group';
+    $species_ctrl_opts['taxonFilter']=[self::$orders[$tg]['tcFilter']];
 
     // Name filter
     if (isset($args['species_filter_mode'])) {
-      $species_ctrl_opts['speciesNameFilterMode'] = $args['species_filter_mode']; 
+      $species_ctrl_opts['speciesNameFilterMode'] = $args['species_filter_mode'];
     }
 
     // Dynamically generate the species selection control required.
@@ -912,7 +911,6 @@ class iform_bas_atlas extends BaseDynamicDetails {
     $vcs = report_helper::get_report_data([
       'readAuth' => $auth['read'],
       'dataSource' => 'projects/bas/list-vcs',
-      'useCache' => FALSE,
     ]);
     // Delegate creation of options to JS
     foreach ($vcs as $vc) {

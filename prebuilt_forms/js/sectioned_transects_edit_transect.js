@@ -2,7 +2,7 @@
 
 var selectedFeature = null;
 var sectionDetailsChanged = false;
-var clearSection, loadSectionDetails, confirmSelectSection, selectSection, syncPost, deleteWalks,
+var clearSection, loadSectionDetails, confirmSelectSection, selectSection, syncPost,
     deleteLocation, deleteSections, deleteSection;
 
 (function ($) {
@@ -176,19 +176,6 @@ syncPost = function(url, data) {
   });
 };
 
-deleteWalks = function(walkIDs) {
-  $.each(walkIDs, function(i, walkID) {
-    $('#delete-transect').html('Deleting Walks ' + (Math.round(i/walkIDs.length*100) + '%'));
-    var data = {
-      'sample:id':walkID,
-      'sample:deleted':'t',
-      'website_id':indiciaData.website_id
-    };
-    syncPost(indiciaData.ajaxFormPostSampleUrl, data);
-  });
-  $('#delete-transect').html('Deleting Walks 100%');
-};
-
 deleteLocation = function(ID) {
   var data = {
     'location:id':ID,
@@ -225,20 +212,7 @@ deleteSection = function(section) {
   $('.remove-section').addClass('waiting-button');
   // if it has been saved, delete any subsamples lodged against it.
   if(typeof indiciaData.sections[section] !== "undefined"){
-    $.getJSON(indiciaData.indiciaSvc + "index.php/services/data/sample?location_id=" + indiciaData.sections[section].id +
-            "&mode=json&view=detail&callback=?&auth_token=" + indiciaData.read.auth_token + "&nonce=" + indiciaData.read.nonce,
-      function(sdata) {
-        if (typeof sdata.error==="undefined") {
-          $.each(sdata, function(idx, sample) {
-            var postData = {'sample:id':sample.id,'sample:deleted':'t','website_id':indiciaData.website_id};
-            $.post(indiciaData.ajaxFormPostSampleUrl, postData,
-              function(data) { if (typeof(data.error)!=="undefined") { alert(data.error); }},
-              'json');
-          });
-        }
-      }
-    );
-    // then delete the section record itself
+    // Delete the section record itself
     data = {'location:id':indiciaData.sections[section].id,'location:deleted':'t','website_id':indiciaData.website_id};
     $.post(indiciaData.ajaxFormPostUrl,
           data,

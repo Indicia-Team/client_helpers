@@ -600,7 +600,6 @@ class iform_species_details_2 extends BaseDynamicDetails {
       'readAuth' => $auth['read'],
       'class' => 'species-details-fields',
       'dataSource' => 'library/taxa/taxon_names_2',
-      'useCache' => FALSE,
       'extraParams' => $extraParams,
     ]);
 
@@ -1340,7 +1339,8 @@ HTML;
       $rss = report_helper::get_report_data([
         'readAuth' => $auth['read'],
         'dataSource' => 'library/taxa/taxon_rss',
-        'useCache' => TRUE,
+        'caching' => TRUE,
+        'cachePerUser' => TRUE,
         'extraParams' => $extraParams,
       ]);
 
@@ -1717,7 +1717,6 @@ HTML;
     $reportResult = report_helper::get_report_data([
       'readAuth' => $auth['read'],
       'dataSource' => 'library/taxa/species_notes_and_images',
-      'useCache' => FALSE,
       'extraParams' => [
         'taxa_taxon_list_id' => self::$taxaTaxonListId,
         'taxon_meaning_id' => self::$taxonMeaningId,

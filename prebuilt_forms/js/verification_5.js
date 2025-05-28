@@ -161,7 +161,7 @@ indiciaData.rowIdToReselect = false;
               thisSpLyrSettings = $.extend({}, layerDef.settings);
               // replace values with the external key if the token is used
               $.each(thisSpLyrSettings, function (prop, value) {
-                if (typeof value === 'string' && $.trim(value) === '{external_key}') {
+                if (typeof value === 'string' && value.trim() === '{external_key}') {
                   thisSpLyrSettings[prop] = data.extra.taxon_external_key;
                 }
               });
@@ -863,7 +863,7 @@ indiciaData.rowIdToReselect = false;
       reportSource: 'local',
       taxon_meaning_id: currRec.extra.taxon_meaning_id,
       template_status: status,
-      website_id: currRec.extra.website_id
+      website_id: indiciaData.website_id
     };
     $.getJSON(
       getTemplatesReport,

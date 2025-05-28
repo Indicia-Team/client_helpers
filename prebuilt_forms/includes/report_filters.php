@@ -1781,7 +1781,7 @@ HTML;
     $r .= "<div id=\"filter-details\"$style>";
     if ($options['initialState'] === 'closed') {
       // Add close button if panes can be opened/closed.
-      $r .= "<i class=\"fas fa-window-close\" alt=\"$lang[closeFilterBuilder]\" title=\"$lang[closeFilterBuilder]\" class=\"button\" id=\"filter-done\" ></i>";
+      $r .= "<i class=\"far fa-caret-square-up\" alt=\"$lang[closeFilterBuilder]\" title=\"$lang[closeFilterBuilder]\" class=\"button\" id=\"filter-done\" ></i>";
     }
   }
   else {

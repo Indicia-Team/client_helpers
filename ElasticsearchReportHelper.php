@@ -2038,7 +2038,22 @@ HTML;
       'useLocalFormPaths' => FALSE,
       'verificationTemplates' => FALSE,
     ], $options);
+    if (!empty($options['allowForceLinkedLocationsUsingLocTypeId'])) {
+      $locTypeTerm = $options['allowForceLinkedLocationsUsingLocType'] = helper_base::get_population_data([
+        'table' => 'termlists_term',
+        'extraParams' => $options['readAuth'] + [
+          'view' => 'cache',
+          'id' => $options['allowForceLinkedLocationsUsingLocTypeId'],
+        ],
+      ]);
+      if (count($locTypeTerm) !== 1) {
+        throw new Exception('The location type ID specified in allowForceLinkedLocationsUsingLocTypeId does not exist.');
+      }
+      $options['allowForceLinkedLocationsUsingLocType'] = $locTypeTerm[0]['term'];
+    }
     $dataOptions = helper_base::getOptionsForJs($options, [
+      'allowForceLinkedLocationsUsingLocTypeId',
+      'allowForceLinkedLocationsUsingLocType',
       'editPath',
       'id',
       'keyboardNavigation',
@@ -2089,12 +2104,15 @@ HTML;
       'emailPlaceholder' => lang::get('Enter the email address to send the record to'),
       'emailSubject' => lang::get('Email subject'),
       'emailTabTitle' => lang::get('Email record details'),
+      'forceLinkedLocation' => lang::get('Force this record to be linked to a selected location boundary.'),
+      'forceLinkedLocationTitle' => lang::get('Link record to boundary'),
       'help' => lang::get('Help'),
       'notAccepted' => lang::get('Not accepted'),
       'notAcceptedIncorrect' => lang::get('Not accepted :: incorrect'),
       'notAcceptedUnableToVerify' => lang::get('Not accepted :: unable to verify'),
       'plausible' => lang::get('Plausible'),
       'raiseQuery' => lang::get('Raise a query with the recorder'),
+      'saveLocationLink' => lang::get('Save link to location'),
       'saveStatus' => lang::get('Save status'),
       'saveTemplate' => lang::get('Save template'),
       'selected' => lang::get('selected'),
@@ -2161,6 +2179,10 @@ HTML;
       'emailSent' => 'The email was sent successfully.',
       'emailTabTitle' => 'Email record details',
       'enterEmailAddress' => 'Enter the email address to send the record to',
+      'forceLinkedLocationError' => 'An error occurred when trying to link the record to the selected location',
+      'forceLinkedLocationInfo' => 'This record is currently linked to: {{ location name }}',
+      'forceLinkedLocationInfoMultiple' => 'You are altering the location link for {{ count }} records.',
+      'forceLinkedLocationInfoNoExisting' => 'There is no existing linked location for this record.',
       'nothingSelected' => 'There are no selected records. Either select some rows using the checkboxes in the leftmost column or set the "Apply decision to" mode to "all".',
       'overwrite' => 'Overwrite',
       'pleaseSupplyATemplateNameAndText' => 'Please supply a name and comment text for your template then click the Save button again.',
@@ -2182,6 +2204,7 @@ HTML;
       'saveTemplateError' => 'Save template error',
       'saveTemplateErrorMsg' => 'An error occurred when saving your template to the database. Please try later.',
       'templateNameTextRequired' => 'Template details required',
+      'unknown' => 'Unknown',
       'updatingMultipleInParentSampleWarning' => lang::get('This verification decision will be applied to a total of {1} records of the same taxon within the parent sample (e.g. within the transect or timed count)!'),
       'uploadError' => 'An error occurred whilst uploading your spreadsheet.',
       'C3' => 'marked as plausible',
@@ -2262,6 +2285,19 @@ HTML;
       'class' => 'comment-textarea',
       'default' => '',
     ]);
+    $forceLinkedLocationInput = data_entry_helper::autocomplete([
+      'label' => lang::get('Force record to link to location'),
+      'fieldname' => 'force-linked-location',
+      'table' => 'location',
+      'extraParams' => $options['readAuth'] + [
+        'location_type_id' => $options['allowForceLinkedLocationsUsingLocTypeId'] ?? 0,
+      ],
+      'captionField' => 'name',
+      'valueField' => 'id',
+      'attributes' => [
+        'placeholder' => lang::get('Type to search'),
+      ]
+    ]);
     $uploadButton = empty($options['includeUploadButton']) ? '' : <<<HTML
       <button class="upload-decisions $btnClass" title="$lang[uploadVerificationDecisions]"><span class="fas fa-file-upload"></span>$lang[upload]</button>
 HTML;
@@ -2298,6 +2334,9 @@ HTML;
       $loadQueryTemplateDropdown = '';
       $commentTools = '';
     }
+    $forceLinkedLocationButton = empty($options['allowForceLinkedLocationsUsingLocTypeId']) ? '' : <<<HTML
+      <button class="force-linked-location $btnClassDefault" title="$lang[forceLinkedLocation]"><span class="fas fa-map-marked-alt"></span></button>
+    HTML;
     $r = <<<HTML
 <div id="$options[id]" class="idc-control idc-verificationButtons" data-idc-class="idcVerificationButtons" style="display: none;" data-idc-config="$dataOptions">
   <div id="$options[id]-buttons" class="verification-buttons-cntr">
@@ -2317,6 +2356,7 @@ HTML;
         <span class="sep"></span>
         <button class="redet $btnClassDefault" title="Redetermine this record"><span class="fas fa-tag"></span></button>
         <button class="query $btnClassDefault" data-query="Q" title="$lang[raiseQuery]"><span class="fas fa-question-circle query-Q"></span></button>
+        $forceLinkedLocationButton
         <div class="multi-only apply-to">
           <span>$lang[applyTo]:</span>
           <button class="multi-mode-selected active $btnClassDefault">$lang[selected]</button>
@@ -2420,6 +2460,23 @@ HTML;
         <button type="button" class="$btnClassDefault cancel">$lang[cancel]</button>
       </form>
     </fieldset>
+  </div>
+</div>
+
+<div id="force-linked-loc-panel-wrap" style="display: none">
+  <div id="force-linked-location-form" class="verification-popup">
+    <form>
+      <fieldset>
+        <legend>
+          <span class="fas fa-map-marked-alt"></span>
+          $lang[forceLinkedLocationTitle]
+        </legend>
+        <p class="alert alert-info" id="force-linked-location-info"></p>
+        $forceLinkedLocationInput
+        <button type="submit" class="$btnClass" disabled="disabled">$lang[saveLocationLink]</button>
+        <button type="button" class="$btnClassDefault cancel">$lang[cancel]</button>
+      </fieldset>
+    </form>
   </div>
 </div>
 

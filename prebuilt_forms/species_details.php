@@ -318,7 +318,6 @@ class iform_species_details extends iform_dynamic {
       'readAuth' => $auth['read'],
       'class' => 'species-details-fields',
       'dataSource' => 'library/taxa/taxon_names',
-      'useCache' => FALSE,
       'extraParams' => $extraParams,
     ));
     foreach ($species_details as $speciesData) {
@@ -1027,7 +1026,6 @@ class iform_species_details extends iform_dynamic {
     $reportResult = report_helper::get_report_data(array(
       'readAuth' => $auth['read'],
       'dataSource' => 'library/taxa/species_notes_and_images',
-      'useCache' => FALSE,
       'extraParams'=>array(
         'taxa_taxon_list_id'=>self::$taxa_taxon_list_id,
         'taxon_meaning_id'=>self::$taxon_meaning_id,
