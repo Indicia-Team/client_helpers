@@ -725,6 +725,10 @@ HTML;
               $value='';
               $row[$field['fieldname']] = self::mediaToThumbnails($imgs, $options['imageThumbPreset'], $entity, $rowId);
             }
+            elseif (isset($field['html_safe']) && $field['html_safe']=='true') {
+              // HTML output from report column so no escaping.
+              $value = $row[$field['fieldname']];
+            }
             else {
               // Fields that are neither images nor templates can be HTML escaped.
               $row[$field['fieldname']] = htmlspecialchars($row[$field['fieldname']]);
