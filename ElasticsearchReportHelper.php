@@ -177,6 +177,10 @@ class ElasticsearchReportHelper {
       'caption' => 'Verification decision source',
       'description' => 'Either M for machine based verification or H for human verification decisions.',
     ],
+    'identification.verifier_comment' => [
+      'caption' => 'Verifier comment',
+      'description' => "Comment given by the verifier at the time of the verification decision.",
+    ],
     '#identification_classifier_agreement#' => [
       'caption' => 'Image classifier agreement',
       'description' => 'If an image classifier was used, does the current determination match the most likely suggestion given by the classifier?',
