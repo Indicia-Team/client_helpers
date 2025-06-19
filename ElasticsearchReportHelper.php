@@ -1221,6 +1221,12 @@ JS;
     if (!empty($_GET['initialZoom'])) {
       $options['initialZoom'] = $_GET['initialZoom'];
     }
+    helper_base::addLanguageStringsToJs('leafletTools', [
+      'autoLayerTitle' => 'Auto',
+      'dataLayerOpacity' => 'Data layer opacity',
+      'gridSquareSize' => 'Grid square size',
+      'queryLimitTo1kmOrBetter' => 'Click map to query limited to squares 1km or smaller',
+    ]);
     $dataOptions = helper_base::getOptionsForJs($options, [
       'baseLayerConfig',
       'boundaryLocationId',
@@ -2658,10 +2664,14 @@ AGG;
    *   Options passed to the [source]. Will be modified as appropriate.
    */
   private static function applySourceModeDefaultsMapGridSquare(array &$options) {
+    $userSettingSqSize = $_COOKIE['leafletMapGridSquareSize'] ?? FALSE;
     $options = array_merge([
       'mapGridSquareSize' => 'autoGridSquareSize',
       'size' => 0,
     ], $options);
+    if ($userSettingSqSize) {
+      $options['mapGridSquareSize'] = $userSettingSqSize;
+    }
     if ($options['mapGridSquareSize'] === 'autoGridSquareSize') {
       $geoField = 'autoGridSquareField';
     }
