@@ -223,6 +223,7 @@ $('input#{escaped_input_id}').result(function(event, data) {
   'report_download_link' => '<div class="report-download-link"><a href="{link}"{class}>{caption}</a></div>',
   'verification_panel' => '<div id="verification-panel">{button}<div class="messages" style="display: none"></div></div>',
   'two-col-50' => '<div class="two columns"{attrs}><div class="column">{col-1}</div><div class="column">{col-2}</div></div>',
+  'two-col-50-js' => '<div class="two columns"><div class="column col-1"></div><div class="column col-2"></div></div>',
   'loading_overlay' => '<div class="loading-spinner" style="display: none"><div>Loading...</div></div>',
   'report-table' => '<table{class}>{content}</table>',
   'report-thead' => '<thead{class}>{content}</thead>',
@@ -1328,6 +1329,7 @@ class helper_base {
             'https://cdnjs.cloudflare.com/ajax/libs/wicket/1.3.3/wicket.min.js',
             'https://cdnjs.cloudflare.com/ajax/libs/wicket/1.3.3/wicket-leaflet.min.js',
             self::$js_path . 'leaflet.heat/dist/leaflet-heat.js',
+            self::$js_path . 'indicia.datacomponents/idc.leafletTools.js',
           ],
         ],
         'leaflet_google' => [
@@ -1874,6 +1876,9 @@ HTML;
    *   The HTML for the form parameter.
    */
   protected static function getParamsFormControl($key, array $info, array $options, &$tools) {
+    if (empty($info['datatype'])) {
+      throw new exception("Parameter for $key missing a datatype attribute.");
+    }
     $r = '';
     $fieldPrefix = (isset($options['fieldNamePrefix']) ? $options['fieldNamePrefix'] . '-' : '');
     $ctrlOptions = [
@@ -2490,6 +2495,7 @@ HTML;
       'buttonHighlightedClass' => $indicia_templates['buttonHighlightedClass'],
       'buttonSmallClass' => 'btn-xs',
       'jQueryValidateErrorClass' => $indicia_templates['error_class'],
+      'twoCol50' => $indicia_templates['two-col-50-js']
     ], self::$indiciaData['templates']);
     self::$indiciaData['formControlClass'] = $indicia_templates['formControlClass'];
     self::$indiciaData['inlineErrorClass'] = $indicia_templates['error_class'];

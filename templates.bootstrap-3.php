@@ -10,8 +10,11 @@ $indicia_templates['controlAddonsWrap'] =
   '<div class="input-group">{control}<div class="input-group-addon ctrl-addons">{addons}</div></div>';
 $indicia_templates['two-col-50'] =
   '<div class="row"{attrs}><div class="col-md-6">{col-1}</div><div class="col-md-6">{col-2}</div></div>';
+// For JavaScript.
+$indicia_templates['two-col-50-js'] =
+  '<div class="row"><div class="col-md-6 col-1"></div><div class="col-md-6 col-2"></div></div>';
 
-// Remove cols from textarea
+// Remove cols from textarea.
 $indicia_templates['textarea'] =
   '<textarea id="{id}" name="{fieldname}"{class} {disabled} rows="{rows}" {title}>{default}</textarea>'."\n";
 

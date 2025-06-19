@@ -9,7 +9,10 @@ $indicia_templates['controlWrapErrorClass'] = 'has-error';
 $indicia_templates['controlAddonsWrap'] =
   '<div class="input-group">{control}<div class="input-group-addon ctrl-addons">{addons}</div></div>';
 $indicia_templates['two-col-50'] =
-  '<div class="row"{attrs}><div class="col-md-6">{col-1}</div><div class="col-md-6">{col-2}</div></div>';
+  '<div class="row"{attrs}><div class="col">{col-1}</div><div class="col">{col-2}</div></div>';
+// For JavaScript.
+$indicia_templates['two-col-50-js'] =
+  '<div class="row"><div class="col col-1"></div><div class="col col-2"></div></div>';
 
 // Remove cols from textarea
 $indicia_templates['textarea'] =
