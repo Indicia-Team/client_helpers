@@ -28,7 +28,9 @@ jQuery(document).ready(function ($) {
 
   function addGeomsToMap() {
     $.each(indiciaData.parentChildGeoms, function() {
-      addGeom(this.geom, this.type, this.id);
+      if (this.geom) {
+        addGeom(this.geom, this.type, this.id);
+      }
     });
     indiciaData.mapdiv.map.editLayer.redraw();
     indiciaData.mapdiv.map.zoomToExtent(indiciaData.mapdiv.map.editLayer.getDataExtent());
