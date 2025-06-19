@@ -1051,6 +1051,9 @@ class ElasticsearchProxyHelper {
       'match_phrase',
       'match_phrase_prefix',
     ];
+    $rangeQueryTypes = [
+      'range',
+    ];
     $fieldQueryTypes = [
       'exists',
     ];
@@ -1107,7 +1110,7 @@ class ElasticsearchProxyHelper {
       }
       elseif (in_array($qryConfig['query_type'], $fieldValueQueryTypes)) {
         // One of the standard ES field based query types (e.g. term or match).
-        // Special handling needed for metadata and release_status filters.
+        // Special handling needed for confidential and release_status filters.
         if ($qryConfig['field'] == 'metadata.confidential') {
           self::$confidentialFilterApplied = TRUE;
           if ($qryConfig['value'] == 'all') {
@@ -1123,6 +1126,17 @@ class ElasticsearchProxyHelper {
           self::$releaseStatusFilterApplied = TRUE;
         }
         $queryDef = [$qryConfig['query_type'] => [$qryConfig['field'] => $qryConfig['value']]];
+      }
+      elseif (in_array($qryConfig['query_type'], $rangeQueryTypes)) {
+        $range = [
+          'gte' => $qryConfig['value'][0],
+          'lte' => $qryConfig['value'][1],
+        ];
+        $queryDef = [
+          $qryConfig['query_type'] => [
+            $qryConfig['field'] => $range
+          ],
+        ];
       }
       elseif (in_array($qryConfig['query_type'], $fieldQueryTypes)) {
         // A query type that just needs a field name.
