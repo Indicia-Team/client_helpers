@@ -355,6 +355,7 @@ class ElasticsearchProxyHelper {
    *   JSON string data returned by Elasticsearch.
    */
   private static function proxyRawsearch() {
+    iform_load_helpers(['helper_base']);
     $url = self::getEsUrl() . '/_search';
     $query = array_merge($_POST);
     $query['size'] = 0;
