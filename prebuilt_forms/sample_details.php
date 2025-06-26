@@ -269,6 +269,7 @@ Sample ID',
       ['fieldname' => 'common'],
       ['fieldname' => 'taxon_group'],
     ];
+    $occAttrIds = [];
     // If nothing sensitive, can show extra attribute data.
     if (empty(self::$sample['includes_sensitive'])) {
       $attrs = report_helper::get_population_data([
@@ -279,7 +280,6 @@ Sample ID',
           'orderby' => 'taxon_restrictions is null desc,outer_block_weight,inner_block_weight,weight',
         ],
       ]);
-      $occAttrIds = [];
       $systemFunctionsDone = [];
       foreach ($attrs as $attr) {
         if (!empty($attr['system_function'])) {
