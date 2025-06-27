@@ -348,10 +348,10 @@ Record ID',
     if (!empty(self::$record['sensitivity_precision'] && !$args['allow_sensitive_full_precision'])) {
       unset($availableFields['recorder']);
       unset($availableFields['inputter']);
-      unset($availableFields['entered_sref']);
       unset($availableFields['occurrence_comment']);
       unset($availableFields['location_name']);
       unset($availableFields['sample_comment']);
+      self::$record['entered_sref'] .= ' (' . lang::get('blurred') . ')';
     }
 
     $flags = [];
