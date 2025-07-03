@@ -294,20 +294,28 @@ class ElasticsearchReportHelper {
       'description' => 'The name of the location which defines the region of the record, selected by the user when inputting the record. For example, this may be the name of a Vice County location.',
     ],
     'location.output_sref' => [
-      'caption' => 'Display spatial reference',
-      'description' => 'Spatial reference in the recommended local grid system.',
+      'caption' => 'Display map ref.',
+      'description' => 'Map reference in the recommended local grid system. Will show the full precision map reference if the record is sensitive or private only if you have permission to see the unblurred record details.',
     ],
     'location.output_sref_system' => [
-      'caption' => 'Display spatial reference system',
-      'description' => 'System used for the spatial reference in the recommended local grid system.',
+      'caption' => 'Display spatial ref. system',
+      'description' => 'System used for the display map ref.',
+    ],
+    'location.output_sref_blurred' => [
+      'caption' => 'Display map ref. (blurred)',
+      'description' => 'Map reference in the recommended local grid system. Will always show the blurred map reference if the record is sensitive or private.',
+    ],
+    'location.output_sref_system_blurred' => [
+      'caption' => 'Display spatial ref. system (blurred)',
+      'description' => 'System used for the display map ref. (blurred).',
     ],
     'location.input_sref' => [
-      'caption' => 'Input spatial reference',
-      'description' => 'Spatial reference as input by the recorder.',
+      'caption' => 'Input map ref.',
+      'description' => 'Map reference as input by the recorder. Will be blurred if the record is sensitive or private unless you have permission to see the unblurred record details.',
     ],
     'location.input_sref_system' => [
-      'caption' => 'Input spatial reference system',
-      'description' => 'System used for the spatial reference as input by the recorder.',
+      'caption' => 'Input spatial ref. system',
+      'description' => 'System used for the map reference as input by the recorder.',
     ],
     'location.coordinate_uncertainty_in_meters' => [
       'caption' => 'Coordinate uncertainty in metres',
@@ -1490,7 +1498,8 @@ JS;
   /**
    * Output a selector for record status.
    *
-   * Mirrors the 'quality - records to include' drop-down in standardParams control.
+   * Mirrors the 'quality - records to include' drop-down in standardParams
+   * control.
    *
    * @return string
    *   Select HTML.
