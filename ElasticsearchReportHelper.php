@@ -1203,7 +1203,7 @@ JS;
   public static function leafletMap(array $options) {
     self::checkOptions('leafletMap', $options,
       ['layerConfig'],
-      ['baseLayerConfig', 'layerConfig', 'selectedFeatureStyle']
+      ['baseLayerConfig', 'layerConfig', 'selectedFeatureStyle', 'tools']
     );
     $options = array_merge([
       'initialLat' => hostsite_get_config_value('iform', 'map_centroid_lat', 54.093409),
@@ -1233,7 +1233,7 @@ JS;
       'autoLayerTitle' => 'Auto',
       'dataLayerOpacity' => 'Data layer opacity',
       'gridSquareSize' => 'Grid square size',
-      'queryLimitTo1kmOrBetter' => 'Click map to query limited to squares 1km or smaller',
+      'queryLimitTo1kmOrBetter' => 'Limit results when clicking on the map to squares 1km or smaller',
     ]);
     $dataOptions = helper_base::getOptionsForJs($options, [
       'baseLayerConfig',
@@ -1247,6 +1247,7 @@ JS;
       'minSqSizeKms',
       'selectedFeatureStyle',
       'showSelectedRow',
+      'tools',
     ], TRUE);
     // Extra setup required after map loads.
     helper_base::$late_javascript .= <<<JS
