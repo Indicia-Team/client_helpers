@@ -566,6 +566,7 @@ Sample ID',
       $params = [
         'sample_id' => self::$id,
         'sharing' => $args['sharing'],
+        'allow_unreleased' => $args['allow_unreleased'] ? 1 : 0,
         'allow_sensitive_full_precision' => $args['allow_sensitive_full_precision'] ? 1 : 0,
         'includes_sensitive' => self::$sample['includes_sensitive'] ? 1 : 0,
       ];
