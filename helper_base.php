@@ -93,12 +93,12 @@ $indicia_templates = [
   'image_upload' => "<input type=\"file\" id=\"{id}\" name=\"{fieldname}\" accept=\"png|jpg|gif|jpeg|mp3|wav\" {title}/>\n" .
       "<input type=\"hidden\" id=\"{pathFieldName}\" name=\"{pathFieldName}\" value=\"{pathFieldValue}\"/>\n",
   'text_input' => '<input {attribute_list} id="{id}" name="{fieldname}"{class} {disabled} {readonly} value="{default|escape}" {title} {maxlength} />'."\n",
-  'hidden_text' => '<input type="hidden" id="{id}" name="{fieldname}" {disabled} value="{default}" />',
-  'password_input' => '<input type="password" id="{id}" name="{fieldname}"{class} {disabled} value="{default}" {title} />'."\n",
-  'textarea' => '<textarea id="{id}" name="{fieldname}"{class} {disabled} cols="{cols}" rows="{rows}" {title}>{default}</textarea>'."\n",
+  'hidden_text' => '<input type="hidden" id="{id}" name="{fieldname}" {disabled} value="{default|escape}" />',
+  'password_input' => '<input type="password" id="{id}" name="{fieldname}"{class} {disabled} value="{default|escape}" {title} />'."\n",
+  'textarea' => '<textarea id="{id}" name="{fieldname}"{class} {disabled} cols="{cols}" rows="{rows}" {title}>{default|textarea}</textarea>'."\n",
   'checkbox' => '<input type="hidden" name="{fieldname}" value="0"/><input type="checkbox" id="{id}" name="{fieldname}" value="1"{class}{checked}{disabled} {title} />'."\n",
   'training' => '<input type="hidden" name="{fieldname}" value="{hiddenValue}"/><input type="checkbox" id="{id}" name="{fieldname}" value="1"{class}{checked}{disabled} {title} />'."\n",
-  'date_picker' => '<input type="text" {attribute_list} {class} id="{id}" name="{fieldname}" value="{default}" style="display: none" {title}/>
+  'date_picker' => '<input type="text" {attribute_list} {class} id="{id}" name="{fieldname}" value="{default|escape}" style="display: none" {title}/>
       <input type="date" {attribute_list_date} class="{datePickerClass}" id="{id}:date">' . "\n",
   'date_picker_mode_toggle' => '<span>{vagueLabel}:</span> <label class="switch">
         <input type="checkbox" class="date-mode-toggle" id="{id}:toggle">
@@ -106,7 +106,7 @@ $indicia_templates = [
       </label>' . "\n",
   'select' => '<select {attribute_list} id="{id}" name="{fieldname}"{class} {disabled} {title}>{items}</select>',
   'select_item' => '<option value="{value}"{selected}{attribute_list}>{caption}</option>',
-  'select_species' => '<option value="{value}" {selected} >{caption} - {common}</option>',
+  'select_species' => '<option value="{value|escape}" {selected} >{caption} - {common}</option>',
   'listbox' => '<select id="{id}" name="{fieldname}"{class} {disabled} size="{size}" multiple="{multiple}" {title}>{items}</select>',
   'listbox_item' => '<option value="{value}"{selected}{attribute_list}>{caption}</option>',
   'list_in_template' => '<ul{class} {title}>{items}</ul>',
@@ -123,10 +123,10 @@ $indicia_templates = [
       '<span class="nobreak vernacular">{default_common_name}</span></div>',
   'single_species_taxon_label' => '{taxon}',
   'treeview_node' => '<span>{caption}</span>',
-  'tree_browser' => '<div{outerClass} id="{divId}"></div><input type="hidden" name="{fieldname}" id="{id}" value="{default}"{class}/>',
+  'tree_browser' => '<div{outerClass} id="{divId}"></div><input type="hidden" name="{fieldname}" id="{id}" value="{default|escape}"{class}/>',
   'tree_browser_node' => '<span>{caption}</span>',
-  'autocomplete' => '<input type="hidden" class="hidden" id="{id}" name="{fieldname}" value="{default}" />' .
-      '<input id="{inputId}" name="{inputId}" type="text" value="{defaultCaption}" {class} {disabled} {title} {attribute_list} data-hiddenvalueinput="{id}" />' . "\n",
+  'autocomplete' => '<input type="hidden" class="hidden" id="{id}" name="{fieldname}" value="{default|escape}" />' .
+      '<input id="{inputId}" name="{inputId}" type="text" value="{defaultCaption|escape}" {class} {disabled} {title} {attribute_list} data-hiddenvalueinput="{id}" />' . "\n",
   'autocomplete_javascript' => "
 $('input#{escaped_input_id}').change(function() {
   if ($('input#{escaped_id}').data('set-for') !== $('input#{escaped_input_id}').val()) {
@@ -199,17 +199,17 @@ $('input#{escaped_input_id}').result(function(event, data) {
     '<ul id="{id}:sublist" class="ind-sub-list">{items}</ul>{subListAdd}'."\n".
     '</div></div>'."\n",
   'sub_list_item' => '<li class="ui-widget-content ui-corner-all"><span class="ind-delete-icon">&nbsp;</span>{caption}'.
-    '<input type="hidden" name="{fieldname}" value="{value}" /></li>',
-  'postcode_textbox' => '<input type="text" name="{fieldname}" id="{id}"{class} value="{default}" '.
+    '<input type="hidden" name="{fieldname}" value="{value|escape}" /></li>',
+  'postcode_textbox' => '<input type="text" name="{fieldname}" id="{id}"{class} value="{default|escape}" '.
         'onblur="javascript:indiciaFns.decodePostcode(\'{linkedAddressBoxId}\');" />'."\n",
-  'sref_textbox' => '<input type="text" id="{id}" name="{fieldname}" {class} {disabled} value="{default}" />' .
-        '<input type="hidden" id="{geomid}" name="{geomFieldname}" value="{defaultGeom}" />'."\n",
+  'sref_textbox' => '<input type="text" id="{id}" name="{fieldname}" {class} {disabled} value="{default|escape}" />' .
+        '<input type="hidden" id="{geomid}" name="{geomFieldname}" value="{defaultGeom|escape}" />'."\n",
   'sref_textbox_latlong' => '<label for="{idLat}">{labelLat}:</label>'.
-        '<input type="text" id="{idLat}" name="{fieldnameLat}" {class} {disabled} value="{defaultLat}" /><br />' .
+        '<input type="text" id="{idLat}" name="{fieldnameLat}" {class} {disabled} value="{defaultLat|escape}" /><br />' .
         '<label for="{idLong}">{labelLong}:</label>'.
-        '<input type="text" id="{idLong}" name="{fieldnameLong}" {class} {disabled} value="{defaultLong}" />' .
-        '<input type="hidden" id="{geomid}" name="geomFieldname" value="{defaultGeom}" />'.
-        '<input type="hidden" id="{id}" name="{fieldname}" value="{default}" />',
+        '<input type="text" id="{idLong}" name="{fieldnameLong}" {class} {disabled} value="{defaultLong|escape}" />' .
+        '<input type="hidden" id="{geomid}" name="geomFieldname" value="{defaultGeom|escape}" />'.
+        '<input type="hidden" id="{id}" name="{fieldname}" value="{default|escape}" />',
   'attribute_cell' => "\n<td class=\"scOccAttrCell ui-widget-content {class}\" headers=\"{headers}\">{content}</td>",
   'taxon_label_cell' => "\n<td class=\"scTaxonCell{editClass}\" headers=\"{tableId}-species-{idx}\" {colspan}>{content}</td>",
   'helpText' => "\n<p class=\"{helpTextClass}\">{helpText}</p>",
