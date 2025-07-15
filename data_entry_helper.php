@@ -9232,10 +9232,14 @@ HTML;
           self::$entity_to_load = $_POST;
           if (isset($response['code'])) {
             switch ($response['code']) {
-              case 2003: if (function_exists('hostsite_show_message'))
-                hostsite_show_message(lang::get('The data could not be saved.'), 'error');
-              else
-                $r .= "<div class=\"ui-widget ui-corner-all ui-state-highlight page-notice\">" . lang::get('The data could not be saved.') . "</div>\n";
+              case 2003:
+                $message = lang::get('The data could not be saved.');
+                if (function_exists('hostsite_show_message')) {
+                  hostsite_show_message($message, 'error');
+                }
+                else {
+                  $r .= "<div class=\"ui-widget ui-corner-all ui-state-highlight page-notice\">$message</div>\n";
+                }
             }
           }
         }
@@ -10213,6 +10217,7 @@ HTML;
               // Generate a file id to store the image as
               $destination = time().rand(0,1000) . "." . $fext;
               $uploadpath = self::getInterimImageFolder();
+              // Safe to move as file type and mime type checked.
               if (move_uploaded_file($fname, $uploadpath.$destination)) {
                 $r[] = array(
                   // Id is set only when saving over an existing record. This will always be a new record
