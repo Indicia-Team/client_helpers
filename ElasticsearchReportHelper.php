@@ -2674,14 +2674,10 @@ AGG;
    *   Options passed to the [source]. Will be modified as appropriate.
    */
   private static function applySourceModeDefaultsMapGridSquare(array &$options) {
-    $userSettingSqSize = $_COOKIE['leafletMapGridSquareSize'] ?? FALSE;
     $options = array_merge([
       'mapGridSquareSize' => 'autoGridSquareSize',
       'size' => 0,
     ], $options);
-    if ($userSettingSqSize) {
-      $options['mapGridSquareSize'] = $userSettingSqSize;
-    }
     if ($options['mapGridSquareSize'] === 'autoGridSquareSize') {
       $geoField = 'autoGridSquareField';
     }
