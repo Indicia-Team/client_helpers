@@ -186,6 +186,12 @@ HTML;
       default:
         throw new RuntimeException('Unknown errors.');
     }
+    // Check file extension for CSV or Excel.
+    $allowedExtensions = ['csv', 'xls', 'xlsx'];
+    $fileExt = strtolower(pathinfo($_FILES['file']['name'], PATHINFO_EXTENSION));
+    if (!in_array($fileExt, $allowedExtensions)) {
+      throw new RuntimeException('Invalid file type. Only CSV and Excel files are allowed.');
+    }
     $targetDir = helper_base::getInterimImageFolder('fullpath');
     $fileName = sprintf('%s_%s', uniqid(), $_FILES['file']['name']);
     $filePath = $targetDir . $fileName;
