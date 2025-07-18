@@ -1232,8 +1232,8 @@ JS;
     helper_base::addLanguageStringsToJs('leafletTools', [
       'autoLayerTitle' => 'Auto',
       'dataLayerOpacity' => 'Data layer opacity',
-      'gridSquareSize' => 'Grid square size',
-      'queryLimitTo1kmOrBetter' => 'Limit results when clicking on the map to squares 1km or smaller',
+      'gridSquareSize' => 'Displayed grid square size',
+      'queryLimitTo1kmOrBetter' => 'Limit results when clicking on the map to squares 1 km or smaller',
     ]);
     $dataOptions = helper_base::getOptionsForJs($options, [
       'baseLayerConfig',
