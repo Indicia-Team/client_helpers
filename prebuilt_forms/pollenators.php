@@ -172,7 +172,7 @@ class iform_pollenators implements PrebuiltFormInterface {
       array(
           'name' => 'within50m_attr_id',
           'caption' => 'within50m Attribute ID',
-          'description' => 'Indicia ID for the location attribute that describes whether the location is within 50m of a grand culture.',
+          'description' => 'Indicia ID for the location attribute that describes whether the location is within 50 m of a grand culture.',
           'type' => 'int',
           'group' => 'Floral Station Attributes'
       ),

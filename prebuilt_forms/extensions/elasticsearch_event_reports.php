@@ -503,7 +503,7 @@ HTML;
       // If group has a single boundary object, we can use that to set
       // viewpoint. Otherwise use the data.
       'initialMapBounds' => !isset(helper_base::$indiciaData['reportBoundaries']) || count(helper_base::$indiciaData['reportBoundaries']) !== 1,
-      'switchToGeomsAt' => 12,
+      'switchToGeomsAt' => 13,
     ]);
     $r = ElasticsearchReportHelper::source($srcOptions);
     if ($options['title']) {

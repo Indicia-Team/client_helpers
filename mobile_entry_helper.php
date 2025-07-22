@@ -193,7 +193,7 @@ class mobile_entry_helper extends data_entry_helper {
   * more work to reload this for an existing record.</li>
   * </ul>
   * <li><b>gps_accuracy_limit</b><br/>
-  * Optionl. A threshold value for accuracy to be provided. Default 100m.</li>
+  * Optionl. A threshold value for accuracy to be provided. Default 100 m.</li>
   * </ul>
   * <li><b>default</b><br/>
   * Optional. The default spatial reference to assign to the control. This is

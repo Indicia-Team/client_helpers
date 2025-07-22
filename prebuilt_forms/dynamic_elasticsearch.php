@@ -498,7 +498,7 @@ TXT;
         'overlayLayers',
         'dataLayerOpacity',
         'gridSquareSize',
-        'queryLimitTo1kmOrBetter',
+        'impreciseMapRefHandling',
       ],
     ], $options);
     return ElasticsearchReportHelper::leafletMap($options);

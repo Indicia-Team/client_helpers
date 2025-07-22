@@ -200,11 +200,11 @@ class map_helper extends helper_base {
    *   * clickedSrefPrecisionMin - Specify the minimum precision allowed when
    *     clicking on the map to get a grid square. If not set then the grid
    *     square selected will increase to its maximum - size as the map is
-   *     zoomed out. E.g. specify 4 for a 1km British National Grid square.
+   *     zoomed out. E.g. specify 4 for a 1 km British National Grid square.
    *   * clickedSrefPrecisionMax - Specify the maximum precision allowed when
    *     clicking on the map to get a grid square. If not set then the grid
    *     square selected will decrease to its minimum size as the map is zoomed
-   *     in. E.g. specify 4 for a 1km British National Grid square.
+   *     in. E.g. specify 4 for a 1 km British National Grid square.
    *   * msgGeorefSelectPlace
    *   * msgGeorefNothingFound
    *   * msgSrefOutsideGrid - Message displayed when point outside of grid

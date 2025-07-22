@@ -285,7 +285,7 @@ class iform_wildflower_count implements PrebuiltFormInterface {
             'Or if you know the grid reference, type it into the following box.'
     ));
     $r .= data_entry_helper::sref_and_system(array(
-        'label' => 'Your 1km grid reference',
+        'label' => 'Your 1 km grid reference',
         'labelClass' => 'control-width-5',
         'fieldname' => 'sample:entered_sref',
         'systems'=>array('OSGB' => 'British National Grid', 'OSIE' => 'Irish Grid'),
@@ -338,8 +338,8 @@ class iform_wildflower_count implements PrebuiltFormInterface {
         'presetLayers' => array('google_hybrid'),
         'readAuth' => $auth,
         'class' => 'ui-widget-content',
-        'clickedSrefPrecisionMin'=>4, // fix to 1km
-        'clickedSrefPrecisionMax'=>4, // fix to 1km,
+        'clickedSrefPrecisionMin'=>4, // fix to 1 km
+        'clickedSrefPrecisionMax'=>4, // fix to 1 km,
         'initial_lat'=>54,
         'initial_long'=>-1,
         'initial_zoom'=>5,
@@ -582,12 +582,12 @@ class iform_wildflower_count implements PrebuiltFormInterface {
     if (!self::array_attr_exists('smpAttr:'.$args['attr_surveyed_square'], $values)) {
       $errors['smpAttr:'.$args['attr_surveyed_square']]="Please tell us which square you surveyed.";
     }
-    // Ensure spatial reference is a 1km reference
+    // Ensure spatial reference is a 1 km reference
     if (strlen($values['sample:entered_sref'])===0) {
-      $errors['sample:entered_sref']="Please specify your 1km grid reference";
+      $errors['sample:entered_sref']="Please specify your   grid reference";
     } elseif (strlen($values['sample:entered_sref'])<5 || strlen($values['sample:entered_sref'])>6) {
-      // not a 5 character Irish 1km grid or 6 character GB 1km grid
-      $errors['sample:entered_sref']="The entered grid reference ".$values['sample:entered_sref']." is not a 1km square. Please enter a 1km grid square.";
+      // not a 5 character Irish 1 km grid or 6 character GB 1 km grid
+      $errors['sample:entered_sref']="The entered grid reference ".$values['sample:entered_sref']." is not a 1 km square. Please enter a 1 km grid square.";
     }
     return $errors;
   }
