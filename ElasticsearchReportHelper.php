@@ -1232,8 +1232,11 @@ JS;
     helper_base::addLanguageStringsToJs('leafletTools', [
       'autoLayerTitle' => 'Auto',
       'dataLayerOpacity' => 'Data layer opacity',
-      'gridSquareSize' => 'Grid square size',
-      'queryLimitTo1kmOrBetter' => 'Limit results when clicking on the map to squares 1km or smaller',
+      'gridSquareSize' => 'Displayed grid square size',
+      'gridSquareSizeHelp' => 'This mode limits how far the map can be zoomed out - use the 10 km or Auto display options to zoom out further.',
+      'impreciseMapRefHandling' => 'When using “Auto” mode, the map switches to show records in the full available precision when zoomed in.  When viewing records at full precision',
+      'impreciseMapRefHandlingLimitTo1kmOrBetter' => 'Hide imprecise records that are larger than 1 km square precision',
+      'impreciseMapRefHandlingNotLimited' => 'Show all records irrespective of precision'
     ]);
     $dataOptions = helper_base::getOptionsForJs($options, [
       'baseLayerConfig',

@@ -6673,8 +6673,8 @@ HTML;
     // Put a hidden input out, so that when the select control is disabled we get an empty value posted to clear the sensitivity
     $r .= '<input type="hidden" name="' . $options['fieldname'] . '">';
     $r .= '<div id="sensitivity-controls">';
-    $lookupValues = array_intersect_key(array('100'=>lang::get('Blur to 100m'), '1000'=>lang::get('Blur to 1km'), '2000'=>lang::get('Blur to 2km'),
-        '10000'=>lang::get('Blur to 10km'), '100000'=>lang::get('Blur to 100km')),
+    $lookupValues = array_intersect_key(array('100'=>lang::get('Blur to 100 m'), '1000'=>lang::get('Blur to 1 km'), '2000'=>lang::get('Blur to 2 km'),
+        '10000'=>lang::get('Blur to 10 km'), '100000'=>lang::get('Blur to 100 km')),
         array_combine($options['precisions'], $options['precisions']));
     $r .= data_entry_helper::select(array(
       'fieldname' => $options['fieldname'],
@@ -8792,11 +8792,11 @@ HTML;
           'fieldname' => $fieldname,
           'class' => 'scSensitivity',
           'lookupValues' => array(
-            '100' => lang::get('Blur to 100m'),
-            '1000' => lang::get('Blur to 1km'),
-            '2000' => lang::get('Blur to 2km'),
-            '10000' => lang::get('Blur to 10km'),
-            '100000' => lang::get('Blur to 100km')
+            '100' => lang::get('Blur to 100 m'),
+            '1000' => lang::get('Blur to 1 km'),
+            '2000' => lang::get('Blur to 2 km'),
+            '10000' => lang::get('Blur to 10 km'),
+            '100000' => lang::get('Blur to 100 km')
           ),
           'blankText' => 'Not sensitive',
           'default' => $value ? $value : FALSE

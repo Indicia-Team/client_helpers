@@ -237,8 +237,8 @@ class iform_sectioned_transects_edit_transect implements PrebuiltFormInterface {
           'type' => 'select',
           'lookupValues' => [
             'parent' => 'Same as parent transect',
-            'sectionCentroid100' => '100m grid square covering the centroid of the sect,ion',
-            'sectionStart100' => '100m grid square covering the start of the section'
+            'sectionCentroid100' => '100 m grid square covering the centroid of the section',
+            'sectionStart100' => '100 m grid square covering the start of the section'
           ],
           'default' => 'parent',
           'group' => 'Transects Editor Settings',

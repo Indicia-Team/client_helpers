@@ -1122,7 +1122,7 @@ HTML;
    * * maxSqSizeKms - maximum square size to show (10, 2 or 1). Set this to
    *   force a higher precision when zoomed out.
    * * switchToGeomsAt - layer zoom level below which full precision geometries
-   *   are shown. Defaults to 13, set to NULL to disable full precision
+   *   are shown. Defaults to 14, set to NULL to disable full precision
    *   geometries.
    *
    * @return string
@@ -1143,7 +1143,7 @@ HTML;
       'nid' => $options['nid'],
       'id' => 'recordsGridSquares',
       'mode' => 'mapGridSquare',
-      'switchToGeomsAt' => $options['switchToGeomsAt'] ?? 13,
+      'switchToGeomsAt' => $options['switchToGeomsAt'] ?? 14,
     ];
     ElasticsearchReportHelper::source($optionsMapSource);
     $optionsLeafletMap = [

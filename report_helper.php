@@ -1877,8 +1877,8 @@ HTML;
   * * *readAuth* - Read authorisation tokens.
   * * *dataSource* - Name of the report file or table/view.
   * * *dataSourceLoRes* - Name of the report file or table/view to use when
-  *   zoomed out. For example this might aggregate records to 1km or 10km grid
-  *   squares.
+  *   zoomed out. For example this might aggregate records to 1 km or 10 km
+  *   grid squares.
   * * *autoParamsForm* - Defaults to true. If true, then if a report requires
   *   parameters, a parameters input form will be auto-generated at the top of
   *   the grid. If set to false, then it is possible to manually build a

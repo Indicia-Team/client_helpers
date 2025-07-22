@@ -45,7 +45,7 @@ var bindSpeciesAutocomplete, initButtons, _getCentroid, getCentroid, processDele
             longDeg = Math.abs(geom.x);
             longMin = (longDeg - Math.floor(longDeg))*60;
             longSec = (longMin - Math.floor(longMin))*60;
-            // Approx 1m resolution
+            // Approx 1 m resolution
             switch ('DM' /* mapMousePositionFormat */) {
               case 'DM' :
                 lat = Math.floor(latDeg)+'&#176;' +
@@ -94,7 +94,7 @@ bindSpeciesAutocomplete = function (selectorID, target, url, lookupListId, looku
     var parent = $('#'+target).parent();
     if(parent.find('.deh-required').length == 0) parent.append('<span class="deh-required">*</span>');
   };
-  
+
   var extra_params = {
         view : 'detail',
         orderby : 'taxon',
