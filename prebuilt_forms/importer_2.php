@@ -69,69 +69,88 @@ class iform_importer_2 implements PrebuiltFormInterface {
     require_once dirname(dirname(__FILE__)) . '/lang/import_helper_2.php';
     global $default_terms;
     $fixedValuesDescription = <<<TXT
-<p>Provide a list of fixed values which the user does not need to specify in the import, one on each line in the form
-key=value, where the key is a field name. The fixed values key field names should be chosen from those available for
-input on the Import settings page of the import wizard or the fields available on the Mappings page. </p>
-<p>Fields on the Import settings page behave as follows. If a single value is provided for a field key, then that field
-is removed from the Import settings form and the value will be applied to all rows created by the import. If multiple
-values are provided as a semi-colon separated list, then the user will be able to choose the value to apply from a
-drop-down with a restricted range of options. Each entry in the list should be the raw value to store in the database
-(e.g. a termlists_term_id rather than the term) and you can override the label shown for the item by adding a colon
-followed by the required term. A further possibility is to specify an asterisk '*' as a special value, if present in
-the list for a control then the user is given the option to remove the restrictions and select from any possible value
-for the control. For example, to limit the default list and further extend the available mapping systems with a custom
-projection you can specify the following, which includes only 4326 (GPS lat long) from the default list, but adds an
-extra system for local use. The * at the end gives the user an option to show the whole list of available reference
-systems:</p>
-<code>sample:entered_sref_system=4326;32730:WGS84 UTM30S;*</code><br/>
-<p>If the field keys are from the Import mappings page, then a single value can be provided which sets the value for
-every imported record.</p>
-<p>You can use the following replacement tokens in the values: {user_id}, {username}, {email} or {profile_*} (i.e. any
-field in the user profile data).</p>
-TXT;
+      <p>Provide a list of fixed values which the user does not need to specify in the import, one on each line in the form
+      key=value, where the key is a field name. The fixed values key field names should be chosen from those available for
+      input on the Import settings page of the import wizard or the fields available on the Mappings page. </p>
+      <p>Fields on the Import settings page behave as follows. If a single value is provided for a field key, then that field
+      is removed from the Import settings form and the value will be applied to all rows created by the import. If multiple
+      values are provided as a semi-colon separated list, then the user will be able to choose the value to apply from a
+      drop-down with a restricted range of options. Each entry in the list should be the raw value to store in the database
+      (e.g. a termlists_term_id rather than the term) and you can override the label shown for the item by adding a colon
+      followed by the required term. A further possibility is to specify an asterisk '*' as a special value, if present in
+      the list for a control then the user is given the option to remove the restrictions and select from any possible value
+      for the control. For example, to limit the default list and further extend the available mapping systems with a custom
+      projection you can specify the following, which includes only 4326 (GPS lat long) from the default list, but adds an
+      extra system for local use. The * at the end gives the user an option to show the whole list of available reference
+      systems:</p>
+      <code>sample:entered_sref_system=4326;32730:WGS84 UTM30S;*</code><br/>
+      <p>If the field keys are from the Import mappings page, then a single value can be provided which sets the value for
+      every imported record.</p>
+      <p>You can use the following replacement tokens in the values: {user_id}, {username}, {email} or {profile_*} (i.e. any
+      field in the user profile data).</p>
+      TXT;
 
 // @todo Make sure the state of the advanced toggle is saved in a template
 
     $advancedFieldsDefault = <<<TXT
-occurrence:confidential
-occurrence:fk_taxa_taxon_list:external_key
-occurrence:fk_taxa_taxon_list:genus
-occurrence:fk_taxa_taxon_list:id
-occurrence:fk_taxa_taxon_list:specific
-occurrence:import_guid
-occurrence:record_status
-occurrence:record_substatus
-occurrence:release_status
-occurrence:zero_abundance
-occurrence_medium:caption:1
-occurrence_medium:caption:2
-occurrence_medium:caption:3
-occurrence_medium:caption:4
-occurrence_medium:path:1
-occurrence_medium:path:2
-occurrence_medium:path:3
-occurrence_medium:path:4
-sample:date_end
-sample:date_start
-sample:date_type
-sample:date:day
-sample:date:month
-sample:date:year
-sample:entered_sref_system
-sample:external_key
-sample:fk_group
-sample:fk_licence
-sample:fk_licence:code
-sample:fk_location
-sample:fk_location:code
-sample:fk_location:external_key
-sample:fk_location:id
-sample:input_form
-sample:privacy_precision
-sample:import_guid
-sample:record_status
-sample:sensitivity_precision
-TXT;
+      occurrence:classification_event_id
+      occurrence:confidential
+      occurrence:created_by_id
+      occurrence:determiner_id
+      occurrence:fk_created_by
+      occurrence:fk_taxa_taxon_list:external_key
+      occurrence:fk_taxa_taxon_list:genus
+      occurrence:fk_taxa_taxon_list:id
+      occurrence:fk_taxa_taxon_list:specific
+      occurrence:fk_verified_by
+      occurrence:import_guid
+      occurrence:record_status
+      occurrence:record_substatus
+      occurrence:release_status
+      occurrence:updated_by_id
+      occurrence:verified_by_id
+      occurrence:verified_on
+      occurrence:zero_abundance
+      occurrence_medium:caption:1
+      occurrence_medium:caption:2
+      occurrence_medium:caption:3
+      occurrence_medium:caption:4
+      occurrence_medium:path:1
+      occurrence_medium:path:2
+      occurrence_medium:path:3
+      occurrence_medium:path:4
+      sample:created_by_id
+      sample:date_end
+      sample:date_start
+      sample:date_type
+      sample:date:day
+      sample:date:month
+      sample:date:year
+      sample:entered_sref_system
+      sample:external_key
+      sample:fk_created_by
+      sample:fk_group
+      sample:fk_licence
+      sample:fk_licence:code
+      sample:fk_location
+      sample:fk_location:code
+      sample:fk_location:external_key
+      sample:fk_location:id
+      sample:fk_verified_by
+      sample:group_id
+      sample:input_form
+      sample:licence_id
+      sample:location_id
+      sample:sample_method_id
+      sample:parent_id
+      sample:privacy_precision
+      sample:import_guid
+      sample:record_status
+      sample:sensitivity_precision
+      sample:updated_by_id
+      sample:verified_by_id
+      sample:verified_on
+      TXT;
     $params = [
       [
         'name' => 'fixedValues',
@@ -154,6 +173,13 @@ TXT;
         'type' => 'textarea',
         'required' => FALSE,
         'default' => $advancedFieldsDefault,
+      ],
+      [
+        'name' => 'advancedModePermissionName',
+        'caption' => 'Permission name for advanced mode',
+        'description' => 'Enables the import of additional fields if the user has this permission. Fields include created by and record status/verification info.',
+        'type' => 'text_input',
+        'required' => FALSE,
       ],
       [
         'name' => 'allowUpdates',
@@ -319,13 +345,17 @@ TXT;
       'fixedValues' => [],
       'entity' => 'occurrence',
       'advancedFields' => '',
+      'advancedModePermissionName' => '',
     ], $args);
     $options['fixedValues'] = empty($options['fixedValues']) ? [] : get_options_array_with_user_data($options['fixedValues']);
     $options['fixedValues'] = array_merge($options['fixedValues'], self::getAdditionalFixedValues($auth, $options['entity']));
     if (!empty($options['fixedValueDefaults'])) {
       $options['fixedValueDefaults'] = get_options_array_with_user_data($options['fixedValueDefaults']);
     }
+    // Advanced fields are available to everyone, but hidden by default.
     $options['advancedFields'] = helper_base::explode_lines($options['advancedFields']);
+    // Advanced mode enables additional fields only for advanced users.
+    $options['advancedMode'] = $options['advancedModePermissionName'] && hostsite_user_has_permission($options['advancedModePermissionName']);
     return import_helper_2::importer($options);
   }
 
