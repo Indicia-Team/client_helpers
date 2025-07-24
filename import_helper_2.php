@@ -1886,7 +1886,7 @@ HTML;
       'downloadErrors' => 'Download the rows that had errors',
       'errorInImportFile' => 'Errors were found in {1} row.',
       'errorsInImportFile' => 'Errors were found in {1} rows.',
-      'importingCrashInfo' => 'An error occurred on the server whilst importing your data. You can download the errors file which also includes an imported column indicating which rows have been successfully imported.',
+      'importingCrashInfo' => 'An error occurred on the server whilst importing your data. You can download the errors file which includes all rows that have errors or were not imported. The file also includes an [errors] column with row-level error information and an [imported] column indicating which rows have been successfully imported.',
       'importingData' => 'Importing data',
       'importingDetails' => '{rowsProcessed} of {totalRows} rows imported, {errorsCount} rows with errors found.',
       'importingFoundErrors' => 'Errors were found during the import stage which means that data was imported but rows with errors were skipped. Please download the errors spreadsheet using the button below and correct the data then upload just the errors spreadsheet again.',
