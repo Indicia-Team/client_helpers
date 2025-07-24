@@ -38,6 +38,42 @@ require_once 'helper_base.php';
 class import_helper_2 extends helper_base {
 
   /**
+   * Array of field names which are disallowed for import.
+   *
+   * Can be altered before calling the importer.
+   *
+   * @var array
+   */
+  public static array $blockedFields = [
+    'occurrence:all_info_in_determinations',
+    'occurrence:fk_classification_event',
+    'occurrence:downloaded_flag',
+    'occurrence:downloaded_on',
+    'occurrence:last_verification_check_date',
+    'occurrence:machine_involvement',
+    'occurrence:metadata',
+    'occurrence:record_decision_source',
+    'sample:fk_parent',
+    'sample:fk_parent:external_key',
+    'id',
+    'created_by_id',
+    'deleted',
+    'fk_created_by',
+    'fk_determiner',
+    'fk_updated_by',
+    'fk_verified_by',
+    'created_on',
+    'updated_on',
+    'verified_on',
+    'verifier_only_data',
+    'survey_id',
+    'website_id',
+    'fk_survey',
+    'fk_website',
+    'training',
+  ];
+
+  /**
    * A file import component.
    *
    * Options include:
@@ -136,6 +172,15 @@ class import_helper_2 extends helper_base {
     self::$indiciaData['advancedFields'] = $options['advancedFields'];
     $nextImportStep = $_POST['next-import-step'] ?? (empty($_GET['reverse_import_guid']) ? 'fileSelectForm' : 'reversalModeWarningOrSkipToResult');
     self::$indiciaData['step'] = $nextImportStep;
+    if ($options['advancedMode']) {
+      // Unblock some fields in advanced mode.
+      $options['blockedFields'] = array_diff($options['blockedFields'],   [
+        'created_by_id',
+        'fk_created_by',
+        'fk_verified_by',
+        'verified_on',
+      ]);
+    }
     switch ($nextImportStep) {
       case 'fileSelectForm':
         $r = self::fileSelectForm($options);
@@ -1841,6 +1886,7 @@ HTML;
       'downloadErrors' => 'Download the rows that had errors',
       'errorInImportFile' => 'Errors were found in {1} row.',
       'errorsInImportFile' => 'Errors were found in {1} rows.',
+      'importingCrashInfo' => 'An error occurred on the server whilst importing your data. You can download the errors file which also includes an imported column indicating which rows have been successfully imported.',
       'importingData' => 'Importing data',
       'importingDetails' => '{rowsProcessed} of {totalRows} rows imported, {errorsCount} rows with errors found.',
       'importingFoundErrors' => 'Errors were found during the import stage which means that data was imported but rows with errors were skipped. Please download the errors spreadsheet using the button below and correct the data then upload just the errors spreadsheet again.',
@@ -1913,46 +1959,21 @@ HTML;
   private static function getImportHelperOptions(&$options) {
     // Apply default options.
     $defaults = [
+      'advancedMode' => FALSE,
+      'allowDeletes' => FALSE,
+      'allowUpdates' => FALSE,
+      'blockedFields' => self::$blockedFields,
+      'doImportPageIntro' => lang::get('import2doImportPageIntro'),
       'entity' => 'occurrence',
       'fileSelectFormIntro' => lang::get('import2fileSelectFormIntro'),
-      'globalValuesFormIntro' => lang::get('import2globalValuesFormIntro'),
-      'mappingsFormIntro' => lang::get('import2mappingsFormIntro'),
-      'lookupMatchingFormIntro' => lang::get('lookupMatchingFormIntro'),
-      'preprocessPageIntro' => lang::get('import2preprocessPageIntro'),
-      'summaryPageIntro' => lang::get('summaryPageIntro'),
-      'doImportPageIntro' => lang::get('import2doImportPageIntro'),
-      'requiredFieldsIntro' => lang::get('import2requiredFieldsIntro'),
       'fixedValues' => [],
-      'blockedFields' => [
-        'occurrence:all_info_in_determinations',
-        'occurrence:fk_classification_event',
-        'occurrence:downloaded_flag',
-        'occurrence:downloaded_on',
-        'occurrence:last_verification_check_date',
-        'occurrence:machine_involvement',
-        'occurrence:metadata',
-        'occurrence:record_decision_source',
-        'sample:fk_parent',
-        'sample:fk_parent:external_key',
-        'id',
-        'deleted',
-        'fk_created_by',
-        'fk_determiner',
-        'fk_updated_by',
-        'fk_verified_by',
-        'created_on',
-        'updated_on',
-        'verified_on',
-        'verifier_only_data',
-        'survey_id',
-        'website_id',
-        'fk_survey',
-        'fk_website',
-        'training',
-      ],
-      'allowUpdates' => FALSE,
-      'allowDeletes' => FALSE,
+      'globalValuesFormIntro' => lang::get('import2globalValuesFormIntro'),
       'importReverse' => 'import',
+      'lookupMatchingFormIntro' => lang::get('lookupMatchingFormIntro'),
+      'mappingsFormIntro' => lang::get('import2mappingsFormIntro'),
+      'preprocessPageIntro' => lang::get('import2preprocessPageIntro'),
+      'requiredFieldsIntro' => lang::get('import2requiredFieldsIntro'),
+      'summaryPageIntro' => lang::get('summaryPageIntro'),
     ];
     $options = array_merge($defaults, $options);
     $requiredOptions = [
@@ -2014,6 +2035,11 @@ HTML;
         && isset($globalValues['taxa_taxon_list:taxon_list_id'])
         && trim($globalValues['taxa_taxon_list:taxon_list_id'] ?? '') !== '') {
       $get['taxon_list_id'] = trim($globalValues['taxa_taxon_list:taxon_list_id']);
+    }
+    if ($options['advancedMode']) {
+      // In advanced mode, allow user to import directly into a foreign key
+      // field by ID, without using a lookup term.
+      $get['keep_fk_ids'] = 'true';
     }
     if ($requiredOnly) {
       $get['required'] = 'true';
