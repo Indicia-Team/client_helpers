@@ -926,6 +926,24 @@ TXT;
    * Override get_form_html to add extra functionality.
    */
   protected static function get_form_html($args, $auth, $attributes) {
+    if (function_exists('hostsite_get_user_field')  &&
+        (!empty($_GET['sample_id']) || !empty($_GET['occurrence_id']))) {
+      $trainingSample = 0;
+      if (!empty(data_entry_helper::$entity_to_load['sample:training']) &&
+          data_entry_helper::$entity_to_load['sample:training'] == 't') {
+        $trainingSample = 1;
+      }
+      if (hostsite_get_user_field('training') == 1 &&
+          $trainingSample == 0) {
+        return lang::get('<div>The sample cannot be displayed because your account is in training mode,
+        but the sample being loaded is not a training sample.</div>');
+      }
+      if (hostsite_get_user_field('training') == 0 &&
+          $trainingSample == 1) {
+        return lang::get('<div>The sample cannot be displayed because your account is not in training mode,
+        and the sample being loaded is a training sample.</div>');
+      }
+    }
     self::addNewSampleFromExistingSampleEntityToLoadRemover($args);
     group_authorise_form($args, $auth['read']);
     // We always want an autocomplete formatter function for species lookups.
