@@ -1148,7 +1148,14 @@ class ElasticsearchProxyHelper {
       }
       elseif (in_array($qryConfig['query_type'], $stringQueryTypes)) {
         // One of the ES query string based query types.
-        $queryDef = [$qryConfig['query_type'] => ['query' => $qryConfig['value']]];
+        // Sanitise special characters.
+        $reservedCharacters = '+\-=&|><!(){}[\]^"~*?:\\/';
+        $value = preg_replace("/[$reservedCharacters]/", '\\\\$0', $qryConfig['value']);
+        $queryDef = [
+          $qryConfig['query_type'] => [
+            'query' =>  $value,
+          ],
+        ];
       }
       elseif (in_array($qryConfig['query_type'], $objectQueryTypes)) {
         $queryDef = [$qryConfig['query_type'] => $qryConfig['value']];
