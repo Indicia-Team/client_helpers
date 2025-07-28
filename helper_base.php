@@ -199,7 +199,7 @@ $('input#{escaped_input_id}').result(function(event, data) {
     '<ul id="{id}:sublist" class="ind-sub-list">{items}</ul>{subListAdd}'."\n".
     '</div></div>'."\n",
   'sub_list_item' => '<li class="ui-widget-content ui-corner-all"><span class="ind-delete-icon">&nbsp;</span>{caption}'.
-    '<input type="hidden" name="{fieldname}" value="{value|escape}" /></li>',
+    '<input type="hidden" name="{fieldname}" value="{value}" /></li>',
   'postcode_textbox' => '<input type="text" name="{fieldname}" id="{id}"{class} value="{default|escape}" '.
         'onblur="javascript:indiciaFns.decodePostcode(\'{linkedAddressBoxId}\');" />'."\n",
   'sref_textbox' => '<input type="text" id="{id}" name="{fieldname}" {class} {disabled} value="{default|escape}" />' .
