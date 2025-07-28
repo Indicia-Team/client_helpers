@@ -95,7 +95,7 @@ $indicia_templates = [
   'text_input' => '<input {attribute_list} id="{id}" name="{fieldname}"{class} {disabled} {readonly} value="{default|escape}" {title} {maxlength} />'."\n",
   'hidden_text' => '<input type="hidden" id="{id}" name="{fieldname}" {disabled} value="{default|escape}" />',
   'password_input' => '<input type="password" id="{id}" name="{fieldname}"{class} {disabled} value="{default|escape}" {title} />'."\n",
-  'textarea' => '<textarea id="{id}" name="{fieldname}"{class} {disabled} cols="{cols}" rows="{rows}" {title}>{default|textarea}</textarea>'."\n",
+  'textarea' => '<textarea id="{id}" name="{fieldname}"{class} {disabled} cols="{cols}" rows="{rows}" {title}>{default|escape}</textarea>'."\n",
   'checkbox' => '<input type="hidden" name="{fieldname}" value="0"/><input type="checkbox" id="{id}" name="{fieldname}" value="1"{class}{checked}{disabled} {title} />'."\n",
   'training' => '<input type="hidden" name="{fieldname}" value="{hiddenValue}"/><input type="checkbox" id="{id}" name="{fieldname}" value="1"{class}{checked}{disabled} {title} />'."\n",
   'date_picker' => '<input type="text" {attribute_list} {class} id="{id}" name="{fieldname}" value="{default|escape}" style="display: none" {title}/>
