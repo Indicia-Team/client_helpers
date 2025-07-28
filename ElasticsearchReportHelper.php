@@ -177,6 +177,10 @@ class ElasticsearchReportHelper {
       'caption' => 'Verification decision source',
       'description' => 'Either M for machine based verification or H for human verification decisions.',
     ],
+    'identification.verifier_comment' => [
+      'caption' => 'Verifier comment',
+      'description' => "Comment given by the verifier at the time of the verification decision.",
+    ],
     '#identification_classifier_agreement#' => [
       'caption' => 'Image classifier agreement',
       'description' => 'If an image classifier was used, does the current determination match the most likely suggestion given by the classifier?',
@@ -290,20 +294,28 @@ class ElasticsearchReportHelper {
       'description' => 'The name of the location which defines the region of the record, selected by the user when inputting the record. For example, this may be the name of a Vice County location.',
     ],
     'location.output_sref' => [
-      'caption' => 'Display spatial reference',
-      'description' => 'Spatial reference in the recommended local grid system.',
+      'caption' => 'Display map ref.',
+      'description' => 'Map reference in the recommended local grid system. Will show the full precision map reference if the record is sensitive or private only if you have permission to see the unblurred record details.',
     ],
     'location.output_sref_system' => [
-      'caption' => 'Display spatial reference system',
-      'description' => 'System used for the spatial reference in the recommended local grid system.',
+      'caption' => 'Display spatial ref. system',
+      'description' => 'System used for the display map ref.',
+    ],
+    'location.output_sref_blurred' => [
+      'caption' => 'Display map ref. (blurred)',
+      'description' => 'Map reference in the recommended local grid system. Will always show the blurred map reference if the record is sensitive or private.',
+    ],
+    'location.output_sref_system_blurred' => [
+      'caption' => 'Display spatial ref. system (blurred)',
+      'description' => 'System used for the display map ref. (blurred).',
     ],
     'location.input_sref' => [
-      'caption' => 'Input spatial reference',
-      'description' => 'Spatial reference as input by the recorder.',
+      'caption' => 'Input map ref.',
+      'description' => 'Map reference as input by the recorder. Will be blurred if the record is sensitive or private unless you have permission to see the unblurred record details.',
     ],
     'location.input_sref_system' => [
-      'caption' => 'Input spatial reference system',
-      'description' => 'System used for the spatial reference as input by the recorder.',
+      'caption' => 'Input spatial ref. system',
+      'description' => 'System used for the map reference as input by the recorder.',
     ],
     'location.coordinate_uncertainty_in_meters' => [
       'caption' => 'Coordinate uncertainty in metres',
@@ -1191,7 +1203,7 @@ JS;
   public static function leafletMap(array $options) {
     self::checkOptions('leafletMap', $options,
       ['layerConfig'],
-      ['baseLayerConfig', 'layerConfig', 'selectedFeatureStyle']
+      ['baseLayerConfig', 'layerConfig', 'selectedFeatureStyle', 'tools']
     );
     $options = array_merge([
       'initialLat' => hostsite_get_config_value('iform', 'map_centroid_lat', 54.093409),
@@ -1217,6 +1229,15 @@ JS;
     if (!empty($_GET['initialZoom'])) {
       $options['initialZoom'] = $_GET['initialZoom'];
     }
+    helper_base::addLanguageStringsToJs('leafletTools', [
+      'autoLayerTitle' => 'Auto',
+      'dataLayerOpacity' => 'Data layer opacity',
+      'gridSquareSize' => 'Displayed grid square size',
+      'gridSquareSizeHelp' => 'This mode limits how far the map can be zoomed out - use the 10 km or Auto display options to zoom out further.',
+      'impreciseMapRefHandling' => 'When using “Auto” mode, the map switches to show records in the full available precision when zoomed in.  When viewing records at full precision',
+      'impreciseMapRefHandlingLimitTo1kmOrBetter' => 'Hide imprecise records that are larger than 1 km square precision',
+      'impreciseMapRefHandlingNotLimited' => 'Show all records irrespective of precision'
+    ]);
     $dataOptions = helper_base::getOptionsForJs($options, [
       'baseLayerConfig',
       'boundaryLocationId',
@@ -1229,6 +1250,7 @@ JS;
       'minSqSizeKms',
       'selectedFeatureStyle',
       'showSelectedRow',
+      'tools',
     ], TRUE);
     // Extra setup required after map loads.
     helper_base::$late_javascript .= <<<JS
@@ -1480,7 +1502,8 @@ JS;
   /**
    * Output a selector for record status.
    *
-   * Mirrors the 'quality - records to include' drop-down in standardParams control.
+   * Mirrors the 'quality - records to include' drop-down in standardParams
+   * control.
    *
    * @return string
    *   Select HTML.
@@ -2038,7 +2061,22 @@ HTML;
       'useLocalFormPaths' => FALSE,
       'verificationTemplates' => FALSE,
     ], $options);
+    if (!empty($options['allowForceLinkedLocationsUsingLocTypeId'])) {
+      $locTypeTerm = $options['allowForceLinkedLocationsUsingLocType'] = helper_base::get_population_data([
+        'table' => 'termlists_term',
+        'extraParams' => $options['readAuth'] + [
+          'view' => 'cache',
+          'id' => $options['allowForceLinkedLocationsUsingLocTypeId'],
+        ],
+      ]);
+      if (count($locTypeTerm) !== 1) {
+        throw new Exception('The location type ID specified in allowForceLinkedLocationsUsingLocTypeId does not exist.');
+      }
+      $options['allowForceLinkedLocationsUsingLocType'] = $locTypeTerm[0]['term'];
+    }
     $dataOptions = helper_base::getOptionsForJs($options, [
+      'allowForceLinkedLocationsUsingLocTypeId',
+      'allowForceLinkedLocationsUsingLocType',
       'editPath',
       'id',
       'keyboardNavigation',
@@ -2089,12 +2127,15 @@ HTML;
       'emailPlaceholder' => lang::get('Enter the email address to send the record to'),
       'emailSubject' => lang::get('Email subject'),
       'emailTabTitle' => lang::get('Email record details'),
+      'forceLinkedLocation' => lang::get('Force this record to be linked to a selected location boundary.'),
+      'forceLinkedLocationTitle' => lang::get('Link record to boundary'),
       'help' => lang::get('Help'),
       'notAccepted' => lang::get('Not accepted'),
       'notAcceptedIncorrect' => lang::get('Not accepted :: incorrect'),
       'notAcceptedUnableToVerify' => lang::get('Not accepted :: unable to verify'),
       'plausible' => lang::get('Plausible'),
       'raiseQuery' => lang::get('Raise a query with the recorder'),
+      'saveLocationLink' => lang::get('Save link to location'),
       'saveStatus' => lang::get('Save status'),
       'saveTemplate' => lang::get('Save template'),
       'selected' => lang::get('selected'),
@@ -2161,6 +2202,10 @@ HTML;
       'emailSent' => 'The email was sent successfully.',
       'emailTabTitle' => 'Email record details',
       'enterEmailAddress' => 'Enter the email address to send the record to',
+      'forceLinkedLocationError' => 'An error occurred when trying to link the record to the selected location',
+      'forceLinkedLocationInfo' => 'This record is currently linked to: {{ location name }}',
+      'forceLinkedLocationInfoMultiple' => 'You are altering the location link for {{ count }} records.',
+      'forceLinkedLocationInfoNoExisting' => 'There is no existing linked location for this record.',
       'nothingSelected' => 'There are no selected records. Either select some rows using the checkboxes in the leftmost column or set the "Apply decision to" mode to "all".',
       'overwrite' => 'Overwrite',
       'pleaseSupplyATemplateNameAndText' => 'Please supply a name and comment text for your template then click the Save button again.',
@@ -2182,6 +2227,7 @@ HTML;
       'saveTemplateError' => 'Save template error',
       'saveTemplateErrorMsg' => 'An error occurred when saving your template to the database. Please try later.',
       'templateNameTextRequired' => 'Template details required',
+      'unknown' => 'Unknown',
       'updatingMultipleInParentSampleWarning' => lang::get('This verification decision will be applied to a total of {1} records of the same taxon within the parent sample (e.g. within the transect or timed count)!'),
       'uploadError' => 'An error occurred whilst uploading your spreadsheet.',
       'C3' => 'marked as plausible',
@@ -2262,6 +2308,19 @@ HTML;
       'class' => 'comment-textarea',
       'default' => '',
     ]);
+    $forceLinkedLocationInput = data_entry_helper::autocomplete([
+      'label' => lang::get('Force record to link to location'),
+      'fieldname' => 'force-linked-location',
+      'table' => 'location',
+      'extraParams' => $options['readAuth'] + [
+        'location_type_id' => $options['allowForceLinkedLocationsUsingLocTypeId'] ?? 0,
+      ],
+      'captionField' => 'name',
+      'valueField' => 'id',
+      'attributes' => [
+        'placeholder' => lang::get('Type to search'),
+      ]
+    ]);
     $uploadButton = empty($options['includeUploadButton']) ? '' : <<<HTML
       <button class="upload-decisions $btnClass" title="$lang[uploadVerificationDecisions]"><span class="fas fa-file-upload"></span>$lang[upload]</button>
 HTML;
@@ -2298,6 +2357,9 @@ HTML;
       $loadQueryTemplateDropdown = '';
       $commentTools = '';
     }
+    $forceLinkedLocationButton = empty($options['allowForceLinkedLocationsUsingLocTypeId']) ? '' : <<<HTML
+      <button class="force-linked-location $btnClassDefault" title="$lang[forceLinkedLocation]"><span class="fas fa-map-marked-alt"></span></button>
+    HTML;
     $r = <<<HTML
 <div id="$options[id]" class="idc-control idc-verificationButtons" data-idc-class="idcVerificationButtons" style="display: none;" data-idc-config="$dataOptions">
   <div id="$options[id]-buttons" class="verification-buttons-cntr">
@@ -2317,6 +2379,7 @@ HTML;
         <span class="sep"></span>
         <button class="redet $btnClassDefault" title="Redetermine this record"><span class="fas fa-tag"></span></button>
         <button class="query $btnClassDefault" data-query="Q" title="$lang[raiseQuery]"><span class="fas fa-question-circle query-Q"></span></button>
+        $forceLinkedLocationButton
         <div class="multi-only apply-to">
           <span>$lang[applyTo]:</span>
           <button class="multi-mode-selected active $btnClassDefault">$lang[selected]</button>
@@ -2420,6 +2483,23 @@ HTML;
         <button type="button" class="$btnClassDefault cancel">$lang[cancel]</button>
       </form>
     </fieldset>
+  </div>
+</div>
+
+<div id="force-linked-loc-panel-wrap" style="display: none">
+  <div id="force-linked-location-form" class="verification-popup">
+    <form>
+      <fieldset>
+        <legend>
+          <span class="fas fa-map-marked-alt"></span>
+          $lang[forceLinkedLocationTitle]
+        </legend>
+        <p class="alert alert-info" id="force-linked-location-info"></p>
+        $forceLinkedLocationInput
+        <button type="submit" class="$btnClass" disabled="disabled">$lang[saveLocationLink]</button>
+        <button type="button" class="$btnClassDefault cancel">$lang[cancel]</button>
+      </fieldset>
+    </form>
   </div>
 </div>
 

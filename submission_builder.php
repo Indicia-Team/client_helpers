@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Indicia, the OPAL Online Recording Toolkit.
  *
@@ -13,14 +14,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/indicia-team/client_helpers
  */
 
-/**
- * Link in other required php files.
- */
+use IForm\ValidationException;
+
 require_once 'lang.php';
 require_once 'data_entry_helper.php';
 
@@ -425,7 +424,12 @@ class submission_builder {
         $mediaModelName = $modelName;
     }
     foreach ($_FILES as $fieldname => &$file) {
-      if ($file['name'] && is_string($file['name'])) {
+      if (file_exists($file['tmp_name']) && !empty($file['name']) && is_string($file['name'])) {
+        if (!helper_base::checkUploadFileType($file['full_path']) ||
+            !helper_base::checkUploadMimeType($file['tmp_name'])) {
+          // Attempt to upload an invalid file type.
+          throw new ValidationException('The selected file type is not allowed.', $fieldname);
+        }
         // Get the original file's extension.
         $parts = explode(".", $file['name']);
         $fext = array_pop($parts);

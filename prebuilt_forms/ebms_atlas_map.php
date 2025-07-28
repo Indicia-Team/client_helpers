@@ -625,7 +625,6 @@ HTML;
       $species_details = report_helper::get_report_data([
         'readAuth' => $auth['read'],
         'dataSource' => 'projects/ebms/ebms_taxon_names',
-        'useCache' => FALSE,
         'extraParams' => $extraParams,
       ]);
 

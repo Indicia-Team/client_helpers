@@ -41,16 +41,6 @@ class helper_config {
   public static $base_url = '';
 
   /**
-   * Path to proxy script for calls to the warehouse. Optional.
-   *
-   * Allows the warehouse to sit behind a firewall only accessible from the
-   * server.
-   *
-   * @var string
-   */
-  public static $warehouse_proxy = '';
-
-  /**
    * Base URL of the GeoServer we are linked to if GeoServer is used. Optional.
    *
    * @var string

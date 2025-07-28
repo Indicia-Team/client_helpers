@@ -10,6 +10,15 @@
         required: "Select either a species or a list of species to trigger the alert for in the control below."
       }
     });
+    // Enforce selection of at least one alert event type.
+    $('#species_alert\\:alert_on_verify').rules('add', {
+      required: function() {
+        return !($('#species_alert\\:alert_on_verify').is(':checked') || $('#species_alert\\:alert_on_entry').is(':checked'));
+      },
+      messages: {
+        required: 'You must select at least one of the options to alert on initial entry or verification.'
+      }
+    });
   });
 })(jQuery);
 

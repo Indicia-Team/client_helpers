@@ -1047,10 +1047,10 @@ HTML;
         'fieldname' => 'coordinate_precision',
         'lookupValues' => [
           '' => lang::get('Not filtered'),
-          '1000' => '1km',
-          '2000' => '2km',
-          '10000' => '10km',
-          '100000' => '100km',
+          '1000' => '1 km',
+          '2000' => '2 km',
+          '10000' => '10 km',
+          '100000' => '100 km',
         ],
       ]);
       $r .= str_replace(
@@ -1781,7 +1781,7 @@ HTML;
     $r .= "<div id=\"filter-details\"$style>";
     if ($options['initialState'] === 'closed') {
       // Add close button if panes can be opened/closed.
-      $r .= "<i class=\"fas fa-window-close\" alt=\"$lang[closeFilterBuilder]\" title=\"$lang[closeFilterBuilder]\" class=\"button\" id=\"filter-done\" ></i>";
+      $r .= "<i class=\"far fa-caret-square-up\" alt=\"$lang[closeFilterBuilder]\" title=\"$lang[closeFilterBuilder]\" class=\"button\" id=\"filter-done\" ></i>";
     }
   }
   else {

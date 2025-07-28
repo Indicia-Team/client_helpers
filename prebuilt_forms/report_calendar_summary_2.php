@@ -1187,7 +1187,7 @@ class iform_report_calendar_summary_2 implements PrebuiltFormInterface {
             $fetchList = array_diff($regionLocationList, $fetchList);
             if ($parts[0] === 'region' && count($fetchList) > 0 && self::data_set_access($args, $isSuperManager, $isSchemeManager, $isBranchManager, 'other', 'branch')) {
               $locationListArgs['extraParams']['idlist'] = implode(',', $fetchList);
-              if (!empty($args['sensitivityLocAttrId'])) {
+              if (!$isSuperManager && !empty($args['sensitivityLocAttrId'])) {
                 $locationListArgs['extraParams']['exclude_sensitive'] = 1;
               }
               $otherRegionLocations = report_helper::get_report_data($locationListArgs); // this is sorted by name
@@ -1283,7 +1283,7 @@ class iform_report_calendar_summary_2 implements PrebuiltFormInterface {
           if (count($fetchList) > 0 &&
               self::data_set_access($args, $isSuperManager, $isSchemeManager, $isBranchManager, 'other', $level)) {
             $locationListArgs['extraParams']['idlist'] = implode(',', $fetchList);
-            if (!empty($args['sensitivityLocAttrId'])) {
+            if (!$isSuperManager && !empty($args['sensitivityLocAttrId'])) {
               $locationListArgs['extraParams']['exclude_sensitive'] = 1;
             }
             $otherAreaLocations = report_helper::get_report_data($locationListArgs); // this is sorted by name
@@ -1308,7 +1308,7 @@ class iform_report_calendar_summary_2 implements PrebuiltFormInterface {
           "index" => count($optionList)
         ];
         $locationListArgs['extraParams']['location_type_id'] = self::$siteUrlParams[self::$locationTypeKey]['value'];
-        if (!empty($args['sensitivityLocAttrId'])) {
+        if (!$isSuperManager && !empty($args['sensitivityLocAttrId'])) {
           $locationListArgs['extraParams']['exclude_sensitive'] = 1;
         }
         unset($locationListArgs['extraParams']['idlist']);

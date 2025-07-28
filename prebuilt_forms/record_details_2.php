@@ -202,7 +202,7 @@ Record ID',
           'caption' => 'Map geometry precision',
           'description' => 'If you want to output a lower precision map geometry than was actually recorded, select the precision here',
           'type' => 'select',
-          'options' => ['1' => '1km', '2' => '2km', '10' => '10km'],
+          'options' => ['1' => '1 km', '2' => '2 km', '10' => '10 km'],
           'required' => FALSE,
           'group' => 'Other Map Settings',
         ],
@@ -348,10 +348,10 @@ Record ID',
     if (!empty(self::$record['sensitivity_precision'] && !$args['allow_sensitive_full_precision'])) {
       unset($availableFields['recorder']);
       unset($availableFields['inputter']);
-      unset($availableFields['entered_sref']);
       unset($availableFields['occurrence_comment']);
       unset($availableFields['location_name']);
       unset($availableFields['sample_comment']);
+      self::$record['entered_sref'] .= ' (' . lang::get('blurred') . ')';
     }
 
     $flags = [];

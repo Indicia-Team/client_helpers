@@ -9,12 +9,12 @@ $indicia_templates['controlWrapErrorClass'] = 'has-error';
 $indicia_templates['controlAddonsWrap'] =
   '<div class="input-group">{control}<div class="input-group-addon ctrl-addons">{addons}</div></div>';
 $indicia_templates['two-col-50'] =
-  '<div class="row"{attrs}><div class="col-md-6">{col-1}</div><div class="col-md-6">{col-2}</div></div>';
+  '<div class="row"{attrs}><div class="col">{col-1}</div><div class="col">{col-2}</div></div>';
 // For JavaScript.
 $indicia_templates['two-col-50-js'] =
-  '<div class="row"><div class="col-md-6 col-1"></div><div class="col-md-6 col-2"></div></div>';
+  '<div class="row"><div class="col col-1"></div><div class="col col-2"></div></div>';
 
-// Remove cols from textarea.
+// Remove cols from textarea
 $indicia_templates['textarea'] =
   '<textarea id="{id}" name="{fieldname}"{class} {disabled} rows="{rows}" {title}>{default}</textarea>'."\n";
 
@@ -25,11 +25,11 @@ $indicia_templates['buttonWarningClass'] = 'indicia-button btn btn-danger';
 $indicia_templates['anchorButtonClass'] = 'indicia-button btn btn-default';
 
 // Floats.
-$indicia_templates['floatLeftClass'] = 'pull-left';
-$indicia_templates['floatRightClass'] = 'pull-right';
+$indicia_templates['floatLeftClass'] = 'float-left';
+$indicia_templates['floatRightClass'] = 'float-right';
 
-$indicia_templates['messageBox'] = '<div class="alert alert-info">{message}</div>';
-$indicia_templates['warningBox'] = '<div class="alert alert-warning"><span class="fas fa-exclamation-triangle"></span>{message}</div>';
+$indicia_templates['messageBox'] = '<div class="alert alert-info" role="alert">{message}</div>';
+$indicia_templates['warningBox'] = '<div class="alert alert-warning" role="alert"><span class="fas fa-exclamation-triangle"></span>{message}</div>';
 
 $indicia_templates['speciesDetailsThumbnail'] = <<<HTML
 <div class="thumbnail">

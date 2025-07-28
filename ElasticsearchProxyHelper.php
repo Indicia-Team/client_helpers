@@ -128,6 +128,9 @@ class ElasticsearchProxyHelper {
       case 'redetids':
         return self::proxyRedetIds();
 
+      case 'saveLinkedLocation':
+        return self::proxySaveLinkedLocation($nid);
+
       case 'bulkmoveall':
         return self::proxyBulkMoveAll($nid);
 
@@ -352,6 +355,7 @@ class ElasticsearchProxyHelper {
    *   JSON string data returned by Elasticsearch.
    */
   private static function proxyRawsearch() {
+    iform_load_helpers(['helper_base']);
     $url = self::getEsUrl() . '/_search';
     $query = array_merge($_POST);
     $query['size'] = 0;
@@ -650,6 +654,32 @@ class ElasticsearchProxyHelper {
     return [
       'updated' => self::processWholeEsFilter($nid, [], 0),
     ];
+  }
+
+  /**
+   * Proxy method allowing verifiers to link a record to a specified boundary.
+   */
+  private static function proxySaveLinkedLocation($nid) {
+    iform_load_helpers(['helper_base']);
+    if ($_POST['mode'] === 'table') {
+      $ids = self::getOccurrenceIdsFromFilter($nid, $_POST['idsFromElasticFilter']);
+    }
+    else {
+      $ids = $_POST['todoListInfo']['ids'];
+    }
+    $conn = iform_get_connection_details($nid);
+    $data = [
+      'website_id' => $conn['website_id'],
+      'user_id' => hostsite_get_user_field('indicia_user_id'),
+      'occurrence_ids' => implode(',', $ids),
+      'location_id' => $_POST['location_id'],
+      'location_type_id' => $_POST['location_type_id'],
+    ];
+    $auth = helper_base::get_read_write_auth($conn['website_id'], $conn['password']);
+    $request = helper_base::$base_url . "index.php/services/data_utils/force_linked_location";
+    $postargs = helper_base::array_to_query_string(array_merge($data, $auth['write_tokens']), TRUE);
+    $response = helper_base::http_post($request, $postargs, FALSE);
+    return json_decode($response['output'], TRUE);
   }
 
   /**
@@ -1022,6 +1052,9 @@ class ElasticsearchProxyHelper {
       'match_phrase',
       'match_phrase_prefix',
     ];
+    $rangeQueryTypes = [
+      'range',
+    ];
     $fieldQueryTypes = [
       'exists',
     ];
@@ -1078,7 +1111,7 @@ class ElasticsearchProxyHelper {
       }
       elseif (in_array($qryConfig['query_type'], $fieldValueQueryTypes)) {
         // One of the standard ES field based query types (e.g. term or match).
-        // Special handling needed for metadata and release_status filters.
+        // Special handling needed for confidential and release_status filters.
         if ($qryConfig['field'] == 'metadata.confidential') {
           self::$confidentialFilterApplied = TRUE;
           if ($qryConfig['value'] == 'all') {
@@ -1094,6 +1127,17 @@ class ElasticsearchProxyHelper {
           self::$releaseStatusFilterApplied = TRUE;
         }
         $queryDef = [$qryConfig['query_type'] => [$qryConfig['field'] => $qryConfig['value']]];
+      }
+      elseif (in_array($qryConfig['query_type'], $rangeQueryTypes)) {
+        $range = [
+          'gte' => $qryConfig['value'][0],
+          'lte' => $qryConfig['value'][1],
+        ];
+        $queryDef = [
+          $qryConfig['query_type'] => [
+            $qryConfig['field'] => $range
+          ],
+        ];
       }
       elseif (in_array($qryConfig['query_type'], $fieldQueryTypes)) {
         // A query type that just needs a field name.
@@ -1814,7 +1858,7 @@ class ElasticsearchProxyHelper {
             if (preg_match('/^(?P<d>\d{2})\/(?P<m>\d{2})\/(?P<Y>\d{4})$/', $value, $matches)) {
               $value = "$matches[Y]-$matches[m]-$matches[d]";
             }
-            elseif ($type === 'age') {
+            elseif ($fieldSuffix === 'age') {
               $value = 'now-' . str_replace(
                 ['minute', 'hour', 'day', 'week', 'month', 'year', 's', ' '],
                 ['m', 'H', 'd', 'w', 'M', 'y', '', ''],

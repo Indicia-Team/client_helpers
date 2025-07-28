@@ -237,8 +237,8 @@ class iform_sectioned_transects_edit_transect implements PrebuiltFormInterface {
           'type' => 'select',
           'lookupValues' => [
             'parent' => 'Same as parent transect',
-            'sectionCentroid100' => '100m grid square covering the centroid of the sect,ion',
-            'sectionStart100' => '100m grid square covering the start of the section'
+            'sectionCentroid100' => '100 m grid square covering the centroid of the section',
+            'sectionStart100' => '100 m grid square covering the start of the section'
           ],
           'default' => 'parent',
           'group' => 'Transects Editor Settings',
@@ -385,22 +385,22 @@ class iform_sectioned_transects_edit_transect implements PrebuiltFormInterface {
     $sectionIds = [];
     if ($settings['locationId']) {
       data_entry_helper::load_existing_record($auth['read'], 'location', $settings['locationId']);
-      $settings['walks'] = data_entry_helper::get_population_data([
+      $settings['hasAnyWalks'] = count(data_entry_helper::get_population_data([
         'table' => 'sample',
-        'extraParams' => $auth['read'] + ['view' => 'detail', 'location_id' => $settings['locationId'], 'deleted' => 'f'],
+        'extraParams' => $auth['read'] + ['view' => 'detail', 'location_id' => $settings['locationId'], 'limit' => 1, 'deleted' => 'f'],
         'nocache' => TRUE
-      ]);
+      ])) > 0;
       // Work out permissions for this user: note that canAllocBranch setting effectively shows if a manager.
       if(!$settings['canAllocBranch']) {
         // Check whether I am a normal user and it is allocated to me, and also if I am a branch manager and it is allocated to me.
         $settings['canEditBody'] = FALSE;
         $settings['canEditSections'] = FALSE;
-        if(!$args['allow_user_assignment'] && count($settings['walks']) == 0) {
+        if(!$args['allow_user_assignment'] && !$settings['hasAnyWalks']) {
           // when no sites assignments for this client, just allow editing for everyone if no samples recorded.
           $settings['canEditBody'] = TRUE;
           $settings['canEditSections'] = TRUE;
         } else if($args['allow_user_assignment'] &&
-            count($settings['walks']) == 0 &&
+            !$settings['hasAnyWalks'] &&
             isset($settings['cmsUserAttr']['default']) &&
             !empty($settings['cmsUserAttr']['default'])) {
           foreach($settings['cmsUserAttr']['default'] as $value) { // multi value
@@ -464,7 +464,7 @@ class iform_sectioned_transects_edit_transect implements PrebuiltFormInterface {
           data_entry_helper::$javascript .= "$('#".str_replace(':','\\\\:',$attr['id'])."').attr('min',1).attr('max',".$args['maxSectionCount'].");\n";
         }
       }
-      $settings['walks'] = [];
+      $settings['hasAnyWalks'] = FALSE;
     }
     if ($settings['numSectionsAttr'] === '') {
       for ($i=1; $i<=$settings['maxSectionCount']; $i++) {
@@ -579,7 +579,7 @@ class iform_sectioned_transects_edit_transect implements PrebuiltFormInterface {
     if (!$settings['canEditBody']) {
       $r .= '<p>' . lang::get('This site cannot be edited because there are walks recorded on it. Please contact the site administrator if you think there are details which need changing.') . '</p>';
     }
-    elseif (count($settings['walks']) > 0) { // can edit it
+    elseif ($settings['hasAnyWalks']) { // can edit it
       $r .= '<p>' . lang::get('This site has walks recorded on it. Please do not change the site details without considering the impact on the existing data.') . '</p>';
     }
     $list = explode(',', str_replace(' ', '', $args['spatial_systems']));
@@ -675,17 +675,12 @@ class iform_sectioned_transects_edit_transect implements PrebuiltFormInterface {
     // This must go after the map panel, so it has created its toolbar.
     data_entry_helper::$onload_javascript .= "$('#current-section').change(selectSection);\n";
     if ($settings['canEditBody'] && $settings['locationId']) {
-      $walkIDs = [];
-      foreach ($settings['walks'] as $walk) {
-        $walkIDs[] = $walk['id'];
-      }
       $sectionIDs = [];
       foreach($settings['sections'] as $code => $section)
         $sectionIDs[] = $section['id'];
       data_entry_helper::$javascript .= "
 deleteSurvey = function(){
-  if(confirm(\"" . (count($settings['walks']) > 0 ? count($settings['walks']) . ' ' . lang::get('walks will also be deleted when you delete this location.').' ' : '').lang::get('Are you sure you wish to delete this location?')."\")){
-    deleteWalks([" . implode(',', $walkIDs) . "]);
+  if(confirm(\"" . lang::get('Are you sure you wish to delete this location?') . "\")){
     deleteSections([" . implode(',', $sectionIDs) . "]);
     $('#delete-transect').html('Deleting Transect');
     deleteLocation(" . $settings['locationId'] . ");

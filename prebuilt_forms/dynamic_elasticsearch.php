@@ -480,7 +480,7 @@ TXT;
    * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-leafletmap
    */
   protected static function get_control_map($auth, $args, $tabalias, $options) {
-    return ElasticsearchReportHelper::leafletMap($options);
+    return self::get_control_leafletMap($auth, $args, $tabalias, $options);
   }
 
   /**
@@ -492,6 +492,15 @@ TXT;
    * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-leafletmap
    */
   protected static function get_control_leafletMap($auth, $args, $tabalias, $options) {
+    $options = array_merge([
+      'tools' => [
+        'baseLayers',
+        'overlayLayers',
+        'dataLayerOpacity',
+        'gridSquareSize',
+        'impreciseMapRefHandling',
+      ],
+    ], $options);
     return ElasticsearchReportHelper::leafletMap($options);
   }
 

@@ -175,6 +175,42 @@ class import_helper_2 extends helper_base {
   }
 
   /**
+   * Checks the file type of the uploaded file.
+   *
+   * @param array $file
+   *   The uploaded file array as provided by PHP.
+   *
+   * @throws RuntimeException
+   *   If the file type is not allowed.
+   */
+  private static function checkImportFileType(array $file) {
+    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+    $mimeType = finfo_file($finfo, $file['tmp_name']);
+    finfo_close($finfo);
+    // Only allow spreadsheet or CSV files.
+    $allowedMimeTypes = [
+      'text/csv',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/zip',
+      'application/x-zip-compressed',
+      'multipart/x-zip',
+      // Some browsers use this for .xlsx/.xls.
+      'application/octet-stream',
+      // Sometimes CSVs are uploaded as text/plain.
+      'text/plain',
+    ];
+    if (!in_array($mimeType, $allowedMimeTypes)) {
+      throw new RuntimeException('Invalid file type. Only CSV, Excel, or Zip files are allowed.');
+    }
+    $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+    $allowedExtensions = ['csv', 'xls', 'xlsx', 'zip'];
+    if (!in_array($ext, $allowedExtensions)) {
+      throw new RuntimeException('Invalid file type. Only CSV, Excel, or Zip files are allowed.');
+    }
+  }
+
+  /**
    * Upload interim file AJAX handler.
    *
    * Provides functionality that can receive an selected file and saves it to
@@ -203,10 +239,10 @@ class import_helper_2 extends helper_base {
       default:
         throw new RuntimeException('Unknown errors.');
     }
+    self::checkImportFileType($_FILES['file']);
     $targetDir = self::getInterimImageFolder('fullpath');
     $fileName = sprintf('%s_%s', uniqid(), $_FILES['file']['name']);
     $filePath = $targetDir . $fileName;
-
     if (!move_uploaded_file($_FILES['file']['tmp_name'], $filePath)) {
       throw new RuntimeException('Failed to move uploaded file.');
     }

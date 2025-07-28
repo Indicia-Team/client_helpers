@@ -93,12 +93,12 @@ $indicia_templates = [
   'image_upload' => "<input type=\"file\" id=\"{id}\" name=\"{fieldname}\" accept=\"png|jpg|gif|jpeg|mp3|wav\" {title}/>\n" .
       "<input type=\"hidden\" id=\"{pathFieldName}\" name=\"{pathFieldName}\" value=\"{pathFieldValue}\"/>\n",
   'text_input' => '<input {attribute_list} id="{id}" name="{fieldname}"{class} {disabled} {readonly} value="{default|escape}" {title} {maxlength} />'."\n",
-  'hidden_text' => '<input type="hidden" id="{id}" name="{fieldname}" {disabled} value="{default}" />',
-  'password_input' => '<input type="password" id="{id}" name="{fieldname}"{class} {disabled} value="{default}" {title} />'."\n",
-  'textarea' => '<textarea id="{id}" name="{fieldname}"{class} {disabled} cols="{cols}" rows="{rows}" {title}>{default}</textarea>'."\n",
+  'hidden_text' => '<input type="hidden" id="{id}" name="{fieldname}" {disabled} value="{default|escape}" />',
+  'password_input' => '<input type="password" id="{id}" name="{fieldname}"{class} {disabled} value="{default|escape}" {title} />'."\n",
+  'textarea' => '<textarea id="{id}" name="{fieldname}"{class} {disabled} cols="{cols}" rows="{rows}" {title}>{default|textarea}</textarea>'."\n",
   'checkbox' => '<input type="hidden" name="{fieldname}" value="0"/><input type="checkbox" id="{id}" name="{fieldname}" value="1"{class}{checked}{disabled} {title} />'."\n",
   'training' => '<input type="hidden" name="{fieldname}" value="{hiddenValue}"/><input type="checkbox" id="{id}" name="{fieldname}" value="1"{class}{checked}{disabled} {title} />'."\n",
-  'date_picker' => '<input type="text" {attribute_list} {class} id="{id}" name="{fieldname}" value="{default}" style="display: none" {title}/>
+  'date_picker' => '<input type="text" {attribute_list} {class} id="{id}" name="{fieldname}" value="{default|escape}" style="display: none" {title}/>
       <input type="date" {attribute_list_date} class="{datePickerClass}" id="{id}:date">' . "\n",
   'date_picker_mode_toggle' => '<span>{vagueLabel}:</span> <label class="switch">
         <input type="checkbox" class="date-mode-toggle" id="{id}:toggle">
@@ -106,7 +106,7 @@ $indicia_templates = [
       </label>' . "\n",
   'select' => '<select {attribute_list} id="{id}" name="{fieldname}"{class} {disabled} {title}>{items}</select>',
   'select_item' => '<option value="{value}"{selected}{attribute_list}>{caption}</option>',
-  'select_species' => '<option value="{value}" {selected} >{caption} - {common}</option>',
+  'select_species' => '<option value="{value|escape}" {selected} >{caption} - {common}</option>',
   'listbox' => '<select id="{id}" name="{fieldname}"{class} {disabled} size="{size}" multiple="{multiple}" {title}>{items}</select>',
   'listbox_item' => '<option value="{value}"{selected}{attribute_list}>{caption}</option>',
   'list_in_template' => '<ul{class} {title}>{items}</ul>',
@@ -123,10 +123,10 @@ $indicia_templates = [
       '<span class="nobreak vernacular">{default_common_name}</span></div>',
   'single_species_taxon_label' => '{taxon}',
   'treeview_node' => '<span>{caption}</span>',
-  'tree_browser' => '<div{outerClass} id="{divId}"></div><input type="hidden" name="{fieldname}" id="{id}" value="{default}"{class}/>',
+  'tree_browser' => '<div{outerClass} id="{divId}"></div><input type="hidden" name="{fieldname}" id="{id}" value="{default|escape}"{class}/>',
   'tree_browser_node' => '<span>{caption}</span>',
-  'autocomplete' => '<input type="hidden" class="hidden" id="{id}" name="{fieldname}" value="{default}" />' .
-      '<input id="{inputId}" name="{inputId}" type="text" value="{defaultCaption}" {class} {disabled} {title} {attribute_list}/>' . "\n",
+  'autocomplete' => '<input type="hidden" class="hidden" id="{id}" name="{fieldname}" value="{default|escape}" />' .
+      '<input id="{inputId}" name="{inputId}" type="text" value="{defaultCaption|escape}" {class} {disabled} {title} {attribute_list} data-hiddenvalueinput="{id}" />' . "\n",
   'autocomplete_javascript' => "
 $('input#{escaped_input_id}').change(function() {
   if ($('input#{escaped_id}').data('set-for') !== $('input#{escaped_input_id}').val()) {
@@ -200,16 +200,16 @@ $('input#{escaped_input_id}').result(function(event, data) {
     '</div></div>'."\n",
   'sub_list_item' => '<li class="ui-widget-content ui-corner-all"><span class="ind-delete-icon">&nbsp;</span>{caption}'.
     '<input type="hidden" name="{fieldname}" value="{value}" /></li>',
-  'postcode_textbox' => '<input type="text" name="{fieldname}" id="{id}"{class} value="{default}" '.
+  'postcode_textbox' => '<input type="text" name="{fieldname}" id="{id}"{class} value="{default|escape}" '.
         'onblur="javascript:indiciaFns.decodePostcode(\'{linkedAddressBoxId}\');" />'."\n",
-  'sref_textbox' => '<input type="text" id="{id}" name="{fieldname}" {class} {disabled} value="{default}" />' .
-        '<input type="hidden" id="{geomid}" name="{geomFieldname}" value="{defaultGeom}" />'."\n",
+  'sref_textbox' => '<input type="text" id="{id}" name="{fieldname}" {class} {disabled} value="{default|escape}" />' .
+        '<input type="hidden" id="{geomid}" name="{geomFieldname}" value="{defaultGeom|escape}" />'."\n",
   'sref_textbox_latlong' => '<label for="{idLat}">{labelLat}:</label>'.
-        '<input type="text" id="{idLat}" name="{fieldnameLat}" {class} {disabled} value="{defaultLat}" /><br />' .
+        '<input type="text" id="{idLat}" name="{fieldnameLat}" {class} {disabled} value="{defaultLat|escape}" /><br />' .
         '<label for="{idLong}">{labelLong}:</label>'.
-        '<input type="text" id="{idLong}" name="{fieldnameLong}" {class} {disabled} value="{defaultLong}" />' .
-        '<input type="hidden" id="{geomid}" name="geomFieldname" value="{defaultGeom}" />'.
-        '<input type="hidden" id="{id}" name="{fieldname}" value="{default}" />',
+        '<input type="text" id="{idLong}" name="{fieldnameLong}" {class} {disabled} value="{defaultLong|escape}" />' .
+        '<input type="hidden" id="{geomid}" name="geomFieldname" value="{defaultGeom|escape}" />'.
+        '<input type="hidden" id="{id}" name="{fieldname}" value="{default|escape}" />',
   'attribute_cell' => "\n<td class=\"scOccAttrCell ui-widget-content {class}\" headers=\"{headers}\">{content}</td>",
   'taxon_label_cell' => "\n<td class=\"scTaxonCell{editClass}\" headers=\"{tableId}-species-{idx}\" {colspan}>{content}</td>",
   'helpText' => "\n<p class=\"{helpTextClass}\">{helpText}</p>",
@@ -223,6 +223,7 @@ $('input#{escaped_input_id}').result(function(event, data) {
   'report_download_link' => '<div class="report-download-link"><a href="{link}"{class}>{caption}</a></div>',
   'verification_panel' => '<div id="verification-panel">{button}<div class="messages" style="display: none"></div></div>',
   'two-col-50' => '<div class="two columns"{attrs}><div class="column">{col-1}</div><div class="column">{col-2}</div></div>',
+  'two-col-50-js' => '<div class="two columns"><div class="column col-1"></div><div class="column col-2"></div></div>',
   'loading_overlay' => '<div class="loading-spinner" style="display: none"><div>Loading...</div></div>',
   'report-table' => '<table{class}>{content}</table>',
   'report-thead' => '<thead{class}>{content}</thead>',
@@ -260,16 +261,6 @@ class helper_base {
    * @var string
    */
   public static $base_url = '';
-
-  /**
-   * Path to proxy script for calls to the warehouse.
-   *
-   * Allows the warehouse to sit behind a firewall only accessible from the
-   * server.
-   *
-   * @var string
-   */
-  public static $warehouse_proxy = NULL;
 
   /**
    * Base URL of the GeoServer we are linked to if GeoServer is used.
@@ -571,7 +562,7 @@ class helper_base {
   public static $default_validation_rules = [
     'sample:date' => ['required', 'date'],
     'sample:entered_sref' => ['required'],
-    'occurrence:taxa_taxon_list_id' => ['required'],
+    'occurrence:taxa_taxon_list_id' => ['required', 'autocompleteRequired'],
     'location:name' => ['required'],
     'location:centroid_sref' => ['required'],
   ];
@@ -690,16 +681,6 @@ class helper_base {
   protected static $indiciaFnsDone = FALSE;
 
   /**
-   * Returns the URL to access the warehouse by, respecting proxy settings.
-   *
-   * @return string
-   *   URL.
-   */
-  public static function getProxiedBaseUrl() {
-    return empty(self::$warehouse_proxy) ? self::$base_url : self::$warehouse_proxy;
-  }
-
-  /**
    * Returns the folder to store uploaded images in before submission.
    *
    * When an image has been uploaded on a form but not submitted to the
@@ -728,6 +709,110 @@ class helper_base {
       default:
         return $folder;
     }
+  }
+
+  /**
+   * Checks the extension of a file against the allowed upload file types.
+   *
+   * @param string $fileName
+   *   Name of the file to check, including extension.
+   *
+   * @return bool
+   *   True if the file type is allowed, otherwise false.
+   */
+  public static function checkUploadFileType($fileName) {
+    // Check the file type is allowed.
+    $ext = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+    foreach (self::$upload_file_types as $extensions) {
+      if (in_array($ext, $extensions)) {
+        return TRUE;
+      }
+    }
+    return FALSE;
+  }
+
+  /**
+   * Checks the mime type of a file against the allowed upload mime types.
+   *
+   * @param string $filePath
+   *   Path to the file to check.
+   *
+   * @return bool
+   *   True if the mime type is allowed, otherwise false.
+   */
+  public static function checkUploadMimeType($filePath) {
+    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+    $mimeType = finfo_file($finfo, $filePath);
+    finfo_close($finfo);
+    if ($mimeType) {
+      list ($mainType, $subType) = explode('/', $mimeType);
+      if (in_array($subType, self::$upload_mime_types[$mainType])) {
+        return TRUE;
+      }
+    }
+    return FALSE;
+  }
+
+  /**
+   * Validation rule to test if an uploaded file is allowed by file size.
+   *
+   * File sizes are obtained from the $maxUploadSize setting, and defined as:
+   * SB, where S is the size (1, 15, 300, etc) and
+   * B is the byte modifier: (B)ytes, (K)ilobytes, (M)egabytes, (G)igabytes.
+   * Eg: to limit the size to 1MB or less, you would use "1M".
+   *
+   * @param array $file
+   *   Item from the $_FILES array.
+   *
+   * @return bool
+   *   True if the file size is acceptable, otherwise false.
+   */
+  public static function checkUploadSize(array $file) {
+    if ((int) $file['error'] !== UPLOAD_ERR_OK) {
+      return TRUE;
+    }
+
+    $size = self::$upload_max_filesize;
+
+    if (!preg_match('/[0-9]++[BKMG]/', $size)) {
+      return FALSE;
+    }
+
+    $size = self::convertToBytes($size);
+
+    // Test that the file is under or equal to the max size
+    return $file['size'] <= $size;
+  }
+
+  /**
+   * Convert a memory size string (e.g. 1K, 1M) into the number of bytes.
+   *
+   * @param string $size
+   *   Size string to convert. Valid suffixes as G (gigabytes), M (megabytes),
+   *   K (kilobytes) or nothing.
+   *
+   * @return int
+   *   Number of bytes.
+   */
+  protected static function convertToBytes($size) {
+    // Make the size into a power of 1024
+    switch (substr($size, -1)) {
+      case 'G':
+        $size = intval($size) * pow(1024, 3);
+        break;
+
+      case 'M':
+        $size = intval($size) * pow(1024, 2);
+        break;
+
+      case 'K':
+        $size = intval($size) * pow(1024, 1);
+        break;
+
+      default:
+        $size = intval($size);
+    }
+    return $size;
   }
 
   /**
@@ -1244,6 +1329,7 @@ class helper_base {
             'https://cdnjs.cloudflare.com/ajax/libs/wicket/1.3.3/wicket.min.js',
             'https://cdnjs.cloudflare.com/ajax/libs/wicket/1.3.3/wicket-leaflet.min.js',
             self::$js_path . 'leaflet.heat/dist/leaflet-heat.js',
+            self::$js_path . 'indicia.datacomponents/idc.leafletTools.js',
           ],
         ],
         'leaflet_google' => [
@@ -1504,15 +1590,10 @@ class helper_base {
   }
 
   /**
-   * Calculates the folder that submitted images end up in according to the helper_config.
+   * Calculates the folder that submitted images end up in.
    */
   public static function get_uploaded_image_folder() {
-    if (!isset(self::$final_image_folder) || self::$final_image_folder === 'warehouse') {
-      return self::getProxiedBaseUrl() . (isset(self::$indicia_upload_path) ? self::$indicia_upload_path : 'upload/');
-    }
-    else {
-      return self::getRootFolder() . self::client_helper_path() . self::$final_image_folder;
-    }
+    return self::$base_url . (isset(self::$indicia_upload_path) ? self::$indicia_upload_path : 'upload/');
   }
 
   /**
@@ -1795,6 +1876,9 @@ HTML;
    *   The HTML for the form parameter.
    */
   protected static function getParamsFormControl($key, array $info, array $options, &$tools) {
+    if (empty($info['datatype'])) {
+      throw new exception("Parameter for $key missing a datatype attribute.");
+    }
     $r = '';
     $fieldPrefix = (isset($options['fieldNamePrefix']) ? $options['fieldNamePrefix'] . '-' : '');
     $ctrlOptions = [
@@ -2401,8 +2485,6 @@ HTML;
     global $indicia_templates;
     self::$indiciaData['imagesPath'] = self::$images_path;
     self::$indiciaData['warehouseUrl'] = self::$base_url;
-    $proxyUrl = self::getRootFolder() . self::relative_client_helper_path() . 'proxy.php';
-    self::$indiciaData['proxyUrl'] = $proxyUrl;
     $protocol = empty($_SERVER['HTTPS']) || $_SERVER['HTTPS'] === 'off' ? 'http' : 'https';
     self::$indiciaData['protocol'] = $protocol;
     // Add some useful templates.
@@ -2413,6 +2495,7 @@ HTML;
       'buttonHighlightedClass' => $indicia_templates['buttonHighlightedClass'],
       'buttonSmallClass' => 'btn-xs',
       'jQueryValidateErrorClass' => $indicia_templates['error_class'],
+      'twoCol50' => $indicia_templates['two-col-50-js']
     ], self::$indiciaData['templates']);
     self::$indiciaData['formControlClass'] = $indicia_templates['formControlClass'];
     self::$indiciaData['inlineErrorClass'] = $indicia_templates['error_class'];
@@ -2537,7 +2620,7 @@ JS;
       }
 
       if (self::$js_read_tokens) {
-        self::$js_read_tokens['url'] = self::getProxiedBaseUrl();
+        self::$js_read_tokens['url'] = self::$base_url;
         $script .= "indiciaData.read = " . json_encode(self::$js_read_tokens) . ";\n";
       }
       if (!self::$is_ajax) {
@@ -2934,6 +3017,9 @@ if (typeof validator!=='undefined') {
     if (lang::get('validation_required') != 'validation_required') {
       self::$late_javascript .= "$.validator.messages.required = \"" . lang::get('validation_required') . "\";\n";
     }
+    if (lang::get('validation_autocompleteRequired') != 'validation_autocompleteRequired') {
+      self::$late_javascript .= "$.validator.messages.autocompleteRequired = \"" . lang::get('validation_autocompleteRequired') . "\";\n";
+    }
     if (lang::get('validation_max') != 'validation_max') {
       self::$late_javascript .= "$.validator.messages.max = $.validator.format(\"" . lang::get('validation_max') . "\");\n";
     }
@@ -2941,13 +3027,13 @@ if (typeof validator!=='undefined') {
       self::$late_javascript .= "$.validator.messages.min = $.validator.format(\"" . lang::get('validation_min') . "\");\n";
     }
     if (lang::get('validation_number') != 'validation_number') {
-      self::$late_javascript .= "$.validator.messages.number = $.validator.format(\"" . lang::get('validation_number') . "\");\n";
+      self::$late_javascript .= "$.validator.messages.number = \"" . lang::get('validation_number') . "\";\n";
     }
     if (lang::get('validation_digits') != 'validation_digits') {
-      self::$late_javascript .= "$.validator.messages.digits = $.validator.format(\"" . lang::get('validation_digits') . "\");\n";
+      self::$late_javascript .= "$.validator.messages.digits = \"" . lang::get('validation_digits') . "\";\n";
     }
     if (lang::get('validation_integer') != 'validation_integer') {
-      self::$late_javascript .= "$.validator.messages.integer = $.validator.format(\"" . lang::get('validation_integer') . "\");\n";
+      self::$late_javascript .= "$.validator.messages.integer = \"" . lang::get('validation_integer') . "\";\n";
     }
   }
 
@@ -3202,6 +3288,7 @@ if (typeof validator!=='undefined') {
       $rule = trim($rule);
       $mappings = [
         'required' => ['jqRule' => 'required'],
+        'autocompleteRequired' => ['jqRule' => 'autocompleteRequired'],
         'dateISO' => ['jqRule' => 'dateISO'],
         'email' => ['jqRule' => 'email'],
         'url' => ['jqRule' => 'url'],
@@ -3430,22 +3517,34 @@ if (typeof validator!=='undefined') {
    * @param array $cacheOpts
    *   Options array which defines the cache "key", i.e. the unique set of
    *   options being cached.
+   * @param int $expireEarlyIfLoggedIn
+   *   Number of seconds earlier a cached item is treated as expired if the
+   *   user is logged in. This is useful for reducing the load on the server on
+   *   pages that are hit by a high volume of anonymous users where you want
+   *   the data to be more recent for logged in users. I.e. set a large number
+   *   of seconds in the $expireAfter parameter for the hostsite_cache_set
+   *   function, but reduce the time for logged in users by specifying a
+   *   smaller value here.
    *
    * @return mixed
    *   String read from the cache, or false if not read.
    */
-  public static function cacheGet(array $cacheOpts) {
+  public static function cacheGet(array $cacheOpts, int $expireEarlyIfLoggedIn = NULL) {
     $key = self::getCacheKey($cacheOpts);
-    $r = self::getCachedResponse($key, $cacheOpts);
+    $r = self::getCachedResponse($key, $cacheOpts, $expireEarlyIfLoggedIn);
     return $r === FALSE ? $r : $r['output'];
   }
 
   /**
    * Utility function for external writes to the iform cache.
    *
-   * @param array $cacheOpts Options array which defines the cache "key", i.e. the unique set of options being cached.
-   * @param string $toCache String data to cache.
-   * @param integer $cacheTimeout Timeout in seconds, if overriding the default cache timeout.
+   * @param array $cacheOpts
+   *   Options array which defines the cache "key", i.e. the unique set of
+   *   options being cached.
+   * @param string $toCache
+   *   String data to cache.
+   * @param integer $cacheTimeout
+   *   Timeout in seconds, if overriding the default cache timeout.
    */
   public static function cacheSet($cacheOpts, $toCache, $cacheTimeout = 0) {
     if (!$cacheTimeout) {
@@ -3685,22 +3784,25 @@ if (typeof validator!=='undefined') {
    *
    * @param string $key
    *   Cache key to be used.
-   * @param integer $timeout
-   *   Will be false if no caching to take place.
-   * @param array $options
-   *   Options array : contents used to confirm what this data is.
-   * @param boolean $random
-   *   Should a random element be introduced to prevent simultaneous expiry of multiple
-   *   caches? Default true.
+   * @param array $cacheOpts
+   *   Options array which defines the cache "key", i.e. the unique set of
+   *   options being cached.
+   * @param int $expireEarlyIfLoggedIn
+   *   Number of seconds earlier a cached item is treated as expired if the
+   *   user is logged in. This is useful for reducing the load on the server on
+   *   pages that are hit by a high volume of anonymous users where you want
+   *   the data to be more recent for logged in users. I.e. set a large number
+   *   of seconds in the $expireAfter parameter for the hostsite_cache_set
+   *   function, but reduce the time for logged in users by specifying a
+   *   smaller value here.
    *
    * @return bool|array
    *   Equivalent of call to http_post, else FALSE if data not read from the
    *   cache.
    */
-  private static function getCachedResponse($key, $options) {
-
+  private static function getCachedResponse($key, array $cacheOpts, int $expireEarlyIfLoggedIn = NULL) {
     if (self::$delegate_caching_to_hostsite && function_exists('hostsite_cache_get')) {
-      return hostsite_cache_get($key, $options);
+      return hostsite_cache_get($key, $cacheOpts, $expireEarlyIfLoggedIn);
     }
     else {
       $cacheFolder = self::$cache_folder ? self::$cache_folder : self::relative_client_helper_path() . 'cache/';
@@ -3716,13 +3818,13 @@ if (typeof validator!=='undefined') {
         }
         // Make double sure this cache entry was for the same request options.
         $tags = fgets($handle);
-        if ($tags !== http_build_query($options)."\n") {
+        if ($tags !== http_build_query($cacheOpts)."\n") {
           return FALSE;
         }
         // Check not expired.
         $expiry = trim(fgets($handle));
-        if ($expiry < time()) {
-          return FALSE;
+        if (!empty($expireEarlyIfLoggedIn) && hostsite_get_user_field('id') > 0) {
+          $expiry -= $expireEarlyIfLoggedIn;
         }
         if (self::getProbabilisticEarlyExpiration($expiry)) {
           return FALSE;
@@ -3930,9 +4032,6 @@ if (!function_exists('get_called_class')) {
 if (class_exists('helper_config')) {
   if (isset(helper_config::$base_url)) {
     helper_base::$base_url = helper_config::$base_url;
-  }
-  if (isset(helper_config::$warehouse_proxy)) {
-    helper_base::$warehouse_proxy = helper_config::$warehouse_proxy;
   }
   if (isset(helper_config::$geoserver_url)) {
     helper_base::$geoserver_url = helper_config::$geoserver_url;

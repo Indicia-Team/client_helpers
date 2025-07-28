@@ -933,7 +933,6 @@ HTML;
     $r .= "<div id='progress-text'>$actionMessage.</div>
     </div>
     ";
-    $baseUrl = parent::getProxiedBaseUrl();
     self::$onload_javascript .= <<<JS
 /**
  * Upload a single chunk of a file, by doing an AJAX get. If there is more, then on receiving the response upload the
@@ -942,7 +941,7 @@ HTML;
 uploadChunk = function() {
   var limit = 50;
   $.ajax({
-    url: '{$baseUrl}index.php/services/import/upload?offset=' + total + '&limit=' + limit +
+    url: indiciaData.warehouseUrl + 'index.php/services/import/upload?offset=' + total + '&limit=' + limit +
          '&filepos=' + filepos + '&uploaded_csv=$filename' +
          '&model=$options[model]&allow_commit_to_db=$options[allowCommitToDB]',
     dataType: 'jsonp',
@@ -975,6 +974,10 @@ uploadChunk = function() {
         $('#fields_to_retain_form').submit();
       }
     }
+  })
+  .fail(function(r) {
+    alert('Error uploading file. More information is in the warehouse logs.');
+    jQuery('#progress-text').html('Error uploading file. More information is in the warehouse logs.');
   });
 };
 var total = 0, filepos = 0;
