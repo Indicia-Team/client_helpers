@@ -139,6 +139,10 @@ class import_helper_2 extends helper_base {
    *     * import - only importing new files allowed
    *     * import_and_reverse - allow either importing new files or reversal of
    *       previous imports allowed.
+   *     * import_and_reverse_via_query - as import_and_reverse, but the
+   *       control for selecting an import to reverse is not shown and reversal
+   *       is triggered by passing a URL parameter called
+   *       "reverse_import_guid".
    *     * reverse - only reversal of previous imports allowed.
    */
   public static function importer($options) {
@@ -185,7 +189,7 @@ class import_helper_2 extends helper_base {
       case 'fileSelectForm':
         $r = self::fileSelectForm($options);
         // The reverser currently assumes occurrence entity.
-        if ($options['entity'] === 'occurrence' && $options['importReverse'] !== 'import') {
+        if ($options['entity'] === 'occurrence' && in_array($options['importReverse'], ['import_and_reverse', 'reverse'])) {
           $r .= self::importToReverseDropDown($options);
         }
         return $r;

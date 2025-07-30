@@ -265,13 +265,21 @@ class iform_importer_2 implements PrebuiltFormInterface {
       [
         'name' => 'importReverse',
         'caption' => 'Import reversals',
-        'description' => 'Form mode with respect to allowing import reversal. If reversal is allowed, the previous import can either be selected via a control on the form or by passing a URL parameter called "reverse_import_guid".',
+        'description' => <<<TXT
+          Form mode with respect to allowing import reversal. If reversal is allowed, the previous import can either be
+          selected via a control on the form or by passing a URL parameter called "reverse_import_guid". Reversal can
+          also be allowed only via the query parameter, in which case the reversal control is not displayed on the form
+          if this parameter is absent. This allows reversal to be triggerable only be a link in another page which
+          shows a list of the user's previous imports.
+          TXT,
         'group' => 'Import reverser',
         'type' => 'select',
         'options' => [
           'import' => 'Only importing new files allowed',
-          'import_and_reverse' => 'Allow either importing new files or reversal of previous imports allowed',
+          'import_and_reverse' => 'Importing new files and reversal of previous imports allowed',
+          'import_and_reverse_via_query' => 'Importing new files and reversal of previous imports allowed (via reverse_import_guid query parameter)',
           'reverse' => 'Only reversal of previous imports allowed',
+
         ],
         'default' => 'import',
         'required' => TRUE,
