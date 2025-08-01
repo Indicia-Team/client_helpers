@@ -1793,6 +1793,7 @@ HTML;
         'aggregation',
         'fields',
         'filterBoolClauses',
+        'numericFilters',
         'sort',
         'sortAggregation',
       ]
@@ -1829,6 +1830,7 @@ HTML;
       'initialMapBounds',
       'mapGridSquareSize',
       'mode',
+      'numericFilters',
       'proxyCacheTimeout',
       'sortAggregation',
       'shardSize',
