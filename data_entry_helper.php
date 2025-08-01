@@ -2918,7 +2918,7 @@ JS;
       );
     }
     foreach ($options['systems'] as $system => $caption) {
-      $selected = ($options['default'] == $system ? 'selected' : '');
+      $selected = strcasecmp($options['default'], $system) === 0 ? 'selected' : '';
       $opts .= str_replace(
         ['{value}', '{caption}', '{selected}', '{attribute_list}'],
         [$system, $caption, $selected],
