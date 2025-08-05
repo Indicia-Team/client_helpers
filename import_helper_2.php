@@ -1075,9 +1075,7 @@ HTML;
     }
     $updateOrDeleteOptions = self::updateOrDeleteOptions($options);
     $r .= $updateOrDeleteOptions['html'];
-    if ($updateOrDeleteOptions['visibleControls']) {
-      $visibleControlsFound = TRUE;
-    }
+    $visibleControlsFound = $visibleControlsFound || $updateOrDeleteOptions['visibleControls'];
     if (!$visibleControlsFound) {
       // All controls had a fixed value provided in config or the loaded
       // template, so show a message instead of the form.
@@ -1098,7 +1096,9 @@ HTML;
    */
   private static function updateOrDeleteOptions(array $options) {
     $html = '';
+    $visibleControlsAdded = FALSE;
     if (!empty($options['allowUpdates'])) {
+      // Allow Updates can be set in the fixed values given on the Edit tab.
       $ctrlType = isset($options['fixedValues']['config:allowUpdates']) ? 'hidden_text' : 'checkbox';
       $html .= data_entry_helper::$ctrlType([
         'fieldname' => 'config:allowUpdates',
@@ -1106,7 +1106,9 @@ HTML;
         'helpText' => lang::get('Tick this box if your import file contains updates for existing data.'),
         'default' => isset($options['fixedValues']['config:allowUpdates']) ? $options['fixedValues']['config:allowUpdates'] : 0,
       ]);
+      $visibleControlsAdded = $ctrlType !== 'hidden_text';
       if (!empty($options['allowDeletes'])) {
+        // Allow Deletes can be set in the fixed values given on the Edit tab.
         $ctrlType = isset($options['fixedValues']['config:allowDeletes']) ? 'hidden_text' : 'checkbox';
         $html .= data_entry_helper::$ctrlType([
           'fieldname' => 'config:allowDeletes',
@@ -1114,6 +1116,7 @@ HTML;
           'helpText' => lang::get('Tick this box if your import file contains a flag for deleting existing data.'),
           'default' => isset($options['fixedValues']['config:allowDeletes']) ? $options['fixedValues']['config:allowDeletes'] : 0,
         ]);
+        $visibleControlsAdded = $visibleControlsAdded || ($ctrlType !== 'hidden_text');
         if (!isset($options['fixedValues']['config:allowDeletes'])) {
           // If not set by the template, the UI should only enable the deletes
           // control when updates are enabled.
@@ -1123,7 +1126,7 @@ HTML;
     }
     return [
       'html' => $html,
-      'visibleControls' => !isset($options['fixedValues']['config:allowUpdates']) || !isset($options['fixedValues']['config:allowDeletes']),
+      'visibleControls' => $visibleControlsAdded,
     ];
   }
 
@@ -1218,11 +1221,11 @@ HTML;
       self::$indiciaData['import_template_id'] = $config['importTemplateId'];
     }
     $htmlList = [];
-    if ($globalValues['config:allowUpdates']) {
+    if (isset($globalValues['config:allowUpdates']) && $globalValues['config:allowUpdates'] == '1') {
       unset($options['blockedFields'][array_search('id', $options['blockedFields'])]);
       $options['blockedFields'][] = 'sample:id';
       $requiredFields['occurrence:id|occurrence:external_key'] = 'Occurrence ID or external key';
-      if ($globalValues['config:allowDeletes']) {
+      if (isset($globalValues['config:allowDeletes']) && $globalValues['config:allowDeletes'] == '1') {
         unset($options['blockedFields'][array_search('deleted', $options['blockedFields'])]);
         $options['blockedFields'][] = 'sample:deleted';
         $requiredFields['occurrence:deleted'] = 'Occurrence deleted';
@@ -1757,10 +1760,10 @@ HTML;
     if (!empty($config['importTemplateTitle'])) {
       $infoRows[] = "<dt>$lang[importTemplate]</dt><dd>$config[importTemplateTitle]</dd>";
     }
-    if ($config['global-values']['config:allowUpdates']) {
+    if (isset($config['global-values']['config:allowUpdates']) && $config['global-values']['config:allowUpdates'] == '1') {
       $matchFieldExplanation = lang::get('Existing records will be updated if there is a match on {1}.', implode('; ', $existingMatchFields));
       $infoRows[] = "<dt>$lang[existingRecords]</dt><dd class=\"alert alert-warning\">$matchFieldExplanation</dd>";
-      if ($config['global-values']['config:allowDeletes']) {
+      if (isset($config['global-values']['config:allowDeletes']) && $config['global-values']['config:allowDeletes'] == '1') {
         $infoRows[] = "<dt>$lang[recordDeletion]</dt><dd class=\"alert alert-warning\">$lang[deletionExplanation]</dd>";
       }
     }

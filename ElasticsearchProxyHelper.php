@@ -1149,8 +1149,8 @@ class ElasticsearchProxyHelper {
       elseif (in_array($qryConfig['query_type'], $stringQueryTypes)) {
         // One of the ES query string based query types.
         // Sanitise special characters.
-        $reservedCharacters = '+\-=&|><!(){}[\]^"~*?:\\/';
-        $value = preg_replace("/[$reservedCharacters]/", '\\\\$0', $qryConfig['value']);
+        $value = self::escapeQueryString($qryConfig['value']);
+
         $queryDef = [
           $qryConfig['query_type'] => [
             'query' =>  $value,
@@ -1225,6 +1225,35 @@ class ElasticsearchProxyHelper {
     }
     return $query;
   }
+
+  /**
+   * Escaping for Elasticsearch query strings.
+   *
+   * Prevents errors due to special characters etc.
+   *
+   * @param string $value
+   *   Search phrase.
+   *
+   * @return string
+   *   Escaped search phrase.
+   */
+  private static function escapeQueryString($value) {
+    // Find fielded search terms and temporarily protect them.
+    $value = preg_replace_callback('/\b(\w+):("[^"]+"|\S+)/', function ($matches) {
+        // Return the match wrapped in a placeholder.
+        return '__FIELD__' . base64_encode($matches[0]) . '__';
+    }, $value);
+
+    // Escape reserved characters in the remaining string.
+    $reservedCharacters = '+\-=&|><!(){}[\]^"~*?:\\/';
+    $value = preg_replace("/([" . preg_quote($reservedCharacters, '/') . "])/", '\\\\$1', $value);
+
+    // Restore the protected fielded queries.
+    $value = preg_replace_callback('/__FIELD__(.*?)__/', function ($matches) {
+        return base64_decode($matches[1]);
+    }, $value);
+    return $value;
+}
 
   /**
    * Applies an option from the [permissionFilters] control.

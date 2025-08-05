@@ -7938,7 +7938,7 @@ if (errors$uniq.length>0) {
       if (count($media) > 0) {
         $postargs .= '&persist_auth=true';
       }
-      $response = self::http_post($request, $postargs);
+      $response = self::http_post($request, $postargs, FALSE);
       // The response should be in JSON if it worked
       $output = json_decode($response['output'], TRUE);
       // If this is not JSON, it is an error, so just return it as is.
