@@ -1976,6 +1976,7 @@ HTML;
     'quality:D' => 'Queried',
     'quality:A' => 'Answered',
     'quality:all' => 'All records',
+    'quality:OV' => 'Verified by other verifiers',
     'quality_op:in' => 'Include',
     'quality_op:not in' => 'Exclude',
     'filterDeleted' => 'The filter has been deleted',
