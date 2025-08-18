@@ -2194,7 +2194,7 @@ HTML;
       'csvDisallowedMessage' => 'Uploading verification decisions is only allowed when there is a filter that defines the scope of the records you can verify.',
       'duplicateTemplateMsg' => 'A template with that name already exists. Please specify a unique name for your template then save it again, or click Overwrite to update the existing template details.',
       'emailExpertBodyHeader' => "Verification query\n\nThe following record requires your assistance. Please could you reply to this email " .
-        'with your opininion on whether the record is correct or not. You can reply to this message and it will be ' .
+        'with your opinion on whether the record is correct or not. You can reply to this message and it will be ' .
         'forwarded direct to the verifier.',
       'emailExpertInstruct' => 'Enter the email of an expert to request their assistance with this record.',
       'emailExpertLoggedAsComment' => 'This record was emailed to an expert for checking.',
