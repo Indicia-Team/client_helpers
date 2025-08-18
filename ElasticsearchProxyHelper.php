@@ -1271,7 +1271,9 @@ class ElasticsearchProxyHelper {
       $strippedCharacters .= '\[\]\{\}';
     }
     // Strip any reserved characters.
-    $value = preg_replace('/[' . $strippedCharacters . ']/', '', $value);
+    if ($strippedCharacters) {
+      $value = preg_replace('/[' . $strippedCharacters . ']/', '', $value);
+    }
     return $value;
 }
 
