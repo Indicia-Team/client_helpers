@@ -413,9 +413,21 @@ class ElasticsearchProxyHelper {
     $conn = iform_get_connection_details($nid);
     $readAuth = helper_base::get_read_auth($conn['website_id'], $conn['password']);
     $params = array_merge(['sharing' => 'verification'], hostsite_get_node_field_value($nid, 'params'));
+    $includeInfo = empty($_GET['include_info']) || $_GET['include_info'] !== 'f';
     return [
-      'media' => VerificationHelper::getMedia($readAuth, $params, $_GET['occurrence_id'], $_GET['sample_id']),
-      'comments' => VerificationHelper::getComments($readAuth, $params, $_GET['occurrence_id'], TRUE),
+      'media' => VerificationHelper::getMedia(
+        $readAuth,
+        $params,
+        $_GET['occurrence_id'],
+        $_GET['sample_id'],
+        $includeInfo
+      ),
+      'comments' => VerificationHelper::getComments(
+        $readAuth,
+        $params,
+        $_GET['occurrence_id'],
+        TRUE
+      ),
     ];
   }
 
