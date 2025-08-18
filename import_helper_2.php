@@ -1679,6 +1679,8 @@ HTML;
    *   List of available fields for the import entity, with their display
    *   labels.
    *
+   * @return string
+   *   Field label to display.
    */
   private static function getWarehouseFieldLabel($field, array $availableFields, $includeTablePrefix = FALSE) {
     $label = lang::get($field);
@@ -1745,7 +1747,7 @@ HTML;
     $existingMatchFields = [];
     foreach ($config['columns'] as $columnLabel => $info) {
       $arrow = self::getSummaryColumnArrow($info);
-      $warehouseFieldLabel = self::getWarehouseFieldLabel($info['warehouseField'], $availableFields, TRUE);
+      $warehouseFieldLabel = isset($info['warehouseField']) ? self::getWarehouseFieldLabel($info['warehouseField'], $availableFields, TRUE) : '';
       $mappingRows[] = "<tr><td><em>$columnLabel</td></em><td>$arrow</td><td>$warehouseFieldLabel</td></tr>";
       if (preg_match('/:(id|external_key)$/', $info['warehouseField'])) {
         $existingMatchFields[] = $warehouseFieldLabel;
