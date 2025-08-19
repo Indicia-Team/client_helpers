@@ -65,7 +65,7 @@ $(document).ready(function () {
   /**
    * Catch clicks on the grid icons, to add layers for the species to the map.
    */
-  $('table.report-grid tbody').click(function (evt) {
+  $('table.report-grid tbody').on('click', function (evt) {
     if ((evt.target.localName || evt.target.nodeName.toLowerCase())!=="img") {
       return;
     }

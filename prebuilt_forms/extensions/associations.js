@@ -163,12 +163,12 @@ jQuery(document).ready(function($) {
     return row;
   }
 
-  $('#associations-add').click(addAssociationRow);
+  $('#associations-add').on('click', addAssociationRow);
 
   /**
    * Check for a click on the associations grid delete button
    */
-  $('#associations-list').click(function(e) {
+  $('#associations-list').on('click', function(e) {
     if ($(e.target).hasClass('ind-delete-icon')) {
       $(e.target).parents('div.association-row').remove();
     }

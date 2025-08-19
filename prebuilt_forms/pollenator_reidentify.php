@@ -416,8 +416,8 @@ bulkReassignFinish=function(message){
 	jQuery('#search-insects-button,#reassign-button').removeAttr('disabled');
 }
 bulkReassignFinish(false);
-jQuery('.cancel-reassign-button').click(function(){bulkCancel=true;});
-jQuery('#reassign-button').click(function(){
+jQuery('.cancel-reassign-button').on('click', function(){bulkCancel=true;});
+jQuery('#reassign-button').on('click', function(){
 	var max=0;
 	if(searchResults!= null) max=searchResults.features.length;
 	bulkReassignPrep(max);
@@ -433,7 +433,7 @@ jQuery('#reassign-button').click(function(){
 	}
 });
 
-jQuery('#search-insects-button').click(function(){
+jQuery('#search-insects-button').on('click', function(){
 	if(bulkAssigning) return; //prevent results changing underneath bulk reassignment
 	jQuery('#results-insects-header').addClass('ui-state-active').removeClass('ui-state-default');
 	runSearch();

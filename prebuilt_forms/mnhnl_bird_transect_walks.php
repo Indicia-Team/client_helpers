@@ -971,7 +971,7 @@ jQuery('#SurveyForm').ajaxForm({
       data_entry_helper::$javascript .= "
           jQuery('#occurrence\\\\:record_status').val(jQuery('#smpAttr\\\\:".$attributes[$sample_closure_id]['attributeId'].":checked').length > 0 ? 'C' : 'I');
           if(jQuery('#main-sample-deleted:checked').length > 0){
-            jQuery('#return-to-main').click();
+            jQuery('#return-to-main').trigger('click');
             return;
           };\n";
     }
@@ -1041,7 +1041,7 @@ if(jQuery('#SurveyForm > input[name=sample\\:id]').val() != ''){
             switch(\"".$args["on_save_survey_nav"]."\"){
 				case \"list\":
 					var a = $('ul.ui-tabs-nav a')[2];
-					$(a).click();
+					$(a).trigger('click');
 					break;
 				case \"survey\":
 					break;
@@ -1050,12 +1050,12 @@ if(jQuery('#SurveyForm > input[name=sample\\:id]').val() != ''){
     	data_entry_helper::$javascript .= "
 					if(jQuery('#main-sample-closed').val() == 0){
 						var a = $('ul.ui-tabs-nav a')[1];
-						$(a).click();
+						$(a).trigger('click');
 					};";
     } else {
     	data_entry_helper::$javascript .= "
 					var a = $('ul.ui-tabs-nav a')[1];
-					$(a).click();";
+					$(a).trigger('click');";
     }
     data_entry_helper::$javascript .= "
 					break;
@@ -1273,11 +1273,11 @@ jQuery('#occ-form').ajaxForm({
 			switch(\"".$args["on_save_occurrence_nav"]."\"){
 				case \"list\":
 					a = $('ul.ui-tabs-nav a')[2];
-					$(a).click();
+					$(a).trigger('click');
 					break;
 				case \"survey\":
 					a = $('ul.ui-tabs-nav a')[0];
-					$(a).click();
+					$(a).trigger('click');
 					break;
 				default:
 					break;
@@ -1323,7 +1323,7 @@ setAtlasStatus = function() {
 };
 jQuery(\"#occ-territorial\").change(setAtlasStatus);
 if($.browser.msie) {
-    jQuery(\"#occ-territorial\").click(function() {
+    jQuery(\"#occ-territorial\").on('click', function() {
         $(this).change();
     });
 }

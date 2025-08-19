@@ -303,7 +303,7 @@ jQuery(document).ready(function ($) {
       div.map.zoomToExtent(layer.getDataExtent());
     }
     // Event handler for the select_map_control button click.
-    $('button.select_map_control').click(function() {
+    $('button.select_map_control').on('click', function() {
       var control = $(this).attr('data-control');
       // convert control name to the expected display class
       var controlDisplayClass = 'olControl' + control.charAt(0).toUpperCase() + control.slice(1);

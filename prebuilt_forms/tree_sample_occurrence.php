@@ -854,7 +854,7 @@ $('[name=sample\\\\:date]').change(function(){
       $r .= '<a href="JavaScript:window.close()"><input type="button" class="indicia-button" name="cancel" value="'.lang::get('Cancel').'" /></a>';
     if (!empty(self::$loadedSampleId)) {
       $r .= '<input type="submit" class="indicia-button" id="delete-button" name="delete-button" value="'.lang::get('Delete')."\" />\n";
-      data_entry_helper::$javascript .= "$('#delete-button').click(function(e) {
+      data_entry_helper::$javascript .= "$('#delete-button').on('click', function(e) {
   if (!confirm('".lang::get('Are you sure you want to delete this record?')."')) {
     e.preventDefault();
     return false;

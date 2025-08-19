@@ -60,7 +60,7 @@ clearTreeAttributes = function(setDefaults) {
 
 loadTreeAttributes = function(tree){
   $.getJSON(indiciaData.indiciaSvc + "index.php/services/data/location_attribute_value?location_id=" + tree +
-        "&mode=json&view=list&callback=?&auth_token=" + indiciaData.readAuth.auth_token + "&nonce=" + indiciaData.readAuth.nonce, 
+        "&mode=json&view=list&callback=?&auth_token=" + indiciaData.readAuth.auth_token + "&nonce=" + indiciaData.readAuth.nonce,
       function(data) {
           // because of async issues and validation, clear values now
           clearTreeAttributes(false);
@@ -77,7 +77,7 @@ loadTreeAttributes = function(tree){
               $('#tree-form [id^=locAttr\\:'+attr.location_attribute_id+'\\:]').filter('[value='+attr.raw_value+']').attr('checked', true);
             } else if (checkboxes.length > 0) {
               checkboxes.filter('[value='+attr.raw_value+']').attr('name',attrname).attr('checked', true).before('<input class="multiselect" type="hidden" name="'+attrname+'" value="" />');
-            } else {              
+            } else {
               $('#tree-form #locAttr\\:'+attr.location_attribute_id).val(attr.raw_value).attr('name',attrname);
             }
           });
@@ -92,7 +92,7 @@ loadTreeDetails = function(location_id) {
     $('#tree-location-id').removeAttr('disabled').val(location_id);
     $('#locations-website-website-id').attr('disabled','disabled');
     $.getJSON(indiciaData.indiciaSvc + "index.php/services/data/location/" + location_id +
-            "?mode=json&view=detail&callback=?&auth_token=" + indiciaData.readAuth.auth_token + "&nonce=" + indiciaData.readAuth.nonce, 
+            "?mode=json&view=detail&callback=?&auth_token=" + indiciaData.readAuth.auth_token + "&nonce=" + indiciaData.readAuth.nonce,
             function(data) {
               // TODO confirm location type & parent_id
               $('form#tree-form [name=location\\:name]').val(data[0].name);
@@ -104,7 +104,7 @@ loadTreeDetails = function(location_id) {
             }
         );
     $.getJSON(indiciaData.indiciaSvc + "index.php/services/data/sample?location_id=" + location_id + "&sample_method_id=" + indiciaData.treeSampleMethodID +
-            "&mode=json&view=detail&callback=?&auth_token=" + indiciaData.readAuth.auth_token + "&nonce=" + indiciaData.readAuth.nonce, 
+            "&mode=json&view=detail&callback=?&auth_token=" + indiciaData.readAuth.auth_token + "&nonce=" + indiciaData.readAuth.nonce,
             function(data) {
               //TODO add error return check
               if(data.length>0){
@@ -113,7 +113,7 @@ loadTreeDetails = function(location_id) {
                 $('form#tree-form [name=sample\\:date]').val(data[0].date_start.slice(8,10)+'/'+data[0].date_start.slice(5,7)+'/'+data[0].date_start.slice(0,4));
                 // sample_method_id is constant
                 $.getJSON(indiciaData.indiciaSvc + "index.php/services/data/occurrence?sample_id=" + data[0].id +
-                        "&mode=json&view=detail&callback=?&auth_token=" + indiciaData.readAuth.auth_token + "&nonce=" + indiciaData.readAuth.nonce, 
+                        "&mode=json&view=detail&callback=?&auth_token=" + indiciaData.readAuth.auth_token + "&nonce=" + indiciaData.readAuth.nonce,
                         function(odata) {
                           //TODO add error return check
                           if(odata.length>0){
@@ -127,7 +127,7 @@ loadTreeDetails = function(location_id) {
         );
     loadTreeAttributes(location_id);
     $.getJSON(indiciaData.indiciaSvc + "index.php/services/data/location_image?location_id=" + location_id +
-            "&deleted=f&mode=json&view=list&callback=?&auth_token=" + indiciaData.readAuth.auth_token + "&nonce=" + indiciaData.readAuth.nonce, 
+            "&deleted=f&mode=json&view=list&callback=?&auth_token=" + indiciaData.readAuth.auth_token + "&nonce=" + indiciaData.readAuth.nonce,
             function(data) {
     	// TODO add error check
               $.each(data, function(idx, file) {
@@ -165,7 +165,7 @@ loadTreeDetails = function(location_id) {
                            .replace(/\{deletedValue\}/g, 'f')
                            .replace(/\{isNewField\}/g, 'isNew-' + uniqueId)
                            .replace(/\{isNewValue\}/g, 'f')
-                           .replace(/\{idField\}/g, div.settings.table + ':id:' + count) 
+                           .replace(/\{idField\}/g, div.settings.table + ':id:' + count)
                            .replace(/\{idValue\}/g, file.id) // If ID is set, the picture is uploaded to the server
                 );
               });
@@ -174,7 +174,7 @@ loadTreeDetails = function(location_id) {
 };
 
 confirmSelectTree = function(tree, doFeature, withCancel) {
-  var buttons =  { 
+  var buttons =  {
     "Yes": function() {
           dialog.dialog('close');
           $('#tree-form').submit(); // this is synchronous
@@ -284,7 +284,7 @@ deleteTree = function(tree) {
   // if it has been saved, delete any samples lodged against it.
   if(typeof indiciaData.trees[tree] !== "undefined"){
     $.getJSON(indiciaData.indiciaSvc + "index.php/services/data/sample?location_id=" + tree +
-            "&mode=json&view=detail&callback=?&auth_token=" + indiciaData.readAuth.auth_token + "&nonce=" + indiciaData.readAuth.nonce, 
+            "&mode=json&view=detail&callback=?&auth_token=" + indiciaData.readAuth.auth_token + "&nonce=" + indiciaData.readAuth.nonce,
       function(sdata) {
         if (typeof sdata.error==="undefined") {
           $.each(sdata, function(idx, sample) {
@@ -302,7 +302,7 @@ deleteTree = function(tree) {
           data,
           function(data) { if (typeof(data.error)!=="undefined") { alert(data.error); }},
           'json');
-  } 
+  }
   $('#tree-'+tree).remove();
   var remove = [];
   if(indiciaData.selectFeature.layer.selectedFeatures.length > 0)
@@ -326,17 +326,17 @@ insertTree = function() {
     // TODO add dialog to say to save previous created new tree before next one created.
   } else {
     $('#tree-select').append('<li id="tree-new" class="missing">New Tree</li>');
-    $('#tree-new').click(function(evt) {
+    $('#tree-new').on('click', function(evt) {
         var parts = evt.target.id.split('-');
         confirmSelectTree(parts[parts.length-1], true, true); // click on control
     });
   }
-  confirmSelectTree('new', true, true); 
+  confirmSelectTree('new', true, true);
 };
 
 var errorPos = null;
 $(document).ready(function() {
-  
+
   $('#tree-form').ajaxForm({
     async: false,
     dataType:  'json',
@@ -347,7 +347,7 @@ $(document).ready(function() {
       $('#tree-form').find('.ui-state-error').removeClass('ui-state-error');
       var valid = true;
       var validator = $('#tree-form').validate({});
-      validator.settings.ignoreTitle = true; // some of the 
+      validator.settings.ignoreTitle = true; // some of the
       if (!$('#tree-form input').valid()) { valid = false; }
       if (!$('#tree-form select').valid()) { valid = false; }
       if(!valid)
@@ -355,7 +355,7 @@ $(document).ready(function() {
       return valid;
     },
     complete: function() {
-      // 
+      //
     },
     success: function(data) {
       if(typeof data.errors !== "undefined"){
@@ -398,11 +398,11 @@ $(document).ready(function() {
         loadTreeAttributes(location_id);
         $('.filelist .deleted-value[value=t]').closest('.photo').remove();
         // create a dialog
-        var buttons =  { 
+        var buttons =  {
             "Yes: Create Visit Now": function() {
                   dialog.dialog('close');
                   $('#visit_link').attr('href', indiciaData.visitURL+location_id+(isnew?'&date='+first_date:'')+'&no_referer=1');
-                  $('#visit_link').each(function(idex,elem){elem.click();});
+                  $('#visit_link').each(function(idex,elem){elem.trigger('click');});
                 },
             "No Thanks":  function() {
                   dialog.dialog('close');
@@ -411,9 +411,9 @@ $(document).ready(function() {
          var dialog = $('<p>'+(isnew ? indiciaData.newVisitDialog : indiciaData.existingVisitDialog)+'</p>').dialog({ title: "Create Visit Data?", buttons: buttons });
       }
     }
-  });  
-  
-  $('#tree-select li').click(function(evt) {
+  });
+
+  $('#tree-select li').on('click', function(evt) {
     var parts = evt.target.id.split('-');
     confirmSelectTree(parts[parts.length-1], true, true); // click on control
   });
@@ -423,7 +423,7 @@ $(document).ready(function() {
 
   mapInitialisationHooks.push(function(div) {
     if (div.id==='trees-map') {
-      $('.remove-tree').click(function(evt) {
+      $('.remove-tree').on('click', function(evt) {
         var current = $('#tree-select li.selected').attr('id').split('-');
         current=current[current.length-1];
         // TODO add check if not selected
@@ -431,7 +431,7 @@ $(document).ready(function() {
         if(confirm(indiciaData.treeDeleteConfirm + ' ' + name + '?'))
           deleteTree(current);
       });
-      $('.insert-tree').click(function(evt) {
+      $('.insert-tree').on('click', function(evt) {
         insertTree();
       });
       div.map.parentLayer = new OpenLayers.Layer.Vector('Main Sites', {style: div.map.editLayer.style, 'sphericalMercator': true, displayInLayerSwitcher: true});
@@ -485,7 +485,7 @@ $(document).ready(function() {
           }});
         }
       });
-      
+
       div.map.editLayer.style = null;
 
       var baseStyle = {
@@ -575,18 +575,18 @@ $(document).ready(function() {
 //          indiciaData.trees[current].geom = evt.feature.geometry.toString();
         }
       }
-      div.map.editLayer.events.on({'featureadded': featureChangeEvent, 'afterfeaturemodified': featureChangeEvent}); 
+      div.map.editLayer.events.on({'featureadded': featureChangeEvent, 'afterfeaturemodified': featureChangeEvent});
     }
   });
-  
-  $('#add-user').click(function(evt) {
+
+  $('#add-user').on('click', function(evt) {
     var user=($('#cmsUserId')[0]).options[$('#cmsUserId')[0].selectedIndex];
     if ($('#user-'+user.value).length===0) {
       $('#user-list').append('<tr><td id="user-'+user.value+'"><input type="hidden" name="locAttr:'+indiciaData.locCmsUsrAttr+'::'+user.value+'" value="'+user.value+'"/>'+
           user.text+'</td><td><div class="ui-state-default ui-corner-all"><span class="remove-user ui-icon ui-icon-circle-close"></span></div></td></tr>');
     }
   });
-  
+
   $('.remove-user').live('click', function(evt) {
     $(evt.target).closest('tr').css('text-decoration','line-through');
     $(evt.target).closest('tr').addClass('ui-state-disabled');

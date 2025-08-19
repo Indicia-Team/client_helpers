@@ -549,7 +549,7 @@
     // hide remove buttons if only one bird or for birds which exist on database
     setRemoveButtonDisplay();
     // install a click handler for the 'add another' button
-    $('input#idn\\:add-another').click(function(event) {
+    $('input#idn\\:add-another').on('click', function(event) {
       addIndividual();
     });
   };

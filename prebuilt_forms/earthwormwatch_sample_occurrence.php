@@ -384,7 +384,7 @@ class iform_earthwormwatch_sample_occurrence extends iform_dynamic_sample_occurr
     //Each colour cell in the table has an attribute called "tt" (termlist term), this hold the id of the termlist term for the colour code
     //e.g. A2. We can then set the colour drop-down to the appropriate value.
     data_entry_helper::$javascript .= "
-    $('.soil-select-colour-cell').click(function () {
+    $('.soil-select-colour-cell').on('click', function () {
       $('#smpAttr\\\\:".$options['soilDropAttId']."').val($(this).attr('tt'));
       $('#smpAttr\\\\:".$options['soilDropAttId']."').attr('selected', true);
     });\n";

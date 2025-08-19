@@ -15,7 +15,7 @@ jQuery(window).load(function($) {
   setupHtmlForLinkingPhotosToHabitats();
   //Some pages use a full reload, when the page reloads it needs to move back to the appropriate tab (held in the "current" variable)
   var a = jQuery('ul.ui-tabs-nav a')[current];
-  jQuery(a).click();
+  jQuery(a).trigger('click');
   scrollTopIntoView(indiciaData.topSelector);
   //see detailed notes before method
   disableTabContents();

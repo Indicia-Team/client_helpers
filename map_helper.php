@@ -593,7 +593,7 @@ function refreshLayers_$funcSuffix(div) {
     }
   });\n";
     if ($options['includeSwitchers'])
-      self::$javascript .= "  $('.layer-switcher').click(layerSwitcherClick);\n";
+      self::$javascript .= "  $('.layer-switcher').on('click', layerSwitcherClick);\n";
     self::$javascript .= "}
 
 mapInitialisationHooks.push(function(div) {

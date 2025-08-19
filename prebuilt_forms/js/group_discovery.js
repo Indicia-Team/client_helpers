@@ -107,7 +107,7 @@ jQuery(document).ready(function($) {
   /**
    * Handle show more clicks if there are more pages of groups after a search.
    */
-  $('#show-more').click(function() {
+  $('#show-more').on('click', function() {
     searchOffset += searchLimit;
     doSearch(true);
   });
@@ -126,7 +126,7 @@ jQuery(document).ready(function($) {
       newSearch();
     }
   });
-  $('#group-search-go').click(newSearch);
+  $('#group-search-go').on('click', newSearch);
 
   // Changing the filter mode also re-triggers search.
   $('input[type=radio][name=group-scope]').change(newSearch);

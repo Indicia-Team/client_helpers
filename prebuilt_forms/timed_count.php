@@ -724,7 +724,7 @@ if($('#C1\\\\:sample\\\\:date').val() != '') {
       $r .= '<input type="hidden" name="website_id" value="'.$args['website_id'].'"/>';
       $r .= '<input type="hidden" name="sample:id" value="'.data_entry_helper::$entity_to_load['sample:id'].'"/>';
       $r .= '<input type="hidden" name="sample:deleted" value="t"/>';
-      data_entry_helper::$javascript .= "jQuery('#delete-button').click(function(){
+      data_entry_helper::$javascript .= "jQuery('#delete-button').on('click', function(){
   if(confirm(\"".lang::get('Are you sure you want to delete this timed count?')."\"))
     jQuery('#delete-form').submit();
 });\n";

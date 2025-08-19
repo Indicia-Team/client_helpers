@@ -7,8 +7,8 @@ window.npmsFns = {};
   let squareImagesMod = []
   let toggleComment = false
   const flds = [
-    ['samples', 'Plot samples'], 
-    ['dates', 'Number of visits'], 
+    ['samples', 'Plot samples'],
+    ['dates', 'Number of visits'],
     ['earliest', 'Earliest visit'],
     ['latest', 'Latest visit'],
     //['records', 'Records'],
@@ -37,7 +37,7 @@ window.npmsFns = {};
     //////////////////////////////////////
     // General core square and plot report
     //////////////////////////////////////
-    
+
 
     // The report includes two types of records - the main records
     // that group the records on location and have most of
@@ -126,9 +126,9 @@ window.npmsFns = {};
     indiciaData.npmsCoreSquareTaxaByYear = consolidatedTaxaByYear
     // console.log('consolidatedTaxaByYear', consolidatedTaxaByYear)
   }
- 
+
   function createMap() {
-    
+
     $('#mapid').height(400)
     map = L.map('mapid').setView([55, 0], 5)
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -145,8 +145,8 @@ window.npmsFns = {};
     }).addTo(map)
     ftrsCoreSquare.addLayer(lyr)
     indiciaData.npmsCoreSquareReport.records.find(p => p.name === indiciaData.npmsCoreSquareDetails.gr).leafletLayer = lyr
-    
-    
+
+
     // Show the core square sub-plots on the map
     const ftrsPlot = new L.featureGroup;
     indiciaData.npmsCoreSquareReport.records.filter(plot => plot.plot_type !== 'Core square').forEach(plot => {
@@ -180,7 +180,7 @@ window.npmsFns = {};
           })
           layer.on('click', function () {
             const plotName = feature.properties['name']
-            $('#summary-info-select').val(plotName) 
+            $('#summary-info-select').val(plotName)
             updateSummaryInfo(plotName)
             updateTaxaByYearChart(plotName)
             updateTaxaByPlotTable(plotName)
@@ -227,7 +227,7 @@ window.npmsFns = {};
       $dt.css('width', '200px')
       $dt.css('margin-right', '20px')
       $dt.text(d[1])
-    
+
       const $dd = $('<dd>').appendTo($dl)
       $dd.attr('id', `summary-info-${d[0]}`)
     })
@@ -260,7 +260,7 @@ window.npmsFns = {};
     // console.log('Display ', plot)
 
     $('#summary-info-name').text(`(${plot.plot_type.toLowerCase()})`)
-  
+
     flds.forEach(function(d) {
       $(`#summary-info-${d[0]}`).text(plot[d[0]] == null ? 'n/a' : plot[d[0]])
     })
@@ -292,7 +292,7 @@ window.npmsFns = {};
       minPeriod: 2015,
       maxPeriod: 2023,
       // minPeriodTrans: 1975,
-      // maxPeriodTrans: 2022, // Adjusted to match data later 
+      // maxPeriodTrans: 2022, // Adjusted to match data later
       missingValues: 'break',
       expand: true,
       minY: 0,
@@ -376,7 +376,7 @@ window.npmsFns = {};
     const down = '&#9660;'
     $('#taxon-table-header-records span').html(down)
 
-    $('.taxon-table-header').click(function(e) {
+    $('.taxon-table-header').on('click', function(e) {
       const idTokens = $(this).attr('id').split('-')
       const col = idTokens[idTokens.length-1]
 
@@ -454,7 +454,7 @@ window.npmsFns = {};
     indiciaData.npmsCoreSquareLayers.forEach(l => {
       $('#core-square-layers').append(`<div>${l.name} (${l.layer_type}): ${l.area}%</div>`)
     })
-    
+
   }
 
   async function createGalleries() {
@@ -462,8 +462,8 @@ window.npmsFns = {};
     // be found in the warehouse. LightGallery doesn't deal very well with images
     // which can't be found - showing as a blank image. There doesn't seem to be
     // a way of preventing these from showing.
-    // So ideally we'd like to filter the list of images before they are passed 
-    // to lightgallery based on whether or not they can be found by polling the warehouse 
+    // So ideally we'd like to filter the list of images before they are passed
+    // to lightgallery based on whether or not they can be found by polling the warehouse
     // to see if each image can be found. I tried to do this using the fetch HEADER method
     // but this encountered cors problems. Specifying no-cors returns results that
     // do not differentiate between images which can and can't be found. So had
@@ -488,7 +488,7 @@ window.npmsFns = {};
     squareImages = indiciaData.npmsCoreSquareLocationSampleMedia
       .sort(dateSort)
       .map(img => {
-        let caption 
+        let caption
         const date = img.created_on.split(" ")[0]
         const plot = `${img.plot}${img.plotnumber ? ` (${img.plotnumber})` : ''}`
         const imgcap = `${img.caption ? ` (Original caption: ${img.caption})` : ''}`
@@ -584,7 +584,7 @@ window.npmsFns = {};
     //console.log('update gallery', plotName, imageType)
 
     // Only run this once pSquareImages is settled which means that
-    // the results of attempting to fetch all images is known. 
+    // the results of attempting to fetch all images is known.
     Promise.allSettled(pSquareImages).then(data => {
       // Dynamically update gallery to remove any images that
       // can't be loaded.
@@ -602,7 +602,7 @@ window.npmsFns = {};
       // otherwise gallery won't clear.
       if (!squareImagesMod.length) {
         squareImagesMod = [{
-          src: '/modules/custom/npms_vis/images/no-image.jpg', 
+          src: '/modules/custom/npms_vis/images/no-image.jpg',
           thumb: '/modules/custom/npms_vis/images/no-image.jpg',
           caption: ''
         }]
@@ -618,9 +618,9 @@ window.npmsFns = {};
     // console.log(squareImagesMod)
     if (squareImagesMod.length) {
       let img = squareImagesMod[i]
-      $('#gal-cap-div').html(img.caption) 
+      $('#gal-cap-div').html(img.caption)
     } else {
-      $('#gal-cap-div').html('') 
+      $('#gal-cap-div').html('')
     }
   }
 

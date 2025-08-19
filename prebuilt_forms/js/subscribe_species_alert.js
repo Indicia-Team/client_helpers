@@ -67,7 +67,7 @@ jQuery(document).ready(function($) {
               .attr('name', $(select).attr('name'))
               .append($('<option value="">- Please select -</option>'))
               .insertAfter($(select))
-              .click(function() {
+              .on('click', function() {
                 indiciaData.mapdiv.locationSelectedInInput(indiciaData.mapdiv, $(this).val())
               });
             data.forEach(function(item) {

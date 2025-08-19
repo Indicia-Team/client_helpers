@@ -1184,7 +1184,7 @@ indiciaData.rowIdToReselect = false;
       trustedHtml;
     $('#verification-grid').height($(document).height() - $('#verification-grid').offset().top - 50);
     $('#filter-build').after(verifyGridButtons);
-    $('#verify-grid-trusted').click(function () {
+    $('#verify-grid-trusted').on('click', function () {
       var settings = indiciaData.reports.verification.grid_verification_grid[0].settings;
       var show;
       trustedHtml = '<div class="grid-verify-popup" style="width: 550px"><h2>Review all grid data</h2>' +
@@ -1209,10 +1209,10 @@ indiciaData.rowIdToReselect = false;
       trustedHtml += '<button type="button" class="default-button" id="verify-all-button">Accept all records</button></div>';
 
       $.fancybox.open(trustedHtml);
-      $('#verify-trusted-button').click(function () {
+      $('#verify-trusted-button').on('click', function () {
         verifyRecordSet(true);
       });
-      $('#verify-all-button').click(function () {
+      $('#verify-all-button').on('click', function () {
         verifyRecordSet(false);
       });
     });
@@ -1260,7 +1260,7 @@ indiciaData.rowIdToReselect = false;
       popupHtml += '<button type="button" class="default-button verify-button">Verify chosen records</button>' +
         '<button type="button" class="default-button cancel-button">Cancel</button></p></div>';
       $.fancybox.open(popupHtml);
-      $('.quick-verify-popup .verify-button').click(function () {
+      $('.quick-verify-popup .verify-button').on('click', function () {
         var params = indiciaData.reports.verification.grid_verification_grid.getUrlParamsForAllRecords();
         var radio = $('.quick-verify-popup input[name=quick-option]:checked');
         var request;
@@ -1298,7 +1298,7 @@ indiciaData.rowIdToReselect = false;
           $.fancybox.close();
         }
       });
-      $('.quick-verify-popup .cancel-button').click(function () {
+      $('.quick-verify-popup .cancel-button').on('click', function () {
         $.fancybox.close();
       });
     }
@@ -1357,7 +1357,7 @@ indiciaData.rowIdToReselect = false;
       }
       popupHtml += '<button type="button" id="trust-button" class="default-button trust-button">Set trust for ' + currRec.extra.recorder + '</button>' + "</div>\n";
       $.fancybox.open(popupHtml);
-      $('.quick-verify-popup .trust-button').click(function () {
+      $('.quick-verify-popup .trust-button').on('click', function () {
         var theData = {
           website_id: indiciaData.website_id,
           'user_trust:user_id': currRec.extra.created_by_id,
@@ -1545,7 +1545,7 @@ indiciaData.rowIdToReselect = false;
       }
     }
 
-    $('table.report-grid tbody').click(function (evt) {
+    $('table.report-grid tbody').on('click', function (evt) {
       var row = $(evt.target).parents('tr:first')[0];
       $('.verify-tools').hide();
       // reinstate tooltips
@@ -1629,42 +1629,42 @@ indiciaData.rowIdToReselect = false;
       }
     }
 
-    $('#more-status-buttons').click(function () {
+    $('#more-status-buttons').on('click', function () {
       var showMore = $('#actions-less:visible').length;
       showSetStatusButtons(showMore);
     });
 
     // Handlers for basic status buttons
-    $('#btn-accepted').click(function () {
+    $('#btn-accepted').on('click', function () {
       setStatus('V');
     });
 
-    $('#btn-notaccepted').click(function () {
+    $('#btn-notaccepted').on('click', function () {
       setStatus('R');
     });
 
     // Handlers for advanced status buttons
-    $('#btn-accepted-correct').click(function () {
+    $('#btn-accepted-correct').on('click', function () {
       setStatus('V', 1);
     });
 
-    $('#btn-accepted-considered-correct').click(function () {
+    $('#btn-accepted-considered-correct').on('click', function () {
       setStatus('V', 2);
     });
 
-    $('#btn-plausible').click(function () {
+    $('#btn-plausible').on('click', function () {
       setStatus('C', 3);
     });
 
-    $('#btn-notaccepted-unable').click(function () {
+    $('#btn-notaccepted-unable').on('click', function () {
       setStatus('R', 4);
     });
 
-    $('#btn-notaccepted-incorrect').click(function () {
+    $('#btn-notaccepted-incorrect').on('click', function () {
       setStatus('R', 5);
     });
 
-    $('#btn-multiple').click(function () {
+    $('#btn-multiple').on('click', function () {
       multimode = !multimode;
       if (multimode) {
         showTickList();
@@ -1679,19 +1679,19 @@ indiciaData.rowIdToReselect = false;
       }
     });
 
-    $('#btn-query').click(function () {
+    $('#btn-query').on('click', function () {
       buildRecorderQueryMessage();
     });
 
-    $('#btn-email-expert').click(function () {
+    $('#btn-email-expert').on('click', function () {
       buildVerifierEmail();
     });
 
-    $('#btn-redetermine').click(function () {
+    $('#btn-redetermine').on('click', function () {
       showRedeterminationPopup();
     });
 
-    $('#btn-log-response').click(function () {
+    $('#btn-log-response').on('click', function () {
       popupLogResponse();
     });
 
@@ -1726,7 +1726,7 @@ indiciaData.rowIdToReselect = false;
 
     indiciaFns.applyVerificationCommentsFilterToReports(false, false);
 
-    $('#details-zoom').click(function toggleZoom() {
+    $('#details-zoom').on('click', function toggleZoom() {
       if ($('#outer-with-map').hasClass('details-zoomed')) {
         $('#outer-with-map').removeClass('details-zoomed');
         $('#details-zoom').html('&#8689;');
@@ -1830,7 +1830,7 @@ indiciaData.rowIdToReselect = false;
             // Apply the HTML to the HTML tag
             document.getElementById('existingTrusts').innerHTML = textMessage;
             // Remove a trust if the user clicks the remove button
-            $('.existingTrustRemoveButton').click(function (evt) {
+            $('.existingTrustRemoveButton').on('click', function (evt) {
               // We only want the number from the end of the id
               var idNumArray = evt.target.id.match(/\d+$/);
 

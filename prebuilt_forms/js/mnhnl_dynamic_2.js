@@ -499,7 +499,7 @@ function _addExistingSpeciesGridRow(index,row,options){
 };
 
 function bindSpeciesButton(options){
-  $('#' + options.selectorID).click(function(){
+  $('#' + options.selectorID).on('click', function(){
     _addNewSpeciesGridRow(options.speciesData, options)
   });
   $('#'+options.gridId+' tbody').find('.first').each(function(idx,elem){_addExistingSpeciesGridRow(idx+1,elem,options);});

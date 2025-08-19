@@ -153,13 +153,13 @@ function addSite(locationId) {
     );
   }
 }
-$('#add-site-button').click(function() {
+$('#add-site-button').on('click', function() {
   addSite($('#location-select').val());
   if (!isNaN($('#location-select').val())) {
     $('#location-select option:selected').remove();
   }
 });
-$('#add-searched-site-button').click(function() {addSite($('#location-search').val());});
+$('#add-searched-site-button').on('click', function() {addSite($('#location-search').val());});
 $('#location-select, #location-search, #locality_id').change(function() {
   if (typeof indiciaData.mapdiv!=='undefined') {
     indiciaData.mapdiv.locationSelectedInInput(indiciaData.mapdiv, this.value);
@@ -398,7 +398,7 @@ JS;
     // combination.
     data_entry_helper::$javascript .= <<<JS
 
-$('#add-user-site-button').click(function() {
+$('#add-user-site-button').on('click', function() {
   // We can get the location id from the url or from the locations drop-down
   // depending on the option the administrator has set.
   var locationId;

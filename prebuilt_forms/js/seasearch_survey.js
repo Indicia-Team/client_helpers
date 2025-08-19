@@ -216,7 +216,7 @@ jQuery(document).ready(function($) {
     processRow($('#species-grid-scClonableRow'), '-idx-');
   }
 
-  $('#add-habitat').click(function() {
+  $('#add-habitat').on('click', function() {
     setHabitatCount($('#habitat-blocks').children('fieldset').length+1);
   });
   setHabitatCount(indiciaData.initialHabitatCount);

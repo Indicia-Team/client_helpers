@@ -89,7 +89,7 @@ jQuery(document).ready(function($) {
   })
 
   // Attach download button event handlers
-  $('.brc-hectad-map-image-download').click(e => {
+  $('.brc-hectad-map-image-download').on('click', e => {
 
     var defaultName = replaceTags($('#species-details-preferred-name').val())
 

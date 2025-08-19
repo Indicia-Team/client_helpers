@@ -370,7 +370,7 @@ $(document).ready(function() {
     }
   });
 
-  $('#section-select li').click(function(evt) {
+  $('#section-select li').on('click', function(evt) {
     var parts = evt.target.id.split('-');
     confirmSelectSection(parts[parts.length-1], true, true);
   });
@@ -380,25 +380,25 @@ $(document).ready(function() {
 
   mapInitialisationHooks.push(function(div) {
     if (div.id==='route-map') {
-      $('#section-select-route li').click(function(evt) {
+      $('#section-select-route li').on('click', function(evt) {
         var parts = evt.target.id.split('-');
         confirmSelectSection(parts[parts.length-1], true, false);
       });
-      $('.remove-section').click(function(evt) {
+      $('.remove-section').on('click', function(evt) {
         var current = $('#section-select-route li.selected').html();
         if (confirm(indiciaData.lang.sectionedTransectsEditTransect.sectionDeleteConfirm.replace('{1}', current))) {
           deleteSection(current);
         }
       });
-      $('.insert-section').click(function(evt) {
+      $('.insert-section').on('click', function(evt) {
         var current = $('#section-select-route li.selected').html();
         if(confirm(indiciaData.lang.sectionedTransectsEditTransect.sectionInsertConfirm.replace('{1}', current))) insertSection(current);
       });
-      $('.reload-section').click(function(evt) {
+      $('.reload-section').on('click', function(evt) {
           var current = $('#section-select-route li.selected').html();
           reloadSection(current);
         });
-      $('.erase-route').click(function(evt) {
+      $('.erase-route').on('click', function(evt) {
         var current = $('#section-select-route li.selected').html(),
             oldSection = [];
         // If the draw feature control is active unwind it one point at a time.
@@ -788,7 +788,7 @@ $(document).ready(function() {
     }
   });
 
-  $('#add-user').click(function(evt) {
+  $('#add-user').on('click', function(evt) {
     var user=($('#cmsUserId')[0]).options[$('#cmsUserId')[0].selectedIndex];
     if ($('#user-' + user.value).length===0) {
       $('#user-list').append('<tr><td id="user-' + user.value + '"><input type="hidden" name="locAttr:' + indiciaData.locCmsUsrAttr + '::' + user.value + '" value="' + user.value + '"/>' +
@@ -803,7 +803,7 @@ $(document).ready(function() {
     $(evt.target).closest('tr').find('input').val('');
   });
 
-  $('#add-branch-coord').click(function(evt) {
+  $('#add-branch-coord').on('click', function(evt) {
     var coordinator=($('#branchCmsUserId')[0]).options[$('#branchCmsUserId')[0].selectedIndex];
     if ($('#branch-coord-' + coordinator.value).length===0) {
       $('#branch-coord-list').append('<tr><td id="branch-coord-' + coordinator.value + '">' +

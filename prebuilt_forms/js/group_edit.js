@@ -45,7 +45,7 @@ jQuery(document).ready(function($) {
   /**
    * Hook the email check handler to the member control add buttons.
    */
-  $('#groups_user\\:user_id\\:add, #groups_user\\:admin_user_id\\:add').click(function handleAddClick() {
+  $('#groups_user\\:user_id\\:add, #groups_user\\:admin_user_id\\:add').on('click', function handleAddClick() {
     var field = this.id.match(/admin_user_id/) ? 'admin_user_id' : 'user_id';
     addMemberByEmail(field);
   });
@@ -137,7 +137,7 @@ jQuery(document).ready(function($) {
     $('#ctrl-wrap-groups_user-user_id').slideUp();
     $('#ctrl-wrap-groups_user-user_id li').remove();
     $.each(unselectablePageOptions.filter(':selected'), function() {
-      $(this).closest('tr').find('.action-delete').click();
+      $(this).closest('tr').find('.action-delete').trigger('click');
     });
     unselectablePageOptions.prop('disabled', true);
   }

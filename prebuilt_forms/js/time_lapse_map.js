@@ -245,7 +245,7 @@ var rgbvalue, applyJitter, setToDate, loadYear;
       resetMap();
     });
 
-    $(iTLMOpts.playButtonSelector).click(function () {
+    $(iTLMOpts.playButtonSelector).on('click', function () {
       if (currentYear() === '' || iTLMData.species === '') {
         alert(iTLMOpts.pleaseSelectPrompt);
         return;
@@ -275,13 +275,13 @@ var rgbvalue, applyJitter, setToDate, loadYear;
       $(this).button('option', options);
     });
 
-    $(iTLMOpts.firstButtonSelector).click(function () {
+    $(iTLMOpts.firstButtonSelector).on('click', function () {
       stopAnimation();
       $(iTLMOpts.playButtonSelector).button('option', {label: iTLMOpts.playButtonPlayLabel, icons: {primary: iTLMOpts.playButtonPlayIcon}});
       setToDate(iTLMData.minDayIndex);
     });
 
-    $(iTLMOpts.lastButtonSelector).click(function () {
+    $(iTLMOpts.lastButtonSelector).on('click', function () {
       stopAnimation();
       $(iTLMOpts.playButtonSelector).button('option', {label: iTLMOpts.playButtonPlayLabel, icons: {primary: iTLMOpts.playButtonPlayIcon}});
       setToDate(iTLMData.maxDayIndex);

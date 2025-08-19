@@ -535,7 +535,7 @@ $.validator.addMethod('end_time', function(value, element){
   else
     controls.removeAttr('disabled');
 };
-jQuery('[name=".$selector."\\[\\]],[name=".$selector."],[name^=".$selector."\\:]').click(".$func.");\n".$func."();\n";
+jQuery('[name=".$selector."\\[\\]],[name=".$selector."],[name^=".$selector."\\:]').on('click', ".$func.");\n".$func."();\n";
           }  else if($rule[$i]=='N=3'){
             // we want immediate, restrict number checkable..
             // allow a maximum of 3 entries in a multiple value checkbox set. name will be the same.

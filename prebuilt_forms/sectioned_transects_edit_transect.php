@@ -688,7 +688,7 @@ deleteSurvey = function(){
     window.location='" . hostsite_get_url($args['sites_list_path']) . "';
   };
 };
-$('#delete-transect').click(deleteSurvey);
+$('#delete-transect').on('click', deleteSurvey);
 ";
     }
     return $r;

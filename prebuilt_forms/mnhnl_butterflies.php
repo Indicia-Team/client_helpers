@@ -216,7 +216,7 @@ updateSampleDate = function(context, doAlert){
 jQuery('#sample\\\\:date').change(function(){updateSampleDate(this, true);});
 updateSampleDate('#sample\\\\:date', false);
 jQuery('.tab-submit').off('click');
-jQuery('.tab-submit').click(function() {
+jQuery('.tab-submit').on('click', function() {
   var current=indiciaFns.activeTab($('#controls'));
   var tabinputs = jQuery('#entry_form div > .ui-tabs-panel:eq('+current+')').find('input,select');
   var secList = '';
@@ -463,7 +463,7 @@ build_empty_transectgrid = function(speciesID){
   // first check if already set up. If yes do nothing.
   if(jQuery('.transectgrid').find('[taxonID='+speciesID+']').length > 0) return;
   var container = jQuery('<div class=\"trSpeciesContainer\" ></div>').prependTo('.transectgrid');
-  jQuery('<span class=\"right\"><img src=\"/misc/watchdog-error.png\" alt=\"Delete\"/></span>').attr('taxonID',speciesID).appendTo(container).click(function(){
+  jQuery('<span class=\"right\"><img src=\"/misc/watchdog-error.png\" alt=\"Delete\"/></span>').attr('taxonID',speciesID).appendTo(container).on('click', function(){
     if(confirm(\"".lang::get('transectgrid:confirmremove')."\"+jQuery(this).parent().find('.trgridspecname')[0].textContent+\"?\")){
      jQuery(this).parent().find('select').each(function(){
       var parts = jQuery(this).attr('name').split(':');
@@ -673,7 +673,7 @@ remove_section_columns = function(from, to){
 add_section_species_row = function(speciesID){
   // first check if already set up. If yes do nothing.
   if(jQuery('.sectionlist').find('[taxonID='+speciesID+']').length > 0) return;
-  var remButton = jQuery('<img src=\"/misc/watchdog-error.png\" alt=\"Delete\"/>').click(function(){
+  var remButton = jQuery('<img src=\"/misc/watchdog-error.png\" alt=\"Delete\"/>').on('click', function(){
     delete_section_species_row(jQuery(this).parent().parent()); // image, td, tr
   });
   var name = jQuery('<span class=\"seclistspecname\"></span>').attr('taxonID',speciesID);

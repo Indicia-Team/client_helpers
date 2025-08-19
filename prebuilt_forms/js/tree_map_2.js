@@ -241,7 +241,7 @@ var rgbvalue, applyJitter, setToDate, loadYear;
     setToDate(last);
   };
 
-  // init must be called before the maps are initialised, as it sets up a 
+  // init must be called before the maps are initialised, as it sets up a
   initTreeMap2 = function (options) {
     var defaults = {
       advanced_UI: false,
@@ -335,7 +335,7 @@ var rgbvalue, applyJitter, setToDate, loadYear;
       }
     });
 
-    $(iTM2Opts.playButtonSelector).click(function () {
+    $(iTM2Opts.playButtonSelector).on('click', function () {
       if (iTM2Data.year1 === '' || iTM2Data.species1 === '' || iTM2Data.event1 === '') {
         alert(iTM2Opts.pleaseSelectPrompt);
         return;
@@ -371,7 +371,7 @@ var rgbvalue, applyJitter, setToDate, loadYear;
         $(this).text(options.label);
     });
 
-    $(iTM2Opts.firstButtonSelector).click(function () {
+    $(iTM2Opts.firstButtonSelector).on('click', function () {
       stopAnimation();
       if (iTM2Opts.advanced_UI && iTM2Data.advancedButtons)
         $(iTM2Opts.playButtonSelector).button('option', {label: iTM2Opts.playButtonPlayLabel, icons: {primary: iTM2Opts.playButtonPlayIcon}});
@@ -380,7 +380,7 @@ var rgbvalue, applyJitter, setToDate, loadYear;
       setToDate(iTM2Data.minDayIndex);
     });
 
-    $(iTM2Opts.lastButtonSelector).click(function () {
+    $(iTM2Opts.lastButtonSelector).on('click', function () {
       stopAnimation();
       if (iTM2Opts.advanced_UI && iTM2Data.advancedButtons)
         $(iTM2Opts.playButtonSelector).button('option', {label: iTM2Opts.playButtonPlayLabel, icons: {primary: iTM2Opts.playButtonPlayIcon}});
@@ -487,7 +487,7 @@ var rgbvalue, applyJitter, setToDate, loadYear;
     }
     $(iTM2Opts.errorDiv).empty();
     dialog = $('<p>' + iTM2Opts.waitDialogText.replace('{year}', year) + '</p>').dialog({
-      title: iTM2Opts.waitDialogTitle, 
+      title: iTM2Opts.waitDialogTitle,
       buttons: {OK: function () {
         dialog.dialog('close');
       }}
@@ -667,7 +667,7 @@ var rgbvalue, applyJitter, setToDate, loadYear;
             layer.addFeatures([day.others.feature]);
           }
           if (day.mine.feature) {
-            // Dont apply jitter to own data as this may 
+            // Dont apply jitter to own data as this may
             day.mine.feature.style.pointRadius = iTM2Data.dotSize + 2;
             day.mine.feature.style.fillColor = rgbvalue(idx);
             layer.addFeatures([day.mine.feature]);

@@ -73,7 +73,7 @@ class report_helper extends helper_base {
     }
     self::$javascript .= '$("#'.$options['id'].' > ul").treeview({collapsed: true});'."\n";
     self::$javascript .= "indiciaData.reportList=".$response['output'].";\n";
-    self::$javascript .= '$(\'#'.$options['id'].' > ul input[checked="checked"]\').click();'."\n";
+    self::$javascript .= '$(\'#'.$options['id'].' > ul input[checked="checked"]\').trigger('click');'."\n";
     self::$javascript .= '$(\'#'.$options['id'].' > ul input[checked="checked"]\').parents("#'.$options['id'].' ul").show();'."\n";
     $options['reports']=$reports;
     $options['moreinfo']=lang::get('More info');
@@ -808,7 +808,7 @@ JS;
         if (isset($options['rowId'])) {
           //if the user clicks on a summary table row then open the report specified using the row ID as a parameter.
             self::$javascript .= "
-              $('#".$options['id']." tbody').click(function(evt) {
+              $('#".$options['id']." tbody').on('click', function(evt) {
                 var tr=$(evt.target).parents('tr')[0], rowId=tr.id.substr(3);
                 window.location='$path'.replace(/#param#/g, rowId);
               });
@@ -4141,7 +4141,7 @@ jQuery('[name=".$options['chartID']."-series]').change(function(){
   setSeriesURLParam();
   replot();
 });
-jQuery('#".$options['chartID']."-series-disable').click(function(){
+jQuery('#".$options['chartID']."-series-disable').on('click', function(){
   if(jQuery(this).is('.cleared')){ // button is to show all
     jQuery('[name=".$options['chartID']."-series]').not('[value=0]').attr('checked','checked');
     $.each(seriesData.ids, function(idx, elem){
@@ -5346,7 +5346,7 @@ jQuery('#estimateChart [name={$options['chartID']}-series]').change(function(){
   $('#summaryChart [name={$options['chartID']}-series]').filter('[value='+$(this).val()+']').prop('checked',!!$(this).prop('checked'));
   replot('estimates');
 });
-jQuery('#summaryChart .disable-button').click(function(){
+jQuery('#summaryChart .disable-button').on('click', function(){
   if(jQuery(this).is('.cleared')){ // button is to show all
     jQuery('[name={$options['chartID']}-series]').not('[value=0]').prop('checked','checked');
     jQuery('.disable-button').removeClass('cleared').val(\"" . lang::get('Hide all') . "\");
@@ -5356,7 +5356,7 @@ jQuery('#summaryChart .disable-button').click(function(){
   }
   replot('summary');
 });
-jQuery('#estimateChart .disable-button').click(function(){
+jQuery('#estimateChart .disable-button').on('click', function(){
   if(jQuery(this).is('.cleared')){ // button is to show all
     jQuery('[name={$options['chartID']}-series]').not('[value=0]').prop('checked','checked');
     jQuery('.disable-button').removeClass('cleared').val(\"" . lang::get('Hide all') . "\");

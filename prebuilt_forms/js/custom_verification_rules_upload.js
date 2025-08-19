@@ -140,7 +140,7 @@ jQuery(document).ready(function($) {
   /**
    * Button handler which initiates the upload process.
    */
-  $('#upload-rules').click(function() {
+  $('#upload-rules').on('click', function() {
     // Prevent re-uploading the same file twice which doesn't work.
     $('#upload-rules').attr('disabled', true);
     // Remove any messages from previous upload attempt.

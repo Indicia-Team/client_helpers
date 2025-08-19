@@ -3831,7 +3831,7 @@ modPGPoint = function(geometry){
     if(!found) jQuery(this).remove();
   });
 }
-jQuery('#pgNewPoint').click(function(){
+jQuery('#pgNewPoint').on('click', function(){
   // only add if the modPointFeature is active.
   if(!modPointFeature.active) return;
   if($('#new-srefX').val()=='' || $('#new-srefY').val()=='') return;

@@ -4399,14 +4399,19 @@ HTML;
           lang::get('You are editing a single record that is part of a larger list of records, so any changes to the overall information such as edits to the date or map reference will affect the whole list of records.') .
           "<br/><button type=\"button\" class=\"$indicia_templates[buttonDefaultClass]\" id=\"species-grid-view-all-$options[id]\">" . lang::get('Show the full list of records for editing or addition of more records.') . '</button>',
           $indicia_templates['warningBox']) . $r;
-        self::$javascript .= "$('#species-grid-view-all-$options[id]').click(function(e) {
-  $('#$options[id] tbody tr').show();
-  $(e.currentTarget).hide();
-});\n";
-        self::$onload_javascript .= "
-if ($('#$options[id]').parents('.ui-tabs-panel').length) {
-  indiciaFns.activeTab($('#controls'), $('#$options[id]').parents('.ui-tabs-panel')[0].id);
-}\n";
+        self::$javascript .= <<<JS
+          $('#species-grid-view-all-$options[id]').on('blur', function(e) {
+            $('#$options[id] tbody tr').show();
+            $(e.currentTarget).hide();
+          });
+
+        JS;
+        self::$onload_javascript .= <<<JS
+          if ($('#$options[id]').parents('.ui-tabs-panel').length) {
+            indiciaFns.activeTab($('#controls'), $('#$options[id]').parents('.ui-tabs-panel')[0].id);
+          }
+
+        JS;
       }
       if ($options['mediaTypes']) {
         $r .= self::addLinkPopup($options);
@@ -7129,7 +7134,7 @@ $('div#$escaped_divId').indiciaTreeBrowser({
           ]);
           $msg = lang::get('Are you sure you want to delete this form?');
           self::$javascript .= <<<JS
-$('#tab-delete').click(function(e) {
+$('#tab-delete').on('click', function(e) {
   if (!confirm('$msg')) {
     e.preventDefault();
     return false;

@@ -157,7 +157,7 @@ jQuery(document).ready(function ($) {
       }
     });
     // Forces sorting click handlers added to grid column th to not override the link on lexicon items
-    $('.lexicon th a.lexicon-info').click(function () {
+    $('.lexicon th a.lexicon-info').on('click', function () {
       window.location = $(this).attr('href');
     });
   };

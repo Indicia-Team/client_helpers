@@ -456,7 +456,7 @@ $('#form-picker').change(function(e) {
   $('#form-def').hide().html(details).fadeIn();
 });
 
-$('#load-params').click(function() {
+$('#load-params').on('click', function() {
   if ($('#form-picker').val()==='' || $('#website_id').val()==='' || $('#form-picker').val()==='') {
     alert('$jsParams[langEnterLoginAndForm]');
   } else {

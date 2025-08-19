@@ -1,7 +1,7 @@
 jQuery(document).ready(function($) {
   "use strict";
   // Click on a star sets the rating for the question.
-  $('.hover-star').click(function(e) {
+  $('.hover-star').on('click', function(e) {
     var hiddenInput = $(this).closest('.hover-ratings').find('.clicked-rating');
     $(hiddenInput).val($(this).data('value'));
   });
@@ -31,7 +31,7 @@ jQuery(document).ready(function($) {
   });
 
   // Save button submits filled in data.
-  $('#vote-save').click(function() {
+  $('#vote-save').on('click', function() {
     var data = {};
     var div = $(this).closest('.voting-form');
     var s;

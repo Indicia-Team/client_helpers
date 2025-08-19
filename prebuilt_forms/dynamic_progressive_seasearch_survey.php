@@ -281,7 +281,7 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
       //Need to add 1 to i as habitats are numbered from 1
       setupSubSampleAttrsForHabitat(i+1,false, habitatIdSampleId);
     }
-    $('#add-new-habitat').click(function() {
+    $('#add-new-habitat').on('click', function() {
       createNewHabitat();
     });";
     data_entry_helper::$javascript.="indiciaData.existingHabitatSubSamplesIds=existingHabitatSubSamplesIds;\n";
@@ -691,7 +691,7 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
     data_entry_helper::$javascript.="
     $(window).load(function () {
       if (indiciaData.gpsSyncWarning) {
-        $('#file_upload').click(function() {
+        $('#file_upload').on('click', function() {
             var r = confirm(indiciaData.gpsSyncWarning);
             if (r != true) {
               return false;
@@ -1832,7 +1832,7 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
         data_entry_helper::$javascript .= "$('#$options[id] tbody tr td.edited-record').parent().next('tr.supplementary-row').show();\n";
         $r .= '<p>'.lang::get('You are editing a single record that is part of a larger sample, so any changes to the sample\'s information such as edits to the date or map reference '.
             'will affect the whole sample.')." <a id=\"species-grid-view-all-$options[id]\">".lang::get('View all the records in this sample or add more records.').'</a></p>';
-        data_entry_helper::$javascript .= "$('#species-grid-view-all-$options[id]').click(function(e) {
+        data_entry_helper::$javascript .= "$('#species-grid-view-all-$options[id]').on('click', function(e) {
   $('#$options[id] tbody tr').show();
   $(e.currentTarget).hide();
 });\n";

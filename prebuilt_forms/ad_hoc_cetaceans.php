@@ -318,7 +318,7 @@ class iform_ad_hoc_cetaceans implements PrebuiltFormInterface {
     // Now, add some JavaScript to show or hide the map. Show it for when the sighting was from the shore.
     // Hide it for boat based sightings as we want a GPS coordinate in this case. The JavaScript looks for the
     // checked radio button to see the value
-    data_entry_helper::$javascript .= 'jQuery(".sighting-platform input").click(
+    data_entry_helper::$javascript .= 'jQuery(".sighting-platform input").on("click",
       function() {
         var platformId = jQuery("input[name=smpAttr\\\\:'.$args['platform_attr_id'].']:checked").val();
         if (platformId == '.$args['platform_mapped_term_id'].') {

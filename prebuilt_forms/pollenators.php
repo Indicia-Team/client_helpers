@@ -449,7 +449,7 @@ class iform_pollenators implements PrebuiltFormInterface {
   private function help_button($use_help, $id, $func, $arg) {
   	if($use_help == false) return '';
   	data_entry_helper::$javascript .= "
-jQuery('#".$id."').click(function(){
+jQuery('#".$id."').on('click', function(){
 	".$func."(".$arg.");
 });
 ";
@@ -1062,11 +1062,11 @@ $('#cc-1-delete-collection').ajaxForm({
   		}
 });
 
-$('#cc-1-valid-button').click(function() {
+$('#cc-1-valid-button').on('click', function() {
 	jQuery('#cc-1-collection-details').submit();
 });
 
-$('#cc-1-reinit-button').click(function() {
+$('#cc-1-reinit-button').on('click', function() {
     clearErrors('form#cc-1-collection-details');
 	if(jQuery('form#cc-1-collection-details > input[name=sample\\:id]').filter('[disabled]').length > 0) { return } // sample id is disabled, so no data has been saved - do nothing.
     if (!jQuery('form#cc-1-collection-details > input').valid()) {
@@ -1475,7 +1475,7 @@ jQuery('.removeRow').live('click', function (){
   jQuery(this).closest('tr.flower-species-list-entry').remove();
 });
 
-jQuery('#search-insee-button').click(function(){
+jQuery('#search-insee-button').on('click', function(){
 	if(inseeLayer != null)
 		inseeLayer.destroy();
 	var filters = [];
@@ -1773,7 +1773,7 @@ $('#cc-2-floral-station').ajaxForm({
   	}
 });
 
-$('#cc-2-valid-button').click(function() {
+$('#cc-2-valid-button').on('click', function() {
 	jQuery('#cc-2-floral-station').submit();
 });
 
@@ -1931,7 +1931,7 @@ addSession = function(){
 		.appendTo(newTitle).hide();
 	var newDeleteButton = jQuery('<div class=\"right ui-state-default ui-corner-all delete-button\">".lang::get('LANG_Delete_Session')."</div>')
 		.appendTo(newTitle);
-	newModButton.click(function() {
+	newModButton.on('click', function() {
 		if(!validateAndSubmitOpenSessions()) return false;
 		var session=$(this).parents('.poll-session');
 		session.show();
@@ -1948,7 +1948,7 @@ addSession = function(){
     if($use_help){
         data_entry_helper::$javascript .= "
 	var helpDiv = jQuery('<div class=\"right ui-state-default ui-corner-all help-button\">".lang::get('LANG_Help_Button')."</div>');
-	helpDiv.click(function(){
+	helpDiv.on('click', function(){
 		".$args['help_function']."(".$args['help_session_arg'].");
 	});
 	helpDiv.appendTo(newForm);";
@@ -1973,7 +1973,7 @@ addSession = function(){
 	jQuery('".str_replace("\n", "", data_entry_helper::outputAttribute($sample_attributes[$args['temperature_attr_id']], $defNRAttrOptions))."').appendTo(newForm);
 	jQuery('".str_replace("\n", "", data_entry_helper::outputAttribute($sample_attributes[$args['wind_attr_id']], $defNRAttrOptions))."').appendTo(newForm);
 	jQuery('".str_replace("\n", "", data_entry_helper::outputAttribute($sample_attributes[$args['shade_attr_id']], array_merge($defNRAttrOptions, array('default' => '-1'))))."').appendTo(newForm);
-	newDeleteButton.click(function() {
+	newDeleteButton.on('click', function() {
 		var container = $(this).parent().parent();
 		jQuery('#cc-3-delete-session').find('[name=sample\\:id]').val(container.find('[name=sample\\:id]').val());
 		jQuery('#cc-3-delete-session').find('[name=sample\\:date]').val(container.find('[name=sample\\:date]').val());
@@ -2068,19 +2068,19 @@ validateSessionsPanel = function(){
 	populateSessionSelect();
 	return true;
 };
-jQuery('#cc-3-valid-button').click(function(){
+jQuery('#cc-3-valid-button').on('click', function(){
 	if(!validateAndSubmitOpenSessions()) return;
 	jQuery('#cc-3').foldPanel();
 	jQuery('#cc-4').showPanel();
 	populateSessionSelect();
 });
-jQuery('#cc-3-add-button').click(function(){
+jQuery('#cc-3-add-button').on('click', function(){
 	if(!validateAndSubmitOpenSessions()) return;
 	addSession();
 	checkSessionButtons();
 });
 
-jQuery('.mod-button').click(function() {
+jQuery('.mod-button').on('click', function() {
 	// first close all the other panels, ensuring any data is saved.
 	if(!validateCollectionPanel() || !validateStationPanel() || !validateSessionsPanel() || !validateInsectPanel())
 		return;
@@ -2215,11 +2215,11 @@ insectIDstruc = {
 	taxaList: insectTaxa
 };
 
-jQuery('#insect-id-button').click(function(){
+jQuery('#insect-id-button').on('click', function(){
 	idButtonPressed(insectIDstruc);
 });
 
-jQuery('#insect-id-cancel').click(function(){
+jQuery('#insect-id-cancel').on('click', function(){
 	pollReset(insectIDstruc);
 });
 jQuery('#insect-id-cancel').hide();
@@ -2402,7 +2402,7 @@ addNewToPhotoReel = function(occId){
 	var container = jQuery('[occId='+occId+']');
 	if(container.length == 0) {
 		container = jQuery('[occId=new]');
-		container.attr('occId', occId.toString()).click(function () {
+		container.attr('occId', occId.toString()).on('click', function () {
 		    setInsect(occId)});
 	}
 	$.getJSON(\"".$svcUrl."/data/occurrence_image\" +
@@ -2428,7 +2428,7 @@ addNewToPhotoReel = function(occId){
 addExistingToPhotoReel = function(occId){
 	var container = jQuery('[occId='+occId+']');
 	if(container.length == 0)
-		container = jQuery('<div/>').addClass('thumb').insertBefore('.blankPhoto').attr('occId', occId.toString()).click(function () {
+		container = jQuery('<div/>').addClass('thumb').insertBefore('.blankPhoto').attr('occId', occId.toString()).on('click', function () {
 		    setInsect(occId)});
 	else
 		container.empty();
@@ -2506,7 +2506,7 @@ setNoInsect = function(){
 	clearInsect();
 };
 
-jQuery('.blankPhoto').click(setNoInsect);
+jQuery('.blankPhoto').on('click', setNoInsect);
 
 // TODO separate photoreel out into own js
 validateInsect = function(){
@@ -2554,9 +2554,9 @@ validateInsect = function(){
 	return true;
 }
 
-$('#cc-4-valid-insect-button').click(validateInsect);
+$('#cc-4-valid-insect-button').on('click', validateInsect);
 
-$('#cc-4-delete-insect-button').click(function() {
+$('#cc-4-delete-insect-button').on('click', function() {
 	var container = $(this).parent().parent();
 	jQuery('#cc-4-delete-insect').find('[name=occurrence\\:id]').val(jQuery('#cc-4-main-form').find('[name=occurrence\\:id]').val()).removeAttr('disabled');
 	jQuery('#cc-4-delete-insect').find('[name=occurrence\\:sample_id]').val(jQuery('#cc-4-main-form').find('[name=occurrence\\:sample_id]').val()).removeAttr('disabled');
@@ -2593,7 +2593,7 @@ $('#cc-4-delete-insect').ajaxForm({
   		}
 });
 
-$('#cc-4-valid-photo-button').click(function(){
+$('#cc-4-valid-photo-button').on('click', function(){
 	if(!validateInsect()) return;
 	jQuery('#cc-4').foldPanel();
 	jQuery('#cc-5').showPanel();
@@ -2695,7 +2695,7 @@ $('#cc-5-collection').ajaxForm({
   			jQuery('.loading-button').removeClass('loading-button');
   		}
 });
-$('#cc-5-complete-collection').click(function(){
+$('#cc-5-complete-collection').on('click', function(){
 	jQuery('#cc-5-complete-collection').addClass('loading-button');
 	jQuery('#cc-2,#cc-3,#cc-4,#cc-5').hidePanel();
 	jQuery('.reinit-button').hide();

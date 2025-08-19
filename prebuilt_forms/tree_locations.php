@@ -611,7 +611,7 @@ deleteSite = function(){
     window.location='".url($args['sites_list_path'])."';
   };
 };
-$('#delete-site').click(deleteSite);
+$('#delete-site').on('click', deleteSite);
 ";
     }
     return $r;

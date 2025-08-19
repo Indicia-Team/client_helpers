@@ -1045,7 +1045,7 @@ HTML;
 </button>
 
 HTML;
-      data_entry_helper::$javascript .= "$('#delete-button').click(function(e) {
+      data_entry_helper::$javascript .= "$('#delete-button').on('click', function(e) {
         if (!confirm(\"Are you sure you want to delete this taxon?\")) {
           e.preventDefault();
           return FALSE;

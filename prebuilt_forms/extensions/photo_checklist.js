@@ -246,7 +246,7 @@ jQuery(document).ready(function($) {
       setPanelStyle(panel);
     });
     // Hook up the delete buttons.
-    $(sectionBody).find('.delete-photo').click(function(e) {
+    $(sectionBody).find('.delete-photo').on('click', function(e) {
       var panel = $(e.currentTarget).closest('.photo-checklist-item');
       var img = panel.find('img');
       var a = panel.find('a.photo-popup');
