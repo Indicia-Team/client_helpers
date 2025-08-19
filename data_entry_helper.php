@@ -4383,7 +4383,7 @@ HTML;
         $r .= "<input type=\"hidden\" name=\"scSpatialRefPrecisionAttrId\" value=\"$options[spatialRefPrecisionAttrId]\" />";
       }
       $r .= self::get_help_text($options, 'after');
-      self::$javascript .= "$('#$options[id]').find('input,select').keydown(keyHandler);\n";
+      self::$javascript .= "$('#$options[id]').find('input,select').on('keydown', keyHandler);\n";
       self::speciesChecklistFilterPopup($options);
       if ($options['subSamplePerRow']) {
         // Output a hidden block to contain sub-sample hidden input values.

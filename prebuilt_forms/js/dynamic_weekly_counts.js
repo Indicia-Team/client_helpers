@@ -12,17 +12,17 @@ jQuery(document).ready(function($) {
     $.each($(row).find('td input'), function(idx, input) {
       if (parseInt($(input).val(), 10) > max) {
         max=parseInt($(input).val(), 10);
-      } 
+      }
     });
     $(row).find('.max').html(max);
   }
-  
+
   function totaliseCol(cell) {
     $('.species-totals .' + cell.className).html($('.' + cell.className + ' input').filter(function() {
       return parseInt($(this).val(), 10) > 0;
     }).length);
   }
-  
+
   $('.count-input').change(function(e) {
     var data={}, ctrl = e.target, cell = $(ctrl).parents('td')[0], row = $(ctrl).parents('tr')[0];
     // strip non-numerics
@@ -36,7 +36,7 @@ jQuery(document).ready(function($) {
     totaliseCol(cell);
     totaliseRow(row);
   });
-  
+
   // fill in initial totals
   $.each($('#weekly-counts-grid tbody tr'), function (idx, row) {
     totaliseRow(row);
@@ -46,7 +46,7 @@ jQuery(document).ready(function($) {
       totaliseCol(cell);
     }
   });
-  
+
   /*
    * A keyboard event handler for the grid.
    */
@@ -92,26 +92,26 @@ jQuery(document).ready(function($) {
           deltaX = 1;
         }
         break;
-      case 40: // down. 
+      case 40: // down.
         if (rowIndex < rows.length-1) {
           deltaY = 1;
         }
         break;
-    }    
+    }
     if (deltaX !== 0) {
       var inputs = $(cell).closest('table').find(':input:visible');
       // timeout necessary to allow keyup to occur on correct control
       setTimeout(function() {
         inputs.eq(inputs.index(ctrl) + deltaX).focus();
       }, 200);
-      e.preventDefault();      
+      e.preventDefault();
       return false;
     }
     if (deltaY !== 0) {
       $(rows[rowIndex+deltaY]).find('td.' + cell.className + ' input').focus();
     }
   };
-  
-  $('#weekly-counts-grid').keydown(keyHandler);
+
+  $('#weekly-counts-grid').on('keydown', keyHandler);
 
 });

@@ -459,7 +459,7 @@ jQuery(window).load(function($) {
         delete extraParams.taxon_list_id;
       }
     }
-    $(newRow).find('input,select').keydown(keyHandler);
+    $(newRow).find('input,select').on('keydown', keyHandler);
     var autocompleteSettings = getAutocompleteSettings(extraParams, gridId);
     if ($('#' + selectorId).width()<200) {
       autocompleteSettings.width = 200;

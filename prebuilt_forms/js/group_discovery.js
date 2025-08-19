@@ -121,7 +121,7 @@ jQuery(document).ready(function($) {
   }
 
   // Return key or Go button click does a search.
-  $('#group-search').keyup(function(e) {
+  $('#group-search').on('keyup', function(e) {
     if ((e.keyCode || e.which) == 13) {
       newSearch();
     }

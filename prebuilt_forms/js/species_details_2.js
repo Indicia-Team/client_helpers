@@ -77,12 +77,12 @@ jQuery(document).ready(function($) {
   $('#brc-hectad-map-thresh2').change(e => {
     thresholdChanged(2);
   })
-  $('#brc-hectad-map-thresh1').keyup(e => {
+  $('#brc-hectad-map-thresh1').on('keyup', e => {
     if ($('#brc-hectad-map-thresh1').val().length > 3) {
       thresholdChanged(1);
     }
   })
-  $('#brc-hectad-map-thresh2').keyup(e => {
+  $('#brc-hectad-map-thresh2').on('keyup', e => {
     if ($('#brc-hectad-map-thresh2').val().length > 3) {
       thresholdChanged(2);
     }

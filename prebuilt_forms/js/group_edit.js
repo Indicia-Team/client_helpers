@@ -53,7 +53,7 @@ jQuery(document).ready(function($) {
   /**
    * Hook the email check handler to the enter key on the search input box for members/admins
    */
-  $('#groups_user\\:user_id\\:search\\:person_name_unique, #groups_user\\:admin_user_id\\:search\\:person_name_unique').keyup(function(e) {
+  $('#groups_user\\:user_id\\:search\\:person_name_unique, #groups_user\\:admin_user_id\\:search\\:person_name_unique').on('keyup', function(e) {
     var field;
     if ((e.keyCode || e.which) == 13) {
       field = this.id.match(/admin_user_id/) ? 'admin_user_id' : 'user_id';

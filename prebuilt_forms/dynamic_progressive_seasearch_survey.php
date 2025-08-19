@@ -1818,7 +1818,7 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
       // If options contain a help text, output it at the end if that is the preferred position
       $options['helpTextClass'] = (isset($options['helpTextClass'])) ? $options['helpTextClass'] : 'helpTextLeft';
       $r = $beforegrid.$grid;
-      data_entry_helper::$javascript .= "$('#".$options['id']."').find('input,select').keydown(keyHandler);\n";
+      data_entry_helper::$javascript .= "$('#".$options['id']."').find('input,select').on('keydown', keyHandler);\n";
       data_entry_helper::speciesChecklistFilterPopup($options);
       if ($options['subSamplePerRow']) {
         // output a hidden block to contain sub-sample hidden input values.

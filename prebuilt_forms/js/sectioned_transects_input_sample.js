@@ -116,7 +116,7 @@ function loadSpeciesList() {
         $('tfoot .col-total.col-'+(idx+1)).html(section.total);
       });
 
-      $('.count-input').keydown(function (evt) {
+      $('.count-input').on('keydown', function (evt) {
         var targetRow = [], code, parts=evt.target.id.split(':');
         code=parts[2];
 
