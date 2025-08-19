@@ -1217,7 +1217,7 @@ indiciaData.rowIdToReselect = false;
       });
     });
 
-    $('#verification-grid').find('tbody').dblclick(function () {
+    $('#verification-grid').find('tbody').on('dblclick', function () {
       var extent;
       var zoom;
       $.each(indiciaData.mapdiv.map.editLayer.features, function() {
