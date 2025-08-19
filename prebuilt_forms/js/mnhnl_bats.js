@@ -92,7 +92,7 @@ bindSpeciesAutocomplete = function(selectorID, url, gridId, lookupListId, readAu
         return item.taxon;
       }
   });
-  ctrl.bind('result', handleSelectedTaxon);
+  ctrl.on('result', handleSelectedTaxon);
   setTimeout(function() { $('#' + ctrl.attr('id')).focus(); });
 }
 

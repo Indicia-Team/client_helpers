@@ -561,7 +561,7 @@ polygonDraw = null;
 editControl = null;
 
 mapInitialisationHooks.push(function(mapdiv) {
-	$('#imp-sref').unbind('change');
+	$('#imp-sref').off('change');
 	editLayer=mapdiv.map.editLayer;
     var nav=new OpenLayers.Control.Navigation({displayClass: \"olControlNavigation\", \"title\":mapdiv.settings.hintNavigation+((!mapdiv.settings.scroll_wheel_zoom || mapdiv.settings.scroll_wheel_zoom===\"false\")?'': mapdiv.settings.hintScrollWheel)});
 	editControl = new OpenLayers.Control.Panel({allowDepress: false, 'displayClass':'olControlEditingToolbar'});

@@ -1505,7 +1505,7 @@ JS;
       //open the report, note that data[0] varies depending on whether we are using a pie or bar. But we have
       //saved the data to the array twice already to handle this
       // Note the data[0] is a pie label, or a 1 indexed bar index.
-      self::$javascript .= "$('#$options[id]').bind('jqplotDataClick',
+      self::$javascript .= "$('#$options[id]').on('jqplotDataClick',
   function(ev, seriesIndex, pointIndex, data) {
     var path='$options[linkToReportPath]';
     var rowId = " . ($options['chartType']==='pie' ? 'data[0]' : 'data[0]-1') . ";
@@ -1522,13 +1522,13 @@ JS;
 );\n";
     }
     self::$javascript .= <<<JS
-$('#$options[id]').bind('jqplotDataHighlight', function(ev, seriesIndex, pointIndex, data) {
+$('#$options[id]').on('jqplotDataHighlight', function(ev, seriesIndex, pointIndex, data) {
   $('table.jqplot-table-legend td').removeClass('highlight');
   $('table.jqplot-table-legend td').filter(function() {
     return this.textContent == data[0];
   }).addClass('highlight');
 });
-$('#$options[id]').bind('jqplotDataUnhighlight', function(ev, seriesIndex, pointIndex, data) {
+$('#$options[id]').on('jqplotDataUnhighlight', function(ev, seriesIndex, pointIndex, data) {
   $('table.jqplot-table-legend td').removeClass('highlight');
 });
 

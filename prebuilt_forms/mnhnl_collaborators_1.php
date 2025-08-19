@@ -505,7 +505,7 @@ locationChange = function(obj){
 		});
   }
 };
-jQuery('#imp-location').unbind('change');
+jQuery('#imp-location').off('change');
 jQuery('#imp-location').change(function(){
 	locationChange(this);
 });

@@ -352,7 +352,7 @@ var _bindSpeciesGridControls = function(row,rowNum,options){
       jQuery(this).css('width',jQuery(this).find('label').css('width'));
   });
   // normal validation is taken from the database.
-  row.find('input,select').bind('focus', handleFocus);
+  row.find('input,select').on('focus', handleFocus);
   if(typeof options.rowControl != 'undefined'){
     function setRowControl(value,row){
       for(var i = 0; i < options.rowControl.controls.length; i++){
@@ -539,7 +539,7 @@ function bindSpeciesAutocomplete(options){
         return item.taxon;
       }
   });
-  ctrl.bind('result', handleSelectedTaxon);
+  ctrl.on('result', handleSelectedTaxon);
   setTimeout(function() { $('#' + ctrl.attr('id')).focus(); });
 
   $('#'+options.gridId+' tbody').find('.first').each(function(idx,elem){_addExistingSpeciesGridRow(idx+1,elem,options);});
@@ -726,7 +726,7 @@ function bindSupportingSpeciesAutocomplete(field, options){
       },
       formatItem: function(item) { return item.taxon; }
   });
-  ctrl.bind('result', handleSelectedTaxon);
+  ctrl.on('result', handleSelectedTaxon);
   setTimeout(function() { ctrl.focus(); });
 }
 

@@ -1913,7 +1913,7 @@ loadCollection = function(id, index){
 					var tallest = 0;
 					group.each(function(){ tallest = Math.max($(this).height(), tallest); });
 					group.each(function(){ $(this).height(Math.max($(this).height(), tallest)); }); // have synchronicity problems.
-					$(this).unbind(event);
+					$(this).off(event);
 				});
 			}}
 	    }));

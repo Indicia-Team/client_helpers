@@ -332,8 +332,8 @@ jQuery(window).load(function($) {
       var taxonCell, checkbox, rowId, row, label, subSpeciesCellId, regex, deleteAndEditHtml;
       // on picking a result in the autocomplete, ensure we have a spare row
       // clear the event handlers
-      $(event.target).unbind('result', handleSelectedTaxon);
-      $(event.target).unbind('return', returnPressedInAutocomplete);
+      $(event.target).off('result', handleSelectedTaxon);
+      $(event.target).off('return', returnPressedInAutocomplete);
       taxonCell=event.target.parentNode;
       //Create edit icons for taxon cells. Only add the edit icon if the user has this functionality available on the edit tab.
       //Also create Notes and Delete icons when required
@@ -467,8 +467,8 @@ jQuery(window).load(function($) {
     // Attach auto-complete code to the input
     // @todo Update to use taxa_search service
     ctrl = $('#' + selectorId).autocomplete(url+'/cache_taxon_searchterm', autocompleteSettings);
-    ctrl.bind('result', handleSelectedTaxon);
-    ctrl.bind('return', returnPressedInAutocomplete);
+    ctrl.on('result', handleSelectedTaxon);
+    ctrl.on('return', returnPressedInAutocomplete);
     // Check that the new entry control for taxa will remain in view with enough space for the autocomplete drop down
     if (scroll && ctrl.offset().top > $(window).scrollTop() + $(window).height() - 180) {
       var newTop = ctrl.offset().top - $(window).height() + 180;

@@ -3609,7 +3609,7 @@ hook_setSref = function(geom){ // geom is in map projection.
       foreach($attrList as $filterAttr){
         $locAttrText[] ="  {'id':'".$filterAttr['id']."', 'shape':".($filterAttr['shape']?'true':'false')."}";
       }
-      data_entry_helper::$javascript .="    $(this).unbind(event);\n  });\n};\nlocation_attrs = [".(implode(",\n",$locAttrText))."];";
+      data_entry_helper::$javascript .="    $(this).off(event);\n  });\n};\nlocation_attrs = [".(implode(",\n",$locAttrText))."];";
 
       if($includeCommune)
         data_entry_helper::$javascript .="jQuery('[name=locAttr\\:$communeAttr],[name^=locAttr\\:$communeAttr\\:]').attr('readonly','readonly');\n";

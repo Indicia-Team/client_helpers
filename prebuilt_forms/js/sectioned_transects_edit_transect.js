@@ -105,7 +105,7 @@ confirmSelectSection = function(section, doFeature, withCancel) {
           dialog.dialog('close');
           $('#section-form').submit(); // this is synchronous
           selectSection(section, doFeature);
-          $(this).unbind(event);
+          $(this).off(event);
         },
       "No":  function() {
           dialog.dialog('close');
