@@ -396,7 +396,7 @@ class mobile_entry_helper extends data_entry_helper {
           html += '</select>';
           // Add a change event to the select.
           var obj = $(html);
-          obj.change(function(evt) {
+          obj.on('change', function(evt) {
             $('#fld-$safeId').val($(evt.target).val());
             pickHierarchySelectNode($(evt.target));
           });
@@ -409,7 +409,7 @@ class mobile_entry_helper extends data_entry_helper {
       }
     }
 
-    $('#$safeId').change(function(evt) {
+    $('#$safeId').on('change', function(evt) {
       $('#fld-$safeId').val($(evt.target).val());
       pickHierarchySelectNode($(evt.target));
     });

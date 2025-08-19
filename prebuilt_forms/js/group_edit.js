@@ -1,6 +1,6 @@
 jQuery(document).ready(function($) {
 
-  $('#group\\:private_records').change(function() {
+  $('#group\\:private_records').on('change', function() {
     if ($('#group\\:private_records').attr('checked')) {
       $('#release-warning').hide();
     } else {
@@ -76,7 +76,7 @@ jQuery(document).ready(function($) {
       $('#group\\:view_full_precision').removeAttr('disabled');
     }
   }
-  $('input[name=group\\:joining_method],input[name=group\\:implicit_record_inclusion]').change(checkViewSensitiveAllowed);
+  $('input[name=group\\:joining_method],input[name=group\\:implicit_record_inclusion]').on('change', checkViewSensitiveAllowed);
   checkViewSensitiveAllowed();
 
   // Check all checkbox functionality
@@ -97,9 +97,9 @@ jQuery(document).ready(function($) {
 
   updateCheckallBoxState();
 
-  $('.parent-checkbox').change(updateCheckallBoxState);
+  $('.parent-checkbox').on('change', updateCheckallBoxState);
 
-  $('#check-all-groups').change(function() {
+  $('#check-all-groups').on('change', function() {
     $('#ctrl-wrap-check-all-groups').css('opacity', 1);
     if (this.checked) {
       $('.parent-checkbox').attr('checked', 'checked');
@@ -163,7 +163,7 @@ jQuery(document).ready(function($) {
   /**
    * Container activities disallow certain form options.
    */
-  $('#group\\:container').change(function() {
+  $('#group\\:container').on('change', function() {
     const joinRadios = $('[name="group:joining_method"]');
     if ($('#group\\:container').is(':checked')) {
       let warnings = [];

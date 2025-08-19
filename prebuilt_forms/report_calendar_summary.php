@@ -1453,7 +1453,7 @@ class iform_report_calendar_summary implements PrebuiltFormInterface {
     // their values to be carried over.
     $prop = ($checkBox) ? 'attr("checked")' : 'val()';
     data_entry_helper::$javascript .="
-jQuery('#".$ctrlid."').change(function(){
+jQuery('#".$ctrlid."').on('change', function(){
   var dialog = $('<p>Please wait whilst the next set of data is loaded.</p>').dialog({ title: 'Loading...', buttons: { 'OK': function() { dialog.dialog('close'); }}});
   // no need to update other controls on the page, as we jump off it straight away.
   window.location = rebuild_page_url(pageURI, \"".$urlparam."\", jQuery(this).$prop);

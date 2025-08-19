@@ -29,7 +29,7 @@ jQuery(document).ready(function($) {
   } else {
     $('#ctrl-wrap-occurrence-taxa_taxon_list_id').hide()
   }
-  $('input[name="species-group-switch"]').change(function() {
+  $('input[name="species-group-switch"]').on('change', function() {
     const spgrp = $('input[name="species-group-switch"]:checked').val()
     sessionStorage.setItem('bas-atlas-spgrp', spgrp)
     if (spgrp === 'species') {
@@ -796,7 +796,7 @@ jQuery(document).ready(function($) {
     //$radio.css('margin-left', 0)
     if (checked) $radio.prop('checked', true)
 
-    $radio.change(function (e) {
+    $radio.on('change', function (e) {
       // Store value in local storage
       sessionStorage.setItem(ss, val)
       // Callbacks

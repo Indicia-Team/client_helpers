@@ -241,7 +241,7 @@ jQuery(document).ready(function($) {
       });
     }, 500);
     // Set a class to visually indicate which photo panes have a count value.
-    $(sectionBody).find('input[type="number"]').change(function(e) {
+    $(sectionBody).find('input[type="number"]').on('change', function(e) {
       var panel = $(e.currentTarget).closest('.photo-checklist-item');
       setPanelStyle(panel);
     });
@@ -337,7 +337,7 @@ jQuery(document).ready(function($) {
    * If photo_checklist_by_location_attr control in use.
    */
   if (indiciaData.useLocAttrToPopulatePhotoChecklist) {
-    $('#imp-location').change(function() {
+    $('#imp-location').on('change', function() {
       if ($('#imp-location').val() !== '') {
         // Find the selected location's appropriate attribute value.
         request = indiciaData.read.url + 'index.php/services/data/location_attribute_value?mode=json' +
@@ -375,7 +375,7 @@ jQuery(document).ready(function($) {
         $('#imp-location').val($('#imp-location option[data-centroid_sref="' + $('#imp-sref').val() + '"]').val());
       }
       // Force initial entry to load list.
-      $('#imp-location').change();
+      $('#imp-location').trigger('change');
     });
   }
 

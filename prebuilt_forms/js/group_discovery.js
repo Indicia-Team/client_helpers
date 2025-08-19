@@ -129,6 +129,6 @@ jQuery(document).ready(function($) {
   $('#group-search-go').on('click', newSearch);
 
   // Changing the filter mode also re-triggers search.
-  $('input[type=radio][name=group-scope]').change(newSearch);
+  $('input[type=radio][name=group-scope]').on('change', newSearch);
 
 });

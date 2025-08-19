@@ -128,7 +128,7 @@ $indicia_templates = [
   'autocomplete' => '<input type="hidden" class="hidden" id="{id}" name="{fieldname}" value="{default|escape}" />' .
       '<input id="{inputId}" name="{inputId}" type="text" value="{defaultCaption|escape}" {class} {disabled} {title} {attribute_list} data-hiddenvalueinput="{id}" />' . "\n",
   'autocomplete_javascript' => "
-$('input#{escaped_input_id}').change(function() {
+$('input#{escaped_input_id}').on('change', function() {
   if ($('input#{escaped_id}').data('set-for') !== $('input#{escaped_input_id}').val()) {
     $('input#{escaped_id}').val('');
   }

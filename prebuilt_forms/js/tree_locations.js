@@ -417,7 +417,7 @@ $(document).ready(function() {
     var parts = evt.target.id.split('-');
     confirmSelectTree(parts[parts.length-1], true, true); // click on control
   });
-  $('#tree-form').find('input,textarea,select').change(function(evt) {
+  $('#tree-form').find('input,textarea,select').on('change', function(evt) {
 	  treeDetailsChanged = true;
   });
 

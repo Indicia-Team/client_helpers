@@ -518,7 +518,7 @@ mapInitialisationHooks.push(function (div) {
     </form>
   </div>';
         data_entry_helper::$late_javascript .= "
-$('#filter_date_from').change(function() {
+$('#filter_date_from').on('change', function() {
   $('#downloads form [name=params]').each(function(idx, elem) {
     var params = JSON.parse($(elem).val()),
         newValue = $('#filter_date_from').val();
@@ -530,7 +530,7 @@ $('#filter_date_from').change(function() {
     $(elem).val(JSON.stringify(params));
   });
 });
-$('#filter_date_to').change(function() {
+$('#filter_date_to').on('change', function() {
   $('#downloads form [name=params]').each(function(idx, elem) {
     var params = JSON.parse($(elem).val()),
         newValue = $('#filter_date_to').val();
@@ -542,7 +542,7 @@ $('#filter_date_to').change(function() {
     $(elem).val(JSON.stringify(params));
   });
 });
-$('#filter_date_from,#filter_date_to').change();
+$('#filter_date_from,#filter_date_to').trigger('change');
 ";
       }
       // Create Map
@@ -1321,10 +1321,10 @@ setAtlasStatus = function() {
       }
   }
 };
-jQuery(\"#occ-territorial\").change(setAtlasStatus);
+jQuery(\"#occ-territorial\").on('change', setAtlasStatus);
 if($.browser.msie) {
     jQuery(\"#occ-territorial\").on('click', function() {
-        $(this).change();
+        $(this).trigger('change');
     });
 }
 \n";
@@ -1412,7 +1412,7 @@ jQuery('#imp-location').each(function(){
   locationChange(this);
 });
 jQuery('#imp-location').off('change');
-jQuery('#imp-location').change(function(){
+jQuery('#imp-location').on('change', function(){
   locationChange(this);
 });
 var selected = indiciaFns.activeTab($('#controls'));

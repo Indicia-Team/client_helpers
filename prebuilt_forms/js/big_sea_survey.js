@@ -15,7 +15,7 @@ jQuery(document).ready(function($) {
     }
   });
 
-  $('#entry_form :input').change(function(e) {
+  $('#entry_form :input').on('change', function(e) {
     // imp-sref gets changed on page load. So let's ignore that change.
     if (e.currentTarget.id!=='imp-sref') {
       currentPageChanged = true;

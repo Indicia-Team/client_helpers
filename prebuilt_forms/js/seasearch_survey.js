@@ -120,7 +120,7 @@ jQuery(document).ready(function($) {
               if (maxDepth) {
                 validationClass = validationClass.replace('}', ', max:'+maxDepth+'}');
               }
-              $(this).change(correctHabitatDepthFields);
+              $(this).on('change', correctHabitatDepthFields);
 
               /*bsl = $('#smpAttr\\:'+indiciaData.habitatMinDepthSLAttr).val();
               if (bsl.match(/^\d+(\.\d+)?$/)) {
@@ -244,7 +244,7 @@ jQuery(document).ready(function($) {
     }
   });
 
-  getEl('smpAttr:' + indiciaData.driftAttrId).find('input').change(function() {
+  getEl('smpAttr:' + indiciaData.driftAttrId).find('input').on('change', function() {
     if ($('label[for='+getEl('smpAttr:' + indiciaData.driftAttrId).find('input:checked').attr('id').replace(/:/g,'\\:')+']').html()==='Yes') {
       $('p.drift-only').css('opacity',1);
     } else {
@@ -349,9 +349,9 @@ jQuery(document).ready(function($) {
     updateHabitatDepthValidation();
   }
 
-  getEl(indiciaData.depthCDAttrName).change(cdCorrectionUpdated);
-  getEl(indiciaData.depthMinLimitAttrNames[0]).change(diveDepthUpdated);
-  getEl(indiciaData.depthMaxLimitAttrNames[0]).change(diveDepthUpdated);
+  getEl(indiciaData.depthCDAttrName).on('change', cdCorrectionUpdated);
+  getEl(indiciaData.depthMinLimitAttrNames[0]).on('change', diveDepthUpdated);
+  getEl(indiciaData.depthMaxLimitAttrNames[0]).on('change', diveDepthUpdated);
 
   // Add the Dorset Integrated Seabed layers
   function addDorisLayers(div) {

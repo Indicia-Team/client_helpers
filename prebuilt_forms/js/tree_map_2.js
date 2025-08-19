@@ -136,7 +136,7 @@ var rgbvalue, applyJitter, setToDate, loadYear;
       $(iTM2Opts.rhsControlSelector).val(rhs);
     } else
       $(iTM2Opts.rhsControlSelector).val('');
-    $(iTM2Opts.rhsControlSelector).change();
+    $(iTM2Opts.rhsControlSelector).trigger('change');
   };
 
   var calculateMinAndMax = function () {
@@ -288,13 +288,13 @@ var rgbvalue, applyJitter, setToDate, loadYear;
 
     // Field change events:
 
-    $(iTM2Opts.yearControlSelector).change(function (evt) {
+    $(iTM2Opts.yearControlSelector).on('change', function (evt) {
       var year = $(evt.target).val();
       stopAnimation();
       loadYear(year, 'lh');
     });
 
-    $(iTM2Opts.speciesControlSelector).change(function (evt) {
+    $(iTM2Opts.speciesControlSelector).on('change', function (evt) {
       stopAnimation();
       enableEventControlOptions();
       buildRhsControlOptions();
@@ -302,14 +302,14 @@ var rgbvalue, applyJitter, setToDate, loadYear;
       resetMap();
     });
 
-    $(iTM2Opts.eventControlSelector).change(function (evt) {
+    $(iTM2Opts.eventControlSelector).on('change', function (evt) {
       stopAnimation();
       buildRhsControlOptions();
       calculateMinAndMax();
       resetMap();
     });
 
-    $(iTM2Opts.rhsControlSelector).change(function (evt) {
+    $(iTM2Opts.rhsControlSelector).on('change', function (evt) {
       // we are assumming that map and map2 are identical
       // This could be animated.
       var centre = new OpenLayers.LonLat(iTM2Opts.long, iTM2Opts.lat);
@@ -401,7 +401,7 @@ var rgbvalue, applyJitter, setToDate, loadYear;
         $(iTM2Opts.lastButtonSelector).button({text: false, icons: {primary: 'ui-icon-seek-end'}});
       }
     } else {
-      $(iTM2Opts.timeControlSelector).change(function (event, ui) {
+      $(iTM2Opts.timeControlSelector).on('change', function (event, ui) {
         setToDate($(iTM2Opts.timeControlSelector).val());
       });
     }
@@ -432,7 +432,7 @@ var rgbvalue, applyJitter, setToDate, loadYear;
         }});
     } else {
       $(iTM2Opts.dotControlSelector).val(iTM2Data.dotSize);
-      $(iTM2Opts.dotControlSelector).change(function (event, ui) {
+      $(iTM2Opts.dotControlSelector).on('change', function (event, ui) {
         iTM2Data.dotSize = $(iTM2Opts.dotControlSelector).val();
         if ($(iTM2Opts.primaryMapSelector)[0].map.sitesLayer.features.length > 0) {
           var features = $(iTM2Opts.primaryMapSelector)[0].map.sitesLayer.features;

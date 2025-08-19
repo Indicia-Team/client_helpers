@@ -529,7 +529,7 @@ class data_entry_helper extends helper_base {
       $escaped = str_replace(':', '\\\\:', $options['rowCountControl']);
       data_entry_helper::$javascript .=
         "$('#$escaped').val($rowCount);
-$('#$escaped').change(function(e) {
+$('#$escaped').on('change', function(e) {
   changeComplexGridRowCount('$escaped', '$attrTypeTag', '$attrId');
 });\n";
     }
@@ -1819,7 +1819,7 @@ JS;
       });
       html += '</select>';
       obj=$(html);
-      obj.change(function(evt) {
+      obj.on('change', function(evt) {
         $(evt.target).closest('.hierarchical-select-cntr').find('input[type="hidden"]').val($(evt.target).val());
         pickHierarchySelectNode($(evt.target),true);
       });
@@ -1827,7 +1827,7 @@ JS;
     }
   }
 
-  $('#$safeId').change(function(evt) {
+  $('#$safeId').on('change', function(evt) {
     $(evt.target).closest('.hierarchical-select-cntr').find('input[type="hidden"]').val($(evt.target).val());
     pickHierarchySelectNode($(evt.target),true);
   });
@@ -1859,7 +1859,7 @@ JS;
   thisselect = $('#$safeId');
   while (tree.length>0) {
     toselect = tree.pop();
-    thisselect.val(toselect).change();
+    thisselect.val(toselect).trigger('change');
     thisselect = thisselect.next();
   }
 }) ();
@@ -2116,7 +2116,7 @@ JS;
     if ($options['fetchLocationAttributesIntoSample'] &&
         function_exists('hostsite_get_user_field') && ($createdById = hostsite_get_user_field('indicia_user_id'))) {
       self::$javascript .= <<<JS
-$('#$escapedId').change(function() {
+$('#$escapedId').on('change', function() {
   indiciaFns.locationControl.fetchLocationAttributesIntoSample('$options[id]', $createdById);
 });
 
@@ -2129,7 +2129,7 @@ JS;
       $ctrlNameSafe = str_replace(':', '\\\\:', $options['id']);
       self::$javascript .= <<<JS
 indiciaData.langMoreThanOneLocationMatch = '$langMoreThanOneLocationMatch';
-$('#imp-geom').change(function() {
+$('#imp-geom').on('change', function() {
   indiciaFns.locationControl.autoFillLocationFromLocationTypeId('$options[id]', $options[autofillFromLocationTypeId]);
 });
 $('#$ctrlNameSafe\\\\:name').addClass('validateLinkedLocationAgainstGridSquare');
@@ -3210,7 +3210,7 @@ JS;
       $options['defaultCaption'] = $r[0]['taxon'];
     }
     if ($options['outputPreferredNameToSelector']) {
-      self::$javascript .= "  $('#occurrence\\\\:taxa_taxon_list_id').change(function(evt, data) {
+      self::$javascript .= "  $('#occurrence\\\\:taxa_taxon_list_id').on('change', function(evt, data) {
         if (typeof data!=='undefined') {
           $('$options[outputPreferredNameToSelector]').html(data.preferred_taxon);
         }
@@ -6708,10 +6708,10 @@ var doSensitivityChange = function(evt) {
     $('#sensitive-blur').val('');
   }
 };
-$('#sensitive-checkbox').change(doSensitivityChange);
+$('#sensitive-checkbox').on('change', doSensitivityChange);
 $('#sensitive-checkbox').attr('checked', $('#sensitive-blur').val()==='' ? false : true);
 doSensitivityChange();
-$('#sensitive-blur').change(function() {
+$('#sensitive-blur').on('change', function() {
   if ($('#sensitive-blur').val()==='') {
     $('#sensitive-checkbox').attr('checked', false);
     doSensitivityChange();
@@ -7739,7 +7739,7 @@ HTML;
       $showHideFn = 'show_hide_other_' . str_replace(':', '', $options['otherValueAttrId']) . '()';
       //Set the visibility of the "Other" textbox based on the checkbox when the page loads, but also when the checkbox changes.
       self::$javascript .= $showHideFn . ';
-        $("input[name='.$mainAttributeNameSafe.']").change(function() {
+        $("input[name='.$mainAttributeNameSafe.']").on("change", function() {
           ' . $showHideFn . ';
         });
       ';

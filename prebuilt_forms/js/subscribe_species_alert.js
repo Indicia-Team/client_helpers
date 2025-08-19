@@ -27,7 +27,7 @@ jQuery(document).ready(function($) {
   // location autocomplete mode as automated if the location picker control is
   // a select.
   if ($('#imp-location\\:name').length > 0) {
-    $('#location_type').change(function(e) {
+    $('#location_type').on('change', function(e) {
       if ($('#location_type').val()) {
         $('#imp-location\\:name').setExtraParams({location_type_id: $('#location_type').val()});
         $('#imp-location\\:name').prop('disabled', false);

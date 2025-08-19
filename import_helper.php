@@ -476,7 +476,7 @@ HTML;
          "<br/><input type='checkbox' name='RememberAll' id='RememberAll' value='1' title='" .
          lang::get('Tick all boxes to remember every column mapping next time you import.') . "'$checkedRememberAll/></th>";
       self::$javascript .= "
-      $('#RememberAll').change(function() {
+      $('#RememberAll').on('change', function() {
         if (this.checked) {
           $(\".rememberField\").attr(\"checked\",\"checked\")
         } else {

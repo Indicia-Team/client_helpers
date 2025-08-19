@@ -658,7 +658,7 @@ indiciaFns.on('change', '.precise-date-picker', {}, function(e) {
   }
 });
 if($('#C1\\\\:sample\\\\:date').val() != '') {
-  $('.precise-date-picker').change();
+  $('.precise-date-picker').trigger('change');
 }\n";
     }
     unset(data_entry_helper::$default_validation_rules['sample:date']);
@@ -882,7 +882,7 @@ indiciaData.indiciaSvc = '".data_entry_helper::$base_url."';\n";
       }
       if (!$subSampleId && $i) {
         $r .= "<p>".lang::get('You must enter the date before you can enter any further information.').'</p>';
-        data_entry_helper::$javascript .= "$('#ctrl-wrap-C" . ($i+1) . "-sample-date .precise-date-picker' ).change(function(){
+        data_entry_helper::$javascript .= "$('#ctrl-wrap-C" . ($i+1) . "-sample-date .precise-date-picker' ).on('change', function(){
   myFieldset = $(this).addClass('required').closest('fieldset');
   myFieldset.find('.smp-input,[name=taxonLookupControl]').removeAttr('disabled'); // leave the count fields as are.
 });\n";

@@ -283,7 +283,7 @@ jQuery('input#insectAutocomplete1').result(function(event, data) {
   else
     alert('".lang::get('The chosen taxon is already in the replacement list.')."');
 });
-jQuery('input#insect2').change(function() {
+jQuery('input#insect2').on('change', function() {
   jQuery('input#insectAutocomplete1').val('');
   var value = jQuery('input#insect2').val();
   jQuery('input#insect2').val('');

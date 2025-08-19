@@ -722,7 +722,7 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
   //Note that a limitation of this is we assume that the Drupal date format is set to is dd/mm/yyyy.
   public static function no_photos_with_date_warning($args) {
     data_entry_helper::$javascript.="
-    $('#sample\\\\:date').change(function(evt) {
+    $('#sample\\\\:date').on('change', function(evt) {
       var formattedSampleDate;
       //Date has full year yyyy, so split up, chop the year, and then reconstruct
       var sampleDateArray=$('#sample\\\\:date').val().split('/');
@@ -749,7 +749,7 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
   //Warn user if they set the dive start time to be more than one hour either side of the date on the first photo exif.
   public static function dive_start_outside_one_hour_warning($args) {
     data_entry_helper::$javascript.="
-    $('#smpAttr\\\\:".$args['dive_start_time_attr_id']."').change(function(evt) {
+    $('#smpAttr\\\\:".$args['dive_start_time_attr_id']."').on('change', function(evt) {
       if ($('#smpAttr\\\\:".$args['exif_date_time_attr_id']."').val() && $('#smpAttr\\\\:".$args['dive_start_time_attr_id']."').val()) {
         //Get dates associated with all photos
         var dateTimesToCheck=$('#smpAttr\\\\:".$args['exif_date_time_attr_id']."').val().split(';');

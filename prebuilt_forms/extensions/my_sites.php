@@ -160,7 +160,7 @@ $('#add-site-button').on('click', function() {
   }
 });
 $('#add-searched-site-button').on('click', function() {addSite($('#location-search').val());});
-$('#location-select, #location-search, #locality_id').change(function() {
+$('#location-select, #location-search, #locality_id').on('change', function() {
   if (typeof indiciaData.mapdiv!=='undefined') {
     indiciaData.mapdiv.locationSelectedInInput(indiciaData.mapdiv, this.value);
   }
@@ -416,7 +416,7 @@ $('#add-user-site-button').on('click', function() {
   duplicateCheck(locationId,userId);
 });
 
-$('#location-select, #location-search, #locality_id').change(function() {
+$('#location-select, #location-search, #locality_id').on('change', function() {
   if (typeof indiciaData.mapdiv !== 'undefined') {
     // Zoom map as user selects locations.
     indiciaData.mapdiv.locationSelectedInInput(indiciaData.mapdiv, this.value);

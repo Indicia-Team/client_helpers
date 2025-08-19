@@ -1265,7 +1265,7 @@ jQuery('input#flowerAutocomplete').result(function(event, data) {
   jQuery('#id-flower-unknown').removeAttr('checked');
   jQuery('#id-flower-later').removeAttr('checked').attr('disabled','disabled');
 });
-jQuery('select#flowerSelect').change(function() {
+jQuery('select#flowerSelect').on('change', function() {
   if(jQuery('#flower-species-list input[value='+jQuery(this).val()+']').length > 0) return;
   jQuery('<tr class=\"flower-species-list-entry\"><td><input type=\"hidden\" name=\"flower:taxa_taxon_list_id_list[]\" value=\"'+jQuery(this).val()+'\"\>'+htmlspecialchars(jQuery(this).find('option[value='+jQuery(this).val()+']').text())+'</td><td><img class=\"removeRow\" src=\"/misc/watchdog-error.png\" alt=\"".lang::get('Remove this entry')."\" title=\"".lang::get('Remove this entry')."\"/></td></tr>').appendTo('#flower-species-list-body');
   jQuery('#cc-2-flower-identify [name=flower\\:determination_type]').val('A');
@@ -1454,10 +1454,10 @@ idLater = function (toolStruct){
     jQuery('[name='+toolStruct.type+'\\:comment]').val('');
   }
 };
-jQuery('#id-flower-later').change(function (){
+jQuery('#id-flower-later').on('change', function (){
 	idLater(flowerIDstruc);
 });
-jQuery('#id-flower-unknown').change(function (){
+jQuery('#id-flower-unknown').on('change', function (){
   if (jQuery('#id-flower-unknown').attr('checked') != '') {
     jQuery('#id-flower-later').removeAttr('checked').attr('disabled','disabled');
     jQuery('#cc-2-flower-identify [name=flower\\:determination_type]').val('X');
@@ -2195,7 +2195,7 @@ jQuery('.mod-button').on('click', function() {
 
     data_entry_helper::$javascript .= "
 jQuery('#Foraging_Confirm').hide();
-jQuery('[name=occAttr\\:".$args['foraging_attr_id']."],[name^=occAttr\\:".$args['foraging_attr_id'].":]').change(function(){
+jQuery('[name=occAttr\\:".$args['foraging_attr_id']."],[name^=occAttr\\:".$args['foraging_attr_id'].":]').on('change', function(){
 	jQuery('[name=dummy_foraging_confirm]').filter('[value=0]').attr('checked',true);
 	checkForagingStatus(false);
 });
@@ -2224,11 +2224,11 @@ jQuery('#insect-id-cancel').on('click', function(){
 });
 jQuery('#insect-id-cancel').hide();
 
-jQuery('#cc-4-insect-identify select[name=insect\\:taxa_taxon_list_id]').change(function(){
+jQuery('#cc-4-insect-identify select[name=insect\\:taxa_taxon_list_id]').on('change', function(){
 	pollReset(insectIDstruc);
 	taxonChosen(insectIDstruc);
 });
-jQuery('#id-insect-later').change(function (){
+jQuery('#id-insect-later').on('change', function (){
 	pollReset(insectIDstruc);
 	idLater(insectIDstruc);
 });

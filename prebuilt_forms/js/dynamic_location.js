@@ -163,7 +163,7 @@ jQuery(document).ready(function ($) {
       div.map.editLayer.events.on({'featureadded': locationAdded});
 
       // Detect parent-location change event and call the parentChange function.
-      $('#location\\:parent_id').change(function() {
+      $('#location\\:parent_id').on('change', function() {
         var locationID = $(this).val();
         parentChange(div, locationID)
       });

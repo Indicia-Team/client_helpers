@@ -13,7 +13,7 @@ jQuery(document).ready(function($) {
   /**
    * If any lat long data is entered, this overrides the grid ref.
    */
-  $('table#position-data :input').change(function() {
+  $('table#position-data :input').on('change', function() {
     $('#input-os-grid').val('');
     updatePositionData(indiciaData.mapdiv, true);
   });
@@ -22,13 +22,13 @@ jQuery(document).ready(function($) {
    * When the user changes the OS grid input control, the lat long boxes can be cleared. Also copies the grid ref to the
    * hidden fields used to post the form data.
    */
-  $('#input-os-grid').change(function(e) {
+  $('#input-os-grid').on('change', function(e) {
     // entering an OS grid reference. So clear any data from the lat long grid.
     $('table#position-data :input').val('');
     // Copy the grid ref to the hidden input so that it gets posted and shown on the map
     $('#imp-sref').val($(e.currentTarget).val());
     $('#imp-sref-system').val('OSGB');
-    $('#imp-sref').change();
+    $('#imp-sref').trigger('change');
   });
 
   /**
@@ -58,7 +58,7 @@ jQuery(document).ready(function($) {
     }
   }
 
-  $('#imp-sref-system').change(showHidePositionEntryMethods);
+  $('#imp-sref-system').on('change', showHidePositionEntryMethods);
 
   // Trigger the switch between lat long and OSGB on form load, in case there is existing data to load.
   showHidePositionEntryMethods();
@@ -237,7 +237,7 @@ jQuery(document).ready(function($) {
   });
 
   // when toggling drift vs non-drift dive, clear out the unnecessary positions
-  $('input[name="which-point"]').change(function() {
+  $('input[name="which-point"]').on('change', function() {
     if ($('input[name="which-point"]:checked').val()==='centre') {
       $('#input-lat-deg-from,#input-lat-deg-to,#input-lat-min-from,#input-lat-min-to,' +
           '#input-long-deg-from,#input-long-deg-to,#input-long-min-from,#input-long-min-to').val('');

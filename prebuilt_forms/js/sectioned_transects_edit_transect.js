@@ -374,7 +374,7 @@ $(document).ready(function() {
     var parts = evt.target.id.split('-');
     confirmSelectSection(parts[parts.length-1], true, true);
   });
-  $('#section-form').find('input,textarea,select').change(function(evt) {
+  $('#section-form').find('input,textarea,select').on('change', function(evt) {
       sectionDetailsChanged = true;
   });
 
@@ -814,7 +814,7 @@ $(document).ready(function() {
 
   if (indiciaData.checkLocationNameUnique) {
     // Track location name changes and check for uniqueness.
-    $('#location\\:name').change(function() {
+    $('#location\\:name').on('change', function() {
       // Build report request to find duplicates.
       const reportApi = indiciaData.warehouseUrl + 'index.php/services/report/requestReport';
       const report = 'library/locations/find_duplicate_names.xml';

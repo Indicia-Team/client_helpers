@@ -334,7 +334,7 @@ jQuery(document).ready(function docReady($) {
 
   if (hasDynamicAttrs) {
     // On selection of a taxon or change of sex/stage attribute, load any dynamically linked attrs into the form.
-    $(taxonRestrictionInputSelectors).change(changeTaxonRestrictionInputs);
+    $(taxonRestrictionInputSelectors).on('change', changeTaxonRestrictionInputs);
   }
 
   // If dynamic attrs loaded for existing record on initial page load, ensure
@@ -345,7 +345,7 @@ jQuery(document).ready(function docReady($) {
 
   // If the Client Selects Taxon Filter option is enabled, attach an event
   // handler to the select control that is added.
-  $('#taxonListSelect').change(changeTaxonList);
+  $('#taxonListSelect').on('change', changeTaxonList);
 
   // In single species mode need to put line through verification information to show it is no longer valid
   $('#occurrence\\:taxa_taxon_list_id\\:taxon').on('change', function() {

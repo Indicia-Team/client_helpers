@@ -487,6 +487,6 @@ jQuery(document).ready(function docReady($) {
   }
 
   // On selection of a taxon or change of sex/stage attribute, load any dynamically linked attrs into the form.
-  $('#taxa_taxon_list\\:parent_id').change(changeTaxonRestrictionInputs);
+  $('#taxa_taxon_list\\:parent_id').on('change', changeTaxonRestrictionInputs);
 });
 

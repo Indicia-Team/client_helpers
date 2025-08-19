@@ -224,13 +224,13 @@ var rgbvalue, applyJitter, setToDate, loadYear;
 
     // Field change events:
 
-    $(iTLMOpts.yearControlSelector).change(function (evt) {
+    $(iTLMOpts.yearControlSelector).on('change', function (evt) {
       var year = $(evt.target).val();
       stopAnimation();
       loadYear(year, 'lh');
     });
 
-    $(iTLMOpts.speciesControlSelector).change(function (evt) {
+    $(iTLMOpts.speciesControlSelector).on('change', function (evt) {
       stopAnimation();
       // Either a select (single species) or a checked checkbox triggers load.
       if ($(evt.target).is('select') || $(evt.target).is(':checked')) {
@@ -240,7 +240,7 @@ var rgbvalue, applyJitter, setToDate, loadYear;
       resetMap();
     });
 
-    $('#acceptedOnlyControl').change(function acceptedChange() {
+    $('#acceptedOnlyControl').on('change', function acceptedChange() {
       calculateMinAndMax();
       resetMap();
     });

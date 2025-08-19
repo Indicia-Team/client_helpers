@@ -1799,7 +1799,7 @@ class iform_report_calendar_summary_2 implements PrebuiltFormInterface {
     // Need to use a global for pageURI as the internal controls may have changed, and we want
     // their values to be carried over.
     data_entry_helper::$javascript .= "
-jQuery('#".$ctrlid."').change(function(){
+jQuery('#".$ctrlid."').on('change', function(){
   $.fancyDialog({ title: '" . lang::get("Loading...") . "',
     message: '" . lang::get("Please wait whilst the next set of data is loaded.") . "',
     cancelButton: null });\n";

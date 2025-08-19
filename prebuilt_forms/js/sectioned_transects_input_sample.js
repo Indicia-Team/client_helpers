@@ -28,7 +28,7 @@ function createNewSample(code, force) {
 }
 
 $(document).ready(function() {
-  $('#imp-location').change(function(evt) {
+  $('#imp-location').on('change', function(evt) {
     $('#entered_sref').val(indiciaData.sites[evt.target.value].centroid_sref);
     $('#entered_sref_system').val(indiciaData.sites[evt.target.value].centroid_sref_system);
   });
@@ -169,7 +169,7 @@ function loadSpeciesList() {
         $(evt.target).parents('table:first').find('tbody .col-'+colidx).addClass('table-selected');
         $(evt.target).parents('table:first').find('thead .col-'+colidx).addClass('ui-state-active');
       });
-      $('.count-input,.smp-input').change(function(evt) {
+      $('.count-input,.smp-input').on('change', function(evt) {
         $(evt.target).addClass('edited');
       });
       $('.count-input,.smp-input').on('blur', function(evt) {

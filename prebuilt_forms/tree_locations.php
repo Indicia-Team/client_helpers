@@ -387,7 +387,7 @@ check_attrs = function(){
     span.append(tgt);".
     ($defn["required"] ? "\n    span.append('<span class=\"deh-required\">*</span>');" : "")."
     tgt.attr('title','".$defn["title"]."');
-    $(elem).change(function(e){checkbox_changed_base(e.target, '#locAttr\\\\:".$defn["target"]."', ".($defn["required"] ? "true" : "false").");});
+    $(elem).on('change', function(e){checkbox_changed_base(e.target, '#locAttr\\\\:".$defn["target"]."', ".($defn["required"] ? "true" : "false").");});
     check_attr_def.push([elem, '#locAttr\\\\:".$defn["target"]."', ".($defn["required"] ? "true" : "false")."]);
   }
 });\n";
@@ -819,7 +819,7 @@ $('#fieldset-optional-external-sc').prepend(\"".lang::get('If you choose to reco
     		'labelClass' => 'autowidth'))."<br />";
     $r .= '<input type="submit" value="'.lang::get('Save').'" class="form-button right" id="submit-tree" />';
     $r .= '</div></form></div>';
-    data_entry_helper::$onload_javascript .= "$('#current-tree').change(selectTree);\n";
+    data_entry_helper::$onload_javascript .= "$('#current-tree').on('change', selectTree);\n";
     return $r;
   }
 

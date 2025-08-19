@@ -61,13 +61,13 @@ jQuery(document).ready(function($) {
               //Only apply validation when both time fields are filled in
               if ($('#smpAttr\\:' + indiciaData.start_time_attr_id).val() && $('#smpAttr\\:' + indiciaData.end_time_attr_id).val()) {
                 //Get the times in minutes from the start of the day
-                startTimeHourMin=$('#smpAttr\\:' + indiciaData.start_time_attr_id).val().split(':'); 
+                startTimeHourMin=$('#smpAttr\\:' + indiciaData.start_time_attr_id).val().split(':');
                 endTimeHourMin=$('#smpAttr\\:' + indiciaData.end_time_attr_id).val().split(':');
                 startTimeMin=parseInt(startTimeHourMin[0],10)*60+parseInt(startTimeHourMin[1],10);
                 endTimeMin=parseInt(endTimeHourMin[0],10)*60+parseInt(endTimeHourMin[1],10);
-                //There are two scenerios which are valid. 
+                //There are two scenerios which are valid.
                 //1.The difference between the end and start time is less than ten minutes.
-                //2. If the time crosses midnight then the end - start times must be 0 and -1430. 
+                //2. If the time crosses midnight then the end - start times must be 0 and -1430.
                 if (((endTimeMin-startTimeMin)<=(-1430))||(((endTimeMin-startTimeMin)>0)&&((endTimeMin-startTimeMin)<=10)))
                   return true;
               //always pass validation if both times aren't filled in.
@@ -97,13 +97,13 @@ jQuery(document).ready(function($) {
         }
       }
   }
-  
+
   //The wdcs newsletter checkbox should only be shown for guests
   hide_wdcs_newsletter = function hide_wdcs_newsletter() {
     if (indiciaData.roleType=='data manager' ||indiciaData.roleType=='staff' || indiciaData.roleType=='volunteer') {
       //Hide WDCS newsletter when user isn't a guest as this is held in user's profile
       $('#smpAttr\\:'+ indiciaData.wdcs_newsletter_attr_id).attr('style', style='display: none;');
-      //hide the field label 
+      //hide the field label
       $('[for=\"smpAttr\\:' + indiciaData.wdcs_newsletter_attr_id + '\"]').attr('style', style='display: none;');
       $('#smpAttr\\:'+ indiciaData.wdcs_newsletter_attr_id).nextAll('.helpText:first').remove();
     }
@@ -154,7 +154,7 @@ jQuery(document).ready(function($) {
         }//Remove the lock icon
         $('#smpAttr\\:' + indiciaData.observer_name_attr_id + '_lock').remove();
         $('[for=\"smpAttr\\:' + indiciaData.observer_name_attr_id + '\"]').remove();
-        
+
         if (indiciaData.user_email && !$('#smpAttr\\:'+ indiciaData.observer_email_attr_id).val() && !indiciaData.sample_id) {
           $('#smpAttr\\:'+indiciaData.observer_email_attr_id).val(indiciaData.user_email);
         }
@@ -172,11 +172,11 @@ jQuery(document).ready(function($) {
       default:
         //Guests get free text fields to fill in, observer name autocomplete isn't displayed
         $('#obSelect\\:' + indiciaData.observer_name_attr_id + '_lock').remove();
-        $('#obSelect\\:' + indiciaData.observer_name_attr_id + '\\:fullname_surname_first').remove();  
+        $('#obSelect\\:' + indiciaData.observer_name_attr_id + '\\:fullname_surname_first').remove();
         $('[for=\"obSelect\\:' + indiciaData.observer_name_attr_id + '\\:fullname_surname_first\"]').remove();
         $('[name=\"smpAttr\\:' + indiciaData.observer_name_attr_id + '\"]').rules('add', {required:true});
         $('<span class=\"deh-required\">*</span>').insertAfter($('[name=\"smpAttr\\:' + indiciaData.observer_name_attr_id + '\"]'));
-        
+
         //attach validator classes for these fields
         $('#smpAttr\\:'+ indiciaData.observer_email_attr_id).addClass('emailOrPhoneRequired');
         $('#smpAttr\\:'+ indiciaData.observer_phone_number_attr_id).addClass('emailOrPhoneRequired');
@@ -184,12 +184,12 @@ jQuery(document).ready(function($) {
     }
 
     //Phone number or email must be supplied, attach validator to the class.
-    $('#entry_form').validate(); 
+    $('#entry_form').validate();
     jQuery.validator.addMethod('emailOrPhoneRequired',
       function(value, element) {
         if ($('#smpAttr\\:' + indiciaData.observer_email_attr_id).val() ||  $('#smpAttr\\:' + indiciaData.observer_phone_number_attr_id).val()) {
           return true;
-        }   
+        }
       }, indiciaData.emailPhoneMessage
     );
 
@@ -204,19 +204,19 @@ jQuery(document).ready(function($) {
         $('[id=\"save-button\"]').show();
       }
     };
-    
+
     //Only on the normal (not adhoc) recording form, the "New Step" button is only displayed if the Cetaceans Seen option is yes.
     animals_seen_controls_next_step = function cetaceans_control_next_step() {
       //By default we show the save button
       $('[id=\"tab-next\"]').hide();
       $('.right.buttons').append('<input id=\"save-button\" class=\"indicia-button inline-control tab-submit\" type=\"submit\" value=\"Save\">');
-      //Show Next Step button instead of save if Cetaceans Seen is yes. Do this on page load but also on change     
+      //Show Next Step button instead of save if Cetaceans Seen is yes. Do this on page load but also on change
       $('[name^=\"smpAttr\\:' + indiciaData.cetaceans_seen_attr_id + '\"],'+
         '[name^=\"smpAttr\\:' + indiciaData.non_cetacean_marine_animals_seen_attr_id + '\"]')
-        .change(show_or_hide_next_step_button);
+        .on('change', show_or_hide_next_step_button);
       show_or_hide_next_step_button();
     }
-    
+
     //There are two Reticule drop-downs in the grid. If one is field is filled in then the other is becomes mandatory on the adhoc form (both are always mandatory
     //on the non-adhoc form)
     adhoc_reticule_fields_validator = function adhoc_reticule_fields_validator() {
@@ -253,13 +253,13 @@ jQuery(document).ready(function($) {
           if ((!$('#'+ currentIdToRead).val() && !$('#'+ otherIdToRead).val()) || ($('#'+ currentIdToRead).val() && $('#'+ otherIdToRead).val())) {
             //If the user has changed a reticule field into a position where we don't need to warn the user anymore,
             //then clear any existing stars or warnings.
-            if ($('#'+ reticulesFromStarIdCurrent).length) {          
+            if ($('#'+ reticulesFromStarIdCurrent).length) {
               $('#'+ reticulesFromStarIdCurrent).remove();
               $('#'+ currentIdToRead).rules('remove', 'required');
             }
             if ($('#'+ reticulesFromStarIdOther).length) {
-              $('#'+ reticulesFromStarIdOther).remove(); 
-              $('#'+ otherIdToRead).rules('remove', 'required'); 
+              $('#'+ reticulesFromStarIdOther).remove();
+              $('#'+ otherIdToRead).rules('remove', 'required');
             }
           } else {
             //Otherwise we need to add warnings
@@ -285,18 +285,18 @@ jQuery(document).ready(function($) {
       }
     }
   }
-  
+
   //When page is in addhoc mode, the user is not allowed submit when there are no sightings.
   adhoc_sightings_grid_species_validator = function adhoc_sightings_grid_species_validator() {
-    $('#entry_form').validate(); 
+    $('#entry_form').validate();
     if (indiciaData.adhocMode==1) {
       jQuery.validator.addMethod('grid-required',
         function(value, element) {
           //We check the row number by taking the last character of the species cell id.
-          if (value && element.id[element.id.length-1]==='0'|| 
-            element.id[element.id.length-1]!=='0') { 
+          if (value && element.id[element.id.length-1]==='0'||
+            element.id[element.id.length-1]!=='0') {
               return true;
-          }   
+          }
         }, indiciaData.addSpeciesMessage
       );
     }

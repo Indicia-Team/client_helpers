@@ -63,7 +63,7 @@ jQuery(document).ready(function($) {
   mapInitialisationHooks.push(function() {
     if ($('#imp-location').length) {
       var locChange = function() {locationSelectedInInput(indiciaData.mapdiv, $('#imp-location').val());};
-      $('#imp-location').change(locChange);
+      $('#imp-location').on('change', locChange);
       // trigger change event, incase imp-location was already populated when the map loaded
       locChange();
     }

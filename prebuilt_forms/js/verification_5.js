@@ -879,7 +879,7 @@ indiciaData.rowIdToReselect = false;
         }
       }
     );
-    $('.verify-template').change(function () {
+    $('.verify-template').on('change', function () {
       var templateID = $('.verify-template').val();
       var data = $('.verify-template').data('data');
       // The currRec is populated from the details report reports_for_prebuilt_forms/verification_5/record_data
@@ -1706,7 +1706,7 @@ indiciaData.rowIdToReselect = false;
      * On the redetermine popup, handle the switch to and from searching the full species lists for records which come from
      * custom species lists.
      */
-    $('#redet-from-full-list').change(function () {
+    $('#redet-from-full-list').on('change', function () {
       if ($('#redet-from-full-list:checked').length) {
         $('#redet\\:taxon').setExtraParams({ taxon_list_id: indiciaData.mainTaxonListId });
       } else {
@@ -1714,13 +1714,13 @@ indiciaData.rowIdToReselect = false;
       }
     });
 
-    $('.radio-log-created-by input:radio').change(function () {
+    $('.radio-log-created-by input:radio').on('change', function () {
       indiciaFns.applyCreatedByFilterToReports(true, this);
     });
 
     indiciaFns.applyCreatedByFilterToReports(false, false);
 
-    $('input.checkbox-log-verification-comments:checkbox').change(function () {
+    $('input.checkbox-log-verification-comments:checkbox').on('change', function () {
       indiciaFns.applyVerificationCommentsFilterToReports(true, this);
     });
 

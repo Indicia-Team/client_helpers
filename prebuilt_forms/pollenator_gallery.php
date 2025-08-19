@@ -1785,7 +1785,7 @@ loadCollection = function(id, index){
 					var parts=locationData[0].centroid_sref.split(' ');
 					var refx = parts[0].split(',');
 					jQuery('#imp-sref-lat').val(refx[0]);
-					jQuery('#imp-sref-long').val(parts[1]).change(); // adds location, auto
+					jQuery('#imp-sref-long').val(parts[1]).trigger('change'); // adds location, auto
 				    loadImage('location_image', 'location_id', locationData[0].id, '#environment-image', ".$args['Environment_Image_Ratio'].", function(imageRecord){collection_preferred_object.environment_image_path = imageRecord.path}, 'med-', true);
 				}
 			}));
@@ -2468,7 +2468,7 @@ expertSetUnidentified = function(toolStruct){
 	jQuery(toolStruct.mainForm+' [name=determination\\:taxa_taxon_list_id_list\\[\\]]').remove();
 	jQuery(toolStruct.mainForm+' [name=determination\\:comment]').val(\"".lang::get('LANG_Default_ID_Comment')."\");
   };
-jQuery('#fo-insect-expert-det-type').change(function(){
+jQuery('#fo-insect-expert-det-type').on('change', function(){
 	if(jQuery(this).val()=='X') expertSetUnidentified(insectIDstruc);
 });
 
@@ -2504,7 +2504,7 @@ jQuery('#insect-id-cancel').on('click', function(){
 });
 jQuery('#insect-id-cancel').hide();
 
-jQuery('form#fo-new-insect-id-form select[name=determination\\:taxa_taxon_list_id]').change(function(){
+jQuery('form#fo-new-insect-id-form select[name=determination\\:taxa_taxon_list_id]').on('change', function(){
 	pollReset(insectIDstruc);
 	taxonChosen(insectIDstruc);
 });
@@ -4061,7 +4061,7 @@ jQuery('input#flowerAutocomplete2').result(function(event, data) {
   jQuery('#fo-flower-expert-det-type').html('".lang::get('LANG_Det_Type_'.(hostsite_user_has_permission('IForm n'.$nid.' flower expert') ? "C" : "A"))."');
   jQuery('#id-flower-unknown').removeAttr('checked');
 });
-jQuery('select#flowerSelect').change(function() {
+jQuery('select#flowerSelect').on('change', function() {
   if(jQuery('#flower-species-list input[value='+jQuery(this).val()+']').length > 0) return;
   jQuery('#flower-species-list-body').append('<tr class=\"flower-species-list-entry\"><td><input type=\"hidden\" name=\"determination:taxa_taxon_list_id_list[]\" value=\"'+jQuery(this).val()+'\">'+htmlspecialchars(jQuery(this).find('option[value='+jQuery(this).val()+']').text())+'</td><td><img class=\"removeRow\" src=\"/misc/watchdog-error.png\" alt=\"".lang::get('Remove this entry')."\" title=\"".lang::get('Remove this entry')."\"/></td></tr>');
   jQuery('#fo-new-flower-id-form [name=determination\\:determination_type]').val('".(hostsite_user_has_permission('IForm n'.$nid.' flower expert') ? "C" : "A")."');
@@ -4070,7 +4070,7 @@ jQuery('select#flowerSelect').change(function() {
   jQuery('#id-flower-unknown').removeAttr('checked');
 });
 
-jQuery('#id-flower-unknown').change(function (){
+jQuery('#id-flower-unknown').on('change', function (){
   clearErrors('form#fo-new-flower-id-form');
   if (jQuery('#id-flower-unknown').attr('checked') != '') {
     jQuery('#fo-new-flower-id-form [name=determination\\:determination_type]').val('X');

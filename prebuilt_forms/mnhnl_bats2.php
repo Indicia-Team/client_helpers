@@ -235,20 +235,20 @@ institutionAttr.after(dateLabel);
     $disturb2InProgTerm = helper_base::get_termlist_terms($auth, 'bats2:disturbances', array('Renovations in progress'));
     $disturb2RecentTerm = helper_base::get_termlist_terms($auth, 'bats2:disturbances', array('Renovations recently completed'));
     data_entry_helper::$javascript .= "
-jQuery('[name=smpAttr\\:".$disturb2AttrID."\\[\\]],[name^=smpAttr\\:".$disturb2AttrID."\\:]').filter('[value=".$disturb2PlannedTerm[0]['meaning_id']."],[value^=".$disturb2PlannedTerm[0]['meaning_id']."\\:]').change(function(){
+jQuery('[name=smpAttr\\:".$disturb2AttrID."\\[\\]],[name^=smpAttr\\:".$disturb2AttrID."\\:]').filter('[value=".$disturb2PlannedTerm[0]['meaning_id']."],[value^=".$disturb2PlannedTerm[0]['meaning_id']."\\:]').on('change', function(){
   if(this.checked)
     jQuery('[name=smpAttr\\:".$disturb2AttrID."\\[\\]],[name^=smpAttr\\:".$disturb2AttrID."\\:]').filter('[value=".$disturb2InProgTerm[0]['meaning_id']."],[value^=".$disturb2InProgTerm[0]['meaning_id']."\\:],[value=".$disturb2RecentTerm[0]['meaning_id']."],[value^=".$disturb2RecentTerm[0]['meaning_id']."\\:]').removeAttr('checked');
 });
-jQuery('[name=smpAttr\\:".$disturb2AttrID."\\[\\]],[name^=smpAttr\\:".$disturb2AttrID."\\:]').filter('[value=".$disturb2InProgTerm[0]['meaning_id']."],[value^=".$disturb2InProgTerm[0]['meaning_id']."\\:]').change(function(){
+jQuery('[name=smpAttr\\:".$disturb2AttrID."\\[\\]],[name^=smpAttr\\:".$disturb2AttrID."\\:]').filter('[value=".$disturb2InProgTerm[0]['meaning_id']."],[value^=".$disturb2InProgTerm[0]['meaning_id']."\\:]').on('change', function(){
   if(this.checked)
     jQuery('[name=smpAttr\\:".$disturb2AttrID."\\[\\]],[name^=smpAttr\\:".$disturb2AttrID."\\:]').filter('[value=".$disturb2PlannedTerm[0]['meaning_id']."],[value^=".$disturb2PlannedTerm[0]['meaning_id']."\\:],[value=".$disturb2RecentTerm[0]['meaning_id']."],[value^=".$disturb2RecentTerm[0]['meaning_id']."\\:]').removeAttr('checked');
 });
-jQuery('[name=smpAttr\\:".$disturb2AttrID."\\[\\]],[name^=smpAttr\\:".$disturb2AttrID."\\:]').filter('[value=".$disturb2RecentTerm[0]['meaning_id']."],[value^=".$disturb2RecentTerm[0]['meaning_id']."\\:]').change(function(){
+jQuery('[name=smpAttr\\:".$disturb2AttrID."\\[\\]],[name^=smpAttr\\:".$disturb2AttrID."\\:]').filter('[value=".$disturb2RecentTerm[0]['meaning_id']."],[value^=".$disturb2RecentTerm[0]['meaning_id']."\\:]').on('change', function(){
   if(this.checked)
     jQuery('[name=smpAttr\\:".$disturb2AttrID."\\[\\]],[name^=smpAttr\\:".$disturb2AttrID."\\:]').filter('[value=".$disturb2InProgTerm[0]['meaning_id']."],[value^=".$disturb2InProgTerm[0]['meaning_id']."\\:],[value=".$disturb2PlannedTerm[0]['meaning_id']."],[value^=".$disturb2PlannedTerm[0]['meaning_id']."\\:]').removeAttr('checked');
 });
 var myTerm = jQuery('[name=smpAttr\\:".$disturb2AttrID."\\[\\]],[name^=smpAttr\\:".$disturb2AttrID."\\:]').filter('[value=".$disturb2OtherTerm[0]['meaning_id']."],[value^=".$disturb2OtherTerm[0]['meaning_id']."\\:]');
-myTerm.change(function(){
+myTerm.on('change', function(){
     if(this.checked)
       jQuery('[name=smpAttr\\:".$disturbOtherAttrID."],[name^=smpAttr\\:".$disturbOtherAttrID."\\:]').addClass('required').removeAttr('readonly');
     else
@@ -259,7 +259,7 @@ other.next().remove(); // remove break
 other.prev().remove(); // remove legend
 other.removeClass('wide').remove(); // remove Other field, then bolt in after the other radio button.
 myTerm.parent().append(other);
-myTerm.change();
+myTerm.trigger('change');
 jQuery('span').filter('.control-box').each(function(idex, elem){
   if(jQuery(elem).find(':checkbox').length){
     jQuery(elem).prev().filter('label').addClass('auto-width');
@@ -392,7 +392,7 @@ jQuery('.scCheckTaxon:checkbox').live('change', function(value, element){
     $extraParams = $auth['read'] + array('termlist_id' => $termlist, 'view' => 'detail');
     $surveyMethods = data_entry_helper::get_population_data(array('table' => 'termlists_term', 'extraParams' => $extraParams));
     data_entry_helper::$javascript .= "// JS for survey method grid control.
-jQuery('.method-presence').change(function(){
+jQuery('.method-presence').on('change', function(){
   var myTR = jQuery(this).closest('tr');
   if(jQuery(this).filter('[checked]').length>0) {
     myTR.find('.method-grid-cell').find('input,select').removeAttr('disabled').addClass('required').after('<span class=\"deh-required\">*</span>');

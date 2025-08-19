@@ -66,15 +66,15 @@ jQuery(document).ready(function($) {
   };
 
   // Attach hectad map priority event handlers
-  $('#brc-hectad-map-priority').change(e => {
+  $('#brc-hectad-map-priority').on('change', e => {
     brcmap.redrawMap();
   })
 
   // Attach hectad map threshold event handlers
-  $('#brc-hectad-map-thresh1').change(e => {
+  $('#brc-hectad-map-thresh1').on('change', e => {
     thresholdChanged(1);
   })
-  $('#brc-hectad-map-thresh2').change(e => {
+  $('#brc-hectad-map-thresh2').on('change', e => {
     thresholdChanged(2);
   })
   $('#brc-hectad-map-thresh1').on('keyup', e => {

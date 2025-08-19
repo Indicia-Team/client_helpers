@@ -845,7 +845,7 @@ function checkErrors(data) {
 }
 $('.update-input').focus(function(evt) {
   $(evt.target).addClass('input-selected');
-}).change(function(evt) {
+}).on('change', function(evt) {
   $(evt.target).addClass('input-edited');
 }).on('blur', function(evt) {
   var selector = '#'+evt.target.id.replace(/:/g, '\\:');
@@ -3913,7 +3913,7 @@ update_controls();
     				($options['includeSummaryData'] ? '<option id="viewSummaryData" value="summary"/>'.lang::get('summary data').'</option>' : '').
     				($options['includeEstimatesData'] ? '<option id="viewDataEstimates" value="estimates"/>'.lang::get('summary data with estimates').'</option>' : '').
     				'</select>';
-    		self::$javascript .= "jQuery('#outputSource').change(function(){
+    		self::$javascript .= "jQuery('#outputSource').on('change', function(){
   pageURI = rebuild_page_url(pageURI, \"outputSource\", jQuery(this).val());
   update_controls();
   switch(jQuery(this).val()){
@@ -3942,7 +3942,7 @@ update_controls();
                   '<option '.($defaultTable?'selected="selected"':'').' value="table"/>'.lang::get('table').'</option>'.
                   '<option '.(!$defaultTable?'selected="selected"':'').' value="chart"/>'.lang::get('chart').'</option>'.
                   '</select>'; // not providing option for both at moment
-            self::$javascript .= "jQuery('[name=outputFormat]').change(function(){
+            self::$javascript .= "jQuery('[name=outputFormat]').on('change', function(){
   pageURI = rebuild_page_url(pageURI, \"outputFormat\", jQuery(this).val());
   update_controls();
   switch($(this).val()) {
@@ -4124,7 +4124,7 @@ setSeriesURLParam = function(){
   }
   update_controls();
 }
-jQuery('[name=".$options['chartID']."-series]').change(function(){
+jQuery('[name=".$options['chartID']."-series]').on('change', function(){
   var seriesID = jQuery(this).val(), index;
   $.each(seriesData.ids, function(idx, elem){
     if(seriesID == elem) index = idx;
@@ -4463,13 +4463,13 @@ jQuery('#".$options['chartID']."-series-disable').on('click', function(){
     self::$javascript .= "replotActive = false;\n";
     if($userPicksSource) {
       self::$javascript .= (isset($options['outputSource']) ?
-          "$('#outputSource').val('".$options['outputSource']."').change();\n" :
-          "if($('#viewDataEstimates').length > 0){\n  $('#outputSource').val('estimates').change();\n".
-          "} else if($('#viewSummaryData').length > 0){\n  $('#outputSource').val('summary').change();\n".
-          "} else {\n  $('#outputSource').val('raw').change();\n}\n");
+          "$('#outputSource').val('".$options['outputSource']."').trigger('change');\n" :
+          "if($('#viewDataEstimates').length > 0){\n  $('#outputSource').val('estimates').trigger('change');\n".
+          "} else if($('#viewSummaryData').length > 0){\n  $('#outputSource').val('summary').trigger('change');\n".
+          "} else {\n  $('#outputSource').val('raw').trigger('change');\n}\n");
     }
     if($userPicksFormat) {
-      self::$javascript .= "jQuery('[name=outputFormat]').change();\n";
+      self::$javascript .= "jQuery('[name=outputFormat]').trigger('change');\n";
     }
     self::$javascript .= "replotActive = true;\n";
     if($format['chart']['display']){
@@ -5338,11 +5338,11 @@ indiciaFns.bindTabsActivate($('#controls'), function(event, ui) {
       // so replotting doesn't scale to the displayed series!
       // Note we are keeping the 2 charts in sync.
       self::$javascript .= "
-jQuery('#summaryChart [name={$options['chartID']}-series]').change(function(){
+jQuery('#summaryChart [name={$options['chartID']}-series]').on('change', function(){
   $('#estimateChart [name={$options['chartID']}-series]').filter('[value='+$(this).val()+']').prop('checked',!!$(this).prop('checked'));
   replot('summary');
 });
-jQuery('#estimateChart [name={$options['chartID']}-series]').change(function(){
+jQuery('#estimateChart [name={$options['chartID']}-series]').on('change', function(){
   $('#summaryChart [name={$options['chartID']}-series]').filter('[value='+$(this).val()+']').prop('checked',!!$(this).prop('checked'));
   replot('estimates');
 });

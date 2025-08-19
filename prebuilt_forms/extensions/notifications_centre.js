@@ -123,7 +123,7 @@ var createNotifications;
     // Also store any grid column filters so the acknowledge button can use the
     // same filter.
     let endRegex = new RegExp('-' + gridId + '$');
-    $(cntr).find('.col-filter').change(function() {
+    $(cntr).find('.col-filter').on('change', function() {
       let data = {};
       $.each($(cntr).find('.col-filter'), function() {
         if ($(this).val()) {

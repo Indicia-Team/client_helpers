@@ -90,7 +90,7 @@ jQuery(document).ready(($) => {
     }
     // On startup, draw any grid refs.
     if ($('#geography\\:grid_refs').val() !== '') {
-      $('#geography\\:grid_refs').change();
+      $('#geography\\:grid_refs').trigger('change');
     }
   });
 
@@ -107,7 +107,7 @@ jQuery(document).ready(($) => {
   /**
    * Handle when grid ref(s) input into the list box.
    */
-  $('#geography\\:grid_refs').change(function() {
+  $('#geography\\:grid_refs').on('change', function() {
     const gridRefs = $('#geography\\:grid_refs').val().toUpperCase().split(/\n/);
     // Clear other types of geography limit so we only have one.
     $('.lat-lng-input').val('');
@@ -189,7 +189,7 @@ jQuery(document).ready(($) => {
    *
    * Clears other data. Draws a bounding box if all values available.
    */
-  $('.lat-lng-input').change(function() {
+  $('.lat-lng-input').on('change', function() {
     indiciaData.displayLayer.removeAllFeatures();
     // Clear other types of geography limit so we only have one.
     $('#geography\\:grid_refs').val('');
@@ -219,7 +219,7 @@ jQuery(document).ready(($) => {
   });
 
   // Location type filter for higher geo areas.
-  $('#geography\\:location_type').change(() => {
+  $('#geography\\:location_type').on('change', () => {
     $('input#geography\\:location_list\\:search\\:name').setExtraParams({
       location_type_id: $('#geography\\:location_type').val()
     });

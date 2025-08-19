@@ -506,12 +506,12 @@ locationChange = function(obj){
   }
 };
 jQuery('#imp-location').off('change');
-jQuery('#imp-location').change(function(){
+jQuery('#imp-location').on('change', function(){
 	locationChange(this);
 });
 // upload location & sref initial values into map.
-jQuery('#imp-location').change();
-jQuery('#imp-sref').change();
+jQuery('#imp-location').trigger('change');
+jQuery('#imp-sref').trigger('change');
 
 ";
 	return $r;

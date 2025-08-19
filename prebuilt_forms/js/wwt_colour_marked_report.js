@@ -361,7 +361,7 @@
     });
     // install a change handler for the taxon hidden fields to trigger change on their inputs
     $("input[id$='occurrence:taxa_taxon_list_id']", scope).on('change', function(event) {
-      $('#'+esc4jq(this.id+':taxon')).change();
+      $('#'+esc4jq(this.id+':taxon')).trigger('change');
     });
     // install a change handler for the taxon selecters to set the pictures and header
     $('.select_taxon', scope).on('change', function(event) {

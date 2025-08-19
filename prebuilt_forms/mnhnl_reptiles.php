@@ -692,7 +692,7 @@ jQuery('[name=".str_replace(':','\\:',$rule[0])."],[name^=".str_replace(':','\\:
     }
     $retval .= '</table><br />';
     data_entry_helper::$javascript .= "// JS for target species grid control.
-jQuery('.targ-presence').change(function(){
+jQuery('.targ-presence').on('change', function(){
   var myTR = jQuery(this).closest('tr');
   if(jQuery(this).filter('[checked]').length>0) {
     myTR.find('input').filter('[name*=\\:smpAttr\\:]').removeAttr('disabled');

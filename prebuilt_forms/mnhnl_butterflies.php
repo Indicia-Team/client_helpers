@@ -213,7 +213,7 @@ updateSampleDate = function(context, doAlert){
   if(doAlert && monthAttr.val() == \"\")
   	alert('Given date is outside valid month range (April to September).');
 };
-jQuery('#sample\\\\:date').change(function(){updateSampleDate(this, true);});
+jQuery('#sample\\\\:date').on('change', function(){updateSampleDate(this, true);});
 updateSampleDate('#sample\\\\:date', false);
 jQuery('.tab-submit').off('click');
 jQuery('.tab-submit').on('click', function() {
@@ -403,11 +403,11 @@ deleteSurvey = function(sampleID){
     }
     $ret .= "<input type=hidden name=\"sample:location_name\" value=\"\" /><br />";
     data_entry_helper::$javascript .= "
-jQuery(\"#sample\\\\:location_id\").change(function(){
+jQuery(\"#sample\\\\:location_id\").on('change', function(){
   jQuery('[name=sample\\:location_name]').val(jQuery(this).find(':selected')[0].text);
   jQuery('.displayTransectDetails').empty().append('<span>'+jQuery('[name=sample\\:location_name]').val()+'</span>');
 });
-jQuery(\"#sample\\\\:location_id\").change();
+jQuery(\"#sample\\\\:location_id\").trigger('change');
 ";
     return $ret;
   }
@@ -507,7 +507,7 @@ build_transectgrid = function(speciesID, X, Y, gridSampleID, occurrenceID, attri
   var sel=jQuery('[name^=TG\\:'+speciesID+'\\:'+X+'\\:'+Y+'\\:]').attr('name','TG:'+speciesID+':'+X+':'+Y+':'+gridSampleID+':'+occurrenceID+':'+attributeID).val(value);
 };
 
-jQuery('#transectgrid_taxa_taxon_list_id').change(function(){
+jQuery('#transectgrid_taxa_taxon_list_id').on('change', function(){
   // when this is called the value stored is the taxon_meaning_id: .
   // Initially check that row does not already exist:
   var existRows = jQuery('.trgridspecname').filter('[meaningID='+jQuery('#transectgrid_taxa_taxon_list_id').val()+']');
@@ -577,7 +577,7 @@ build_transectgrid(".($OCCentity['taxa_taxon_list_id']).",".$X.",".$Y.",".($OCCe
 jQuery('input#transectgrid_taxa_taxon_list_id\\\\:taxon').off(\"result\");
 jQuery('input#transectgrid_taxa_taxon_list_id\\\\:taxon').result(function(event, data, value) {
       jQuery('input#transectgrid_taxa_taxon_list_id').attr('value', value);
-      jQuery('input#transectgrid_taxa_taxon_list_id').change();
+      jQuery('input#transectgrid_taxa_taxon_list_id').trigger('change');
 });
 ";
     return $retVal;
@@ -709,7 +709,7 @@ section_data_changed = function(){
 add_section_value = function(row, column, sampleID){
   // Fieldname is SL:speciesID:section:SectionsampleID:OccID:AttrID
   var taxonID = jQuery(row).find('.seclistspecname').attr('taxonID');
-  var ctrl = jQuery('<input type=\"text\" name=\"SL:'+taxonID+':'+column+':'+sampleID+':-:-\" class=\"sl-input digits\" value=\"\" />').change(section_data_changed);
+  var ctrl = jQuery('<input type=\"text\" name=\"SL:'+taxonID+':'+column+':'+sampleID+':-:-\" class=\"sl-input digits\" value=\"\" />').on('change', section_data_changed);
   jQuery('<td></td>').append(ctrl).appendTo(row);
 };
 
@@ -761,7 +761,7 @@ add_section_column = function(column, sampleID){
   if(jQuery('#sectionlist_number').val() < column) jQuery('#sectionlist_number').val(column);
   section_column_changed(column);
 };
-jQuery('#sectionlist_number').change(function(){
+jQuery('#sectionlist_number').on('change', function(){
   // initially we put in the restriction that it is only possible to increase the number of sections.
   var currentCols = jQuery('.sectionlist-column-header').length;
   if(currentCols > jQuery('#sectionlist_number').val()){
@@ -773,7 +773,7 @@ jQuery('#sectionlist_number').change(function(){
 add_section_species = function(speciesID, section, sectionSampleID, occurrenceID, attributeID, value){
   add_section_column(section, sectionSampleID);
   add_section_species_row(speciesID);
-  jQuery('[name^=\"SL\\:'+speciesID+'\\:'+section+'\\:\"]').attr('name','SL:'+speciesID+':'+section+':'+sectionSampleID+':'+occurrenceID+':'+attributeID).val(value).change()
+  jQuery('[name^=\"SL\\:'+speciesID+'\\:'+section+'\\:\"]').attr('name','SL:'+speciesID+':'+section+':'+sectionSampleID+':'+occurrenceID+':'+attributeID).val(value).trigger('change')
   section_column_changed(section);
 };
 add_section_attribute = function(section, sectionSampleID, attrValID, attributeID, value){
@@ -793,7 +793,7 @@ add_section_attribute = function(section, sectionSampleID, attrValID, attributeI
     }
   });
 };
-jQuery('#sectionlist_taxa_taxon_list_id').change(function(){
+jQuery('#sectionlist_taxa_taxon_list_id').on('change', function(){
   // when this is called the value stored is the taxon_meaning_id: .
   // Initially check that row does not already exist:
   var existRows = jQuery('.seclistspecname').filter('[meaningID='+jQuery('#sectionlist_taxa_taxon_list_id').val()+']');
@@ -809,7 +809,7 @@ jQuery('#sectionlist_taxa_taxon_list_id').change(function(){
         }});
   jQuery('#sectionlist_taxa_taxon_list_id\\\\:taxon').val('');
 });
-jQuery('#sectionlist_number').change();
+jQuery('#sectionlist_number').trigger('change');
 ";
     if($args['init_species_ids'] != '') {
       $init_species = explode(',', $args['init_species_ids']);
@@ -883,7 +883,7 @@ add_section_attribute(".$section.",".($entity['id']).",".($ATTRentity['id']).","
 jQuery('input#sectionlist_taxa_taxon_list_id\\\\:taxon').off(\"result\");
 jQuery('input#sectionlist_taxa_taxon_list_id\\\\:taxon').result(function(event, data, value) {
       jQuery('input#sectionlist_taxa_taxon_list_id').attr('value', value);
-      jQuery('input#sectionlist_taxa_taxon_list_id').change();
+      jQuery('input#sectionlist_taxa_taxon_list_id').trigger('change');
 });
 ";
 

@@ -23,7 +23,7 @@ jQuery(document).ready(function($) {
     }).length);
   }
 
-  $('.count-input').change(function(e) {
+  $('.count-input').on('change', function(e) {
     var data={}, ctrl = e.target, cell = $(ctrl).parents('td')[0], row = $(ctrl).parents('tr')[0];
     // strip non-numerics
     $(ctrl).val($(ctrl).val().replace(/[^\d]/g, ''));

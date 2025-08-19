@@ -21,7 +21,7 @@ jQuery(document).ready(function ($) {
     $.fancybox.open($('#group-link-popup'));
   };
 
-  $('#area-picker').change(function areaPickerSelect() {
+  $('#area-picker').on('change', function areaPickerSelect() {
     var geom;
     var data = indiciaData.areaPickerMapAreaData;
     var placeDef;

@@ -176,7 +176,7 @@ getCentroid=function(geometry){
 }
 // Only allow one delete at a time: prevents removal of last subsample.
 processDeleted=function(){
-  $('.subSampleDelete').change(function(){
+  $('.subSampleDelete').on('change', function(){
     if($(this).attr('checked'))
       $('.subSampleDelete').not(this).attr('disabled','disabled');
     else

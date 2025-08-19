@@ -43,7 +43,7 @@ $(document).ready(function () {
   /**
    * Catch change of state on the show instructins checkbox.
    */
-  $('#layerbox #checkShowInstructions').change(function () {
+  $('#layerbox #checkShowInstructions').on('change', function () {
     if(this.checked) {
       $('#layerbox #instruct').show()
     } else {
@@ -54,7 +54,7 @@ $(document).ready(function () {
   /**
    * Catch change of state on the show legend checkbox.
    */
-  $('#layerbox #checkShowLegend').change(function () {
+  $('#layerbox #checkShowLegend').on('change', function () {
     if(this.checked) {
       $('#layerbox #layers').show()
     } else {
