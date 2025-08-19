@@ -183,7 +183,7 @@ class iform_mnhnl_bats2 extends iform_mnhnl_bats {
     data_entry_helper::$javascript .= "
 if($.browser.msie && $.browser.version < 9)
   $('input[type=radio],[type=checkbox]').live('click', function(){
-    this.blur();
+    this.trigger('blur');
     this.focus();
 });\n";
     // Move the date after the Institution

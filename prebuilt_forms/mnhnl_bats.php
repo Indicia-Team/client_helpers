@@ -385,7 +385,7 @@ jQuery('[name^=smpAttr]').filter(':checkbox').filter('[value=".$args['disturbanc
       data_entry_helper::$javascript .= "
 if($.browser.msie && $.browser.version < 9)
   $('input[type=radio],[type=checkbox]').live('click', function(){
-    this.blur();
+    this.trigger('blur');
     this.focus();
   });
 checkCheckStatus = function(){

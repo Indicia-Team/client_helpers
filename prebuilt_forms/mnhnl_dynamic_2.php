@@ -375,7 +375,7 @@ deleteSurvey = function(sampleID){
     data_entry_helper::$javascript .= "
 if($.browser.msie && $.browser.version < 9)
   $('input[type=radio],[type=checkbox]').live('click', function(){
-    this.blur();
+    this.trigger('blur');
     this.focus();
 });\n";
     self::$check_or_radio_group_template = $indicia_templates['check_or_radio_group'];

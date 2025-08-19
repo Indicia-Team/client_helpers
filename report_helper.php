@@ -847,7 +847,7 @@ $('.update-input').focus(function(evt) {
   $(evt.target).addClass('input-selected');
 }).change(function(evt) {
   $(evt.target).addClass('input-edited');
-}).blur(function(evt) {
+}).on('blur', function(evt) {
   var selector = '#'+evt.target.id.replace(/:/g, '\\:');
   currentCell = evt.target.id;
   $(selector).removeClass('input-selected');

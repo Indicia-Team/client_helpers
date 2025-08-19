@@ -11,7 +11,7 @@ function createNewSample(code, force) {
   } else {
     $('#smpid').val('');
   }
-  
+
   $.each(indiciaData.sections, function(idx, section) {
     if (section.code==code) {
       // copy the fieldname and value into the sample submission form for each sample custom attribute
@@ -131,7 +131,7 @@ function loadSpeciesList() {
         var targetInput = [];
         if (targetRow.length>0) {
           targetInput = $('#value\\:' + targetRow[0].id.substr(4) + '\\:' + code);
-        }        
+        }
         // right arrow - move to next cell if at end of text
         if (evt.keyCode===39 && evt.target.selectionEnd >= evt.target.value.length) {
           targetInput = $(evt.target).parents('td').next('td').find('input');
@@ -172,7 +172,7 @@ function loadSpeciesList() {
       $('.count-input,.smp-input').change(function(evt) {
         $(evt.target).addClass('edited');
       });
-      $('.count-input,.smp-input').blur(function(evt) {        
+      $('.count-input,.smp-input').on('blur', function(evt) {
         var selector = '#'+evt.target.id.replace(/:/g, '\\:');
         currentCell = evt.target.id;
         getTotal(evt.target);
