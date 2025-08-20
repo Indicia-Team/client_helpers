@@ -71,10 +71,13 @@ class report_helper extends helper_base {
         return $output['error'];
       $reports .= self::get_report_list_level($options['id'], $options['fieldname'], $options['default'], $output);
     }
-    self::$javascript .= '$("#'.$options['id'].' > ul").treeview({collapsed: true});'."\n";
-    self::$javascript .= "indiciaData.reportList=".$response['output'].";\n";
-    self::$javascript .= '$(\'#'.$options['id'].' > ul input[checked="checked"]\').trigger('click');'."\n";
-    self::$javascript .= '$(\'#'.$options['id'].' > ul input[checked="checked"]\').parents("#'.$options['id'].' ul").show();'."\n";
+    self::$javascript .= <<<JS
+      $('#$options[id] > ul').treeview({collapsed: true});
+      indiciaData.reportList=$response[output];
+      $('#$options[id] > ul input[checked="checked"]').trigger('click');
+      $('#$options[id] > ul input[checked="checked"]').parents('#$options[id] ul').show();
+
+    JS;
     $options['reports']=$reports;
     $options['moreinfo']=lang::get('More info');
     return self::apply_template('report_picker', $options);
