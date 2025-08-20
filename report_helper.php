@@ -1540,7 +1540,7 @@ JS;
       static $handlers_once = false;
       if (!$handlers_once) {
         // Only need to emit event handlers once.
-        self::$javascript .= "$(window).resize(function(){
+        self::$javascript .= "$(window).on('resize', function(){
           // Calculate scaling factor to alter dimensions according to width.
           var scaling = 1;
           var shadow = true;

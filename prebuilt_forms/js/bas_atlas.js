@@ -90,7 +90,7 @@ jQuery(document).ready(function($) {
     }
   }
 
-  $(window).resize(function() {
+  $(window).on('resize', function() {
     resizeTabs()
     resizeZoomMap()
   })
