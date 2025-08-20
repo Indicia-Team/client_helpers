@@ -6722,61 +6722,33 @@ $('#sensitive-blur').on('change', function() {
   }
 
   /**
-   * A control for inputting a time value. Provides a text input with a spin control that allows
-   * the time to be input. Reverts to a standard text input when JavaScript disabled.
-   * @param array $options Options array with the following possibilities:
-   * <ul>
-   * <li><b>fieldname</b><br/>
-   * Required. The name of the database field this control is bound to.</li>
-   * <li><b>id</b><br/>
-   * Optional. The id to assign to the HTML control. If not assigned the fieldname is used.</li>
-   * <li><b>default</b><br/>
-   * Optional. The default value to assign to the control. This is overridden when reloading a
-   * record with existing data for this control.</li>
-   * <li><b>class</b><br/>
-   * Optional. CSS class names to add to the control.</li>
-   * <li><b>beforeSetTime</b><br/>
-   * Optional. Set this to the name of a JavaScript function which is called when the user tries to set a time value. This
-   * can be used, for example, to display a warning label when an out of range time value is input. See <a '.
-   * href="http://keith-wood.name/timeEntry.html">jQuery Time Entry</a> then click on the Restricting tab for more information.</li>
-   * <li><b>timeSteps</b><br/>
-   * Optional. An array containing 3 values for the allowable increments in time for hours, minutes and seconds respectively. Defaults to
-   * 1, 15, 0 meaning that the increments allowed are in 15 minute steps and seconds are ignored.</li>
-   * <li><b>show24Hours</b><br/>
-   * Optional. True to use 24 hour time, false for 12 hour (AM/PM)</li>
-   * </ul>
+   * A control for inputting a time value.
+   *
+   * Outputs an HTML5 time control. Exact behaviour will depend on the browser.
+   *
    * The output of this control can be configured using the following templates:
-   * <ul>
-   * <li><b>text_input</b></br>
-   * HTML template used to generate the input element. Time management aspects of this are managed
-   * by JavaScript.
-   * </li>
-   * </ul>
+   * * *text_input* - HTML template used to generate the input element.
+   *
+   * @param array $options
+   *   Options array with the following possibilities:
+   *   * *fieldname* - Required. The name of the database field this control is
+   *     bound to.
+   *   * *id* - Optional. The id to assign to the HTML control. If not assigned
+   *     the fieldname is used.
+   *   * *default* - Optional. The default value to assign to the control. This
+   *     is overridden when reloading a record with existing data for this
+   *     control.
+   *   * *class* - Optional. CSS class names to add to the control.
+   *   * *step* - the granularity which the value must adhere to in minutes.
+   *     Defaults to 'any'.
    */
   public static function time_input($options) {
-    $options = array_merge(array(
-      'id' => $options['fieldname'],
-      'default' => '',
-      'timeSteps' => array(1,15,0),
-      'show24Hours' => FALSE,
-      'isFormControl' => TRUE
-    ), $options);
-    self::add_resource('timeentry');
-    $steps = implode(', ', $options['timeSteps']);
-    $imgPath = empty(self::$images_path) ? self::relative_client_helper_path() . "../media/images/" : self::$images_path;
-    $show24Hours = ($options['show24Hours'] === TRUE) ? 'true' : 'false';
-    // build a list of options to pass through to the jQuery widget
-    $jsOpts = array(
-      "timeSteps: [$steps]",
-      "spinnerImage: '".$imgPath."/spinnerGreen.png'",
-      "show24Hours: $show24Hours",
-    );
-    if (isset($options['beforeSetTime']))
-      $jsOpts[] = "beforeSetTime: ".$options['beforeSetTime'];
-    // ensure ID is safe for jQuery selectors
-    $safeId = str_replace(':','\\\\:',$options['id']);
-    self::$javascript .= "$('#".$safeId."').timeEntry({".implode(', ', $jsOpts) . "});\n";
-    return self::apply_template('text_input', $options);
+    $options = array_merge([
+      'attributes' => [],
+    ], $options);
+    $options['attributes']['type'] = 'time';
+    $options['attributes']['step'] = $options['step'] ?? 'any';
+    return self::text_input($options);
   }
 
   /**

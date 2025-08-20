@@ -908,7 +908,6 @@ class helper_base {
    *   * wizardprogress
    *   * spatialReports
    *   * jsonwidget
-   *   * timeentry
    *   * verification
    *   * complexAttrGrid
    *   * footable
@@ -1235,9 +1234,6 @@ class helper_base {
             self::$js_path . 'jquery.jsonwidget.js',
           ],
           'stylesheets' => [self::$css_path . 'jsonwidget.css'],
-        ],
-        'timeentry' => [
-          'javascript' => [self::$js_path . 'jquery.timeentry.min.js'],
         ],
         'verification' => [
           'javascript' => [self::$js_path . 'verification.js'],
