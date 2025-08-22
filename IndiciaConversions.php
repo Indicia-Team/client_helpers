@@ -215,7 +215,7 @@ class IndiciaConversions {
       \lang::get("{1} decades ago")
     ];
     $lengths = ['60', '60', '24', '7', '4.35', '12', '10'];
-    for ($j = 0; (($difference >= $lengths[$j]) && ($j < 7)); $j++) {
+    for ($j = 0; (($j < 7) && ($difference >= $lengths[$j])); $j++) {
       $difference /= $lengths[$j];
     }
     $difference = round($difference);
