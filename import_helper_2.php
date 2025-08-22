@@ -1749,7 +1749,7 @@ HTML;
       $arrow = self::getSummaryColumnArrow($info);
       $warehouseFieldLabel = isset($info['warehouseField']) ? self::getWarehouseFieldLabel($info['warehouseField'], $availableFields, TRUE) : '';
       $mappingRows[] = "<tr><td><em>$columnLabel</td></em><td>$arrow</td><td>$warehouseFieldLabel</td></tr>";
-      if (preg_match('/:(id|external_key)$/', $info['warehouseField'])) {
+      if (preg_match('/:(id|external_key)$/', $info['warehouseField'] ?? '')) {
         $existingMatchFields[] = $warehouseFieldLabel;
       }
     }
