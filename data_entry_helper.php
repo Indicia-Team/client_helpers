@@ -1093,7 +1093,7 @@ JS;
    *     non-zero.
    *   * upload - Boolean, defaults to true.
    *   * maxFileCount - Maximum number of files to allow upload for. Defaults
-   *     to 4. Set to false to allow unlimited files.
+   *     to 8. Set to false to allow unlimited files.
    *   * maxUploadSize - Maximum file size to allow in bytes. This limits file
    *     selection. PHP settings on server may limit upload.
    *   * autoupload - Defaults to true. If false, then a button is displayed
@@ -1175,7 +1175,7 @@ JS;
     $defaults = [
       'id' => 'default',
       'upload' => TRUE,
-      'maxFileCount' => 4,
+      'maxFileCount' => 8,
       'msgUploadError' => lang::get('upload error'),
       'msgFileTooBig' => lang::get('file too big for warehouse'),
       'runtimes' => ['html5', 'flash', 'silverlight', 'html4'],
