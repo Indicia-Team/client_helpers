@@ -2141,6 +2141,7 @@ HTML;
       'notAcceptedUnableToVerify' => lang::get('Not accepted :: unable to verify'),
       'plausible' => lang::get('Plausible'),
       'raiseQuery' => lang::get('Raise a query with the recorder'),
+      'redet' => lang::get('Redet.'),
       'saveLocationLink' => lang::get('Save link to location'),
       'saveStatus' => lang::get('Save status'),
       'saveTemplate' => lang::get('Save template'),
@@ -2383,7 +2384,7 @@ HTML;
         <button class="verify l2 $btnClassDefault" data-status="R5" title="$lang[notAcceptedIncorrect]"><span class="fas fa-times status-R5"></span></button>
         <button class="apply-to-parent-sample-contents single-only $btnClassDefault" title="$lang[applyThisDecisionToParentSample]" disabled="disabled"><span class="fas fa-sitemap"></span></button>
         <span class="sep"></span>
-        <button class="redet $btnClassDefault" title="Redetermine this record"><span class="fas fa-tag"></span></button>
+        <button class="redet $btnClassDefault" title="Redetermine this record">$lang[redet]</button>
         <button class="query $btnClassDefault" data-query="Q" title="$lang[raiseQuery]"><span class="fas fa-question-circle query-Q"></span></button>
         $forceLinkedLocationButton
         <div class="multi-only apply-to">
