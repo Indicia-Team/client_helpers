@@ -459,7 +459,7 @@ class data_entry_helper extends helper_base {
           ? json_decode($options['default'][$i]['default'], TRUE)
           : explode($options['encoding'], $options['default'][$i]['default']);
       }
-      else {
+      if (empty($defaults)) {
         $defaults = [];
       }
 
