@@ -945,34 +945,35 @@ uploadChunk = function() {
          '&filepos=' + filepos + '&uploaded_csv=$filename' +
          '&model=$options[model]&allow_commit_to_db=$options[allowCommitToDB]',
     dataType: 'jsonp',
-    success: function(response) {
-      var allowCommitToDB = '$options[allowCommitToDB]';
-      var message;
-      total = total + response.uploaded;
-      filepos = response.filepos;
-      message = '$progressMessage'.replace('{1}', total - response.errorCount);
-      if (response.errorCount > 0) {
-        message += ' $errorMessage'.replace('{1}', response.errorCount);
-      }
-      jQuery('#progress-text').html(message);
-      $('#progress-bar').val(response.progress);
-      $('#progress-bar').text(response.progress + ' %');
-      if (response.uploaded >= limit) {
-        uploadChunk();
-      } else {
-        if (allowCommitToDB) {
-          if (response.errorCount > 0) {
-            jQuery('#progress-text').html('Upload finished with errors.');
-          } else {
-            jQuery('#progress-text').html('Upload complete.');
-          }
-          //We only need total at end of wizard, so we can just refresh page with total as param to use in the post of next step
+    crossDomain: true
+  })
+  .done(function(response) {
+    var allowCommitToDB = '$options[allowCommitToDB]';
+    var message;
+    total = total + response.uploaded;
+    filepos = response.filepos;
+    message = '$progressMessage'.replace('{1}', total - response.errorCount);
+    if (response.errorCount > 0) {
+      message += ' $errorMessage'.replace('{1}', response.errorCount);
+    }
+    jQuery('#progress-text').html(message);
+    $('#progress-bar').val(response.progress);
+    $('#progress-bar').text(response.progress + ' %');
+    if (response.uploaded >= limit) {
+      uploadChunk();
+    } else {
+      if (allowCommitToDB) {
+        if (response.errorCount > 0) {
+          jQuery('#progress-text').html('Upload finished with errors.');
         } else {
-          jQuery('#progress-text').html('Checks complete.');
+          jQuery('#progress-text').html('Upload complete.');
         }
-        $('#fields_to_retain_form').append('<input type=\"hidden\" name=\"total\" id=\"total\" value=\"'+total+'\"/>');
-        $('#fields_to_retain_form').submit();
+        //We only need total at end of wizard, so we can just refresh page with total as param to use in the post of next step
+      } else {
+        jQuery('#progress-text').html('Checks complete.');
       }
+      $('#fields_to_retain_form').append('<input type=\"hidden\" name=\"total\" id=\"total\" value=\"'+total+'\"/>');
+      $('#fields_to_retain_form').submit();
     }
   })
   .fail(function(r) {

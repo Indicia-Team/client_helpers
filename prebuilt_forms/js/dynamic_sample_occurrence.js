@@ -202,8 +202,8 @@ jQuery(document).ready(function docReady($) {
     var reportApi = indiciaData.warehouseUrl + 'index.php/services/report/requestReport';
     var report = 'library/occurrences/list_taxon_meanings.xml';
     return $.ajax({
-      'url': reportApi,
-      'data': {
+      url: reportApi,
+      data: {
         'auth_token': indiciaData.read.auth_token,
         'nonce': indiciaData.read.nonce,
         'mode': 'json',
@@ -212,7 +212,8 @@ jQuery(document).ready(function docReady($) {
         [param]: value,
         'training': indiciaData.training
       },
-      'dataType': 'jsonp',
+      dataType: 'jsonp',
+      crossDomain: true
     });
   }
 
@@ -246,10 +247,11 @@ jQuery(document).ready(function docReady($) {
     }
 
     return $.ajax({
-      'url': indiciaData.warehouseUrl+'index.php/services/data/taxa_taxon_list',
-      'method': 'POST',
-      'data': data,
-      'dataType': 'jsonp',
+      url: indiciaData.warehouseUrl + 'index.php/services/data/taxa_taxon_list',
+      method: 'POST',
+      data: data,
+      dataType: 'jsonp',
+      crossDomain: true
     });
   }
 

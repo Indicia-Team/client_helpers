@@ -34,6 +34,7 @@ jQuery(document).ready(function docReady($) {
     );
     $.ajax({
       dataType: 'jsonp',
+      crossDomain: true,
       url: indiciaData.read.url + 'index.php/services/report/requestReport?' +
         'report=projects/inns_mapper/treatment_info.xml' +
         '&reportSource=local&sample_id=' + id +

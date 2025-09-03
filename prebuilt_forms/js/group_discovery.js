@@ -35,9 +35,9 @@ jQuery(document).ready(function($) {
     const limit = 1;
     if (searchWords || filterMode === 'member') {
       $('#group-list-container .loading-spinner').show();
-      var reportingURL = indiciaData.read.url + 'index.php/services/report/requestReport' +
-      '?report=library/groups/groups_list.xml&callback=?';
+      var reportingURL = indiciaData.read.url + 'index.php/services/report/requestReport';
       var reportOptions = {
+        report: 'library/groups/groups_list.xml',
         mode: 'json',
         nonce: indiciaData.read.nonce,
         auth_token: indiciaData.read.auth_token,
@@ -51,11 +51,16 @@ jQuery(document).ready(function($) {
       if (searchWords) {
         reportOptions.search_fulltext = searchWords;
       }
-      $.getJSON(reportingURL, reportOptions,
-        function(data) {
-          // Clear existing results, but not if appending a new page after
-          // clicking show more.
-          if (!append) {
+      $.ajax({
+        url: reportingURL,
+        data: reportOptions,
+        dataType: 'jsonp',
+        crossDomain: true
+      })
+      .done(function(data) {
+        // Clear existing results, but not if appending a new page after
+        // clicking show more.
+        if (!append) {
             $('#search-groups .card-gallery ul li').remove();
           }
           // Show or hide the show more link depending on if there are more pages.

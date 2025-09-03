@@ -816,16 +816,16 @@ $(document).ready(function() {
     // Track location name changes and check for uniqueness.
     $('#location\\:name').on('change', function() {
       // Build report request to find duplicates.
-      const reportApi = indiciaData.warehouseUrl + 'index.php/services/report/requestReport';
+      const reportApiUrl = indiciaData.warehouseUrl + 'index.php/services/report/requestReport';
       const report = 'library/locations/find_duplicate_names.xml';
       const params = {
-        'auth_token': indiciaData.read.auth_token,
-        'nonce': indiciaData.read.nonce,
-        'mode': 'json',
-        'reportSource': 'local',
-        'report': report,
-        'wantCount': 1,
-        'wantRecords': 0,
+        auth_token: indiciaData.read.auth_token,
+        nonce: indiciaData.read.nonce,
+        mode: 'json',
+        reportSource: 'local',
+        report: report,
+        wantCount: 1,
+        wantRecords: 0,
         name: $('#location\\:name').val(),
         location_type_id: $('[name="location\\:location_type_id"]').val(),
         website_id: indiciaData.website_id
@@ -835,9 +835,10 @@ $(document).ready(function() {
         params.exclude_location_id = $('#location\\:id').val();
       }
       $.ajax({
-        'url': reportApi,
-        'data': params,
-        'dataType': 'jsonp',
+        url: reportApiUrl,
+        data: params,
+        dataType: 'jsonp',
+        crossDomain: true
       }).done(function(data) {
         if (data.count > 0) {
           $('#input-form [type="submit"]').prop('disabled', true);

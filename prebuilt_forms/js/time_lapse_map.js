@@ -336,8 +336,6 @@ var rgbvalue, applyJitter, setToDate, loadYear;
   };
 
   loadYear = function (year, side, speciesId) {
-    var dateFilter = (year === 'all' ? '&date_from=' + iTLMOpts.firstYear + '-01-01' : '&date_from=' + year + '-01-01&date_to=' + year + '-12-31');
-    var speciesFilter = typeof speciesId === 'undefined' ? '' : '&species_id=' + speciesId;
     var loadingAll = typeof speciesId === 'undefined';
     if ((iTLMOpts.preloadData && typeof iTLMData.myData['year:' + year] !== 'undefined' && loadingAll)
       || (!loadingAll && typeof iTLMData.myData['year:' + year]['species:' + speciesId] !== 'undefined')) {
@@ -348,104 +346,120 @@ var rgbvalue, applyJitter, setToDate, loadYear;
       resetMap();
       return; // already loaded.
     }
+    $(iTLMOpts.errorDiv).empty();
+    $.fancyDialog({ title: iTLMOpts.waitDialogTitle, message: iTLMOpts.waitDialogText, cancelButton: null });
+    var params = {
+      report: iTLMOpts.report_name + '.xml',
+      reportSource: 'local',
+      mode: 'json',
+      reset_timeout: true,
+      quality: '!R',
+      date_from: year === 'all' ? iTLMOpts.firstYear + '-01-01' : year + '-01-01',
+      date_to: year === 'all' ? iTLMOpts.lastYear + '-12-31' : year + '-12-31',
+      auth_token: indiciaData.read.auth_token,
+      nonce: indiciaData.read.nonce,
+      ...iTLMOpts.reportExtraParams
+    };
     if (typeof speciesId === 'undefined') {
       iTLMData.myData['year:' + year] = {};
       iTLMData.mySpecies['year:' + year] = {};
+    } else {
+      params.species_id = speciesId;
     }
-    $(iTLMOpts.errorDiv).empty();
-    $.fancyDialog({ title: iTLMOpts.waitDialogTitle, message: iTLMOpts.waitDialogText, cancelButton: null });
     // Report record should have geom, date, recordDayIndex (days since unix epoch), species ttl_id, attributes.
-    jQuery.getJSON(indiciaData.warehouseUrl + 'index.php/services/report/requestReport?report=' + iTLMOpts.report_name +
-        '.xml&reportSource=local&mode=json&reset_timeout=true' +
-        '&auth_token=' + indiciaData.read.auth_token + '&nonce=' + indiciaData.read.nonce + iTLMOpts.reportExtraParams +
-        '&callback=?&quality=!R' + dateFilter + speciesFilter,
-      function (data) {
-        var hasDate = false;
-        var wktCol = false;
-        var parser = new OpenLayers.Format.WKT();
-        var donePoints = [];
-        var wkt;
-        var found;
+    $.ajax({
+      url: indiciaData.warehouseUrl + 'index.php/services/report/requestReport',
+      data: params,
+      dataType: 'jsonp',
+      crossDomain: true
+    })
+    .done(function (data) {
+      var hasDate = false;
+      var wktCol = false;
+      var parser = new OpenLayers.Format.WKT();
+      var donePoints = [];
+      var wkt;
+      var found;
 
-        if (typeof data.records !== 'undefined') {
-          if (data.records.length > 0) {
-            // first isolate geometry column
-            $.each(data.columns, function (column, properties) {
-              if (column === 'created_by_id')
-                canIDuser = true;
-              if (column === 'date')
-                hasDate = true;
-              if (typeof properties.mappable !== 'undefined' && properties.mappable === 'true' && !wktCol)
-                wktCol = column;
-            });
-            if (!wktCol)
-              return $(iTLMOpts.errorDiv).append('<p>' + iTLMOpts.noMappableDataError + '</p>');
-            if (!hasDate)
-              return $(iTLMOpts.errorDiv).append('<p>' + iTLMOpts.noDateError + '</p>');
-            $.each(data.records, function() {
-              // remove point stuff: don't need to convert to numbers, as that was only to save space in php.
-              wkt = this[wktCol].replace(/POINT\(/, '').replace(/\)/, '');
+      if (typeof data.records !== 'undefined') {
+        if (data.records.length > 0) {
+          // first isolate geometry column
+          $.each(data.columns, function (column, properties) {
+            if (column === 'created_by_id')
+              canIDuser = true;
+            if (column === 'date')
+              hasDate = true;
+            if (typeof properties.mappable !== 'undefined' && properties.mappable === 'true' && !wktCol)
+              wktCol = column;
+          });
+          if (!wktCol)
+            return $(iTLMOpts.errorDiv).append('<p>' + iTLMOpts.noMappableDataError + '</p>');
+          if (!hasDate)
+            return $(iTLMOpts.errorDiv).append('<p>' + iTLMOpts.noDateError + '</p>');
+          $.each(data.records, function() {
+            // remove point stuff: don't need to convert to numbers, as that was only to save space in php.
+            wkt = this[wktCol].replace(/POINT\(/, '').replace(/\)/, '');
 
-              if (typeof iTLMData.mySpecies['year:' + year]['species:' + this.species_id] === 'undefined') {
-                iTLMData.mySpecies['year:' + year]['species:' + this.species_id] = {
-                  id: this.species_id,
-                  taxon: this.taxon
-                };
-              }
-              if (typeof iTLMData.myData['year:' + year]['species:' + this.species_id] === 'undefined') {
-                iTLMData.myData['year:' + year]['species:' + this.species_id] = {};
-              }
-              // Need to check that geom + species ID combination not already done at this point
-              found = $.inArray(this.species_id + ':' + wkt, donePoints) !== -1;
-              if (found) {
-                return true; // continue to next iteration of records
-              }
-              donePoints.push(this.species_id + ':' + wkt);
-              if (typeof iTLMData.myData['year:' + year]['species:' + this.species_id]['day:' + this.recordDayIndex] === "undefined") {
-                iTLMData.myData['year:' + year]['species:' + this.species_id]['day:' + this.recordDayIndex] = {
-                  records: [],
-                  coords: [],
-                  acceptedCoords: [],
-                };
-              }
-              iTLMData.myData['year:' + year]['species:' + this.species_id]['day:' + this.recordDayIndex].records.push(this);
-              iTLMData.myData['year:' + year]['species:' + this.species_id]['day:' + this.recordDayIndex].coords.push(wkt);
-              if (this.record_status === 'V') {
-                iTLMData.myData['year:' + year]['species:' + this.species_id]['day:' + this.recordDayIndex].acceptedCoords.push(wkt);
-              }
+            if (typeof iTLMData.mySpecies['year:' + year]['species:' + this.species_id] === 'undefined') {
+              iTLMData.mySpecies['year:' + year]['species:' + this.species_id] = {
+                id: this.species_id,
+                taxon: this.taxon
+              };
+            }
+            if (typeof iTLMData.myData['year:' + year]['species:' + this.species_id] === 'undefined') {
+              iTLMData.myData['year:' + year]['species:' + this.species_id] = {};
+            }
+            // Need to check that geom + species ID combination not already done at this point
+            found = $.inArray(this.species_id + ':' + wkt, donePoints) !== -1;
+            if (found) {
+              return true; // continue to next iteration of records
+            }
+            donePoints.push(this.species_id + ':' + wkt);
+            if (typeof iTLMData.myData['year:' + year]['species:' + this.species_id]['day:' + this.recordDayIndex] === "undefined") {
+              iTLMData.myData['year:' + year]['species:' + this.species_id]['day:' + this.recordDayIndex] = {
+                records: [],
+                coords: [],
+                acceptedCoords: [],
+              };
+            }
+            iTLMData.myData['year:' + year]['species:' + this.species_id]['day:' + this.recordDayIndex].records.push(this);
+            iTLMData.myData['year:' + year]['species:' + this.species_id]['day:' + this.recordDayIndex].coords.push(wkt);
+            if (this.record_status === 'V') {
+              iTLMData.myData['year:' + year]['species:' + this.species_id]['day:' + this.recordDayIndex].acceptedCoords.push(wkt);
+            }
+          });
+          // Now, loop the data, for each species/day combination, build 1 big feature.
+          $.each(iTLMData.myData['year:' + year], function(speciesTag, dayList) {
+            $.each(dayList, function(idx) {
+              var shapeType = this.coords.length === 1 ? 'POINT' : 'MULTIPOINT';
+              this.feature = parser.read(shapeType + '(' + this.coords.join(',') + ')');
+              this.feature.style = { fillOpacity: 0.8, strokeWidth: 0 };
+              this.feature.attributes.dayIndex = idx.replace('day:', '');
+              this.feature.attributes.acceptedOnly = 0;
+              this.acceptedFeature = parser.read(shapeType + '(' + this.acceptedCoords.join(',') + ')');
+              this.acceptedFeature.style = { fillOpacity: 0.8, strokeWidth: 0 };
+              this.acceptedFeature.attributes.dayIndex = idx.replace('day:', '');
+              this.acceptedFeature.attributes.acceptedOnly = 1;
             });
-            // Now, loop the data, for each species/day combination, build 1 big feature.
-            $.each(iTLMData.myData['year:' + year], function(speciesTag, dayList) {
-              $.each(dayList, function(idx) {
-                var shapeType = this.coords.length === 1 ? 'POINT' : 'MULTIPOINT';
-                this.feature = parser.read(shapeType + '(' + this.coords.join(',') + ')');
-                this.feature.style = { fillOpacity: 0.8, strokeWidth: 0 };
-                this.feature.attributes.dayIndex = idx.replace('day:', '');
-                this.feature.attributes.acceptedOnly = 0;
-                this.acceptedFeature = parser.read(shapeType + '(' + this.acceptedCoords.join(',') + ')');
-                this.acceptedFeature.style = { fillOpacity: 0.8, strokeWidth: 0 };
-                this.acceptedFeature.attributes.dayIndex = idx.replace('day:', '');
-                this.acceptedFeature.attributes.acceptedOnly = 1;
-              });
-            });
-          }
-        } else if (typeof data.error !== 'undefined') {
-          $(iTLMOpts.errorDiv).html('<p>Error Returned from warehouse report:<br>' + data.error + '<br/>' +
-                  (typeof data.code !== 'undefined' ? 'Code: ' + data.code + '<br/>' : '') +
-                  (typeof data.file !== 'undefined' ? 'File: ' + data.file + '<br/>' : '') +
-                  (typeof data.line !== 'undefined' ? 'Line: ' + data.line + '<br/>' : '') +
-                  // not doing trace
-                  '</p>');
-        } else {
-          $(iTLMOpts.errorDiv).html('<p>Internal Error: Format from report request not recognised.</p>');
+          });
         }
-        if (loadingAll) {
-          enableSpeciesControlOptions(year);
-        }
-        calculateMinAndMax();
-        resetMap();
-        $.fancybox.close();
-      });
+      } else if (typeof data.error !== 'undefined') {
+        $(iTLMOpts.errorDiv).html('<p>Error Returned from warehouse report:<br>' + data.error + '<br/>' +
+                (typeof data.code !== 'undefined' ? 'Code: ' + data.code + '<br/>' : '') +
+                (typeof data.file !== 'undefined' ? 'File: ' + data.file + '<br/>' : '') +
+                (typeof data.line !== 'undefined' ? 'Line: ' + data.line + '<br/>' : '') +
+                // not doing trace
+                '</p>');
+      } else {
+        $(iTLMOpts.errorDiv).html('<p>Internal Error: Format from report request not recognised.</p>');
+      }
+      if (loadingAll) {
+        enableSpeciesControlOptions(year);
+      }
+      calculateMinAndMax();
+      resetMap();
+      $.fancybox.close();
+    });
   };
 
   /**
@@ -454,33 +468,42 @@ var rgbvalue, applyJitter, setToDate, loadYear;
   loadSpeciesOpts = function() {
     iTLMData.myData['year:all'] = {};
     iTLMData.mySpecies['year:all'] = {};
-    $.getJSON(indiciaData.warehouseUrl + 'index.php/services/report/requestReport?report=' + iTLMOpts.species_report_name +
-      '.xml&reportSource=local&mode=json&reset_timeout=true' +
-      '&auth_token=' + indiciaData.read.auth_token + '&nonce=' + indiciaData.read.nonce + iTLMOpts.reportExtraParams +
-      '&callback=?',
-      function (data) {
-        if (typeof data.records !== 'undefined') {
-          $.each(data.records, function() {
-            if (typeof iTLMData.mySpecies['year:all']['species:' + this.species_id] === 'undefined') {
-              iTLMData.mySpecies['year:all']['species:' + this.species_id] = {
-                id: this.species_id,
-                taxon: this.taxon
-              };
-            }
-          });
-        } else if (typeof data.error !== 'undefined') {
-          $(iTLMOpts.errorDiv).html('<p>Error Returned from warehouse report:<br>' + data.error + '<br/>' +
-                  (typeof data.code !== 'undefined' ? 'Code: ' + data.code + '<br/>' : '') +
-                  (typeof data.file !== 'undefined' ? 'File: ' + data.file + '<br/>' : '') +
-                  (typeof data.line !== 'undefined' ? 'Line: ' + data.line + '<br/>' : '') +
-                  // not doing trace
-                  '</p>');
-        } else {
-          $(iTLMOpts.errorDiv).html('<p>Internal Error: Format from report request not recognised.</p>');
-        }
-        enableSpeciesControlOptions('all');
+    $.ajax({
+      url: indiciaData.warehouseUrl + 'index.php/services/report/requestReport',
+      data: {
+        report: iTLMOpts.species_report_name + '.xml',
+        reportSource: 'local',
+        mode: 'json',
+        reset_timeout: true,
+        auth_token: indiciaData.read.auth_token,
+        nonce: indiciaData.read.nonce,
+        ...iTLMOpts.reportExtraParams
+      },
+      dataType: 'jsonp',
+      crossDomain: true
+    })
+    .done(function (data) {
+      if (typeof data.records !== 'undefined') {
+        $.each(data.records, function() {
+          if (typeof iTLMData.mySpecies['year:all']['species:' + this.species_id] === 'undefined') {
+            iTLMData.mySpecies['year:all']['species:' + this.species_id] = {
+              id: this.species_id,
+              taxon: this.taxon
+            };
+          }
+        });
+      } else if (typeof data.error !== 'undefined') {
+        $(iTLMOpts.errorDiv).html('<p>Error Returned from warehouse report:<br>' + data.error + '<br/>' +
+                (typeof data.code !== 'undefined' ? 'Code: ' + data.code + '<br/>' : '') +
+                (typeof data.file !== 'undefined' ? 'File: ' + data.file + '<br/>' : '') +
+                (typeof data.line !== 'undefined' ? 'Line: ' + data.line + '<br/>' : '') +
+                // not doing trace
+                '</p>');
+      } else {
+        $(iTLMOpts.errorDiv).html('<p>Internal Error: Format from report request not recognised.</p>');
       }
-    );
+      enableSpeciesControlOptions('all');
+    });
   }
 
   rgbvalue = function (dateidx) {

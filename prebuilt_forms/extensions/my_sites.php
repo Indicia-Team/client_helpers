@@ -333,35 +333,39 @@ JS;
 function duplicateCheck(locationId, userId) {
   var userIdToAdd = userId;
   var locationIdToAdd = locationId;
-  var sitesReport = indiciaData.read.url +'/index.php/services/report/requestReport?report=library/locations/all_user_sites.xml&mode=json&mode=json&callback=?';
+  const sitesReportUrl = indiciaData.read.url +'/index.php/services/report/requestReport';
 
   var sitesReportParameters = {
-    'person_site_attr_id': '$options[mySitesPsnAttrId]',
-    'auth_token': indiciaData.read.auth_token,
-    'nonce': indiciaData.read.nonce,
-    'reportSource':'local'
+    report: 'library/locations/all_user_sites.xml',
+    mode: 'json',
+    person_site_attr_id: '$options[mySitesPsnAttrId]',
+    auth_token: indiciaData.read.auth_token,
+    nonce: indiciaData.read.nonce,
+    reportSource:'local'
   };
 
   if (!userIdToAdd || !locationIdToAdd) {
     alert('Please select both a user and a location to add.');
   } else {
-    $.getJSON (
-      sitesReport,
-      sitesReportParameters,
-      function (data) {
-        var duplicateDetected=false;
-        $.each(data, function(i, dataItem) {
-          if (userIdToAdd == dataItem.pav_user_id&&locationIdToAdd == dataItem.location_id) {
-              duplicateDetected = true;
-          }
-        });
-        if (duplicateDetected === true) {
-          alert('The site/user combination you are adding already exists in the database.');
-        } else {
-          addUserSiteData(locationId, userIdToAdd);
+    $.ajax({
+      url: sitesReportUrl,
+      data: sitesReportParameters,
+      dataType: 'jsonp',
+      crossDomain: true
+    })
+    .done(function (data) {
+      var duplicateDetected=false;
+      $.each(data, function(i, dataItem) {
+        if (userIdToAdd == dataItem.pav_user_id&&locationIdToAdd == dataItem.location_id) {
+            duplicateDetected = true;
         }
+      });
+      if (duplicateDetected === true) {
+        alert('The site/user combination you are adding already exists in the database.');
+      } else {
+        addUserSiteData(locationId, userIdToAdd);
       }
-    );
+    });
   }
 }
 

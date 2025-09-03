@@ -22,6 +22,7 @@ jQuery(document).ready(function ($) {
       $.ajax({
         url: url,
         dataType: 'jsonp',
+        crossDomain: true,
         data: {
           auth_token: indiciaData.read.auth_token,
           nonce: indiciaData.read.nonce,

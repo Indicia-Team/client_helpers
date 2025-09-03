@@ -251,6 +251,7 @@ jQuery(document).ready(function ($) {
       url: indiciaData.warehouseUrl + 'index.php/services/data_utils/combine_scratchpad_lists/' +
         params.join('/') + '?nonce=' + indiciaData.write.nonce + '&auth_token=' + indiciaData.write.auth_token,
       dataType: 'jsonp',
+      crossDomain: true,
       success: function (response) {
         alert('The combined list has been saved');
       }

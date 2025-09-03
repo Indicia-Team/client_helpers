@@ -308,27 +308,30 @@ HTML;
     $timerDelay = ((int) 1000 / $args['frameRate']);
     $preloadData = $args['preloadData'] ? 'true' : 'false';
     $yearSelector = $args['yearSelector'] ? 'true' : 'false';
-    $extras = '&wantColumns=1&wantParameters=1&' . report_helper::array_to_query_string($currentParamValues, TRUE);
+    $extras = json_encode(array_merge([
+      'wantColumns' => 1,
+      'wantParameters' => 1,
+    ], $currentParamValues));
     data_entry_helper::$javascript .= <<<JS
-indiciaFns.initTimeLapseMap({
-  preloadData: $preloadData,
-  dotSize: $args[dotSize],
-  lat: $args[map_centroid_lat],
-  long: $args[map_centroid_long],
-  zoom: $args[map_zoom],
-  report_name: '$args[report_name]',
-  species_report_name: '$args[species_report_name]',
-  reportExtraParams: '$extras',
-  timeControlSelector: '#timeSlider',
-  dotControlSelector: '#dotSlider',
-  timerDelay: $timerDelay,
-  imgPath: '$imgPath',
-  yearSelector: $yearSelector,
-  firstYear: $args[firstYear],
-  numberOfDateLabels: $args[numberOfDateLabels]
-});
+      indiciaFns.initTimeLapseMap({
+        preloadData: $preloadData,
+        dotSize: $args[dotSize],
+        lat: $args[map_centroid_lat],
+        long: $args[map_centroid_long],
+        zoom: $args[map_zoom],
+        report_name: '$args[report_name]',
+        species_report_name: '$args[species_report_name]',
+        reportExtraParams: $extras,
+        timeControlSelector: '#timeSlider',
+        dotControlSelector: '#dotSlider',
+        timerDelay: $timerDelay,
+        imgPath: '$imgPath',
+        yearSelector: $yearSelector,
+        firstYear: $args[firstYear],
+        numberOfDateLabels: $args[numberOfDateLabels]
+      });
 
-JS;
+      JS;
   }
 
 }

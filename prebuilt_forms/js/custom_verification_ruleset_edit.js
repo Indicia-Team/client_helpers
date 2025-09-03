@@ -136,6 +136,7 @@ jQuery(document).ready(($) => {
       if (gridRef.trim() !== '' && indiciaData.gridRefsOnMap.indexOf(gridRef) === -1) {
         $.ajax({
           dataType: 'jsonp',
+          crossDomain: true,
           url: indiciaData.warehouseUrl + 'index.php/services/spatial/sref_to_wkt',
           data: 'sref=' + gridRef +
             '&system=' + $('#imp-sref-system').val() +
@@ -243,21 +244,30 @@ jQuery(document).ready(($) => {
       }
     });
     if (locationId && !found) {
-      $.getJSON(indiciaData.read.url + 'index.php/services/data/location/' + locationId +
-              '?mode=json&view=detail&auth_token=' + indiciaData.read.auth_token + '&nonce=' + indiciaData.read.nonce + '&callback=?')
-        .done(function (data) {
-          if (data.length > 0) {
-            const parser = new OpenLayers.Format.WKT();
-            const geomwkt = data[0].boundary_geom || data[0].centroid_geom;
-            const feature = parser.read(geomwkt);
-            feature.id = 'higherGeo:' + locationId;
-            feature.attributes.type = 'higherGeo';
-            if (indiciaData.mapdiv.indiciaProjection.getCode() !== indiciaData.mapdiv.map.projection.getCode()) {
-              feature.geometry.transform(indiciaData.mapdiv.indiciaProjection, indiciaData.mapdiv.map.projection);
-            }
-            indiciaData.displayLayer.addFeatures([feature]);
+      $.ajax({
+        url: indiciaData.read.url + 'index.php/services/data/location/' + locationId,
+        data: {
+          mode: 'json',
+          view: 'detail',
+          auth_token: indiciaData.read.auth_token,
+          nonce: indiciaData.read.nonce
+        },
+        dataType: 'jsonp',
+        crossDomain: true
+      })
+      .done(function (data) {
+        if (data.length > 0) {
+          const parser = new OpenLayers.Format.WKT();
+          const geomwkt = data[0].boundary_geom || data[0].centroid_geom;
+          const feature = parser.read(geomwkt);
+          feature.id = 'higherGeo:' + locationId;
+          feature.attributes.type = 'higherGeo';
+          if (indiciaData.mapdiv.indiciaProjection.getCode() !== indiciaData.mapdiv.map.projection.getCode()) {
+            feature.geometry.transform(indiciaData.mapdiv.indiciaProjection, indiciaData.mapdiv.map.projection);
           }
-        });
+          indiciaData.displayLayer.addFeatures([feature]);
+        }
+      });
     }
   });
 

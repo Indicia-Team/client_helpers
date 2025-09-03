@@ -99,31 +99,34 @@ jQuery(document).ready(function($) {
       var voteFields = $(div).data('votefields');
       var voteKeys = Object.keys(voteFields);
       var entity = $(div).data('entity');
-      var reportingUrl = indiciaData.read.url
-        + 'index.php/services/report/requestReport'
-        + '?report=library/' + entity + 's/vote_comments_summary.xml&callback=?';
       var params = {
+        report: 'library/' + entity + 's/vote_comments_summary.xml',
         mode: 'json',
         nonce: indiciaData.read.nonce,
         auth_token: indiciaData.read.auth_token,
-        reportSource: 'local',
+        reportSource: 'local'
       };
       params[entity + '_id'] = $(div).data('id');
       voteKeys.forEach(function(key, idx) {
         params['key' + (idx + 1)] = key;
       });
-      $.getJSON(reportingUrl, params)
-        .done(function(data) {
-          var heading = $(div).find('.panel-heading a');
-          var body = $(div).find('.panel-body');
-          // @todo i18n
-          heading.children().fadeOut();
-          body.children().fadeOut();
-          addScoreStars(heading, data[0].vote_avg, data[0].vote_count, null, 'fa-2x');
-          voteKeys.forEach(function(key, idx) {
-            addScoreStars(body, data[0]['key' + (idx + 1) + '_avg'], data[0]['key' + (idx + 1) + '_count'], voteFields[key]);
-          });
+      $.ajax({
+        url: reportingUrl = indiciaData.read.url + 'index.php/services/report/requestReport',
+        data: params,
+        dataType: 'jsonp',
+        crossDomain: true
+      })
+      .done(function(data) {
+        var heading = $(div).find('.panel-heading a');
+        var body = $(div).find('.panel-body');
+        // @todo i18n
+        heading.children().fadeOut();
+        body.children().fadeOut();
+        addScoreStars(heading, data[0].vote_avg, data[0].vote_count, null, 'fa-2x');
+        voteKeys.forEach(function(key, idx) {
+          addScoreStars(body, data[0]['key' + (idx + 1) + '_avg'], data[0]['key' + (idx + 1) + '_count'], voteFields[key]);
         });
+      });
     });
   }
 
@@ -138,8 +141,7 @@ jQuery(document).ready(function($) {
       var offset = $(div).data('offset');
       var repliesMode = $(div).data('repliesmode');
       var repliesEnabled = (repliesMode === 'loggedIn' && typeof indiciaData.user_id !== 'undefined');
-      var dataUrl = indiciaData.read.url
-        + 'index.php/services/data/' + entity + '_comment?callback=?';
+      var dataUrl = indiciaData.read.url + 'index.php/services/data/' + entity + '_comment';
       var params = {
         nonce: indiciaData.read.nonce,
         auth_token: indiciaData.read.auth_token,
@@ -157,7 +159,12 @@ jQuery(document).ready(function($) {
           '<button type="button" class="btn btn-default btn-xs pull-right cancel-reply">Cancel reply</button>' +
           '</div>');
       }
-      $.getJSON(dataUrl, params)
+      $.ajax({
+        url: dataUrl,
+        data: params,
+        dataType: 'jsonp',
+        crossDomain: true
+      })
         .done(function(data) {
           var allReplies = {};
           if (data.length === 0) {

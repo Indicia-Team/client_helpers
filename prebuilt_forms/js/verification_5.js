@@ -854,10 +854,9 @@ indiciaData.rowIdToReselect = false;
    *   Status code to load templates for.
    */
   function loadVerificationTemplates(status) {
-    var getTemplatesReport;
-    var getTemplatesReportParameters;
-    getTemplatesReport = indiciaData.read.url + '/index.php/services/report/requestReport?report=library/verification_templates/verification_templates_for_a_taxon.xml&mode=json&mode=json&callback=?';
-    getTemplatesReportParameters = {
+    const getTemplatesReportUrl = indiciaData.read.url + '/index.php/services/report/requestReport?report=library/verification_templates/verification_templates_for_a_taxon.xml';
+    const getTemplatesReportParameters = {
+      mode: 'json',
       auth_token: indiciaData.read.auth_token,
       nonce: indiciaData.read.nonce,
       reportSource: 'local',
@@ -865,20 +864,22 @@ indiciaData.rowIdToReselect = false;
       template_status: status,
       website_id: indiciaData.website_id
     };
-    $.getJSON(
-      getTemplatesReport,
-      getTemplatesReportParameters,
-      function (data) {
-        if (data.length > 0) {
-          $.each(data, function() {
-            $('.verify-template').append('<option value="' + this.id + '">' + this.title + '</option>');
-          });
-          $('.verify-template').data('data', data);
-        } else {
-          $('.verify-template-container').hide();
-        }
+    $.ajax({
+      url: getTemplatesReportUrl,
+      data: getTemplatesReportParameters,
+      dataType: 'jsonp',
+      crossDomain: true
+    })
+    .done(function (data) {
+      if (data.length > 0) {
+        $.each(data, function() {
+          $('.verify-template').append('<option value="' + this.id + '">' + this.title + '</option>');
+        });
+        $('.verify-template').data('data', data);
+      } else {
+        $('.verify-template-container').hide();
       }
-    );
+    });
     $('.verify-template').on('change', function () {
       var templateID = $('.verify-template').val();
       var data = $('.verify-template').data('data');
@@ -1390,8 +1391,9 @@ indiciaData.rowIdToReselect = false;
             downgradeConfirmed = false,
             duplicateDetected = false,
             trustNeedsRemoval = [],
-            getTrustsReport = indiciaData.read.url + '/index.php/services/report/requestReport?report=library/user_trusts/get_user_trust_for_record.xml&mode=json&mode=json&callback=?',
+            getTrustsReportUrl = indiciaData.read.url + '/index.php/services/report/requestReport?report=library/user_trusts/get_user_trust_for_record.xml',
             getTrustsReportParameters = {
+              mode: 'json',
               user_id: currRec.extra.created_by_id,
               survey_id: currRec.extra.survey_id,
               taxon_group_id: currRec.extra.taxon_group_id,
@@ -1401,122 +1403,124 @@ indiciaData.rowIdToReselect = false;
               reportSource: 'local'
             };
           // Collect the existing trust data associated with the record so we can compare the new trust data with it
-          $.getJSON(
-            getTrustsReport,
-            getTrustsReportParameters,
-            function (data) {
-              var downgradeDetect = 0;
-              var upgradeDetect = 0;
-              var trustNeedsRemovalIndex = 0;
-              var trustNeedsDowngradeIndex = 0;
-              var trustNeedsDowngrade = [];
-              // Cycle through the existing trust data we need for the record
-              for (i = 0; i < data.length; i++) {
-                // If the new selections match an existing record then we flag it as a duplicate not be be added
-                if (theData['user_trust:survey_id'] === data[i].survey_id &&
-                  theData['user_trust:taxon_group_id'] === data[i].taxon_group_id &&
-                  theData['user_trust:location_id'] === data[i].location_id &&
-                  currRec.extra.created_by_id === data[i].user_id) {
-                  duplicateDetected = true;
-                }
-                // If any of the 3 trust items the user has entered are smaller than the existing trust item we are looking at,
-                // then we flag it as the existing row needs to be at least partially downgraded
-                if ((theData['user_trust:survey_id'] && !data[i].survey_id) ||
-                  (theData['user_trust:taxon_group_id'] && !data[i].taxon_group_id) ||
-                  (theData['user_trust:location_id'] && !data[i].location_id)) {
-                  downgradeDetect++;
-                }
-                // If any of the 3 trust items the user has entered are bigger than the existing trust item we are
-                // looking at, then we flag it as the existing row needs to be at least partially upgraded
-                if ((!theData['user_trust:survey_id'] && data[i].survey_id) ||
-                  (!theData['user_trust:taxon_group_id'] && data[i].taxon_group_id) ||
-                  (!theData['user_trust:location_id'] && data[i].location_id)) {
-                  upgradeDetect++;
-                }
-                // If we have detected that there are more items to be downgraded than upgraded for an existing trust
-                // then we flag it. We can then warn the user about the downgrade and remove the existing trust, e.g.
-                // This means if we have a trust which is just a trust for location Dorset and the user upgrades the
-                // location trust setting to "All" but downgrades the taxon_group trust from "All" to insects, then
-                // although a downgrade has been performed it is actually a completely seperate trust. In this case we
-                // don't want to warn the user or remove the existing trust. DowngradeDetect and upgradeDetect are both
-                // 1 so the following code wouldn't run.
-                if (downgradeDetect > upgradeDetect) {
-                  // Save the existing trust data to be downgraded for processing
-                  trustNeedsDowngrade[trustNeedsDowngradeIndex] = data[i].trust_id;
-                  trustNeedsRemoval[trustNeedsRemovalIndex] = data[i].trust_id;
-                  trustNeedsDowngradeIndex++;
-                  trustNeedsRemovalIndex++;
-                }
-                // Same logic as above but we are working out which existing trusts are being upgraded.
-                // The difference is that we don't warn the user about upgrades.
-                if (upgradeDetect > downgradeDetect) {
-                  trustNeedsRemoval[trustNeedsRemovalIndex] = data[i].trust_id;
-                  trustNeedsRemovalIndex++;
-                }
-                downgradeDetect = 0;
-                upgradeDetect = 0;
+          $.ajax({
+            url: getTrustsReportUrl,
+            data: getTrustsReportParameters,
+            dataType: 'jsonp',
+            crossDomain: true
+          })
+          .done(function (data) {
+            var downgradeDetect = 0;
+            var upgradeDetect = 0;
+            var trustNeedsRemovalIndex = 0;
+            var trustNeedsDowngradeIndex = 0;
+            var trustNeedsDowngrade = [];
+            // Cycle through the existing trust data we need for the record
+            for (i = 0; i < data.length; i++) {
+              // If the new selections match an existing record then we flag it as a duplicate not be be added
+              if (theData['user_trust:survey_id'] === data[i].survey_id &&
+                theData['user_trust:taxon_group_id'] === data[i].taxon_group_id &&
+                theData['user_trust:location_id'] === data[i].location_id &&
+                currRec.extra.created_by_id === data[i].user_id) {
+                duplicateDetected = true;
               }
+              // If any of the 3 trust items the user has entered are smaller than the existing trust item we are looking at,
+              // then we flag it as the existing row needs to be at least partially downgraded
+              if ((theData['user_trust:survey_id'] && !data[i].survey_id) ||
+                (theData['user_trust:taxon_group_id'] && !data[i].taxon_group_id) ||
+                (theData['user_trust:location_id'] && !data[i].location_id)) {
+                downgradeDetect++;
+              }
+              // If any of the 3 trust items the user has entered are bigger than the existing trust item we are
+              // looking at, then we flag it as the existing row needs to be at least partially upgraded
+              if ((!theData['user_trust:survey_id'] && data[i].survey_id) ||
+                (!theData['user_trust:taxon_group_id'] && data[i].taxon_group_id) ||
+                (!theData['user_trust:location_id'] && data[i].location_id)) {
+                upgradeDetect++;
+              }
+              // If we have detected that there are more items to be downgraded than upgraded for an existing trust
+              // then we flag it. We can then warn the user about the downgrade and remove the existing trust, e.g.
+              // This means if we have a trust which is just a trust for location Dorset and the user upgrades the
+              // location trust setting to "All" but downgrades the taxon_group trust from "All" to insects, then
+              // although a downgrade has been performed it is actually a completely seperate trust. In this case we
+              // don't want to warn the user or remove the existing trust. DowngradeDetect and upgradeDetect are both
+              // 1 so the following code wouldn't run.
+              if (downgradeDetect > upgradeDetect) {
+                // Save the existing trust data to be downgraded for processing
+                trustNeedsDowngrade[trustNeedsDowngradeIndex] = data[i].trust_id;
+                trustNeedsRemoval[trustNeedsRemovalIndex] = data[i].trust_id;
+                trustNeedsDowngradeIndex++;
+                trustNeedsRemovalIndex++;
+              }
+              // Same logic as above but we are working out which existing trusts are being upgraded.
+              // The difference is that we don't warn the user about upgrades.
+              if (upgradeDetect > downgradeDetect) {
+                trustNeedsRemoval[trustNeedsRemovalIndex] = data[i].trust_id;
+                trustNeedsRemovalIndex++;
+              }
+              downgradeDetect = 0;
+              upgradeDetect = 0;
+            }
 
-              if (duplicateDetected === true) {
-                alert('Your selected trust settings already exist in the database');
+            if (duplicateDetected === true) {
+              alert('Your selected trust settings already exist in the database');
+              $('.trust-button').removeAttr('disabled');
+              document.getElementById('trust-button').innerHTML = 'Trust';
+            }
+
+            if (trustNeedsDowngrade.length !== 0 && duplicateDetected === false) {
+              downgradeConfirmRequired = true;
+              downgradeConfirmed = confirm('Your new trust settings will result in the existing trust rights for ' +
+                'this recorder being lowered.\n Are you sure you wish to continue?');
+              // Re-enable the Trust button if the user chooses the Cancel option.
+              if (downgradeConfirmed === false) {
                 $('.trust-button').removeAttr('disabled');
                 document.getElementById('trust-button').innerHTML = 'Trust';
               }
-
-              if (trustNeedsDowngrade.length !== 0 && duplicateDetected === false) {
-                downgradeConfirmRequired = true;
-                downgradeConfirmed = confirm('Your new trust settings will result in the existing trust rights for ' +
-                  'this recorder being lowered.\n Are you sure you wish to continue?');
-                // Re-enable the Trust button if the user chooses the Cancel option.
-                if (downgradeConfirmed === false) {
-                  $('.trust-button').removeAttr('disabled');
-                  document.getElementById('trust-button').innerHTML = 'Trust';
+            }
+            // We are going to proceed if the user has clicked ok on the downgrade confirmation message or
+            // if the message was never displayed.
+            if (duplicateDetected === false && (downgradeConfirmRequired === false || downgradeConfirmed === true)) {
+              // Go through each trust item we need to remove from the database and do the removal
+              var handlePostResponse = function (postResponse) {
+                if (typeof postResponse.error !== 'undefined') {
+                  alert(postResponse.error);
                 }
-              }
-              // We are going to proceed if the user has clicked ok on the downgrade confirmation message or
-              // if the message was never displayed.
-              if (duplicateDetected === false && (downgradeConfirmRequired === false || downgradeConfirmed === true)) {
-                // Go through each trust item we need to remove from the database and do the removal
-                var handlePostResponse = function (postResponse) {
-                  if (typeof postResponse.error !== 'undefined') {
-                    alert(postResponse.error);
-                  }
+              };
+              for (i = 0; i < trustNeedsRemovalIndex; i++) {
+                theDataToRemove = {
+                  website_id: indiciaData.website_id,
+                  'user_trust:id': trustNeedsRemoval[i],
+                  'user_trust:deleted': true
                 };
-                for (i = 0; i < trustNeedsRemovalIndex; i++) {
-                  theDataToRemove = {
-                    website_id: indiciaData.website_id,
-                    'user_trust:id': trustNeedsRemoval[i],
-                    'user_trust:deleted': true
-                  };
-                  $.post(
-                    indiciaData.ajaxFormPostUrl.replace('occurrence', 'user-trust'),
-                    theDataToRemove,
-                    handlePostResponse
-                  );
-                }
-              }
-              // Now add the new trust settings
-              if (duplicateDetected === false && (downgradeConfirmRequired === false || downgradeConfirmed === true)) {
                 $.post(
                   indiciaData.ajaxFormPostUrl.replace('occurrence', 'user-trust'),
-                  theData,
-                  function (trustResponse) {
-                    if (typeof trustResponse.error === 'undefined') {
-                      drawExistingTrusts();
-                      alert('Trust settings successfully applied to the recorder');
-                      $('.trust-button').removeAttr('disabled');
-                      document.getElementById('trust-button').innerHTML = 'Trust';
-                    } else {
-                      alert(trustResponse.error);
-                      $('.trust-button').removeAttr('disabled');
-                      document.getElementById('trust-button').innerHTML = 'Trust';
-                    }
-                  },
-                  'json'
+                  theDataToRemove,
+                  handlePostResponse
                 );
               }
             }
-          );
+            // Now add the new trust settings
+            if (duplicateDetected === false && (downgradeConfirmRequired === false || downgradeConfirmed === true)) {
+              $.post(
+                indiciaData.ajaxFormPostUrl.replace('occurrence', 'user-trust'),
+                theData,
+                function (trustResponse) {
+                  if (typeof trustResponse.error === 'undefined') {
+                    drawExistingTrusts();
+                    alert('Trust settings successfully applied to the recorder');
+                    $('.trust-button').removeAttr('disabled');
+                    document.getElementById('trust-button').innerHTML = 'Trust';
+                  } else {
+                    alert(trustResponse.error);
+                    $('.trust-button').removeAttr('disabled');
+                    document.getElementById('trust-button').innerHTML = 'Trust';
+                  }
+                },
+                'json'
+              );
+            }
+          });
         }
       });
     }
@@ -1768,8 +1772,9 @@ indiciaData.rowIdToReselect = false;
 
   // Function to draw any existing trusts from the database
   function drawExistingTrusts() {
-    var getTrustsReport = indiciaData.read.url + '/index.php/services/report/requestReport?report=library/user_trusts/get_user_trust_for_record.xml&mode=json&callback=?';
+    var getTrustsReportUrl = indiciaData.read.url + '/index.php/services/report/requestReport?report=library/user_trusts/get_user_trust_for_record.xml';
     var getTrustsReportParameters = {
+      mode: 'json',
       user_id: currRec.extra.created_by_id,
       survey_id: currRec.extra.survey_id,
       taxon_group_id: currRec.extra.taxon_group_id,
@@ -1782,69 +1787,71 @@ indiciaData.rowIdToReselect = false;
     var idNum;
     // Variable holds our HTML
     var textMessage;
-    $.getJSON(
-      getTrustsReport,
-      getTrustsReportParameters,
-      function (data) {
-        if (typeof data.error === 'undefined') {
-          if (data.length > 0) {
-            trustsCounter = data.length;
-            textMessage = '<h3>Existing trust criteria</h3>';
-            // If there is only one trust we put the information into a sentence, else we put it in a bullet list
-            if (data.length === 1) {
-              textMessage += '<div class="existingTrustSection existingTrustData">' + data[0].recorder_name + ' is trusted for the ';
-            } else {
-              textMessage += '<div class="existingTrustSection">This record is trusted as ' + data[0].recorder_name + ' has the following trust criteria:';
-              textMessage += '<ul>';
-            }
-            // for each trust we build the HTML
-            for (i = 0; i < data.length; i++) {
-              if (data.length > 1) {
-                textMessage += '<li class="existingTrustData" id="trust-' + data[i].trust_id + '">The ';
-              }
-              if (data[i].survey_title) {
-                textMessage += '<strong>survey </strong><em>' + data[i].survey_title + '</em>, ';
-              }
-              if (data[i].taxon_group) {
-                textMessage += '<strong> taxon group</strong><em> ' + data[i].taxon_group + '</em>, ';
-              }
-              if (data[i].location_name) {
-                textMessage += '<strong> location</strong><em> ' + data[i].location_name + '</em>';
-              }
-              // Remove comma from end of trust information if there is a dangling comma because location info isn't
-              // present
-              if (!data[i].location_name) {
-                textMessage = textMessage.substring(0, textMessage.length - 2);
-              }
-              textMessage += '<br/>&nbsp;&nbsp;- trust was setup by ' + data[i].trusted_by;
-              textMessage += ' <a class="default-button existingTrustRemoveButton" id="deleteTrust-' +
-                data[i].trust_id + '" >Remove</a><br/>';
-              if (data.length > 1) {
-                textMessage += '</li>';
-              }
-            }
-            if (data.length > 1) {
-              textMessage += '</ul>';
-            }
-            textMessage += '</div>';
-            // Apply the HTML to the HTML tag
-            document.getElementById('existingTrusts').innerHTML = textMessage;
-            // Remove a trust if the user clicks the remove button
-            $('.existingTrustRemoveButton').on('click', function (evt) {
-              // We only want the number from the end of the id
-              var idNumArray = evt.target.id.match(/\d+$/);
-
-              if (idNumArray) {
-                idNum = idNumArray[0];
-              }
-              removeTrust(idNum);
-            });
+    $.ajax({
+      url: getTrustsReportUrl,
+      data: getTrustsReportParameters,
+      dataType: 'jsonp',
+      crossDomain: true
+    })
+    .done(function (data) {
+      if (typeof data.error === 'undefined') {
+        if (data.length > 0) {
+          trustsCounter = data.length;
+          textMessage = '<h3>Existing trust criteria</h3>';
+          // If there is only one trust we put the information into a sentence, else we put it in a bullet list
+          if (data.length === 1) {
+            textMessage += '<div class="existingTrustSection existingTrustData">' + data[0].recorder_name + ' is trusted for the ';
+          } else {
+            textMessage += '<div class="existingTrustSection">This record is trusted as ' + data[0].recorder_name + ' has the following trust criteria:';
+            textMessage += '<ul>';
           }
-        } else {
-          alert(data.error);
+          // for each trust we build the HTML
+          for (i = 0; i < data.length; i++) {
+            if (data.length > 1) {
+              textMessage += '<li class="existingTrustData" id="trust-' + data[i].trust_id + '">The ';
+            }
+            if (data[i].survey_title) {
+              textMessage += '<strong>survey </strong><em>' + data[i].survey_title + '</em>, ';
+            }
+            if (data[i].taxon_group) {
+              textMessage += '<strong> taxon group</strong><em> ' + data[i].taxon_group + '</em>, ';
+            }
+            if (data[i].location_name) {
+              textMessage += '<strong> location</strong><em> ' + data[i].location_name + '</em>';
+            }
+            // Remove comma from end of trust information if there is a dangling comma because location info isn't
+            // present
+            if (!data[i].location_name) {
+              textMessage = textMessage.substring(0, textMessage.length - 2);
+            }
+            textMessage += '<br/>&nbsp;&nbsp;- trust was setup by ' + data[i].trusted_by;
+            textMessage += ' <a class="default-button existingTrustRemoveButton" id="deleteTrust-' +
+              data[i].trust_id + '" >Remove</a><br/>';
+            if (data.length > 1) {
+              textMessage += '</li>';
+            }
+          }
+          if (data.length > 1) {
+            textMessage += '</ul>';
+          }
+          textMessage += '</div>';
+          // Apply the HTML to the HTML tag
+          document.getElementById('existingTrusts').innerHTML = textMessage;
+          // Remove a trust if the user clicks the remove button
+          $('.existingTrustRemoveButton').on('click', function (evt) {
+            // We only want the number from the end of the id
+            var idNumArray = evt.target.id.match(/\d+$/);
+
+            if (idNumArray) {
+              idNum = idNumArray[0];
+            }
+            removeTrust(idNum);
+          });
         }
+      } else {
+        alert(data.error);
       }
-    );
+    });
   }
 
   indiciaFns.on('click', '.shrink-comment', {}, function () {
