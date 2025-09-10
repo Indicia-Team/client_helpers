@@ -33,11 +33,28 @@ global $indicia_templates;
  * Provides control templates to define the output of the data entry helper class.
  */
 $indicia_templates = [
+  /* Overrideable HTML Classes */
+  'formControlClass' => 'form-control',
+  'controlWrapErrorClass' => '',
+  'error_class' => 'inline-error',
+  // Button classes. If changing these, keep the indicia-button class to ensure
+  // functionality works.
+  'buttonDefaultClass' => 'indicia-button',
+  'buttonHighlightedClass' => 'indicia-button',
+  'buttonWarningClass' => 'indicia-button',
+  'buttonSmallClass' => 'btn-xs',
+  // Classes applied to <a> when styled like a button.
+  'anchorButtonClass' => 'indicia-button',
+  // Floats.
+  'floatLeftClass' => 'left',
+  'floatRightClass' => 'right',
+
+  /* Other overrideable HTML templates */
   'blank' => '',
   'prefix' => '',
-  'formControlClass' => 'form-control',
+  'suffix' => "\n",
+  'requiredsuffix' => "<span class=\"deh-required\">*</span>",
   'controlWrap' => "<div id=\"ctrl-wrap-{id}\" class=\"form-row ctrl-wrap{wrapClasses}\">{control}</div>\n",
-  'controlWrapErrorClass' => '',
   // Template for control with associated buttons/icons to appear to the side.
   'controlAddonsWrap' => "{control}{addons}",
   'justControl' => "{control}\n",
@@ -47,20 +64,9 @@ $indicia_templates = [
   'labelAfter' => '<label for="{id}"{labelClass}>{label}</label>',
   'toplabel' => '<label data-for="{id}"{labelClass}>{label}:</label>',
   'toplabelNoColon' => '<label data-for="{id}"{labelClass}>{label}</label>',
-  'suffix' => "\n",
-  'requiredsuffix' => "<span class=\"deh-required\">*</span>",
   'button' => '<button id="{id}" type="button" title="{title}"{class}>{caption}</button>',
-  // Button classes. If changing these, keep the indicia-button class to ensure functionality works.
-  'buttonDefaultClass' => 'indicia-button',
-  'buttonHighlightedClass' => 'indicia-button',
-  'buttonWarningClass' => 'indicia-button',
-  'buttonSmallClass' => 'btn-xs',
-  // Classes applied to <a> when styled like a button.
-  'anchorButtonClass' => 'indicia-button',
   'submitButton' => '<input id="{id}" type="submit"{class} name="{name}" value="{caption}" />',
-  // Floats.
-  'floatLeftClass' => 'left',
-  'floatRightClass' => 'right',
+
   // Message boxes.
   'messageBox' => '<div class="page-notice ui-state-default ui-corner-all">{message}</div>',
   'warningBox' => '<div class="page-notice ui-state-highlight ui-corner-all"><span class="fas fa-exclamation-triangle"></span>{message}</div>',
@@ -73,7 +79,6 @@ $indicia_templates = [
       );\n",
   'validation_message' => "<p class=\"{class}\">{error}</p>\n",
   'validation_icon' => '<span class="ui-state-error ui-corner-all validation-icon"><span class="ui-icon ui-icon-alert"></span></span>',
-  'error_class' => 'inline-error',
   'invalid_handler_javascript' => "function(form, validator) {
           var tabselected=false;
           jQuery.each(validator.errorMap, function(ctrlId, error) {
@@ -2489,7 +2494,7 @@ HTML;
       'warningBox' => $indicia_templates['warningBox'],
       'buttonDefaultClass' => $indicia_templates['buttonDefaultClass'],
       'buttonHighlightedClass' => $indicia_templates['buttonHighlightedClass'],
-      'buttonSmallClass' => 'btn-xs',
+      'buttonSmallClass' => $indicia_templates['buttonSmallClass'],
       'jQueryValidateErrorClass' => $indicia_templates['error_class'],
       'twoCol50' => $indicia_templates['two-col-50-js']
     ], self::$indiciaData['templates']);
