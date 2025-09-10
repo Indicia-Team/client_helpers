@@ -1844,15 +1844,15 @@ jQuery('#".$ctrlid."').on('change', function(){
           $oldWrap = $indicia_templates['controlWrap'];
           $indicia_templates['controlWrap'] =
             '<div id="ctrl-wrap-{id}" class="form-group ctrl-wrap">' .
-            '<div class="input-group">' .
-            '<div class="input-group-addon ctrl-addons">' .
+            '<div class="' . $indicia_templates['inputGroup'] . '">' .
+            '<div class="' . $indicia_templates['inputGroupAddon'] . ' ctrl-addons">' .
             '<a id="year-control-previous" title="' . (self::$siteUrlParams[self::$yearKey]['value']-1) . '" rel="nofollow" href="' . $reloadUrl['path'] . $param . (self::$siteUrlParams[self::$yearKey]['value']-1)  .'">' .
             '<span class="glyphicon glyphicon-step-backward"></span>' .
             '</a>' .
             '</div>' .
             '{control}' .
             (self::$siteUrlParams[self::$yearKey]['value'] < date('Y') ?
-                '<div class="input-group-addon ctrl-addons">' .
+                '<div class="' . $indicia_templates['inputGroupAddon'] . ' ctrl-addons">' .
                 '<a id="year-control-next" title="' . (self::$siteUrlParams[self::$yearKey]['value']+1) . '" rel="nofollow" href="' . $reloadUrl['path'] . $param.(self::$siteUrlParams[self::$yearKey]['value']+1) . '">' .
                 '<span class="glyphicon glyphicon-step-forward" aria-hidden="true"></span>' .
                 '</a>' .

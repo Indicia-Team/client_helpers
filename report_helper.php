@@ -3056,8 +3056,7 @@ if (typeof mapSettingsHooks!=='undefined') {
   * @todo Future Enhancements? Allow restriction to month.
   */
   public static function report_calendar_grid($options) {
-    // I know that there are better ways to approach some of the date manipulation, but they are PHP 5.3+.
-    // We support back to PHP 5.2
+    global $indicia_templates;
     // TODO : i8n
     $warnings="";
     self::add_resource('jquery_ui');
@@ -3117,37 +3116,53 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue, removeparam) {
     $baseTheme = hostsite_get_config_value('iform.settings', 'base_theme', 'generic');
     $reloadURL = $pageUrl . $pageUrlParams['year']['name']."=";
     $firstYear = (!empty($options["first_year"]) && $options["year"] >= $options["first_year"] ? $options["first_year"] : $options["year"]);
+    $prevYear = $options["year"] - 1;
+    $nextYear = $options["year"] + 1;
+    $lang = [
+      'Next' => lang::get('Next'),
+      'Prev' => lang::get('Prev'),
+    ];
     if ($baseTheme === 'generic') {
-      $template = '<a id="year-control-previous" title="' . ($options["year"]-1) . '" rel="nofollow" href="' . $reloadURL . ($options["year"]-1) . '" class="ui-datepicker-prev ui-corner-all">' .
-        '<span class="ui-icon ui-icon-circle-triangle-w">' . lang::get('Prev') . '</span>' .
-        '</a>' .
-        '{control}' .
-        ($options["year"] < date('Y') ?
-          '<a id="year-control-next" title="' . ($options["year"]+1) . '" rel="nofollow" href="' . $reloadURL.($options["year"]+1) . '" class="ui-datepicker-next ui-corner-all">' .
-          '<span class="ui-icon ui-icon-circle-triangle-e">' . lang::get('Next') . '</span>' .
-          '</a>' : '') .
-        '</div>' .
-        PHP_EOL;
-    } else {
-      $template = '<div id="ctrl-wrap-{id}" class="ctrl-wrap right">' .
-        '<div class="input-group">' .
-        '<div class="input-group-addon ctrl-addons">' .
-        '<a id="year-control-previous" title="' . ($options["year"]-1) . '" rel="nofollow" href="'  .$reloadURL . ($options["year"]-1) . '" class="yearControl">' .
-        '<span class="glyphicon glyphicon-step-backward"></span>' .
-        '</a>' .
-        '</div>' .
-        '{control}' .
-        ($options["year"] < date('Y') ?
-          '<div class="input-group-addon ctrl-addons">' .
-          '<a id="year-control-next" title="' . ($options["year"]+1) . '" rel="nofollow" href="' . $reloadURL . ($options["year"]+1) . '" class="yearControl">' .
-          '<span class="glyphicon glyphicon-step-forward" aria-hidden="true"></span>' .
-          '</a>' .
-          '</div>' : '') .
-        '</div>' .
-        '</div>' . PHP_EOL;
-    }
+      $nextLink = $options["year"] < date('Y') ? <<<HTML
+          <a id="year-control-next" title="$nextYear" rel="nofollow" href="$reloadURL$nextYear" class="ui-datepicker-next ui-corner-all">
+            <span class="ui-icon ui-icon-circle-triangle-e">$lang[Next]</span>
+          </a>
+        HTML
+        : '';
+      $template = <<<HTML
+        <div>
+          <a id="year-control-previous" title="$prevYear" rel="nofollow" href="$reloadURL$prevYear" class="ui-datepicker-prev ui-corner-all">
+            <span class="ui-icon ui-icon-circle-triangle-w">$lang[Prev]</span>
+          </a>
+          {control}
+          $nextLink
+        </div>
 
-    global $indicia_templates;
+      HTML;
+    } else {
+      $nextLink = $options["year"] < date('Y') ? <<<HTML
+          <div class="$indicia_templates[inputGroupAddon] ctrl-addons">
+            <a id="year-control-next" title="$nextYear" rel="nofollow" href="$reloadURL$nextYear" class="yearControl">
+              <span class="glyphicon glyphicon-step-forward" aria-hidden="true"></span>
+            </a>
+          </div>
+        HTML
+        : '';
+      $template = <<<HTML
+        <div id="ctrl-wrap-{id}" class="ctrl-wrap right">
+          <div class="$indicia_templates[inputGroup]">
+            <div class="$indicia_templates[inputGroupAddon] ctrl-addons">
+              <a id="year-control-previous" title="$prevYear" rel="nofollow" href="$reloadURL$prevYear" class="yearControl">
+                <span class="glyphicon glyphicon-step-backward"></span>
+              </a>
+            </div>
+            {control}
+            $nextLink
+          </div>
+        </div>
+
+      HTML;
+    }
     $r .= '<th class="' . $thClass . '" colspan=3 class="year-picker">';
     $indicia_templates['rcg_controlWrap'] = $template;
     $ctrlid = 'year-select';

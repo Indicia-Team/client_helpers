@@ -34,7 +34,6 @@ global $indicia_templates;
  */
 $indicia_templates = [
   /* Overrideable HTML Classes */
-  'formControlClass' => 'form-control',
   'controlWrapErrorClass' => '',
   'error_class' => 'inline-error',
   // Button classes. If changing these, keep the indicia-button class to ensure
@@ -48,7 +47,10 @@ $indicia_templates = [
   // Floats.
   'floatLeftClass' => 'left',
   'floatRightClass' => 'right',
-
+  // Form controls.
+  'formControlClass' => 'form-control',
+  'inputGroupClass' => 'input-group',
+  'inputGroupAddonClass' => 'input-group-addon',
   /* Other overrideable HTML templates */
   'blank' => '',
   'prefix' => '',
@@ -2495,6 +2497,8 @@ HTML;
       'buttonDefaultClass' => $indicia_templates['buttonDefaultClass'],
       'buttonHighlightedClass' => $indicia_templates['buttonHighlightedClass'],
       'buttonSmallClass' => $indicia_templates['buttonSmallClass'],
+      'inputGroupClass' => $indicia_templates['inputGroupClass'],
+      'inputGroupAddonClass' => $indicia_templates['inputGroupAddonClass'],
       'jQueryValidateErrorClass' => $indicia_templates['error_class'],
       'twoCol50' => $indicia_templates['two-col-50-js']
     ], self::$indiciaData['templates']);
@@ -2771,7 +2775,7 @@ var validator = $('#" . self::$validated_form_id . "').validate({
   errorPlacement: function(error, element) {
     var jqBox, nexts;
     // If using Bootstrap input-group class, put the message after the group
-    var inputGroup = $(element).closest('.input-group');
+    var inputGroup = $(element).closest('.' + indiciaData.templates.inputGroupClass);
     if (inputGroup.length) {
       element = inputGroup;
     } else {
