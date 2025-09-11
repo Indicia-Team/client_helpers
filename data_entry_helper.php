@@ -4400,7 +4400,7 @@ HTML;
           "<br/><button type=\"button\" class=\"$indicia_templates[buttonDefaultClass]\" id=\"species-grid-view-all-$options[id]\">" . lang::get('Show the full list of records for editing or addition of more records.') . '</button>',
           $indicia_templates['warningBox']) . $r;
         self::$javascript .= <<<JS
-          $('#species-grid-view-all-$options[id]').on('blur', function(e) {
+          $('#species-grid-view-all-$options[id]').on('click', function(e) {
             $('#$options[id] tbody tr').show();
             $(e.currentTarget).hide();
           });
