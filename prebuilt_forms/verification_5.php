@@ -1315,6 +1315,7 @@ HTML
    * Response is OK or Fail depending on whether the email was sent or not.
    */
   public static function ajax_email($website_id, $password, $nid) {
+    iform_load_helpers(['VerificationHelper']);
     $lang = [
       'verification' => lang::get('Verification'),
     ];
