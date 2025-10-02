@@ -229,6 +229,23 @@ class IndiciaConversions {
   }
 
   /**
+   * Transform a size in bytes into a human readable format such as 2GB.
+   *
+   * @param int $size
+   *   Size in bytes.
+   *
+   * @return string
+   *   Size converted to human readable format.
+   */
+  public static function bytesToReadable($size) {
+    $units = ['bytes', 'KB', 'MB', 'GB', 'TB', 'PB'];
+    for ($i = 0; $size >= 1024 && $i < count($units) - 1; $i++) {
+      $size /= 1024;
+    }
+    return round($size, 2) . ' ' . $units[$i];
+  }
+
+  /**
    * Convert the list of status/substatus terms and into a translated version.
    */
   private static function translateStatusTerms() {
