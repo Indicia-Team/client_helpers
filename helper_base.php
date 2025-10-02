@@ -1742,7 +1742,9 @@ class helper_base {
         $r .= self::getParamsFormControl($key, $info, $options, $tools);
         // If that was a visible setting, then we have to tell the caller that
         // there is something to show.
-        if (!isset($options['extraParams']) || !array_key_exists($key, $options['extraParams'])) {
+        // Do not include the idlist when deciding if parameters
+        // should be visible, as that param is not for human input.
+        if (!isset($options['extraParams']) || (!array_key_exists($key, $options['extraParams']) && $key !== 'idlist')) {
           $hasVisibleContent = TRUE;
         }
       }

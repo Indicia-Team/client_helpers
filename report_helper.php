@@ -490,6 +490,10 @@ HTML;
     global $indicia_templates;
     self::add_resource('fancybox');
     $options = self::getReportGridOptions($options);
+    // Make sure jquery.indiciaMapPanel.js code has access to rowId.
+    if (isset($options['rowId'])) {
+      self::$javascript .= "indiciaData.dataGridRowIdOption='" . $options['rowId'] . "';\n";
+    }
     $sortAndPageUrlParams = self::getReportGridSortPageUrlParams($options);
     $extras = self::getReportSortingPagingParams($options, $sortAndPageUrlParams);
     if ($options['ajax'])
@@ -2670,15 +2674,21 @@ mapSettingsHooks.push(function(opts) { $setLocationJs
   private static function getReportGridParametersForm($response, $options, $params) {
     if ($options['autoParamsForm'] || $options['paramsOnly']) {
       $r = '';
+      // The building of params form has been moved here (earlier in the function than previously) as we
+      // need any changes to $hasVisibleContent earlier in the function than before.
+      $builtParamsForm = self::build_params_form(array_merge($options, array('form'=>$response['parameterRequest'], 'defaults'=>$params)), $hasVisibleContent);
       // The form must use POST, because polygon parameters can be too large for GET.
       if (isset($options['completeParamsForm']) && $options['completeParamsForm']) {
         $cls = $options['paramsInMapToolbar'] ? 'no-border' : '';
         if (!empty($options['fieldsetClass']))
           $cls .= ' '.$options['fieldsetClass'];
         $r .= '<form action="'.$_SERVER['REQUEST_URI'].'" method="post" id="'.$options['reportGroup'].'-params">'."\n<fieldset class=\"$cls\">";
-        if (!$options['paramsInMapToolbar'])
+        // Don't use the fieldset legend in toolbar mode,
+        // and also only if the params have visible content.
+        if (!$options['paramsInMapToolbar'] && $hasVisibleContent == true) {
           // don't use the fieldset legend in toolbar mode
           $r .= '<legend>' . lang::get('Report parameters') . '</legend>';
+        }
       }
       $reloadUrl = self::get_reload_link_parts();
       // Output any other get parameters from our URL as hidden fields
@@ -2695,8 +2705,10 @@ mapSettingsHooks.push(function(opts) { $setLocationJs
       if (isset($options['ignoreParams']))
         // tell the params form builder to hide the ignored parameters.
         $options['paramsToHide']=$options['ignoreParams'];
-      $r .= self::build_params_form(array_merge($options, array('form'=>$response['parameterRequest'], 'defaults'=>$params)), $hasVisibleContent);
-      if (isset($options['completeParamsForm']) && $options['completeParamsForm']) {
+      $r .= $builtParamsForm;
+      // Don't include the submit button unless the parameters are showing
+      if (isset($options['completeParamsForm']) && $options['completeParamsForm'] &&
+      $hasVisibleContent == true) {
         global $indicia_templates;
         $suffix = '<input type="submit" value="'.lang::get($options['paramsFormButtonCaption']).'" id="run-report" ' .
             "class=\"$indicia_templates[buttonHighlightedClass]\" />" .
