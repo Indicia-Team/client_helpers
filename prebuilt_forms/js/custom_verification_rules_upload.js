@@ -3,7 +3,7 @@ jQuery(document).ready(function($) {
   // Removes the current uploaded file.
   function clearExistingUploadedFileInfo() {
     $('#uploaded-files').html('');
-    $('#uploaded-file').val('');
+    $('#interim-file').val('');
     $('#upload-rules').attr('disabled', true);
   }
 
