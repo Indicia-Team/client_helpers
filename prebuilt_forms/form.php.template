@@ -60,7 +60,7 @@ class iform_form_name implements PrebuiltFormInterface {
    * @return PageType
    *   Page type.
    */
-  public static function getPageType(): PageType {
+  public static function getPageType(): IForm\prebuilt_forms\PageType {
     return PageType::Report;
   }
 
