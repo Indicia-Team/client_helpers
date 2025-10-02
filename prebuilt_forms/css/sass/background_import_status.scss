@@ -1,0 +1,71 @@
+@use 'sass:color';
+
+.import-info {
+  margin-top: 15px;
+  header {
+    font-weight: bold;
+    font-size: 1.2em;
+  }
+  .import-dashboard {
+    display: flex;
+    flex-wrap: wrap; /* allows wrapping on smaller screens */
+    gap: 20px;       /* space between panels */
+    .dashboard-panel {
+      flex: 1 1 calc(25% - 20px); /* 4 panels per row with gap adjustment */
+      min-width: 250px;          /* ensures panels don’t shrink too small */
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      border: solid 1px #ddd;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      text-align: center;
+      position: relative;
+    }
+    &.error .dashboard-panel.dashboard-errors {
+      border-color: #e74c3c; /* red border for error state */
+      background-color: color.mix(#fff, #e74c3c, 90%); /* light red background */
+      a {
+        position: absolute;
+        bottom: 4px;
+        right: 4px;
+      }
+    }
+    &.done .dashboard-panel.dashboard-status {
+      border-color: #2ecc71; /* green border for done state */
+      background-color: color.mix(#fff, #2ecc71, 90%); /* light green background */
+    }
+    h2 {
+      margin-top: 0;
+      font-size: 18px;
+      color: #333;
+    }
+    p {
+      color: #666;
+      font-size: 1.2em;
+      margin: 0;
+    }
+  }
+
+  /* Make panels take full width on very small screens */
+  @media (max-width: 600px) {
+    .dashboard-panel {
+      flex: 1 1 100%;
+    }
+  }
+  .progress-container {
+    position: relative;
+    margin-top: 15px;
+    .progress {
+      margin: 0;
+    }
+    span {
+      position: absolute;
+      width: 100%;
+      text-align: center;
+      top: 0;
+      left: 0;
+      color: white;
+      z-index: 1000;
+    }
+  }
+}
