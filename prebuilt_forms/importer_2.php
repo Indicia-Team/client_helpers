@@ -199,6 +199,21 @@ class iform_importer_2 implements PrebuiltFormInterface {
         'enableIf' => ['allowUpdates' => ['1']],
       ],
       [
+        'name' => 'enableBackgroundImports',
+        'caption' => 'Enable background imports',
+        'description' => "If ticked, then large imports of > 10,000 records will be queued and processed as a background task using the Warehouse's Work Queue module. The user will receive an email when the import completes.",
+        'type' => 'boolean',
+        'default' => FALSE,
+        'required' => FALSE,
+      ],
+      [
+        'name' => 'backgroundImportStatusPath',
+        'caption' => 'Background import status path',
+        'description' => 'Path to page which displays progress information for imports running in the background, which could be Utilities > Background Import Status page.',
+        'type' => 'text_input',
+        'required' => FALSE,
+      ],
+      [
         'name' => 'fileSelectFormIntro',
         'caption' => 'File select form introduction',
         'group' => 'Instruction texts',
@@ -354,6 +369,7 @@ class iform_importer_2 implements PrebuiltFormInterface {
       'entity' => 'occurrence',
       'advancedFields' => '',
       'advancedModePermissionName' => '',
+      'backgroundImportStatusPath' => $args['backgroundImportStatusPath'] ?? NULL,
     ], $args);
     $options['fixedValues'] = empty($options['fixedValues']) ? [] : get_options_array_with_user_data($options['fixedValues']);
     $options['fixedValues'] = array_merge($options['fixedValues'], self::getAdditionalFixedValues($auth, $options['entity']));
@@ -475,10 +491,11 @@ class iform_importer_2 implements PrebuiltFormInterface {
       }
     }
     return import_helper_2::initServerConfig(
-      $_GET['data-file'],
-      isset($_GET['import_template_id']) ? $_GET['import_template_id'] : NULL,
+      $_GET['data-files'],
+      $_GET['import_template_id'] ?? NULL,
       $writeAuth,
-      $plugins
+      $plugins,
+      $nodeParams['enableBackgroundImports'] ?? FALSE
     );
   }
 
@@ -498,7 +515,7 @@ class iform_importer_2 implements PrebuiltFormInterface {
   public static function ajax_load_chunk_to_temp_table($website_id, $password, $nid) {
     $writeAuth = self::getAuthFromHeaders();
     iform_load_helpers(['import_helper_2']);
-    return import_helper_2::loadChunkToTempTable($_GET['data-file'], $writeAuth);
+    return import_helper_2::loadChunkToTempTable($_GET['data-file'], $_GET['config-id'], $writeAuth);
   }
 
   /**
@@ -517,7 +534,7 @@ class iform_importer_2 implements PrebuiltFormInterface {
   public static function ajax_process_lookup_matching($website_id, $password, $nid) {
     $writeAuth = self::getAuthFromHeaders();
     iform_load_helpers(['import_helper_2']);
-    return import_helper_2::processLookupMatching($_GET['data-file'], $_GET['index'], $writeAuth);
+    return import_helper_2::processLookupMatching($_GET['config-id'], $_GET['index'], $writeAuth);
   }
 
   /**
@@ -536,7 +553,7 @@ class iform_importer_2 implements PrebuiltFormInterface {
   public static function ajax_save_lookup_matches_group($website_id, $password, $nid) {
     $writeAuth = self::getAuthFromHeaders();
     iform_load_helpers(['import_helper_2']);
-    return import_helper_2::saveLookupMatchesGroup($_GET['data-file'], $_POST, $writeAuth);
+    return import_helper_2::saveLookupMatchesGroup($_GET['config-id'], $_POST, $writeAuth);
   }
 
   /**
@@ -555,7 +572,7 @@ class iform_importer_2 implements PrebuiltFormInterface {
   public static function ajax_preprocess($website_id, $password, $nid) {
     $writeAuth = self::getAuthFromHeaders();
     iform_load_helpers(['import_helper_2']);
-    return import_helper_2::preprocess($_GET['data-file'], $_GET['index'], $writeAuth);
+    return import_helper_2::preprocess($_GET['config-id'], $_GET['index'], $writeAuth);
   }
 
   /**
@@ -580,7 +597,7 @@ class iform_importer_2 implements PrebuiltFormInterface {
     $params['precheck'] = !empty($params['precheck']) && $params['precheck'] === 'true';
     $params['forceTemplateOverwrite'] = !empty($params['forceTemplateOverwrite']) && $params['forceTemplateOverwrite'] === 'true';
     $response = import_helper_2::importChunk(
-      $_GET['data-file'],
+      $_GET['config-id'],
       $params,
       $writeAuth
     );

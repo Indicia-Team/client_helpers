@@ -21,6 +21,8 @@
  * @link https://github.com/indicia-team/warehouse/
  */
 
+use IForm\IndiciaConversions;
+
 /**
  * Link in other required php files.
  */
@@ -91,6 +93,10 @@ class import_helper_2 extends helper_base {
    * * summaryPageIntro
    * * doImportPageIntro
    * * requiredFieldsIntro
+   * * backgroundImportStatusPath - path to a Drupal page, normally built using
+   *   Utilities > Background Import Status, which can be provided as a link
+   *   when a large import gets queued for bacgrkound importing. This page
+   *   should show progress information for a user's background imports.
    * * uploadFileUrl - path to a script that handles the initial upload of a
    *   file to the interim file location. The script can call
    *   import_helper_2::uploadFile for a complete implementation.
@@ -341,8 +347,8 @@ class import_helper_2 extends helper_base {
   /**
    * Sets up the config JSON file on the server.
    *
-   * @param string $fileName
-   *   Name of the file.
+   * @param array $fileName
+   *   List of file names being imported.
    * @param int $importTemplateId
    *   Template ID if one was selected.
    * @param array $writeAuth
@@ -353,18 +359,19 @@ class import_helper_2 extends helper_base {
    * @return array
    *   Output of the web service request.
    */
-  public static function initServerConfig($fileName, $importTemplateId, array $writeAuth, array $plugins = []) {
+  public static function initServerConfig(array $files, $importTemplateId, array $writeAuth, array $plugins = [], $enableBackgroundImports = FALSE) {
     $serviceUrl = self ::$base_url . 'index.php/services/import_2/init_server_config';
     $data = $writeAuth + [
-      'data-file' => $fileName,
+      'data-files' => json_encode($files),
       'import_template_id' => $importTemplateId,
       'plugins' => json_encode($plugins),
+      'enable-background-imports' => $enableBackgroundImports ? 't' : 'f',
     ];
     $response = self::http_post($serviceUrl, $data, FALSE);
     $output = json_decode($response['output'], TRUE);
     if (!$response['result']) {
       \Drupal::logger('iform')->notice('Error in initServerConfig: ' . var_export($response, TRUE));
-      throw new exception(isset($output['msg']) ? $output['msg'] : $response['output']);
+      throw new exception($output['msg'] ?? $response['output'], $response['status'] ?? 0);
     }
     return $output;
   }
@@ -372,14 +379,19 @@ class import_helper_2 extends helper_base {
   /**
    * Triggers the load of a chunk of records from the file to the temp table.
    *
-   * @param string $fileName
+   * @param string $file
    *   Name of the file to transfer.
+   * @param string $configId
+   *   Configuration ID which holds the import settings.
    * @param array $writeAuth
    *   Write authorisation tokens.
    */
-  public static function loadChunkToTempTable($fileName, array $writeAuth) {
+  public static function loadChunkToTempTable($file, $configId, array $writeAuth) {
     $serviceUrl = self ::$base_url . 'index.php/services/import_2/load_chunk_to_temp_table';
-    $data = $writeAuth + ['data-file' => $fileName];
+    $data = $writeAuth + [
+      'data-file' => $file,
+      'config-id' => $configId,
+    ];
     $response = self::http_post($serviceUrl, $data, FALSE);
     $output = json_decode($response['output'], TRUE);
     if (!$response['result']) {
@@ -391,18 +403,18 @@ class import_helper_2 extends helper_base {
   /**
    * Actions the next step in the process of linking data values to lookup IDs.
    *
-   * @param string $fileName
-   *   Name of the file to process.
+   * @param string $configId
+   *   ID of the configuration for this import.
    * @param int $index
    *   Index of the request - start at 0 then increment by one for each request
    *   to fetch each lookup that needs matching in turn.
    * @param array $writeAuth
    *   Write authorisation tokens.
    */
-  public static function processLookupMatching($fileName, $index, array $writeAuth) {
+  public static function processLookupMatching($configId, $index, array $writeAuth) {
     $serviceUrl = self ::$base_url . 'index.php/services/import_2/process_lookup_matching';
     $data = $writeAuth + [
-      'data-file' => $fileName,
+      'config-id' => $configId,
       'index' => $index,
     ];
     $response = self::http_post($serviceUrl, $data, FALSE);
@@ -416,17 +428,17 @@ class import_helper_2 extends helper_base {
   /**
    * Saves the manually matched value / term ID pairings for a custom attr.
    *
-   * @param string $fileName
-   *   Name of the file to process.
+   * @param string $configId
+   *   ID of the current import's config.
    * @param array $matchesInfo
    *   Matching data.
    * @param array $writeAuth
    *   Write authorisation tokens.
    */
-  public static function saveLookupMatchesGroup($fileName, array $matchesInfo, array $writeAuth) {
+  public static function saveLookupMatchesGroup($configId, array $matchesInfo, array $writeAuth) {
     $serviceUrl = self ::$base_url . 'index.php/services/import_2/save_lookup_matches_group';
     $data = $writeAuth + [
-      'data-file' => $fileName,
+      'config-id' => $configId,
       'matches-info' => json_encode($matchesInfo),
     ];
     $response = self::http_post($serviceUrl, $data, FALSE);
@@ -443,18 +455,18 @@ class import_helper_2 extends helper_base {
    *
    * Includes global validation and linking to existing records.
    *
-   * @param string $fileName
-   *   Name of the file to process.
+   * @param string $configId
+   *   ID of the config of this import.
    * @param int $index
    *   Index of the request - start at 0 then increment by one for each request
    *   to perform each processing step in turn.
    * @param array $writeAuth
    *   Write authorisation tokens.
    */
-  public static function preprocess($fileName, $index, array $writeAuth) {
+  public static function preprocess($configId, $index, array $writeAuth) {
     $serviceUrl = self ::$base_url . 'index.php/services/import_2/preprocess';
     $data = $writeAuth + [
-      'data-file' => $fileName,
+      'config-id' => $configId,
       'index' => $index,
     ];
     $response = self::http_post($serviceUrl, $data, FALSE);
@@ -468,8 +480,8 @@ class import_helper_2 extends helper_base {
   /**
    * Import the next chunk of records to the main database.
    *
-   * @param string $fileName
-   *   Name of the file to process.
+   * @param string $configId
+   *   ID of the config of the current import.
    * @param array $params
    *   List of options passed to the import chunk AJAX proxy. Includes:
    *   * description - Description if saving the import metadata for the first
@@ -488,7 +500,7 @@ class import_helper_2 extends helper_base {
    * @param array $writeAuth
    *   Write authorisation tokens.
    */
-  public static function importChunk($fileName, array $params, array $writeAuth) {
+  public static function importChunk($configId, array $params, array $writeAuth) {
     $params = array_merge([
       'description' => NULL,
       'training' => FALSE,
@@ -500,7 +512,7 @@ class import_helper_2 extends helper_base {
 
     $serviceUrl = self ::$base_url . 'index.php/services/import_2/import_chunk';
     $data = $writeAuth + [
-      'data-file' => $fileName,
+      'config-id' => $configId,
     ];
     if (!empty(trim($params['description'] ?? ''))) {
       $data['save-import-record'] = json_encode([
@@ -540,6 +552,53 @@ class import_helper_2 extends helper_base {
   }
 
   /**
+   * Returns the maximum files size that can be uploaded.
+   *
+   * @return int
+   *   File size in bytes.
+   */
+  private static function getMaximumFileUploadSize() {
+    return min(
+      self::convertPHPSizeToBytes(ini_get('post_max_size')),
+      self::convertPHPSizeToBytes(ini_get('upload_max_filesize'))
+    );
+  }
+
+  /**
+   * Transform php.ini notation for numbers (like '2M') to an integer.
+   *
+   * @param string $size
+   *   Size string as read from PHP ini file, e.g. '2M'.
+   *
+   * @return int
+   *   The value in bytes.
+   */
+  private static function convertPhpSizeToBytes($size) {
+    $suffix = strtoupper(substr($size, -1));
+    if (!in_array($suffix, ['P', 'T', 'G', 'M', 'K'])) {
+      return (int) $size;
+    }
+    $iValue = substr($size, 0, -1);
+    switch ($suffix) {
+      case 'P':
+        $iValue *= 1024;
+        // Fallthrough intended.
+      case 'T':
+        $iValue *= 1024;
+        // Fallthrough intended.
+      case 'G':
+        $iValue *= 1024;
+        // Fallthrough intended.
+      case 'M':
+        $iValue *= 1024;
+        // Fallthrough intended.
+      case 'K':
+        $iValue *= 1024;
+    }
+    return (int) $iValue;
+  }
+
+  /**
    * Fetch the HTML for the file select form.
    *
    * @param array $options
@@ -559,6 +618,7 @@ class import_helper_2 extends helper_base {
       'clickToAdd' => lang::get('Click to add files'),
       'instructions' => lang::get($options['fileSelectFormIntro']),
       'instructionsSelectTemplate' => lang::get('Choose one of the templates you saved previously if repeating a similar import.'),
+      'maxFileSize' => lang::get('The maximum size of an individual file you can upload is {1}.', IndiciaConversions::bytesToReadable(self::getMaximumFileUploadSize())),
       'next' => lang::get('Next step'),
       'selectAFile' => lang::get('Select a CSV or Excel file or drag it over this area. The file can optionally be a zip archive. If importing an Excel file, only the first worksheet will be imported.'),
       'uploadFileToImport' => lang::get('Upload a file to import'),
@@ -579,27 +639,27 @@ class import_helper_2 extends helper_base {
       ]);
     }
     $r = <<<HTML
-<h3>$lang[uploadFileToImport]</h3>
-<p>$lang[instructions]</p>
-<form id="file-upload-form" method="POST">
-  <div class="dm-uploader row">
-    <div class="col-md-9">
-      <div role="button" class="btn btn-primary">
-        <i class="fas fa-file-upload"></i>
-        $lang[browseFiles]
-        <input type="file" title="$lang[clickToAdd]">
-      </div>
-      <small class="status text-muted">$lang[selectAFile]</small>
-    </div>
-    <div class="col-md-3" id="uploaded-files"></div>
-  </div>
-  $templatePickerHtml
-  <progress id="file-progress" class="progress" value="0" max="100" style="display: none"></progress>
-  <input type="submit" class="btn btn-primary" id="next-step" value="$lang[next]" disabled />
-  <input type="hidden" name="next-import-step" value="globalValuesForm" />
-  <input type="hidden" name="interim-file" id="interim-file" value="" />
-</form>
-HTML;
+      <h3>$lang[uploadFileToImport]</h3>
+      <p>$lang[instructions]</p>
+      <form id="file-upload-form" method="POST">
+        <div class="dm-uploader row">
+          <div class="col-md-9">
+            <div role="button" class="btn btn-primary">
+              <i class="fas fa-file-upload"></i>
+              $lang[browseFiles]
+              <input type="file" title="$lang[clickToAdd]">
+            </div>
+            <small class="status text-muted">$lang[selectAFile]</small>
+            <small class="status text-muted">$lang[maxFileSize]</small>
+          </div>
+          <div class="col-md-3" id="uploaded-files"></div>
+        </div>
+        $templatePickerHtml
+        <progress id="file-progress" class="progress" value="0" max="100" style="display: none"></progress>
+        <input type="submit" class="btn btn-primary" id="next-step" value="$lang[next]" disabled />
+        <input type="hidden" name="next-import-step" value="globalValuesForm" />
+      </form>
+    HTML;
     self::$indiciaData['importerDropArea'] = '.dm-uploader';
     return $r;
   }
@@ -926,13 +986,14 @@ HTML;
       'extractingFile' => 'Extracting the data from the Zip file.',
       'errorExtractingZip' => 'An error occurred on the server whilst extracting the Zip file',
       'errorUploadingFile' => 'An error occurred on the server whilst uploading the file',
-      'fileExtracted' => 'Data extracted from Zip file.',
-      'fileUploaded' => 'File uploaded to the server.',
+      'extractedFile' => 'Unzipped file {1}.',
       'loadingRecords' => 'Loading records into temporary processing area.',
       'loaded' => 'Records loaded ready for matching.',
+      'mixedFileTypesError' => 'The list of files you have uploaded contains different file types. Please upload either a set of zip files or a set of data files (csv, xls, xlsx) of the same type.',
       'preparingToLoadRecords' => 'Preparing to load records.',
+      'uploadedFile' => 'Uploaded file {1}.',
       'uploadError' => 'Upload error',
-      'uploadingFile' => 'Uploading the file to the server.',
+      'uploadingFile' => 'Uploading the file {1} to the server.',
     ]);
     $lang = [
       'backgroundProcessing' => lang::get('Background processing in progress...'),
@@ -958,25 +1019,25 @@ HTML;
     // entity we are importing into.
     $formArray = self::getGlobalValuesFormControlArray($options);
     $form = self::globalValuesFormControls($formArray, $options);
-    self::$indiciaData['processUploadedInterimFile'] = $_POST['interim-file'];
+    self::$indiciaData['processUploadedInterimFiles'] = $_POST['interim-file'];
     return <<<HTML
-<h3>$lang[title]</h3>
-<p>$lang[instructions]</p>
-<form id="settings-form" method="POST">
-  $form
-  <div class="panel panel-info background-processing">
-    <div class="panel-heading">
-      <span>$lang[backgroundProcessing]</span>
-      <progress id="file-progress" class="progress" value="0" max="100"></progress>
-      <br/><a data-toggle="collapse" class="small" href="#background-extra">$lang[moreInfo]</a>
-    </div>
-    <div id="background-extra" class="panel-body panel-collapse collapse"></div>
-  </div>
-  <input type="submit" class="btn btn-primary" id="next-step" value="$lang[next]" disabled />
-  <input type="hidden" name="next-import-step" value="mappingsForm" />
-  <input type="hidden" name="data-file" id="data-file" value="" />
-</form>
-HTML;
+      <h3>$lang[title]</h3>
+      <p>$lang[instructions]</p>
+      <form id="settings-form" method="POST">
+        $form
+        <div class="panel panel-info background-processing">
+          <div class="panel-heading">
+            <span>$lang[backgroundProcessing]</span>
+            <progress id="file-progress" class="progress" value="0" max="100"></progress>
+            <br/><a data-toggle="collapse" class="small" href="#background-extra">$lang[moreInfo]</a>
+          </div>
+          <div id="background-extra" class="panel-body panel-collapse collapse"></div>
+        </div>
+        <input type="submit" class="btn btn-primary" id="next-step" value="$lang[next]" disabled />
+        <input type="hidden" name="next-import-step" value="mappingsForm" />
+        <input type="hidden" name="config-id" id="config-id" value="" />
+      </form>
+    HTML;
   }
 
   /**
@@ -1190,10 +1251,10 @@ HTML;
       'incompleteFieldGroupSelected' => 'You have selected a mapping for the following field(s): {1}',
       'suggestions' => 'Suggestions',
     ]);
-    $fileName = $_POST['data-file'];
+    $configId = $_POST['config-id'];
     // Load the config for this import.
     $request = parent::$base_url . "index.php/services/import_2/get_config";
-    $request .= '?' . http_build_query($options['readAuth'] + ['data-file' => $fileName]);
+    $request .= '?' . http_build_query($options['readAuth'] + ['config-id' => $configId]);
 
     $response = self::http_post($request, []);
     $config = json_decode($response['output'], TRUE);
@@ -1205,9 +1266,9 @@ HTML;
       throw new Exception('Service call to get_config failed.');
     }
     self::$indiciaData['globalValues'] = $globalValues;
-    $availableFields = self::getAvailableDbFields($options, $fileName, $globalValues);
+    $availableFields = self::getAvailableDbFields($options, $configId, $globalValues);
     self::hideCoreFieldsIfReplaced($options, $globalValues['survey_id'], $availableFields);
-    $requiredFields = self::getAvailableDbFields($options, $fileName, $globalValues, TRUE);
+    $requiredFields = self::getAvailableDbFields($options, $configId, $globalValues, TRUE);
     // Only include required fields that are available for selection. Others
     // get populated by some other means.
     $requiredFields = array_intersect_key($requiredFields, $availableFields);
@@ -1284,7 +1345,7 @@ HTML;
   </div>
   <input type="submit" class="btn btn-primary" id="next-step" value="$lang[next]" disabled="disabled" />
   <input type="hidden" name="next-import-step" value="lookupMatchingForm" />
-  <input type="hidden" name="data-file" id="data-file" value="{$_POST['data-file']}" />
+  <input type="hidden" name="config-id" id="config-id" value="{$_POST['config-id']}" />
 </form>
 HTML;
   }
@@ -1497,11 +1558,11 @@ HTML;
    */
   private static function saveFormValuesToConfig(array $values, array $options, $configFieldName) {
     $settings = array_merge([], $values);
-    unset($settings['data-file']);
+    unset($settings['config-id']);
     unset($settings['next-import-step']);
     $request = parent::$base_url . 'index.php/services/import_2/save_config';
     self::http_post($request, $options['writeAuth'] + [
-      'data-file' => $_POST['data-file'],
+      'config-id' => $_POST['config-id'],
       $configFieldName => json_encode($settings),
     ]);
     return $settings;
@@ -1517,11 +1578,11 @@ HTML;
    */
   private static function saveMappings(array $values, array $options) {
     $settings = array_merge([], $values);
-    unset($settings['data-file']);
+    unset($settings['config-id']);
     unset($settings['next-import-step']);
     $request = parent::$base_url . 'index.php/services/import_2/save_mappings';
     self::http_post($request, $options['writeAuth'] + [
-      'data-file' => $_POST['data-file'],
+      'config-id' => $_POST['config-id'],
       'mappings' => json_encode($settings),
     ]);
   }
@@ -1567,7 +1628,7 @@ HTML;
       'next' => lang::get('Next step'),
       'title' => lang::get('Value matching'),
     ];
-    self::$indiciaData['dataFile'] = $_POST['data-file'];
+    self::$indiciaData['configId'] = $_POST['config-id'];
     return <<<HTML
 <h3>$lang[title]</h3>
 <p id="instructions">$lang[instructions]</p>
@@ -1583,7 +1644,7 @@ HTML;
   </div>
   <input type="submit" class="btn btn-primary" id="next-step" value="$lang[next]" disabled />
   <input type="hidden" name="next-import-step" value="preprocessPage" />
-  <input type="hidden" name="data-file" id="data-file" value="{$_POST['data-file']}" />
+  <input type="hidden" name="config-id" id="config-id" value="{$_POST['config-id']}" />
 </form>
 HTML;
   }
@@ -1608,7 +1669,7 @@ HTML;
       'next' => lang::get('Next step'),
       'title' => lang::get('Preparing to import'),
     ];
-    self::$indiciaData['dataFile'] = $_POST['data-file'];
+    self::$indiciaData['configId'] = $_POST['config-id'];
     return <<<HTML
 <h3>$lang[title]</h3>
 <p id="instructions">$lang[instructions]</p>
@@ -1622,7 +1683,7 @@ HTML;
   </div>
   <input type="submit" class="btn btn-primary" id="next-step" value="$lang[next]" style="display: none" />
   <input type="hidden" name="next-import-step" value="summaryPage" />
-  <input type="hidden" name="data-file" id="data-file" value="{$_POST['data-file']}" />
+  <input type="hidden" name="config-id" id="config-id" value="{$_POST['config-id']}" />
 </form>
 HTML;
   }
@@ -1714,6 +1775,9 @@ HTML;
    */
   private static function summaryPage(array $options) {
     $lang = [
+      'backgroundProcessing' => lang::get('Importing large files...'),
+      'backgroundProcessingInfo' => lang::get('As your import is fairly large, the data will be added to a queue of records to import and processed in the background. ' .
+        'After clicking the Queue import button you can close this page and continue working, the import will continue in the background and you will receive an email once complete.'),
       'columnMappings' => lang::get('Column mappings'),
       'databaseField' => lang::get('Database field'),
       'deletionExplanation' => lang::get('Existing records will be deleted if the Deleted field is set to "1", "true" or "t".'),
@@ -1726,6 +1790,7 @@ HTML;
       'instructions' => lang::get($options['summaryPageIntro']),
       'importColumn' => lang::get('Import column'),
       'numberOfRecords' => lang::get('Number of records'),
+      'queueImport' => lang::get('Queue import'),
       'recordDeletion' => lang::get('Record deletion'),
       'saveImportTemplate' => lang::get('Save import template'),
       'saveImportTemplateHelp' => lang::get('If you would like to save the column mappings and fixed values so they can be re-used when importing other files in future, please provide a descriptive name for your settings here.'),
@@ -1733,16 +1798,16 @@ HTML;
       'title' => lang::get('Import summary'),
       'value' => lang::get('Value'),
     ];
-    $fileName = $_POST['data-file'];
+    $configId = $_POST['config-id'];
     $request = parent::$base_url . "index.php/services/import_2/get_config";
-    $request .= '?' . http_build_query($options['readAuth'] + ['data-file' => $fileName]);
+    $request .= '?' . http_build_query($options['readAuth'] + ['config-id' => $configId]);
     $response = self::http_post($request, []);
     $config = json_decode($response['output'], TRUE);
     if (!is_array($config)) {
       throw new Exception('Service call to get_config failed.');
     }
     $ext = pathinfo($config['fileName'], PATHINFO_EXTENSION);
-    $availableFields = self::getAvailableDbFields($options, $fileName, $config['global-values']);
+    $availableFields = self::getAvailableDbFields($options, $configId, $config['global-values']);
     $mappingRows = [];
     $existingMatchFields = [];
     foreach ($config['columns'] as $columnLabel => $info) {
@@ -1771,53 +1836,65 @@ HTML;
     }
     $info = '<dl>' . implode("\n", $infoRows) . '</dl>';
     $importFieldTableContent = <<<HTML
-<tbody>
-  <tr>
-    <th colspan="3" class="body-title">$lang[columnMappings]</th>
-  </tr>
-  <tr>
-    <th>$lang[importColumn]</th><th></th><th>$lang[databaseField]</th>
-  </tr>
-  $mappings
-</tbody>
-HTML;
+      <tbody>
+        <tr>
+          <th colspan="3" class="body-title">$lang[columnMappings]</th>
+        </tr>
+        <tr>
+          <th>$lang[importColumn]</th><th></th><th>$lang[databaseField]</th>
+        </tr>
+        $mappings
+      </tbody>
+      HTML;
     if (count($globalRows) > 0) {
       $globalRowsJoined = implode('', $globalRows);
       $importFieldTableContent .= <<<HTML
-<tbody>
-  <tr>
-    <th colspan="3" class="body-title">$lang[globalValues]</th>
-  </tr>
-  <tr>
-    <th>$lang[value]</th><th></th><th>$lang[databaseField]</th>
-  </tr>
-  $globalRowsJoined
-</tbody>
-HTML;
+        <tbody>
+          <tr>
+            <th colspan="3" class="body-title">$lang[globalValues]</th>
+          </tr>
+          <tr>
+            <th>$lang[value]</th><th></th><th>$lang[databaseField]</th>
+          </tr>
+          $globalRowsJoined
+        </tbody>
+        HTML;
     }
     $info .= "<table class=\"table\">$importFieldTableContent</table>";
+    $startButtonCaption = $config['processingMode'] === 'background' ? $lang['queueImport'] : $lang['startImport'];
+    $backgroundProcessingInfo = '';
+    if ($config['processingMode'] === 'background') {
+      $backgroundProcessingInfo = <<<HTML
+        <div class="alert alert-info">
+          <strong>$lang[backgroundProcessing]</strong><br/>
+          <span id="background-processing-info">$lang[backgroundProcessingInfo]</span>
+        </div>
+        HTML;
+    }
     return <<<HTML
-<h3>$lang[title]</h3>
-<p>$lang[instructions]</p>
-<form method="POST" id="summary-form">
-  <div>
-    $info
-  </div>
-  <div class="form-group">
-    <label for="description">$lang[importMetadata]:</label>
-    <textarea class="form-control" rows="5" name="description"></textarea>
-    <p class="helpText">$lang[importMetadataHelp]</p>
-  </div>
-  <div class="form-group">
-    <label for="template_title">$lang[saveImportTemplate]:</label>
-    <input type="text" class="form-control" name="template_title" />
-    <p class="helpText">$lang[saveImportTemplateHelp]</p>
-  </div>
-  <input type="submit" class="btn btn-primary" id="next-step" value="$lang[startImport]" />
-  <input type="hidden" name="next-import-step" value="doImportPage" />
-  <input type="hidden" name="data-file" id="data-file" value="{$_POST['data-file']}" />
-</form>
-HTML;
+      <h3>$lang[title]</h3>
+      <p>$lang[instructions]</p>
+      <form method="POST" id="summary-form">
+        <div>
+          $info
+        </div>
+        <div class="form-group">
+          <label for="description">$lang[importMetadata]:</label>
+          <textarea class="form-control" rows="5" name="description"></textarea>
+          <p class="helpText">$lang[importMetadataHelp]</p>
+        </div>
+        <div class="form-group">
+          <label for="template_title">$lang[saveImportTemplate]:</label>
+          <input type="text" class="form-control" name="template_title" />
+          <p class="helpText">$lang[saveImportTemplateHelp]</p>
+        </div>
+        $backgroundProcessingInfo
+        <input type="submit" class="btn btn-primary" id="next-step" value="$startButtonCaption" />
+        <input type="hidden" name="next-import-step" value="doImportPage" />
+        <input type="hidden" name="config-id" id="config-id" value="$configId" />
+        <input type="hidden" name="processing-mode" value="$config[processingMode]" />
+      </form>
+      HTML;
   }
 
   /**
@@ -1887,6 +1964,58 @@ HTML;
    * Outputs the page that shows import progress.
    */
   private static function doImportPage($options) {
+    self::$indiciaData['readyToImport'] = TRUE;
+    self::$indiciaData['configId'] = $_POST['config-id'];
+    // Put the import description somewhere so it can be saved.
+    self::$indiciaData['importDescription'] = $_POST['description'];
+    self::$indiciaData['importTemplateTitle'] = $_POST['template_title'];
+    if (!empty($_POST['template_title'])) {
+      // Force a cache reload so the new template is instantly available.
+      self::clearTemplateCache($options);
+    }
+    if ($_POST['processing-mode'] ?? '' === 'background') {
+      return self::backgroundImportPage($options['backgroundImportStatusPath'] ?? NULL);
+    }
+    else {
+      return self::immediateImportPage();
+    }
+  }
+
+  /**
+   * Shows the page which informs the user that a large import has been queued.
+   *
+   * @param mixed $statusPagePath
+   *   Optional path to a page which shows the progress of a user's import
+   *   tasks.
+   *
+   * @return string
+   *   Page HTML.
+   */
+  private static function backgroundImportPage($statusPagePath) {
+    global $indicia_templates;
+    $lang = [
+      'importQueued' => lang::get('Import queued'),
+      'importQueuedInfo' => lang::get('Your import has been queued for processing. You can close this page and continue working, the import will continue in the background and you will receive an email once complete.'),
+      'startAnotherImport' => lang::get('Start another import'),
+      'viewBackgroundImportStatus' => 'View status of my background imports',
+    ];
+    $urlInfo = self::get_reload_link_parts();
+    $restartUrl = $urlInfo['path'] . '?' . self::array_to_query_string($urlInfo['params']);
+    $message = $lang['importQueuedInfo'];
+    if ($statusPagePath) {
+      $message .= "<br/><a href=\"$statusPagePath\" class=\"$indicia_templates[anchorButtonClass]\">$lang[viewBackgroundImportStatus]</a>";
+    }
+    $messageBox = str_replace('{message}', $message, $indicia_templates['messageBox']);
+    return <<<HTML
+      <h3>$lang[importQueued]</h3>
+      <div id="import-queued-info" style="display: none">
+        $messageBox
+      </div>
+      <a href="$restartUrl" class="btn btn-primary">$lang[startAnotherImport]</a>
+    HTML;
+  }
+
+  private static function immediateImportPage() {
     global $indicia_templates;
     self::addLanguageStringsToJs('import_helper_2', [
       'cancel' => 'Cancel',
@@ -1914,47 +2043,38 @@ HTML;
       'precheckTitle' => 'Checking the import data for validation errors...',
       'specifyUniqueTemplateName' => 'Please specify a unique name for the import template',
     ];
-    self::$indiciaData['readyToImport'] = TRUE;
-    self::$indiciaData['dataFile'] = $_POST['data-file'];
-    // Put the import description somewhere so it can be saved.
-    self::$indiciaData['importDescription'] = $_POST['description'];
-    self::$indiciaData['importTemplateTitle'] = $_POST['template_title'];
-    if (!empty($_POST['template_title'])) {
-      // Force a cache reload so the new template is instantly available.
-      self::clearTemplateCache($options);
-    }
     $urlInfo = self::get_reload_link_parts();
     $restartUrl = $urlInfo['path'] . '?' . self::array_to_query_string($urlInfo['params']);
     return <<<HTML
-<h3 id="current-task">$lang[checkingData]</h3>
-<progress id="file-progress" class="progress" value="0" max="100"></progress>
-<div class="panel panel-info">
-  <div class="panel-heading">
-    <h4>Import details</h4>
-  </div>
-  <div id="import-details" class="panel-body">
-    <p id="import-details-precheck-title" style="display: none">$lang[precheckTitle]</p>
-    <p id="import-details-precheck-details" style="display: none"></p>
-    <p id="import-details-precheck-done" style="display: none"><i class="fas fa-check"></i>$lang[precheckDone]</p>
-    <p id="import-details-importing-title" style="display: none">$lang[importingTitle]</p>
-    <p id="import-details-importing-details" style="display: none"></p>
-    <p id="import-details-importing-done" style="display: none"><i class="fas fa-check"></i>$lang[importingDone]</p>
-    <p id="import-details-import-another" style="display: none"><a href="$restartUrl" class="btn btn-primary">$lang[importAnother]</a></p>
-  </div>
-</div>
-<div class="alert alert-danger clearfix" id="error-info" style="display: none">
-  <i class="fas fa-exclamation-triangle fa-2x $indicia_templates[floatRightClass]"></i>
-</div>
-<div style="display: none">
-  <div id="template-title-form">
-    <p>$lang[specifyUniqueTemplateName]</p>
-    <div class="form-group">
-      <label for="description">Import template name:</label>
-      <input class="form-control" id="import-template-title" />
-    </div>
-  </div>
-</div>
-HTML;
+      <h3 id="current-task">$lang[checkingData]</h3>
+      <progress id="file-progress" class="progress" value="0" max="100"></progress>
+      <div class="panel panel-info">
+        <div class="panel-heading">
+          <h4>Import details</h4>
+        </div>
+        <div id="import-details" class="panel-body">
+          <p id="import-details-precheck-title" style="display: none">$lang[precheckTitle]</p>
+          <p id="import-details-precheck-details" style="display: none"></p>
+          <p id="import-details-precheck-done" style="display: none"><i class="fas fa-check"></i>$lang[precheckDone]</p>
+          <p id="import-details-importing-title" style="display: none">$lang[importingTitle]</p>
+          <p id="import-details-importing-details" style="display: none"></p>
+          <p id="import-details-importing-done" style="display: none"><i class="fas fa-check"></i>$lang[importingDone]</p>
+          <p id="import-details-import-another" style="display: none"><a href="$restartUrl" class="btn btn-primary">$lang[importAnother]</a></p>
+        </div>
+      </div>
+      <div class="alert alert-danger clearfix" id="error-info" style="display: none">
+        <i class="fas fa-exclamation-triangle fa-2x $indicia_templates[floatRightClass]"></i>
+      </div>
+      <div style="display: none">
+        <div id="template-title-form">
+          <p>$lang[specifyUniqueTemplateName]</p>
+          <div class="form-group">
+            <label for="description">Import template name:</label>
+            <input class="form-control" id="import-template-title" />
+          </div>
+        </div>
+      </div>
+    HTML;
   }
 
   /**
@@ -2008,8 +2128,8 @@ HTML;
    *
    * @param array $options
    *   Options array for the control.
-   * @param string $fileName
-   *   Import file name, allows the server to lookup config.
+   * @param string $configId
+   *   Import config identifier, allows the server to lookup config.
    * @param array $globalValues
    *   Values that apply to every import row, including website_id and
    *   survey__id where available.
@@ -2019,7 +2139,7 @@ HTML;
    * @return array
    *   Associated array with key/value pairs of field names and captions.
    */
-  private static function getAvailableDbFields(array $options, $fileName, array $globalValues, $requiredOnly = FALSE) {
+  private static function getAvailableDbFields(array $options, $configId, array $globalValues, $requiredOnly = FALSE) {
     $url = "index.php/services/import_2/get_fields/$options[entity]";
     $get = array_merge($options['readAuth']);
     // Include survey and website information in the request if available, as
@@ -2053,7 +2173,7 @@ HTML;
     if ($requiredOnly) {
       $get['required'] = 'true';
     }
-    $r = self::getCachedGenericCall($url, $get, ['data-file' => $fileName], [
+    $r = self::getCachedGenericCall($url, $get, ['config-id' => $configId], [
       'caching' => TRUE,
       'cachePerUser' => FALSE,
     ]);
