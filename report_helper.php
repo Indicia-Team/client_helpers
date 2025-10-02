@@ -2674,7 +2674,8 @@ mapSettingsHooks.push(function(opts) { $setLocationJs
   private static function getReportGridParametersForm($response, $options, $params) {
     if ($options['autoParamsForm'] || $options['paramsOnly']) {
       $r = '';
-      // The building of params form has been moved here (earlier in the function than previously) as we
+      // The building of params form has been moved here
+      // (earlier in the function than previously) as we
       // need any changes to $hasVisibleContent earlier in the function than before.
       $builtParamsForm = self::build_params_form(array_merge($options, array('form'=>$response['parameterRequest'], 'defaults'=>$params)), $hasVisibleContent);
       // The form must use POST, because polygon parameters can be too large for GET.
@@ -2685,7 +2686,7 @@ mapSettingsHooks.push(function(opts) { $setLocationJs
         $r .= '<form action="'.$_SERVER['REQUEST_URI'].'" method="post" id="'.$options['reportGroup'].'-params">'."\n<fieldset class=\"$cls\">";
         // Don't use the fieldset legend in toolbar mode,
         // and also only if the params have visible content.
-        if (!$options['paramsInMapToolbar'] && $hasVisibleContent == true) {
+        if (!$options['paramsInMapToolbar'] && $hasVisibleContent === TRUE) {
           // don't use the fieldset legend in toolbar mode
           $r .= '<legend>' . lang::get('Report parameters') . '</legend>';
         }
@@ -2708,7 +2709,7 @@ mapSettingsHooks.push(function(opts) { $setLocationJs
       $r .= $builtParamsForm;
       // Don't include the submit button unless the parameters are showing
       if (isset($options['completeParamsForm']) && $options['completeParamsForm'] &&
-      $hasVisibleContent == true) {
+          $hasVisibleContent === TRUE) {
         global $indicia_templates;
         $suffix = '<input type="submit" value="'.lang::get($options['paramsFormButtonCaption']).'" id="run-report" ' .
             "class=\"$indicia_templates[buttonHighlightedClass]\" />" .
