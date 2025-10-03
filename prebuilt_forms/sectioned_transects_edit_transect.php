@@ -848,6 +848,7 @@ $('#delete-transect').click(deleteSurvey);
         $users[$user->id()] = $user->getDisplayName();
       }
     }
+    \Drupal::service('entity.memory_cache')->deleteAll();
     return $users;
   }
 
