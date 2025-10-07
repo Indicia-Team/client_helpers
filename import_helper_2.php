@@ -131,7 +131,6 @@ class import_helper_2 extends helper_base {
    *   location types looked up against when importing samples that link to
    *   locations, specify `sample:fkFilter:location:location_type_id=n` where
    *   n is the location type to filter to.
-   *   @todo Document how to get the fixed value field names.
    * * fixedValueDefaults - default values for fixedValues that present a list
    *   of options to the user.
    * * allowUpdates - set to true to enable updating existing rows based on an
@@ -184,7 +183,7 @@ class import_helper_2 extends helper_base {
     self::$indiciaData['step'] = $nextImportStep;
     if ($options['advancedMode']) {
       // Unblock some fields in advanced mode.
-      $options['blockedFields'] = array_diff($options['blockedFields'],   [
+      $options['blockedFields'] = array_diff($options['blockedFields'], [
         'created_by_id',
         'fk_created_by',
         'fk_verified_by',
@@ -339,7 +338,7 @@ class import_helper_2 extends helper_base {
     $response = self::http_post($serviceUrl, $data, FALSE);
     $output = json_decode($response['output'], TRUE);
     if (!$response['result']) {
-      throw new exception(isset($output['msg']) ? $output['msg'] : $response['output']);
+      throw new exception($output['msg'] ?? $response['output']);
     }
     return $output;
   }
@@ -347,7 +346,7 @@ class import_helper_2 extends helper_base {
   /**
    * Sets up the config JSON file on the server.
    *
-   * @param array $fileName
+   * @param array $files
    *   List of file names being imported.
    * @param int $importTemplateId
    *   Template ID if one was selected.
@@ -355,6 +354,8 @@ class import_helper_2 extends helper_base {
    *   Write authorisation tokens.
    * @param array $plugins
    *   List of enabled plugins as keys, with parameter arrays as values.
+   * @param bool $enableBackgroundImports
+   *   True if background importing of large files is enabled.
    *
    * @return array
    *   Output of the web service request.
@@ -445,7 +446,7 @@ class import_helper_2 extends helper_base {
     $output = json_decode($response['output'], TRUE);
     if (!$response['result']) {
       \Drupal::logger('iform')->notice('Error in saveLookupMatchesGroup: ' . var_export($response, TRUE));
-      throw new exception(isset($output['msg']) ? $output['msg'] : $response['output']);
+      throw new exception($output['msg'] ?? $response['output']);
     }
     return $output;
   }
@@ -1165,7 +1166,7 @@ class import_helper_2 extends helper_base {
         'fieldname' => 'config:allowUpdates',
         'label' => lang::get('Import file contains updates for existing data'),
         'helpText' => lang::get('Tick this box if your import file contains updates for existing data.'),
-        'default' => isset($options['fixedValues']['config:allowUpdates']) ? $options['fixedValues']['config:allowUpdates'] : 0,
+        'default' => $options['fixedValues']['config:allowUpdates'] ?? 0,
       ]);
       $visibleControlsAdded = $ctrlType !== 'hidden_text';
       if (!empty($options['allowDeletes'])) {
@@ -1175,7 +1176,7 @@ class import_helper_2 extends helper_base {
           'fieldname' => 'config:allowDeletes',
           'label' => lang::get('Import file contains a flag for deleting existing data'),
           'helpText' => lang::get('Tick this box if your import file contains a flag for deleting existing data.'),
-          'default' => isset($options['fixedValues']['config:allowDeletes']) ? $options['fixedValues']['config:allowDeletes'] : 0,
+          'default' => $options['fixedValues']['config:allowDeletes'] ?? 0,
         ]);
         $visibleControlsAdded = $visibleControlsAdded || ($ctrlType !== 'hidden_text');
         if (!isset($options['fixedValues']['config:allowDeletes'])) {
@@ -1429,7 +1430,7 @@ HTML;
       ['vc', 'vicecounty', 'vicecountynumber'],
       ['recorder', 'recorders', 'recordername', 'recordernames'],
       ['determinedby', 'determiner', 'identifiedby', 'identifier'],
-      ['lifestage','stage'],
+      ['lifestage', 'stage'],
     ];
     foreach ($availableFields as $field => $caption) {
       // Skip fields that are not suitable for non-expert imports.
@@ -1458,7 +1459,7 @@ HTML;
           break;
 
         case 'occurrence:fk_taxa_taxon_list:search_code':
-          $alts = ['searchcode','tvk','taxonversionkey'];
+          $alts = ['searchcode', 'tvk', 'taxonversionkey'];
           break;
 
         case 'sample:date':

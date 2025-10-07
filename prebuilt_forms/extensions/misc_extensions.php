@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @file
  * A collection of miscellaneous extension controls for dynamic pages.
@@ -210,7 +211,8 @@ class extension_misc_extensions {
            ($options['onlyShowWhenLoggedInStatus'] == 2 && $loggedIn === FALSE) ||
            ($options['onlyShowWhenLoggedInStatus'] == FALSE))) ||
         empty($options['onlyShowWhenLoggedInStatus'])) {
-      //Only display a link if the administrator has specified both a label and a link.
+      // Only display a link if the administrator has specified both a label
+      // and a link.
       if (!empty($options['label'])&&!empty($options['linkPath'])) {
         if (!empty($options['paramNameToPass']) && !empty($options['paramValueToPass'])) {
           // If multiple parameters are supplied.
@@ -347,14 +349,17 @@ class extension_misc_extensions {
   }
 
   /**
-   * Adds JavaScript to the page allowing detection of whether the user has a certain permission.
+   * Inform JavaScript whether the user has a certain permission.
+   *
    * Adds a setting indiciaData.permissions[permission name] = true or false.
-   * Provide a setting called permissionName to identify the permission to check.
+   * Provide an option called permissionName to identify the permission to
+   * check.
    */
   public static function js_has_permission($auth, $args, $tabalias, $options, $path) {
-    static $done_js_has_permission=FALSE;
-    if (empty($options['permissionName']))
+    static $done_js_has_permission = FALSE;
+    if (empty($options['permissionName'])) {
       return 'Please provide a setting @permissionName for the js_has_permission control.';
+    }
     $val = hostsite_user_has_permission($options['permissionName']) ? 'true' : 'false';
     if (!$done_js_has_permission) {
       data_entry_helper::$javascript .= "if (typeof indiciaData.permissions==='undefined') {
@@ -373,10 +378,12 @@ class extension_misc_extensions {
    */
   public static function js_user_field($auth, $args, $tabalias, $options, $path) {
     static $done_js_user_field = FALSE;
-    if (empty($options['fieldName']))
+    if (empty($options['fieldName'])) {
       return 'Please provide a setting @fieldName for the js_user_field control.';
-    if (!function_exists('hostsite_get_user_field'))
+    }
+    if (!function_exists('hostsite_get_user_field')) {
       return 'Can\'t use the js_user_field extension without a hostsite_get_user_field function.';
+    }
     $val = hostsite_get_user_field($options['fieldName']);
     if ($val === TRUE) {
       $val = 'true';
@@ -418,11 +425,13 @@ class extension_misc_extensions {
    * through.
    * Also allows a user to supply an extraParam inside # characters to
    * get that param from the URL instead of directly.
-   * Example use that takes the location_id directly from a URL param
+   * Example use that takes the location_id directly from a URL param:
+   * ```
    * [misc_extensions.report_helper_control]
    * @control=report_grid
    * @dataSource=<report_path>
    * @extraParams={"location_id":"#location_id#"}
+   * ```
    */
   public static function report_helper_control($auth, $args, $tabalias, $options, $path) {
     iform_load_helpers(['report_helper']);
@@ -1060,7 +1069,7 @@ JS;
     foreach ($options['params'] as $param => &$value) {
       if (preg_match('/{{ (?<field>.+) }}/', $value, $matches)) {
         if ($matches['field'] === 'indicia_user_id') {
-          $value = hostsite_get_field('indicia_user_id');
+          $value = hostsite_get_user_field('indicia_user_id');
         }
         elseif (isset($_GET[$matches['field']])) {
           $value = $_GET[$matches['field']];
