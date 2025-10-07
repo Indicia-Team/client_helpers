@@ -2335,18 +2335,18 @@ JS;
   /**
    * Helper function to list the output from a request against the data services, using an HTML template
    * for each item. As an example, the following outputs an unordered list of surveys:
-   * <pre>echo data_entry_helper::list_in_template(array(
+   * ```
+   * echo data_entry_helper::list_in_template(array(
    *     'label' => 'template',
    *     'table' => 'survey',
    *     'extraParams' => $readAuth,
    *     'template' => '<li>|title|</li>'
-   * ));</pre>
-   * The output of this control can be configured using the following templates:
-   * <ul>
-   * <li><b>list_in_template</b></br>
-   * HTML template used to generate the outer container.
-   * </li>
-   * </ul>
+   * ));
+   * ```
+   * The output of this control can be configured using the following
+   * templates:
+   * * **list_in_template** - HTML template used to generate the outer
+   *   container.
    *
    * @param array $options
    *   Options array with the following possibilities:
@@ -2491,17 +2491,18 @@ JS;
   }
 
   /**
-   * Helper function to output a textbox for determining a locality from an entered postcode.
+   * Textbox for determining a locality from an entered postcode.
    *
-   * <p>The textbox optionally includes hidden fields for the latitude and longitude and can
-   * link to an address control for automatic generation of address information. When the focus
-   * leaves the textbox, the Google AJAX Search API is used to obtain the latitude and longitude
-   * so they can be saved with the record.</p>
+   * The textbox optionally includes hidden fields for the latitude and
+   * longitude and can link to an address control for automatic generation of
+   * address information. When the focus leaves the textbox, the Google AJAX
+   * Search API is used to obtain the latitude and longitude so they can be
+   * saved with the record.
    *
-   * <p>The following example displays a postcode box and an address box, which is auto-populated
-   * when a postcode is given. The spatial reference controls are "hidden" from the user but
-   * are available to post into the database.</p>
-   * <code>
+   * The following example displays a postcode box and an address box, which is
+   * auto-populated when a postcode is given. The spatial reference controls
+   * are "hidden" from the user but are available to post into the database.
+   * ```
    * <?php echo data_entry_helper::postcode_textbox(array(
    *     'label' => 'Postcode',
    *     'fieldname' => 'smpAttr:8',
@@ -2512,38 +2513,39 @@ JS;
    *     'id' => 'address',
    *     'fieldname' => 'smpAttr:9'
    * ));?>
-   * </code>
-   * <p>The output of this control can be configured using the following templates:</p>
-   * <ul>
-   * <li><b>postcode_textbox</b></br>
-   * Template which outputs the HTML for the text input control used. Must have an onblur event handler
-   * which calls the JavaScript required to search for the post code.
-   * </li>
-   * </ul>
+   * ```
    *
-   * @param array $options Options array with the following possibilities:<ul>
-   * <li><b>fieldname</b><br/>
-   * Required. The name of the database field this control is bound to.</li>
-   * <li><b>id</b><br/>
-   * Optional. The id to assign to the HTML control. This should be left to its default value for
-   * integration with other mapping controls to work correctly.</li>
-   * <li><b>default</b><br/>
-   * Optional. The default value to assign to the control. This is overridden when reloading a
-   * record with existing data for this control.</li>
-   * <li><b>class</b><br/>
-   * Optional. CSS class names to add to the control.</li>
-   * <li><b>hiddenFields</b><br/>
-   * Optional. Set to true to insert hidden inputs to receive the latitude and longitude. Otherwise there
-   * should be separate sref_textbox and sref_system_textbox controls elsewhere on the page. Defaults to true.
-   * <li><b>srefField</b><br/>
-   * Optional. Name of the spatial reference hidden field that will be output by this control if hidddenFields is true.</li>
-   * <li><b>systemField</b><br/>
-   * Optional. Name of the spatial reference system hidden field that will be output by this control if hidddenFields is true.</li>
-   * <li><b>linkedAddressBoxId</b><br/>
-   * Optional. Id of the separate textarea control that will be populated with an address when a postcode is looked up.</li>
-   * </ul>
+   * The output of this control can be configured using the following
+   * templates:
+   * * **postcode_textbox** - Template which outputs the HTML for the text
+   *   input control used. Must have an onblur event handler which calls the
+   *   JavaScript required to search for the post code.
    *
-   * @return string HTML to insert into the page for the postcode control.
+   * @param array $options
+   *   Options array with the following possibilities:
+   *   * **fieldname** - Required. The name of the database field this control
+   *     is bound to.
+   *   * **id** - Optional. The id to assign to the HTML control. This should
+   *     be left to its default value for integration with other mapping
+   *     controls to work correctly.
+   *   * **default** - Optional. The default value to assign to the control.
+   *     This is overridden when reloading a record with existing data for this
+   *     control.
+   *   * **class** - Optional. CSS class names to add to the control.
+   *   * **hiddenFields** -    * Optional. Set to true to insert hidden inputs
+   *     to receive the latitude and longitude. Otherwise there should be
+   *     separate sref_textbox and sref_system_textbox controls elsewhere on
+   *     the page. Defaults to true.
+   *   * **srefField** - Optional. Name of the spatial reference hidden field
+   *     that will be output by this control if hidddenFields is true.
+   *   * **systemField** - Optional. Name of the spatial reference system
+   *     hidden field that will be output by this control if hidddenFields is
+   *     true.
+   *   * **linkedAddressBoxId** - Optional. Id of the separate textarea control
+   *     that will be populated with an address when a postcode is looked up.
+   *
+   * @return string
+   *   HTML to insert into the page for the postcode control.
    */
   public static function postcode_textbox($options) {
     if (empty(self::$google_api_key))
