@@ -41,6 +41,7 @@ class iform_importer_2 implements PrebuiltFormInterface {
       'description' => 'A page containing a wizard for uploading CSV file data.',
       'supportsGroups' => TRUE,
       'recommended' => TRUE,
+      'helpLink' => 'http://indicia-docs.readthedocs.org/en/latest/site-building/iform/prebuilt-forms/importer-2.html',
     ];
   }
 

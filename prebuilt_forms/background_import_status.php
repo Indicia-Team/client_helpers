@@ -37,6 +37,7 @@ class iform_background_import_status implements PrebuiltFormInterface {
       'title' => 'Background import status',
       'category' => 'Utilities',
       'description' => "A summary of a user's background import tasks.",
+      'helpLink' => 'http://indicia-docs.readthedocs.org/en/latest/site-building/iform/prebuilt-forms/background-import-status.html',
     ];
   }
 
