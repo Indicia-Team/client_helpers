@@ -29,7 +29,7 @@ jQuery(document).ready(function($) {
   } else {
     $('#ctrl-wrap-occurrence-taxa_taxon_list_id').hide()
   }
-  $('input[name="species-group-switch"]').change(function() {
+  $('input[name="species-group-switch"]').on('change', function() {
     const spgrp = $('input[name="species-group-switch"]:checked').val()
     sessionStorage.setItem('bas-atlas-spgrp', spgrp)
     if (spgrp === 'species') {
@@ -49,7 +49,7 @@ jQuery(document).ready(function($) {
 
   mapTypes = mapTypes.filter(t => t.val !== 'tetradfreq' || vcCode === '')
   let mapTypesSel = {}
-  let mapTypesKey 
+  let mapTypesKey
 
   window.indiciaFns.speciesDetailsSub = () => {
 
@@ -75,7 +75,7 @@ jQuery(document).ready(function($) {
       // If searching on a group, set the ttlid to the group
       ttlid = 'grp'
     }
-    
+
     if (ttlid === '') {
       // No taxon selected, so warn user and do not submit.
       $('#dataset-warning').html(`You must first select a taxon.`)
@@ -90,7 +90,7 @@ jQuery(document).ready(function($) {
     }
   }
 
-  $(window).resize(function() {
+  $(window).on('resize', function() {
     resizeTabs()
     resizeZoomMap()
   })
@@ -114,7 +114,7 @@ jQuery(document).ready(function($) {
     if (mapTypesKey === 'tetradfreq' && vcCode) {
       mapTypesKey = mapTypes[0].val
     }
-      
+
     // Create tabbed display
     const paramOptionalTabs = indiciaData.basAtlas.other.tab_types.replace(/\s+/g, ' ').split(' ')
     let tabs = [
@@ -217,7 +217,7 @@ jQuery(document).ready(function($) {
 
     // Enhance data selection controls
     createDatasetCheckboxes()
-   
+
     // Map controls
     const $ctrlMap = $(`<div id="ctrl-map">`).appendTo($('#bas-atlas-other-controls'))
     $ctrlMap.attr('id', `ctrl-map`)
@@ -314,7 +314,7 @@ jQuery(document).ready(function($) {
 
     const $divWarning = $('<div>').appendTo($('#bas-atlas-species'))
     $divWarning.attr('id', 'dataset-warning')
-    
+
     checkbox('srs', 'SRS')
     checkbox('irec', 'iRec')
     checkbox('inat', 'iNat')
@@ -337,7 +337,7 @@ jQuery(document).ready(function($) {
       const $label = $('<label>').appendTo($dcb)
       $label.attr('for', `dataset-${type}`)
       $label.text(caption)
-      $cb.click( () => {
+      $cb.on('click',  () => {
         sessionStorage.setItem(`bas-atlas-dataset-${type}`, $(`#dataset-${type}`).is(':checked'))
       })
     }
@@ -347,7 +347,7 @@ jQuery(document).ready(function($) {
 
     const $div0 = $('<div>').appendTo($ctrlMap)
     $div0.attr('id', id)
-    
+
     const $div1 = $('<div>').appendTo($div0)
     $div1.css('margin-top', '0.5em')
     const $label = $('<div>').appendTo($div1)
@@ -553,7 +553,7 @@ jQuery(document).ready(function($) {
         val: 'BI4'
       },
     ]
-  
+
     // Main type selector
     const $sel = $('<select>').appendTo($ctrlMap)
     $sel.css('margin-top', '0.5em')
@@ -562,14 +562,14 @@ jQuery(document).ready(function($) {
     $sel.addClass('overview-only')
 
     $sel.on('change', function() {
-  
+
       insetType = $(this).val()
       sessionStorage.setItem('bas-atlas-inset', insetType)
       overviewmap.setTransform(insetType)
 
       resizeLegend()
     })
-  
+
     insets.forEach(function(i){
       const $opt = $('<option>')
       $opt.attr('value', i.val)
@@ -581,7 +581,7 @@ jQuery(document).ready(function($) {
   }
 
   function createGridControl($ctrlMap) {
-    
+
     const currentVal = sessionStorage.getItem('bas-atlas-grid') ? sessionStorage.getItem('bas-atlas-grid') : 'solid'
     overviewmap.setGridLineStyle(currentVal)
 
@@ -599,7 +599,7 @@ jQuery(document).ready(function($) {
         val: 'none'
       }
     ]
-  
+
     // Main type selector
     const $sel = $('<select>').appendTo($ctrlMap)
     $sel.css('margin-top', '0.5em')
@@ -609,10 +609,10 @@ jQuery(document).ready(function($) {
 
     $sel.on('change', function() {
       const gridStyle = $(this).val()
-      sessionStorage.setItem('bas-atlas-grid', gridStyle) 
+      sessionStorage.setItem('bas-atlas-grid', gridStyle)
       overviewmap.setGridLineStyle(gridStyle)
     })
-  
+
     gridStyles.forEach(function(s){
       const $opt = s.selected  ? $('<option>') : $('<option>')
       $opt.attr('value', s.val)
@@ -622,7 +622,7 @@ jQuery(document).ready(function($) {
       $opt.html(s.caption).appendTo($sel)
     })
   }
-  
+
   function createBoundaryControl($ctrlMap) {
 
     const currentVal = sessionStorage.getItem('bas-atlas-boundaries') ? sessionStorage.getItem('bas-atlas-boundaries') : 'none'
@@ -642,7 +642,7 @@ jQuery(document).ready(function($) {
         val: 'none'
       }
     ]
-  
+
     // Main type selector
     const $sel = $('<select>').appendTo($ctrlMap)
     $sel.css('margin-top', '0.5em')
@@ -651,10 +651,10 @@ jQuery(document).ready(function($) {
 
     $sel.on('change', function() {
       boundaryType = $(this).val()
-      sessionStorage.setItem('bas-atlas-boundaries', boundaryType) 
+      sessionStorage.setItem('bas-atlas-boundaries', boundaryType)
       setBoundary(boundaryType)
     })
-  
+
     boundaries.forEach(function(b){
       const $opt = b.selected  ? $('<option>') : $('<option>')
       $opt.attr('value', b.val)
@@ -709,7 +709,7 @@ jQuery(document).ready(function($) {
 
       makeRadio(`download-type`, 'SVG', 'svg', currentDownloadType === 'svg', 'bas-atlas-download-type', $downloadDiv, downloadTypeChanged)
       makeRadio(`download-type`, 'PNG', 'png', currentDownloadType === 'png', 'bas-atlas-download-type', $downloadDiv, downloadTypeChanged)
-    
+
       function downloadTypeChanged() {
         // Do nothing
       }
@@ -732,7 +732,7 @@ jQuery(document).ready(function($) {
       if (indiciaData.basAtlas.taxon.defaultCommonName) {
         taxon = `${taxon} (${indiciaData.basAtlas.taxon.defaultCommonName})`
       }
-      
+
       // Create a string indicating selected datasets. Note that this should be
       // constructed from the URL ds param - not the checkboxes as the user could
       // alter these before creating the image.
@@ -755,7 +755,7 @@ jQuery(document).ready(function($) {
       if (vcCode) {
         vc = ` and vice county ${$("#map-area-selector option:selected").text()}`
       }
-     
+
       info.text = `
         Distribution map for ${taxon}${vc}. Generated at ${location.href} on ${getDateString()}.
         BRC Indicia datasets used to generate these data: ${datasets}.
@@ -780,7 +780,7 @@ jQuery(document).ready(function($) {
   }
 
   function makeRadio(id, label, val, checked, ss, $container, callback) {
-    
+
     const $div = $('<div>').appendTo($container)
     $div.css('display', 'inline-block')
     $div.css('margin-left', '0.5em')
@@ -796,7 +796,7 @@ jQuery(document).ready(function($) {
     //$radio.css('margin-left', 0)
     if (checked) $radio.prop('checked', true)
 
-    $radio.change(function (e) {
+    $radio.on('change', function (e) {
       // Store value in local storage
       sessionStorage.setItem(ss, val)
       // Callbacks
@@ -942,7 +942,7 @@ jQuery(document).ready(function($) {
       }
     }
   }
-  
+
   function createZoomMap () {
 
     const basemapConfigs = [
@@ -1018,7 +1018,7 @@ jQuery(document).ready(function($) {
   }
 
   function createAtlasMap () {
-    
+
     // Create atlas map
     if (typeof(brcatlas) !== "undefined") {
       const opts = {
@@ -1080,7 +1080,7 @@ jQuery(document).ready(function($) {
     // ratio of the maps changing due to inset changes or
     // area of interest changes (i.e. VC maps).
 
-    // In addition, for some VC maps, the default position of 
+    // In addition, for some VC maps, the default position of
     // top left for the legend is no good - it overlaps the
     // map data, so here we have an array with custom positions.
 
@@ -1517,7 +1517,7 @@ jQuery(document).ready(function($) {
         return {
           gr: h.gr,
           id: h.gr,
-          colour: 'black', 
+          colour: 'black',
           caption: h.recs,
           size: size
         }
@@ -1603,7 +1603,7 @@ jQuery(document).ready(function($) {
     // download functionality.
     let taxonNew = ''
     let remainder = taxon
-    let ems 
+    let ems
 
     do {
       ems = remainder.indexOf('<em>')

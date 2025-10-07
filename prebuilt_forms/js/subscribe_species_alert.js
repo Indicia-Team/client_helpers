@@ -27,7 +27,7 @@ jQuery(document).ready(function($) {
   // location autocomplete mode as automated if the location picker control is
   // a select.
   if ($('#imp-location\\:name').length > 0) {
-    $('#location_type').change(function(e) {
+    $('#location_type').on('change', function(e) {
       if ($('#location_type').val()) {
         $('#imp-location\\:name').setExtraParams({location_type_id: $('#location_type').val()});
         $('#imp-location\\:name').prop('disabled', false);
@@ -52,28 +52,29 @@ jQuery(document).ready(function($) {
       $('#hidden-location-id').val($(select).val());
       // Fetch children.
       $.ajax({
-        dataType: 'jsonp',
         url: indiciaData.read.url + 'index.php/services/data/location',
         data: {
           parent_id: $(select).val(),
           auth_token: indiciaData.read.auth_token,
           nonce: indiciaData.read.nonce
         },
-        success: function (data) {
-          var newSelect;
-          if (data.length > 0) {
-            newSelect = $('<select class="' + select.className + '" />')
-              .attr('data-index', parseInt($(select).attr('data-index'), 10) + 1)
-              .attr('name', $(select).attr('name'))
-              .append($('<option value="">- Please select -</option>'))
-              .insertAfter($(select))
-              .click(function() {
-                indiciaData.mapdiv.locationSelectedInInput(indiciaData.mapdiv, $(this).val())
-              });
-            data.forEach(function(item) {
-              newSelect.append($('<option value="' + item.id + '">' + item.name + '</option>'));
+        dataType: 'jsonp',
+        crossDomain: true
+      })
+      .done(function (data) {
+        var newSelect;
+        if (data.length > 0) {
+          newSelect = $('<select class="' + select.className + '" />')
+            .attr('data-index', parseInt($(select).attr('data-index'), 10) + 1)
+            .attr('name', $(select).attr('name'))
+            .append($('<option value="">- Please select -</option>'))
+            .insertAfter($(select))
+            .on('click', function() {
+              indiciaData.mapdiv.locationSelectedInInput(indiciaData.mapdiv, $(this).val())
             });
-          }
+          data.forEach(function(item) {
+            newSelect.append($('<option value="' + item.id + '">' + item.name + '</option>'));
+          });
         }
       });
     } else {

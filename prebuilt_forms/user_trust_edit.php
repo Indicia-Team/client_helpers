@@ -171,7 +171,7 @@ class iform_user_trust_edit implements PrebuiltFormInterface {
         ."\" />\n";
     if (!empty($_GET['user_trust_id'])) {
       $r .= '<input type="submit" class="indicia-button" id="delete-button" name="delete-button" value="'.lang::get('Revoke this trust')."\" />\n";
-      data_entry_helper::$javascript .= "$('#delete-button').click(function(e) {
+      data_entry_helper::$javascript .= "$('#delete-button').on('click', function(e) {
         if (!confirm(\"Are you sure you want to revoke this trust?\")) {
           e.preventDefault();
           return false;

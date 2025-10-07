@@ -215,7 +215,7 @@ class IndiciaConversions {
       \lang::get("{1} decades ago")
     ];
     $lengths = ['60', '60', '24', '7', '4.35', '12', '10'];
-    for ($j = 0; (($difference >= $lengths[$j]) && ($j < 7)); $j++) {
+    for ($j = 0; (($j < 7) && ($difference >= $lengths[$j])); $j++) {
       $difference /= $lengths[$j];
     }
     $difference = round($difference);
@@ -226,6 +226,23 @@ class IndiciaConversions {
       $text = str_replace('{1}', $difference, $periodsPlural[$j]);
     }
     return $text;
+  }
+
+  /**
+   * Transform a size in bytes into a human readable format such as 2GB.
+   *
+   * @param int $size
+   *   Size in bytes.
+   *
+   * @return string
+   *   Size converted to human readable format.
+   */
+  public static function bytesToReadable($size) {
+    $units = ['bytes', 'KB', 'MB', 'GB', 'TB', 'PB'];
+    for ($i = 0; $size >= 1024 && $i < count($units) - 1; $i++) {
+      $size /= 1024;
+    }
+    return round($size, 2) . ' ' . $units[$i];
   }
 
   /**

@@ -7,7 +7,7 @@ $indicia_templates['controlWrap'] =
   '<div id="ctrl-wrap-{id}" class="form-group ctrl-wrap{wrapClasses}">{control}</div>' . "\n";
 $indicia_templates['controlWrapErrorClass'] = 'has-error';
 $indicia_templates['controlAddonsWrap'] =
-  '<div class="input-group">{control}<div class="input-group-addon ctrl-addons">{addons}</div></div>';
+  '<div class="input-group">{control}<div class="input-group-text ctrl-addons">{addons}</div></div>';
 $indicia_templates['two-col-50'] =
   '<div class="row"{attrs}><div class="col">{col-1}</div><div class="col">{col-2}</div></div>';
 // For JavaScript.
@@ -19,14 +19,17 @@ $indicia_templates['textarea'] =
   '<textarea id="{id}" name="{fieldname}"{class} {disabled} rows="{rows}" {title}>{default}</textarea>'."\n";
 
 // Switch to Bootstrap button classes.
-$indicia_templates['buttonDefaultClass'] = 'indicia-button btn btn-default';
+$indicia_templates['buttonDefaultClass'] = 'indicia-button btn btn-light';
 $indicia_templates['buttonHighlightedClass'] = 'indicia-button btn btn-primary';
 $indicia_templates['buttonWarningClass'] = 'indicia-button btn btn-danger';
-$indicia_templates['anchorButtonClass'] = 'indicia-button btn btn-default';
+$indicia_templates['anchorButtonClass'] = 'indicia-button btn btn-light';
 
 // Floats.
 $indicia_templates['floatLeftClass'] = 'float-left';
 $indicia_templates['floatRightClass'] = 'float-right';
+
+// Form classes.
+$indicia_templates['inputGroupAddonClass'] = 'input-group-text';
 
 $indicia_templates['messageBox'] = '<div class="alert alert-info" role="alert">{message}</div>';
 $indicia_templates['warningBox'] = '<div class="alert alert-warning" role="alert"><span class="fas fa-exclamation-triangle"></span>{message}</div>';
@@ -50,7 +53,7 @@ $indicia_templates['autocomplete_new_taxon_form'] = <<<HTML
       <label for="new-taxon-name">Taxon name:</label>
       <div class="input-group">
         <input type="text" id="new-taxon-name" class="form-control {required:true}"/>
-        <div class="input-group-addon ctrl-addons">
+        <div class="input-group-text ctrl-addons">
           <span class="deh-required">*</span>
         </div>
       </div>
@@ -61,7 +64,7 @@ $indicia_templates['autocomplete_new_taxon_form'] = <<<HTML
         <select id="new-taxon-group" class="form-control {required:true}">
           {taxonGroupOpts}
         </select>
-        <div class="input-group-addon ctrl-addons">
+        <div class="input-group-text ctrl-addons">
           <span class="deh-required">*</span>
         </div>
       </div>

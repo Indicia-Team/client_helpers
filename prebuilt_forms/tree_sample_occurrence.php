@@ -203,7 +203,7 @@ var _zoomToExtent = function(bounds, layer){
     layer.map.zoomToExtent(bounds);
   }
 };
-$('.scPresence:checkbox').change(function(){
+$('.scPresence:checkbox').on('change', function(){
   var cells = $(this).closest('tr').find('.scOccAttrCell');
   if($(this).attr('checked')){
     cells.find('select').addClass('required').removeAttr('disabled');
@@ -217,7 +217,7 @@ $('.scPresence:checkbox').change(function(){
     cells.find('.ui-state-error').removeClass('ui-state-error');
   }
 });
-$('.scPresence:checkbox').change();
+$('.scPresence:checkbox').trigger('change');
 indiciaData.searchUpdatesSref=false;\n";
     data_entry_helper::$late_javascript .= "
 jQuery('[name=".str_replace(':','\\\\:',$smpAttrs[0]['id'])."],[name^=".str_replace(':','\\\\:',$smpAttrs[0]['id'])."\\\\:]').filter(':checkbox').rules('add', {no_observation: true});
@@ -399,7 +399,7 @@ mapInitialisationHooks.push(function (div) {
 });";
       if(self::$loadedSampleId)
         data_entry_helper::$javascript .= "
-$('[name=sample\\\\:date]').change(function(){ // sample exists so just check that no sample already taken on that date.
+$('[name=sample\\\\:date]').on('change', function(){ // sample exists so just check that no sample already taken on that date.
   $.getJSON(ParentLocationLayer.map.div.settings.indiciaSvc + 'index.php/services/data/sample?location_id='+".$locationRecord[0]['id']." +
       '&sample_method_id=".$args['sample_method_id']."&mode=json&view=detail' + ParentLocationLayer.map.div.settings.readAuth + '&callback=?', function(data) {
     if (typeof data.error!=='undefined') {
@@ -416,7 +416,7 @@ $('[name=sample\\\\:date]').change(function(){ // sample exists so just check th
   });\n});\n";
       else
         data_entry_helper::$javascript .= "
-$('[name=sample\\\\:date]').change(function(){
+$('[name=sample\\\\:date]').on('change', function(){
   $.getJSON(ParentLocationLayer.map.div.settings.indiciaSvc + 'index.php/services/data/sample?location_id='+".$locationRecord[0]['id']." +
   		'&sample_method_id=".$args['sample_method_id']."&mode=json&view=detail&orderby=date_start' + ParentLocationLayer.map.div.settings.readAuth + '&callback=?', function(data) {
     if (typeof data.error!=='undefined') {
@@ -570,7 +570,7 @@ $('[name=sample\\\\:date]').change(function(){
         'helpText' => lang::get('The following field is filled in automatically when you select a tree.')
     ), $options));
     data_entry_helper::$javascript .= "
-$('#imp-site-location').change(function() {
+$('#imp-site-location').on('change', function() {
   $('#".data_entry_helper::$validated_form_id."').find('label.error').remove();
   $('#".data_entry_helper::$validated_form_id."').find('.error').removeClass('error');
   $('#".data_entry_helper::$validated_form_id."').find('.inline-error').remove();
@@ -633,7 +633,7 @@ mapLocationSelectedHooks.push(function(div, data){
   $('#".data_entry_helper::$validated_form_id."').find('.inline-error').remove();
   $('#".data_entry_helper::$validated_form_id."').find('.ui-state-error').removeClass('ui-state-error');
   if($('#imp-site-location').val() != data[0].parent_id) {
-    $('#imp-site-location').val(data[0].parent_id).change();
+    $('#imp-site-location').val(data[0].parent_id).trigger('change');
     $('#imp-site-location option[value=]').attr('disabled',true);
   }
   if(data[0].parent_id != ''){
@@ -668,7 +668,7 @@ mapLocationSelectedHooks.push(function(div, data){
       }});
   }});
 });
-$('[name=sample\\\\:date]').change(function(){
+$('[name=sample\\\\:date]').on('change', function(){
   if($('#imp-location').val()=='') return;
   $.getJSON(ParentLocationLayer.map.div.settings.indiciaSvc + 'index.php/services/data/sample?location_id='+$('#imp-location').val() +
   		'&sample_method_id=".$args['sample_method_id']."&mode=json&view=detail&orderby=date_start' + ParentLocationLayer.map.div.settings.readAuth + '&callback=?', function(data) {
@@ -854,7 +854,7 @@ $('[name=sample\\\\:date]').change(function(){
       $r .= '<a href="JavaScript:window.close()"><input type="button" class="indicia-button" name="cancel" value="'.lang::get('Cancel').'" /></a>';
     if (!empty(self::$loadedSampleId)) {
       $r .= '<input type="submit" class="indicia-button" id="delete-button" name="delete-button" value="'.lang::get('Delete')."\" />\n";
-      data_entry_helper::$javascript .= "$('#delete-button').click(function(e) {
+      data_entry_helper::$javascript .= "$('#delete-button').on('click', function(e) {
   if (!confirm('".lang::get('Are you sure you want to delete this record?')."')) {
     e.preventDefault();
     return false;

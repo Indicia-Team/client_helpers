@@ -90,36 +90,42 @@ indiciaFns.hookDynamicAttrsAfterLoad = [];
   function loadExistingRows(el) {
     if ($('input[name="taxon_meaning\\:id"]').length > 0 && $('input[name="taxon_meaning\\:id"]').val() !== '') {
       $.ajax({
+        url: indiciaData.read.url + 'index.php/services/data/taxon_association',
+        data: {
+          from_preferred: 't',
+          to_preferred: 't',
+          from_taxon_meaning_id: $('input[name="taxon_meaning\\:id"]').val(),
+          nonce: indiciaData.read.nonce,
+          auth_token: indiciaData.read.auth_token,
+          mode: 'json'
+        },
         dataType: 'jsonp',
-        url: indiciaData.read.url + 'index.php/services/data/taxon_association' +
-          '?from_preferred=t&to_preferred=t&from_taxon_meaning_id=' + $('input[name="taxon_meaning\\:id"]').val() +
-          '&nonce=' + indiciaData.read.nonce + '&auth_token=' + indiciaData.read.auth_token +
-          '&mode=json&callback=?',
-        success: function(data) {
-          $.each(data, function eachData() {
-            var tr = addRow(el);
-            $(tr).find('.associated-taxon').val(this.to_taxon);
-            $('<input type="hidden" class="associated-taxon-id" name="associated-taxon-id:' + rowCount + '" value="' + this.id + '" />')
-              .appendTo($(tr).find('td:first-child'));
-            $('[name="associated-taxon-tmId:' + rowCount + '"]').val(this.to_taxon_meaning_id);
-            $('[name="associated-taxon-typeId:' + rowCount + '"]').val(this.association_type_id);
-            if (this.part_id) {
-              $('[name="associated-taxon-partId:' + rowCount + '"]').val(this.part_id);
-            }
-            if (this.position_id) {
-              $('[name="associated-taxon-positionId:' + rowCount + '"]').val(this.position_id);
-            }
-            if (this.impact_id) {
-              $('[name="associated-taxon-impactId:' + rowCount + '"]').val(this.impact_id);
-            }
-            if (this.fidelity) {
-              $('[name="associated-taxon-fidelity:' + rowCount + '"]').val(this.fidelity);
-            }
+        crossDomain: true
+      })
+      .done(function(data) {
+        $.each(data, function eachData() {
+          var tr = addRow(el);
+          $(tr).find('.associated-taxon').val(this.to_taxon);
+          $('<input type="hidden" class="associated-taxon-id" name="associated-taxon-id:' + rowCount + '" value="' + this.id + '" />')
+            .appendTo($(tr).find('td:first-child'));
+          $('[name="associated-taxon-tmId:' + rowCount + '"]').val(this.to_taxon_meaning_id);
+          $('[name="associated-taxon-typeId:' + rowCount + '"]').val(this.association_type_id);
+          if (this.part_id) {
+            $('[name="associated-taxon-partId:' + rowCount + '"]').val(this.part_id);
+          }
+          if (this.position_id) {
+            $('[name="associated-taxon-positionId:' + rowCount + '"]').val(this.position_id);
+          }
+          if (this.impact_id) {
+            $('[name="associated-taxon-impactId:' + rowCount + '"]').val(this.impact_id);
+          }
+          if (this.fidelity) {
+            $('[name="associated-taxon-fidelity:' + rowCount + '"]').val(this.fidelity);
+          }
 
-          });
-          // add a blank row for new records
-          addRow(el);
-        }
+        });
+        // add a blank row for new records
+        addRow(el);
       });
     }
     else {
@@ -359,24 +365,27 @@ indiciaFns.hookDynamicAttrsAfterLoad = [];
   function loadExistingRows(el) {
     if ($('input[name="taxon\\:id"]').length > 0 && $('input[name="taxon\\:id"]').val() !== '') {
       $.ajax({
+        url: indiciaData.read.url + 'index.php/services/data/taxa_taxon_designation',
+        data: {
+          taxon_id: $('input[name="taxon\\:id"]').val(),
+          nonce: indiciaData.read.nonce,
+          auth_token: indiciaData.read.auth_token,
+          mode: 'json'
+        },
         dataType: 'jsonp',
-        url: indiciaData.read.url + 'index.php/services/data/taxa_taxon_designation' +
-          '?taxon_id=' + $('input[name="taxon\\:id"]').val() +
-          '&nonce=' + indiciaData.read.nonce + '&auth_token=' + indiciaData.read.auth_token +
-          '&mode=json&callback=?',
-        success: function(data) {
-          $.each(data, function eachData() {
-            var tr = addRow(el);
-            $('<input type="hidden" class="taxa_taxon_designation_id" name="taxa_taxon_designation_id:' + rowCount + '" value="' + this.id + '" />')
+        crossDomain: true
+      }).done(function(data) {
+        $.each(data, function eachData() {
+          var tr = addRow(el);
+          $('<input type="hidden" class="taxa_taxon_designation_id" name="taxa_taxon_designation_id:' + rowCount + '" value="' + this.id + '" />')
               .appendTo($(tr).find('td:first-child'));
-            $('[name="taxon-designation-taxon_designation_id:' + rowCount + '"]').val(this.taxon_designation_id);
-            $('[name="taxon-designation-start_date:' + rowCount + '"]').val(this.start_date);
-            $('[name="taxon-designation-source:' + rowCount + '"]').val(this.source);
-            $('[name="taxon-designation-geographical_constraint:' + rowCount + '"]').val(this.geographical_constraint);
-          });
-          // add a blank row for new records
-          addRow(el);
-        }
+          $('[name="taxon-designation-taxon_designation_id:' + rowCount + '"]').val(this.taxon_designation_id);
+          $('[name="taxon-designation-start_date:' + rowCount + '"]').val(this.start_date);
+          $('[name="taxon-designation-source:' + rowCount + '"]').val(this.source);
+          $('[name="taxon-designation-geographical_constraint:' + rowCount + '"]').val(this.geographical_constraint);
+        });
+        // add a blank row for new records
+        addRow(el);
       });
     }
     else {
@@ -487,6 +496,6 @@ jQuery(document).ready(function docReady($) {
   }
 
   // On selection of a taxon or change of sex/stage attribute, load any dynamically linked attrs into the form.
-  $('#taxa_taxon_list\\:parent_id').change(changeTaxonRestrictionInputs);
+  $('#taxa_taxon_list\\:parent_id').on('change', changeTaxonRestrictionInputs);
 });
 

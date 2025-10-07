@@ -472,7 +472,7 @@ function iform_mnhnl_locModTool($auth, $args, $node) {
 mapInitialisationHooks.push(function(mapdiv) {
 // try to identify if this map is the secondary small one
   if(mapdiv.id=='map')
-    jQuery(\"#dummy-parent-id\").val('').change();});
+    jQuery(\"#dummy-parent-id\").val('').trigger('change');});
 ";
   return $retVal;
 }
@@ -684,7 +684,7 @@ ParentWMSLayer = new OpenLayers.Layer.WMS('Parent Grid',
       if($args['locationMode']=='multi' && isset(data_entry_helper::$entity_to_load["sample:location_id"])){
         data_entry_helper::$javascript .= "setClickedParent = function(features, div){ return ''; };\n";
       } else {
-        data_entry_helper::$javascript .= "setClickedParent = function(features, div){\n  jQuery('[name=".str_replace(':','\\:',$options['ChooseParentFieldName'])."]').val(features[0].data.id).change();\n  return '';\n};\n";
+        data_entry_helper::$javascript .= "setClickedParent = function(features, div){\n  jQuery('[name=".str_replace(':','\\:',$options['ChooseParentFieldName'])."]').val(features[0].data.id).trigger('change');\n  return '';\n};\n";
       }
     }
 
@@ -1477,7 +1477,7 @@ setDrawnGeom = function() {
   clearLocation(true, 'maybe');
   if(jQuery('#dummy-parent-id').length>0 && jQuery('[name=location\\:parent_id]').length>0 &&
       jQuery('#dummy-parent-id').val() != jQuery('[name=location\\:parent_id]').val())
-    jQuery('[name=location\\:parent_id]').val(jQuery('#dummy-parent-id').val()).change();
+    jQuery('[name=location\\:parent_id]').val(jQuery('#dummy-parent-id').val()).trigger('change');
 ".($creatorAttr ? "  jQuery('[name=locAttr:".$creatorAttr."],[name^=locAttr:".$creatorAttr.":]').val('".$user->name."');\n" : "").
 "};
 removeDrawnGeom = function(SiteNum){
@@ -2018,7 +2018,7 @@ StartNewSite = function(){
   clearLocation(true, !keepName);
   if(jQuery('#dummy-parent-id').length>0 && jQuery('[name=location\\:parent_id]').length>0 &&
       jQuery('#dummy-parent-id').val() != jQuery('[name=location\\:parent_id]').val())
-    jQuery('[name=location\\:parent_id]').val(jQuery('#dummy-parent-id').val()).change();
+    jQuery('[name=location\\:parent_id]').val(jQuery('#dummy-parent-id').val()).trigger('change');
 ".($creatorAttr ? "  jQuery('[name=locAttr:".$creatorAttr."],[name^=locAttr:".$creatorAttr.":]').val('".$user->name."');\n" : "").
 "  // No currently selected feature. Create a dummy label new one.
   SiteNum++;
@@ -2495,7 +2495,7 @@ hook_ChildFeatureLoad = function(feature, data, child_id, childArgs){
   }
 //  setGeomFields();
 };
-jQuery('#location-name').change(function(){";
+jQuery('#location-name').on('change', function(){";
       if($args['locationMode']!='filtered' && isset($args['duplicateNameCheck']) && ($args['duplicateNameCheck']==true || $args['duplicateNameCheck']=='check' || $args['duplicateNameCheck']=='enforce'))
         data_entry_helper::$javascript .= "
   for(var i=0; i< SiteLabelLayer.features.length; i++){
@@ -2508,7 +2508,7 @@ jQuery('#location-name').change(function(){";
       data_entry_helper::$javascript .= "
   jQuery('#sample-location-name').val(jQuery(this).val());
 });
-jQuery('#location-id').change(function(){
+jQuery('#location-id').on('change', function(){
   jQuery('#sample-location-id').val(jQuery(this).val());
   });
 //  jQuery(\"#location-name\").val('');
@@ -2559,7 +2559,7 @@ mainFieldChange = function(resetName){
   }
   clearLocation(true, true);
 }
-jQuery('#".$options['MainFieldID']."').change(function(){mainFieldChange(true)});
+jQuery('#".$options['MainFieldID']."').on('change', function(){mainFieldChange(true)});
 ";
     }
     if($args['locationMode']=='multi' && isset(data_entry_helper::$entity_to_load["sample:updated_by_id"])){ // only set if data loaded from db, not error condition
@@ -2635,14 +2635,14 @@ jQuery('#".$options['MainFieldID']."').change(function(){mainFieldChange(true)})
     if($args['locationMode']=='parent'){
       $retVal .= "<input type='hidden' id=\"sample-location-id\" name=\"sample:location_id\" value='".data_entry_helper::$entity_to_load['sample:location_id']."' />";
       data_entry_helper::$javascript .= "
-jQuery(\"#".$options['ChooseParentFieldID']."\").change(function(){
+jQuery(\"#".$options['ChooseParentFieldID']."\").on('change', function(){
   jQuery(\"#imp-geom,#imp-boundary-geom,#imp-sref,#imp-srefX,#imp-srefY,#".$options['MainFieldID'].",#".$options['ParentFieldID'].",#sample-location-id,#location-name,#sample-location-name\").val('');
   jQuery(\"#location_location_type_id\").val('$primary');
   loadFeatures(this.value, '', {initial: false}, true, true, true, true, true);
   if(typeof hook_mnhnl_parent_changed != 'undefined')
     hook_mnhnl_parent_changed();
 });
-jQuery(\"#".$options['ParentFieldID']."\").change(function(){
+jQuery(\"#".$options['ParentFieldID']."\").on('change', function(){
   if(jQuery(this).val() != '') {
     // we have a new parent location, so draw boundary
     jQuery.getJSON(\"".data_entry_helper::$base_url."/index.php/services/data/location/\"+jQuery(this).val()+\"?mode=json&view=detail&auth_token=".$auth['read']['auth_token']."&nonce=".$auth['read']["nonce"]."&callback=?\",
@@ -2791,7 +2791,7 @@ jQuery(\"#".$options['ParentFieldID']."\").change(function(){
         ));
       }
       data_entry_helper::$javascript .= "
-jQuery(\"#".$options['ChooseParentFieldID']."\").change(function(){
+jQuery(\"#".$options['ChooseParentFieldID']."\").on('change', function(){
   if(typeof hook_mnhnl_parent_changed != 'undefined')
     hook_mnhnl_parent_changed();
   loadFeatures(this.value, '', {initial : false}, true, true, true, true, true);
@@ -3042,7 +3042,7 @@ displayParent = function(zoom){
   var parent_id = jQuery('#filterSelect".$idx."').val();
   loadFeatures(parent_id, '', {initial : false}, true, false, zoom, false, false);
 }
-jQuery('#filterSelect".$idx."').change(function(){
+jQuery('#filterSelect".$idx."').on('change', function(){
   jQuery('#".$options['ParentFieldID']."').val(jQuery(this).val());
   SetFilterNewLocation();\n";
                   foreach($filterAttrs as $idx1=>$filterAttr1)
@@ -3275,7 +3275,7 @@ hook_setSref_".$idx." = function(geom){ // map projection
 ($filterAttr[3]!=''?"  filter = new OpenLayers.Filter.Logical({type:OpenLayers.Filter.Logical.AND, filters:[filter, new OpenLayers.Filter.Comparison({type: OpenLayers.Filter.Comparison.EQUAL_TO, property: 'location_type_id', value: '".$parentLocTypeID."'})]});\n":'').
 "  protocol.read({filter: filter});
 };
-jQuery('#filterSelect".$idx."').change(function(){
+jQuery('#filterSelect".$idx."').on('change', function(){
   jQuery('#locAttr\\\\:".$attr['attributeId']."').val(jQuery('#filterSelect".$idx."').val());
   SetFilterNewLocation();\n";
         foreach($filterAttrs as $idx1=>$filterAttr1)
@@ -3429,11 +3429,11 @@ jQuery('#locAttr\\\\:".$attr['attributeId']."').autocomplete('".data_entry_helpe
       formatItem: function(item) {return item.term;}
   });
 jQuery('#locAttr\\\\:".$attr['attributeId']."').result(function(data,value){
-  jQuery(this).change();
+  jQuery(this).trigger('change');
 });";
         }
         data_entry_helper::$javascript .="
-jQuery('#filterSelect".$idx."').change(function(){
+jQuery('#filterSelect".$idx."').on('change', function(){
   jQuery('#locAttr\\\\:".$attr['attributeId']."').data('store',jQuery('#filterSelect".$idx."').val()).val(jQuery('#filterSelect".$idx."').val());
   SetFilterNewLocation();
   if(jQuery(this).val()==''){\n";
@@ -3443,7 +3443,7 @@ jQuery('#filterSelect".$idx."').change(function(){
         foreach($filterAttrs as $idx1=>$filterAttr1)
           if($idx1 > $idx) data_entry_helper::$javascript .="    filterLoad".($idx1)."();\n";
         data_entry_helper::$javascript .="  }});\n
-jQuery('#locAttr\\\\:".$attr['attributeId']."').data('store',jQuery('#locAttr\\\\:".$attr['attributeId']."').val()).change(function(){
+jQuery('#locAttr\\\\:".$attr['attributeId']."').data('store',jQuery('#locAttr\\\\:".$attr['attributeId']."').val()).on('change', function(){
   jQuery(this).data('store',jQuery(this).val());
   if(jQuery(this).val()=='') {
     jQuery('#filterSelect".$idx."').val('');\n";
@@ -3609,7 +3609,7 @@ hook_setSref = function(geom){ // geom is in map projection.
       foreach($attrList as $filterAttr){
         $locAttrText[] ="  {'id':'".$filterAttr['id']."', 'shape':".($filterAttr['shape']?'true':'false')."}";
       }
-      data_entry_helper::$javascript .="    $(this).unbind(event);\n  });\n};\nlocation_attrs = [".(implode(",\n",$locAttrText))."];";
+      data_entry_helper::$javascript .="    $(this).off(event);\n  });\n};\nlocation_attrs = [".(implode(",\n",$locAttrText))."];";
 
       if($includeCommune)
         data_entry_helper::$javascript .="jQuery('[name=locAttr\\:$communeAttr],[name^=locAttr\\:$communeAttr\\:]').attr('readonly','readonly');\n";
@@ -3742,7 +3742,7 @@ jQuery('[name=pg\\:srefX],[name=pg\\:srefY]').live('change', function(){
   $retVal.="</tbody></table>";
   $retVal.="</fieldset>";
   data_entry_helper::$javascript .= "
-jQuery('.pgSrefSystem').change();
+jQuery('.pgSrefSystem').trigger('change');
 jQuery('.pgDeletePoint').live('click', function(){
   if(!modPointFeature.feature) return;
   var myRow=jQuery(this).closest('tr').remove();
@@ -3808,7 +3808,7 @@ addPGPoint = function(geometry){
   newRow.append('<td><input class=\"pgHighlightPoint\" type=\"button\" value=\"".lang::get('LANG_HighlightPoint')."\"></td>');
   newRow.data('WKT',wkt).data('geometry',geometry).data('oldGeometry',geometry.clone()).data('popup',null);
   jQuery('#pointgridtable').append(newRow);
-  newRow.find('.pgSrefSystem').val(jQuery('.pgAddRow').find('.pgSrefSystem').val()).change();
+  newRow.find('.pgSrefSystem').val(jQuery('.pgAddRow').find('.pgSrefSystem').val()).trigger('change');
 };
 modPGPoint = function(geometry){
   removePopups();
@@ -3822,7 +3822,7 @@ modPGPoint = function(geometry){
       var geometryX = convertGeom(jQuery(this).data('geometry'), SitePointLayer.map.projection);
       var wkt= getwkt(geometryX, true, true);
       jQuery(this).data('WKT',wkt).data('oldGeometry',jQuery(this).data('geometry').clone());
-      jQuery(this).find('.pgSrefSystem').change();
+      jQuery(this).find('.pgSrefSystem').trigger('change');
     }
     var found=false;
     for(var i=0; i< geomList.length; i++){
@@ -3831,7 +3831,7 @@ modPGPoint = function(geometry){
     if(!found) jQuery(this).remove();
   });
 }
-jQuery('#pgNewPoint').click(function(){
+jQuery('#pgNewPoint').on('click', function(){
   // only add if the modPointFeature is active.
   if(!modPointFeature.active) return;
   if($('#new-srefX').val()=='' || $('#new-srefY').val()=='') return;
@@ -3861,7 +3861,7 @@ populatePGrid= function(){
       }
     }
   }
-  jQuery('.pgSrefSystem').change(); // triggers the population of the X/Y for all rows
+  jQuery('.pgSrefSystem').trigger('change'); // triggers the population of the X/Y for all rows
 };
 clearPGrid= function(){jQuery('.pgDataRow').remove();}
 ";
@@ -3898,7 +3898,7 @@ setSref = function(geometry, sref){
     _setSref(sref);
   }
 };
-$('#imp-srefX,#imp-srefY').change(function() {
+$('#imp-srefX,#imp-srefY').on('change', function() {
   if($('#imp-srefX').val()!='' && $('#imp-srefY').val()!='') {
     $('#imp-sref').val($('#imp-srefX').val() + ', ' + $('#imp-srefY').val());
     handleEnteredSref($('#imp-sref').val());

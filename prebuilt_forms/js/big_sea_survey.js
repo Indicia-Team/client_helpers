@@ -2,10 +2,10 @@ jQuery(document).ready(function($) {
   var currentPageChanged = false, origGeom,
     toggle='start',  // clicking to set start or end?
     proj4326 = new OpenLayers.Projection('EPSG:4326')
-    
+
   $('#gps'+toggle).css('border','solid red 1px');
-  
-  $('.select-transect').click(function(e) {
+
+  $('.select-transect').on('click', function(e) {
     // prevent losing changes by navigating. Geom handled separately as it doesn't trigger a change on an input when you modify the feature.
     if (currentPageChanged || origGeom!==$('#imp-geom').val()) {
       if (!confirm("You have made changes to the current transect? Are you sure you want to navigate away without saving them? Click Cancel to avoid losing your changes.")) {
@@ -14,14 +14,14 @@ jQuery(document).ready(function($) {
       }
     }
   });
-  
-  $('#entry_form :input').change(function(e) {
+
+  $('#entry_form :input').on('change', function(e) {
     // imp-sref gets changed on page load. So let's ignore that change.
     if (e.currentTarget.id!=='imp-sref') {
       currentPageChanged = true;
     }
   });
-  
+
   mapInitialisationHooks.push(function(div) {
     var feature=div.map.editLayer.features[0],
       /**
@@ -49,7 +49,7 @@ jQuery(document).ready(function($) {
       div.map.zoomToExtent(div.map.editLayer);
       $('#imp-geom').val(feature.geometry.toString());
       $('#imp-sref-system').val('4326');
-    } 
+    }
     else {
       copyFeatureComponentToSrefBox('gpsstart', feature, 0);
       copyFeatureComponentToSrefBox('gpsend', feature, 1);
@@ -63,8 +63,8 @@ jQuery(document).ready(function($) {
       feature.style.strokeDashstyle='dash';
       feature.style.strokeColorBoundary='#FF0000';
       div.map.editLayer.redraw();
-    }    
-    
+    }
+
     OpenLayers.Control.Click = OpenLayers.Class(OpenLayers.Control, {
       defaultHandlerOptions: {'single': true, 'double': false, 'pixelTolerance': 0, 'stopSingle': false, 'stopDouble': false},
       title: div.settings.hintClickSpatialRefTool,
@@ -91,14 +91,14 @@ jQuery(document).ready(function($) {
       {
         this.handlerOptions = OpenLayers.Util.extend({}, this.defaultHandlerOptions);
         OpenLayers.Control.prototype.initialize.apply(this, arguments);
-        this.handler = new OpenLayers.Handler.Click( this, {'click': this.trigger}, this.handlerOptions );
+        this.handler = new OpenLayers.Handler.on('click',  this, {'click': this.trigger}, this.handlerOptions );
       }
     });
-    var click = new OpenLayers.Control.Click({"displayClass":"olControlClickSref"});
+    var click = new OpenLayers.Control.on('click', {"displayClass":"olControlClickSref"});
     div.map.addControl(click);
     click.activate();
   });
-  
+
   var version = $().jquery;
   var aryVersion = version.split('.');
   if (aryVersion[0] == 1 && aryVersion[1] < 6 ) {
@@ -107,5 +107,5 @@ jQuery(document).ready(function($) {
   } else {
     $('#gpsstart').prop('readonly', true);
     $('#gpsend').prop('readonly', true);
-  } 
+  }
 });

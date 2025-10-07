@@ -92,7 +92,7 @@ jQuery(document).ready(function($) {
         '</fieldset>' +
       '</form>'
     );
-    $('#occurrence-comment-save-button').click(function(){
+    $('#occurrence-comment-save-button').on('click', function(){
       //Trim white space
       if (!$('#occurrence-comment').val().trim()) {
         alert('Please enter an occurrence comment before saving.');

@@ -1,9 +1,9 @@
 
 (function ($) {
-  
+
   $(document).ready(function () {
 
-    $('a.report-information').click(function (evt) {
+    $('a.report-information').on('click', function (evt) {
       var buttons = {};
       if (typeof indiciaData.informationDialog === 'undefined') {
         buttons[indiciaData.informationCloseButton] = function() {
@@ -22,7 +22,7 @@
         indiciaData.informationDialog.dialog("open");
       }
     });
-    
+
 
     indiciaData.copyClipboard = function(elementId) {
       var body = document.body, range, sel, el;
@@ -45,7 +45,7 @@
     indiciaData.copyImageToClipboard = function(link, elementId) {
       if (navigator.userAgent.indexOf("Firefox") > 0) {
         var buttons = {};
-        
+
         buttons[indiciaData.informationCloseButton] = function() {
           $(this).dialog('close'); }
 

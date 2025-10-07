@@ -122,12 +122,12 @@ bindSpeciesAutocomplete = function (selectorID, target, url, lookupListId, looku
       },
       formatItem: function(item) { return item.taxon; }
   });
-  ctrl.bind('result', handleSelectedTaxon);
+  ctrl.on('result', handleSelectedTaxon);
   setTimeout(function() { $('#' + ctrl.attr('id')).focus(); });
 };
 
 initButtons = function(){
-  $('.remove-button').click(function(){
+  $('.remove-button').on('click', function(){
     var myRow = $(this).closest('tr');
     // we leave the field names the same, so that the submission builder can delete the occurrence.
     // need to leave as enabled, so set as readonly.
@@ -135,7 +135,7 @@ initButtons = function(){
     myRow.find('.deh-required').remove();
   });
 
-  $('.clear-button').click(function(){
+  $('.clear-button').on('click', function(){
     var myFieldset = $(this).closest('fieldset');
     myFieldset.find('.hasDatepicker').val('').removeClass('required');
     myFieldset.find('.occValField,.smp-input,[name=taxonLookupControl]').val('').attr('disabled','disabled').removeClass('required'); // leave the count fields as are.
@@ -176,7 +176,7 @@ getCentroid=function(geometry){
 }
 // Only allow one delete at a time: prevents removal of last subsample.
 processDeleted=function(){
-  $('.subSampleDelete').change(function(){
+  $('.subSampleDelete').on('change', function(){
     if($(this).attr('checked'))
       $('.subSampleDelete').not(this).attr('disabled','disabled');
     else

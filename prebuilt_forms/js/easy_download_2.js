@@ -67,6 +67,6 @@ var setAvailableDownloadFilters;
   }
 
   jQuery(document).ready(function ($) {
-    $('#download-type').change(setAvailableDownloadFilters);
+    $('#download-type').on('change', setAvailableDownloadFilters);
   });
 }(jQuery));

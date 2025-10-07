@@ -153,14 +153,14 @@ function addSite(locationId) {
     );
   }
 }
-$('#add-site-button').click(function() {
+$('#add-site-button').on('click', function() {
   addSite($('#location-select').val());
   if (!isNaN($('#location-select').val())) {
     $('#location-select option:selected').remove();
   }
 });
-$('#add-searched-site-button').click(function() {addSite($('#location-search').val());});
-$('#location-select, #location-search, #locality_id').change(function() {
+$('#add-searched-site-button').on('click', function() {addSite($('#location-search').val());});
+$('#location-select, #location-search, #locality_id').on('change', function() {
   if (typeof indiciaData.mapdiv!=='undefined') {
     indiciaData.mapdiv.locationSelectedInInput(indiciaData.mapdiv, this.value);
   }
@@ -333,35 +333,39 @@ JS;
 function duplicateCheck(locationId, userId) {
   var userIdToAdd = userId;
   var locationIdToAdd = locationId;
-  var sitesReport = indiciaData.read.url +'/index.php/services/report/requestReport?report=library/locations/all_user_sites.xml&mode=json&mode=json&callback=?';
+  const sitesReportUrl = indiciaData.read.url +'/index.php/services/report/requestReport';
 
   var sitesReportParameters = {
-    'person_site_attr_id': '$options[mySitesPsnAttrId]',
-    'auth_token': indiciaData.read.auth_token,
-    'nonce': indiciaData.read.nonce,
-    'reportSource':'local'
+    report: 'library/locations/all_user_sites.xml',
+    mode: 'json',
+    person_site_attr_id: '$options[mySitesPsnAttrId]',
+    auth_token: indiciaData.read.auth_token,
+    nonce: indiciaData.read.nonce,
+    reportSource:'local'
   };
 
   if (!userIdToAdd || !locationIdToAdd) {
     alert('Please select both a user and a location to add.');
   } else {
-    $.getJSON (
-      sitesReport,
-      sitesReportParameters,
-      function (data) {
-        var duplicateDetected=false;
-        $.each(data, function(i, dataItem) {
-          if (userIdToAdd == dataItem.pav_user_id&&locationIdToAdd == dataItem.location_id) {
-              duplicateDetected = true;
-          }
-        });
-        if (duplicateDetected === true) {
-          alert('The site/user combination you are adding already exists in the database.');
-        } else {
-          addUserSiteData(locationId, userIdToAdd);
+    $.ajax({
+      url: sitesReportUrl,
+      data: sitesReportParameters,
+      dataType: 'jsonp',
+      crossDomain: true
+    })
+    .done(function (data) {
+      var duplicateDetected=false;
+      $.each(data, function(i, dataItem) {
+        if (userIdToAdd == dataItem.pav_user_id&&locationIdToAdd == dataItem.location_id) {
+            duplicateDetected = true;
         }
+      });
+      if (duplicateDetected === true) {
+        alert('The site/user combination you are adding already exists in the database.');
+      } else {
+        addUserSiteData(locationId, userIdToAdd);
       }
-    );
+    });
   }
 }
 
@@ -398,7 +402,7 @@ JS;
     // combination.
     data_entry_helper::$javascript .= <<<JS
 
-$('#add-user-site-button').click(function() {
+$('#add-user-site-button').on('click', function() {
   // We can get the location id from the url or from the locations drop-down
   // depending on the option the administrator has set.
   var locationId;
@@ -416,7 +420,7 @@ $('#add-user-site-button').click(function() {
   duplicateCheck(locationId,userId);
 });
 
-$('#location-select, #location-search, #locality_id').change(function() {
+$('#location-select, #location-search, #locality_id').on('change', function() {
   if (typeof indiciaData.mapdiv !== 'undefined') {
     // Zoom map as user selects locations.
     indiciaData.mapdiv.locationSelectedInInput(indiciaData.mapdiv, this.value);

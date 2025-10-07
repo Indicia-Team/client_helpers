@@ -572,7 +572,7 @@ class iform_verification_template_edit extends iform_dynamic {
         // use a button here, not input, as Chrome does not post the input value
         $r .= '<button type="submit" class="' . $indicia_templates['buttonWarningClass'] .
         '" id="delete-button" name="delete-button" value="delete" >' . lang::get('Delete') . "</button>\n";
-        data_entry_helper::$javascript .= "$('#delete-button').click(function(e) {
+        data_entry_helper::$javascript .= "$('#delete-button').on('click', function(e) {
   if (!confirm(\"Are you sure you want to delete this template?\")) {
     e.preventDefault();
     return false;

@@ -241,12 +241,12 @@ jQuery(document).ready(function($) {
       });
     }, 500);
     // Set a class to visually indicate which photo panes have a count value.
-    $(sectionBody).find('input[type="number"]').change(function(e) {
+    $(sectionBody).find('input[type="number"]').on('change', function(e) {
       var panel = $(e.currentTarget).closest('.photo-checklist-item');
       setPanelStyle(panel);
     });
     // Hook up the delete buttons.
-    $(sectionBody).find('.delete-photo').click(function(e) {
+    $(sectionBody).find('.delete-photo').on('click', function(e) {
       var panel = $(e.currentTarget).closest('.photo-checklist-item');
       var img = panel.find('img');
       var a = panel.find('a.photo-popup');
@@ -258,25 +258,23 @@ jQuery(document).ready(function($) {
   }
 
   function addSpeciesPanels(config, sectionIdx, section, sectionInfo) {
-    var query;
     if (sectionInfo.taxaList) {
       addSpeciesPanelsFromList(config, sectionIdx, section, sectionInfo.taxaList);
     }
     else {
-      query = new URLSearchParams();
-      $.each(sectionInfo.params, function(key, val) {
-        query.append(key, val);
+      $.ajax({
+        url: indiciaData.read.url + 'index.php/services/data/taxa_search',
+        data: {
+          mode: 'json',
+          nonce: indiciaData.read.nonce,
+          auth_token: indiciaData.read.auth_token,
+          ...sectionInfo.params
+        },
+        dataType: 'jsonp',
+        crossDomain: true
+      }).done(function(response) {
+        addSpeciesPanelsFromList(config, sectionIdx, section, response);
       });
-      request = indiciaData.read.url + 'index.php/services/data/taxa_search?mode=json' +
-          '&nonce=' + indiciaData.read.nonce +
-          '&auth_token=' + indiciaData.read.auth_token +
-          '&' + query.toString() + '&callback=?';
-      $.getJSON(request,
-        null,
-        function(response) {
-          addSpeciesPanelsFromList(config, sectionIdx, section, response);
-        }
-      );
     }
   }
 
@@ -337,32 +335,35 @@ jQuery(document).ready(function($) {
    * If photo_checklist_by_location_attr control in use.
    */
   if (indiciaData.useLocAttrToPopulatePhotoChecklist) {
-    $('#imp-location').change(function() {
+    $('#imp-location').on('change', function() {
       if ($('#imp-location').val() !== '') {
         // Find the selected location's appropriate attribute value.
-        request = indiciaData.read.url + 'index.php/services/data/location_attribute_value?mode=json' +
-          '&nonce=' + indiciaData.read.nonce +
-          '&auth_token=' + indiciaData.read.auth_token +
-          '&location_id=' + $('#imp-location').val() +
-          '&location_attribute_id=' + indiciaData.useLocAttrToPopulatePhotoChecklist +
-          '&callback=?';
-        $.getJSON(request,
-          null,
-          function(attrValResponse) {
-            if (attrValResponse.length > 0) {
-              // For first time use, we load the data file that relates
-              // attribute values to the checklist data.
-              if (indiciaData.photoChecklistData) {
+        $.ajax({
+          url: indiciaData.read.url + 'index.php/services/data/location_attribute_value',
+          data: {
+            mode: 'json',
+            nonce: indiciaData.read.nonce,
+            auth_token: indiciaData.read.auth_token,
+            location_id: $('#imp-location').val(),
+            location_attribute_id: indiciaData.useLocAttrToPopulatePhotoChecklist
+          },
+          dataType: 'jsonp',
+          crossDomain: true
+        })
+        .done(function(attrValResponse) {
+          if (attrValResponse.length > 0) {
+            // For first time use, we load the data file that relates
+            // attribute values to the checklist data.
+            if (indiciaData.photoChecklistData) {
+              populateFromPhotoChecklistData(attrValResponse[0].value);
+            } else {
+              $.getJSON(indiciaData.photoChecklistDataFile, function(dataFile) {
+                indiciaData.photoChecklistData = dataFile;
                 populateFromPhotoChecklistData(attrValResponse[0].value);
-              } else {
-                $.getJSON(indiciaData.photoChecklistDataFile, function(dataFile) {
-                  indiciaData.photoChecklistData = dataFile;
-                  populateFromPhotoChecklistData(attrValResponse[0].value);
-                });
-              }
+              });
             }
           }
-        );
+        });
       }
     });
     mapInitialisationHooks.push(function() {
@@ -375,7 +376,7 @@ jQuery(document).ready(function($) {
         $('#imp-location').val($('#imp-location option[data-centroid_sref="' + $('#imp-sref').val() + '"]').val());
       }
       // Force initial entry to load list.
-      $('#imp-location').change();
+      $('#imp-location').trigger('change');
     });
   }
 

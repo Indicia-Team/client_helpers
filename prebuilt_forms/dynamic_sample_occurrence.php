@@ -3104,7 +3104,7 @@ JS;
     }
     $r = '<div><input id="pending_release_status" type="checkbox" checked="checked" name="occurrence:release_status" value="P">' . $options['label'] . '</div>';
     data_entry_helper::$javascript .= "
-    $('#pending_release_status').change(function() {
+    $('#pending_release_status').on('change', function() {
       if ($('#pending_release_status').is(':checked')) {
         $('#pending_release_status').val('P');
       } else {
@@ -3551,7 +3551,7 @@ TXT;
   HTML;
         $msg = str_replace("'", "\'", lang::get('Are you sure you want to delete this {1}?', $formType));
         data_entry_helper::$javascript .= <<<JS
-  $('#delete-button').click(function(e) {
+  $('#delete-button').on('click', function(e) {
     if (!confirm('$msg')) {
       e.preventDefault();
       return false;

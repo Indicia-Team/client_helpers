@@ -26,7 +26,7 @@ jQuery(document).ready(function docReady($) {
   });
 
   // Handle display of treatment details.
-  $('#treatment-list tbody').click(function(evt) {
+  $('#treatment-list tbody').on('click', function(evt) {
     var row = $(evt.target).parents('tr:first')[0];
     var id = $(row).attr('id').replace(/^row/, '');
     indiciaData.reports.dynamic.grid_treatment_list.highlightFeatureById(
@@ -34,6 +34,7 @@ jQuery(document).ready(function docReady($) {
     );
     $.ajax({
       dataType: 'jsonp',
+      crossDomain: true,
       url: indiciaData.read.url + 'index.php/services/report/requestReport?' +
         'report=projects/inns_mapper/treatment_info.xml' +
         '&reportSource=local&sample_id=' + id +

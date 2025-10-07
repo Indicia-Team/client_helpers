@@ -15,9 +15,9 @@
 
 /**
  * Helper methods for additional JavaScript functionality required by the species_checklist control.
- * formatter - The taxon label template, OR a JavaScript function that takes an item returned by the web service 
- * search for a species when adding rows to the grid, and returns a formatted taxon label. Overrides the label 
- * template and controls the appearance of the species name both in the autocomplete for adding new rows, plus for 
+ * formatter - The taxon label template, OR a JavaScript function that takes an item returned by the web service
+ * search for a species when adding rows to the grid, and returns a formatted taxon label. Overrides the label
+ * template and controls the appearance of the species name both in the autocomplete for adding new rows, plus for
   the newly added rows.
  */
 var addRowToGridSequence = 1000; // this should be more than the length of the initial taxon list
@@ -27,7 +27,7 @@ var bindSpeciesAutocomplete;
 (function ($) {
 
 "use strict";
-  
+
 bindSpeciesAutocomplete = function(selectorID, url, gridId, lookupListId, readAuth, formatter, duplicateMsg, max) {
   // inner function to handle a selection of a taxon from the autocomplete
   var handleSelectedTaxon = function(event, data) {
@@ -48,9 +48,9 @@ bindSpeciesAutocomplete = function(selectorID, url, gridId, lookupListId, readAu
       row.find('.scPresence').val('1');
       $.each(row.children(), function(j, cell) {
         cell.innerHTML = cell.innerHTML.replace(/-ttlId-:/g, data.id+':y'+addRowToGridSequence);
-      }); 
+      });
       row.appendTo('#'+gridId);
-    }); 
+    });
     $(event.target).val('');
     formatter(data,taxonCell);
     // we have added a row, so no_record is no longer applicable.
@@ -85,7 +85,7 @@ bindSpeciesAutocomplete = function(selectorID, url, gridId, lookupListId, readAu
         return item.taxon;
       }
   });
-  ctrl.bind('result', handleSelectedTaxon);
+  ctrl.on('result', handleSelectedTaxon);
   setTimeout(function() { $('#' + ctrl.attr('id')).focus(); });
 }
 

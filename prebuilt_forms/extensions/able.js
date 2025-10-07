@@ -72,7 +72,7 @@ jQuery(document).ready(function ($) {
     // Completely disable downloads.
     $('.download-buttons').remove();
   }
-  $('#select-dataset').change(setDatasetFilter);
+  $('#select-dataset').on('change', setDatasetFilter);
   captureOriginalIndiciaDownloadLinkSettings();
   setDatasetFilter();
 

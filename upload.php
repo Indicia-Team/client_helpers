@@ -35,8 +35,7 @@ if (isset($_GET['destination'])) {
   $targetDir = "$_GET[destination]";
 }
 else {
-  // If not provided, revert to the default.
-  $targetDir = data_entry_helper::getInterimImageFolder('fullpath');
+  throw new Exception('Bad request to upload.php script');
 }
 // Clenaup old .part upload files.
 $cleanupTargetDir = TRUE;

@@ -35,9 +35,9 @@ jQuery(document).ready(function($) {
     const limit = 1;
     if (searchWords || filterMode === 'member') {
       $('#group-list-container .loading-spinner').show();
-      var reportingURL = indiciaData.read.url + 'index.php/services/report/requestReport' +
-      '?report=library/groups/groups_list.xml&callback=?';
+      var reportingURL = indiciaData.read.url + 'index.php/services/report/requestReport';
       var reportOptions = {
+        report: 'library/groups/groups_list.xml',
         mode: 'json',
         nonce: indiciaData.read.nonce,
         auth_token: indiciaData.read.auth_token,
@@ -51,11 +51,16 @@ jQuery(document).ready(function($) {
       if (searchWords) {
         reportOptions.search_fulltext = searchWords;
       }
-      $.getJSON(reportingURL, reportOptions,
-        function(data) {
-          // Clear existing results, but not if appending a new page after
-          // clicking show more.
-          if (!append) {
+      $.ajax({
+        url: reportingURL,
+        data: reportOptions,
+        dataType: 'jsonp',
+        crossDomain: true
+      })
+      .done(function(data) {
+        // Clear existing results, but not if appending a new page after
+        // clicking show more.
+        if (!append) {
             $('#search-groups .card-gallery ul li').remove();
           }
           // Show or hide the show more link depending on if there are more pages.
@@ -107,7 +112,7 @@ jQuery(document).ready(function($) {
   /**
    * Handle show more clicks if there are more pages of groups after a search.
    */
-  $('#show-more').click(function() {
+  $('#show-more').on('click', function() {
     searchOffset += searchLimit;
     doSearch(true);
   });
@@ -121,14 +126,14 @@ jQuery(document).ready(function($) {
   }
 
   // Return key or Go button click does a search.
-  $('#group-search').keyup(function(e) {
+  $('#group-search').on('keyup', function(e) {
     if ((e.keyCode || e.which) == 13) {
       newSearch();
     }
   });
-  $('#group-search-go').click(newSearch);
+  $('#group-search-go').on('click', newSearch);
 
   // Changing the filter mode also re-triggers search.
-  $('input[type=radio][name=group-scope]').change(newSearch);
+  $('input[type=radio][name=group-scope]').on('change', newSearch);
 
 });

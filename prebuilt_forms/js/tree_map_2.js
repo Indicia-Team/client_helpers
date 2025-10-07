@@ -136,7 +136,7 @@ var rgbvalue, applyJitter, setToDate, loadYear;
       $(iTM2Opts.rhsControlSelector).val(rhs);
     } else
       $(iTM2Opts.rhsControlSelector).val('');
-    $(iTM2Opts.rhsControlSelector).change();
+    $(iTM2Opts.rhsControlSelector).trigger('change');
   };
 
   var calculateMinAndMax = function () {
@@ -241,7 +241,7 @@ var rgbvalue, applyJitter, setToDate, loadYear;
     setToDate(last);
   };
 
-  // init must be called before the maps are initialised, as it sets up a 
+  // init must be called before the maps are initialised, as it sets up a
   initTreeMap2 = function (options) {
     var defaults = {
       advanced_UI: false,
@@ -288,13 +288,13 @@ var rgbvalue, applyJitter, setToDate, loadYear;
 
     // Field change events:
 
-    $(iTM2Opts.yearControlSelector).change(function (evt) {
+    $(iTM2Opts.yearControlSelector).on('change', function (evt) {
       var year = $(evt.target).val();
       stopAnimation();
       loadYear(year, 'lh');
     });
 
-    $(iTM2Opts.speciesControlSelector).change(function (evt) {
+    $(iTM2Opts.speciesControlSelector).on('change', function (evt) {
       stopAnimation();
       enableEventControlOptions();
       buildRhsControlOptions();
@@ -302,14 +302,14 @@ var rgbvalue, applyJitter, setToDate, loadYear;
       resetMap();
     });
 
-    $(iTM2Opts.eventControlSelector).change(function (evt) {
+    $(iTM2Opts.eventControlSelector).on('change', function (evt) {
       stopAnimation();
       buildRhsControlOptions();
       calculateMinAndMax();
       resetMap();
     });
 
-    $(iTM2Opts.rhsControlSelector).change(function (evt) {
+    $(iTM2Opts.rhsControlSelector).on('change', function (evt) {
       // we are assumming that map and map2 are identical
       // This could be animated.
       var centre = new OpenLayers.LonLat(iTM2Opts.long, iTM2Opts.lat);
@@ -335,7 +335,7 @@ var rgbvalue, applyJitter, setToDate, loadYear;
       }
     });
 
-    $(iTM2Opts.playButtonSelector).click(function () {
+    $(iTM2Opts.playButtonSelector).on('click', function () {
       if (iTM2Data.year1 === '' || iTM2Data.species1 === '' || iTM2Data.event1 === '') {
         alert(iTM2Opts.pleaseSelectPrompt);
         return;
@@ -371,7 +371,7 @@ var rgbvalue, applyJitter, setToDate, loadYear;
         $(this).text(options.label);
     });
 
-    $(iTM2Opts.firstButtonSelector).click(function () {
+    $(iTM2Opts.firstButtonSelector).on('click', function () {
       stopAnimation();
       if (iTM2Opts.advanced_UI && iTM2Data.advancedButtons)
         $(iTM2Opts.playButtonSelector).button('option', {label: iTM2Opts.playButtonPlayLabel, icons: {primary: iTM2Opts.playButtonPlayIcon}});
@@ -380,7 +380,7 @@ var rgbvalue, applyJitter, setToDate, loadYear;
       setToDate(iTM2Data.minDayIndex);
     });
 
-    $(iTM2Opts.lastButtonSelector).click(function () {
+    $(iTM2Opts.lastButtonSelector).on('click', function () {
       stopAnimation();
       if (iTM2Opts.advanced_UI && iTM2Data.advancedButtons)
         $(iTM2Opts.playButtonSelector).button('option', {label: iTM2Opts.playButtonPlayLabel, icons: {primary: iTM2Opts.playButtonPlayIcon}});
@@ -401,7 +401,7 @@ var rgbvalue, applyJitter, setToDate, loadYear;
         $(iTM2Opts.lastButtonSelector).button({text: false, icons: {primary: 'ui-icon-seek-end'}});
       }
     } else {
-      $(iTM2Opts.timeControlSelector).change(function (event, ui) {
+      $(iTM2Opts.timeControlSelector).on('change', function (event, ui) {
         setToDate($(iTM2Opts.timeControlSelector).val());
       });
     }
@@ -432,7 +432,7 @@ var rgbvalue, applyJitter, setToDate, loadYear;
         }});
     } else {
       $(iTM2Opts.dotControlSelector).val(iTM2Data.dotSize);
-      $(iTM2Opts.dotControlSelector).change(function (event, ui) {
+      $(iTM2Opts.dotControlSelector).on('change', function (event, ui) {
         iTM2Data.dotSize = $(iTM2Opts.dotControlSelector).val();
         if ($(iTM2Opts.primaryMapSelector)[0].map.sitesLayer.features.length > 0) {
           var features = $(iTM2Opts.primaryMapSelector)[0].map.sitesLayer.features;
@@ -487,7 +487,7 @@ var rgbvalue, applyJitter, setToDate, loadYear;
     }
     $(iTM2Opts.errorDiv).empty();
     dialog = $('<p>' + iTM2Opts.waitDialogText.replace('{year}', year) + '</p>').dialog({
-      title: iTM2Opts.waitDialogTitle, 
+      title: iTM2Opts.waitDialogTitle,
       buttons: {OK: function () {
         dialog.dialog('close');
       }}
@@ -667,7 +667,7 @@ var rgbvalue, applyJitter, setToDate, loadYear;
             layer.addFeatures([day.others.feature]);
           }
           if (day.mine.feature) {
-            // Dont apply jitter to own data as this may 
+            // Dont apply jitter to own data as this may
             day.mine.feature.style.pointRadius = iTM2Data.dotSize + 2;
             day.mine.feature.style.fillColor = rgbvalue(idx);
             layer.addFeatures([day.mine.feature]);

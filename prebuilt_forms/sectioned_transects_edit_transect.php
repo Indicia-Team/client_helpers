@@ -673,7 +673,7 @@ class iform_sectioned_transects_edit_transect implements PrebuiltFormInterface {
     $r .= '</form>';
     $r .= '</div>'; // site-details
     // This must go after the map panel, so it has created its toolbar.
-    data_entry_helper::$onload_javascript .= "$('#current-section').change(selectSection);\n";
+    data_entry_helper::$onload_javascript .= "$('#current-section').on('change', selectSection);\n";
     if ($settings['canEditBody'] && $settings['locationId']) {
       $sectionIDs = [];
       foreach($settings['sections'] as $code => $section)
@@ -688,7 +688,7 @@ deleteSurvey = function(){
     window.location='" . hostsite_get_url($args['sites_list_path']) . "';
   };
 };
-$('#delete-transect').click(deleteSurvey);
+$('#delete-transect').on('click', deleteSurvey);
 ";
     }
     return $r;

@@ -327,7 +327,7 @@ var _bindSpeciesGridControls = function(row,rowNum,options){
   }
 
   if(row.find('[id$=imp-srefX]').length>0)
-    row.find('[id$=imp-srefX]').change(function() {
+    row.find('[id$=imp-srefX]').on('change', function() {
       var map2 = jQuery('#map2');
       if(map2.length==0) return;
       // Only do something if the long is also populated
@@ -338,7 +338,7 @@ var _bindSpeciesGridControls = function(row,rowNum,options){
       }
     });
   if(row.find('[id$=imp-srefY]').length>0)
-    row.find('[id$=imp-srefY]').change(function() {
+    row.find('[id$=imp-srefY]').on('change', function() {
       var map2 = jQuery('#map2');
       if(map2.length==0) return;
       // Only do something if the lat is also populated
@@ -352,7 +352,7 @@ var _bindSpeciesGridControls = function(row,rowNum,options){
       jQuery(this).css('width',jQuery(this).find('label').css('width'));
   });
   // normal validation is taken from the database.
-  row.find('input,select').bind('focus', handleFocus);
+  row.find('input,select').on('focus', handleFocus);
   if(typeof options.rowControl != 'undefined'){
     function setRowControl(value,row){
       for(var i = 0; i < options.rowControl.controls.length; i++){
@@ -379,7 +379,7 @@ var _bindSpeciesGridControls = function(row,rowNum,options){
     var control = row.find('.'+options.rowControl.selector).find('input');
     if(control.length > 0){
       // for radio buttons, the change is fired on the new value only.
-      (function(control,rownum){control.change(function(){setRowControl($(this).val(),rownum)})})(control,rowNum);
+      (function(control,rownum){control.on('change', function(){setRowControl($(this).val(),rownum)})})(control,rowNum);
       control = control.filter(':checked');
       setRowControl(control.length>0 ? control.val() : -1,rowNum);
     }
@@ -390,7 +390,7 @@ var _bindSpeciesGridControls = function(row,rowNum,options){
       if(units.length > 0){
         // initially units will not be m2,  but set min to 0: will be set correctly when units selected.
         row.find('.scNumber').attr('min',0);
-        units.change(function(){
+        units.on('change', function(){
           jQuery('.ui-state-error').removeClass('ui-state-error');
           jQuery('.inline-error').remove();
           var shown = jQuery(this).find('option').filter(':selected')[0].text;
@@ -452,19 +452,19 @@ function _addNewSpeciesGridRow(data,options){
         }};
         $(row).find('[name$=occAttr\:'+attrRestrictionsProcessOrder[i]+'],[name*=occAttr\:'+attrRestrictionsProcessOrder[i]+'\:]').each(
           function(idx,elem){
-            $(elem).change(
+            $(elem).on('change',
               chngFunc(i, elem)
             );
           }
         );
       }
       // last is special - only updates similar on other rows.
-      $(row).find('[name$=occAttr\:'+attrRestrictionsProcessOrder[attrRestrictionsProcessOrder.length-1]+'],[name*=occAttr\:'+attrRestrictionsProcessOrder[attrRestrictionsProcessOrder.length-1]+'\\:]').change(function(){
+      $(row).find('[name$=occAttr\:'+attrRestrictionsProcessOrder[attrRestrictionsProcessOrder.length-1]+'],[name*=occAttr\:'+attrRestrictionsProcessOrder[attrRestrictionsProcessOrder.length-1]+'\\:]').on('change', function(){
         set_up_last_relationship(this, attrRestrictionsProcessOrder[attrRestrictionsProcessOrder.length-1], attrRestrictionsProcessOrder[attrRestrictionsProcessOrder.length-2], true);
       });
       // for duplicate checks have to trigger on all duplicate based fields.
       if(typeof attrRestrictionsDuplicateSelector != "undefined"){
-        $(row).find(attrRestrictionsDuplicateSelector).change(function(){
+        $(row).find(attrRestrictionsDuplicateSelector).on('change', function(){
           set_up_last_relationship(this, attrRestrictionsProcessOrder[attrRestrictionsProcessOrder.length-1], attrRestrictionsProcessOrder[attrRestrictionsProcessOrder.length-2], true);
         });
       }
@@ -499,7 +499,7 @@ function _addExistingSpeciesGridRow(index,row,options){
 };
 
 function bindSpeciesButton(options){
-  $('#' + options.selectorID).click(function(){
+  $('#' + options.selectorID).on('click', function(){
     _addNewSpeciesGridRow(options.speciesData, options)
   });
   $('#'+options.gridId+' tbody').find('.first').each(function(idx,elem){_addExistingSpeciesGridRow(idx+1,elem,options);});
@@ -539,7 +539,7 @@ function bindSpeciesAutocomplete(options){
         return item.taxon;
       }
   });
-  ctrl.bind('result', handleSelectedTaxon);
+  ctrl.on('result', handleSelectedTaxon);
   setTimeout(function() { $('#' + ctrl.attr('id')).focus(); });
 
   $('#'+options.gridId+' tbody').find('.first').each(function(idx,elem){_addExistingSpeciesGridRow(idx+1,elem,options);});
@@ -726,7 +726,7 @@ function bindSupportingSpeciesAutocomplete(field, options){
       },
       formatItem: function(item) { return item.taxon; }
   });
-  ctrl.bind('result', handleSelectedTaxon);
+  ctrl.on('result', handleSelectedTaxon);
   setTimeout(function() { ctrl.focus(); });
 }
 

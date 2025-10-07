@@ -71,10 +71,13 @@ class report_helper extends helper_base {
         return $output['error'];
       $reports .= self::get_report_list_level($options['id'], $options['fieldname'], $options['default'], $output);
     }
-    self::$javascript .= '$("#'.$options['id'].' > ul").treeview({collapsed: true});'."\n";
-    self::$javascript .= "indiciaData.reportList=".$response['output'].";\n";
-    self::$javascript .= '$(\'#'.$options['id'].' > ul input[checked="checked"]\').click();'."\n";
-    self::$javascript .= '$(\'#'.$options['id'].' > ul input[checked="checked"]\').parents("#'.$options['id'].' ul").show();'."\n";
+    self::$javascript .= <<<JS
+      $('#$options[id] > ul').treeview({collapsed: true});
+      indiciaData.reportList=$response[output];
+      $('#$options[id] > ul input[checked="checked"]').trigger('click');
+      $('#$options[id] > ul input[checked="checked"]').parents('#$options[id] ul').show();
+
+    JS;
     $options['reports']=$reports;
     $options['moreinfo']=lang::get('More info');
     return self::apply_template('report_picker', $options);
@@ -812,7 +815,7 @@ JS;
         if (isset($options['rowId'])) {
           //if the user clicks on a summary table row then open the report specified using the row ID as a parameter.
             self::$javascript .= "
-              $('#".$options['id']." tbody').click(function(evt) {
+              $('#".$options['id']." tbody').on('click', function(evt) {
                 var tr=$(evt.target).parents('tr')[0], rowId=tr.id.substr(3);
                 window.location='$path'.replace(/#param#/g, rowId);
               });
@@ -849,9 +852,9 @@ function checkErrors(data) {
 }
 $('.update-input').focus(function(evt) {
   $(evt.target).addClass('input-selected');
-}).change(function(evt) {
+}).on('change', function(evt) {
   $(evt.target).addClass('input-edited');
-}).blur(function(evt) {
+}).on('blur', function(evt) {
   var selector = '#'+evt.target.id.replace(/:/g, '\\:');
   currentCell = evt.target.id;
   $(selector).removeClass('input-selected');
@@ -1509,7 +1512,7 @@ JS;
       //open the report, note that data[0] varies depending on whether we are using a pie or bar. But we have
       //saved the data to the array twice already to handle this
       // Note the data[0] is a pie label, or a 1 indexed bar index.
-      self::$javascript .= "$('#$options[id]').bind('jqplotDataClick',
+      self::$javascript .= "$('#$options[id]').on('jqplotDataClick',
   function(ev, seriesIndex, pointIndex, data) {
     var path='$options[linkToReportPath]';
     var rowId = " . ($options['chartType']==='pie' ? 'data[0]' : 'data[0]-1') . ";
@@ -1526,13 +1529,13 @@ JS;
 );\n";
     }
     self::$javascript .= <<<JS
-$('#$options[id]').bind('jqplotDataHighlight', function(ev, seriesIndex, pointIndex, data) {
+$('#$options[id]').on('jqplotDataHighlight', function(ev, seriesIndex, pointIndex, data) {
   $('table.jqplot-table-legend td').removeClass('highlight');
   $('table.jqplot-table-legend td').filter(function() {
     return this.textContent == data[0];
   }).addClass('highlight');
 });
-$('#$options[id]').bind('jqplotDataUnhighlight', function(ev, seriesIndex, pointIndex, data) {
+$('#$options[id]').on('jqplotDataUnhighlight', function(ev, seriesIndex, pointIndex, data) {
   $('table.jqplot-table-legend td').removeClass('highlight');
 });
 
@@ -1544,7 +1547,7 @@ JS;
       static $handlers_once = false;
       if (!$handlers_once) {
         // Only need to emit event handlers once.
-        self::$javascript .= "$(window).resize(function(){
+        self::$javascript .= "$(window).on('resize', function(){
           // Calculate scaling factor to alter dimensions according to width.
           var scaling = 1;
           var shadow = true;
@@ -3066,8 +3069,7 @@ if (typeof mapSettingsHooks!=='undefined') {
   * @todo Future Enhancements? Allow restriction to month.
   */
   public static function report_calendar_grid($options) {
-    // I know that there are better ways to approach some of the date manipulation, but they are PHP 5.3+.
-    // We support back to PHP 5.2
+    global $indicia_templates;
     // TODO : i8n
     $warnings="";
     self::add_resource('jquery_ui');
@@ -3127,37 +3129,53 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue, removeparam) {
     $baseTheme = hostsite_get_config_value('iform.settings', 'base_theme', 'generic');
     $reloadURL = $pageUrl . $pageUrlParams['year']['name']."=";
     $firstYear = (!empty($options["first_year"]) && $options["year"] >= $options["first_year"] ? $options["first_year"] : $options["year"]);
+    $prevYear = $options["year"] - 1;
+    $nextYear = $options["year"] + 1;
+    $lang = [
+      'Next' => lang::get('Next'),
+      'Prev' => lang::get('Prev'),
+    ];
     if ($baseTheme === 'generic') {
-      $template = '<a id="year-control-previous" title="' . ($options["year"]-1) . '" rel="nofollow" href="' . $reloadURL . ($options["year"]-1) . '" class="ui-datepicker-prev ui-corner-all">' .
-        '<span class="ui-icon ui-icon-circle-triangle-w">' . lang::get('Prev') . '</span>' .
-        '</a>' .
-        '{control}' .
-        ($options["year"] < date('Y') ?
-          '<a id="year-control-next" title="' . ($options["year"]+1) . '" rel="nofollow" href="' . $reloadURL.($options["year"]+1) . '" class="ui-datepicker-next ui-corner-all">' .
-          '<span class="ui-icon ui-icon-circle-triangle-e">' . lang::get('Next') . '</span>' .
-          '</a>' : '') .
-        '</div>' .
-        PHP_EOL;
-    } else {
-      $template = '<div id="ctrl-wrap-{id}" class="ctrl-wrap right">' .
-        '<div class="input-group">' .
-        '<div class="input-group-addon ctrl-addons">' .
-        '<a id="year-control-previous" title="' . ($options["year"]-1) . '" rel="nofollow" href="'  .$reloadURL . ($options["year"]-1) . '" class="yearControl">' .
-        '<span class="glyphicon glyphicon-step-backward"></span>' .
-        '</a>' .
-        '</div>' .
-        '{control}' .
-        ($options["year"] < date('Y') ?
-          '<div class="input-group-addon ctrl-addons">' .
-          '<a id="year-control-next" title="' . ($options["year"]+1) . '" rel="nofollow" href="' . $reloadURL . ($options["year"]+1) . '" class="yearControl">' .
-          '<span class="glyphicon glyphicon-step-forward" aria-hidden="true"></span>' .
-          '</a>' .
-          '</div>' : '') .
-        '</div>' .
-        '</div>' . PHP_EOL;
-    }
+      $nextLink = $options["year"] < date('Y') ? <<<HTML
+          <a id="year-control-next" title="$nextYear" rel="nofollow" href="$reloadURL$nextYear" class="ui-datepicker-next ui-corner-all">
+            <span class="ui-icon ui-icon-circle-triangle-e">$lang[Next]</span>
+          </a>
+        HTML
+        : '';
+      $template = <<<HTML
+        <div>
+          <a id="year-control-previous" title="$prevYear" rel="nofollow" href="$reloadURL$prevYear" class="ui-datepicker-prev ui-corner-all">
+            <span class="ui-icon ui-icon-circle-triangle-w">$lang[Prev]</span>
+          </a>
+          {control}
+          $nextLink
+        </div>
 
-    global $indicia_templates;
+      HTML;
+    } else {
+      $nextLink = $options["year"] < date('Y') ? <<<HTML
+          <div class="$indicia_templates[inputGroupAddon] ctrl-addons">
+            <a id="year-control-next" title="$nextYear" rel="nofollow" href="$reloadURL$nextYear" class="yearControl">
+              <span class="glyphicon glyphicon-step-forward" aria-hidden="true"></span>
+            </a>
+          </div>
+        HTML
+        : '';
+      $template = <<<HTML
+        <div id="ctrl-wrap-{id}" class="ctrl-wrap right">
+          <div class="$indicia_templates[inputGroup]">
+            <div class="$indicia_templates[inputGroupAddon] ctrl-addons">
+              <a id="year-control-previous" title="$prevYear" rel="nofollow" href="$reloadURL$prevYear" class="yearControl">
+                <span class="glyphicon glyphicon-step-backward"></span>
+              </a>
+            </div>
+            {control}
+            $nextLink
+          </div>
+        </div>
+
+      HTML;
+    }
     $r .= '<th class="' . $thClass . '" colspan=3 class="year-picker">';
     $indicia_templates['rcg_controlWrap'] = $template;
     $ctrlid = 'year-select';
@@ -3926,7 +3944,7 @@ update_controls();
     				($options['includeSummaryData'] ? '<option id="viewSummaryData" value="summary"/>'.lang::get('summary data').'</option>' : '').
     				($options['includeEstimatesData'] ? '<option id="viewDataEstimates" value="estimates"/>'.lang::get('summary data with estimates').'</option>' : '').
     				'</select>';
-    		self::$javascript .= "jQuery('#outputSource').change(function(){
+    		self::$javascript .= "jQuery('#outputSource').on('change', function(){
   pageURI = rebuild_page_url(pageURI, \"outputSource\", jQuery(this).val());
   update_controls();
   switch(jQuery(this).val()){
@@ -3955,7 +3973,7 @@ update_controls();
                   '<option '.($defaultTable?'selected="selected"':'').' value="table"/>'.lang::get('table').'</option>'.
                   '<option '.(!$defaultTable?'selected="selected"':'').' value="chart"/>'.lang::get('chart').'</option>'.
                   '</select>'; // not providing option for both at moment
-            self::$javascript .= "jQuery('[name=outputFormat]').change(function(){
+            self::$javascript .= "jQuery('[name=outputFormat]').on('change', function(){
   pageURI = rebuild_page_url(pageURI, \"outputFormat\", jQuery(this).val());
   update_controls();
   switch($(this).val()) {
@@ -4137,7 +4155,7 @@ setSeriesURLParam = function(){
   }
   update_controls();
 }
-jQuery('[name=".$options['chartID']."-series]').change(function(){
+jQuery('[name=".$options['chartID']."-series]').on('change', function(){
   var seriesID = jQuery(this).val(), index;
   $.each(seriesData.ids, function(idx, elem){
     if(seriesID == elem) index = idx;
@@ -4154,7 +4172,7 @@ jQuery('[name=".$options['chartID']."-series]').change(function(){
   setSeriesURLParam();
   replot();
 });
-jQuery('#".$options['chartID']."-series-disable').click(function(){
+jQuery('#".$options['chartID']."-series-disable').on('click', function(){
   if(jQuery(this).is('.cleared')){ // button is to show all
     jQuery('[name=".$options['chartID']."-series]').not('[value=0]').attr('checked','checked');
     $.each(seriesData.ids, function(idx, elem){
@@ -4476,13 +4494,13 @@ jQuery('#".$options['chartID']."-series-disable').click(function(){
     self::$javascript .= "replotActive = false;\n";
     if($userPicksSource) {
       self::$javascript .= (isset($options['outputSource']) ?
-          "$('#outputSource').val('".$options['outputSource']."').change();\n" :
-          "if($('#viewDataEstimates').length > 0){\n  $('#outputSource').val('estimates').change();\n".
-          "} else if($('#viewSummaryData').length > 0){\n  $('#outputSource').val('summary').change();\n".
-          "} else {\n  $('#outputSource').val('raw').change();\n}\n");
+          "$('#outputSource').val('".$options['outputSource']."').trigger('change');\n" :
+          "if($('#viewDataEstimates').length > 0){\n  $('#outputSource').val('estimates').trigger('change');\n".
+          "} else if($('#viewSummaryData').length > 0){\n  $('#outputSource').val('summary').trigger('change');\n".
+          "} else {\n  $('#outputSource').val('raw').trigger('change');\n}\n");
     }
     if($userPicksFormat) {
-      self::$javascript .= "jQuery('[name=outputFormat]').change();\n";
+      self::$javascript .= "jQuery('[name=outputFormat]').trigger('change');\n";
     }
     self::$javascript .= "replotActive = true;\n";
     if($format['chart']['display']){
@@ -5351,15 +5369,15 @@ indiciaFns.bindTabsActivate($('#controls'), function(event, ui) {
       // so replotting doesn't scale to the displayed series!
       // Note we are keeping the 2 charts in sync.
       self::$javascript .= "
-jQuery('#summaryChart [name={$options['chartID']}-series]').change(function(){
+jQuery('#summaryChart [name={$options['chartID']}-series]').on('change', function(){
   $('#estimateChart [name={$options['chartID']}-series]').filter('[value='+$(this).val()+']').prop('checked',!!$(this).prop('checked'));
   replot('summary');
 });
-jQuery('#estimateChart [name={$options['chartID']}-series]').change(function(){
+jQuery('#estimateChart [name={$options['chartID']}-series]').on('change', function(){
   $('#summaryChart [name={$options['chartID']}-series]').filter('[value='+$(this).val()+']').prop('checked',!!$(this).prop('checked'));
   replot('estimates');
 });
-jQuery('#summaryChart .disable-button').click(function(){
+jQuery('#summaryChart .disable-button').on('click', function(){
   if(jQuery(this).is('.cleared')){ // button is to show all
     jQuery('[name={$options['chartID']}-series]').not('[value=0]').prop('checked','checked');
     jQuery('.disable-button').removeClass('cleared').val(\"" . lang::get('Hide all') . "\");
@@ -5369,7 +5387,7 @@ jQuery('#summaryChart .disable-button').click(function(){
   }
   replot('summary');
 });
-jQuery('#estimateChart .disable-button').click(function(){
+jQuery('#estimateChart .disable-button').on('click', function(){
   if(jQuery(this).is('.cleared')){ // button is to show all
     jQuery('[name={$options['chartID']}-series]').not('[value=0]').prop('checked','checked');
     jQuery('.disable-button').removeClass('cleared').val(\"" . lang::get('Hide all') . "\");

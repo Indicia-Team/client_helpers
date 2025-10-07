@@ -21,7 +21,7 @@ jQuery(document).ready(function ($) {
     $.fancybox.open($('#group-link-popup'));
   };
 
-  $('#area-picker').change(function areaPickerSelect() {
+  $('#area-picker').on('change', function areaPickerSelect() {
     var geom;
     var data = indiciaData.areaPickerMapAreaData;
     var placeDef;
@@ -70,6 +70,7 @@ jQuery(document).ready(function ($) {
     $.ajax({
       url: indiciaData.warehouseUrl + 'index.php/services/data_utils/bulk_delete_occurrences',
       dataType: 'jsonp',
+      crossDomain: true,
       data: $.extend({}, params, { trial: 't' }),
       success: function (response) {
         if (typeof response.code !== 'undefined' && response.code === 200) {
@@ -77,8 +78,9 @@ jQuery(document).ready(function ($) {
               'Do you want to proceed?')) {
             $.ajax({
               url: indiciaData.warehouseUrl + 'index.php/services/data_utils/bulk_delete_occurrences',
-              dataType: 'jsonp',
               data: params,
+              dataType: 'jsonp',
+              crossDomain: true,
               success: function (response) {
                 if (typeof response.code !== 'undefined' && response.code === 200) {
                   alert(response.affected.occurrences + ' records in ' + response.affected.samples + ' samples were deleted.');
@@ -110,9 +112,9 @@ jQuery(document).ready(function ($) {
   if (indiciaData.queryLocationsOnMapClickSettings) {
     // Attach handler when map clicked on.
     mapClickForSpatialRefHooks.push(function onMapClick(clickInfo) {
-      var reportingURL = indiciaData.read.url + 'index.php/services/report/requestReport' +
-        '?report=library/locations/locations_list_3.xml&callback=?';
+      var reportingURL = indiciaData.read.url + 'index.php/services/report/requestReport';
       var reportOptions = {
+        report: 'library/locations/locations_list_3.xml',
         mode: 'json',
         nonce: indiciaData.read.nonce,
         auth_token: indiciaData.read.auth_token,
@@ -122,25 +124,28 @@ jQuery(document).ready(function ($) {
       $.each(indiciaData.queryLocationsOnMapClickSettings, function eachLocationType(id, data) {
         reportOptions.location_type_ids = data.locationTypeIds.join(',');
         // Find locations that intersect a click point.
-        $.getJSON(reportingURL, reportOptions,
-          function success(locations) {
-            var output = [];
-            // For each location in response, build HTML.
-            $.each(locations, function eachLocation() {
-              var template = data.template;
-              $.each(this, function eachField(field, value) {
-                // Empty values.
-                if (value === null) {
-                  value = '';
-                }
-                template = template.replace(new RegExp('{{ ' + field + ' }}', 'g'), value);
-              });
-              output.push(template);
+        $.ajax({
+          url: reportingURL,
+          data: reportOptions,
+          dataType: 'jsonp',
+          crossDomain: true
+        }).done(function success(locations) {
+          var output = [];
+          // For each location in response, build HTML.
+          $.each(locations, function eachLocation() {
+            var template = data.template;
+            $.each(this, function eachField(field, value) {
+              // Empty values.
+              if (value === null) {
+                value = '';
+              }
+              template = template.replace(new RegExp('{{ ' + field + ' }}', 'g'), value);
             });
-            // Output the list of templated items.
-            $('#' + id).html(output.join(''));
-          }
-        );
+            output.push(template);
+          });
+          // Output the list of templated items.
+          $('#' + id).html(output.join(''));
+        });
       });
     });
   }

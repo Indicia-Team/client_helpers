@@ -281,7 +281,7 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
       //Need to add 1 to i as habitats are numbered from 1
       setupSubSampleAttrsForHabitat(i+1,false, habitatIdSampleId);
     }
-    $('#add-new-habitat').click(function() {
+    $('#add-new-habitat').on('click', function() {
       createNewHabitat();
     });";
     data_entry_helper::$javascript.="indiciaData.existingHabitatSubSamplesIds=existingHabitatSubSamplesIds;\n";
@@ -691,7 +691,7 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
     data_entry_helper::$javascript.="
     $(window).load(function () {
       if (indiciaData.gpsSyncWarning) {
-        $('#file_upload').click(function() {
+        $('#file_upload').on('click', function() {
             var r = confirm(indiciaData.gpsSyncWarning);
             if (r != true) {
               return false;
@@ -722,7 +722,7 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
   //Note that a limitation of this is we assume that the Drupal date format is set to is dd/mm/yyyy.
   public static function no_photos_with_date_warning($args) {
     data_entry_helper::$javascript.="
-    $('#sample\\\\:date').change(function(evt) {
+    $('#sample\\\\:date').on('change', function(evt) {
       var formattedSampleDate;
       //Date has full year yyyy, so split up, chop the year, and then reconstruct
       var sampleDateArray=$('#sample\\\\:date').val().split('/');
@@ -749,7 +749,7 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
   //Warn user if they set the dive start time to be more than one hour either side of the date on the first photo exif.
   public static function dive_start_outside_one_hour_warning($args) {
     data_entry_helper::$javascript.="
-    $('#smpAttr\\\\:".$args['dive_start_time_attr_id']."').change(function(evt) {
+    $('#smpAttr\\\\:".$args['dive_start_time_attr_id']."').on('change', function(evt) {
       if ($('#smpAttr\\\\:".$args['exif_date_time_attr_id']."').val() && $('#smpAttr\\\\:".$args['dive_start_time_attr_id']."').val()) {
         //Get dates associated with all photos
         var dateTimesToCheck=$('#smpAttr\\\\:".$args['exif_date_time_attr_id']."').val().split(';');
@@ -1818,7 +1818,7 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
       // If options contain a help text, output it at the end if that is the preferred position
       $options['helpTextClass'] = (isset($options['helpTextClass'])) ? $options['helpTextClass'] : 'helpTextLeft';
       $r = $beforegrid.$grid;
-      data_entry_helper::$javascript .= "$('#".$options['id']."').find('input,select').keydown(keyHandler);\n";
+      data_entry_helper::$javascript .= "$('#".$options['id']."').find('input,select').on('keydown', keyHandler);\n";
       data_entry_helper::speciesChecklistFilterPopup($options);
       if ($options['subSamplePerRow']) {
         // output a hidden block to contain sub-sample hidden input values.
@@ -1832,7 +1832,7 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
         data_entry_helper::$javascript .= "$('#$options[id] tbody tr td.edited-record').parent().next('tr.supplementary-row').show();\n";
         $r .= '<p>'.lang::get('You are editing a single record that is part of a larger sample, so any changes to the sample\'s information such as edits to the date or map reference '.
             'will affect the whole sample.')." <a id=\"species-grid-view-all-$options[id]\">".lang::get('View all the records in this sample or add more records.').'</a></p>';
-        data_entry_helper::$javascript .= "$('#species-grid-view-all-$options[id]').click(function(e) {
+        data_entry_helper::$javascript .= "$('#species-grid-view-all-$options[id]').on('click', function(e) {
   $('#$options[id] tbody tr').show();
   $(e.currentTarget).hide();
 });\n";

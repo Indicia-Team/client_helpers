@@ -33,8 +33,20 @@ jQuery(document).ready(function($) {
     var intValue = parseInt(val);
     if (!isNaN(intValue)) {
       // Change the location control requests the location's geometry to place on the map.
-      $.getJSON(indiciaData.read.url + 'index.php/services/data/location?parent_id=' + val + '&orderby=name' +
-        '&mode=json&view=detail&auth_token=' + indiciaData.read.auth_token + '&nonce=' + indiciaData.read.nonce + "&callback=?", function(data) {
+      $.ajax({
+        url: indiciaData.read.url + 'index.php/services/data/location',
+        data: {
+          parent_id: val,
+          orderby: 'name',
+          mode: 'json',
+          view: 'detail',
+          auth_token: indiciaData.read.auth_token,
+          nonce: indiciaData.read.nonce
+        },
+        dataType: 'jsonp',
+        crossDomain: true
+      })
+      .done(function(data) {
         // Sort into numeric section order.
         data.sort(function(a, b) {
           var aCode = a.code.replace(/^S/g, '');
@@ -63,7 +75,7 @@ jQuery(document).ready(function($) {
   mapInitialisationHooks.push(function() {
     if ($('#imp-location').length) {
       var locChange = function() {locationSelectedInInput(indiciaData.mapdiv, $('#imp-location').val());};
-      $('#imp-location').change(locChange);
+      $('#imp-location').on('change', locChange);
       // trigger change event, incase imp-location was already populated when the map loaded
       locChange();
     }
