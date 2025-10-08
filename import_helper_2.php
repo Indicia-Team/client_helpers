@@ -1974,7 +1974,7 @@ HTML;
       // Force a cache reload so the new template is instantly available.
       self::clearTemplateCache($options);
     }
-    if ($_POST['processing-mode'] ?? '' === 'background') {
+    if (($_POST['processing-mode'] ?? '') === 'background') {
       return self::backgroundImportPage($options['backgroundImportStatusPath'] ?? NULL);
     }
     else {
