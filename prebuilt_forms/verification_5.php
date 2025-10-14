@@ -143,6 +143,17 @@ class iform_verification_5 implements PrebuiltFormInterface {
           'required' => FALSE,
         ),
         array(
+          'name' => 'taxon_list_id',
+          'caption' => 'Override master species List',
+          'description' => 'The species list that species and groups can be selected from on the Create a Filter tool, only required if not using the default from the iForm configuration settings.',
+          'type' => 'select',
+          'group' => 'Report Settings',
+          'table' => 'taxon_list',
+          'valueField' => 'id',
+          'captionField' => 'title',
+          'required' => FALSE,
+        ),
+        array(
             'name' => 'columns_config',
             'caption' => 'Columns Configuration',
             'description' => 'Define a list of columns with various configuration options when you want to override the '.
@@ -1598,7 +1609,7 @@ HTML;
     if (!empty($args['other_location_type_ids'])) {
       $options['otherLocationTypeIds'] = array_map('intval', explode(',', $args['other_location_type_ids']));
     }
-    $options['taxon_list_id'] = hostsite_get_config_value('iform', 'master_checklist_id', 0);
+    $options['taxon_list_id'] = $args['taxon_list_id'] ?? hostsite_get_config_value('iform', 'master_checklist_id', 0);
     $hiddenStuff = '';
     $r = report_filter_panel($readAuth, $options, $args['website_id'], $hiddenStuff);
     return $r . $hiddenStuff;
