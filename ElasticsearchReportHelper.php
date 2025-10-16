@@ -329,6 +329,10 @@ class ElasticsearchReportHelper {
       'caption' => 'Media',
       'description' => 'Thumbnails for any occurrence photos and other media.',
     ],
+    'occurrence.dna_derived' => [
+      'caption' => 'DNA derived',
+      'description' => 'Indicates if this is a DNA derived record.',
+    ],
     'occurrence.sex' => [
       'caption' => 'Sex',
       'description' => 'Sex of the recorded organism',
