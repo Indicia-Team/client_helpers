@@ -1807,7 +1807,7 @@ HTML;
     if (!is_array($config)) {
       throw new Exception('Service call to get_config failed.');
     }
-    $ext = pathinfo($config['fileName'], PATHINFO_EXTENSION);
+    $ext = pathinfo(array_keys($config['files'])[0], PATHINFO_EXTENSION);
     $availableFields = self::getAvailableDbFields($options, $configId, $config['global-values']);
     $mappingRows = [];
     $existingMatchFields = [];
