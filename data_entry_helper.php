@@ -1152,6 +1152,7 @@ JS;
    */
   public static function file_box(array $options) {
     global $indicia_templates;
+    self::add_resource('font_awesome');
     // If a subType option is supplied, it means we only want to load a
     // particular media type, not just any old media associated with the
     // sample.
