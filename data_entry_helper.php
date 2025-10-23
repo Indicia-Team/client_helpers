@@ -5626,8 +5626,12 @@ JS;
       $options['extraParams']['taxa_taxon_list_id'] = json_encode($options['preloadTaxa']);
     }
     elseif (preg_match('/^(preferred_name|preferred_taxon|taxon_meaning_id|taxa_taxon_list_id|taxon_group|external_key|organism_key|id)$/', $options['taxonFilterField']))  {
+      // Legacy field name support due to switch to loading from cache_taxa_taxon_lists.
       if ($options['taxonFilterField'] === 'preferred_name') {
         $options['taxonFilterField'] = 'preferred_taxon';
+      }
+      if ($options['taxonFilterField'] === 'taxa_taxon_list_id') {
+        $options['taxonFilterField'] = 'id';
       }
       // Tolerate filter as an array or CSV list.
       $filterList = is_array($options['taxonFilter']) ? $options['taxonFilter'] : explode(',', $options['taxonFilter']);
