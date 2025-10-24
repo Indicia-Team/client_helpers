@@ -7934,9 +7934,14 @@ if (errors$uniq.length>0) {
         // final location.
         $image_overall_success = TRUE;
         $image_errors = [];
+        $onlyImages = TRUE;
+        $savedEntity = $output['outer_table'];
         foreach ($media as $idx => $item) {
-          // no need to resend an existing image, or a media link, just local files.
+          // No need to resend an existing image, or a media link, just local files.
           if ((empty($item['media_type']) || preg_match('/:Local$/', $item['media_type'])) && (!isset($item['id']) || empty($item['id']))) {
+            if (substr($item['media_type'], 0, 6) !== 'Image:') {
+              $onlyImages = FALSE;
+            }
             // Final location is the Warehouse. Sets persist_auth to false if
             // the last file.
             $success = self::send_file_to_warehouse($item['path'], $idx < count($media) - 1, $writeTokens);
@@ -7949,15 +7954,27 @@ if (errors$uniq.length>0) {
         }
         if (!$image_overall_success) {
           // Report any file transfer failures.
-          $error = lang::get('submit ok but file transfer failed') . '<br/>';
+          $imageType = $onlyImages ? 'image' : 'media file';
+          if (count($media) !== 1) {
+            $imageType .= 's';
+          }
+          $what = count($media) === count($image_errors)
+            ? lang::get('{1} {2}', count($image_errors), $imageType)
+            : lang::get('{1} of {2} {3}', count($image_errors), count($media), $imageType);
+          $error = lang::get('Saving the {1} data was succesful, but {2} failed to save.',
+            lang::get($savedEntity),
+            $what
+          ) . '<br/>';
+          $image_errors = array_unique($image_errors);
           $error .= implode('<br/>', $image_errors);
           $output = array('error' => $error);
         }
       }
       return $output;
     }
-    else
-      return array('error' => 'Pre-validation failed', 'errors' => self::$validation_errors);
+    else {
+      return ['error' => 'Pre-validation failed', 'errors' => self::$validation_errors];
+    }
   }
 
   /**
@@ -9205,6 +9222,7 @@ HTML;
    */
   public static function dump_errors($response, $inline = TRUE) {
     $r = "";
+    global $indicia_templates;
     if (is_array($response)) {
       // set form mode
       self::$form_mode = 'ERRORS';
@@ -9222,33 +9240,32 @@ HTML;
                   hostsite_show_message($message, 'error');
                 }
                 else {
-                  $r .= "<div class=\"ui-widget ui-corner-all ui-state-highlight page-notice\">$message</div>\n";
+                  $r .= str_replace('{message}', $message, $indicia_templates['messageBox']) . "\n";
                 }
             }
           }
         }
         else {
-          $r .= "<div class=\"ui-state-error ui-corner-all\">\n";
-          $r .= "<p>" . lang::get('An error occurred when the data was submitted.') . "</p>\n";
+          $message = lang::get('An error occurred when the data was submitted.') . "<br/>\n";
           if (is_array($response['error'])) {
-            $r .=  "<ul>\n";
-            foreach ($response['error'] as $field => $message)
-              $r .=  "<li>$field: $message</li>\n";
-            $r .=  "</ul>\n";
+            $message .=  "<ul>\n";
+            foreach ($response['error'] as $field => $fieldError)
+              $message .=  "<li>$field: $fieldError</li>\n";
+            $message .=  "</ul>\n";
           }
           else {
-            $r .= "<p class=\"error_message\">".$response['error']."</p>\n";
+            $message .= "<p class=\"error_message\">".$response['error']."</p>\n";
           }
           if (array_key_exists('file', $response) && array_key_exists('line', $response)) {
-            $r .= "<p>Error occurred in ".$response['file']." at line ".$response['line']."</p>\n";
+            $message .= "<p>Error occurred in ".$response['file']." at line ".$response['line']."</p>\n";
           }
           if (array_key_exists('errors', $response)) {
-            $r .= "<pre>".print_r($response['errors'], TRUE) . "</pre>\n";
+            $message .= "<pre>".print_r($response['errors'], TRUE) . "</pre>\n";
           }
           if (array_key_exists('trace', $response)) {
-            $r .= "<pre>".print_r($response['trace'], TRUE) . "</pre>\n";
+            $message .= "<pre>".print_r($response['trace'], TRUE) . "</pre>\n";
           }
-          $r .= "</div>\n";
+          $r .= str_replace('{message}', $message, $indicia_templates['warningBox']) . "\n";
         }
       }
       elseif (array_key_exists('warning',$response)) {
@@ -9256,13 +9273,13 @@ HTML;
           hostsite_show_message(lang::get('A warning occurred when the data was submitted.').' '.$response['error'], 'error');
         }
         else {
-          $r .= lang::get('A warning occurred when the data was submitted.');
-          $r .= '<p class="error">'.$response['error']."</p>\n";
+          $r .= str_replace('{message}', lang::get('A warning occurred when the data was submitted.') . '<br/>' . $response['error'], $indicia_templates['warningBox']) . "\n";
         }
       }
     }
-    else
-      $r .= "<div class=\"ui-state-error ui-corner-all\">$response</div>\n";
+    else {
+      $r .= str_replace('{message}', $response, $indicia_templates['warningBox']) . "\n";
+    }
     return $r;
   }
 
