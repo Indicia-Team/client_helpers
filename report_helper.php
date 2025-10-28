@@ -138,11 +138,13 @@ class report_helper extends helper_base {
    *   * itemsPerPage - max size of download file. Default 20000.
    */
   public static function report_download_link($options) {
+    static $report_download_link_index = 1;
     $options = array_merge(array(
       'caption' => 'Download this report',
       'format' => 'csv',
       'itemsPerPage' => 20000,
       'class' => '',
+      'id' => 'report-download-link-' . $report_download_link_index++,
     ), $options);
     // Option for a special report for downloading.
     if (!empty($options['dataSourceDownloadLink'])) {
@@ -163,8 +165,8 @@ class report_helper extends helper_base {
     $class = $options['class'] ? " class=\"$options[class]\"" : '';
     global $indicia_templates;
     return str_replace(
-      ['{link}', '{caption}', '{class}'],
-      [$link, lang::get($options['caption']), $class],
+      ['{link}', '{caption}', '{id}', '{class}'],
+      [$link, lang::get($options['caption']), $options['id'], $class],
       $indicia_templates['report_download_link']
     );
   }
