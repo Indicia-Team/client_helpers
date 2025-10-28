@@ -4148,7 +4148,7 @@ HTML;
         }
         $idx = 0;
         foreach ($occAttrControlsExisting as $attrId => $control) {
-          $existing_value = '';
+          $existingValue = '';
           $valId = FALSE;
           if (!empty(data_entry_helper::$entity_to_load)) {
             // Search for the control in the data to load. It has a suffix containing the attr_value_id which we don't know, hence preg.
@@ -4191,7 +4191,7 @@ HTML;
               $ctrlId = str_replace('-idx-:', "$options[id]-$txIdx:$existingRecordId", $attributes[$attrId]['fieldname']);
             }
             if (isset(self::$entity_to_load[$loadedCtrlFieldName])) {
-              $existing_value = self::$entity_to_load[$loadedCtrlFieldName];
+              $existingValue = self::$entity_to_load[$loadedCtrlFieldName];
             }
           }
           else {
@@ -4200,47 +4200,48 @@ HTML;
             $ctrlId = str_replace('-idx-', "$options[id]-$txIdx", $attributes[$attrId]['fieldname']);
             $loadedCtrlFieldName = '-';
           }
-          if (!$existingRecordId && $existing_value === '' && array_key_exists('default', $attributes[$attrId])) {
+          if (!$existingRecordId && $existingValue === '' && array_key_exists('default', $attributes[$attrId])) {
             // This case happens when reloading an existing record.
-            $existing_value = $attributes[$attrId]['default'];
-            if (is_array($existing_value)) {
-              $existing_value = count($existing_value) > 0 ? $existing_value[0] : NULL;
+            $existingValue = $attributes[$attrId]['default'];
+            if (is_array($existingValue)) {
+              $existingValue = count($existingValue) > 0 ? $existingValue[0] : NULL;
             }
           }
           // Inject the field name into the control HTML.
           $oc = str_replace('{fieldname}', $ctrlId, $control);
-          if ($existing_value !== '') {
+          if ($existingValue !== '') {
+            $existingValue = htmlspecialchars($existingValue);
             // For select controls, specify which option is selected from the
             // existing value.
             if (strpos($oc, '<select') !== FALSE) {
-              if (strpos($oc, 'value="' . $existing_value . '"')) {
-                $oc = str_replace('value="' . $existing_value . '"',
-                  'value="' . $existing_value . '" selected="selected"', $oc);
+              if (strpos($oc, 'value="' . $existingValue . '"')) {
+                $oc = str_replace('value="' . $existingValue . '"',
+                  'value="' . $existingValue . '" selected="selected"', $oc);
               }
               elseif (isset(self::$entity_to_load["$loadedCtrlFieldName:term"])) {
                 // Value not available for some reason, e.g. editing record in
                 // wrong language. Inject it so the default data associated
                 // with the record does not change.
                 $term = self::$entity_to_load["$loadedCtrlFieldName:term"];
-                $oc = str_replace('</select>', "<option selected=\"selected\" value=\"$existing_value\">$term</option></select>", $oc);
+                $oc = str_replace('</select>', "<option selected=\"selected\" value=\"$existingValue\">$term</option></select>", $oc);
               }
             }
             elseif (strpos($oc, 'type="checkbox"') !== FALSE) {
-              if ($existing_value == '1') {
+              if ($existingValue == '1') {
                 $oc = str_replace('type="checkbox"', 'type="checkbox" checked="checked"', $oc);
               }
             }
             else {
               // Dates (including single day vague dates) need formatting to the local date format.
               if ($attributes[$attrId]['data_type'] === 'D' || $attributes[$attrId]['data_type'] === 'V'
-                  && preg_match('/^\d{2}\/\d{2}\/\d{4}$/', $existing_value)) {
-                $d = new DateTime($existing_value);
-                $existing_value = $d->format(self::$date_format);
+                  && preg_match('/^\d{2}\/\d{2}\/\d{4}$/', $existingValue)) {
+                $d = new DateTime($existingValue);
+                $existingValue = $d->format(self::$date_format);
               }
-              elseif (is_array($existing_value)) {
-                $existing_value = implode('', $existing_value);
+              elseif (is_array($existingValue)) {
+                $existingValue = implode('', $existingValue);
               }
-              $oc = str_replace('value=""', 'value="' . $existing_value . '"', $oc);
+              $oc = str_replace('value=""', 'value="' . $existingValue . '"', $oc);
             }
           }
           $errorField = "occAttr:$attrId" . ($valId ? ":$valId" : '');
