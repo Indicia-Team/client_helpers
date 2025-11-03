@@ -266,11 +266,11 @@ class ElasticsearchReportHelper {
       'description' => 'Location name associated with the record.',
     ],
     'location.name' => [
-      'caption' => 'Location',
+      'caption' => 'Defined location',
       'description' => 'Location associated with the record where the record was linked to a defined location.',
     ],
     'location.location_id' => [
-      'caption' => 'Location ID',
+      'caption' => 'Defined location ID',
       'description' => 'Unique ID of the location associated with the record where the record was linked to a defined location.',
     ],
     'location.parent_name' => [
