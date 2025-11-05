@@ -151,6 +151,23 @@ class iform_importer_2 implements PrebuiltFormInterface {
       sample:updated_by_id
       sample:verified_by_id
       sample:verified_on
+      dna_occurrence:associated_sequences
+      dna_occurrence:dna_sequence
+      dna_occurrence:target_gene
+      dna_occurrence:pcr_primer_reference
+      dna_occurrence:env_medium
+      dna_occurrence:env_broad_scale
+      dna_occurrence:otu_db
+      dna_occurrence:otu_seq_comp_appr
+      dna_occurrence:otu_class_appr
+      dna_occurrence:env_local_scale
+      dna_occurrence:target_subfragment
+      dna_occurrence:pcr_primer_name_forward
+      dna_occurrence:pcr_primer_forward
+      dna_occurrence:pcr_primer_name_reverse
+      dna_occurrence:pcr_primer_reverse
+      dna_occurrence:updated_by_id
+
       TXT;
     $params = [
       [
