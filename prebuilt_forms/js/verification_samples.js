@@ -537,7 +537,7 @@ var saveComment, saveVerifyComment, verificationGridLoaded, reselectRow, rowIdTo
     $('table.report-grid tbody').on('click', function (evt) {
       var row=$(evt.target).parents('tr:first')[0];
       // reinstate tooltips
-      $.each($(row).parents('table:first tbody').find(':data(title)'), function(idx, ctrl) {
+      $.each($(row).parents('table:first tbody').find('[data-title]'), function(idx, ctrl) {
         $(ctrl).attr('title', $(this).data('title'));
       });
       // Find the appropriate separator for AJAX url params - depends on clean urls setting.
