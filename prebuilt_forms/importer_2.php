@@ -200,6 +200,19 @@ class iform_importer_2 implements PrebuiltFormInterface {
         'required' => FALSE,
       ],
       [
+        'name' => 'dnaSupport',
+        'caption' => 'Enable DNA-derived occurrence data fields',
+        'description' => 'If enabled, fields for DNA-derived occurrence data will be available for import.',
+        'type' => 'select',
+        'options' => [
+          'no' => 'Disabled',
+          'enabled' => 'Enabled',
+          'advancedMode' => 'Enabled for users with advanced mode permission',
+        ],
+        'default' => 'no',
+        'required' => TRUE,
+      ],
+      [
         'name' => 'allowUpdates',
         'caption' => 'Allow updates?',
         'description' => 'Allows existing records to be update by allowing an import field to be mapped to either an "id" field or an "External Key" field. Only allows updates of the user\'s own records.',
@@ -508,12 +521,26 @@ class iform_importer_2 implements PrebuiltFormInterface {
         $plugins[substr($param, 7)] = empty($paramCsv) ? [] : explode(',', $paramCsv);
       }
     }
+    $options = [
+      'enable-background-imports' => $nodeParams['enableBackgroundImports'] ?? FALSE,
+    ];
+    switch ($nodeParams['dnaSupport'] ?? 'no') {
+      case 'enabled':
+        $options['support-dna'] = TRUE;
+        break;
+
+      case 'advancedMode':
+        if ($nodeParams['advancedModePermissionName'] && hostsite_user_has_permission($nodeParams['advancedModePermissionName'])) {
+          $options['support-dna'] = TRUE;
+        }
+        break;
+    }
     return import_helper_2::initServerConfig(
       $_GET['data-files'],
       $_GET['import_template_id'] ?? NULL,
       $writeAuth,
       $plugins,
-      $nodeParams['enableBackgroundImports'] ?? FALSE
+      $options
     );
   }
 

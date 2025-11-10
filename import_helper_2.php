@@ -354,21 +354,27 @@ class import_helper_2 extends helper_base {
    *   Write authorisation tokens.
    * @param array $plugins
    *   List of enabled plugins as keys, with parameter arrays as values.
-   * @param bool $enableBackgroundImports
-   *   True if background importing of large files is enabled.
+   * @param array $options
+   *   Additional options for the init_server_config API call. Options include:
+   *   * enable-background-imports - True if background importing of large
+   *     files is enabled.
+   *   * support-dna - True if DNA-derived occurrence fields are to be
+   *     supported.
    *
    * @return array
    *   Output of the web service request.
    */
-  public static function initServerConfig(array $files, $importTemplateId, array $writeAuth, array $plugins = [], $enableBackgroundImports = FALSE) {
+  public static function initServerConfig(array $files, $importTemplateId, array $writeAuth, array $plugins = [], array $options = []) {
     $serviceUrl = self ::$base_url . 'index.php/services/import_2/init_server_config';
     $data = $writeAuth + [
       'data-files' => json_encode($files),
       'import_template_id' => $importTemplateId,
       'plugins' => json_encode($plugins),
-      'enable-background-imports' => $enableBackgroundImports ? 't' : 'f',
+      'enable-background-imports' => $options['enable-background-imports'] ?? 'f',
+      'support-dna' => $options['support-dna'] ?? 'f',
     ];
     $response = self::http_post($serviceUrl, $data, FALSE);
+    hostsite_show_message(var_export($data, TRUE));
     $output = json_decode($response['output'], TRUE);
     if (!$response['result']) {
       \Drupal::logger('iform')->notice('Error in initServerConfig: ' . var_export($response, TRUE));
