@@ -374,7 +374,6 @@ class import_helper_2 extends helper_base {
       'support-dna' => $options['support-dna'] ?? 'f',
     ];
     $response = self::http_post($serviceUrl, $data, FALSE);
-    hostsite_show_message(var_export($data, TRUE));
     $output = json_decode($response['output'], TRUE);
     if (!$response['result']) {
       \Drupal::logger('iform')->notice('Error in initServerConfig: ' . var_export($response, TRUE));
