@@ -4209,7 +4209,7 @@ HTML;
           }
           // Inject the field name into the control HTML.
           $oc = str_replace('{fieldname}', $ctrlId, $control);
-          if ($existingValue !== '') {
+          if ($existingValue !== '' && $existingValue !== NULL) {
             $existingValue = htmlspecialchars($existingValue);
             // For select controls, specify which option is selected from the
             // existing value.
