@@ -163,8 +163,8 @@ class iform_background_import_status implements PrebuiltFormInterface {
       $importProgress = $import['state'] === 'importing' ? $import['rowsProcessed'] * 100 / $import['totalRows'] : 0;
       $r .= '<div class="progress-container"><span>Precheck progress (' . round($precheckProgress) . '%)</span><progress class="progress" max="100" value="' . $precheckProgress . '"></progress></div>';
       $r .= '<div class="progress-container"><span>Import progress (' . round($importProgress) . '%)</span><progress class="progress" max="100" value="' . $importProgress . '"></progress></div>';
-      if ($import['errorCount'] > 0) {
-        $r .= str_replace('{message}', "$import[errorCount] errors have been found", $indicia_templates['warningBox']);
+      if ($import['errorsCount'] > 0) {
+        $r .= str_replace('{message}', "$import[errorsCount] errors have been found", $indicia_templates['warningBox']);
       }
       if (!empty($import['error_detail'])) {
         if (hostsite_user_has_permission('indicia data admin')) {

@@ -1058,7 +1058,7 @@ class import_helper_2 extends helper_base {
    * @return array
    *   List of control info.
    */
-  private static function getGlobalValuesFormControlArray($options) {
+  private static function getGlobalValuesFormControlArray(array $options) {
     $response = self::cacheGet(['entityImportSettings' => $options['entity']]);
     if ($response === FALSE) {
       $request = parent::$base_url . "index.php/services/import_2/get_globalvalues_form/" . $options['entity'];
@@ -1826,7 +1826,7 @@ HTML;
       }
     }
     $mappings = implode('', $mappingRows);
-    $globalRows = self::globalValuesAsTableRows($config, $options['readAuth'], $availableFields);
+    $globalRows = self::globalValuesAsTableRows($config, $options, $availableFields);
     $infoRows = [
       "<dt>$lang[fileType]</dt><dd>$ext</dd>",
       "<dt>$lang[numberOfRecords]</dt><dd>$config[totalRows]</dd>",
@@ -1909,8 +1909,8 @@ HTML;
    *
    * @param array $config
    *   Upload config.
-   * @param array $readAuth
-   *   Read authorisation.
+   * @param array $options
+   *   Importer control options.
    * @param array $availableFields
    *   List of field names and captions to use.
    *
@@ -1918,13 +1918,13 @@ HTML;
    *   Each entry is the HTML for a <tr> to show on the summary page,
    *   explaining one of the global values being applied to the import.
    */
-  private static function globalValuesAsTableRows(array $config, array $readAuth, array $availableFields) {
+  private static function globalValuesAsTableRows(array $config, array $options, array $availableFields) {
     $globalRows = [];
     $lang = [
       'dataValuesCopied' => lang::get('This value is copied to this field for all records created.'),
     ];
     $arrow = "<i class=\"fas fa-play\" title=\"$lang[dataValuesCopied]\"></i>";
-    $formArray = self::getGlobalValuesFormControlArray($config);
+    $formArray = self::getGlobalValuesFormControlArray($options);
     foreach ($config['global-values'] as $field => $value) {
       // Default to use value as label, but preferably use the global values
       // control lookup info to get a better one.
@@ -1946,7 +1946,7 @@ HTML;
           if (count($populationOptions) >= 4 && $populationOptions[0] === 'direct') {
             $lookupData = self::get_population_data([
               'table' => $populationOptions[1],
-              'extraParams' => $readAuth + [
+              'extraParams' => $options['readAuth'] + [
                 $populationOptions[2] => $value,
               ],
             ]);
