@@ -366,12 +366,16 @@ class import_helper_2 extends helper_base {
    */
   public static function initServerConfig(array $files, $importTemplateId, array $writeAuth, array $plugins = [], array $options = []) {
     $serviceUrl = self ::$base_url . 'index.php/services/import_2/init_server_config';
+    $options = array_merge([
+      'enable-background-imports' => FALSE,
+      'support-dna' => FALSE,
+    ], $options);
     $data = $writeAuth + [
       'data-files' => json_encode($files),
       'import_template_id' => $importTemplateId,
       'plugins' => json_encode($plugins),
-      'enable-background-imports' => $options['enable-background-imports'] ?? 'f',
-      'support-dna' => $options['support-dna'] ?? 'f',
+      'enable-background-imports' => $options['enable-background-imports'] ? 't' : 'f',
+      'support-dna' => $options['support-dna'] ? 't' : 'f',
     ];
     $response = self::http_post($serviceUrl, $data, FALSE);
     $output = json_decode($response['output'], TRUE);

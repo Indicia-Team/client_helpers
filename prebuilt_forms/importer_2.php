@@ -522,7 +522,7 @@ class iform_importer_2 implements PrebuiltFormInterface {
       }
     }
     $options = [
-      'enable-background-imports' => $nodeParams['enableBackgroundImports'] ?? FALSE,
+      'enable-background-imports' => (bool) ($nodeParams['enableBackgroundImports'] ?? FALSE),
     ];
     switch ($nodeParams['dnaSupport'] ?? 'no') {
       case 'enabled':
