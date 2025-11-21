@@ -562,6 +562,26 @@ class import_helper_2 extends helper_base {
   }
 
   /**
+   * Abandon a stuck background-queued import.
+   *
+   * @param mixed $configId
+   *   ID of the config file for the stuck import.
+   * @param array $writeAuth
+   *   Auth tokens.
+   */
+  public static function abandonBackgroundImport($configId, array $writeAuth) {
+    $serviceUrl = self ::$base_url . 'index.php/services/import_2/abandon_background_import';
+    $data = $writeAuth + [
+      'config-id' => $configId,
+    ];
+    $response = self::http_post($serviceUrl, $data, FALSE);
+    $output = json_decode($response['output'], TRUE);
+    if (!isset($response['result']) || $output['status'] !== 'OK') {
+      // @todo Error handling.
+    }
+  }
+
+  /**
    * Returns the maximum files size that can be uploaded.
    *
    * @return int
