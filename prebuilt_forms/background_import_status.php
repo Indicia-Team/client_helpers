@@ -108,6 +108,8 @@ class iform_background_import_status implements PrebuiltFormInterface {
     ];
     helper_base::addLanguageStringsToJs('backgroundImportStatus', [
       'confirmAbandon' => 'Are you sure you want to abandon this import? All details will be removed and cannot be recovered.',
+      'errorOnAbort' => 'An error occurred whilst attempting to abandon the import: {1}',
+      'errorOnAbortGenericMessage' => 'Internal Server Error.',
       'importAbandoned' => 'The import has been removed from the queue.',
     ]);
     $r = '';

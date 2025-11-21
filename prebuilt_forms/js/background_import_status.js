@@ -34,6 +34,9 @@ jQuery(document).ready(function($) {
       }).done(function() {
         $(e.target).closest('section').hide();
         indiciaFns.nonBlockingMessagePopup(indiciaData.lang.backgroundImportStatus.importAbandoned);
+      }).fail(function(response) {
+        const msg = response.responseJSON && response.responseJSON.msg ? response.responseJSON && response.responseJSON.msg : indiciaData.lang.backgroundImportStatus.errorOnAbortGenericMessage;
+        alert(indiciaData.lang.backgroundImportStatus.errorOnAbort.replace('{1}', msg));
       });
 
     }
