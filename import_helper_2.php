@@ -1842,7 +1842,11 @@ HTML;
     $existingMatchFields = [];
     foreach ($config['columns'] as $columnLabel => $info) {
       $arrow = self::getSummaryColumnArrow($info);
-      $warehouseFieldLabel = isset($info['warehouseField']) ? self::getWarehouseFieldLabel($info['warehouseField'], $availableFields, TRUE) : '';
+      // Note that userSelectedWarehouseField gets stored when a plugin, such
+      // as the importPluginOccurrenceLinkedLocationCodeField plugin, replaces
+      // an imported fieldname after processing the imported values. This shows
+      // the original selected field which is less confusing.
+      $warehouseFieldLabel = isset($info['warehouseField']) ? self::getWarehouseFieldLabel($info['userSelectedWarehouseField'] ?? $info['warehouseField'], $availableFields, TRUE) : '';
       $mappingRows[] = "<tr><td><em>$columnLabel</td></em><td>$arrow</td><td>$warehouseFieldLabel</td></tr>";
       if (preg_match('/:(id|external_key)$/', $info['warehouseField'] ?? '')) {
         $existingMatchFields[] = $warehouseFieldLabel;
