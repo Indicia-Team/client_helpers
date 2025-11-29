@@ -404,7 +404,7 @@ HTML;
         'table' => 'language',
         'extraParams' => $auth['read'] + ['iso' => $options['code']],
       ]);
-      if (count($languages === 1)) {
+      if (count($languages) === 1) {
         return data_entry_helper::hidden_text([
           'fieldname' => 'taxon:language_id',
           'default' => $languages[0]['id'],
