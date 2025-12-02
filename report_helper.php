@@ -3156,7 +3156,7 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue, removeparam) {
       HTML;
     } else {
       $nextLink = $options["year"] < date('Y') ? <<<HTML
-          <div class="$indicia_templates[inputGroupAddon] ctrl-addons">
+          <div class="$indicia_templates[inputGroupAddonClass] ctrl-addons">
             <a id="year-control-next" title="$nextYear" rel="nofollow" href="$reloadURL$nextYear" class="yearControl">
               <span class="glyphicon glyphicon-step-forward" aria-hidden="true"></span>
             </a>
@@ -3165,8 +3165,8 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue, removeparam) {
         : '';
       $template = <<<HTML
         <div id="ctrl-wrap-{id}" class="ctrl-wrap right">
-          <div class="$indicia_templates[inputGroup]">
-            <div class="$indicia_templates[inputGroupAddon] ctrl-addons">
+          <div class="$indicia_templates[inputGroupClass]">
+            <div class="$indicia_templates[inputGroupAddonClass] ctrl-addons">
               <a id="year-control-previous" title="$prevYear" rel="nofollow" href="$reloadURL$prevYear" class="yearControl">
                 <span class="glyphicon glyphicon-step-backward"></span>
               </a>
