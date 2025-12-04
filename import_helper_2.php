@@ -354,19 +354,28 @@ class import_helper_2 extends helper_base {
    *   Write authorisation tokens.
    * @param array $plugins
    *   List of enabled plugins as keys, with parameter arrays as values.
-   * @param bool $enableBackgroundImports
-   *   True if background importing of large files is enabled.
+   * @param array $options
+   *   Additional options for the init_server_config API call. Options include:
+   *   * enable-background-imports - True if background importing of large
+   *     files is enabled.
+   *   * support-dna - True if DNA-derived occurrence fields are to be
+   *     supported.
    *
    * @return array
    *   Output of the web service request.
    */
-  public static function initServerConfig(array $files, $importTemplateId, array $writeAuth, array $plugins = [], $enableBackgroundImports = FALSE) {
+  public static function initServerConfig(array $files, $importTemplateId, array $writeAuth, array $plugins = [], array $options = []) {
     $serviceUrl = self ::$base_url . 'index.php/services/import_2/init_server_config';
+    $options = array_merge([
+      'enable-background-imports' => FALSE,
+      'support-dna' => FALSE,
+    ], $options);
     $data = $writeAuth + [
       'data-files' => json_encode($files),
       'import_template_id' => $importTemplateId,
       'plugins' => json_encode($plugins),
-      'enable-background-imports' => $enableBackgroundImports ? 't' : 'f',
+      'enable-background-imports' => $options['enable-background-imports'] ? 't' : 'f',
+      'support-dna' => $options['support-dna'] ? 't' : 'f',
     ];
     $response = self::http_post($serviceUrl, $data, FALSE);
     $output = json_decode($response['output'], TRUE);
@@ -550,6 +559,34 @@ class import_helper_2 extends helper_base {
       }
     }
     return $output;
+  }
+
+  /**
+   * Abandon a stuck background-queued import.
+   *
+   * @param mixed $configId
+   *   ID of the config file for the stuck import.
+   * @param array $writeAuth
+   *   Auth tokens.
+   */
+  public static function abandonBackgroundImport($configId, array $writeAuth) {
+    $serviceUrl = self ::$base_url . 'index.php/services/import_2/abandon_background_import';
+    $data = $writeAuth + [
+      'config-id' => $configId,
+    ];
+    $response = self::http_post($serviceUrl, $data, FALSE);
+    $output = json_decode($response['output'], TRUE);
+    if (!isset($response['result']) || $output['status'] !== 204) {
+      \Drupal::logger('iform')->error('Response from abandon_background_import attempt: ' . var_export($response, TRUE));
+      if (isset($response['output'])) {
+        $responseOutput = json_decode($response['output']);
+        throw new Exception($responseOutput->msg ?? 'Internal Server Error', $response['status'] ?? 500);
+      }
+      else {
+        throw new Exception('Internal Server Error', 500);
+      }
+    }
+
   }
 
   /**
@@ -1052,7 +1089,7 @@ class import_helper_2 extends helper_base {
    * @return array
    *   List of control info.
    */
-  private static function getGlobalValuesFormControlArray($options) {
+  private static function getGlobalValuesFormControlArray(array $options) {
     $response = self::cacheGet(['entityImportSettings' => $options['entity']]);
     if ($response === FALSE) {
       $request = parent::$base_url . "index.php/services/import_2/get_globalvalues_form/" . $options['entity'];
@@ -1807,20 +1844,24 @@ HTML;
     if (!is_array($config)) {
       throw new Exception('Service call to get_config failed.');
     }
-    $ext = pathinfo($config['fileName'], PATHINFO_EXTENSION);
+    $ext = pathinfo(array_keys($config['files'])[0], PATHINFO_EXTENSION);
     $availableFields = self::getAvailableDbFields($options, $configId, $config['global-values']);
     $mappingRows = [];
     $existingMatchFields = [];
     foreach ($config['columns'] as $columnLabel => $info) {
       $arrow = self::getSummaryColumnArrow($info);
-      $warehouseFieldLabel = isset($info['warehouseField']) ? self::getWarehouseFieldLabel($info['warehouseField'], $availableFields, TRUE) : '';
+      // Note that userSelectedWarehouseField gets stored when a plugin, such
+      // as the importPluginOccurrenceLinkedLocationCodeField plugin, replaces
+      // an imported fieldname after processing the imported values. This shows
+      // the original selected field which is less confusing.
+      $warehouseFieldLabel = isset($info['warehouseField']) ? self::getWarehouseFieldLabel($info['userSelectedWarehouseField'] ?? $info['warehouseField'], $availableFields, TRUE) : '';
       $mappingRows[] = "<tr><td><em>$columnLabel</td></em><td>$arrow</td><td>$warehouseFieldLabel</td></tr>";
       if (preg_match('/:(id|external_key)$/', $info['warehouseField'] ?? '')) {
         $existingMatchFields[] = $warehouseFieldLabel;
       }
     }
     $mappings = implode('', $mappingRows);
-    $globalRows = self::globalValuesAsTableRows($config, $options['readAuth'], $availableFields);
+    $globalRows = self::globalValuesAsTableRows($config, $options, $availableFields);
     $infoRows = [
       "<dt>$lang[fileType]</dt><dd>$ext</dd>",
       "<dt>$lang[numberOfRecords]</dt><dd>$config[totalRows]</dd>",
@@ -1903,8 +1944,8 @@ HTML;
    *
    * @param array $config
    *   Upload config.
-   * @param array $readAuth
-   *   Read authorisation.
+   * @param array $options
+   *   Importer control options.
    * @param array $availableFields
    *   List of field names and captions to use.
    *
@@ -1912,14 +1953,17 @@ HTML;
    *   Each entry is the HTML for a <tr> to show on the summary page,
    *   explaining one of the global values being applied to the import.
    */
-  private static function globalValuesAsTableRows(array $config, array $readAuth, array $availableFields) {
+  private static function globalValuesAsTableRows(array $config, array $options, array $availableFields) {
     $globalRows = [];
     $lang = [
       'dataValuesCopied' => lang::get('This value is copied to this field for all records created.'),
     ];
     $arrow = "<i class=\"fas fa-play\" title=\"$lang[dataValuesCopied]\"></i>";
-    $formArray = self::getGlobalValuesFormControlArray($config);
+    $formArray = self::getGlobalValuesFormControlArray($options);
     foreach ($config['global-values'] as $field => $value) {
+      if ($value === '') {
+        continue;
+      }
       // Default to use value as label, but preferably use the global values
       // control lookup info to get a better one.
       $displayLabel = $value;
@@ -1940,7 +1984,7 @@ HTML;
           if (count($populationOptions) >= 4 && $populationOptions[0] === 'direct') {
             $lookupData = self::get_population_data([
               'table' => $populationOptions[1],
-              'extraParams' => $readAuth + [
+              'extraParams' => $options['readAuth'] + [
                 $populationOptions[2] => $value,
               ],
             ]);

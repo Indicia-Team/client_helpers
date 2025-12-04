@@ -444,7 +444,12 @@ class extension_misc_extensions {
         }
       }
     }
-    return report_helper::$ctrl($options);
+    if (method_exists('report_helper', $ctrl)) {
+      return report_helper::$ctrl($options);
+    }
+    else {
+      return "The report_helper control function '$ctrl' does not exist.";
+    }
   }
 
   /**

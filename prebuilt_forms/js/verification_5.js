@@ -1553,7 +1553,7 @@ indiciaData.rowIdToReselect = false;
       var row = $(evt.target).parents('tr:first')[0];
       $('.verify-tools').hide();
       // reinstate tooltips
-      $.each($(row).parents('table:first tbody').find(':data(title)'), function (idx, ctrl) {
+      $.each($(row).parents('table:first tbody').find('[data-title]'), function (idx, ctrl) {
         $(ctrl).attr('title', $(this).data('title'));
       });
       // Find the appropriate separator for AJAX url params - depends on clean urls setting.

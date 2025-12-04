@@ -1924,7 +1924,7 @@ class ElasticsearchProxyHelper {
                 strtolower($value)
               );
             }
-            $fieldName = $esFields[$definition["{$prefix}date_type"] ?? 'na'] ?? $esFields['recorded'];
+            $fieldName = !empty($definition['date_type']) ? $esFields[$definition["{$prefix}date_type"]] : $esFields['recorded'];
             $bool['must'][] = [
               'range' => [
                 $fieldName => [
@@ -1947,7 +1947,7 @@ class ElasticsearchProxyHelper {
    *   Bool clauses that filters can be added to (e.g. $bool['must']).
    */
   private static function applyUserFiltersWho(array $definition, array &$bool) {
-    if (!empty($definition['my_records']) && ((string) $definition['my_records'] === '1' || (string) $definition['my_records'] === '0')) {
+    if (isset($definition['my_records']) && ((string) $definition['my_records'] === '1' || (string) $definition['my_records'] === '0')) {
       $bool[$definition['my_records'] === '1' ? 'must' : 'must_not'][] = [
         'term' => ['metadata.created_by_id' => hostsite_get_user_field('indicia_user_id')],
       ];
