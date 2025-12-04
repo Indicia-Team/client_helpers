@@ -49,14 +49,13 @@ class iform_verification_5 implements PrebuiltFormInterface {
    *   The definition of the form.
    */
   public static function get_verification_5_definition() {
-    return array(
+    return [
       'title' => 'Verification 5',
       'category' => 'Verification',
-      'description' => 'Verification form supporting 2 tier verification statuses. Requires the ' .
-        'Easy Login module and Indicia AJAX Proxy module to both be enabled.',
+      'description' => 'Verification form supporting 2 tier verification statuses. Requires the Easy Login module and Indicia AJAX Proxy module to both be enabled.',
       'recommended' => TRUE,
       'supportsGroups' => TRUE,
-    );
+    ];
   }
 
   /**
@@ -89,7 +88,7 @@ class iform_verification_5 implements PrebuiltFormInterface {
           'table' => 'termlists_term',
           'valueField' => 'id',
           'captionField' => 'term',
-          'extraParams' => array('termlist_external_key' => 'indicia:group_types'),
+          'extraParams' => ['termlist_external_key' => 'indicia:group_types'],
           'class' => 'group-field',
         ),
         array(
@@ -144,7 +143,7 @@ class iform_verification_5 implements PrebuiltFormInterface {
         ),
         array(
           'name' => 'taxon_list_id',
-          'caption' => 'Override master species List',
+          'caption' => 'Override master species list',
           'description' => 'The species list that species and groups can be selected from on the Create a Filter tool, only required if not using the default from the iForm configuration settings.',
           'type' => 'select',
           'group' => 'Report Settings',
@@ -226,7 +225,7 @@ class iform_verification_5 implements PrebuiltFormInterface {
           'description' => 'Identify the task this page is being used for, which determines the websites that will ' .
             'share records for use here.',
           'type' => 'select',
-          'options' => array(
+          'options' => [
             'reporting' => 'Reporting',
             'peer_review' => 'Peer review',
             'verification' => 'Verification',
@@ -234,7 +233,7 @@ class iform_verification_5 implements PrebuiltFormInterface {
             'moderation' => 'Moderation',
             'editing' => 'Editing',
             'me' => 'My records only',
-          ),
+          ],
           'default' => 'verification',
           'group' => 'Report Settings',
         ),
@@ -444,7 +443,7 @@ class iform_verification_5 implements PrebuiltFormInterface {
           'description' => 'Label for the link to the Comment Quick Reply page.',
           'type' => 'text_input',
           'group' => 'Comment quick reply page link',
-          'required' => 'false'
+          'required' => 'false',
         ),
         array(
           'name' => 'comment_quick_reply_page_link_url',
@@ -452,7 +451,7 @@ class iform_verification_5 implements PrebuiltFormInterface {
           'description' => 'URL link to the Comment Quick Reply page.',
           'type' => 'text_input',
           'group' => 'Comment quick reply page link',
-          'required' => 'false'
+          'required' => 'false',
         )
       )
     );

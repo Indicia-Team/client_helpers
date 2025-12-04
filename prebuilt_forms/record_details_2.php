@@ -46,6 +46,14 @@ class iform_record_details_2 extends BaseDynamicDetails {
   protected static $record;
 
   /**
+   * DNA metadata fields if a DNA-derived record.
+   *
+   * @var array
+   */
+  protected static $dnaMetadata;
+
+
+  /**
    * Return the form metadata.
    *
    * @return array
@@ -356,16 +364,19 @@ Record ID',
 
     $flags = [];
     if (!empty(self::$record['sensitive'])) {
-      $flags[] = lang::get('sensitive');
+      $flags[] = '<i class="fas fa-exclamation-circle"></i>' . lang::get('sensitive');
     }
     if (self::$record['confidential'] === 't') {
-      $flags[] = lang::get('confidential');
+      $flags[] = '<i class="fas fa-exclamation-triangle"></i>' . lang::get('confidential');
     }
     if (self::$record['release_status'] !== 'R') {
-      $flags[] = lang::get(self::$record['release_status'] === 'P' ? 'pending release' : 'unreleased');
+      $flags[] = '<i class="fas fa-stop"></i>' . lang::get(self::$record['release_status'] === 'P' ? 'pending release' : 'unreleased');
     }
     if (self::$record['zero_abundance'] === 't') {
       $flags[] = lang::get('zero abundance');
+    }
+    if (self::$record['dna_derived'] === 't') {
+      $flags[] = '<i class="fas fa-dna"></i>' . lang::get('DNA-derived');
     }
     if (!empty($flags)) {
       $details_report = '<div id="record-flags"><span>' . implode('</span><span>', $flags) . '</span></div>';
@@ -427,7 +438,7 @@ Record ID',
           [lang::get('Submission date'), $dateInfo, ''], $indicia_templates['dataValue']);
     }
     $details_report .= '</div>';
-
+    $attrs_report = '';
     if (!self::$record['sensitivity_precision'] || $args['allow_sensitive_full_precision']) {
       // Draw any custom attributes added by the user, but only for a
       // non-sensitive record.
@@ -451,14 +462,58 @@ Record ID',
     }
 
     $blockTitle = self::$record['zero_abundance'] === 't' ? lang::get('Absence record details') : lang::get('Record details');
-    $r = "<h3>$blockTitle</h3><dl class=\"detail-panel dl-horizontal\" id=\"detail-panel-recorddetails\">";
+    $r = <<<HTML
+      <h3>$blockTitle</h3>
+      <dl class="detail-panel dl-horizontal" id="detail-panel-recorddetails">
+        $details_report
+        $attrs_report
+      </dl>
+    HTML;
 
-    $r .= $details_report;
-    if (isset($attrs_report)) {
-      $r .= $attrs_report;
+
+    if (isset(self::$dnaMetadata)) {
+      $r .= self::getDnaMetadataBlock();
     }
-    $r .= '</dl>';
     return $r;
+  }
+
+  private static function getDnaMetadataBlock() {
+    $dnaBlockTitle = lang::get('DNA-derived information');
+    $dnaValues = '';
+    $fields = [
+      'associated_sequences' => 'Associated sequences',
+      'dna_sequence' => 'DNA sequence',
+      'target_gene' => 'Target gene',
+      'pcr_primer_reference' => 'PCR primer reference',
+      'env_medium' => 'Environmental medium',
+      'env_broad_scale' => 'Broad-scale environment',
+      'otu_db' => 'OTU Database',
+      'otu_seq_comp_appr' => 'OTU sequence comparison approach',
+      'otu_class_appr' => 'OTU classification approach',
+      'env_local_scale' => 'Local-scale environment',
+      'target_subfragment' => 'Target subfragment',
+      'pcr_primer_name_forward' => 'Forward PCR primer name',
+      'pcr_primer_forward' => 'Forward PCR primer',
+      'pcr_primer_name_reverse' => 'Reverse PCR primer name',
+      'pcr_primer_reverse' => 'Reverse PCR primer',
+    ];
+    foreach ($fields as $field => $caption) {
+      if (self::$dnaMetadata[$field]) {
+        $i18nCaption = lang::get($caption);
+        $style = $field === 'associated_sequences' ? ' style="overflow-wrap: anywhere"' : '';
+        $value = $field === 'associated_sequences' && !empty(self::$dnaMetadata[$field])
+          ? '<div class="sequence">' . implode('</div><div class="sequence">', json_decode(self::$dnaMetadata[$field])) . '</div>'
+          : self::$dnaMetadata[$field];
+
+        $dnaValues .= "<dt>$i18nCaption</dt><dd$style>$value</dd>";
+      }
+    }
+    return <<<HTML
+      <h4><i class="fas fa-dna"></i>$dnaBlockTitle</h4>
+      <dl class="detail-panel dl-horizontal" id="detail-panel-recorddetails">
+        $dnaValues
+      </dl>
+    HTML;
   }
 
   /**
@@ -1047,13 +1102,13 @@ STRUCT;
    */
   protected static function load_record($auth, $args) {
     if (!isset(self::$record)) {
-      $params = array(
+      $params = [
         'occurrence_id' => self::$id,
         'sharing' => $args['sharing'],
         'allow_confidential' => $args['allow_confidential'] ? 1 : 0,
         'allow_sensitive_full_precision' => $args['allow_sensitive_full_precision'] ? 1 : 0,
         'allow_unreleased' => $args['allow_unreleased'] ? 1 : 0,
-      );
+      ];
       if (!empty($args['map_geom_precision'])) {
         $params['geom_precision'] = $args['map_geom_precision'];
       }
@@ -1097,6 +1152,26 @@ STRUCT;
         $iform_page_metadata['latitude'] = number_format((float) self::$record['lat'], 5, '.', '');
         $iform_page_metadata['longitude'] = number_format((float) self::$record['long'], 5, '.', '');
       }
+      if (self::$record['dna_derived'] === 't') {
+        self::loadDnaMetadata($args, $auth);
+      }
+    }
+  }
+
+  private static function loadDnaMetadata(array $args, array $auth) {
+    $params = [
+      'occurrence_id' => self::$record['occurrence_id'],
+      'sharing' => $args['sharing'],
+      'allow_confidential' => $args['allow_confidential'] ? 1 : 0,
+      'allow_unreleased' => $args['allow_unreleased'] ? 1 : 0,
+    ];
+    $records = report_helper::get_report_data([
+      'readAuth' => $auth['read'],
+      'dataSource' => 'reports_for_prebuilt_forms/record_details_2/record_data_dna_derived',
+      'extraParams' => $params,
+    ]);
+    if (count($records) > 0) {
+      self::$dnaMetadata = $records[0];
     }
   }
 

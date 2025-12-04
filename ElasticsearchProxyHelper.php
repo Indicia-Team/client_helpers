@@ -1533,6 +1533,7 @@ class ElasticsearchProxyHelper {
     self::applyUserFiltersIdentificationClassifierAgreement($definition, $bool);
     self::applyUserFiltersRuleChecks($definition, $bool);
     self::applyUserFiltersHasPhotos($definition, $bool);
+    self::applyUserFiltersDnaDerived($definition, $bool);
     self::applyUserFiltersLicences($definition, $bool, $readAuth);
     self::applyUserFiltersCoordinatePrecision($definition, $bool);
     self::applyUserFiltersWebsiteList($definition, $bool);
@@ -1923,7 +1924,7 @@ class ElasticsearchProxyHelper {
                 strtolower($value)
               );
             }
-            $fieldName = !empty($definition['date_type']) ? $esFields[$definition['date_type']] : $esFields['recorded'];
+            $fieldName = !empty($definition['date_type']) ? $esFields[$definition["{$prefix}date_type"]] : $esFields['recorded'];
             $bool['must'][] = [
               'range' => [
                 $fieldName => [
@@ -2776,7 +2777,7 @@ class ElasticsearchProxyHelper {
   private static function applyUserFiltersHasPhotos(array $definition, array &$bool) {
     $filter = self::getDefinitionFilter($definition, ['has_photos']);
     if (!empty($filter)) {
-      $boolClause = !empty($filter['op']) && $filter['op'] === 'not in' ? 'must_not' : 'must';
+      $boolClause = in_array($filter['value'], ['1', 't']) ? 'must' : 'must_not';
       $bool[$boolClause][] = [
         'nested' => [
           'path' => 'occurrence.media',
@@ -2786,6 +2787,24 @@ class ElasticsearchProxyHelper {
             ],
           ],
         ],
+      ];
+    }
+  }
+
+  /**
+   * Converts an Indicia filter definition dna_derived filter to an ES query.
+   *
+   * @param array $definition
+   *   Definition loaded for the Indicia filter.
+   * @param array $bool
+   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   */
+  private static function applyUserFiltersDnaDerived(array $definition, array &$bool) {
+    $filter = self::getDefinitionFilter($definition, ['dna_derived']);
+    if (!empty($filter)) {
+      $filterValue = in_array($filter['value'], ['1', 't']) ? TRUE : FALSE;
+      $bool['must'][] = [
+        'term' => ['occurrence.dna_derived' => $filterValue],
       ];
     }
   }
@@ -2915,7 +2934,7 @@ class ElasticsearchProxyHelper {
    */
   private static function getDefinitionFilter($definition, array $params) {
     foreach ($params as $param) {
-      if (!empty($definition[$param])) {
+      if (isset($definition[$param]) && trim($definition[$param] ?? '') !== '') {
         return [
           'value' => $definition[$param],
           'op' => empty($definition[$param . '_op']) ? FALSE : $definition[$param . '_op'],
