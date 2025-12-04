@@ -1961,6 +1961,9 @@ HTML;
     $arrow = "<i class=\"fas fa-play\" title=\"$lang[dataValuesCopied]\"></i>";
     $formArray = self::getGlobalValuesFormControlArray($options);
     foreach ($config['global-values'] as $field => $value) {
+      if ($value === '') {
+        continue;
+      }
       // Default to use value as label, but preferably use the global values
       // control lookup info to get a better one.
       $displayLabel = $value;
