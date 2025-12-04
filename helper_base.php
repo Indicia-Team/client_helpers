@@ -1107,7 +1107,7 @@ class helper_base {
         ],
         'jquery_form' => [
           'deps' => ['jquery'],
-          'javascript' => [self::$js_path . "jquery.form.min.js"],
+          'javascript' => [self::$js_path . "jquery.form.js"],
         ],
         'reportPicker' => [
           'deps' => ['treeview', 'fancybox'],
