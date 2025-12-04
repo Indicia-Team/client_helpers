@@ -1372,7 +1372,6 @@ JS;
         'minimal background will be most successful.'),
       ]
     );
-
     // Load javascript for the classifier.
     self::add_resource('file_classifier');
     // We need to call the initialisation function.
@@ -1380,8 +1379,6 @@ JS;
       ($options['table'] ?? 'occurrence_medium') . '-' .
       ($options['id'] ?? 'default');
     $containerId = str_replace(':', '\\\\:', $containerId);
-    $javascript = "$('#$containerId').classifier({});\n";
-
     // To circumvent problems in some browsers with setting up a hidden control,
     // we juggle with javascript when the control is placed on a tab.
     if (isset($options['tabDiv'])) {
@@ -1390,10 +1387,10 @@ JS;
       $r = self::file_box($options);
       // Prepend javascript for filebox.
       $options['codeGenerated'] = 'js';
-      $javascript = self::file_box($options) . $javascript;
+      $javascript = self::file_box($options);
       // Wrap the script in an event handler so we only execute it when
       // the tab is displayed.
-      $javascript =
+      $javascript .=
         "var uploaderTabHandler = function(event, ui) { \n" .
         "  panel = typeof ui.newPanel === 'undefined' ? ui.panel : ui.newPanel[0];\n" .
         "  if ($(panel).attr('id') === '{$options['tabDiv']}') {\n    " .
@@ -1408,10 +1405,8 @@ JS;
     else {
       // Get html and add javascript for a filebox.
       $r = self::file_box($options);
-      // Append javascript for classifier.
-      self::$javascript .= $javascript;
     }
-
+    self::$onload_javascript .= "$('#$containerId').classifier({});\n";
     return $r;
   }
 
@@ -1439,6 +1434,7 @@ JS;
     // Provide default settings for other options which can be overwritten.
     $defaults = [
       'caption' => lang::get('Image classifier'),
+      'classifierRequestFailed' => lang::get('The classifier failed to process the image. It has been added to the grid as Unknown.'),
       'helpText' => lang::get('Add a file here, click the classify button, ' .
         'and we will attempt to automatically identify the species and add ' .
         'it to the grid. Files featuring the specimen with minimal ' .
@@ -1446,24 +1442,15 @@ JS;
       'dialogTitle' => lang::get('Requesting classification'),
       'dialogStart' => lang::get('Your files are being sent to a ' .
         'classification service which will try to identify the species.'),
-      'dialogEnd' => lang::get('Your files have been processed. ' .
-        'Review the identifications and check the abundances.'),
-      'dialogNew' => lang::get('The file has been identified as ' .
-        '<em>{1}</em> with a probability of {2}%. ' .
-        'It is added to the grid as a new row.'),
-      'dialogUnmatched' => lang::get('Sorry, your file could not be matched ' .
-        'to a species in the survey list. It is added to the grid as Unknown.'),
-      'dialogUnknown' => lang::get('Sorry, your file could not be ' .
-        'confidently identified. It is added to the grid as Unknown.'),
-      'dialogFail' => lang::get('Sorry, an error meant your file could not ' .
-        'be identified. It is added to the grid as Unknown.'),
+      'dialogEnd' => lang::get('Your files have been processed. Review the identifications and check the abundances.'),
+      'dialogNew' => lang::get('The file has been identified as <em>{1}</em> with a probability of {2}%. It is added to the grid as a new row.'),
+      'dialogUnmatched' => lang::get('Sorry, your file could not be matched to a species in the survey list. It is added to the grid as Unknown.'),
+      'dialogUnknown' => lang::get('Sorry, your file could not be confidently identified. It is added to the grid as Unknown.'),
+      'dialogFail' => lang::get('Sorry, an error meant your file could not be identified. It is added to the grid as Unknown.'),
       'dialogBtnOk' => lang::get('Okay'),
       'classifyBtnCaption' => lang::get('Classify'),
       'classifyBtnTitle' => lang::get('Start classifying files.'),
-      'buttonTemplate' =>
-      '<button id="{id}" type="button" class="{class}" title="{title}">' .
-        '{caption}' .
-      '</button>',
+      'buttonTemplate' => '<button id="{id}" type="button" class="{class}" title="{title}">{caption}</button>',
       'mode' => 'multi:checklist:append',
     ];
     $classifier_options = array_merge($defaults, $options, $requirements);
