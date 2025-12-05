@@ -1210,6 +1210,7 @@ JS;
       ['baseLayerConfig', 'layerConfig', 'selectedFeatureStyle', 'tools']
     );
     $options = array_merge([
+      'height' => 500,
       'initialLat' => hostsite_get_config_value('iform', 'map_centroid_lat', 54.093409),
       'initialLng' => hostsite_get_config_value('iform', 'map_centroid_long', -2.89479),
       'initialZoom' => hostsite_get_config_value('iform', 'map_zoom', 5),
@@ -1233,6 +1234,7 @@ JS;
     if (!empty($_GET['initialZoom'])) {
       $options['initialZoom'] = $_GET['initialZoom'];
     }
+    $options['style'] = "height: {$options['height']}px;";
     helper_base::addLanguageStringsToJs('leafletTools', [
       'autoLayerTitle' => 'Auto',
       'dataLayerOpacity' => 'Data layer opacity',
@@ -2910,8 +2912,9 @@ $('#$options[id]').$initFn({});
 
 JS;
     $class = "idc-control idc-$controlName" . (empty($options['class']) ? '' : ' ' . $options['class']);
+    $style = !empty($options['style']) ? " style=\"$options[style]\"" : '';
     return <<<HTML
-<div id="$options[id]" class="$class" data-idc-class="$initFn" data-idc-config="$dataOptions">
+<div id="$options[id]" class="$class"$style data-idc-class="$initFn" data-idc-config="$dataOptions">
   $content
 </div>
 
