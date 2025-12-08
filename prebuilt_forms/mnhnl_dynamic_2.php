@@ -375,7 +375,7 @@ deleteSurvey = function(sampleID){
     data_entry_helper::$javascript .= "
 if($.browser.msie && $.browser.version < 9)
   $('input[type=radio],[type=checkbox]').live('click', function(){
-    this.blur();
+    this.trigger('blur');
     this.focus();
 });\n";
     self::$check_or_radio_group_template = $indicia_templates['check_or_radio_group'];
@@ -436,12 +436,12 @@ jQuery('.mnhnl-species-grid').find('[name$=occAttr\\:".$attrOrder[0]."],[name*=o
       // need to check all but last
       for($i = 0; $i < count($attrOrder)-1; $i++){
         data_entry_helper::$javascript .= "
-jQuery('.mnhnl-species-grid').find('[name$=occAttr\\:".$attrOrder[$i]."],[name*=occAttr\\:".$attrOrder[$i]."\\:]').change(function(){
+jQuery('.mnhnl-species-grid').find('[name$=occAttr\\:".$attrOrder[$i]."],[name*=occAttr\\:".$attrOrder[$i]."\\:]').on('change', function(){
   set_up_relationships(".$attrOrder[$i+1].", $(this), true, ".(isset($options["attrRestrictionsEnforceDuplicates"]) ? 'true' : 'false').");
 });\n";
       }
       data_entry_helper::$javascript .= "// last is special - only updates similar on other rows.
-jQuery('.mnhnl-species-grid').find('[name$=occAttr\\:".$attrOrder[count($attrOrder)-1]."],[name*=occAttr\\:".$attrOrder[count($attrOrder)-1]."\\:]').change(function(){
+jQuery('.mnhnl-species-grid').find('[name$=occAttr\\:".$attrOrder[count($attrOrder)-1]."],[name*=occAttr\\:".$attrOrder[count($attrOrder)-1]."\\:]').on('change', function(){
   set_up_last_relationship(this, ".$attrOrder[count($attrOrder)-1].", ".$attrOrder[count($attrOrder)-2].", true);
 });\n";
       // for duplicate checks had to trigger on all duplicate based fields. Don't include the precision field, which is on the sample field.
@@ -453,7 +453,7 @@ jQuery('.mnhnl-species-grid').find('[name$=occAttr\\:".$attrOrder[count($attrOrd
       if($selector != "" && isset($options["attrRestrictionsEnforceDuplicates"]))
         data_entry_helper::$javascript .= "
 attrRestrictionsDuplicateSelector = \"".$selector."\";
-jQuery('.mnhnl-species-grid').find('".$selector."').change(function(){
+jQuery('.mnhnl-species-grid').find('".$selector."').on('change', function(){
   set_up_last_relationship(this, ".$attrOrder[count($attrOrder)-1].", ".$attrOrder[count($attrOrder)-2].", true);
 });\n";
     }
@@ -535,7 +535,7 @@ $.validator.addMethod('end_time', function(value, element){
   else
     controls.removeAttr('disabled');
 };
-jQuery('[name=".$selector."\\[\\]],[name=".$selector."],[name^=".$selector."\\:]').click(".$func.");\n".$func."();\n";
+jQuery('[name=".$selector."\\[\\]],[name=".$selector."],[name^=".$selector."\\:]').on('click', ".$func.");\n".$func."();\n";
           }  else if($rule[$i]=='N=3'){
             // we want immediate, restrict number checkable..
             // allow a maximum of 3 entries in a multiple value checkbox set. name will be the same.
@@ -681,7 +681,7 @@ indiciaData.speciesListInTextMax = '".$ctrlArgs[2]."';\n";
     }
     $retval .= '</table><br />';
     data_entry_helper::$javascript .= "// JS for target species grid control.
-jQuery('.targ-presence').change(function(){
+jQuery('.targ-presence').on('change', function(){
   var myTR = jQuery(this).closest('tr');
   if(jQuery(this).filter('[checked]').length>0) {
     // remove all existing errors in the grid.
@@ -735,7 +735,7 @@ other.next().remove(); // remove break
 other.prev().remove(); // remove legend
 other.removeClass('wide').remove(); // remove Other field, then bolt in after the other radio button.
 jQuery('[name=".str_replace(':','\\:',$attr['id'])."],[name^=".str_replace(':','\\:',$attr['id'])."\\:],[name=".str_replace(':','\\:',$attr['id'])."\\[\\]]').filter('[value=".$other[0]['meaning_id']."],[value^=".$other[0]['meaning_id']."\\:]').parent().css('width','auto').append(other);
-jQuery('[name=".str_replace(':','\\:',$attr['id'])."],[name^=".str_replace(':','\\:',$attr['id'])."\\:],[name=".str_replace(':','\\:',$attr['id'])."\\[\\]]').change(function(){
+jQuery('[name=".str_replace(':','\\:',$attr['id'])."],[name^=".str_replace(':','\\:',$attr['id'])."\\:],[name=".str_replace(':','\\:',$attr['id'])."\\[\\]]').on('change', function(){
   jQuery('[name=".str_replace(':','\\:',$attr['id'])."],[name^=".str_replace(':','\\:',$attr['id'])."\\:],[name=".str_replace(':','\\:',$attr['id'])."\\[\\]]').filter('[value=".$other[0]['meaning_id']."],[value^=".$other[0]['meaning_id']."\\:]').each(function(){
     if(this.checked)
       jQuery('[name=".$prefix."\\:".$attr2."],[name^=".$prefix."\\:".$attr2."\\:]').addClass('required').removeAttr('readonly');
@@ -743,7 +743,7 @@ jQuery('[name=".str_replace(':','\\:',$attr['id'])."],[name^=".str_replace(':','
       jQuery('[name=".$prefix."\\:".$attr2."],[name^=".$prefix."\\:".$attr2."\\:]').removeClass('required').val('').attr('readonly',true);
   });
 });
-jQuery('[name=".str_replace(':','\\:',$attr['id'])."],[name^=".str_replace(':','\\:',$attr['id'])."\\:],[name=".str_replace(':','\\:',$attr['id'])."\\[\\]]').filter('[value=".$other[0]['meaning_id']."],[value^=".$other[0]['meaning_id']."\\:]').change();
+jQuery('[name=".str_replace(':','\\:',$attr['id'])."],[name^=".str_replace(':','\\:',$attr['id'])."\\:],[name=".str_replace(':','\\:',$attr['id'])."\\[\\]]').filter('[value=".$other[0]['meaning_id']."],[value^=".$other[0]['meaning_id']."\\:]').trigger('change');
 ";
     }
     return '';
@@ -785,7 +785,7 @@ for(var j=0; j<speciesRows.length; j++){
 		if(units.length > 0){
 		  if(units.find('option').filter(':selected')[0].text=='m2')
 		    occAttrs.find('.scNumber').removeClass('integer').attr('min',0);
-		  units.change(function(){
+		  units.on('change', function(){
 		    jQuery('.ui-state-error').removeClass('ui-state-error');
 		    jQuery('.inline-error').remove();
 		    if(jQuery(this).find('option').filter(':selected')[0].text=='m2')

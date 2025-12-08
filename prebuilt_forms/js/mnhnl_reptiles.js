@@ -15,9 +15,9 @@
 
 /**
  * Helper methods for additional JavaScript functionality required by the species_checklist control.
- * formatter - The taxon label template, OR a JavaScript function that takes an item returned by the web service 
- * search for a species when adding rows to the grid, and returns a formatted taxon label. Overrides the label 
- * template and controls the appearance of the species name both in the autocomplete for adding new rows, plus for 
+ * formatter - The taxon label template, OR a JavaScript function that takes an item returned by the web service
+ * search for a species when adding rows to the grid, and returns a formatted taxon label. Overrides the label
+ * template and controls the appearance of the species name both in the autocomplete for adding new rows, plus for
   the newly added rows.
  */
 var addRowToGridSequence = 1000; // this should be more than the length of the initial taxon list
@@ -33,7 +33,7 @@ function bindSpeciesAutocomplete(selectorID, url, gridId, lookupListId, readAuth
     // Replace the tags in the row template with the taxa_taxon_list_ID
     $.each(newRow2.children(), function(i, cell) {
       cell.innerHTML = cell.innerHTML.replace(/-ttlId-:/g, data.id+':y'+addRowToGridSequence);
-    }); 
+    });
     // auto-check the row
     newRow2.find('.scPresenceCell input').attr('name', 'sc:' + data.id + ':y'+addRowToGridSequence+':present').attr('checked', 'checked');
     newRow2.find('.scCount').addClass('required').attr('min',1).after('<span class=\"deh-required\">*</span>');
@@ -47,7 +47,7 @@ function bindSpeciesAutocomplete(selectorID, url, gridId, lookupListId, readAuth
         // Replace the tags in the row template with the taxa_taxon_list_ID
         $.each(newRow3.children(), function(i, cell) {
           cell.innerHTML = cell.innerHTML.replace(/-ttlId-:/g, data.id+':y'+addRowToGridSequence);
-        }); 
+        });
         // Allow forms to hook into the event of a new row being added
         newRow3.appendTo('#'+gridId);
     }
@@ -86,7 +86,7 @@ function bindSpeciesAutocomplete(selectorID, url, gridId, lookupListId, readAuth
         return item.taxon;
       }
   });
-  ctrl.bind('result', handleSelectedTaxon);
+  ctrl.on('result', handleSelectedTaxon);
   setTimeout(function() { $('#' + ctrl.attr('id')).focus(); });
 }
 

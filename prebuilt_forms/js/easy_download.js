@@ -43,7 +43,7 @@ jQuery(document).ready(function ($) {
   }
 
   // toggle between the surveys available for the 2 options (my data, or data I am an expert for)
-  $('#user-filter\\:0, #user-filter\\:1, #user-filter\\:2').click(setVisibleSurveyControl);
+  $('#user-filter\\:0, #user-filter\\:1, #user-filter\\:2').on('click', setVisibleSurveyControl);
 
   setVisibleSurveyControl();
 });

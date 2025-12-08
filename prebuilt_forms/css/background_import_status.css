@@ -1,0 +1,71 @@
+@charset "UTF-8";
+.import-info {
+  margin-top: 15px;
+  /* Make panels take full width on very small screens */
+}
+.import-info header {
+  font-weight: bold;
+  font-size: 1.2em;
+}
+.import-info .import-dashboard {
+  display: flex;
+  flex-wrap: wrap; /* allows wrapping on smaller screens */
+  gap: 20px; /* space between panels */
+}
+.import-info .import-dashboard .dashboard-panel {
+  flex: 1 1 calc(25% - 20px); /* 4 panels per row with gap adjustment */
+  min-width: 250px; /* ensures panels don’t shrink too small */
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  border: solid 1px #ddd;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  position: relative;
+}
+.import-info .import-dashboard.error .dashboard-panel.dashboard-errors {
+  border-color: #e74c3c; /* red border for error state */
+  background-color: #fdedec; /* light red background */
+}
+.import-info .import-dashboard.error .dashboard-panel.dashboard-errors a {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+}
+.import-info .import-dashboard.done .dashboard-panel.dashboard-status {
+  border-color: #2ecc71; /* green border for done state */
+  background-color: #eafaf1; /* light green background */
+}
+.import-info .import-dashboard h2 {
+  margin-top: 0;
+  font-size: 18px;
+  color: #333;
+}
+.import-info .import-dashboard p {
+  color: #666;
+  font-size: 1.2em;
+  margin: 0;
+}
+@media (max-width: 600px) {
+  .import-info .dashboard-panel {
+    flex: 1 1 100%;
+  }
+}
+.import-info .progress-container {
+  position: relative;
+  margin-top: 15px;
+}
+.import-info .progress-container .progress {
+  margin: 0;
+}
+.import-info .progress-container span {
+  position: absolute;
+  width: 100%;
+  text-align: center;
+  top: 0;
+  left: 0;
+  color: white;
+  z-index: 1000;
+}
+
+/*# sourceMappingURL=background_import_status.css.map */

@@ -2,7 +2,7 @@ $(document).ready(function($) {
   "use strict";
   // keep track of the last person loaded for each of the 3 tabs
   var surveyLoadedUID=null, groupLoadedUID=null, locationLoadedUID=null;
-  
+
   function showTab(tab) {
     var uid=$('#user_trust\\:user_id').val();
     if (uid!=='') {
@@ -28,7 +28,7 @@ $(document).ready(function($) {
     showTab(panel.id);
   };
   indiciaFns.bindTabsActivate($('#summary-tabs'), tabHandler);
-  $('#user_trust\\:user_id').change(function() {
+  $('#user_trust\\:user_id').on('change', function() {
     showTab($('#summary-tabs .ui-tabs-panel:not(.ui-tabs-hide)')[0].id);
   });
   // focus controls can select appropriate summary tab
@@ -41,5 +41,5 @@ $(document).ready(function($) {
   $('#user_trust\\:location_id\\:name').focus(function() {
     indiciaFns.activeTab($('#summary-tabs'), 2);
   });
-  
+
 });

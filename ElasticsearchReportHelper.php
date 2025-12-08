@@ -1470,7 +1470,7 @@ HTML;
 
     helper_base::$late_javascript .= <<<JS
 $('#es-filter-summary').idcFilterSummary('populate');
-$('.es-filter-param, .user-filter, .permissions-filter, .standalone-quality-filter select,.standalone-media-filter select').change(function () {
+$('.es-filter-param, .user-filter, .permissions-filter, .standalone-quality-filter select,.standalone-media-filter select').on('change', function () {
     // Update any summary output
     $('#es-filter-summary').idcFilterSummary('populate');
 });
@@ -2141,6 +2141,7 @@ HTML;
       'notAcceptedUnableToVerify' => lang::get('Not accepted :: unable to verify'),
       'plausible' => lang::get('Plausible'),
       'raiseQuery' => lang::get('Raise a query with the recorder'),
+      'redet' => lang::get('Redet.'),
       'saveLocationLink' => lang::get('Save link to location'),
       'saveStatus' => lang::get('Save status'),
       'saveTemplate' => lang::get('Save template'),
@@ -2194,7 +2195,7 @@ HTML;
       'csvDisallowedMessage' => 'Uploading verification decisions is only allowed when there is a filter that defines the scope of the records you can verify.',
       'duplicateTemplateMsg' => 'A template with that name already exists. Please specify a unique name for your template then save it again, or click Overwrite to update the existing template details.',
       'emailExpertBodyHeader' => "Verification query\n\nThe following record requires your assistance. Please could you reply to this email " .
-        'with your opininion on whether the record is correct or not. You can reply to this message and it will be ' .
+        'with your opinion on whether the record is correct or not. You can reply to this message and it will be ' .
         'forwarded direct to the verifier.',
       'emailExpertInstruct' => 'Enter the email of an expert to request their assistance with this record.',
       'emailExpertLoggedAsComment' => 'This record was emailed to an expert for checking.',
@@ -2383,7 +2384,7 @@ HTML;
         <button class="verify l2 $btnClassDefault" data-status="R5" title="$lang[notAcceptedIncorrect]"><span class="fas fa-times status-R5"></span></button>
         <button class="apply-to-parent-sample-contents single-only $btnClassDefault" title="$lang[applyThisDecisionToParentSample]" disabled="disabled"><span class="fas fa-sitemap"></span></button>
         <span class="sep"></span>
-        <button class="redet $btnClassDefault" title="Redetermine this record"><span class="fas fa-tag"></span></button>
+        <button class="redet $btnClassDefault" title="Redetermine this record">$lang[redet]</button>
         <button class="query $btnClassDefault" data-query="Q" title="$lang[raiseQuery]"><span class="fas fa-question-circle query-Q"></span></button>
         $forceLinkedLocationButton
         <div class="multi-only apply-to">

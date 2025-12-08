@@ -1799,7 +1799,7 @@ class iform_report_calendar_summary_2 implements PrebuiltFormInterface {
     // Need to use a global for pageURI as the internal controls may have changed, and we want
     // their values to be carried over.
     data_entry_helper::$javascript .= "
-jQuery('#".$ctrlid."').change(function(){
+jQuery('#".$ctrlid."').on('change', function(){
   $.fancyDialog({ title: '" . lang::get("Loading...") . "',
     message: '" . lang::get("Please wait whilst the next set of data is loaded.") . "',
     cancelButton: null });\n";
@@ -1844,15 +1844,15 @@ jQuery('#".$ctrlid."').change(function(){
           $oldWrap = $indicia_templates['controlWrap'];
           $indicia_templates['controlWrap'] =
             '<div id="ctrl-wrap-{id}" class="form-group ctrl-wrap">' .
-            '<div class="input-group">' .
-            '<div class="input-group-addon ctrl-addons">' .
+            '<div class="' . $indicia_templates['inputGroup'] . '">' .
+            '<div class="' . $indicia_templates['inputGroupAddon'] . ' ctrl-addons">' .
             '<a id="year-control-previous" title="' . (self::$siteUrlParams[self::$yearKey]['value']-1) . '" rel="nofollow" href="' . $reloadUrl['path'] . $param . (self::$siteUrlParams[self::$yearKey]['value']-1)  .'">' .
             '<span class="glyphicon glyphicon-step-backward"></span>' .
             '</a>' .
             '</div>' .
             '{control}' .
             (self::$siteUrlParams[self::$yearKey]['value'] < date('Y') ?
-                '<div class="input-group-addon ctrl-addons">' .
+                '<div class="' . $indicia_templates['inputGroupAddon'] . ' ctrl-addons">' .
                 '<a id="year-control-next" title="' . (self::$siteUrlParams[self::$yearKey]['value']+1) . '" rel="nofollow" href="' . $reloadUrl['path'] . $param.(self::$siteUrlParams[self::$yearKey]['value']+1) . '">' .
                 '<span class="glyphicon glyphicon-step-forward" aria-hidden="true"></span>' .
                 '</a>' .

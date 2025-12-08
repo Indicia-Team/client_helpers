@@ -413,9 +413,21 @@ class ElasticsearchProxyHelper {
     $conn = iform_get_connection_details($nid);
     $readAuth = helper_base::get_read_auth($conn['website_id'], $conn['password']);
     $params = array_merge(['sharing' => 'verification'], hostsite_get_node_field_value($nid, 'params'));
+    $includeInfo = empty($_GET['include_info']) || $_GET['include_info'] !== 'f';
     return [
-      'media' => VerificationHelper::getMedia($readAuth, $params, $_GET['occurrence_id'], $_GET['sample_id']),
-      'comments' => VerificationHelper::getComments($readAuth, $params, $_GET['occurrence_id'], TRUE),
+      'media' => VerificationHelper::getMedia(
+        $readAuth,
+        $params,
+        $_GET['occurrence_id'],
+        $_GET['sample_id'],
+        $includeInfo
+      ),
+      'comments' => VerificationHelper::getComments(
+        $readAuth,
+        $params,
+        $_GET['occurrence_id'],
+        TRUE
+      ),
     ];
   }
 
@@ -1259,7 +1271,9 @@ class ElasticsearchProxyHelper {
       $strippedCharacters .= '\[\]\{\}';
     }
     // Strip any reserved characters.
-    $value = preg_replace('/[' . $strippedCharacters . ']/', '', $value);
+    if ($strippedCharacters) {
+      $value = preg_replace('/[' . $strippedCharacters . ']/', '', $value);
+    }
     return $value;
 }
 
@@ -1909,9 +1923,10 @@ class ElasticsearchProxyHelper {
                 strtolower($value)
               );
             }
+            $fieldName = !empty($definition['date_type']) ? $esFields[$definition['date_type']] : $esFields['recorded'];
             $bool['must'][] = [
               'range' => [
-                $esFields[$definition['date_type']] => [
+                $fieldName => [
                   $esOp => $value,
                 ],
               ],
@@ -1931,7 +1946,7 @@ class ElasticsearchProxyHelper {
    *   Bool clauses that filters can be added to (e.g. $bool['must']).
    */
   private static function applyUserFiltersWho(array $definition, array &$bool) {
-    if (!empty($definition['my_records']) && ((string) $definition['my_records'] === '1' || (string) $definition['my_records'] === '0')) {
+    if (isset($definition['my_records']) && ((string) $definition['my_records'] === '1' || (string) $definition['my_records'] === '0')) {
       $bool[$definition['my_records'] === '1' ? 'must' : 'must_not'][] = [
         'term' => ['metadata.created_by_id' => hostsite_get_user_field('indicia_user_id')],
       ];

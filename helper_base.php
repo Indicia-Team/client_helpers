@@ -33,11 +33,30 @@ global $indicia_templates;
  * Provides control templates to define the output of the data entry helper class.
  */
 $indicia_templates = [
+  /* Overrideable HTML Classes */
+  'controlWrapErrorClass' => '',
+  'error_class' => 'inline-error',
+  // Button classes. If changing these, keep the indicia-button class to ensure
+  // functionality works.
+  'buttonDefaultClass' => 'indicia-button',
+  'buttonHighlightedClass' => 'indicia-button',
+  'buttonWarningClass' => 'indicia-button',
+  'buttonSmallClass' => 'btn-xs',
+  // Classes applied to <a> when styled like a button.
+  'anchorButtonClass' => 'indicia-button',
+  // Floats.
+  'floatLeftClass' => 'left',
+  'floatRightClass' => 'right',
+  // Form controls.
+  'formControlClass' => 'form-control',
+  'inputGroupClass' => 'input-group',
+  'inputGroupAddonClass' => 'input-group-addon',
+  /* Other overrideable HTML templates */
   'blank' => '',
   'prefix' => '',
-  'formControlClass' => 'form-control',
+  'suffix' => "\n",
+  'requiredsuffix' => "<span class=\"deh-required\">*</span>",
   'controlWrap' => "<div id=\"ctrl-wrap-{id}\" class=\"form-row ctrl-wrap{wrapClasses}\">{control}</div>\n",
-  'controlWrapErrorClass' => '',
   // Template for control with associated buttons/icons to appear to the side.
   'controlAddonsWrap' => "{control}{addons}",
   'justControl' => "{control}\n",
@@ -47,20 +66,9 @@ $indicia_templates = [
   'labelAfter' => '<label for="{id}"{labelClass}>{label}</label>',
   'toplabel' => '<label data-for="{id}"{labelClass}>{label}:</label>',
   'toplabelNoColon' => '<label data-for="{id}"{labelClass}>{label}</label>',
-  'suffix' => "\n",
-  'requiredsuffix' => "<span class=\"deh-required\">*</span>",
   'button' => '<button id="{id}" type="button" title="{title}"{class}>{caption}</button>',
-  // Button classes. If changing these, keep the indicia-button class to ensure functionality works.
-  'buttonDefaultClass' => 'indicia-button',
-  'buttonHighlightedClass' => 'indicia-button',
-  'buttonWarningClass' => 'indicia-button',
-  'buttonSmallClass' => 'btn-xs',
-  // Classes applied to <a> when styled like a button.
-  'anchorButtonClass' => 'indicia-button',
   'submitButton' => '<input id="{id}" type="submit"{class} name="{name}" value="{caption}" />',
-  // Floats.
-  'floatLeftClass' => 'left',
-  'floatRightClass' => 'right',
+
   // Message boxes.
   'messageBox' => '<div class="page-notice ui-state-default ui-corner-all">{message}</div>',
   'warningBox' => '<div class="page-notice ui-state-highlight ui-corner-all"><span class="fas fa-exclamation-triangle"></span>{message}</div>',
@@ -73,7 +81,6 @@ $indicia_templates = [
       );\n",
   'validation_message' => "<p class=\"{class}\">{error}</p>\n",
   'validation_icon' => '<span class="ui-state-error ui-corner-all validation-icon"><span class="ui-icon ui-icon-alert"></span></span>',
-  'error_class' => 'inline-error',
   'invalid_handler_javascript' => "function(form, validator) {
           var tabselected=false;
           jQuery.each(validator.errorMap, function(ctrlId, error) {
@@ -98,8 +105,8 @@ $indicia_templates = [
   'textarea' => '<textarea id="{id}" name="{fieldname}"{class} {disabled} cols="{cols}" rows="{rows}" {title}>{default|escape}</textarea>'."\n",
   'checkbox' => '<input type="hidden" name="{fieldname}" value="0"/><input type="checkbox" id="{id}" name="{fieldname}" value="1"{class}{checked}{disabled} {title} />'."\n",
   'training' => '<input type="hidden" name="{fieldname}" value="{hiddenValue}"/><input type="checkbox" id="{id}" name="{fieldname}" value="1"{class}{checked}{disabled} {title} />'."\n",
-  'date_picker' => '<input type="text" {attribute_list} {class} id="{id}" name="{fieldname}" value="{default|escape}" style="display: none" {title}/>
-      <input type="date" {attribute_list_date} class="{datePickerClass}" id="{id}:date">' . "\n",
+  'date_picker' => '<input type="date" {attribute_list_date} class="{datePickerClass}" id="{id}:date">
+    <input type="text" {attribute_list} {class} id="{id}" name="{fieldname}" value="{default|escape}" style="display: none" {title}/>' . "\n",
   'date_picker_mode_toggle' => '<span>{vagueLabel}:</span> <label class="switch">
         <input type="checkbox" class="date-mode-toggle" id="{id}:toggle">
         <span class="slider round"></span>
@@ -128,7 +135,7 @@ $indicia_templates = [
   'autocomplete' => '<input type="hidden" class="hidden" id="{id}" name="{fieldname}" value="{default|escape}" />' .
       '<input id="{inputId}" name="{inputId}" type="text" value="{defaultCaption|escape}" {class} {disabled} {title} {attribute_list} data-hiddenvalueinput="{id}" />' . "\n",
   'autocomplete_javascript' => "
-$('input#{escaped_input_id}').change(function() {
+$('input#{escaped_input_id}').on('change', function() {
   if ($('input#{escaped_id}').data('set-for') !== $('input#{escaped_input_id}').val()) {
     $('input#{escaped_id}').val('');
   }
@@ -908,7 +915,6 @@ class helper_base {
    *   * wizardprogress
    *   * spatialReports
    *   * jsonwidget
-   *   * timeentry
    *   * verification
    *   * complexAttrGrid
    *   * footable
@@ -1235,9 +1241,6 @@ class helper_base {
             self::$js_path . 'jquery.jsonwidget.js',
           ],
           'stylesheets' => [self::$css_path . 'jsonwidget.css'],
-        ],
-        'timeentry' => [
-          'javascript' => [self::$js_path . 'jquery.timeentry.min.js'],
         ],
         'verification' => [
           'javascript' => [self::$js_path . 'verification.js'],
@@ -1739,7 +1742,9 @@ class helper_base {
         $r .= self::getParamsFormControl($key, $info, $options, $tools);
         // If that was a visible setting, then we have to tell the caller that
         // there is something to show.
-        if (!isset($options['extraParams']) || !array_key_exists($key, $options['extraParams'])) {
+        // Do not include the idlist when deciding if parameters
+        // should be visible, as that param is not for human input.
+        if (!isset($options['extraParams']) || (!array_key_exists($key, $options['extraParams']) && $key !== 'idlist')) {
           $hasVisibleContent = TRUE;
         }
       }
@@ -2493,7 +2498,9 @@ HTML;
       'warningBox' => $indicia_templates['warningBox'],
       'buttonDefaultClass' => $indicia_templates['buttonDefaultClass'],
       'buttonHighlightedClass' => $indicia_templates['buttonHighlightedClass'],
-      'buttonSmallClass' => 'btn-xs',
+      'buttonSmallClass' => $indicia_templates['buttonSmallClass'],
+      'inputGroupClass' => $indicia_templates['inputGroupClass'],
+      'inputGroupAddonClass' => $indicia_templates['inputGroupAddonClass'],
       'jQueryValidateErrorClass' => $indicia_templates['error_class'],
       'twoCol50' => $indicia_templates['two-col-50-js']
     ], self::$indiciaData['templates']);
@@ -2770,7 +2777,7 @@ var validator = $('#" . self::$validated_form_id . "').validate({
   errorPlacement: function(error, element) {
     var jqBox, nexts;
     // If using Bootstrap input-group class, put the message after the group
-    var inputGroup = $(element).closest('.input-group');
+    var inputGroup = $(element).closest('.' + indiciaData.templates.inputGroupClass);
     if (inputGroup.length) {
       element = inputGroup;
     } else {

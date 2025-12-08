@@ -518,7 +518,7 @@ mapInitialisationHooks.push(function (div) {
     </form>
   </div>';
         data_entry_helper::$late_javascript .= "
-$('#filter_date_from').change(function() {
+$('#filter_date_from').on('change', function() {
   $('#downloads form [name=params]').each(function(idx, elem) {
     var params = JSON.parse($(elem).val()),
         newValue = $('#filter_date_from').val();
@@ -530,7 +530,7 @@ $('#filter_date_from').change(function() {
     $(elem).val(JSON.stringify(params));
   });
 });
-$('#filter_date_to').change(function() {
+$('#filter_date_to').on('change', function() {
   $('#downloads form [name=params]').each(function(idx, elem) {
     var params = JSON.parse($(elem).val()),
         newValue = $('#filter_date_to').val();
@@ -542,7 +542,7 @@ $('#filter_date_to').change(function() {
     $(elem).val(JSON.stringify(params));
   });
 });
-$('#filter_date_from,#filter_date_to').change();
+$('#filter_date_from,#filter_date_to').trigger('change');
 ";
       }
       // Create Map
@@ -971,7 +971,7 @@ jQuery('#SurveyForm').ajaxForm({
       data_entry_helper::$javascript .= "
           jQuery('#occurrence\\\\:record_status').val(jQuery('#smpAttr\\\\:".$attributes[$sample_closure_id]['attributeId'].":checked').length > 0 ? 'C' : 'I');
           if(jQuery('#main-sample-deleted:checked').length > 0){
-            jQuery('#return-to-main').click();
+            jQuery('#return-to-main').trigger('click');
             return;
           };\n";
     }
@@ -1041,7 +1041,7 @@ if(jQuery('#SurveyForm > input[name=sample\\:id]').val() != ''){
             switch(\"".$args["on_save_survey_nav"]."\"){
 				case \"list\":
 					var a = $('ul.ui-tabs-nav a')[2];
-					$(a).click();
+					$(a).trigger('click');
 					break;
 				case \"survey\":
 					break;
@@ -1050,12 +1050,12 @@ if(jQuery('#SurveyForm > input[name=sample\\:id]').val() != ''){
     	data_entry_helper::$javascript .= "
 					if(jQuery('#main-sample-closed').val() == 0){
 						var a = $('ul.ui-tabs-nav a')[1];
-						$(a).click();
+						$(a).trigger('click');
 					};";
     } else {
     	data_entry_helper::$javascript .= "
 					var a = $('ul.ui-tabs-nav a')[1];
-					$(a).click();";
+					$(a).trigger('click');";
     }
     data_entry_helper::$javascript .= "
 					break;
@@ -1273,11 +1273,11 @@ jQuery('#occ-form').ajaxForm({
 			switch(\"".$args["on_save_occurrence_nav"]."\"){
 				case \"list\":
 					a = $('ul.ui-tabs-nav a')[2];
-					$(a).click();
+					$(a).trigger('click');
 					break;
 				case \"survey\":
 					a = $('ul.ui-tabs-nav a')[0];
-					$(a).click();
+					$(a).trigger('click');
 					break;
 				default:
 					break;
@@ -1321,10 +1321,10 @@ setAtlasStatus = function() {
       }
   }
 };
-jQuery(\"#occ-territorial\").change(setAtlasStatus);
+jQuery(\"#occ-territorial\").on('change', setAtlasStatus);
 if($.browser.msie) {
-    jQuery(\"#occ-territorial\").click(function() {
-        $(this).change();
+    jQuery(\"#occ-territorial\").on('click', function() {
+        $(this).trigger('change');
     });
 }
 \n";
@@ -1411,8 +1411,8 @@ locationChange = function(obj){
 jQuery('#imp-location').each(function(){
   locationChange(this);
 });
-jQuery('#imp-location').unbind('change');
-jQuery('#imp-location').change(function(){
+jQuery('#imp-location').off('change');
+jQuery('#imp-location').on('change', function(){
   locationChange(this);
 });
 var selected = indiciaFns.activeTab($('#controls'));

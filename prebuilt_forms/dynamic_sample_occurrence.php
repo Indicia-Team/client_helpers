@@ -926,6 +926,10 @@ TXT;
    * Override get_form_html to add extra functionality.
    */
   protected static function get_form_html($args, $auth, $attributes) {
+    $trainingModeInconsistencyMessage = self::getTrainingModeInconsistencyMessage();
+    if (!empty($trainingModeInconsistencyMessage)) {
+      return $trainingModeInconsistencyMessage;
+    }
     self::addNewSampleFromExistingSampleEntityToLoadRemover($args);
     group_authorise_form($args, $auth['read']);
     // We always want an autocomplete formatter function for species lookups.
@@ -1019,6 +1023,38 @@ TXT;
         'Use the "Save and publish" button to publish them when you are ready for them to be released.'));
     }
     return $r;
+  }
+
+  /**
+   * Disallow loading of samples which don't match the user's training setting.
+   *
+   * Do not allow samples to be loaded which do not match the user's
+   * account training mode setting (otherwise saving the sample
+   * will switch the training setting on the sample, unbeknown to the user)
+   *
+   * @return string
+   *   HTML for the control.
+   */
+  private static function getTrainingModeInconsistencyMessage() {
+    if (function_exists('hostsite_get_user_field')  &&
+        (!empty($_GET['sample_id']) || !empty($_GET['occurrence_id']))) {
+      $trainingSample = 0;
+      if (!empty(data_entry_helper::$entity_to_load['sample:training']) &&
+          data_entry_helper::$entity_to_load['sample:training'] == 't') {
+        $trainingSample = 1;
+      }
+      if (hostsite_get_user_field('training') == 1 &&
+          $trainingSample == 0) {
+        return lang::get('<div>The sample cannot be displayed because your account is in training mode,
+          but the sample being loaded is not a training sample.</div>');
+      }
+      if (hostsite_get_user_field('training') == 0 &&
+          $trainingSample == 1) {
+        return lang::get('<div>The sample cannot be displayed because your account is not in training mode,
+        and the sample being loaded is a training sample.</div>');
+      }
+    }
+    return '';
   }
 
   /**
@@ -3068,7 +3104,7 @@ JS;
     }
     $r = '<div><input id="pending_release_status" type="checkbox" checked="checked" name="occurrence:release_status" value="P">' . $options['label'] . '</div>';
     data_entry_helper::$javascript .= "
-    $('#pending_release_status').change(function() {
+    $('#pending_release_status').on('change', function() {
       if ($('#pending_release_status').is(':checked')) {
         $('#pending_release_status').val('P');
       } else {
@@ -3515,7 +3551,7 @@ TXT;
   HTML;
         $msg = str_replace("'", "\'", lang::get('Are you sure you want to delete this {1}?', $formType));
         data_entry_helper::$javascript .= <<<JS
-  $('#delete-button').click(function(e) {
+  $('#delete-button').on('click', function(e) {
     if (!confirm('$msg')) {
       e.preventDefault();
       return false;

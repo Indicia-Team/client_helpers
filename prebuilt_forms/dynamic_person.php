@@ -238,7 +238,7 @@ class iform_dynamic_person extends iform_dynamic {
       //form I have commented out the deletion code as I am currently uncertain of the suitability of this considering users can be
       //linked to user accounts. I don't want cause breakages, you may resinstate/extend this as required in the future when it is needed, for now it is not needed.
       /*
-      data_entry_helper::$javascript .= "$('#delete-button').click(function(e) {
+      data_entry_helper::$javascript .= "$('#delete-button').on('click', function(e) {
         if (!confirm(\"Are you sure you want to delete this person?\")) {
           e.preventDefault();
           return false;

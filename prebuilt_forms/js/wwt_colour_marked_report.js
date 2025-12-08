@@ -343,38 +343,38 @@
 
   var setHandlers = function(scope) {
     // install a change handler for the colour selecters to set the ring colours
-    $('select.select_colour', scope).bind('change', function(event) {
+    $('select.select_colour', scope).on('change', function(event) {
       autoSetCheckbox(this);
       setIdentifierVisualisation(this);
     });
     // install a keyup handler for the colour selecters to set the ring sequence
-    $('input.identifier_sequence', scope).bind('keyup', function(event) {
+    $('input.identifier_sequence', scope).on('keyup', function(event) {
       $(this).val($(this).val().toUpperCase());
       autoSetCheckbox(this);
       setIdentifierVisualisation(this);
     });
     // install a change handler for the colour selecters to set the ring sequence
-    $('input.identifier_sequence', scope).bind('change', function(event) {
+    $('input.identifier_sequence', scope).on('change', function(event) {
       $(this).val($(this).val().toUpperCase());
       autoSetCheckbox(this);
       setIdentifierVisualisation(this);
     });
     // install a change handler for the taxon hidden fields to trigger change on their inputs
-    $("input[id$='occurrence:taxa_taxon_list_id']", scope).bind('change', function(event) {
-      $('#'+esc4jq(this.id+':taxon')).change();
+    $("input[id$='occurrence:taxa_taxon_list_id']", scope).on('change', function(event) {
+      $('#'+esc4jq(this.id+':taxon')).trigger('change');
     });
     // install a change handler for the taxon selecters to set the pictures and header
-    $('.select_taxon', scope).bind('change', function(event) {
+    $('.select_taxon', scope).on('change', function(event) {
       setTaxonPicture(this);
       setTaxonHeader(this);
     });
     // install an additional 'blur' handler for the autocomplete taxon selecters to set the pictures and header
-    $('input.select_taxon', scope).bind('blur', function(event) {
+    $('input.select_taxon', scope).on('blur', function(event) {
       setTaxonPicture(this);
       setTaxonHeader(this);
     });
     // install a click handler for the remove individual button
-    $('input.idn-remove-individual', scope).bind('click', function(event) {
+    $('input.idn-remove-individual', scope).on('click', function(event) {
       removeIndividual(this);
     });
   };
@@ -549,7 +549,7 @@
     // hide remove buttons if only one bird or for birds which exist on database
     setRemoveButtonDisplay();
     // install a click handler for the 'add another' button
-    $('input#idn\\:add-another').click(function(event) {
+    $('input#idn\\:add-another').on('click', function(event) {
       addIndividual();
     });
   };

@@ -11,7 +11,7 @@ function createNewSample(code, force) {
   } else {
     $('#smpid').val('');
   }
-  
+
   $.each(indiciaData.sections, function(idx, section) {
     if (section.code==code) {
       // copy the fieldname and value into the sample submission form for each sample custom attribute
@@ -28,7 +28,7 @@ function createNewSample(code, force) {
 }
 
 $(document).ready(function() {
-  $('#imp-location').change(function(evt) {
+  $('#imp-location').on('change', function(evt) {
     $('#entered_sref').val(indiciaData.sites[evt.target.value].centroid_sref);
     $('#entered_sref_system').val(indiciaData.sites[evt.target.value].centroid_sref_system);
   });
@@ -116,7 +116,7 @@ function loadSpeciesList() {
         $('tfoot .col-total.col-'+(idx+1)).html(section.total);
       });
 
-      $('.count-input').keydown(function (evt) {
+      $('.count-input').on('keydown', function (evt) {
         var targetRow = [], code, parts=evt.target.id.split(':');
         code=parts[2];
 
@@ -131,7 +131,7 @@ function loadSpeciesList() {
         var targetInput = [];
         if (targetRow.length>0) {
           targetInput = $('#value\\:' + targetRow[0].id.substr(4) + '\\:' + code);
-        }        
+        }
         // right arrow - move to next cell if at end of text
         if (evt.keyCode===39 && evt.target.selectionEnd >= evt.target.value.length) {
           targetInput = $(evt.target).parents('td').next('td').find('input');
@@ -169,10 +169,10 @@ function loadSpeciesList() {
         $(evt.target).parents('table:first').find('tbody .col-'+colidx).addClass('table-selected');
         $(evt.target).parents('table:first').find('thead .col-'+colidx).addClass('ui-state-active');
       });
-      $('.count-input,.smp-input').change(function(evt) {
+      $('.count-input,.smp-input').on('change', function(evt) {
         $(evt.target).addClass('edited');
       });
-      $('.count-input,.smp-input').blur(function(evt) {        
+      $('.count-input,.smp-input').on('blur', function(evt) {
         var selector = '#'+evt.target.id.replace(/:/g, '\\:');
         currentCell = evt.target.id;
         getTotal(evt.target);

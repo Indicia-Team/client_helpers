@@ -90,7 +90,7 @@ jQuery(document).ready(($) => {
     }
     // On startup, draw any grid refs.
     if ($('#geography\\:grid_refs').val() !== '') {
-      $('#geography\\:grid_refs').change();
+      $('#geography\\:grid_refs').trigger('change');
     }
   });
 
@@ -107,7 +107,7 @@ jQuery(document).ready(($) => {
   /**
    * Handle when grid ref(s) input into the list box.
    */
-  $('#geography\\:grid_refs').change(function() {
+  $('#geography\\:grid_refs').on('change', function() {
     const gridRefs = $('#geography\\:grid_refs').val().toUpperCase().split(/\n/);
     // Clear other types of geography limit so we only have one.
     $('.lat-lng-input').val('');
@@ -136,6 +136,7 @@ jQuery(document).ready(($) => {
       if (gridRef.trim() !== '' && indiciaData.gridRefsOnMap.indexOf(gridRef) === -1) {
         $.ajax({
           dataType: 'jsonp',
+          crossDomain: true,
           url: indiciaData.warehouseUrl + 'index.php/services/spatial/sref_to_wkt',
           data: 'sref=' + gridRef +
             '&system=' + $('#imp-sref-system').val() +
@@ -189,7 +190,7 @@ jQuery(document).ready(($) => {
    *
    * Clears other data. Draws a bounding box if all values available.
    */
-  $('.lat-lng-input').change(function() {
+  $('.lat-lng-input').on('change', function() {
     indiciaData.displayLayer.removeAllFeatures();
     // Clear other types of geography limit so we only have one.
     $('#geography\\:grid_refs').val('');
@@ -219,7 +220,7 @@ jQuery(document).ready(($) => {
   });
 
   // Location type filter for higher geo areas.
-  $('#geography\\:location_type').change(() => {
+  $('#geography\\:location_type').on('change', () => {
     $('input#geography\\:location_list\\:search\\:name').setExtraParams({
       location_type_id: $('#geography\\:location_type').val()
     });
@@ -243,21 +244,30 @@ jQuery(document).ready(($) => {
       }
     });
     if (locationId && !found) {
-      $.getJSON(indiciaData.read.url + 'index.php/services/data/location/' + locationId +
-              '?mode=json&view=detail&auth_token=' + indiciaData.read.auth_token + '&nonce=' + indiciaData.read.nonce + '&callback=?')
-        .done(function (data) {
-          if (data.length > 0) {
-            const parser = new OpenLayers.Format.WKT();
-            const geomwkt = data[0].boundary_geom || data[0].centroid_geom;
-            const feature = parser.read(geomwkt);
-            feature.id = 'higherGeo:' + locationId;
-            feature.attributes.type = 'higherGeo';
-            if (indiciaData.mapdiv.indiciaProjection.getCode() !== indiciaData.mapdiv.map.projection.getCode()) {
-              feature.geometry.transform(indiciaData.mapdiv.indiciaProjection, indiciaData.mapdiv.map.projection);
-            }
-            indiciaData.displayLayer.addFeatures([feature]);
+      $.ajax({
+        url: indiciaData.read.url + 'index.php/services/data/location/' + locationId,
+        data: {
+          mode: 'json',
+          view: 'detail',
+          auth_token: indiciaData.read.auth_token,
+          nonce: indiciaData.read.nonce
+        },
+        dataType: 'jsonp',
+        crossDomain: true
+      })
+      .done(function (data) {
+        if (data.length > 0) {
+          const parser = new OpenLayers.Format.WKT();
+          const geomwkt = data[0].boundary_geom || data[0].centroid_geom;
+          const feature = parser.read(geomwkt);
+          feature.id = 'higherGeo:' + locationId;
+          feature.attributes.type = 'higherGeo';
+          if (indiciaData.mapdiv.indiciaProjection.getCode() !== indiciaData.mapdiv.map.projection.getCode()) {
+            feature.geometry.transform(indiciaData.mapdiv.indiciaProjection, indiciaData.mapdiv.map.projection);
           }
-        });
+          indiciaData.displayLayer.addFeatures([feature]);
+        }
+      });
     }
   });
 

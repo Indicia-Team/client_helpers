@@ -338,7 +338,7 @@ class iform_report_calendar_grid implements PrebuiltFormInterface {
   	// their values to be carried over.
   	$prop = ($checkBox) ? 'attr("checked")' : 'val()';
   	data_entry_helper::$javascript .="
-jQuery('#".$ctrlid."').change(function(){
+jQuery('#".$ctrlid."').on('change', function(){
   $.fancyDialog({ title: 'Loading...', message: 'Please wait whilst the next set of data is loaded.', cancelButton: null });
   // no need to update other controls on the page, as we jump off it straight away.
   var newUrl = rebuild_page_url(pageURI, \"".$urlparam."\", jQuery(this).$prop, ['".implode("','",$skipParams)."']);

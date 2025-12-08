@@ -459,7 +459,7 @@ class data_entry_helper extends helper_base {
           ? json_decode($options['default'][$i]['default'], TRUE)
           : explode($options['encoding'], $options['default'][$i]['default']);
       }
-      else {
+      if (empty($defaults)) {
         $defaults = [];
       }
 
@@ -529,7 +529,7 @@ class data_entry_helper extends helper_base {
       $escaped = str_replace(':', '\\\\:', $options['rowCountControl']);
       data_entry_helper::$javascript .=
         "$('#$escaped').val($rowCount);
-$('#$escaped').change(function(e) {
+$('#$escaped').on('change', function(e) {
   changeComplexGridRowCount('$escaped', '$attrTypeTag', '$attrId');
 });\n";
     }
@@ -1093,7 +1093,7 @@ JS;
    *     non-zero.
    *   * upload - Boolean, defaults to true.
    *   * maxFileCount - Maximum number of files to allow upload for. Defaults
-   *     to 4. Set to false to allow unlimited files.
+   *     to 8. Set to false to allow unlimited files.
    *   * maxUploadSize - Maximum file size to allow in bytes. This limits file
    *     selection. PHP settings on server may limit upload.
    *   * autoupload - Defaults to true. If false, then a button is displayed
@@ -1152,6 +1152,7 @@ JS;
    */
   public static function file_box(array $options) {
     global $indicia_templates;
+    self::add_resource('font_awesome');
     // If a subType option is supplied, it means we only want to load a
     // particular media type, not just any old media associated with the
     // sample.
@@ -1175,7 +1176,7 @@ JS;
     $defaults = [
       'id' => 'default',
       'upload' => TRUE,
-      'maxFileCount' => 4,
+      'maxFileCount' => 8,
       'msgUploadError' => lang::get('upload error'),
       'msgFileTooBig' => lang::get('file too big for warehouse'),
       'runtimes' => ['html5', 'flash', 'silverlight', 'html4'],
@@ -1819,7 +1820,7 @@ JS;
       });
       html += '</select>';
       obj=$(html);
-      obj.change(function(evt) {
+      obj.on('change', function(evt) {
         $(evt.target).closest('.hierarchical-select-cntr').find('input[type="hidden"]').val($(evt.target).val());
         pickHierarchySelectNode($(evt.target),true);
       });
@@ -1827,7 +1828,7 @@ JS;
     }
   }
 
-  $('#$safeId').change(function(evt) {
+  $('#$safeId').on('change', function(evt) {
     $(evt.target).closest('.hierarchical-select-cntr').find('input[type="hidden"]').val($(evt.target).val());
     pickHierarchySelectNode($(evt.target),true);
   });
@@ -1859,7 +1860,7 @@ JS;
   thisselect = $('#$safeId');
   while (tree.length>0) {
     toselect = tree.pop();
-    thisselect.val(toselect).change();
+    thisselect.val(toselect).trigger('change');
     thisselect = thisselect.next();
   }
 }) ();
@@ -2116,7 +2117,7 @@ JS;
     if ($options['fetchLocationAttributesIntoSample'] &&
         function_exists('hostsite_get_user_field') && ($createdById = hostsite_get_user_field('indicia_user_id'))) {
       self::$javascript .= <<<JS
-$('#$escapedId').change(function() {
+$('#$escapedId').on('change', function() {
   indiciaFns.locationControl.fetchLocationAttributesIntoSample('$options[id]', $createdById);
 });
 
@@ -2129,7 +2130,7 @@ JS;
       $ctrlNameSafe = str_replace(':', '\\\\:', $options['id']);
       self::$javascript .= <<<JS
 indiciaData.langMoreThanOneLocationMatch = '$langMoreThanOneLocationMatch';
-$('#imp-geom').change(function() {
+$('#imp-geom').on('change', function() {
   indiciaFns.locationControl.autoFillLocationFromLocationTypeId('$options[id]', $options[autofillFromLocationTypeId]);
 });
 $('#$ctrlNameSafe\\\\:name').addClass('validateLinkedLocationAgainstGridSquare');
@@ -2335,18 +2336,18 @@ JS;
   /**
    * Helper function to list the output from a request against the data services, using an HTML template
    * for each item. As an example, the following outputs an unordered list of surveys:
-   * <pre>echo data_entry_helper::list_in_template(array(
+   * ```
+   * echo data_entry_helper::list_in_template(array(
    *     'label' => 'template',
    *     'table' => 'survey',
    *     'extraParams' => $readAuth,
    *     'template' => '<li>|title|</li>'
-   * ));</pre>
-   * The output of this control can be configured using the following templates:
-   * <ul>
-   * <li><b>list_in_template</b></br>
-   * HTML template used to generate the outer container.
-   * </li>
-   * </ul>
+   * ));
+   * ```
+   * The output of this control can be configured using the following
+   * templates:
+   * * **list_in_template** - HTML template used to generate the outer
+   *   container.
    *
    * @param array $options
    *   Options array with the following possibilities:
@@ -2491,17 +2492,18 @@ JS;
   }
 
   /**
-   * Helper function to output a textbox for determining a locality from an entered postcode.
+   * Textbox for determining a locality from an entered postcode.
    *
-   * <p>The textbox optionally includes hidden fields for the latitude and longitude and can
-   * link to an address control for automatic generation of address information. When the focus
-   * leaves the textbox, the Google AJAX Search API is used to obtain the latitude and longitude
-   * so they can be saved with the record.</p>
+   * The textbox optionally includes hidden fields for the latitude and
+   * longitude and can link to an address control for automatic generation of
+   * address information. When the focus leaves the textbox, the Google AJAX
+   * Search API is used to obtain the latitude and longitude so they can be
+   * saved with the record.
    *
-   * <p>The following example displays a postcode box and an address box, which is auto-populated
-   * when a postcode is given. The spatial reference controls are "hidden" from the user but
-   * are available to post into the database.</p>
-   * <code>
+   * The following example displays a postcode box and an address box, which is
+   * auto-populated when a postcode is given. The spatial reference controls
+   * are "hidden" from the user but are available to post into the database.
+   * ```
    * <?php echo data_entry_helper::postcode_textbox(array(
    *     'label' => 'Postcode',
    *     'fieldname' => 'smpAttr:8',
@@ -2512,38 +2514,39 @@ JS;
    *     'id' => 'address',
    *     'fieldname' => 'smpAttr:9'
    * ));?>
-   * </code>
-   * <p>The output of this control can be configured using the following templates:</p>
-   * <ul>
-   * <li><b>postcode_textbox</b></br>
-   * Template which outputs the HTML for the text input control used. Must have an onblur event handler
-   * which calls the JavaScript required to search for the post code.
-   * </li>
-   * </ul>
+   * ```
    *
-   * @param array $options Options array with the following possibilities:<ul>
-   * <li><b>fieldname</b><br/>
-   * Required. The name of the database field this control is bound to.</li>
-   * <li><b>id</b><br/>
-   * Optional. The id to assign to the HTML control. This should be left to its default value for
-   * integration with other mapping controls to work correctly.</li>
-   * <li><b>default</b><br/>
-   * Optional. The default value to assign to the control. This is overridden when reloading a
-   * record with existing data for this control.</li>
-   * <li><b>class</b><br/>
-   * Optional. CSS class names to add to the control.</li>
-   * <li><b>hiddenFields</b><br/>
-   * Optional. Set to true to insert hidden inputs to receive the latitude and longitude. Otherwise there
-   * should be separate sref_textbox and sref_system_textbox controls elsewhere on the page. Defaults to true.
-   * <li><b>srefField</b><br/>
-   * Optional. Name of the spatial reference hidden field that will be output by this control if hidddenFields is true.</li>
-   * <li><b>systemField</b><br/>
-   * Optional. Name of the spatial reference system hidden field that will be output by this control if hidddenFields is true.</li>
-   * <li><b>linkedAddressBoxId</b><br/>
-   * Optional. Id of the separate textarea control that will be populated with an address when a postcode is looked up.</li>
-   * </ul>
+   * The output of this control can be configured using the following
+   * templates:
+   * * **postcode_textbox** - Template which outputs the HTML for the text
+   *   input control used. Must have an onblur event handler which calls the
+   *   JavaScript required to search for the post code.
    *
-   * @return string HTML to insert into the page for the postcode control.
+   * @param array $options
+   *   Options array with the following possibilities:
+   *   * **fieldname** - Required. The name of the database field this control
+   *     is bound to.
+   *   * **id** - Optional. The id to assign to the HTML control. This should
+   *     be left to its default value for integration with other mapping
+   *     controls to work correctly.
+   *   * **default** - Optional. The default value to assign to the control.
+   *     This is overridden when reloading a record with existing data for this
+   *     control.
+   *   * **class** - Optional. CSS class names to add to the control.
+   *   * **hiddenFields** -    * Optional. Set to true to insert hidden inputs
+   *     to receive the latitude and longitude. Otherwise there should be
+   *     separate sref_textbox and sref_system_textbox controls elsewhere on
+   *     the page. Defaults to true.
+   *   * **srefField** - Optional. Name of the spatial reference hidden field
+   *     that will be output by this control if hidddenFields is true.
+   *   * **systemField** - Optional. Name of the spatial reference system
+   *     hidden field that will be output by this control if hidddenFields is
+   *     true.
+   *   * **linkedAddressBoxId** - Optional. Id of the separate textarea control
+   *     that will be populated with an address when a postcode is looked up.
+   *
+   * @return string
+   *   HTML to insert into the page for the postcode control.
    */
   public static function postcode_textbox($options) {
     if (empty(self::$google_api_key))
@@ -3210,7 +3213,7 @@ JS;
       $options['defaultCaption'] = $r[0]['taxon'];
     }
     if ($options['outputPreferredNameToSelector']) {
-      self::$javascript .= "  $('#occurrence\\\\:taxa_taxon_list_id').change(function(evt, data) {
+      self::$javascript .= "  $('#occurrence\\\\:taxa_taxon_list_id').on('change', function(evt, data) {
         if (typeof data!=='undefined') {
           $('$options[outputPreferredNameToSelector]').html(data.preferred_taxon);
         }
@@ -4383,7 +4386,7 @@ HTML;
         $r .= "<input type=\"hidden\" name=\"scSpatialRefPrecisionAttrId\" value=\"$options[spatialRefPrecisionAttrId]\" />";
       }
       $r .= self::get_help_text($options, 'after');
-      self::$javascript .= "$('#$options[id]').find('input,select').keydown(keyHandler);\n";
+      self::$javascript .= "$('#$options[id]').find('input,select').on('keydown', keyHandler);\n";
       self::speciesChecklistFilterPopup($options);
       if ($options['subSamplePerRow']) {
         // Output a hidden block to contain sub-sample hidden input values.
@@ -4399,14 +4402,19 @@ HTML;
           lang::get('You are editing a single record that is part of a larger list of records, so any changes to the overall information such as edits to the date or map reference will affect the whole list of records.') .
           "<br/><button type=\"button\" class=\"$indicia_templates[buttonDefaultClass]\" id=\"species-grid-view-all-$options[id]\">" . lang::get('Show the full list of records for editing or addition of more records.') . '</button>',
           $indicia_templates['warningBox']) . $r;
-        self::$javascript .= "$('#species-grid-view-all-$options[id]').click(function(e) {
-  $('#$options[id] tbody tr').show();
-  $(e.currentTarget).hide();
-});\n";
-        self::$onload_javascript .= "
-if ($('#$options[id]').parents('.ui-tabs-panel').length) {
-  indiciaFns.activeTab($('#controls'), $('#$options[id]').parents('.ui-tabs-panel')[0].id);
-}\n";
+        self::$javascript .= <<<JS
+          $('#species-grid-view-all-$options[id]').on('click', function(e) {
+            $('#$options[id] tbody tr').show();
+            $(e.currentTarget).hide();
+          });
+
+        JS;
+        self::$onload_javascript .= <<<JS
+          if ($('#$options[id]').parents('.ui-tabs-panel').length) {
+            indiciaFns.activeTab($('#controls'), $('#$options[id]').parents('.ui-tabs-panel')[0].id);
+          }
+
+        JS;
       }
       if ($options['mediaTypes']) {
         $r .= self::addLinkPopup($options);
@@ -6703,10 +6711,10 @@ var doSensitivityChange = function(evt) {
     $('#sensitive-blur').val('');
   }
 };
-$('#sensitive-checkbox').change(doSensitivityChange);
+$('#sensitive-checkbox').on('change', doSensitivityChange);
 $('#sensitive-checkbox').attr('checked', $('#sensitive-blur').val()==='' ? false : true);
 doSensitivityChange();
-$('#sensitive-blur').change(function() {
+$('#sensitive-blur').on('change', function() {
   if ($('#sensitive-blur').val()==='') {
     $('#sensitive-checkbox').attr('checked', false);
     doSensitivityChange();
@@ -6717,61 +6725,33 @@ $('#sensitive-blur').change(function() {
   }
 
   /**
-   * A control for inputting a time value. Provides a text input with a spin control that allows
-   * the time to be input. Reverts to a standard text input when JavaScript disabled.
-   * @param array $options Options array with the following possibilities:
-   * <ul>
-   * <li><b>fieldname</b><br/>
-   * Required. The name of the database field this control is bound to.</li>
-   * <li><b>id</b><br/>
-   * Optional. The id to assign to the HTML control. If not assigned the fieldname is used.</li>
-   * <li><b>default</b><br/>
-   * Optional. The default value to assign to the control. This is overridden when reloading a
-   * record with existing data for this control.</li>
-   * <li><b>class</b><br/>
-   * Optional. CSS class names to add to the control.</li>
-   * <li><b>beforeSetTime</b><br/>
-   * Optional. Set this to the name of a JavaScript function which is called when the user tries to set a time value. This
-   * can be used, for example, to display a warning label when an out of range time value is input. See <a '.
-   * href="http://keith-wood.name/timeEntry.html">jQuery Time Entry</a> then click on the Restricting tab for more information.</li>
-   * <li><b>timeSteps</b><br/>
-   * Optional. An array containing 3 values for the allowable increments in time for hours, minutes and seconds respectively. Defaults to
-   * 1, 15, 0 meaning that the increments allowed are in 15 minute steps and seconds are ignored.</li>
-   * <li><b>show24Hours</b><br/>
-   * Optional. True to use 24 hour time, false for 12 hour (AM/PM)</li>
-   * </ul>
+   * A control for inputting a time value.
+   *
+   * Outputs an HTML5 time control. Exact behaviour will depend on the browser.
+   *
    * The output of this control can be configured using the following templates:
-   * <ul>
-   * <li><b>text_input</b></br>
-   * HTML template used to generate the input element. Time management aspects of this are managed
-   * by JavaScript.
-   * </li>
-   * </ul>
+   * * *text_input* - HTML template used to generate the input element.
+   *
+   * @param array $options
+   *   Options array with the following possibilities:
+   *   * *fieldname* - Required. The name of the database field this control is
+   *     bound to.
+   *   * *id* - Optional. The id to assign to the HTML control. If not assigned
+   *     the fieldname is used.
+   *   * *default* - Optional. The default value to assign to the control. This
+   *     is overridden when reloading a record with existing data for this
+   *     control.
+   *   * *class* - Optional. CSS class names to add to the control.
+   *   * *step* - the granularity which the value must adhere to in minutes.
+   *     Defaults to 'any'.
    */
   public static function time_input($options) {
-    $options = array_merge(array(
-      'id' => $options['fieldname'],
-      'default' => '',
-      'timeSteps' => array(1,15,0),
-      'show24Hours' => FALSE,
-      'isFormControl' => TRUE
-    ), $options);
-    self::add_resource('timeentry');
-    $steps = implode(', ', $options['timeSteps']);
-    $imgPath = empty(self::$images_path) ? self::relative_client_helper_path() . "../media/images/" : self::$images_path;
-    $show24Hours = ($options['show24Hours'] === TRUE) ? 'true' : 'false';
-    // build a list of options to pass through to the jQuery widget
-    $jsOpts = array(
-      "timeSteps: [$steps]",
-      "spinnerImage: '".$imgPath."/spinnerGreen.png'",
-      "show24Hours: $show24Hours",
-    );
-    if (isset($options['beforeSetTime']))
-      $jsOpts[] = "beforeSetTime: ".$options['beforeSetTime'];
-    // ensure ID is safe for jQuery selectors
-    $safeId = str_replace(':','\\\\:',$options['id']);
-    self::$javascript .= "$('#".$safeId."').timeEntry({".implode(', ', $jsOpts) . "});\n";
-    return self::apply_template('text_input', $options);
+    $options = array_merge([
+      'attributes' => [],
+    ], $options);
+    $options['attributes']['type'] = 'time';
+    $options['attributes']['step'] = $options['step'] ?? 'any';
+    return self::text_input($options);
   }
 
   /**
@@ -7129,7 +7109,7 @@ $('div#$escaped_divId').indiciaTreeBrowser({
           ]);
           $msg = lang::get('Are you sure you want to delete this form?');
           self::$javascript .= <<<JS
-$('#tab-delete').click(function(e) {
+$('#tab-delete').on('click', function(e) {
   if (!confirm('$msg')) {
     e.preventDefault();
     return false;
@@ -7734,7 +7714,7 @@ HTML;
       $showHideFn = 'show_hide_other_' . str_replace(':', '', $options['otherValueAttrId']) . '()';
       //Set the visibility of the "Other" textbox based on the checkbox when the page loads, but also when the checkbox changes.
       self::$javascript .= $showHideFn . ';
-        $("input[name='.$mainAttributeNameSafe.']").change(function() {
+        $("input[name='.$mainAttributeNameSafe.']").on("change", function() {
           ' . $showHideFn . ';
         });
       ';

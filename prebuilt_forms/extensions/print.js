@@ -182,9 +182,9 @@ jQuery(document).ready(function enablePdf($) {
   }
 
   // Button handlers
-  $('#show-pdf-options').click(showOptions);
-  $('#convert-to-pdf').click(convertToPdf);
-  $('#pdf-options-cancel').click(function cancel() {
+  $('#show-pdf-options').on('click', showOptions);
+  $('#convert-to-pdf').on('click', convertToPdf);
+  $('#pdf-options-cancel').on('click', function cancel() {
     $.fancybox.close();
   });
 });

@@ -635,7 +635,7 @@ resetSpeciesGridHeader = function(){
 }
 resetSpeciesGridHeader();
 sgRowIndex = ".$taxonRow.";
-jQuery('#speciesgrid_taxa_taxon_list_id').change(function(){
+jQuery('#speciesgrid_taxa_taxon_list_id').on('change', function(){
   jQuery.getJSON(\"".data_entry_helper::$base_url."/index.php/services/data/taxa_taxon_list/\" +jQuery('#speciesgrid_taxa_taxon_list_id').val()+
     \"?mode=json&view=detail&auth_token=".$auth['read']['auth_token']."&nonce=".$auth['read']["nonce"]."&callback=?\",
     function(tdata) {
@@ -1001,7 +1001,7 @@ hook_multisite_setGeomFields=function(feature, boundaryWKT, centreWKT){
       if(typeof data.error != 'undefined') alert(data.error);
       else newCGrow.find('.cggrid-centroid_sref').val(data.sref);});
 }
-jQuery('#dummy-name').change(function() {
+jQuery('#dummy-name').on('change', function() {
   var highlighted = gethighlight();
   if(highlighted.length == 0 || !highlighted[0].attributes['new']) {
     setNameDropDowns(true, false);

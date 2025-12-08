@@ -191,11 +191,15 @@ class VerificationHelper {
    *   Occurrence ID to check for media.
    * @param int $sampleId
    *   Sample ID to check for media.
+   * @param bool $includeInfo
+   *   Should a data-media-info attribute be included contaioning extra
+   *   information about the media file? Defaults to TRUE but set to FALSE for
+   *   images to be included in emails.
    *
    * @return string
    *   HTML.
    */
-  public static function getMedia(array $readAuth, array $params, $occurrenceId, $sampleId) {
+  public static function getMedia(array $readAuth, array $params, $occurrenceId, $sampleId, $includeInfo = TRUE) {
     iform_load_helpers(['data_entry_helper']);
     // Retrieve occurrence media for record.
     $occ_media = data_entry_helper::get_population_data([
@@ -219,11 +223,11 @@ class VerificationHelper {
       $r .= '<p>' . lang::get('Click on thumbnails to view full size') . '</p>';
       if (count($occ_media) > 0) {
         $r .= '<p class="header">' . lang::get('Record media') . '</p>';
-        $r .= self::getMediaHtml('occurrence', $occ_media);
+        $r .= self::getMediaHtml('occurrence', $occ_media, $includeInfo);
       }
       if (count($smp_media) > 0) {
         $r .= '<p class="header">' . lang::get('Sample media') . '</p>';
-        $r .= self::getMediaHtml('sample', $smp_media);
+        $r .= self::getMediaHtml('sample', $smp_media, $includeInfo);
       }
     }
     return $r;
@@ -236,15 +240,19 @@ class VerificationHelper {
    *   Root entity for the media, e.g. occurrence, sample.
    * @param array $media
    *   Media data loaded from the database.
+   * @param bool $includeInfo
+   *   Should a data-media-info attribute be included contaioning extra
+   *   information about the media file? Defaults to TRUE but set to FALSE for
+   *   images to be included in emails.
    *
    * @return string
    *   HTML.
    */
-  private static function getMediaHtml($entity, array $media) {
+  private static function getMediaHtml($entity, array $media, $includeInfo = TRUE) {
     require_once 'prebuilt_forms/includes/report.php';
     $r = '<div class="media-gallery"><ul>';
     foreach ($media as $file) {
-      $r .= iform_report_get_gallery_item($entity, $file);
+      $r .= iform_report_get_gallery_item($entity, $file, 'thumb', $includeInfo);
     }
     $r .= '</ul></div>';
     return $r;

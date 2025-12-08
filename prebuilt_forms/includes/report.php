@@ -371,11 +371,15 @@ function iform_report_apply_explore_user_own_preferences(&$reportOptions) {
  *   Media file data as loaded from a *_media table's list view.
  * @param string $imageSize
  *   Output file size, e.g. thumb or med.
+ * @param bool $includeInfo
+ *   Should a data-media-info attribute be included contaioning extra
+ *   information about the media file? Defaults to TRUE but set to FALSE for
+ *   images to be included in emails.
  *
  * @return string
  *   HTML.
  */
-function iform_report_get_gallery_item($entity, array $medium, $imageSize = 'thumb') {
+function iform_report_get_gallery_item($entity, array $medium, $imageSize = 'thumb', $includeInfo = TRUE) {
   $imageFolder = data_entry_helper::get_uploaded_image_folder();
   $captionItems = [];
   // Find the licence and caption info for the file.
@@ -389,7 +393,10 @@ function iform_report_get_gallery_item($entity, array $medium, $imageSize = 'thu
       'licence_title' => $medium['licence_title'],
     ],
   ];
-  $mediaAttr = 'data-media-info="' . htmlspecialchars(json_encode($info)) . '"';
+  $attrs = [];
+  if ($includeInfo) {
+    $attrs[] = 'data-media-info="' . htmlspecialchars(json_encode($info)) . '"';
+  }
   if (!empty($medium['caption'])) {
     $captionItems[] = $medium['caption'];
   }
@@ -399,58 +406,62 @@ function iform_report_get_gallery_item($entity, array $medium, $imageSize = 'thu
   elseif (!empty($medium['licence_code'])) {
     $captionItems[] = "Licence is $medium[licence_code]";
   }
-  $captionAttr = count($captionItems) > 0 ? ' title="' . htmlspecialchars(implode(' | ', $captionItems)) . '"' : '';
+  if (count($captionItems) > 0) {
+    $attrs[] = 'title="' . htmlspecialchars(implode(' | ', $captionItems)) . '"';
+  }
+  $attrHtml = implode(' ', $attrs);
   if ($medium['media_type'] === 'Image:Local') {
     $fullPath = substr($medium['path'], 0, 4) === 'http' ? $medium['path'] : "$imageFolder$medium[path]";
     $thumbPath = substr($medium['path'], 0, 4) === 'http' ? $medium['path'] : "$imageFolder$imageSize-$medium[path]";
     // Standard link to Indicia image.
     return <<<HTML
-<li class="gallery-item">
-  <a $mediaAttr$captionAttr href="$fullPath" data-fancybox="gallery" class="single">
-    <img src="$thumbPath" />
-  </a>
-HTML;
+      <li class="gallery-item">
+        <a $attrHtml href="$fullPath" data-fancybox="gallery" class="single">
+          <img src="$thumbPath" />
+        </a>
+      </li>
+      HTML;
   }
   if ($medium['media_type'] === 'Audio:Local') {
     // Output the media file content, with the info attached.
     return <<<HTML
-<li class="gallery-item">
-  <audio $mediaAttr$captionAttr controls src="$imageFolder$medium[path]" type="audio/mpeg"></audio>
-</li>
-HTML;
+      <li class="gallery-item">
+        <audio $attrHtml controls src="$imageFolder$medium[path]" type="audio/mpeg"></audio>
+      </li>
+      HTML;
   }
   if ($medium['media_type'] === 'Image:iNaturalist') {
     $imgLarge = str_replace('/square.', '/original.', $medium['path']);
     $path = $imageSize === 'med' ? str_replace('/square.', '/medium.', $medium['path']) : $medium['path'];
     return <<<HTML
-<li class="gallery-item">
-  <a $mediaAttr$captionAttr href="$imgLarge" data-fancybox="gallery" class="single">
-    <img src="$path" />
-  </a>
-</li>
-HTML;
+      <li class="gallery-item">
+        <a $attrHtml href="$imgLarge" data-fancybox="gallery" class="single">
+          <img src="$path" />
+        </a>
+      </li>
+      HTML;
   }
   // Other local files can be displayed as a file icon.
   if (substr($medium['media_type'], -6) === ':Local') {
     helper_base::add_resource('font_awesome');
     $fileType = substr($medium['media_type'], 0, strlen($medium['media_type']) - 6);
     return <<<HTML
-<li class="gallery-item">
-  <a $mediaAttr$captionAttr href="$imageFolder$medium[path]">
-    <span class="fas fa-file-invoice fa-2x"></span><br/>
-    $fileType
-  </a>
-</li>
-HTML;
+      <li class="gallery-item">
+        <a $attrHtml href="$imageFolder$medium[path]">
+          <span class="fas fa-file-invoice fa-2x"></span><br/>
+          $fileType
+        </a>
+      </li>
+      HTML;
   }
   // Everything else will be treated using noembed on the popup.
   // Build icon class using web domain.
   $matches = preg_match('/^http(s)?:\/\/(www\.)?([a-z]+(\.kr)?)/', $medium['path']);
   $domainClass = str_replace('.', '', $matches[3]);
   return <<<HTML
-<li class="gallery-item">
-  <a $mediaAttr$captionAttr
-      href="$medium[path]" class="social-icon $domainClass"></a>
-</li>
-HTML;
+    <li class="gallery-item">
+      <a $attrHtml
+          href="$medium[path]" class="social-icon $domainClass"></a>
+    </li>
+    HTML;
 }

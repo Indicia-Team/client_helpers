@@ -404,7 +404,7 @@ HTML;
         'table' => 'language',
         'extraParams' => $auth['read'] + ['iso' => $options['code']],
       ]);
-      if (count($languages === 1)) {
+      if (count($languages) === 1) {
         return data_entry_helper::hidden_text([
           'fieldname' => 'taxon:language_id',
           'default' => $languages[0]['id'],
@@ -1045,7 +1045,7 @@ HTML;
 </button>
 
 HTML;
-      data_entry_helper::$javascript .= "$('#delete-button').click(function(e) {
+      data_entry_helper::$javascript .= "$('#delete-button').on('click', function(e) {
         if (!confirm(\"Are you sure you want to delete this taxon?\")) {
           e.preventDefault();
           return FALSE;

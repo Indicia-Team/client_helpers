@@ -264,13 +264,13 @@ jQuery(document).ready(function ($) {
     recalculateStats();
   });
 
-  $('#scratchpad-check').click(function () {
+  $('#scratchpad-check').on('click', function () {
     $('#scratchpad-check').addClass('checking');
     tidyInput();
     matchToDb();
   });
 
-  $('#scratchpad-remove-duplicates').click(function () {
+  $('#scratchpad-remove-duplicates').on('click', function () {
     totalCount -= $('[data-state="duplicate"]').length;
     $('[data-state="duplicate"]').next('br').remove();
     $('[data-state="duplicate"]').remove();
@@ -288,7 +288,7 @@ jQuery(document).ready(function ($) {
     $('#hidden-entries-list').val(entries.join(';'));
   });
 
-  $('#scratchpad-cancel').click(function () {
+  $('#scratchpad-cancel').on('click', function () {
     window.location = indiciaData.scratchpadSettings.returnPath;
   });
 

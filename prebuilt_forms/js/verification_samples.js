@@ -516,7 +516,7 @@ var saveComment, saveVerifyComment, verificationGridLoaded, reselectRow, rowIdTo
     var verifyGridButtons = '<button type="button" class="default-button review-grid tools-btn" id="review-grid"">Review grid</button>'+
         '<button type="button" id="btn-multiple" title="Select this tool to tick off a list of records and action all of the ticked records in one go">Review tick list</button>';
     $('#filter-build').after(verifyGridButtons);
-    $('#review-grid').click(function() {
+    $('#review-grid').on('click', function() {
       var html = '<div class="grid-verify-popup" style="width: 550px"><h2>Review all grid data</h2>'+
                     '<p>This facility allows you to set the status of entire sets of records in one step. Before using this '+
                     'facility, you should filter the grid so that only the records you want to process are listed. '+
@@ -529,12 +529,12 @@ var saveComment, saveVerifyComment, verificationGridLoaded, reselectRow, rowIdTo
       html += '<button type="button" class="default-button" id="verify-all-button">Accept all records</button></div>';
 
       $.fancybox.open(html);
-      $('#verify-all-button').click(function() {
+      $('#verify-all-button').on('click', function() {
         verifyRecordSet(false);
       });
     });
 
-    $('table.report-grid tbody').click(function (evt) {
+    $('table.report-grid tbody').on('click', function (evt) {
       var row=$(evt.target).parents('tr:first')[0];
       // reinstate tooltips
       $.each($(row).parents('table:first tbody').find(':data(title)'), function(idx, ctrl) {
@@ -548,36 +548,36 @@ var saveComment, saveVerifyComment, verificationGridLoaded, reselectRow, rowIdTo
     indiciaFns.bindTabsActivate($('#record-details-tabs'), showTab);
 
     // Handlers for basic status buttons
-    $('#btn-accepted').click(function () {
+    $('#btn-accepted').on('click', function () {
       setStatus('V');
     });
 
-    $('#btn-notaccepted').click(function () {
+    $('#btn-notaccepted').on('click', function () {
       setStatus('R');
     });
 
     // Handlers for advanced status buttons
-    $('#btn-accepted-correct').click(function () {
+    $('#btn-accepted-correct').on('click', function () {
       setStatus('V', 1);
     });
 
-    $('#btn-accepted-considered-correct').click(function () {
+    $('#btn-accepted-considered-correct').on('click', function () {
       setStatus('V', 2);
     });
 
-    $('#btn-plausible').click(function () {
+    $('#btn-plausible').on('click', function () {
       setStatus('C', 3);
     });
 
-    $('#btn-notaccepted-unable').click(function () {
+    $('#btn-notaccepted-unable').on('click', function () {
       setStatus('R', 4);
     });
 
-    $('#btn-notaccepted-incorrect').click(function () {
+    $('#btn-notaccepted-incorrect').on('click', function () {
       setStatus('R', 5);
     });
 
-    $('#btn-multiple').click(function() {
+    $('#btn-multiple').on('click', function() {
       multimode = !multimode;
       if (multimode) {
         showTickList();
@@ -594,11 +594,11 @@ var saveComment, saveVerifyComment, verificationGridLoaded, reselectRow, rowIdTo
       }
     });
 
-    $('#btn-query').click(function () {
+    $('#btn-query').on('click', function () {
       buildRecorderQueryMessage();
     });
 
-    $('#btn-email-expert').click(function () {
+    $('#btn-email-expert').on('click', function () {
       buildVerifierEmail();
     });
 
@@ -609,7 +609,7 @@ var saveComment, saveVerifyComment, verificationGridLoaded, reselectRow, rowIdTo
       window.location = path + sep + 'sample_id=' + id;
     }
 
-    $('#btn-edit-record').click(function() {
+    $('#btn-edit-record').on('click', function() {
       editThisRecord(sample_id);
     });
   });

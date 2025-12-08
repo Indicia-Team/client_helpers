@@ -760,7 +760,7 @@ function switchToSatelliteBaseLayerForZoom(map) {
         'id="delete-button" name="delete-button" value="delete" >' .
         lang::get('Delete') .
       "</button>\n";
-      data_entry_helper::$javascript .= "$('#delete-button').click(function(e) {
+      data_entry_helper::$javascript .= "$('#delete-button').on('click', function(e) {
         if (!confirm(\"Are you sure you want to delete this location?\")) {
           e.preventDefault();
           return false;

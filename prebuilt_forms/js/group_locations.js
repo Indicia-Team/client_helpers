@@ -42,7 +42,7 @@ jQuery(document).ready(function ($) {
     }
   };
 
-  $('#add-existing').click(function () {
+  $('#add-existing').on('click', function () {
     var locationId = $('#add_existing_location_id').val();
     var s;
     if (locationId) {

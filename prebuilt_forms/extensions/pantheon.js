@@ -157,7 +157,7 @@ jQuery(document).ready(function ($) {
       }
     });
     // Forces sorting click handlers added to grid column th to not override the link on lexicon items
-    $('.lexicon th a.lexicon-info').click(function () {
+    $('.lexicon th a.lexicon-info').on('click', function () {
       window.location = $(this).attr('href');
     });
   };
@@ -251,6 +251,7 @@ jQuery(document).ready(function ($) {
       url: indiciaData.warehouseUrl + 'index.php/services/data_utils/combine_scratchpad_lists/' +
         params.join('/') + '?nonce=' + indiciaData.write.nonce + '&auth_token=' + indiciaData.write.auth_token,
       dataType: 'jsonp',
+      crossDomain: true,
       success: function (response) {
         alert('The combined list has been saved');
       }

@@ -105,7 +105,7 @@ confirmSelectSection = function(section, doFeature, withCancel) {
           dialog.dialog('close');
           $('#section-form').submit(); // this is synchronous
           selectSection(section, doFeature);
-          $(this).unbind(event);
+          $(this).off(event);
         },
       "No":  function() {
           dialog.dialog('close');
@@ -370,35 +370,35 @@ $(document).ready(function() {
     }
   });
 
-  $('#section-select li').click(function(evt) {
+  $('#section-select li').on('click', function(evt) {
     var parts = evt.target.id.split('-');
     confirmSelectSection(parts[parts.length-1], true, true);
   });
-  $('#section-form').find('input,textarea,select').change(function(evt) {
+  $('#section-form').find('input,textarea,select').on('change', function(evt) {
       sectionDetailsChanged = true;
   });
 
   mapInitialisationHooks.push(function(div) {
     if (div.id==='route-map') {
-      $('#section-select-route li').click(function(evt) {
+      $('#section-select-route li').on('click', function(evt) {
         var parts = evt.target.id.split('-');
         confirmSelectSection(parts[parts.length-1], true, false);
       });
-      $('.remove-section').click(function(evt) {
+      $('.remove-section').on('click', function(evt) {
         var current = $('#section-select-route li.selected').html();
         if (confirm(indiciaData.lang.sectionedTransectsEditTransect.sectionDeleteConfirm.replace('{1}', current))) {
           deleteSection(current);
         }
       });
-      $('.insert-section').click(function(evt) {
+      $('.insert-section').on('click', function(evt) {
         var current = $('#section-select-route li.selected').html();
         if(confirm(indiciaData.lang.sectionedTransectsEditTransect.sectionInsertConfirm.replace('{1}', current))) insertSection(current);
       });
-      $('.reload-section').click(function(evt) {
+      $('.reload-section').on('click', function(evt) {
           var current = $('#section-select-route li.selected').html();
           reloadSection(current);
         });
-      $('.erase-route').click(function(evt) {
+      $('.erase-route').on('click', function(evt) {
         var current = $('#section-select-route li.selected').html(),
             oldSection = [];
         // If the draw feature control is active unwind it one point at a time.
@@ -788,7 +788,7 @@ $(document).ready(function() {
     }
   });
 
-  $('#add-user').click(function(evt) {
+  $('#add-user').on('click', function(evt) {
     var user=($('#cmsUserId')[0]).options[$('#cmsUserId')[0].selectedIndex];
     if ($('#user-' + user.value).length===0) {
       $('#user-list').append('<tr><td id="user-' + user.value + '"><input type="hidden" name="locAttr:' + indiciaData.locCmsUsrAttr + '::' + user.value + '" value="' + user.value + '"/>' +
@@ -803,7 +803,7 @@ $(document).ready(function() {
     $(evt.target).closest('tr').find('input').val('');
   });
 
-  $('#add-branch-coord').click(function(evt) {
+  $('#add-branch-coord').on('click', function(evt) {
     var coordinator=($('#branchCmsUserId')[0]).options[$('#branchCmsUserId')[0].selectedIndex];
     if ($('#branch-coord-' + coordinator.value).length===0) {
       $('#branch-coord-list').append('<tr><td id="branch-coord-' + coordinator.value + '">' +
@@ -814,18 +814,18 @@ $(document).ready(function() {
 
   if (indiciaData.checkLocationNameUnique) {
     // Track location name changes and check for uniqueness.
-    $('#location\\:name').change(function() {
+    $('#location\\:name').on('change', function() {
       // Build report request to find duplicates.
-      const reportApi = indiciaData.warehouseUrl + 'index.php/services/report/requestReport';
+      const reportApiUrl = indiciaData.warehouseUrl + 'index.php/services/report/requestReport';
       const report = 'library/locations/find_duplicate_names.xml';
       const params = {
-        'auth_token': indiciaData.read.auth_token,
-        'nonce': indiciaData.read.nonce,
-        'mode': 'json',
-        'reportSource': 'local',
-        'report': report,
-        'wantCount': 1,
-        'wantRecords': 0,
+        auth_token: indiciaData.read.auth_token,
+        nonce: indiciaData.read.nonce,
+        mode: 'json',
+        reportSource: 'local',
+        report: report,
+        wantCount: 1,
+        wantRecords: 0,
         name: $('#location\\:name').val(),
         location_type_id: $('[name="location\\:location_type_id"]').val(),
         website_id: indiciaData.website_id
@@ -835,9 +835,10 @@ $(document).ready(function() {
         params.exclude_location_id = $('#location\\:id').val();
       }
       $.ajax({
-        'url': reportApi,
-        'data': params,
-        'dataType': 'jsonp',
+        url: reportApiUrl,
+        data: params,
+        dataType: 'jsonp',
+        crossDomain: true
       }).done(function(data) {
         if (data.count > 0) {
           $('#input-form [type="submit"]').prop('disabled', true);

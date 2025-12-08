@@ -946,7 +946,7 @@ mapInitialisationHooks.push(function(mapdiv) {
       //When the "Over-write Boundary and Save" is clicked, put the drop-down value into the textbox of the preferred count unit location attribute.
       //Also automatically select the checkbox that indicates we are updating rather creating a boundary. Then hide the checkbox to avoid it being tampered with as save occurs.
       data_entry_helper::$javascript .= "var preferredWhenScreenLoads = $('#locAttr\\\\:".$args['preferred_boundary_attribute_id']."').val();
-                                         $('#set-preferred').click( function() {
+                                         $('#set-preferred').on('click',  function() {
                                            $('#locAttr\\\\:".$args['preferred_boundary_attribute_id']."').val($('#boundary_versions').val());
                                            $('#update-existing-boundary').attr('checked','checked');
                                            $('#update-existing-boundary').hide();
@@ -954,11 +954,11 @@ mapInitialisationHooks.push(function(mapdiv) {
                                          });";
       //As the Update Existing Boundary and Set Preferred on Save checkboxes are selected and deselected by the user, we need
       //to manipulate the Preferred Boundary Id textbox. This needs to occur whenever either checkbox is changed.
-      data_entry_helper::$javascript .= "$('#update-existing-boundary').click( function() {
+      data_entry_helper::$javascript .= "$('#update-existing-boundary').on('click',  function() {
                                            set_preferred_on_save_checks();
                                          });";
 
-      data_entry_helper::$javascript .= "$('#set-preferred-on-save').click( function() {
+      data_entry_helper::$javascript .= "$('#set-preferred-on-save').on('click',  function() {
                                            set_preferred_on_save_checks();
                                          });";
       //User elects to set preferred on save, user elects to update existing boundary and a boundary is selected->Preferred Boundary is set to selected boundary

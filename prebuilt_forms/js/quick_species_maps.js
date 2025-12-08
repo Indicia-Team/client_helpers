@@ -43,7 +43,7 @@ $(document).ready(function () {
   /**
    * Catch change of state on the show instructins checkbox.
    */
-  $('#layerbox #checkShowInstructions').change(function () {
+  $('#layerbox #checkShowInstructions').on('change', function () {
     if(this.checked) {
       $('#layerbox #instruct').show()
     } else {
@@ -54,7 +54,7 @@ $(document).ready(function () {
   /**
    * Catch change of state on the show legend checkbox.
    */
-  $('#layerbox #checkShowLegend').change(function () {
+  $('#layerbox #checkShowLegend').on('change', function () {
     if(this.checked) {
       $('#layerbox #layers').show()
     } else {
@@ -65,7 +65,7 @@ $(document).ready(function () {
   /**
    * Catch clicks on the grid icons, to add layers for the species to the map.
    */
-  $('table.report-grid tbody').click(function (evt) {
+  $('table.report-grid tbody').on('click', function (evt) {
     if ((evt.target.localName || evt.target.nodeName.toLowerCase())!=="img") {
       return;
     }

@@ -423,7 +423,7 @@ class map_helper extends helper_base {
 var srefId = $srefId;
 if (srefId && $('#' + srefId).length && $('#' + srefId).val()!==''
     && indiciaData.mapdiv.settings.initialBoundaryWkt===null && indiciaData.mapdiv.settings.initialFeatureWkt===null) {
-  jQuery('#'+srefId).change();
+  jQuery('#'+srefId).trigger('change');
 }
 JS;
       }
@@ -593,7 +593,7 @@ function refreshLayers_$funcSuffix(div) {
     }
   });\n";
     if ($options['includeSwitchers'])
-      self::$javascript .= "  $('.layer-switcher').click(layerSwitcherClick);\n";
+      self::$javascript .= "  $('.layer-switcher').on('click', layerSwitcherClick);\n";
     self::$javascript .= "}
 
 mapInitialisationHooks.push(function(div) {

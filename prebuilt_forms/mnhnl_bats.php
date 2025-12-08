@@ -248,7 +248,7 @@ var other = jQuery('[name=locAttr\\:".$siteTypeOtherAttrID."],[name^=locAttr\\:"
 other.next('br').remove();
 other.prev('label').remove();
 other.removeClass('wide').remove(); // remove Other field, then bolt in after the 'other' selection.
-myTerms.change(myTerms_change).filter('[value=".$siteTypeTermList[0]['meaning_id']."],[value^=".$siteTypeTermList[0]['meaning_id']."\\:]').parent().append(other);
+myTerms.on('change', myTerms_change).filter('[value=".$siteTypeTermList[0]['meaning_id']."],[value^=".$siteTypeTermList[0]['meaning_id']."\\:]').parent().append(other);
 if(myTerms.filter(':checkbox').length>0){
   myTerms.addClass('type-required');
   other.after('<span class=\"deh-required\">*</span>');
@@ -385,7 +385,7 @@ jQuery('[name^=smpAttr]').filter(':checkbox').filter('[value=".$args['disturbanc
       data_entry_helper::$javascript .= "
 if($.browser.msie && $.browser.version < 9)
   $('input[type=radio],[type=checkbox]').live('click', function(){
-    this.blur();
+    this.trigger('blur');
     this.focus();
   });
 checkCheckStatus = function(){
@@ -402,7 +402,7 @@ checkCheckStatus = function(){
       jQuery('[name=smpAttr\\:".$args['disturbanceCommentAttrID']."],[name^=smpAttr\\:".$args['disturbanceCommentAttrID']."\\:]').removeClass('required').val('').attr('readonly',true);
   });
   };
-jQuery('[name^=smpAttr]').filter(':checkbox').change(checkCheckStatus);
+jQuery('[name^=smpAttr]').filter(':checkbox').on('change', checkCheckStatus);
 checkCheckStatus();
 ";
     }
@@ -578,7 +578,7 @@ hook_set_defaults=function(){
     if(!$isAdmin)
       data_entry_helper::$javascript .= "jQuery('#location-code').attr('readonly','readonly');\n";
     else {
-      data_entry_helper::$javascript .= "jQuery('#location-code').change(function(){
+      data_entry_helper::$javascript .= "jQuery('#location-code').on('change', function(){
   if(jQuery.inArray(jQuery(this).val(), usedCodes) >= 0 && jQuery(this).attr('dbCode') != jQuery(this).val()) {
     alert(\"".lang::get('This code is already in use. The value will be set to the next in sequence: ')."\" + defaultCode + \". \"+(jQuery(this).attr('dbCode') != '' ? \"".lang::get('This site previously had a code of: ')."\"+jQuery(this).attr('dbCode') : ''));
     jQuery(this).val(defaultCode);
