@@ -428,6 +428,9 @@ class iform_importer_2 implements PrebuiltFormInterface {
    *   Progress data from the warehouse.
    */
   public static function ajax_upload_file($website_id, $password, $nid) {
+    if (!hostsite_user_has_node_view_permission($nid)) {
+      hostsite_access_denied();
+    }
     iform_load_helpers(['import_helper_2']);
     return [
       'status' => 'ok',
@@ -450,8 +453,11 @@ class iform_importer_2 implements PrebuiltFormInterface {
    *   Progress data from the warehouse.
    */
   public static function ajax_send_file_to_warehouse($website_id, $password, $nid) {
-    $writeAuth = self::getAuthFromHeaders();
+    if (!hostsite_user_has_node_view_permission($nid)) {
+      hostsite_access_denied();
+    }
     iform_load_helpers(['import_helper_2']);
+    $auth = helper_base::get_read_write_auth($website_id, $password);
     $interimPath = import_helper_2::getInterimImageFolder('fullpath');
     if (!file_exists($interimPath . $_GET['interim-file'])) {
       // Assume the page has been loaded twice and the file already sent. If
@@ -463,7 +469,7 @@ class iform_importer_2 implements PrebuiltFormInterface {
       ];
     }
     else {
-      $r = import_helper_2::sendFileToWarehouse($_GET['interim-file'], $writeAuth);
+      $r = import_helper_2::sendFileToWarehouse($_GET['interim-file'], $auth['write_tokens']);
       if ($r === TRUE) {
         return [
           'status' => 'ok',
@@ -491,9 +497,13 @@ class iform_importer_2 implements PrebuiltFormInterface {
    *   Progress data from the warehouse.
    */
   public static function ajax_extract_file_on_warehouse($website_id, $password, $nid) {
-    $writeAuth = self::getAuthFromHeaders();
+    if (!hostsite_user_has_node_view_permission($nid)) {
+      hostsite_access_denied();
+    }
     iform_load_helpers(['import_helper_2']);
-    return import_helper_2::extractFileOnWarehouse($_GET['uploaded-file'], $writeAuth);
+    $auth = helper_base::get_read_write_auth($website_id, $password);
+    iform_load_helpers(['import_helper_2']);
+    return import_helper_2::extractFileOnWarehouse($_GET['uploaded-file'], $auth['write_tokens']);
   }
 
   /**
@@ -510,8 +520,11 @@ class iform_importer_2 implements PrebuiltFormInterface {
    *   Progress data from the warehouse.
    */
   public static function ajax_init_server_config($website_id, $password, $nid) {
-    $writeAuth = self::getAuthFromHeaders();
+    if (!hostsite_user_has_node_view_permission($nid)) {
+      hostsite_access_denied();
+    }
     iform_load_helpers(['import_helper_2']);
+    $auth = helper_base::get_read_write_auth($website_id, $password);
     // Pass the settings for enabled plugins and params.
     $plugins = [];
     $nodeParams = hostsite_get_node_field_value($nid, 'params');
@@ -538,7 +551,7 @@ class iform_importer_2 implements PrebuiltFormInterface {
     return import_helper_2::initServerConfig(
       $_GET['data-files'],
       $_GET['import_template_id'] ?? NULL,
-      $writeAuth,
+      $auth['write_tokens'],
       $plugins,
       $options
     );
@@ -558,9 +571,12 @@ class iform_importer_2 implements PrebuiltFormInterface {
    *   Progress data from the warehouse.
    */
   public static function ajax_load_chunk_to_temp_table($website_id, $password, $nid) {
-    $writeAuth = self::getAuthFromHeaders();
+    if (!hostsite_user_has_node_view_permission($nid)) {
+      hostsite_access_denied();
+    }
     iform_load_helpers(['import_helper_2']);
-    return import_helper_2::loadChunkToTempTable($_GET['data-file'], $_GET['config-id'], $writeAuth);
+    $auth = helper_base::get_read_write_auth($website_id, $password);
+    return import_helper_2::loadChunkToTempTable($_GET['data-file'], $_GET['config-id'], $auth['write_tokens']);
   }
 
   /**
@@ -577,9 +593,12 @@ class iform_importer_2 implements PrebuiltFormInterface {
    *   Progress data from the warehouse.
    */
   public static function ajax_process_lookup_matching($website_id, $password, $nid) {
-    $writeAuth = self::getAuthFromHeaders();
+    if (!hostsite_user_has_node_view_permission($nid)) {
+      hostsite_access_denied();
+    }
     iform_load_helpers(['import_helper_2']);
-    return import_helper_2::processLookupMatching($_GET['config-id'], $_GET['index'], $writeAuth);
+    $auth = helper_base::get_read_write_auth($website_id, $password);
+    return import_helper_2::processLookupMatching($_GET['config-id'], $_GET['index'], $auth['write_tokens']);
   }
 
   /**
@@ -596,9 +615,12 @@ class iform_importer_2 implements PrebuiltFormInterface {
    *   Progress data from the warehouse.
    */
   public static function ajax_save_lookup_matches_group($website_id, $password, $nid) {
-    $writeAuth = self::getAuthFromHeaders();
+    if (!hostsite_user_has_node_view_permission($nid)) {
+      hostsite_access_denied();
+    }
     iform_load_helpers(['import_helper_2']);
-    return import_helper_2::saveLookupMatchesGroup($_GET['config-id'], $_POST, $writeAuth);
+    $auth = helper_base::get_read_write_auth($website_id, $password);
+    return import_helper_2::saveLookupMatchesGroup($_GET['config-id'], $_POST, $auth['write_tokens']);
   }
 
   /**
@@ -615,9 +637,12 @@ class iform_importer_2 implements PrebuiltFormInterface {
    *   Progress data from the warehouse.
    */
   public static function ajax_preprocess($website_id, $password, $nid) {
-    $writeAuth = self::getAuthFromHeaders();
+    if (!hostsite_user_has_node_view_permission($nid)) {
+      hostsite_access_denied();
+    }
     iform_load_helpers(['import_helper_2']);
-    return import_helper_2::preprocess($_GET['config-id'], $_GET['index'], $writeAuth);
+    $auth = helper_base::get_read_write_auth($website_id, $password);
+    return import_helper_2::preprocess($_GET['config-id'], $_GET['index'], $auth['write_tokens']);
   }
 
   /**
@@ -634,8 +659,11 @@ class iform_importer_2 implements PrebuiltFormInterface {
    *   Progress data from the warehouse.
    */
   public static function ajax_import_chunk($website_id, $password, $nid) {
-    $writeAuth = self::getAuthFromHeaders();
+    if (!hostsite_user_has_node_view_permission($nid)) {
+      hostsite_access_denied();
+    }
     iform_load_helpers(['import_helper_2']);
+    $auth = helper_base::get_read_write_auth($website_id, $password);
     $params = array_merge($_POST);
     // Convert string data to bool.
     $params['restart'] = !empty($params['restart']) && $params['restart'] === 'true';
@@ -644,7 +672,7 @@ class iform_importer_2 implements PrebuiltFormInterface {
     $response = import_helper_2::importChunk(
       $_GET['config-id'],
       $params,
-      $writeAuth
+      $auth['write_tokens']
     );
     return $response;
   }

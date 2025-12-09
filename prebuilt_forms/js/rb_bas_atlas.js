@@ -1,42 +1,4 @@
-
 jQuery(document).ready(function($) {
-
-$('body').append(`
-		<style>
-		  .modal-body-a {
-		    max-height: 400px; /* or any fixed height you prefer */
-		    overflow-y: auto;
-		    padding: 1rem;
-		  }
-
-		  #idcDataGrid {
-		    max-height: 100%;
-		    overflow-y: auto;
-		  }
-		</style>
-		
-		<div class="modal fade" id="mapModal" tabindex="-1" role="dialog" aria-labelledby="mapModalLabel">
-		  <div class="modal-dialog" role="document">
-			<div class="modal-content">
-			
-			  <div class="modal-header">
-				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
-				  <span aria-hidden="true">&times;</span>
-				</button>
-				<h4 class="modal-title" id="mapModalLabel">Map Records</h4>
-			  </div>
-			  
-			  <div class="modal-body modal-body-a" id="modalBody" >
-				<!-- Content will be injected here -->
-				<div id="idcDataGrid" ></div>
-			  </div>
-			  
-			</div>
-		  </div>
-		</div>
-
-`);
-
 
   let mapData, conservationData
   let overviewmap, zoommap, brcyearly, brcphenology
@@ -45,12 +7,10 @@ $('body').append(`
   const vcId = mapArea ? Number(mapArea.split('-')[0]) : 0
   const vcCode = mapArea ? mapArea.split('-')[1] : ''
   const baseRatio = 0.8644 // Based on aspect ration for British atlas map with insets
- // console.log('vcId', vcId, 'vcCode', vcCode)
-  const version = d3.version;
-  // console.log("D3 version :"+version);
+  console.log('vcId', vcId, 'vcCode', vcCode)
+
   // Add click handler to taxon group selection and set initial value
   const currentTaxonGroup = urlParams.get('tg') ? urlParams.get('tg') : 'spider'
-
   $("#taxon-list-selection").val(currentTaxonGroup)
   $("#taxon-list-selection").on('change', function() {
     // Get selected value
@@ -90,8 +50,6 @@ $('body').append(`
   mapTypes = mapTypes.filter(t => t.val !== 'tetradfreq' || vcCode === '')
   let mapTypesSel = {}
   let mapTypesKey 
-
-
 
   window.indiciaFns.speciesDetailsSub = () => {
 
@@ -139,7 +97,7 @@ $('body').append(`
 
   indiciaFns.createAtlas = function () {
 
-  //  console.log('indiciaData.basAtlas', indiciaData.basAtlas)
+    console.log('indiciaData.basAtlas', indiciaData.basAtlas)
 
     // Initialise taxon selection control to be same as previous submission
     $('#occurrence\\:taxa_taxon_list_id\\:taxon').val(indiciaData.basAtlas.taxon.preferredPlain)
@@ -159,7 +117,6 @@ $('body').append(`
       
     // Create tabbed display
     const paramOptionalTabs = indiciaData.basAtlas.other.tab_types.replace(/\s+/g, ' ').split(' ')
-
     let tabs = [
       {
         tab: 'overview',
@@ -192,12 +149,6 @@ $('body').append(`
         optional: true,
       },
       {
-        tab: 'data',
-        caption: 'Data',
-        controlid: null,
-        optional: true,
-      },	  
-      {
         tab: 'dev',
         caption: 'Dev',
         controlid: null,
@@ -212,8 +163,6 @@ $('body').append(`
     createAccount()
     createConservation()
     createTemporal()
-
-
 
     resizeTabs()
     const currentTab = sessionStorage.getItem('bas-atlas-tab') ? sessionStorage.getItem('bas-atlas-tab') : 'overview'
@@ -352,7 +301,6 @@ $('body').append(`
 
     // Opacity control
     createDotOpacityControl($ctrlMap)
-
 
     // Download control
     createDownloadControl($ctrlMap)
@@ -494,7 +442,6 @@ $('body').append(`
       overviewmap.redrawMap()
       overviewmap.showBusy(false)
       zoommap.redrawMap()
-	  triggerPopups()
     }
   }
 
@@ -531,12 +478,6 @@ $('body').append(`
     })
   }
 
-  function createYearSliderControl($ctrlMap) {
-    const $div = $('<div>').appendTo($ctrlMap)	
-	const $yearslider = $(`<label for="customRange3" class="form-label">Year</label><input type="range" class="form-range" min="1600" max="2099" step="0.5" id="customRange3">`).appendTo($div);
-	
-  }
-  
   function createMapBackdropControl($ctrlMap) {
     const rasterRoot = '/sites/default/files/images/'
     const currentVal = sessionStorage.getItem('bas-atlas-backdrop') ? sessionStorage.getItem('bas-atlas-backdrop') : 'none'
@@ -1029,29 +970,14 @@ $('body').append(`
 
     if (typeof(brcatlas) !== "undefined") {
       // Create zoom map
-
       zoommap = brcatlas.leafletMap({
         selector: "#atlas-tab-zoom",
         mapTypesSel: mapTypesSel,
         mapTypesKey: mapTypesKey,
         basemapConfigs: basemapConfigs
       })
-	  
-
-		// Add zoom event listener
-		zoommap.lmap.on('zoomend', function () {
-		onMapZoomChanged(zoommap.lmap.getZoom());
-		});
-		  
-
-		zoommap.lmap.on('moveend', function () {
-		  const center = zoommap.lmap.getCenter();
-		  onMapPanned(center.lat, center.lng);
-		});
-		  
-	  
     }
-	 
+
     if (vcCode) {
       // If working with VC data, centre map on VC
       gjsonFile = `/sites/default/files/atlas/geo/vc-gb-simp-100/vc-gb-${vcCode}.geojson`
@@ -1070,18 +996,7 @@ $('body').append(`
       const lat = c.centroid[1]
       zoommap.lmap.setView({lat: lat, lng: lon}, 9)
     }
-	
-
   }
-
-
-	function onMapZoomChanged(currentZoom) {
-	  triggerPopups();
-	}
-
-	function onMapPanned(lat, lng) {
-	  triggerPopups();
-	}
 
   function showHideMapControls(type) {
     if (type === 'zoom') {
@@ -1150,310 +1065,10 @@ $('body').append(`
         opts.gridGjson = grid
       }
       overviewmap = brcatlas.svgMap(opts)
-	  
-	  triggerPopups();
-	  
       if (indiciaData.basAtlas.taxon.preferred) {
         overviewmap.showBusy(true)
       }
     }
-  }
-  
-
-
-/* **********************************************************************
-   * Shows a modal popup whih is populated by the details of records
-   * @param object event
-   *   details of the event
-   * @param object d
-   *   Point on map to display details for, contains grid ref and lat/lon 
-   *
-   * @return null
-   *   shows populated modal popup as above
-   ********************************************************************* */
-
-function popup(event,d) {
-	console.log('popup event: ',event,d);
-	const gridRef = event.gr;
-	const normalizedGrid = gridRef?.trim().toUpperCase();
-	
-
-
-$('#modalBody').html(`<p>Loading records for <strong>${gridRef}</strong>...</p>`);
-$('#mapModal').modal('show');
-
-/*  
-  "_source": [
-    "id",
-    "event.date_start",
-    "taxon.preferred_name",
-    "location.output_sref",
-    "event.recorded_by",
-    "occurrence.attributes",
-    "event.habitat",
-    "taxon.taxon_name",
-    "taxon.taxa_taxon_list_id"
-  ]*/
-
-	const esFilters = recordsQueryFromDot(event);
-
-	fetchAllForLatLonVariants( esFilters, event );
-
-
-}
-
-// ******************************************
-// HELPERS FOR GEOBOX
-// ******************************************
-
-// choose the square field from the current view
-function currentSquareField() {
-  const vc = new URLSearchParams(location.search).get('vc') || '0';
-  return vc === '0'
-    ? 'location.grid_square.10km.centre'
-    : 'location.grid_square.2km.centre';
-}
-
-/* **********************************************************************
-   * Builds the initial queries to fetch the documents from elasticsearch 
-   * This is part of a work around solution to cater for teh fact that a single point can have several slightly different lat lons
-   * so lat lon iteration has been used to get data for each slightly different location.
-   * @param point
-   *   Point on map to display details for, contains grid ref and lat/lon 
-   *
-   * @return esfilters
-   *   builds part of the query for elastic search
-   ********************************************************************* */
-function recordsQueryFromDot(point) {
-  // IMPORTANT: use the *original strings* from point.latlon so decimals match exactly
-  
-/* **********************************************************************
-   * Builds the EsFilter 
-   * @param field
-   *   The field to be queried in elastic search
-   * @param value
-   *   The value to field in elastic search
-   * @param queryType ( term, match, match_phrase, match_phrase_prefix )
-   *   The query types allowed 
-   * @param booleanFilter ( must , should, must_not, filter )
-   *   The test to perform on the field and value.
-   *
-   * @return esfilter
-   *   returns the esFilter
-   ********************************************************************* */  
-	function createEsFilter(field, value, queryType, boolClause) {
-	  // Convert DD/MM/YYYY to YYYY-MM-DD if it's a date range
-	  if (field === 'date' && queryType === 'range' && Array.isArray(value)) {
-		value = value.map(dateStr => {
-		  const [day, month, year] = dateStr.split('/');
-		  return `${year}-${month}-${day}`;
-		});
-	  }
-
-	  return {
-		query_type: queryType,
-		field: field,
-		value: Array.isArray(value) ? value : String(value),
-		bool_clause: boolClause
-	  };
-	}
-
-
-    const centreStr = `${point.latlon[0]} ${point.latlon[1]}`; // "lon lat"
-	
-	const squareField = currentSquareField();
-	const taxon = $('input[data-es-field="taxon.accepted_taxon_id"]').val();
-
-	const urlParams = new URLSearchParams(window.location.search);
-	const ds = urlParams.get('ds'); // e.g. "101"
-	const tg = urlParams.get('tg');
-	const taxa_taxon_list_id = urlParams.get('taxa_taxon_list_id');
-
-	// irecord general data = 42
-	// Spider recording scheme = 729 
-	// General records = 195
-	// iNaturalist = 510
-	const surveyMap = ['729', '42', '510'];
-	const dsArray = ds.split('');
-	
-	const srs = dsArray[0];   // 729
-	const irec = dsArray[1];  // all others
-	const inat = dsArray[2];  // 510
-
-	const esFilters = [];
-
-
-	if (irec === '1') {
-	  if (srs === '0') {
-		esFilters.push(createEsFilter('metadata.survey.id', '729', 'term', 'must_not'));
-	  }
-	  if (inat === '0') {
-		esFilters.push(createEsFilter('metadata.survey.id', '510', 'term', 'must_not'));
-	  }
-	} else {
-	  if (srs === '1' && inat === '1') {
-		esFilters.push(createEsFilter('metadata.survey.id', ['729', '510'], 'terms', 'must'));
-	  } else if (srs === '1') {
-		esFilters.push(createEsFilter('metadata.survey.id', '729', 'term', 'must'));
-	  } else if (inat === '1') {
-		esFilters.push(createEsFilter('metadata.survey.id', '510', 'term', 'must'));
-	  }
-	}
-
-	esFilters.push(createEsFilter('occurrence.zero_abundance', false, 'term', 'must'));
-	
-//	esFilters.push(createEsFilter('date', ['01/01/1600', '31/12/2099'], 'range', 'filter'));
-	
-/*	esFilters.push({
-	  query_type: 'term',
-	  field: 'identification.verification_status',
-	  value: 'R',
-	  bool_clause: 'must_not'
-	});
-*/
-
-	
-	if (taxa_taxon_list_id>0) {
-      sorg = {
-        query_type: 'term',
-        field: 'taxon.accepted_taxon_id',
-        value: String(taxon),   // e.g. "143048"
-        bool_clause: 'filter'
-      }				
-	} else  {
-		sorg = {
-        query_type: 'term',
-        field: 'taxon.group',
-        value: String(tg),   // e.g. "143048"
-        bool_clause: 'filter'
-      }			 
-	}
-	
-
-/*  query =  {
-    size: 100,
-    bool_queries: [
-	  sorg ,
-		{
-		  query_type: "match_phrase",
-		  field: "location.grid_square.10km.centre",
-		  value: centreStr,
-		  bool_clause: "must"
-		}, 
-	  ...esFilters
-
-    ],
-    sort: [{ 'event.date_start': 'asc' }, { '_doc': 'asc' }]
-  };
-  
-  return query */
-  
-  return esFilters;
-}
-
-
-/* **********************************************************************
-   * Builds final query for eech lat lon value and then fetches the data before populating the modal
-   * This is part of a work around solution to cater for the fact that a single point can have several slightly different lat lons
-   * so lat lon iteration has been used to get data for each slightly different location.
-   * @param point
-   *   Point on map to display details for, contains grid ref and lat/lon 
-   *
-   * @return esfilters
-   *   builds part of the query for elastic search
-   ********************************************************************* */
-async function fetchAllForLatLonVariants( esFilters, point ) {
-		
-  let finalResult = null;
-  for (let i = 0; i < point.latlonVariants.length; i++) {
-    const latlon = point.latlonVariants[i];
-    const centreStr = `${latlon[0]} ${latlon[1]}`;
-	
-		query =  {
-		size: 100,
-		bool_queries: [
-		  sorg ,
-			{
-			  query_type: "term",
-			  field: currentSquareField(),
-			  value: centreStr,
-			  bool_clause: "must"
-			}, 
-		  ...esFilters
-
-		],
-		sort: [{ 'event.date_start': 'asc' }, { '_doc': 'asc' }]
-	  };
-	
-	console.log('Query: ',query);
-	
-	const result = await runElasticSearchQuery(query); // your ES query function
-
-
-		if (i === 0) {
-		  // First iteration: keep full structure
-		  finalResult = result;
-		} else {
-		  // Subsequent iterations: merge hits.hits only
-		  if (result?.hits?.hits?.length) {
-			finalResult.hits.hits.push(...result.hits.hits);
-			finalResult.hits.total.value += result.hits.hits.length;
-		  }
-		}
-
-  }
- 
-  indiciaFns.populateOccurrenceTable( '#modalBody', {}, finalResult, point );
-  return;
-  
-}
-
-
-
-async function runElasticSearchQuery(queryData) {
-  if (!queryData) return [];
-
-  return new Promise((resolve, reject) => {
-    $.ajax({
-      url: indiciaData.esProxyAjaxUrl + '/searchbyparams/' + (indiciaData.nid || '0'),
-      method: 'POST',
-      data: queryData,
-      success: function(response) {
-        console.log('Es response', response);
-        resolve(response);
-      },
-      error: function(err) {
-        console.error('ES query failed', err);
-        reject(err);
-      }
-    });
-  });
-}
-
-
-
-
-// ************* END HELPERS ****************
-  
-  function triggerPopups() {
-	  // *****************************************  Give the map time to draw
-		setTimeout(() => {
-
-				d3.selectAll("circle.dotCircle").on("click", popup);
-				d3.selectAll(".dotSquare").on("click", popup);
-				
-				pointerShape = $("input[name=bas-atlas-control-dot-type]").val();
-
-				const svg = document.getElementById("atlas-leaflet-svg");
-				const paths = svg.querySelectorAll("path");
-
-
-				d3.select("#atlas-leaflet-svg")
-					.selectAll("path")
-					.style("cursor", "pointer") // Optional: show pointer cursor
-					.on("click", popup );
-
-		}, 8000);
   }
 
   function resizeLegend() {
@@ -1579,7 +1194,6 @@ async function runElasticSearchQuery(queryData) {
     }
   }
 
-
   function createTemporal() {
 
     // Create yearly record accumulation chart
@@ -1622,126 +1236,8 @@ async function runElasticSearchQuery(queryData) {
     }
   }
 
-
-// Assume firstDate is already a string like "2020-01-01" or "2020-07-15"
-const formatFirstDate = (firstDate) => {
-  if (!firstDate || firstDate === "-") return "-";
-
-  // Check if last 6 characters are "-01-01"
-  if (firstDate.slice(-6) === "-01-01") {
-    return firstDate.slice(0, 4); // just the year
-  }
-  return firstDate; // full date
-};
-
-
-function createData(speciesData) {
-    const container = document.getElementById('atlas-tab-data');
-    container.innerHTML = '<p>Loading species data...</p>';
-
-    console.log('Species data:', speciesData);
-
-    if (!speciesData || speciesData.length === 0) {
-        container.innerHTML = '<p>No species data available.</p>';
-        return;
-    }
-
-    // Create scrollable wrapper
-    const scrollDiv = document.createElement('div');
-    scrollDiv.style.height = '300px';
-    scrollDiv.style.overflowY = 'auto';
-    scrollDiv.style.border = '1px solid #ccc';
-    scrollDiv.style.padding = '10px';
-    scrollDiv.style.marginTop = '10px';
-
-    // Create table
-    const table = document.createElement('table');
-    table.className = 'species-table';
-    table.style.width = '100%';
-    table.style.borderCollapse = 'collapse';
-    table.innerHTML = `
-        <thead>
-            <tr>
-                <th>Species</th>
-                <th>First Recorded</th>
-                <th>Last Recorded</th>
-                <th>Record Count</th>
-            </tr>
-        </thead>
-    `;
-
-    const tbody = document.createElement('tbody');
-
-	  const toDate = (value) => value ? new Date(value) : null;
-
-	  // 10 years ago from today (to the day)
-	  const TEN_YEARS_MS = 10 * 365.25 * 24 * 60 * 60 * 1000; // accounts for leap years roughly
-	  const now = new Date();
-
-		  
-    // Sort by count descending
-    speciesData.sort((a, b) => b.count - a.count);
-
-    // Build rows
-    speciesData.forEach(item => {
-        const dispCommon = item.commonName ? `(${item.commonName})` : '';
-        const firstDate = item.first_recorded || '-';
-        const lastDate = item.last_recorded || '-';
-
-		const first = toDate(firstDate);
-		const last  = toDate(lastDate);
-		
-
-  // Compute flags
-  // 🟢 firstWithin10y: the first record occurred within the last 10 years
-  const firstWithin10y = !!first && (now - first) <= TEN_YEARS_MS;
-
-  // 🔴 lastOver10y: the most recent record is older than 10 years
-  const lastOver10y = !!last && (now - last) > TEN_YEARS_MS;
-		
-		
-		    const lastIcon  = lastOver10y
-      ? `<span style="display:inline-block;" role="img" aria-label="No record in over 10 years" title="No record in over 10 years">🔴</span>`
-      : "";
-
-    const firstIcon = firstWithin10y
-      ? `<span style="display:inline-block;" role="img" aria-label="First record within 10 years" title="First record within 10 years">🟢</span>`
-      : "";
-
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td><a href="https://www.google.com/search?q=${item.name}" target="_blank()" title="${item.name}">${item.name} </a></td>
-            <td>${formatFirstDate(firstDate)} </td>
-            <td>${lastDate} </td>
-            <td>${item.count}</td>
-			<td>${firstIcon} ${lastIcon}</td>
-        `;
-        tbody.appendChild(row);
-    });
-
-    // ✅ Calculate totals
-    const totalSpecies = speciesData.length;
-    const totalRecords = speciesData.reduce((sum, item) => sum + item.count, 0);
-
-    // ✅ Add summary row
-    const summaryRow = document.createElement('tr');
-    summaryRow.style.fontWeight = 'bold';
-    summaryRow.innerHTML = `
-        <td>Total (${totalSpecies} species)</td>
-        <td colspan="2"></td>
-        <td>${totalRecords} records</td>
-    `;
-    tbody.appendChild(summaryRow);
-
-    table.appendChild(tbody);
-    scrollDiv.appendChild(table);
-
-    container.innerHTML = ''; // Clear loading message
-    container.appendChild(scrollDiv);
-}
-
   // ES custom script definition for map
-  indiciaFns.populateMap = function (el, sourceSettings, response,d) {
+  indiciaFns.populateMap = function (el, sourceSettings, response) {
 
     console.log('ES mapping response', response)
 
@@ -1749,21 +1245,14 @@ function createData(speciesData) {
 
     const mapArea = $('#map-area-selector').find(":selected").val()
     const vcMap = mapArea.split('-')[0] !== '0'
-	
-	console.log('Map data: ',response.aggregations._rows.buckets);
 
     mapData = response.aggregations._rows.buckets
       .filter(function(s){return s.key[`location-grid_square-${vcMap?'2km':'10km'}-centre`]})
       .map(function(s) {
       const latlon = s.key[`location-grid_square-${vcMap?'2km':'10km'}-centre`].split(' ')
       const gr = bigr.getGrFromCoords(Number(latlon[0]), Number(latlon[1]), 'wg', '', [2000, 10000])
-		console.log('latlon: ',latlon);
-		console.log('gr: ',vcMap ? gr.p2000 : gr.p10000 );
-	 return {
+      return {
         gr: vcMap ? gr.p2000 : gr.p10000,
-		latlon: latlon,
-		latlonVariants: [latlon],
-		line:1528,
         recs: s.doc_count,
         minYear: new Date(s.minYear.value_as_string).getFullYear(),
         maxYear: new Date(s.maxYear.value_as_string).getFullYear(),
@@ -1771,40 +1260,23 @@ function createData(speciesData) {
       }
     })
 
-	// console.log('mapData', JSON.parse(JSON.stringify(mapData)))
+    //console.log('mapData', JSON.parse(JSON.stringify(mapData)))
+
     // Turns out that sometimes more than one lat/lon combo is returned for a single square, so
     // can't just do a simple map. Need to reduce to single values for each square.
-    // Also filter out any values with null squares	
-	//  We also need to store the original lat lon somewhere to get to the individual records
-	
-
-mapData = mapData
-  .filter(s => s.gr)
-  .reduce((a, s) => {
-    const existing = a.find(as => as.gr === s.gr);
-    if (existing) {
-      existing.recs += s.recs;
-      existing.minYear = Math.min(existing.minYear, s.minYear);
-      existing.maxYear = Math.max(existing.maxYear, s.maxYear);
-      existing.tetrads = Math.max(existing.tetrads, s.tetrads);
-	  
-	  existing.latlonVariants.push(s.latlon);
-
-    } else {
-      a.push({
-        gr: s.gr,
-        latlon: s.latlon, // Keep original latlon
-        latlonVariants: [s.latlon], // Store all variants here
-		line:1565,
-        recs: s.recs,
-        minYear: s.minYear,
-        maxYear: s.maxYear,
-        tetrads: s.tetrads
-      });
-    }
-    return a;
-  }, []);
-
+    // Also filter out any values with null squares
+    mapData = mapData.filter(function(s){return s.gr}).reduce(function(a,s) {
+      const existing = a.find(function(as){return as.gr === s.gr})
+      if (existing) {
+        existing.recs += s.recs
+        existing.minYear = s.minYear < existing.minYear ? s.minYear : existing.minYear
+        existing.maxYear = s.maxYear > existing.maxYear ? s.maxYear : existing.maxYear
+        existing.tetrads = s.tetrads > existing.tetrads ? s.tetrads : existing.tetrads // Not perfect, but best we can do
+      } else {
+        a.push({gr: s.gr, recs: s.recs, minYear: s.minYear, maxYear: s.maxYear, tetrads: s.tetrads})
+      }
+      return a
+    }, [])
 
     //console.log('mapData', JSON.parse(JSON.stringify(mapData)))
 
@@ -1814,69 +1286,6 @@ mapData = mapData
 
     resizeLegend()
   }
-
-	// ES custom script to get occurences at  a specific location
-	indiciaFns.populateOccurrenceTable = function(el, sourceSettings, response,d) {
-	  const records = response.hits.hits.map(hit => hit._source);
-
-	let html = '<div class="container"><div class="row" ><h1 style="font-size:12px">Grid Ref: '+d.gr+'</h1></div>';
-//	html += '<div class="row" style="font-size:12px" ><div class="col-sm-3">'+d.latlon[1]+'</div><div class="col-sm-3">'+d.latlon[0]+'</div><div class="col-sm-6"></div></div>';
-	html += '<div class="row"><div class="col" style="font-size:12px" >No of records:'+d.recs+'</div></div>';
-	html += '</div>';
-	if (records.length === 0) {
-		$(el).html(html+'<p>No records found for this location.</p>');
-		return;
-    }
-
-
-
-html +='<table class="table table-striped table-bordered occurrence-table">';
-html += '<thead><tr>' +
-  '<th></th>' +
-  '<th>Date</th>' +
-  '<th>Grid Ref</th>' +
-  '<th>Habitat</th>' +
- // '<th>Point</th>' +
-  '<th>Recorder</th>' +
-  '<th>Identified by</th>' +
-    '<th>Name</th>' +
-    '<th>Survey</th>' +
-  '</tr></thead><tbody>';
-
-records.forEach(record => {
-  console.log(record);
-  
-	let verified = ''
-	if (record.identification.verification_status=='V') {
-		verified = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check" style="display:inline-block" viewBox="0 0 16 16">
-  <path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/>
-</svg>`;
-	} 
-	console.log(record);
-  html += '<tr>' +
-    `<td> ${verified} </td>`+
-    `<td> ${record.event?.date_start || ''}</td>` +
-    `<td>${record.location?.output_sref || ''}</td>`;
-	
-	if (record.event?.habitat) {
-		html += `<td>${record.event?.habitat || ''}</td>`;		
-	} else {
-		html += `<td>N/A</td>`;
-	}
-
-//    `<td><small>${record.location?.point || ''}</small></td>` +
-    html += `<td>${record.event?.recorded_by || ''}</td>` +
-	`<td>${record.identification?.identified_by || ''}</td>` +
-    `<td>${record.taxon?.taxon_name || ''}</td>` +
-    `<td>${record.metadata?.survey.title || ''}</td>` +
-    '</tr>';
-});
-
-html += '</tbody></table>';
-
-
-	  $(el).html(html);
-	};
 
   // ES custom script for records by year
   indiciaFns.populateRecsByYearChart = function(el, sourceSettings, response) {
@@ -1892,61 +1301,7 @@ html += '</tbody></table>';
     });
     var opts = {data: yearlyData};
     brcyearly.setChartOpts(opts);
-	triggerPopups();
   }
-  
-  
-
-
-
-
-
-
-	indiciaFns.populateSpeciesList = function(el, sourceSettings, response) {
-		console.log('Specieslist response:', response);
-
-		const buckets = response.aggregations._rows.buckets;
-
-		// Build an array of { name, genus, commonName, count, first_recorded, last_recorded }
-		const speciesData = buckets.map(b => {
-			// Each bucket has a nested species aggregation
-			const speciesBucket = b.species.buckets[0]; // Assuming one species per composite bucket
-			
-			
-
-			// Extract dates and apply condition
-			let firstDate = speciesBucket.first_record?.value_as_string 
-				? speciesBucket.first_record.value_as_string.substring(0, 10) 
-				: null;
-			let lastDate = speciesBucket.last_record?.value_as_string 
-				? speciesBucket.last_record.value_as_string.substring(0, 10) 
-				: null;
-
-			// If firstDate or lastDate equals "1900-01-01", make it blank
-			if (firstDate === '1900-01-01') firstDate = '';
-			if (lastDate === '1900-01-01') lastDate = '';
-
-
-			return {
-				name: b.key["taxon-accepted_name-keyword"],
-				genus: b.key["taxon-genus"],
-				commonName: b.key["taxon-species_vernacular-keyword"],
-				count: b.doc_count,
-				first_recorded: firstDate,
-				last_recorded: lastDate
-			};
-		});
-
-		console.log('Species data:', speciesData);
-
-		// Store full species data globally
-		createData(speciesData);
-
-		return speciesData;
-	};
-
-
-
 
   // ES custom script for records through year
   indiciaFns.populateRecsThroughYearChart = function(el, sourceSettings, response) {
@@ -1975,8 +1330,6 @@ html += '</tbody></table>';
     };
     brcphenology.setChartOpts(opts);
   }
-
-
 
   function mapDataTimeBanded() {
 
@@ -2029,13 +1382,8 @@ html += '</tbody></table>';
       var recs = mapData.filter(function(s){return s.gr}).map(function(s) {
         var minYear = s.minYear ? s.minYear : 'no info';
         var maxYear = s.maxYear ? s.maxYear : 'no info';
-		//console.log('S: ',s);
         return {
           gr: s.gr,
-		  recs: s.recs,
-		  latlon: s.latlon,
-		  latlonVariants: s.latlonVariants,
-		  line:1759,
           id: s.gr,
           colour: getBandColour(s.minYear, s.maxYear),
           caption: 'Square: <b>' + s.gr + '</b>; Recs: <b>' + s.recs + '</b>; Earliest: <b>' + minYear + '</b>; Latest: <b>' + maxYear + '</b>',
@@ -2054,11 +1402,10 @@ html += '</tbody></table>';
       const opacity = $(`#opacity-slider`).val()
 
       //console.log(shape, opacity)
-	  console.log(recs);
+
       const lfText = priority === 'recent' ? 'latest' : 'first'
       const sqText = vcCode ? '2 km' : '10 km'
       const legendSizeFact = 0.8
-
       resolve({
         records: recs,
         precision: vcCode ? 2000 : 10000,
@@ -2108,13 +1455,8 @@ html += '</tbody></table>';
       // At this stage, there might be some records without a
       // resolved squares (possibly outside UK?) so filter these out.
       var recs = mapData.filter(function(s){return s.gr}).map(function(s) {
-		  	//	console.log('S1: ',s);
         return {
           gr: s.gr,
-		  recs: s.recs,
-		  latlon: s.latlon,
-		  latlonVariants: s.latlonVariants,
-		  line:1838,
           id: s.gr,
           colour: colour(Math.log(s.recs)),
           caption: s.recs
@@ -2176,9 +1518,6 @@ html += '</tbody></table>';
           gr: h.gr,
           id: h.gr,
           colour: 'black', 
-		  latlon: h.latlon,
-		  latlonVariants: h.latlonVariants,
-		  line: 1902,
           caption: h.recs,
           size: size
         }
@@ -2215,8 +1554,7 @@ html += '</tbody></table>';
           }]
         }
       })
-      triggerPopups();
-	})
+    })
   }
 
   function mapStandard() {
@@ -2229,15 +1567,10 @@ html += '</tbody></table>';
       // At this stage, there might be some records without a
       // resolved squares (possibly outside UK?) so filter these out.
       var recs = mapData.filter(function(s){return s.gr}).map(function(s) {
-		  		// console.log('S2: ',s);
         return {
           gr: s.gr,
-		  recs: s.recs,
-		  latlon: s.latlon,
-		  latlonVariants: s.latlonVariants,
-		  line: 1959,
           id: s.gr,
-          colour: `black`, // TODO set colour by form parameter
+          colour: 'black', // TODO set colour by form parameter
           caption: s.recs
         };
       });
@@ -2287,6 +1620,4 @@ html += '</tbody></table>';
 
     return taxonNew
   }
-  
-  triggerPopups();
 });

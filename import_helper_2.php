@@ -1028,6 +1028,7 @@ class import_helper_2 extends helper_base {
       'loadingRecords' => 'Loading records into temporary processing area.',
       'loaded' => 'Records loaded ready for matching.',
       'mixedFileTypesError' => 'The list of files you have uploaded contains different file types. Please upload either a set of zip files or a set of data files (csv, xls, xlsx) of the same type.',
+      'nextFile' => 'Starting next file.',
       'preparingToLoadRecords' => 'Preparing to load records.',
       'uploadedFile' => 'Uploaded file {1}.',
       'uploadError' => 'Upload error',
