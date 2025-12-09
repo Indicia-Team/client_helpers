@@ -14,6 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
+ * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link https://github.com/Indicia-Team/client_helpers
  */
@@ -233,15 +234,15 @@ class iform_bas_atlas extends BaseDynamicDetails {
           'group' => 'Atlas mapping options',
         ],
         // Other atlas options
-        [
-          'name' => 'tab_types',
-          'caption' => 'Optional atlas tabs to include',
-          'description' => 'Indicates which optional tabs will appear. Space separated list of any of the following: temporal.',
-          'type' => 'string',
-          'required' => TRUE,
-          'default' => 'temporal',
-          'group' => 'Other atlas options',
-        ],
+		[
+		  'name' => 'tab_types',
+		  'caption' => 'Optional atlas tabs to include',
+		  'description' => 'Indicates which optional tabs will appear. Space separated list of any of the following: temporal data.',
+		  'type' => 'string',
+		  'required' => TRUE,
+		  'default' => 'temporal data', // ✅ Include Data tab by default
+		  'group' => 'Other atlas options',
+		],
         [
           'name' => 'accounts_location',
           'caption' => 'Path to taxon accounts',
@@ -410,6 +411,7 @@ class iform_bas_atlas extends BaseDynamicDetails {
             'moderation' => lang::get('Moderation'),
             'peer_review' => lang::get('Peer review'),
             'user' => lang::get('My records'),
+//            'public' => lang::get('Public'),
           ],
           'required' => TRUE,
           'group' => 'Elasticsearch settings',
@@ -532,6 +534,18 @@ class iform_bas_atlas extends BaseDynamicDetails {
     report_helper::$javascript.="indiciaData.basAtlas.other.tab_types = '" . $args['tab_types'] . "';";
 
 
+
+
+		if (!empty($_GET['os'])) {
+			$osGridRef = $_GET['os'];
+			$esFilter .= self::createEsFilterHtml('location.grid_reference', $osGridRef, 'match_phrase', 'must');
+			$esFilter .= self::createEsFilterHtml('taxon.order', self::$orders[$tg]['esFilter'], 'match_phrase', 'must');
+			$esFilter .= self::createEsFilterHtml('taxon.accepted_taxon_id', self::$externalKey, 'match_phrase', 'must');	
+			      return $esFilter . parent::get_form_html($args, $auth, $attributes);
+		}
+		
+
+
     // Set global flag if no taxon is specified in URL or form.
     if (empty($_GET['taxa_taxon_list_id']) &&
       empty($_GET['taxon_meaning_id']) &&
@@ -609,6 +623,8 @@ class iform_bas_atlas extends BaseDynamicDetails {
           $esFilter .= self::createEsFilterHtml('metadata.survey.id', '510', 'term', 'must');
         }
       }
+
+
 
       return $esFilter . parent::get_form_html($args, $auth, $attributes);
     }
@@ -712,6 +728,12 @@ class iform_bas_atlas extends BaseDynamicDetails {
    */
   protected static function get_control_atlas($auth, $args, $tabalias, $options) {
 
+
+	if (!empty($_GET['os'])) {
+		$r=self::get_filtered_occurrences($args, $options);
+		echo "<pre>$r</pre>";exit;
+	}
+
     $r='<div id="bas-atlas-main">';
 
     $r.='<div id="bas-atlas-controls">';
@@ -771,6 +793,7 @@ class iform_bas_atlas extends BaseDynamicDetails {
     // 'download' => 'false',
 
     // Set up the data source and custom script
+
     data_entry_helper::add_resource('brc_atlas');
 
     // Return now if no taxon specified
@@ -790,6 +813,7 @@ class iform_bas_atlas extends BaseDynamicDetails {
       ],
       'proxyCacheTimeout' => 300,
     ];
+
     if (!$_GET['vc'] ) {
       // For national hectad maps, count the number of tetrads in each hectad
       $optionsSourceMap['aggregation']['tetrads'] = ['cardinality' => ['field' => 'location.grid_square.2km.centre']];
@@ -803,6 +827,11 @@ class iform_bas_atlas extends BaseDynamicDetails {
       'functionName' => 'populateMap',
     ];
     $r = ElasticsearchReportHelper::customScript($optionsCustomScriptMap);
+
+
+
+
+
 
     if(str_contains($args['tab_types'], 'temporal')) {
 
@@ -837,6 +866,7 @@ class iform_bas_atlas extends BaseDynamicDetails {
         'fields' => ['event.week'],
         'proxyCacheTimeout' => 300,
       ];
+	  
       ElasticsearchReportHelper::source($optionsSourceWeekly);
       $optionsCustomScriptWeekly = [
         'extraParams' => $options['extraParams'],
@@ -847,8 +877,135 @@ class iform_bas_atlas extends BaseDynamicDetails {
       $r .= ElasticsearchReportHelper::customScript($optionsCustomScriptWeekly);
     }
 
+
+	if (str_contains($args['tab_types'], 'data')) {
+		data_entry_helper::add_resource('fancyDialog'); // Required for ES error handling
+		data_entry_helper::add_resource('brc_data');    // Optional for your custom tab
+
+
+			$optionsSourceSpecies = [
+				'extraParams'       => $options['extraParams'],
+				'nid'               => $options['nid'],
+				'id'                => 'speciesListSource',
+				'size'              => 0,
+				'mode'              => 'compositeAggregation',
+				'uniqueField'       => 'taxon.accepted_name.keyword', // ✅ Use keyword field
+				'fields'            => [
+				                          'taxon.accepted_name.keyword'	,
+										  'taxon.genus'	,
+										  'taxon.species_vernacular.keyword'
+									    ],
+				'aggregation' => [
+					'species' => [
+						'terms' => [
+							'field' => 'taxon.accepted_name.keyword',
+							'size'  => 10000
+						],
+						'aggs' => [
+							'first_record' => [
+								'min' => [
+									'field' => 'event.date_start'
+								]
+							],
+							'last_record' => [
+								'max' => [
+									'field' => 'event.date_start'
+								]
+							]
+						]
+					]
+				],
+				'proxyCacheTimeout' => 300,
+			];
+
+
+		// Apply Vice County filter if vc is set
+		if (!empty($_GET['vc'])) {
+			$optionsSourceSpecies['extraParams']['query']['bool']['filter'][] = [
+				'term' => ['location.vice_county' => $_GET['vc']]
+			];
+		}
+
+		ElasticsearchReportHelper::source($optionsSourceSpecies);
+
+		$optionsCustomScriptSpecies = [
+			'extraParams' => $options['extraParams'],
+			'nid'         => $options['nid'],
+			'source'      => 'speciesListSource',
+			'functionName'=> 'populateSpeciesList', // JS function you define
+		];
+
+		$r .= ElasticsearchReportHelper::customScript($optionsCustomScriptSpecies);
+	}
+
     return $r;
   }
+
+
+	protected static function get_filtered_occurrences($args, $options) {
+	  $filters = [
+		['field' => 'location.gridref.keyword', 'value' => $_GET['os'], 'queryType' => 'term']
+	  ];
+
+	  if (!empty($_GET['taxa_taxon_list_id'])) {
+		$filters[] = ['field' => 'taxon.taxa_taxon_list_id', 'value' => $_GET['taxa_taxon_list_id'], 'queryType' => 'term'];
+	  }
+	  if (!empty($_GET['ds'])) {
+		$filters[] = ['field' => 'dataset.id', 'value' => $_GET['ds'], 'queryType' => 'term'];
+	  }
+	  if (!empty($_GET['tg'])) {
+		$filters[] = ['field' => 'taxon_group.name', 'value' => $_GET['tg'], 'queryType' => 'term'];
+	  }
+
+
+	  $sourceDefinition = [
+		'extraParams' => $options['extraParams'],
+		'nid' => $options['nid'],
+		'id' => 'occurrencesSource',
+		'mode' => 'json',
+		'fields' => [
+		  'sample.date_start',
+		  'sample.date_end',
+		  'taxon.preferred_name',
+		  'entered_sref',
+		  'recorded_by',
+		  'sample.method',
+		  'occurrence.comment'
+		],
+		'filters' => $filters,
+		'proxyCacheTimeout' => 300
+	  ];
+
+
+	  //  Register the source first
+	  ElasticsearchReportHelper::source($sourceDefinition);
+
+	  // Now fetch the data
+	  $r = ElasticsearchReportHelper::dataGrid( [
+		'extraParams' => $options['extraParams'],
+		'mode' => 'json',
+		'nid' => $options['nid'],
+		'source' => 'occurrencesSource',
+		'columns' => [
+		  ['field' => 'sample.date_start', 'caption' => 'Start Date'],
+		  ['field' => 'sample.date_end', 'caption' => 'End Date'],
+		  ['field' => 'taxon.preferred_name', 'caption' => 'Species'],
+		  ['field' => 'location.gridref', 'caption' => 'Grid Ref'],
+		  ['field' => 'recorded_by', 'caption' => 'Recorder'],
+		  ['field' => 'sample.method', 'caption' => 'Method'],
+		  ['field' => 'occurrence.comment', 'caption' => 'Comment']
+		],
+		'itemsPerPage' => 1000,
+		'sortField' => 'sample.date_start',
+		'sortOrder' => 'desc'
+	  ]);
+
+
+
+	  return $r;
+	}
+
+
 
   /**
    * Returns a control for picking a species.
