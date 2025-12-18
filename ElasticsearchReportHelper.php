@@ -391,6 +391,7 @@ class ElasticsearchReportHelper {
           'imageClassifierAgrees' => 'Image classifier agrees with identification provided.',
           'imageClassifierDisagrees' => 'Image classifier conflicts with identification provided.',
           'noClassifierInfoAvailable' => 'No image classifier information is available for this record.',
+          'probability' => 'Probability',
           'suggestionClassifierChosen' => 'Classifier chosen',
           'suggestionHumanChosen' => 'Human chosen',
           'suggestionNotChosen' => 'Suggestion not chosen',

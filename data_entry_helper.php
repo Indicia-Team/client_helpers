@@ -1339,14 +1339,19 @@ JS;
    *     for a proxy to classifiers designed to work with this control.
    *   * taxonListId - Required. The list to match the classifier results
    *     against.
-   *   * taxonControlId - Required. TODO. The control to update with the
-   *     result of the image classification.
-   *   * unknowMeaningId - Required. The taxon_meaning_id to use when adding rows
-   *     to the species grid for images the classifier could not identify.
-   *   * languageIso - The language to use with the control. Defaults to English
-   *     if not specified. If specified but not available, defaults to preferred
-   *     name.
+   *   * taxonControlId - Required. The control to update with the result of
+   *     the image classification.
+   *   * checklist - set to true if taxonControlId points to a species
+   *     checklist or false if taxonControlId is a single record input. Default
+   *     is true.
+   *   * unknownMeaningId - Required. The taxon_meaning_id to use when adding
+   *     rows to the species grid for images the classifier could not identify.
+   *   * languageIso - The language to use with the control. Defaults to
+   *     English if not specified. If specified but not available, defaults to
+   *     preferred name.
    *   * readAuth - Read authentication array with nonce and token.
+   *   * collapsible - set to true to place the classifier inside a collapsed
+   *     div initially so it does not get in the way when not used.
    */
   public static function file_classifier(array $options) {
     // Ensure some settings have required values.
@@ -1355,7 +1360,7 @@ JS;
     }
 
     // Obtain default options.
-    $classifier_options = self::get_file_classifier_options($options, $options['readAuth']);
+    $classifier_options = self::getFileClassifierOptions($options, $options['readAuth']);
     // Merge additional classifier options.
     $options = array_merge(
       [
@@ -1364,13 +1369,7 @@ JS;
         'maxFileCount' => 9999,
       ],
       $options,
-      $classifier_options,
-      [
-        'helpText' => lang::get('Add files here, click the classify button, ' .
-        'and we will attempt to automatically identify the species in each ' .
-        'file and add them to the grid. Files featuring the specimen with ' .
-        'minimal background will be most successful.'),
-      ]
+      $classifier_options
     );
     // Load javascript for the classifier.
     self::add_resource('file_classifier');
@@ -1406,7 +1405,29 @@ JS;
       // Get html and add javascript for a filebox.
       $r = self::file_box($options);
     }
+    if ($options['collapsible'] ?? TRUE) {
+      global $indicia_templates;
+      $buttonLabel = lang::get('Get assistance with photo identification');
+      $r = <<<HTML
+        <button type="button" class="show-classifier $indicia_templates[buttonDefaultClass]">$buttonLabel</button>
+        <div class="classifier-container" style="display: none">
+          $r
+        </div>
+      HTML;
+    }
     self::$onload_javascript .= "$('#$containerId').classifier({});\n";
+    self::addLanguageStringsToJs('fileClassifier', [
+      'cancel' => 'Cancel',
+      'classifierRequestFailed' => 'The classifier failed to process the image. It has been added to the grid as Unknown.',
+      'classifyBtnCaption' => 'Classify',
+      'classifyBtnTitle' => 'Start classifying files.',
+      'dialogBtnOk' => 'Okay',
+      'dialogEnd' => 'Your files have been processed. Review the identifications and check the abundances.',
+      'dialogStart' => 'Your files are being sent to a classification service which will try to identify the species.',
+      'dialogTitle' => 'Requesting classification',
+      'percentProbability' => '{1}% probability',
+      'multipleSuggestionInstructions' => 'Classification of the following image(s) has returned more than one suggestion. Please click on the one that you would like to use or press Cancel to skip this classification.'
+    ]);
     return $r;
   }
 
@@ -1425,33 +1446,26 @@ JS;
    *   The options array received, augmented by any missing values that will be
    *   needed.
    */
-  public static function get_file_classifier_options(array $options, array $readAuth) {
+  private static function getFileClassifierOptions(array $options, array $readAuth) {
     // Required values.
     $requirements = [
       'fileClassifier' => TRUE,
     ];
-
+    $isChecklist = $options['checklist'] ?? TRUE;
     // Provide default settings for other options which can be overwritten.
     $defaults = [
       'caption' => lang::get('Image classifier'),
-      'classifierRequestFailed' => lang::get('The classifier failed to process the image. It has been added to the grid as Unknown.'),
-      'helpText' => lang::get('Add a file here, click the classify button, ' .
-        'and we will attempt to automatically identify the species and add ' .
-        'it to the grid. Files featuring the specimen with minimal ' .
-        'background will be most successful.'),
-      'dialogTitle' => lang::get('Requesting classification'),
-      'dialogStart' => lang::get('Your files are being sent to a ' .
-        'classification service which will try to identify the species.'),
-      'dialogEnd' => lang::get('Your files have been processed. Review the identifications and check the abundances.'),
-      'dialogNew' => lang::get('The file has been identified as <em>{1}</em> with a probability of {2}%. It is added to the grid as a new row.'),
-      'dialogUnmatched' => lang::get('Sorry, your file could not be matched to a species in the survey list. It is added to the grid as Unknown.'),
-      'dialogUnknown' => lang::get('Sorry, your file could not be confidently identified. It is added to the grid as Unknown.'),
-      'dialogFail' => lang::get('Sorry, an error meant your file could not be identified. It is added to the grid as Unknown.'),
-      'dialogBtnOk' => lang::get('Okay'),
-      'classifyBtnCaption' => lang::get('Classify'),
-      'classifyBtnTitle' => lang::get('Start classifying files.'),
-      'buttonTemplate' => '<button id="{id}" type="button" class="{class}" title="{title}">{caption}</button>',
-      'mode' => 'multi:checklist:append',
+      'helpText' => $isChecklist ? lang::get(
+        'Add files here then click the classify button and we will attempt to automatically ' .
+        'identify the species and add them to the grid. Files featuring the specimen with minimal ' .
+        'background will be most successful.'
+        ) : lang::get(
+        'Add files here then click the classify button and we will attempt to automatically ' .
+        'identify the species and add it to the record. Files featuring the specimen with minimal ' .
+        'background will be most successful.'
+        ),
+      'interimImagePath' => self::$interim_image_folder,
+      'mode' => $isChecklist ? 'multi:checklist:append' : "single:$options[taxonControlId]:add",
     ];
     $classifier_options = array_merge($defaults, $options, $requirements);
 
@@ -3828,7 +3842,7 @@ RIJS;
         empty($options['classifierUnknownMeaningId'])
       ) {
         throw new Exception('A classifierUrl, a classifierTaxonListId, and
-        a classifierUnknowMeaningId must be provided for an image classifier.');
+        a classifierUnknownMeaningId must be provided for an image classifier.');
       }
 
       // Extract all options prefixed by 'classifier'.
@@ -3846,7 +3860,7 @@ RIJS;
       ]);
 
       // Add in remaining default options.
-      $classifier_options = self::get_file_classifier_options(
+      $classifier_options = self::getFileClassifierOptions(
         $classifier_options, $options['readAuth']
       );
 
@@ -8982,7 +8996,6 @@ HTML;
             ]
           ];
         }
-
         $classificationEvent['subModels'][] = $classificationResult;
       }
 
@@ -9050,7 +9063,17 @@ HTML;
       $values['occurrence:release_status'] = 'R';
       $values['sample:record_status'] = 'C';
     }
-    return submission_builder::build_submission($values, $structure);
+    $submission = submission_builder::build_submission($values, $structure);
+    if (!empty($values['classification_result:0'])) {
+      // We have used an image classifier, so attach the result to the
+      // occurrence.
+      foreach ($submission['subModels'] as &$subModel) {
+        if ($subModel['model']['id'] === 'occurrence') {
+          self::attachClassificationToModel($subModel['model'], $values);
+        }
+      }
+    }
+    return $submission;
   }
 
   /**
