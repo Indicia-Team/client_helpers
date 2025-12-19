@@ -4295,12 +4295,7 @@ HTML;
             }
             else {
               // Create a cell containing the existing images.
-              $row .= '<td class="scMediaCell">' . data_entry_helper::file_box([
-                'table' => "sc:$options[id]-$txIdx:$existingRecordId:occurrence_medium",
-                'loadExistingRecordKey' => "sc:$loadedTxIdx:$existingRecordId:occurrence_medium",
-                'mediaTypes' => $options['mediaTypes'],
-                'readAuth' => $options['readAuth']
-              ]) . '</td>';
+              $row .= '<td class="scMediaCell">' . self::getSpeciesChecklistExistingRowPhotoUploader($options, $txIdx, $loadedTxIdx, $existingRecordId) . '</td>';
             }
           }
         }
@@ -4326,12 +4321,7 @@ HTML;
             ($options['verificationInfoColumns'] ? 2 : 0) +
             ($options['occurrenceComment'] ? 1 : 0) + ($options['occurrenceSensitivity'] ? 1 : 0) +
             (count($options['mediaTypes']) ? 1 : 0);
-          $rows[$rowIdx] = "<td colspan=\"$totalCols\">" . data_entry_helper::file_box([
-              'table' => "sc:$options[id]-$txIdx:$existingRecordId:occurrence_medium",
-              'loadExistingRecordKey' => "sc:$loadedTxIdx:$existingRecordId:occurrence_medium",
-              'mediaTypes' => $options['mediaTypes'],
-              'readAuth' => $options['readAuth']
-            ]) . '</td>';
+          $rows[$rowIdx] = "<td colspan=\"$totalCols\">" . self::getSpeciesChecklistExistingRowPhotoUploader($options, $txIdx, $loadedTxIdx, $existingRecordId) . '</td>';
           $imageRowIdxs[] = $rowIdx;
           $rowIdx++;
         }
@@ -4436,6 +4426,45 @@ HTML;
     else {
       return $taxalist['error'];
     }
+  }
+
+  /**
+   * Species checklist existing row photo uploader.
+   *
+   * Returns a file uploader control to add to an existing row when loading the
+   * species checklist.
+   *
+   * @param array $options
+   *   Species checklist options array which contains file uploader options
+   *   such as for resizing.
+   * @param int $rowIndex
+   *   Index of the grid row.
+   * @param int $loadedTxIdx
+   *   Unique row key.
+   * @param mixed $existingRecordId
+   *   ID of the existing record.
+   *
+   * @return string
+   *   File box HTML.
+   */
+  private static function getSpeciesChecklistExistingRowPhotoUploader(array $options, $rowIndex, $loadedTxIdx, $existingRecordId) {
+    $fileBoxOptions = [
+      'table' => "sc:$options[id]-$rowIndex:$existingRecordId:occurrence_medium",
+      'loadExistingRecordKey' => "sc:$loadedTxIdx:$existingRecordId:occurrence_medium",
+      'mediaTypes' => $options['mediaTypes'],
+      'readAuth' => $options['readAuth']
+    ];
+    // Copy over relevant options from the species checklist.
+    if (isset($options['resizeWidth'])) {
+      $fileBoxOptions['resizeWidth'] = $options['resizeWidth'];
+    }
+    if (isset($options['resizeHeight'])) {
+      $fileBoxOptions['resizeHeight'] = $options['resizeHeight'];
+    }
+    if (isset($options['resizeQuality'])) {
+      $fileBoxOptions['resizeQuality'] = $options['resizeQuality'];
+    }
+    return data_entry_helper::file_box($fileBoxOptions);
   }
 
   /**
