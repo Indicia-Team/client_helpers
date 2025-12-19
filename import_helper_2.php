@@ -1620,10 +1620,15 @@ HTML;
     unset($settings['config-id']);
     unset($settings['next-import-step']);
     $request = parent::$base_url . 'index.php/services/import_2/save_mappings';
-    self::http_post($request, $options['writeAuth'] + [
+    $response = self::http_post($request, $options['writeAuth'] + [
       'config-id' => $_POST['config-id'],
       'mappings' => json_encode($settings),
     ]);
+    $output = json_decode($response['output']);
+    if ($output['status'] ?? '' !== 'ok') {
+      \Drupal::logger('iform')->error('Error in saveMappings: ' . var_export($response, TRUE));
+      throw new Exception('Saving column mappings failed');
+    }
   }
 
   /**
