@@ -3192,44 +3192,42 @@ JS;
       $extensions = $values['submission_extensions'];
       unset($values['submission_extensions']);
     }
+    // Work out the attributes that are for abundance, so could contain a
+    // zero.
+    $connection = iform_get_connection_details($nid);
+    $readAuth = data_entry_helper::get_read_auth($connection['website_id'], $connection['password']);
+    $abundanceAttrs = [];
+    $occIdToLoad = isset(self::$loadedOccurrenceId) ? self::$loadedOccurrenceId : '';
+    $occAttrs = self::getAttributesForEntity('occurrence', $args, $readAuth, $occIdToLoad);
+    foreach ($occAttrs as &$attr) {
+      if ($attr['system_function'] === 'sex_stage_count') {
+        // If we have any lookups, we need to load the terms so we can check
+        // the data properly for zero abundance as term Ids are never zero.
+        if ($attr['data_type'] === 'L') {
+          $attr['terms'] = data_entry_helper::get_population_data([
+            'table' => 'termlists_term',
+            'extraParams' => $readAuth + [
+              'termlist_id' => $attr['termlist_id'],
+              'view' => 'cache',
+              'columns' => 'id,term',
+            ],
+            'cachePerUser' => FALSE,
+          ]);
+        }
+        $abundanceAttrs[$attr['attributeId']] = $attr;
+      }
+    }
     // Default for forms setup on old versions is grid - list of occurrences
     // Can't call getGridMode in this context as we might not have the $_GET
     // value to indicate grid.
     if (isset($values['speciesgridmapmode'])) {
-      $submission = data_entry_helper::build_sample_subsamples_occurrences_submission($values);
+      $submission = data_entry_helper::build_sample_subsamples_occurrences_submission($values, FALSE, $abundanceAttrs);
+    }
+    elseif (isset($values['gridmode'])) {
+      $submission = data_entry_helper::build_sample_occurrences_list_submission($values, FALSE, $abundanceAttrs);
     }
     else {
-      // Work out the attributes that are for abundance, so could contain a
-      // zero.
-      $connection = iform_get_connection_details($nid);
-      $readAuth = data_entry_helper::get_read_auth($connection['website_id'], $connection['password']);
-      $abundanceAttrs = [];
-      $occIdToLoad = isset(self::$loadedOccurrenceId) ? self::$loadedOccurrenceId : '';
-      $occAttrs = self::getAttributesForEntity('occurrence', $args, $readAuth, $occIdToLoad);
-      foreach ($occAttrs as &$attr) {
-        if ($attr['system_function'] === 'sex_stage_count') {
-          // If we have any lookups, we need to load the terms so we can check
-          // the data properly for zero abundance as term Ids are never zero.
-          if ($attr['data_type'] === 'L') {
-            $attr['terms'] = data_entry_helper::get_population_data([
-              'table' => 'termlists_term',
-              'extraParams' => $readAuth + [
-                'termlist_id' => $attr['termlist_id'],
-                'view' => 'cache',
-                'columns' => 'id,term',
-              ],
-              'cachePerUser' => FALSE,
-            ]);
-          }
-          $abundanceAttrs[$attr['attributeId']] = $attr;
-        }
-      }
-      if (isset($values['gridmode'])) {
-        $submission = data_entry_helper::build_sample_occurrences_list_submission($values, FALSE, $abundanceAttrs);
-      }
-      else {
-        $submission = data_entry_helper::build_sample_occurrence_submission($values, $abundanceAttrs);
-      }
+      $submission = data_entry_helper::build_sample_occurrence_submission($values, $abundanceAttrs);
     }
     foreach ($extensions as $extension) {
       if (!empty($extension)) {
