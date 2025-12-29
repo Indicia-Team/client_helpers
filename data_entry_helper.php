@@ -4354,19 +4354,26 @@ HTML;
       // add extra rows to the grid, selecting the species from this list. Add
       // the required controls for this.
       if (!empty($options['allowAdditionalTaxa'])) {
-        // Javascript to add further rows to the grid.
-        if (isset($indicia_templates['format_species_autocomplete_fn'])) {
-          self::$javascript .= 'formatter = ' . $indicia_templates['format_species_autocomplete_fn'];
+        $options = array_merge([
+          'matchContains' => 'false',
+          'numValues' => 20,
+          'selectMode' => 'false',
+        ], $options);
+        if (empty($indicia_templates['format_species_autocomplete_fn'])) {
+          self::build_species_autocomplete_item_function($options);
         }
-        else {
-          self::$javascript .= "formatter = '" . $indicia_templates['taxon_label'] . "';\n";
-        }
-        self::$javascript .= "if (typeof indiciaData.speciesGrid==='undefined') {indiciaData.speciesGrid={};}\n";
-        self::$javascript .= "indiciaData.speciesGrid['$options[id]']={};\n";
-        self::$javascript .= "indiciaData.speciesGrid['$options[id]'].numValues=" . (!empty($options['numValues']) ? $options['numValues'] : 20) . ";\n";
-        self::$javascript .= "indiciaData.speciesGrid['$options[id]'].selectMode=" . (!empty($options['selectMode']) && $options['selectMode'] ? 'true' : 'false') . ";\n";
-        self::$javascript .= "indiciaData.speciesGrid['$options[id]'].matchContains=" . (!empty($options['matchContains']) && $options['matchContains'] ? 'true' : 'false') . ";\n";
-        self::$javascript .= "indiciaFns.addRowToGrid('$options[id]', '$options[lookupListId]');\n";
+        self::$javascript .= <<<JS
+          formatter = $indicia_templates[format_species_autocomplete_fn]
+          if (typeof indiciaData.speciesGrid === 'undefined') {
+            indiciaData.speciesGrid={};
+          }
+          indiciaData.speciesGrid['$options[id]'] = {};
+          indiciaData.speciesGrid['$options[id]'].numValues = $options[numValues];
+          indiciaData.speciesGrid['$options[id]'].selectMode = $options[selectMode];
+          indiciaData.speciesGrid['$options[id]'].matchContains = $options[matchContains];
+          indiciaFns.addRowToGrid('$options[id]', '$options[lookupListId]');
+
+        JS;
       }
       // If options contain a help text, output it at the end if that is the
       // preferred position.
