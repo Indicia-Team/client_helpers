@@ -5662,7 +5662,7 @@ JS;
     // Get the list of species that are always added to the grid, by first
     // building a filter or using preloaded ones.
     if (!empty($options['preloadTaxa'])) {
-      $options['extraParams']['taxa_taxon_list_id'] = json_encode($options['preloadTaxa']);
+      self::addQueryParameter($options['extraParams'], ['in' => ['id' => $options['preloadTaxa']]]);
     }
     elseif (preg_match('/^(preferred_name|preferred_taxon|taxon_meaning_id|taxa_taxon_list_id|taxon_group|external_key|organism_key|id)$/', $options['taxonFilterField']))  {
       // Legacy field name support due to switch to loading from cache_taxa_taxon_lists.
