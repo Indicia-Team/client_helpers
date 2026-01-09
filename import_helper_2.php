@@ -1624,9 +1624,9 @@ HTML;
       'config-id' => $_POST['config-id'],
       'mappings' => json_encode($settings),
     ]);
-    $output = json_decode($response['output']);
-    if ($output['status'] ?? '' !== 'ok') {
-      \Drupal::logger('iform')->error('Error in saveMappings: ' . var_export($response, TRUE));
+    $output = json_decode($response['output'], TRUE);
+    if (($output['status'] ?? '') !== 'ok') {
+      \Drupal::logger('iform')->error('Error in saveMappings: ' . var_export($output, TRUE));
       throw new Exception('Saving column mappings failed');
     }
   }
