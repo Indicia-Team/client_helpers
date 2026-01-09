@@ -2825,10 +2825,16 @@ if (typeof validator!=='undefined') {
     global $indicia_templates;
     // Don't need the extraParams - they are just for service communication.
     $options['extraParams'] = NULL;
-    // Set default validation error output mode.
-    if (!array_key_exists('validation_mode', $options)) {
-      $options['validation_mode'] = self::$validation_mode;
-    }
+    // Apply defaults to options.
+    $options = array_merge([
+      'class' => '',
+      'disabled' => '',
+      'labelPosition' => 'before',
+      'readonly' => '',
+      'title' => '',
+      'validation_mode' => self::$validation_mode,
+      'wrapClasses' => [],
+    ], $options);
     // Decide if the main control has an error. If so, highlight with the error
     // class and set it's title.
     $error = '';
@@ -2846,15 +2852,6 @@ if (typeof validator!=='undefined') {
       }
       $options['title'] = 'title="' . implode(' : ', $hint) . '"';
     }
-    else {
-      $options['title'] = '';
-    }
-    $options = array_merge([
-      'class' => '',
-      'disabled' => '',
-      'readonly' => '',
-      'wrapClasses' => [],
-    ], $options);
     $options['wrapClasses'] = empty($options['wrapClasses']) ? '' : ' ' . implode(' ', $options['wrapClasses']);
     if (array_key_exists('maxlength', $options)) {
       $options['maxlength'] = "maxlength=\"$options[maxlength]\"";
@@ -2900,10 +2897,14 @@ if (typeof validator!=='undefined') {
 
     // Add a label only if specified in the options array. Link the label to
     // the inputId if available, otherwise the fieldname (as the fieldname
-    // control could be a hidden control).
+    // control could be a hidden control). A colon is added to the label only
+    // when the label before the control and not ended with ?.
     if (!empty($options['label'])) {
-      $labelTemplate = isset($options['labelTemplate']) ? $indicia_templates[$options['labelTemplate']] :
-      	(substr($options['label'], -1) == '?' ? $indicia_templates['labelNoColon'] : $indicia_templates['label']);
+      $labelTemplate = isset($options['labelTemplate'])
+        ? $indicia_templates[$options['labelTemplate']]
+        : (substr($options['label'], -1) == '?' || $options['labelPosition'] === 'after'
+          ? $indicia_templates['labelNoColon']
+          : $indicia_templates['label']);
       $label = str_replace(
           ['{label}', '{id}', '{labelClass}'],
           [
@@ -2914,7 +2915,7 @@ if (typeof validator!=='undefined') {
           $labelTemplate
       );
     }
-    if (!empty($options['label']) && (!isset($options['labelPosition']) || $options['labelPosition'] != 'after')) {
+    if (!empty($options['label']) && $options['labelPosition'] === 'before') {
       $r .= $label;
     }
     // Output the main control.
@@ -2956,7 +2957,7 @@ if (typeof validator!=='undefined') {
       $r .= $control;
     }
     // Label can sometimes be placed after the control.
-    if (!empty($options['label']) && isset($options['labelPosition']) && $options['labelPosition'] == 'after') {
+    if (!empty($options['label']) && $options['labelPosition'] === 'after') {
       $r .= $label;
     }
     // Add a message to the control if there is an error and this option is
