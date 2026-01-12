@@ -46,52 +46,61 @@ loadSectionDetails = function(section) {
         $('#section-location-sref').val(indiciaData.sections[section].sref);
         $('#section-location-system,#section-location-system-select').val(indiciaData.sections[section].system);
     }
-    $.getJSON(indiciaData.indiciaSvc + "index.php/services/data/location_attribute_value?location_id=" + indiciaData.sections[section].id +
-        "&mode=json&view=list&callback=?&auth_token=" + indiciaData.read.auth_token + "&nonce=" + indiciaData.read.nonce,
-        function(data) {
-          var attrname;
-          $.each(data, function(idx, attr) {
-            attrname = 'locAttr:' + attr.location_attribute_id;
-            if (attr.id!==null) {
-              attrname += ':' + attr.id;
-            }
-            // special handling for checking radios
-            if ($('input:radio#locAttr\\:' + attr.location_attribute_id + '\\:0').length>0) {
-              var radioidx=0;
-              // name the radios with the existing value id
-              while ($('#section-form #locAttr\\:' + attr.location_attribute_id + '\\:' + radioidx).length>0) {
-                $('#section-form #locAttr\\:' + attr.location_attribute_id + '\\:' + radioidx).attr('name',attrname);
-                radioidx++;
-              }
-              radioidx=0;
-              // check the correct radio
-              while ($('#section-form #locAttr\\:' + attr.location_attribute_id + '\\:' + radioidx).length>0 &&
-                  $('#section-form #locAttr\\:' + attr.location_attribute_id + '\\:' + radioidx).val()!==attr.raw_value) {
-                radioidx++;
-              }
-              if ($('#section-form #locAttr\\:' + attr.location_attribute_id + '\\:' + radioidx).length>0 &&
-                  $('#section-form #locAttr\\:' + attr.location_attribute_id + '\\:' + radioidx).val()===attr.raw_value) {
-                $('#section-form #locAttr\\:' + attr.location_attribute_id + '\\:' + radioidx).attr('checked', true);
-              }
-            } else if ($('#section-form #fld-locAttr\\:' + attr.location_attribute_id).length>0) {
-              // a hierarchy select outputs a fld control, which needs a special case
-              $('#section-form #fld-locAttr\\:' + attr.location_attribute_id).val(attr.raw_value);
-              $('#section-form #fld-locAttr\\:' + attr.location_attribute_id).attr('name',attrname);
-              // check the option is already in the drop down.
-              if ($('#section-form #locAttr\\:' + attr.location_attribute_id + " option[value='"+attr.raw_value+"']").length===0) {
-                // no - we'll just put it in at the top level
-                // @todo - should really now fetch the top level in the hierarchy then select that.
-                $('#section-form #locAttr\\:' + attr.location_attribute_id).append('<option value="' +
-                    attr.raw_value + '">' + attr.value + '</option>');
-              }
-              $('#section-form #locAttr\\:' + attr.location_attribute_id).val(attr.raw_value);
-            } else {
-              $('#section-form #locAttr\\:' + attr.location_attribute_id).val(attr.raw_value);
-              $('#section-form #locAttr\\:' + attr.location_attribute_id).attr('name',attrname);
-            }
-          });
+    $.getJSON({
+      url: indiciaData.read.url + 'index.php/services/data/location_attribute_value',
+      data: {
+        location_id: indiciaData.sections[section].id,
+        mode: 'json',
+        view: 'list',
+        auth_token: indiciaData.read.auth_token,
+        nonce: indiciaData.read.nonce
+      },
+      dataType: 'jsonp',
+      crossDomain: true
+    })
+    .done(function (data) {
+      var attrname;
+      $.each(data, function(idx, attr) {
+        attrname = 'locAttr:' + attr.location_attribute_id;
+        if (attr.id !== null) {
+          attrname += ':' + attr.id;
         }
-    );
+        // special handling for checking radios
+        if ($('input:radio#locAttr\\:' + attr.location_attribute_id + '\\:0').length>0) {
+          var radioidx = 0;
+          // name the radios with the existing value id
+          while ($('#section-form #locAttr\\:' + attr.location_attribute_id + '\\:' + radioidx).length>0) {
+            $('#section-form #locAttr\\:' + attr.location_attribute_id + '\\:' + radioidx).attr('name',attrname);
+            radioidx++;
+          }
+          radioidx=0;
+          // check the correct radio
+          while ($('#section-form #locAttr\\:' + attr.location_attribute_id + '\\:' + radioidx).length>0 &&
+              $('#section-form #locAttr\\:' + attr.location_attribute_id + '\\:' + radioidx).val()!==attr.raw_value) {
+            radioidx++;
+          }
+          if ($('#section-form #locAttr\\:' + attr.location_attribute_id + '\\:' + radioidx).length>0 &&
+              $('#section-form #locAttr\\:' + attr.location_attribute_id + '\\:' + radioidx).val()===attr.raw_value) {
+            $('#section-form #locAttr\\:' + attr.location_attribute_id + '\\:' + radioidx).attr('checked', true);
+          }
+        } else if ($('#section-form #fld-locAttr\\:' + attr.location_attribute_id).length>0) {
+          // a hierarchy select outputs a fld control, which needs a special case
+          $('#section-form #fld-locAttr\\:' + attr.location_attribute_id).val(attr.raw_value);
+          $('#section-form #fld-locAttr\\:' + attr.location_attribute_id).attr('name', attrname);
+          // check the option is already in the drop down.
+          if ($('#section-form #locAttr\\:' + attr.location_attribute_id + " option[value='" + attr.raw_value + "']").length === 0) {
+            // no - we'll just put it in at the top level
+            // @todo - should really now fetch the top level in the hierarchy then select that.
+            $('#section-form #locAttr\\:' + attr.location_attribute_id).append('<option value="' +
+                attr.raw_value + '">' + attr.value + '</option>');
+          }
+          $('#section-form #locAttr\\:' + attr.location_attribute_id).val(attr.raw_value);
+        } else {
+          $('#section-form #locAttr\\:' + attr.location_attribute_id).val(attr.raw_value);
+          $('#section-form #locAttr\\:' + attr.location_attribute_id).attr('name', attrname);
+        }
+      });
+    });
   }
 };
 
@@ -313,19 +322,29 @@ reloadSection = function(section) {
 		  			'<span id="recordCounter">0 of ' + (numberOfSections + 1) + '</span></p>').dialog({ title: "Outside Site", buttons: { "OK": function() { dialog.dialog('close'); }}});
 		  // plus 1 is for delete
 	if(typeof indiciaData.sections[section] !== "undefined"){
-		jQuery.getJSON(indiciaData.indiciaSvc + "index.php/services/data/sample?location_id=" + indiciaData.sections[section].id +
-	            "&mode=json&view=detail&callback=?&auth_token=" + indiciaData.read.auth_token + "&nonce=" + indiciaData.read.nonce,
-	        function(sdata) {
-				numberOfSamples = sdata.length;
-				jQuery('#recordCounter').html(numberOfRecordsCompleted + ' of ' + (numberOfSamples+numberOfSections + 1));
-	        	if (typeof sdata.error==="undefined") {
-	        		jQuery.each(sdata, function(idx, sample) {
-	        			numberOfRecordsCompleted++;
-	    				jQuery('#recordCounter').html(numberOfRecordsCompleted + ' of ' + (numberOfSamples+numberOfSections + 1));
-	        			// Would post the delete here
-	        		});
-	        	}
-			});
+    $.getJSON({
+      url: indiciaData.read.url + 'index.php/services/data/sample',
+      data: {
+        location_id: indiciaData.sections[section].id,
+        mode: 'json',
+        view: 'detail',
+        auth_token: indiciaData.read.auth_token,
+        nonce: indiciaData.read.nonce
+      },
+      dataType: 'jsonp',
+      crossDomain: true
+    })
+    .done(function(sdata) {
+      numberOfSamples = sdata.length;
+      $('#recordCounter').html(numberOfRecordsCompleted + ' of ' + (numberOfSamples+numberOfSections + 1));
+      if (typeof sdata.error==="undefined") {
+        $.each(sdata, function(idx, sample) {
+          numberOfRecordsCompleted++;
+          $('#recordCounter').html(numberOfRecordsCompleted + ' of ' + (numberOfSamples+numberOfSections + 1));
+          // Would post the delete here
+        });
+      }
+    });
 	}
 
   window.onbeforeunload = null;

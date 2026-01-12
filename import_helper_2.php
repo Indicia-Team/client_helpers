@@ -354,19 +354,28 @@ class import_helper_2 extends helper_base {
    *   Write authorisation tokens.
    * @param array $plugins
    *   List of enabled plugins as keys, with parameter arrays as values.
-   * @param bool $enableBackgroundImports
-   *   True if background importing of large files is enabled.
+   * @param array $options
+   *   Additional options for the init_server_config API call. Options include:
+   *   * enable-background-imports - True if background importing of large
+   *     files is enabled.
+   *   * support-dna - True if DNA-derived occurrence fields are to be
+   *     supported.
    *
    * @return array
    *   Output of the web service request.
    */
-  public static function initServerConfig(array $files, $importTemplateId, array $writeAuth, array $plugins = [], $enableBackgroundImports = FALSE) {
+  public static function initServerConfig(array $files, $importTemplateId, array $writeAuth, array $plugins = [], array $options = []) {
     $serviceUrl = self ::$base_url . 'index.php/services/import_2/init_server_config';
+    $options = array_merge([
+      'enable-background-imports' => FALSE,
+      'support-dna' => FALSE,
+    ], $options);
     $data = $writeAuth + [
       'data-files' => json_encode($files),
       'import_template_id' => $importTemplateId,
       'plugins' => json_encode($plugins),
-      'enable-background-imports' => $enableBackgroundImports ? 't' : 'f',
+      'enable-background-imports' => $options['enable-background-imports'] ? 't' : 'f',
+      'support-dna' => $options['support-dna'] ? 't' : 'f',
     ];
     $response = self::http_post($serviceUrl, $data, FALSE);
     $output = json_decode($response['output'], TRUE);
@@ -550,6 +559,34 @@ class import_helper_2 extends helper_base {
       }
     }
     return $output;
+  }
+
+  /**
+   * Abandon a stuck background-queued import.
+   *
+   * @param mixed $configId
+   *   ID of the config file for the stuck import.
+   * @param array $writeAuth
+   *   Auth tokens.
+   */
+  public static function abandonBackgroundImport($configId, array $writeAuth) {
+    $serviceUrl = self ::$base_url . 'index.php/services/import_2/abandon_background_import';
+    $data = $writeAuth + [
+      'config-id' => $configId,
+    ];
+    $response = self::http_post($serviceUrl, $data, FALSE);
+    $output = json_decode($response['output'], TRUE);
+    if (!isset($response['result']) || $output['status'] !== 204) {
+      \Drupal::logger('iform')->error('Response from abandon_background_import attempt: ' . var_export($response, TRUE));
+      if (isset($response['output'])) {
+        $responseOutput = json_decode($response['output']);
+        throw new Exception($responseOutput->msg ?? 'Internal Server Error', $response['status'] ?? 500);
+      }
+      else {
+        throw new Exception('Internal Server Error', 500);
+      }
+    }
+
   }
 
   /**
@@ -1583,10 +1620,15 @@ HTML;
     unset($settings['config-id']);
     unset($settings['next-import-step']);
     $request = parent::$base_url . 'index.php/services/import_2/save_mappings';
-    self::http_post($request, $options['writeAuth'] + [
+    $response = self::http_post($request, $options['writeAuth'] + [
       'config-id' => $_POST['config-id'],
       'mappings' => json_encode($settings),
     ]);
+    $output = json_decode($response['output'], TRUE);
+    if (($output['status'] ?? '') !== 'ok') {
+      \Drupal::logger('iform')->error('Error in saveMappings: ' . var_export($output, TRUE));
+      throw new Exception('Saving column mappings failed');
+    }
   }
 
   /**
@@ -1925,6 +1967,9 @@ HTML;
     $arrow = "<i class=\"fas fa-play\" title=\"$lang[dataValuesCopied]\"></i>";
     $formArray = self::getGlobalValuesFormControlArray($options);
     foreach ($config['global-values'] as $field => $value) {
+      if ($value === '') {
+        continue;
+      }
       // Default to use value as label, but preferably use the global values
       // control lookup info to get a better one.
       $displayLabel = $value;

@@ -266,11 +266,11 @@ class ElasticsearchReportHelper {
       'description' => 'Location name associated with the record.',
     ],
     'location.name' => [
-      'caption' => 'Location',
+      'caption' => 'Defined location',
       'description' => 'Location associated with the record where the record was linked to a defined location.',
     ],
     'location.location_id' => [
-      'caption' => 'Location ID',
+      'caption' => 'Defined location ID',
       'description' => 'Unique ID of the location associated with the record where the record was linked to a defined location.',
     ],
     'location.parent_name' => [
@@ -328,6 +328,10 @@ class ElasticsearchReportHelper {
     '#occurrence_media#' => [
       'caption' => 'Media',
       'description' => 'Thumbnails for any occurrence photos and other media.',
+    ],
+    'occurrence.dna_derived' => [
+      'caption' => 'DNA derived',
+      'description' => 'Indicates if this is a DNA derived record.',
     ],
     'occurrence.sex' => [
       'caption' => 'Sex',
@@ -387,6 +391,7 @@ class ElasticsearchReportHelper {
           'imageClassifierAgrees' => 'Image classifier agrees with identification provided.',
           'imageClassifierDisagrees' => 'Image classifier conflicts with identification provided.',
           'noClassifierInfoAvailable' => 'No image classifier information is available for this record.',
+          'probability' => 'Probability',
           'suggestionClassifierChosen' => 'Classifier chosen',
           'suggestionHumanChosen' => 'Human chosen',
           'suggestionNotChosen' => 'Suggestion not chosen',
@@ -1206,6 +1211,7 @@ JS;
       ['baseLayerConfig', 'layerConfig', 'selectedFeatureStyle', 'tools']
     );
     $options = array_merge([
+      'height' => 500,
       'initialLat' => hostsite_get_config_value('iform', 'map_centroid_lat', 54.093409),
       'initialLng' => hostsite_get_config_value('iform', 'map_centroid_long', -2.89479),
       'initialZoom' => hostsite_get_config_value('iform', 'map_zoom', 5),
@@ -1229,6 +1235,7 @@ JS;
     if (!empty($_GET['initialZoom'])) {
       $options['initialZoom'] = $_GET['initialZoom'];
     }
+    $options['style'] = "height: {$options['height']}px;";
     helper_base::addLanguageStringsToJs('leafletTools', [
       'autoLayerTitle' => 'Auto',
       'dataLayerOpacity' => 'Data layer opacity',
@@ -2906,8 +2913,9 @@ $('#$options[id]').$initFn({});
 
 JS;
     $class = "idc-control idc-$controlName" . (empty($options['class']) ? '' : ' ' . $options['class']);
+    $style = !empty($options['style']) ? " style=\"$options[style]\"" : '';
     return <<<HTML
-<div id="$options[id]" class="$class" data-idc-class="$initFn" data-idc-config="$dataOptions">
+<div id="$options[id]" class="$class"$style data-idc-class="$initFn" data-idc-config="$dataOptions">
   $content
 </div>
 

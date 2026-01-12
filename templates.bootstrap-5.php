@@ -14,9 +14,9 @@ $indicia_templates['two-col-50'] =
 $indicia_templates['two-col-50-js'] =
   '<div class="row"><div class="col col-1"></div><div class="col col-2"></div></div>';
 
-// Remove cols from textarea
+// Remove cols from textarea.
 $indicia_templates['textarea'] =
-  '<textarea id="{id}" name="{fieldname}"{class} {disabled} rows="{rows}" {title}>{default}</textarea>'."\n";
+  '<textarea id="{id}" name="{fieldname}"{class} {disabled} rows="{rows}" {title}>{default|escape}</textarea>' . "\n";
 
 // Switch to Bootstrap button classes.
 $indicia_templates['buttonDefaultClass'] = 'indicia-button btn btn-light';

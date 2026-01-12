@@ -827,6 +827,7 @@ class filter_quality extends FilterBase {
     'difficulty',
     'classifier_agreement',
     'photo',
+    'dna_derived',
     'licences',
     'media_licences',
     'coordinate_precision',
@@ -988,6 +989,17 @@ HTML;
           '' => lang::get('Not filtered'),
           '1' => lang::get('With'),
           '0' => lang::get('Without'),
+        ],
+      ]);
+    }
+    if (in_array('dna_derived', $ctls)) {
+      $r .= data_entry_helper::select([
+        'label' => lang::get('DNA derived'),
+        'fieldname' => 'dna_derived',
+        'lookupValues' => [
+          '' => lang::get('Not filtered'),
+          '1' => lang::get('DNA derived'),
+          '0' => lang::get('Not DNA derived'),
         ],
       ]);
     }
@@ -2170,6 +2182,8 @@ function report_filters_set_parser_language_strings() {
     'ClassifierAgrees' => 'Image classifier agrees with the current determination',
     'ClassifierDisagrees' => 'Image classifier disagrees with the current determination',
     'ClassifierUsed' => 'Any record where an image classifier was used',
+    'DnaDerived' => 'DNA derived',
+    'NotDnaDerived' => 'Not DNA derived',
     'IdentificationDifficulty' => 'Identification difficulty',
     'HasPhotos' => 'Only include records which have photos',
     'HasNoPhotos' => 'Exclude records which have photos',

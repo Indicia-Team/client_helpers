@@ -187,6 +187,7 @@ abstract class iform_dynamic implements PrebuiltFormInterface {
           'captionField' => 'title',
           'valueField' => 'id',
           'siteSpecific' => TRUE,
+          'extraParams' => ['orderby' => 'title'],
         ],
         [
           'name' => 'high_volume',

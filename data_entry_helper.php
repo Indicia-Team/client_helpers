@@ -1339,14 +1339,19 @@ JS;
    *     for a proxy to classifiers designed to work with this control.
    *   * taxonListId - Required. The list to match the classifier results
    *     against.
-   *   * taxonControlId - Required. TODO. The control to update with the
-   *     result of the image classification.
-   *   * unknowMeaningId - Required. The taxon_meaning_id to use when adding rows
-   *     to the species grid for images the classifier could not identify.
-   *   * languageIso - The language to use with the control. Defaults to English
-   *     if not specified. If specified but not available, defaults to preferred
-   *     name.
+   *   * taxonControlId - Required. The control to update with the result of
+   *     the image classification.
+   *   * checklist - set to true if taxonControlId points to a species
+   *     checklist or false if taxonControlId is a single record input. Default
+   *     is true.
+   *   * unknownMeaningId - Required. The taxon_meaning_id to use when adding
+   *     rows to the species grid for images the classifier could not identify.
+   *   * languageIso - The language to use with the control. Defaults to
+   *     English if not specified. If specified but not available, defaults to
+   *     preferred name.
    *   * readAuth - Read authentication array with nonce and token.
+   *   * collapsible - set to true to place the classifier inside a collapsed
+   *     div initially so it does not get in the way when not used.
    */
   public static function file_classifier(array $options) {
     // Ensure some settings have required values.
@@ -1355,7 +1360,7 @@ JS;
     }
 
     // Obtain default options.
-    $classifier_options = self::get_file_classifier_options($options, $options['readAuth']);
+    $classifier_options = self::getFileClassifierOptions($options, $options['readAuth']);
     // Merge additional classifier options.
     $options = array_merge(
       [
@@ -1364,15 +1369,8 @@ JS;
         'maxFileCount' => 9999,
       ],
       $options,
-      $classifier_options,
-      [
-        'helpText' => lang::get('Add files here, click the classify button, ' .
-        'and we will attempt to automatically identify the species in each ' .
-        'file and add them to the grid. Files featuring the specimen with ' .
-        'minimal background will be most successful.'),
-      ]
+      $classifier_options
     );
-
     // Load javascript for the classifier.
     self::add_resource('file_classifier');
     // We need to call the initialisation function.
@@ -1380,8 +1378,6 @@ JS;
       ($options['table'] ?? 'occurrence_medium') . '-' .
       ($options['id'] ?? 'default');
     $containerId = str_replace(':', '\\\\:', $containerId);
-    $javascript = "$('#$containerId').classifier({});\n";
-
     // To circumvent problems in some browsers with setting up a hidden control,
     // we juggle with javascript when the control is placed on a tab.
     if (isset($options['tabDiv'])) {
@@ -1390,10 +1386,10 @@ JS;
       $r = self::file_box($options);
       // Prepend javascript for filebox.
       $options['codeGenerated'] = 'js';
-      $javascript = self::file_box($options) . $javascript;
+      $javascript = self::file_box($options);
       // Wrap the script in an event handler so we only execute it when
       // the tab is displayed.
-      $javascript =
+      $javascript .=
         "var uploaderTabHandler = function(event, ui) { \n" .
         "  panel = typeof ui.newPanel === 'undefined' ? ui.panel : ui.newPanel[0];\n" .
         "  if ($(panel).attr('id') === '{$options['tabDiv']}') {\n    " .
@@ -1408,10 +1404,30 @@ JS;
     else {
       // Get html and add javascript for a filebox.
       $r = self::file_box($options);
-      // Append javascript for classifier.
-      self::$javascript .= $javascript;
     }
-
+    if ($options['collapsible'] ?? TRUE) {
+      global $indicia_templates;
+      $buttonLabel = lang::get('Get assistance with photo identification');
+      $r = <<<HTML
+        <button type="button" class="show-classifier $indicia_templates[buttonDefaultClass]">$buttonLabel</button>
+        <div class="classifier-container" style="display: none">
+          $r
+        </div>
+      HTML;
+    }
+    self::$onload_javascript .= "$('#$containerId').classifier({});\n";
+    self::addLanguageStringsToJs('fileClassifier', [
+      'cancel' => 'Cancel',
+      'classifierRequestFailed' => 'The classifier failed to process the image. It has been added to the grid as Unknown.',
+      'classifyBtnCaption' => 'Classify',
+      'classifyBtnTitle' => 'Start classifying files.',
+      'dialogBtnOk' => 'Okay',
+      'dialogEnd' => 'Your files have been processed. Review the identifications and check the abundances.',
+      'dialogStart' => 'Your files are being sent to a classification service which will try to identify the species.',
+      'dialogTitle' => 'Requesting classification',
+      'percentProbability' => '{1}% probability',
+      'multipleSuggestionInstructions' => 'Classification of the following image(s) has returned more than one suggestion. Please click on the one that you would like to use or press Cancel to skip this classification.'
+    ]);
     return $r;
   }
 
@@ -1430,41 +1446,26 @@ JS;
    *   The options array received, augmented by any missing values that will be
    *   needed.
    */
-  public static function get_file_classifier_options(array $options, array $readAuth) {
+  private static function getFileClassifierOptions(array $options, array $readAuth) {
     // Required values.
     $requirements = [
       'fileClassifier' => TRUE,
     ];
-
+    $isChecklist = $options['checklist'] ?? TRUE;
     // Provide default settings for other options which can be overwritten.
     $defaults = [
       'caption' => lang::get('Image classifier'),
-      'helpText' => lang::get('Add a file here, click the classify button, ' .
-        'and we will attempt to automatically identify the species and add ' .
-        'it to the grid. Files featuring the specimen with minimal ' .
-        'background will be most successful.'),
-      'dialogTitle' => lang::get('Requesting classification'),
-      'dialogStart' => lang::get('Your files are being sent to a ' .
-        'classification service which will try to identify the species.'),
-      'dialogEnd' => lang::get('Your files have been processed. ' .
-        'Review the identifications and check the abundances.'),
-      'dialogNew' => lang::get('The file has been identified as ' .
-        '<em>{1}</em> with a probability of {2}%. ' .
-        'It is added to the grid as a new row.'),
-      'dialogUnmatched' => lang::get('Sorry, your file could not be matched ' .
-        'to a species in the survey list. It is added to the grid as Unknown.'),
-      'dialogUnknown' => lang::get('Sorry, your file could not be ' .
-        'confidently identified. It is added to the grid as Unknown.'),
-      'dialogFail' => lang::get('Sorry, an error meant your file could not ' .
-        'be identified. It is added to the grid as Unknown.'),
-      'dialogBtnOk' => lang::get('Okay'),
-      'classifyBtnCaption' => lang::get('Classify'),
-      'classifyBtnTitle' => lang::get('Start classifying files.'),
-      'buttonTemplate' =>
-      '<button id="{id}" type="button" class="{class}" title="{title}">' .
-        '{caption}' .
-      '</button>',
-      'mode' => 'multi:checklist:append',
+      'helpText' => $isChecklist ? lang::get(
+        'Add files here then click the classify button and we will attempt to automatically ' .
+        'identify the species and add them to the grid. Files featuring the specimen with minimal ' .
+        'background will be most successful.'
+        ) : lang::get(
+        'Add files here then click the classify button and we will attempt to automatically ' .
+        'identify the species and add it to the record. Files featuring the specimen with minimal ' .
+        'background will be most successful.'
+        ),
+      'interimImagePath' => self::$interim_image_folder,
+      'mode' => $isChecklist ? 'multi:checklist:append' : "single:$options[taxonControlId]:add",
     ];
     $classifier_options = array_merge($defaults, $options, $requirements);
 
@@ -3841,7 +3842,7 @@ RIJS;
         empty($options['classifierUnknownMeaningId'])
       ) {
         throw new Exception('A classifierUrl, a classifierTaxonListId, and
-        a classifierUnknowMeaningId must be provided for an image classifier.');
+        a classifierUnknownMeaningId must be provided for an image classifier.');
       }
 
       // Extract all options prefixed by 'classifier'.
@@ -3859,7 +3860,7 @@ RIJS;
       ]);
 
       // Add in remaining default options.
-      $classifier_options = self::get_file_classifier_options(
+      $classifier_options = self::getFileClassifierOptions(
         $classifier_options, $options['readAuth']
       );
 
@@ -4148,7 +4149,7 @@ HTML;
         }
         $idx = 0;
         foreach ($occAttrControlsExisting as $attrId => $control) {
-          $existing_value = '';
+          $existingValue = '';
           $valId = FALSE;
           if (!empty(data_entry_helper::$entity_to_load)) {
             // Search for the control in the data to load. It has a suffix containing the attr_value_id which we don't know, hence preg.
@@ -4191,7 +4192,7 @@ HTML;
               $ctrlId = str_replace('-idx-:', "$options[id]-$txIdx:$existingRecordId", $attributes[$attrId]['fieldname']);
             }
             if (isset(self::$entity_to_load[$loadedCtrlFieldName])) {
-              $existing_value = self::$entity_to_load[$loadedCtrlFieldName];
+              $existingValue = self::$entity_to_load[$loadedCtrlFieldName];
             }
           }
           else {
@@ -4200,47 +4201,48 @@ HTML;
             $ctrlId = str_replace('-idx-', "$options[id]-$txIdx", $attributes[$attrId]['fieldname']);
             $loadedCtrlFieldName = '-';
           }
-          if (!$existingRecordId && $existing_value === '' && array_key_exists('default', $attributes[$attrId])) {
+          if (!$existingRecordId && $existingValue === '' && array_key_exists('default', $attributes[$attrId])) {
             // This case happens when reloading an existing record.
-            $existing_value = $attributes[$attrId]['default'];
-            if (is_array($existing_value)) {
-              $existing_value = count($existing_value) > 0 ? $existing_value[0] : NULL;
+            $existingValue = $attributes[$attrId]['default'];
+            if (is_array($existingValue)) {
+              $existingValue = count($existingValue) > 0 ? $existingValue[0] : NULL;
             }
           }
           // Inject the field name into the control HTML.
           $oc = str_replace('{fieldname}', $ctrlId, $control);
-          if ($existing_value !== '') {
+          if ($existingValue !== '' && $existingValue !== NULL) {
+            $existingValue = htmlspecialchars($existingValue);
             // For select controls, specify which option is selected from the
             // existing value.
             if (strpos($oc, '<select') !== FALSE) {
-              if (strpos($oc, 'value="' . $existing_value . '"')) {
-                $oc = str_replace('value="' . $existing_value . '"',
-                  'value="' . $existing_value . '" selected="selected"', $oc);
+              if (strpos($oc, 'value="' . $existingValue . '"')) {
+                $oc = str_replace('value="' . $existingValue . '"',
+                  'value="' . $existingValue . '" selected="selected"', $oc);
               }
               elseif (isset(self::$entity_to_load["$loadedCtrlFieldName:term"])) {
                 // Value not available for some reason, e.g. editing record in
                 // wrong language. Inject it so the default data associated
                 // with the record does not change.
                 $term = self::$entity_to_load["$loadedCtrlFieldName:term"];
-                $oc = str_replace('</select>', "<option selected=\"selected\" value=\"$existing_value\">$term</option></select>", $oc);
+                $oc = str_replace('</select>', "<option selected=\"selected\" value=\"$existingValue\">$term</option></select>", $oc);
               }
             }
             elseif (strpos($oc, 'type="checkbox"') !== FALSE) {
-              if ($existing_value == '1') {
+              if ($existingValue == '1') {
                 $oc = str_replace('type="checkbox"', 'type="checkbox" checked="checked"', $oc);
               }
             }
             else {
               // Dates (including single day vague dates) need formatting to the local date format.
               if ($attributes[$attrId]['data_type'] === 'D' || $attributes[$attrId]['data_type'] === 'V'
-                  && preg_match('/^\d{2}\/\d{2}\/\d{4}$/', $existing_value)) {
-                $d = new DateTime($existing_value);
-                $existing_value = $d->format(self::$date_format);
+                  && preg_match('/^\d{2}\/\d{2}\/\d{4}$/', $existingValue)) {
+                $d = new DateTime($existingValue);
+                $existingValue = $d->format(self::$date_format);
               }
-              elseif (is_array($existing_value)) {
-                $existing_value = implode('', $existing_value);
+              elseif (is_array($existingValue)) {
+                $existingValue = implode('', $existingValue);
               }
-              $oc = str_replace('value=""', 'value="' . $existing_value . '"', $oc);
+              $oc = str_replace('value=""', 'value="' . $existingValue . '"', $oc);
             }
           }
           $errorField = "occAttr:$attrId" . ($valId ? ":$valId" : '');
@@ -4352,19 +4354,26 @@ HTML;
       // add extra rows to the grid, selecting the species from this list. Add
       // the required controls for this.
       if (!empty($options['allowAdditionalTaxa'])) {
-        // Javascript to add further rows to the grid.
-        if (isset($indicia_templates['format_species_autocomplete_fn'])) {
-          self::$javascript .= 'formatter = ' . $indicia_templates['format_species_autocomplete_fn'];
+        $options = array_merge([
+          'matchContains' => 'false',
+          'numValues' => 20,
+          'selectMode' => 'false',
+        ], $options);
+        if (empty($indicia_templates['format_species_autocomplete_fn'])) {
+          self::build_species_autocomplete_item_function($options);
         }
-        else {
-          self::$javascript .= "formatter = '" . $indicia_templates['taxon_label'] . "';\n";
-        }
-        self::$javascript .= "if (typeof indiciaData.speciesGrid==='undefined') {indiciaData.speciesGrid={};}\n";
-        self::$javascript .= "indiciaData.speciesGrid['$options[id]']={};\n";
-        self::$javascript .= "indiciaData.speciesGrid['$options[id]'].numValues=" . (!empty($options['numValues']) ? $options['numValues'] : 20) . ";\n";
-        self::$javascript .= "indiciaData.speciesGrid['$options[id]'].selectMode=" . (!empty($options['selectMode']) && $options['selectMode'] ? 'true' : 'false') . ";\n";
-        self::$javascript .= "indiciaData.speciesGrid['$options[id]'].matchContains=" . (!empty($options['matchContains']) && $options['matchContains'] ? 'true' : 'false') . ";\n";
-        self::$javascript .= "indiciaFns.addRowToGrid('$options[id]', '$options[lookupListId]');\n";
+        self::$javascript .= <<<JS
+          formatter = $indicia_templates[format_species_autocomplete_fn]
+          if (typeof indiciaData.speciesGrid === 'undefined') {
+            indiciaData.speciesGrid={};
+          }
+          indiciaData.speciesGrid['$options[id]'] = {};
+          indiciaData.speciesGrid['$options[id]'].numValues = $options[numValues];
+          indiciaData.speciesGrid['$options[id]'].selectMode = $options[selectMode];
+          indiciaData.speciesGrid['$options[id]'].matchContains = $options[matchContains];
+          indiciaFns.addRowToGrid('$options[id]', '$options[lookupListId]');
+
+        JS;
       }
       // If options contain a help text, output it at the end if that is the
       // preferred position.
@@ -5653,11 +5662,15 @@ JS;
     // Get the list of species that are always added to the grid, by first
     // building a filter or using preloaded ones.
     if (!empty($options['preloadTaxa'])) {
-      $options['extraParams']['taxa_taxon_list_id'] = json_encode($options['preloadTaxa']);
+      self::addQueryParameter($options['extraParams'], ['in' => ['id' => $options['preloadTaxa']]]);
     }
     elseif (preg_match('/^(preferred_name|preferred_taxon|taxon_meaning_id|taxa_taxon_list_id|taxon_group|external_key|organism_key|id)$/', $options['taxonFilterField']))  {
+      // Legacy field name support due to switch to loading from cache_taxa_taxon_lists.
       if ($options['taxonFilterField'] === 'preferred_name') {
         $options['taxonFilterField'] = 'preferred_taxon';
+      }
+      if ($options['taxonFilterField'] === 'taxa_taxon_list_id') {
+        $options['taxonFilterField'] = 'id';
       }
       // Tolerate filter as an array or CSV list.
       $filterList = is_array($options['taxonFilter']) ? $options['taxonFilter'] : explode(',', $options['taxonFilter']);
@@ -7959,9 +7972,14 @@ if (errors$uniq.length>0) {
         // final location.
         $image_overall_success = TRUE;
         $image_errors = [];
+        $onlyImages = TRUE;
+        $savedEntity = $output['outer_table'];
         foreach ($media as $idx => $item) {
-          // no need to resend an existing image, or a media link, just local files.
+          // No need to resend an existing image, or a media link, just local files.
           if ((empty($item['media_type']) || preg_match('/:Local$/', $item['media_type'])) && (!isset($item['id']) || empty($item['id']))) {
+            if (substr($item['media_type'], 0, 6) !== 'Image:') {
+              $onlyImages = FALSE;
+            }
             // Final location is the Warehouse. Sets persist_auth to false if
             // the last file.
             $success = self::send_file_to_warehouse($item['path'], $idx < count($media) - 1, $writeTokens);
@@ -7974,15 +7992,27 @@ if (errors$uniq.length>0) {
         }
         if (!$image_overall_success) {
           // Report any file transfer failures.
-          $error = lang::get('submit ok but file transfer failed') . '<br/>';
+          $imageType = $onlyImages ? 'image' : 'media file';
+          if (count($media) !== 1) {
+            $imageType .= 's';
+          }
+          $what = count($media) === count($image_errors)
+            ? lang::get('{1} {2}', count($image_errors), $imageType)
+            : lang::get('{1} of {2} {3}', count($image_errors), count($media), $imageType);
+          $error = lang::get('Saving the {1} data was succesful, but {2} failed to save.',
+            lang::get($savedEntity),
+            $what
+          ) . '<br/>';
+          $image_errors = array_unique($image_errors);
           $error .= implode('<br/>', $image_errors);
           $output = array('error' => $error);
         }
       }
       return $output;
     }
-    else
-      return array('error' => 'Pre-validation failed', 'errors' => self::$validation_errors);
+    else {
+      return ['error' => 'Pre-validation failed', 'errors' => self::$validation_errors];
+    }
   }
 
   /**
@@ -9002,7 +9032,6 @@ HTML;
             ]
           ];
         }
-
         $classificationEvent['subModels'][] = $classificationResult;
       }
 
@@ -9070,7 +9099,17 @@ HTML;
       $values['occurrence:release_status'] = 'R';
       $values['sample:record_status'] = 'C';
     }
-    return submission_builder::build_submission($values, $structure);
+    $submission = submission_builder::build_submission($values, $structure);
+    if (!empty($values['classification_result:0'])) {
+      // We have used an image classifier, so attach the result to the
+      // occurrence.
+      foreach ($submission['subModels'] as &$subModel) {
+        if ($subModel['model']['id'] === 'occurrence') {
+          self::attachClassificationToModel($subModel['model'], $values);
+        }
+      }
+    }
+    return $submission;
   }
 
   /**
@@ -9230,6 +9269,7 @@ HTML;
    */
   public static function dump_errors($response, $inline = TRUE) {
     $r = "";
+    global $indicia_templates;
     if (is_array($response)) {
       // set form mode
       self::$form_mode = 'ERRORS';
@@ -9247,33 +9287,32 @@ HTML;
                   hostsite_show_message($message, 'error');
                 }
                 else {
-                  $r .= "<div class=\"ui-widget ui-corner-all ui-state-highlight page-notice\">$message</div>\n";
+                  $r .= str_replace('{message}', $message, $indicia_templates['messageBox']) . "\n";
                 }
             }
           }
         }
         else {
-          $r .= "<div class=\"ui-state-error ui-corner-all\">\n";
-          $r .= "<p>" . lang::get('An error occurred when the data was submitted.') . "</p>\n";
+          $message = lang::get('An error occurred when the data was submitted.') . "<br/>\n";
           if (is_array($response['error'])) {
-            $r .=  "<ul>\n";
-            foreach ($response['error'] as $field => $message)
-              $r .=  "<li>$field: $message</li>\n";
-            $r .=  "</ul>\n";
+            $message .=  "<ul>\n";
+            foreach ($response['error'] as $field => $fieldError)
+              $message .=  "<li>$field: $fieldError</li>\n";
+            $message .=  "</ul>\n";
           }
           else {
-            $r .= "<p class=\"error_message\">".$response['error']."</p>\n";
+            $message .= "<p class=\"error_message\">".$response['error']."</p>\n";
           }
           if (array_key_exists('file', $response) && array_key_exists('line', $response)) {
-            $r .= "<p>Error occurred in ".$response['file']." at line ".$response['line']."</p>\n";
+            $message .= "<p>Error occurred in ".$response['file']." at line ".$response['line']."</p>\n";
           }
           if (array_key_exists('errors', $response)) {
-            $r .= "<pre>".print_r($response['errors'], TRUE) . "</pre>\n";
+            $message .= "<pre>".print_r($response['errors'], TRUE) . "</pre>\n";
           }
           if (array_key_exists('trace', $response)) {
-            $r .= "<pre>".print_r($response['trace'], TRUE) . "</pre>\n";
+            $message .= "<pre>".print_r($response['trace'], TRUE) . "</pre>\n";
           }
-          $r .= "</div>\n";
+          $r .= str_replace('{message}', $message, $indicia_templates['warningBox']) . "\n";
         }
       }
       elseif (array_key_exists('warning',$response)) {
@@ -9281,13 +9320,13 @@ HTML;
           hostsite_show_message(lang::get('A warning occurred when the data was submitted.').' '.$response['error'], 'error');
         }
         else {
-          $r .= lang::get('A warning occurred when the data was submitted.');
-          $r .= '<p class="error">'.$response['error']."</p>\n";
+          $r .= str_replace('{message}', lang::get('A warning occurred when the data was submitted.') . '<br/>' . $response['error'], $indicia_templates['warningBox']) . "\n";
         }
       }
     }
-    else
-      $r .= "<div class=\"ui-state-error ui-corner-all\">$response</div>\n";
+    else {
+      $r .= str_replace('{message}', $response, $indicia_templates['warningBox']) . "\n";
+    }
     return $r;
   }
 

@@ -46,6 +46,14 @@ class iform_record_details_2 extends BaseDynamicDetails {
   protected static $record;
 
   /**
+   * DNA metadata fields if a DNA-derived record.
+   *
+   * @var array
+   */
+  protected static $dnaMetadata;
+
+
+  /**
    * Return the form metadata.
    *
    * @return array
@@ -89,9 +97,11 @@ class iform_record_details_2 extends BaseDynamicDetails {
         [
           'name' => 'fields',
           'caption' => 'Fields to include or exclude',
-          'description' => 'List of data fields to hide, one per line. ' .
-              'Type in the field name as seen exactly in the Record Details section. For custom attributes you should use the system function values ' .
-              'to filter instead of the caption if defined below.',
+          'description' => <<<TXT
+            List of data fields to hide, one per line. Type in the field name as seen exactly in the Record Details
+            section. For custom attributes you should use the system function values to filter instead of the caption
+            if defined below.
+            TXT,
           'type' => 'textarea',
           'default' =>
 'CMS Username
@@ -116,10 +126,13 @@ Record ID',
         [
           'name' => 'testagainst',
           'caption' => 'Test attributes against',
-          'description' => 'For custom attributes, do you want to filter the list to show using the caption or the system function? If the latter, then ' .
-              'any custom attributes referred to in the fields list above should be referred to by their system function which might be one of: email, ' .
-              'cms_user_id, cms_username, first_name, last_name, full_name, biotope, behaviour, reproductive_condition, sex_stage, sex, stage, ' .
-              'sex_stage_count, certainty, det_first_name, det_last_name.',
+          'description' => <<<TXT
+            For custom attributes, do you want to filter the list to show using the caption or the system function? If
+            the latter, then any custom attributes referred to in the fields list above should be referred to by their
+            system function which might be one of: email, cms_user_id, cms_username, first_name, last_name, full_name,
+            biotope, behaviour, reproductive_condition, sex_stage, sex, stage, sex_stage_count, certainty,
+            det_first_name, det_last_name.
+            TXT,
           'type' => 'select',
           'options' => [
             'caption' => 'Caption',
@@ -209,24 +222,21 @@ Record ID',
         [
           'name' => 'allow_confidential',
           'caption' => 'Allow viewing of confidential records',
-          'description' => 'Tick this box to enable viewing of confidential records. Ensure that the page is only ' .
-            'available to logged in users with appropropriate permissions if using this option',
+          'description' => 'Tick this box to enable viewing of confidential records. Ensure that the page is only  available to logged in users with appropropriate permissions if using this option',
           'type' => 'checkbox',
           'required' => FALSE,
         ],
         [
           'name' => 'allow_sensitive_full_precision',
           'caption' => 'Allow viewing of sensitive records at full precision',
-          'description' => 'Tick this box to enable viewing of sensitive records at full precision records. Ensure ' .
-            'that the page is only available to logged in users with appropropriate permissions if using this option',
+          'description' => 'Tick this box to enable viewing of sensitive records at full precision records. Ensure that the page is only available to logged in users with appropropriate permissions if using this option',
           'type' => 'checkbox',
           'required' => FALSE,
         ],
         [
           'name' => 'allow_unreleased',
           'caption' => 'Allow viewing of unreleased records',
-          'description' => 'Tick this box to enable viewing of unreleased records. Ensure that the page is only ' .
-            'available to logged in users with appropropriate permissions if using this option',
+          'description' => 'Tick this box to enable viewing of unreleased records. Ensure that the page is only available to logged in users with appropropriate permissions if using this option',
           'type' => 'checkbox',
           'required' => FALSE,
         ],
@@ -356,16 +366,19 @@ Record ID',
 
     $flags = [];
     if (!empty(self::$record['sensitive'])) {
-      $flags[] = lang::get('sensitive');
+      $flags[] = '<i class="fas fa-exclamation-circle"></i>' . lang::get('sensitive');
     }
     if (self::$record['confidential'] === 't') {
-      $flags[] = lang::get('confidential');
+      $flags[] = '<i class="fas fa-exclamation-triangle"></i>' . lang::get('confidential');
     }
     if (self::$record['release_status'] !== 'R') {
-      $flags[] = lang::get(self::$record['release_status'] === 'P' ? 'pending release' : 'unreleased');
+      $flags[] = '<i class="fas fa-stop"></i>' . lang::get(self::$record['release_status'] === 'P' ? 'pending release' : 'unreleased');
     }
     if (self::$record['zero_abundance'] === 't') {
       $flags[] = lang::get('zero abundance');
+    }
+    if (self::$record['dna_derived'] === 't') {
+      $flags[] = '<i class="fas fa-dna"></i>' . lang::get('DNA-derived');
     }
     if (!empty($flags)) {
       $details_report = '<div id="record-flags"><span>' . implode('</span><span>', $flags) . '</span></div>';
@@ -427,7 +440,7 @@ Record ID',
           [lang::get('Submission date'), $dateInfo, ''], $indicia_templates['dataValue']);
     }
     $details_report .= '</div>';
-
+    $attrs_report = '';
     if (!self::$record['sensitivity_precision'] || $args['allow_sensitive_full_precision']) {
       // Draw any custom attributes added by the user, but only for a
       // non-sensitive record.
@@ -451,14 +464,64 @@ Record ID',
     }
 
     $blockTitle = self::$record['zero_abundance'] === 't' ? lang::get('Absence record details') : lang::get('Record details');
-    $r = "<h3>$blockTitle</h3><dl class=\"detail-panel dl-horizontal\" id=\"detail-panel-recorddetails\">";
+    $r = <<<HTML
+      <h3>$blockTitle</h3>
+      <dl class="detail-panel dl-horizontal" id="detail-panel-recorddetails">
+        $details_report
+        $attrs_report
+      </dl>
+    HTML;
 
-    $r .= $details_report;
-    if (isset($attrs_report)) {
-      $r .= $attrs_report;
+
+    if (isset(self::$dnaMetadata)) {
+      $r .= self::getDnaMetadataBlock();
     }
-    $r .= '</dl>';
     return $r;
+  }
+
+  /**
+   * Fetch DNA-derived occurrence data HTML to include in the details pane.
+   *
+   * @return string
+   *   DNA values as HTML.
+   */
+  private static function getDnaMetadataBlock() {
+    $dnaBlockTitle = lang::get('DNA-derived information');
+    $dnaValues = '';
+    $fields = [
+      'associated_sequences' => 'Associated sequences',
+      'dna_sequence' => 'DNA sequence',
+      'target_gene' => 'Target gene',
+      'pcr_primer_reference' => 'PCR primer reference',
+      'env_medium' => 'Environmental medium',
+      'env_broad_scale' => 'Broad-scale environment',
+      'otu_db' => 'OTU Database',
+      'otu_seq_comp_appr' => 'OTU sequence comparison approach',
+      'otu_class_appr' => 'OTU classification approach',
+      'env_local_scale' => 'Local-scale environment',
+      'target_subfragment' => 'Target subfragment',
+      'pcr_primer_name_forward' => 'Forward PCR primer name',
+      'pcr_primer_forward' => 'Forward PCR primer',
+      'pcr_primer_name_reverse' => 'Reverse PCR primer name',
+      'pcr_primer_reverse' => 'Reverse PCR primer',
+    ];
+    foreach ($fields as $field => $caption) {
+      if (self::$dnaMetadata[$field]) {
+        $i18nCaption = lang::get($caption);
+        $style = $field === 'associated_sequences' ? ' style="overflow-wrap: anywhere"' : '';
+        $value = $field === 'associated_sequences' && !empty(self::$dnaMetadata[$field])
+          ? '<div class="sequence">' . implode('</div><div class="sequence">', json_decode(self::$dnaMetadata[$field])) . '</div>'
+          : self::$dnaMetadata[$field];
+
+        $dnaValues .= "<dt>$i18nCaption</dt><dd$style>$value</dd>";
+      }
+    }
+    return <<<HTML
+      <h4><i class="fas fa-dna"></i>$dnaBlockTitle</h4>
+      <dl class="detail-panel dl-horizontal" id="detail-panel-recorddetails">
+        $dnaValues
+      </dl>
+    HTML;
   }
 
   /**
@@ -739,12 +802,16 @@ JS;
   /**
    * Outputs a list of associated occurrence information (recorded interactions).
    *
-   * @param $auth
-   * @param $args
-   * @param $tabalias
-   * @param $options
+   * @param array $auth
+   *   Authorisation tokens.
+   * @param array $args
+   *   Form parameters.
+   * @param string $tabalias
+   * @param array $options
+   *   Control options.
    *
    * @return string
+   *   HTML to include on the page.
    *
    * @throws \exception
    */
@@ -779,7 +846,9 @@ JS;
    * Outputs a login form. Not displayed if already logged in.
    *
    * @param array $auth
+   *   Authorisation tokens.
    * @param array $args
+   *   Form parameters.
    * @param string $tabalias
    * @param array $options
    *   Options array passed in the configuration to the [login] control.
@@ -1047,13 +1116,13 @@ STRUCT;
    */
   protected static function load_record($auth, $args) {
     if (!isset(self::$record)) {
-      $params = array(
+      $params = [
         'occurrence_id' => self::$id,
         'sharing' => $args['sharing'],
         'allow_confidential' => $args['allow_confidential'] ? 1 : 0,
         'allow_sensitive_full_precision' => $args['allow_sensitive_full_precision'] ? 1 : 0,
         'allow_unreleased' => $args['allow_unreleased'] ? 1 : 0,
-      );
+      ];
       if (!empty($args['map_geom_precision'])) {
         $params['geom_precision'] = $args['map_geom_precision'];
       }
@@ -1097,6 +1166,34 @@ STRUCT;
         $iform_page_metadata['latitude'] = number_format((float) self::$record['lat'], 5, '.', '');
         $iform_page_metadata['longitude'] = number_format((float) self::$record['long'], 5, '.', '');
       }
+      if (self::$record['dna_derived'] === 't') {
+        self::loadDnaMetadata($args, $auth);
+      }
+    }
+  }
+
+  /**
+   * Fetch DNA-derived data values from the database.
+   *
+   * @param array $args
+   *   Form arguments.
+   * @param array $auth
+   *   Read authorisation array.
+   */
+  private static function loadDnaMetadata(array $args, array $auth) {
+    $params = [
+      'occurrence_id' => self::$record['occurrence_id'],
+      'sharing' => $args['sharing'],
+      'allow_confidential' => $args['allow_confidential'] ? 1 : 0,
+      'allow_unreleased' => $args['allow_unreleased'] ? 1 : 0,
+    ];
+    $records = report_helper::get_report_data([
+      'readAuth' => $auth['read'],
+      'dataSource' => 'reports_for_prebuilt_forms/record_details_2/record_data_dna_derived',
+      'extraParams' => $params,
+    ]);
+    if (count($records) > 0) {
+      self::$dnaMetadata = $records[0];
     }
   }
 

@@ -2962,24 +2962,18 @@ JS;
    * Get the file classifier control.
    */
   protected static function get_control_fileclassifier($auth, $args, $tabAlias, $options) {
-    if ($args['multiple_occurrence_mode'] === 'single') {
-      return "[file classifier] control cannot be included in form unless in
-      grid entry mode, since records are automatically added to the grid.";
+    $opts = [
+      'readAuth' => $auth['read'],
+      'resizeWidth' => 1600,
+      'resizeHeight' => 1600,
+      'languageIso' => iform_lang_iso_639_2(),
+    ];
+    if ($tabAlias) {
+      $opts['tabDiv'] = $tabAlias;
     }
-    else {
-      $opts = [
-        'readAuth' => $auth['read'],
-        'resizeWidth' => 1600,
-        'resizeHeight' => 1600,
-        'languageIso' => iform_lang_iso_639_2(),
-      ];
-      if ($tabAlias) {
-        $opts['tabDiv'] = $tabAlias;
-      }
-      $options = array_merge($opts, $options);
+    $options = array_merge($opts, $options);
 
-      return data_entry_helper::file_classifier($options);
-    }
+    return data_entry_helper::file_classifier($options);
   }
 
   /**

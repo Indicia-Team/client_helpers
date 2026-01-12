@@ -267,11 +267,43 @@ jQuery(document).ready(function($) {
       val[period] = y.key[periodKey];
       return val;
     });
+    const completedData = normalisePhenologyData(phenData);
     var opts = {
-      data: phenData,
+      data: completedData,
       metrics: [{ prop: 'records', label: '', colour: 'blue' },],
     };
     brcphenology.setChartOpts(opts);
+  }
+
+  /**
+   * Ensure phenology data has entries for all weeks (1-53).
+   *
+   * Since aggregation response does not contain weeks with zero records,
+   *
+   * @param array data
+   *   Phenology data.
+   *
+   * @returns
+   *   Completed data.
+   */
+  function normalisePhenologyData(data) {
+    const MAX_WEEKS = 53;
+
+    // Convert array to a lookup by week
+    const weekMap = data.reduce((acc, d) => {
+      acc[d.week] = d.records;
+      return acc;
+    }, {});
+
+    // Fill missing weeks
+    return Array.from({ length: MAX_WEEKS }, (_, i) => {
+      const week = i + 1;
+      return {
+        taxon: data[0]?.taxon ?? null,
+        week,
+        records: weekMap[week] ?? 0
+      };
+    });
   }
 
   function getBandedColour() {

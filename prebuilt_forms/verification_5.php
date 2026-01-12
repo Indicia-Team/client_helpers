@@ -49,14 +49,13 @@ class iform_verification_5 implements PrebuiltFormInterface {
    *   The definition of the form.
    */
   public static function get_verification_5_definition() {
-    return array(
+    return [
       'title' => 'Verification 5',
       'category' => 'Verification',
-      'description' => 'Verification form supporting 2 tier verification statuses. Requires the ' .
-        'Easy Login module and Indicia AJAX Proxy module to both be enabled.',
+      'description' => 'Verification form supporting 2 tier verification statuses. Requires the Easy Login module and Indicia AJAX Proxy module to both be enabled.',
       'recommended' => TRUE,
       'supportsGroups' => TRUE,
-    );
+    ];
   }
 
   /**
@@ -89,7 +88,7 @@ class iform_verification_5 implements PrebuiltFormInterface {
           'table' => 'termlists_term',
           'valueField' => 'id',
           'captionField' => 'term',
-          'extraParams' => array('termlist_external_key' => 'indicia:group_types'),
+          'extraParams' => ['termlist_external_key' => 'indicia:group_types'],
           'class' => 'group-field',
         ),
         array(
@@ -140,6 +139,17 @@ class iform_verification_5 implements PrebuiltFormInterface {
           'description' => 'For the experience report, specify the minimum taxon rank sort order to include.',
           'type' => 'text_input',
           'group' => 'Report Settings',
+          'required' => FALSE,
+        ),
+        array(
+          'name' => 'taxon_list_id',
+          'caption' => 'Override master species list',
+          'description' => 'The species list that species and groups can be selected from on the Create a Filter tool, only required if not using the default from the iForm configuration settings.',
+          'type' => 'select',
+          'group' => 'Report Settings',
+          'table' => 'taxon_list',
+          'valueField' => 'id',
+          'captionField' => 'title',
           'required' => FALSE,
         ),
         array(
@@ -215,7 +225,7 @@ class iform_verification_5 implements PrebuiltFormInterface {
           'description' => 'Identify the task this page is being used for, which determines the websites that will ' .
             'share records for use here.',
           'type' => 'select',
-          'options' => array(
+          'options' => [
             'reporting' => 'Reporting',
             'peer_review' => 'Peer review',
             'verification' => 'Verification',
@@ -223,7 +233,7 @@ class iform_verification_5 implements PrebuiltFormInterface {
             'moderation' => 'Moderation',
             'editing' => 'Editing',
             'me' => 'My records only',
-          ),
+          ],
           'default' => 'verification',
           'group' => 'Report Settings',
         ),
@@ -433,7 +443,7 @@ class iform_verification_5 implements PrebuiltFormInterface {
           'description' => 'Label for the link to the Comment Quick Reply page.',
           'type' => 'text_input',
           'group' => 'Comment quick reply page link',
-          'required' => 'false'
+          'required' => 'false',
         ),
         array(
           'name' => 'comment_quick_reply_page_link_url',
@@ -441,7 +451,7 @@ class iform_verification_5 implements PrebuiltFormInterface {
           'description' => 'URL link to the Comment Quick Reply page.',
           'type' => 'text_input',
           'group' => 'Comment quick reply page link',
-          'required' => 'false'
+          'required' => 'false',
         )
       )
     );
@@ -1315,10 +1325,6 @@ HTML
    * Response is OK or Fail depending on whether the email was sent or not.
    */
   public static function ajax_email($website_id, $password, $nid) {
-    iform_load_helpers(['VerificationHelper']);
-    $lang = [
-      'verification' => lang::get('Verification'),
-    ];
     $params = hostsite_get_node_field_value($nid, 'params');
     if (empty($params['email_from_address'])) {
       $fromEmail = hostsite_get_config_value('site', 'mail', '');
@@ -1598,7 +1604,7 @@ HTML;
     if (!empty($args['other_location_type_ids'])) {
       $options['otherLocationTypeIds'] = array_map('intval', explode(',', $args['other_location_type_ids']));
     }
-    $options['taxon_list_id'] = hostsite_get_config_value('iform', 'master_checklist_id', 0);
+    $options['taxon_list_id'] = $args['taxon_list_id'] ?? hostsite_get_config_value('iform', 'master_checklist_id', 0);
     $hiddenStuff = '';
     $r = report_filter_panel($readAuth, $options, $args['website_id'], $hiddenStuff);
     return $r . $hiddenStuff;

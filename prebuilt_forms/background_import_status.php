@@ -85,6 +85,7 @@ class iform_background_import_status implements PrebuiltFormInterface {
     helper_base::add_resource('font_awesome');
     $conn = iform_get_connection_details($nid);
     $auth = helper_base::get_read_auth($conn['website_id'], $conn['password']);
+    helper_base::$indiciaData['abandonUrl'] = hostsite_get_url('iform/ajax/background_import_status') . "/abandon_import/$nid";
     $data = [
       'website_id' => $conn['website_id'],
       'nonce' => $auth['nonce'],
@@ -97,6 +98,20 @@ class iform_background_import_status implements PrebuiltFormInterface {
     $serviceUrl = helper_base::$base_url . 'index.php/services/import_2/background_import_status';
     $response = helper_base::http_post($serviceUrl, $data);
     $importList = json_decode($response['output'], TRUE);
+    $lang = [
+      'abandonImport' => lang::get('Abandon import'),
+      'errors' => lang::get('Errors'),
+      'importProgress' => lang::get('Import progress'),
+      'precheckProgress' => lang::get('Precheck progress'),
+      'processedRows' => lang::get('Processed rows'),
+      'totalRows' => lang::get('Total rows'),
+    ];
+    helper_base::addLanguageStringsToJs('backgroundImportStatus', [
+      'confirmAbandon' => 'Are you sure you want to abandon this import? All details will be removed and cannot be recovered.',
+      'errorOnAbort' => 'An error occurred whilst attempting to abandon the import: {1}',
+      'errorOnAbortGenericMessage' => 'Internal Server Error.',
+      'importAbandoned' => 'The import has been removed from the queue.',
+    ]);
     $r = '';
     if (hostsite_user_has_permission('indicia data admin')) {
       // Admins are allowed to search for an import by config-id.
@@ -111,8 +126,7 @@ class iform_background_import_status implements PrebuiltFormInterface {
       $r .= '</form>';
     }
     foreach ($importList as $idx => $import) {
-      $r .= '<section class="panel panel-default import-info">';
-      $r .= '<header class="panel-heading">Import ' . ($idx + 1) . ' created on ' . $import['created_on'] . '</header>';
+      $importCreatedOnHeader = lang::get('Import {1} created on {2}', $idx + 1, $import['created_on']);
       $r .= '<div class="panel-body">';
       if ($import['error_detail']) {
         $status = 'Import failed.';
@@ -136,56 +150,108 @@ class iform_background_import_status implements PrebuiltFormInterface {
       }
       $processed = $import['rowsProcessed'] ?? 0;
       $stateClass = $import['errorsCount'] > 0 ? ' error' : ($import['state'] === 'importing' && $import['rowsProcessed'] === $import['totalRows'] ? ' done' : '');
-      $errorFileLink = $import['errorsCount'] > 0 ? '<a href="' . helper_base::$base_url . 'index.php/services/import_2/get_errors_file?config-id=' . $import['config-id'] . '" title="Download error file"><i class="fas fa-file-download"></i></a>' : '';
-      $r .= <<<HTML
-        <div class="import-dashboard$stateClass">
-          <div class="dashboard-panel dashboard-status">
-            <h2>$status</h2>
-          </div>
-          <div class="dashboard-panel">
-            <h2>Total rows</h2>
-            <p>$import[totalRows]</p>
-          </div>
-          <div class="dashboard-panel">
-            <h2>Processed rows</h2>
-            <p>$processed</p>
-          </div>
-          <div class="dashboard-panel dashboard-errors">
-            <h2>Errors</h2>
-            <p>$import[errorsCount]</p>
-            $errorFileLink
-          </div>
-        </div>
-
-      HTML;
-
+      $errorFileLink = $import['errorsCount'] > 0 ? '<a href="' . helper_base::$base_url . 'index.php/services/import_2/get_errors_file?config-id=' . $import['config-id'] . '" title="Download error file"><i class="fas fa-file-download"></i> Download</a>' : '';
       $precheckProgress = $import['state'] === 'prechecking' ? $import['rowsProcessed'] * 100 / $import['totalRows'] : ($import['state'] === 'importing' ? 100 : 0);
+      $precheckProgressRounded = round($precheckProgress);
       $importProgress = $import['state'] === 'importing' ? $import['rowsProcessed'] * 100 / $import['totalRows'] : 0;
-      $r .= '<div class="progress-container"><span>Precheck progress (' . round($precheckProgress) . '%)</span><progress class="progress" max="100" value="' . $precheckProgress . '"></progress></div>';
-      $r .= '<div class="progress-container"><span>Import progress (' . round($importProgress) . '%)</span><progress class="progress" max="100" value="' . $importProgress . '"></progress></div>';
-      if ($import['errorsCount'] > 0) {
-        $r .= str_replace('{message}', "$import[errorsCount] errors have been found", $indicia_templates['warningBox']);
-      }
+      $importProgressRounded = round($importProgress);
+      $errorWarningBox = $import['errorsCount'] > 0 ? str_replace('{message}', lang::get('{1} errors have been found', $import['errorsCount']), $indicia_templates['warningBox']) : '';
+      $errorDetailBox = '';
       if (!empty($import['error_detail'])) {
         if (hostsite_user_has_permission('indicia data admin')) {
           $decodedError = json_decode($import['error_detail'], TRUE);
           if ($decodedError) {
-            $r .= str_replace('{message}', 'Error detail: <pre>' . htmlspecialchars(var_export($decodedError, TRUE)) . '</pre>', $indicia_templates['warningBox']);
+            $errorDetailBox = str_replace(
+              '{message}',
+              lang::get('Error detail: {1}', '<pre>' . htmlspecialchars(var_export($decodedError, TRUE)) . '</pre>'),
+              $indicia_templates['warningBox']
+            );
           }
           else {
             // Error detail not JSON, just display it raw.
-            $r .= str_replace('{message}', "Error detail: $import[error_detail]", $indicia_templates['warningBox']);
+            $errorDetailBox = str_replace('{message}', "Error detail: $import[error_detail]", $indicia_templates['warningBox']);
           }
         }
         else {
-          $r .= str_replace('{message}', 'An error occurred during the import. Please contact your site administrator for more details providing the import reference "' . $import['config-id'] . '".', $indicia_templates['warningBox']);
+          $errorDetailBox = str_replace(
+            '{message}',
+            lang::get('An error occurred during the import. Please contact your site administrator for more details providing the import reference "{1}".', $import['config-id']),
+            $indicia_templates['warningBox']
+          );
         }
       }
-      $r .= '</div>';
-      $r .= '</div>';
+      // If the import is stuck with an error, allow the user to remove the
+      // work queue entry.
+      $abandonButton = $import['errorsCount'] > 0 ? "<button class=\"abandon-btn $indicia_templates[buttonWarningClass]\" data-config-id=\"{$import['config-id']}\">$lang[abandonImport]</button>" : '';
+      $r .= <<<HTML
+        <section class="panel panel-default import-info">
+          <header class="panel-heading">
+            <p>$importCreatedOnHeader</p>
+            <p class="helpText">Ref: {$import['config-id']}</p>
+          </header>
+          <div class="panel-body">
+            <div class="import-dashboard$stateClass">
+              <div class="dashboard-panel dashboard-status">
+                <h2>$status</h2>
+              </div>
+              <div class="dashboard-panel">
+                <h2>$lang[totalRows]</h2>
+                <p>$import[totalRows]</p>
+              </div>
+              <div class="dashboard-panel">
+                <h2>$lang[processedRows]</h2>
+                <p>$processed</p>
+              </div>
+              <div class="dashboard-panel dashboard-errors">
+                <h2>$lang[errors]</h2>
+                <p>$import[errorsCount]</p>
+                $errorFileLink
+              </div>
+            </div>
+            <div class="progress-container">
+              <span>$lang[precheckProgress] ($precheckProgressRounded)</span>
+              <progress class="progress" max="100" value="$precheckProgress"></progress>
+            </div>
+            <div class="progress-container">
+              <span>$lang[importProgress] ($importProgressRounded)</span>
+              <progress class="progress" max="100" value="$importProgress"></progress>
+            </div>
+            $errorWarningBox
+            $errorDetailBox
+            $abandonButton
+          </div>
+        </section>
+      HTML;
     }
 
     return $r;
+  }
+
+  /**
+   * Ajax handler for when the user clicks to abandon a failed import.
+   *
+   * @param int $website_id
+   *   Website ID for auth.
+   * @param string $password
+   *   Website password for auth.
+   * @param int $nid
+   *   Node ID.
+   *
+   * @return string
+   *   JSON AJAX response.
+   */
+  public static function ajax_abandon_import($website_id, $password, $nid) {
+    if (!hostsite_get_user_field('indicia_user_id')) {
+      throw new Exception('User must be logged in and connected to the warehouse in order to abandon an import.');
+    }
+    if (empty($_GET['config-id'])) {
+      throw new Exception('Attempt to abandon an import without specifying the import config-id parameter.');
+    }
+    iform_load_helpers(['import_helper_2']);
+    $auth = import_helper_2::get_read_write_auth($website_id, $password);
+    // @todo Error and response handling.
+    import_helper_2::abandonBackgroundImport($_GET['config-id'], $auth['write_tokens']);
+    return '{"status":"ok"}';
   }
 
 }

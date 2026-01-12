@@ -227,7 +227,7 @@ $('input#{escaped_input_id}').result(function(event, data) {
   'paging' => '<div class="left">{first} {prev} {pagelist} {next} {last}</div><div class="right">{showing}</div>',
   'jsonwidget' => '<div id="{id}" {class}></div>',
   'report_picker' => '<div id="{id}" {class}>{reports}<div class="report-metadata"></div><button type="button" id="picker-more">{moreinfo}</button><div class="ui-helper-clearfix"></div></div>',
-  'report_download_link' => '<div class="report-download-link"><a href="{link}"{class}>{caption}</a></div>',
+  'report_download_link' => '<div class="report-download-link"><a href="{link}" id="{id}"{class}>{caption}</a></div>',
   'verification_panel' => '<div id="verification-panel">{button}<div class="messages" style="display: none"></div></div>',
   'two-col-50' => '<div class="two columns"{attrs}><div class="column">{col-1}</div><div class="column">{col-2}</div></div>',
   'two-col-50-js' => '<div class="two columns"><div class="column col-1"></div><div class="column col-2"></div></div>',
@@ -1107,7 +1107,7 @@ class helper_base {
         ],
         'jquery_form' => [
           'deps' => ['jquery'],
-          'javascript' => [self::$js_path . "jquery.form.min.js"],
+          'javascript' => [self::$js_path . "jquery.form.js"],
         ],
         'reportPicker' => [
           'deps' => ['treeview', 'fancybox'],
@@ -2357,6 +2357,7 @@ HTML;
             'Indicia configuration is incorrect.', self::$base_url), 404);
         }
         else {
+          \Drupal::logger('iform')->error('Error getting read auth tokens: @trace', ['@trace' => debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 6)]);
           throw new Exception($response['output'], $response['status']);
         }
       }
@@ -2408,7 +2409,7 @@ HTML;
     // Include user ID if logged in.
     $authTokenUserId = self::getAuthTokenUserId();
     $postargs = "website_id=$website_id";
-    $response = self::http_post(self::$base_url . 'index.php/services/security/get_read_write_nonces', $postargs);
+    $response = self::http_post(self::$base_url . 'index.php/services/security/get_read_write_nonces', $postargs, FALSE);
     if (array_key_exists('status', $response)) {
       if ($response['status'] === 404) {
         throw new Exception(lang::get('The warehouse URL {1} was not found. Either the warehouse is down or the ' .
@@ -2825,10 +2826,16 @@ if (typeof validator!=='undefined') {
     global $indicia_templates;
     // Don't need the extraParams - they are just for service communication.
     $options['extraParams'] = NULL;
-    // Set default validation error output mode.
-    if (!array_key_exists('validation_mode', $options)) {
-      $options['validation_mode'] = self::$validation_mode;
-    }
+    // Apply defaults to options.
+    $options = array_merge([
+      'class' => '',
+      'disabled' => '',
+      'labelPosition' => 'before',
+      'readonly' => '',
+      'title' => '',
+      'validation_mode' => self::$validation_mode,
+      'wrapClasses' => [],
+    ], $options);
     // Decide if the main control has an error. If so, highlight with the error
     // class and set it's title.
     $error = '';
@@ -2846,15 +2853,6 @@ if (typeof validator!=='undefined') {
       }
       $options['title'] = 'title="' . implode(' : ', $hint) . '"';
     }
-    else {
-      $options['title'] = '';
-    }
-    $options = array_merge([
-      'class' => '',
-      'disabled' => '',
-      'readonly' => '',
-      'wrapClasses' => [],
-    ], $options);
     $options['wrapClasses'] = empty($options['wrapClasses']) ? '' : ' ' . implode(' ', $options['wrapClasses']);
     if (array_key_exists('maxlength', $options)) {
       $options['maxlength'] = "maxlength=\"$options[maxlength]\"";
@@ -2900,10 +2898,14 @@ if (typeof validator!=='undefined') {
 
     // Add a label only if specified in the options array. Link the label to
     // the inputId if available, otherwise the fieldname (as the fieldname
-    // control could be a hidden control).
+    // control could be a hidden control). A colon is added to the label only
+    // when the label before the control and not ended with ?.
     if (!empty($options['label'])) {
-      $labelTemplate = isset($options['labelTemplate']) ? $indicia_templates[$options['labelTemplate']] :
-      	(substr($options['label'], -1) == '?' ? $indicia_templates['labelNoColon'] : $indicia_templates['label']);
+      $labelTemplate = isset($options['labelTemplate'])
+        ? $indicia_templates[$options['labelTemplate']]
+        : (substr($options['label'], -1) == '?' || $options['labelPosition'] === 'after'
+          ? $indicia_templates['labelNoColon']
+          : $indicia_templates['label']);
       $label = str_replace(
           ['{label}', '{id}', '{labelClass}'],
           [
@@ -2914,7 +2916,7 @@ if (typeof validator!=='undefined') {
           $labelTemplate
       );
     }
-    if (!empty($options['label']) && (!isset($options['labelPosition']) || $options['labelPosition'] != 'after')) {
+    if (!empty($options['label']) && $options['labelPosition'] === 'before') {
       $r .= $label;
     }
     // Output the main control.
@@ -2956,7 +2958,7 @@ if (typeof validator!=='undefined') {
       $r .= $control;
     }
     // Label can sometimes be placed after the control.
-    if (!empty($options['label']) && isset($options['labelPosition']) && $options['labelPosition'] == 'after') {
+    if (!empty($options['label']) && $options['labelPosition'] === 'after') {
       $r .= $label;
     }
     // Add a message to the control if there is an error and this option is
