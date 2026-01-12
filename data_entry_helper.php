@@ -7973,7 +7973,7 @@ if (errors$uniq.length>0) {
         $image_overall_success = TRUE;
         $image_errors = [];
         $onlyImages = TRUE;
-        $savedEntity = $output['outer_table'];
+        $savedEntity = $output['outer_table'] ?? $entity;
         foreach ($media as $idx => $item) {
           // No need to resend an existing image, or a media link, just local files.
           if ((empty($item['media_type']) || preg_match('/:Local$/', $item['media_type'])) && (!isset($item['id']) || empty($item['id']))) {
