@@ -97,9 +97,11 @@ class iform_record_details_2 extends BaseDynamicDetails {
         [
           'name' => 'fields',
           'caption' => 'Fields to include or exclude',
-          'description' => 'List of data fields to hide, one per line. ' .
-              'Type in the field name as seen exactly in the Record Details section. For custom attributes you should use the system function values ' .
-              'to filter instead of the caption if defined below.',
+          'description' => <<<TXT
+            List of data fields to hide, one per line. Type in the field name as seen exactly in the Record Details
+            section. For custom attributes you should use the system function values to filter instead of the caption
+            if defined below.
+            TXT,
           'type' => 'textarea',
           'default' =>
 'CMS Username
@@ -124,10 +126,13 @@ Record ID',
         [
           'name' => 'testagainst',
           'caption' => 'Test attributes against',
-          'description' => 'For custom attributes, do you want to filter the list to show using the caption or the system function? If the latter, then ' .
-              'any custom attributes referred to in the fields list above should be referred to by their system function which might be one of: email, ' .
-              'cms_user_id, cms_username, first_name, last_name, full_name, biotope, behaviour, reproductive_condition, sex_stage, sex, stage, ' .
-              'sex_stage_count, certainty, det_first_name, det_last_name.',
+          'description' => <<<TXT
+            For custom attributes, do you want to filter the list to show using the caption or the system function? If
+            the latter, then any custom attributes referred to in the fields list above should be referred to by their
+            system function which might be one of: email, cms_user_id, cms_username, first_name, last_name, full_name,
+            biotope, behaviour, reproductive_condition, sex_stage, sex, stage, sex_stage_count, certainty,
+            det_first_name, det_last_name.
+            TXT,
           'type' => 'select',
           'options' => [
             'caption' => 'Caption',
@@ -217,24 +222,21 @@ Record ID',
         [
           'name' => 'allow_confidential',
           'caption' => 'Allow viewing of confidential records',
-          'description' => 'Tick this box to enable viewing of confidential records. Ensure that the page is only ' .
-            'available to logged in users with appropropriate permissions if using this option',
+          'description' => 'Tick this box to enable viewing of confidential records. Ensure that the page is only  available to logged in users with appropropriate permissions if using this option',
           'type' => 'checkbox',
           'required' => FALSE,
         ],
         [
           'name' => 'allow_sensitive_full_precision',
           'caption' => 'Allow viewing of sensitive records at full precision',
-          'description' => 'Tick this box to enable viewing of sensitive records at full precision records. Ensure ' .
-            'that the page is only available to logged in users with appropropriate permissions if using this option',
+          'description' => 'Tick this box to enable viewing of sensitive records at full precision records. Ensure that the page is only available to logged in users with appropropriate permissions if using this option',
           'type' => 'checkbox',
           'required' => FALSE,
         ],
         [
           'name' => 'allow_unreleased',
           'caption' => 'Allow viewing of unreleased records',
-          'description' => 'Tick this box to enable viewing of unreleased records. Ensure that the page is only ' .
-            'available to logged in users with appropropriate permissions if using this option',
+          'description' => 'Tick this box to enable viewing of unreleased records. Ensure that the page is only available to logged in users with appropropriate permissions if using this option',
           'type' => 'checkbox',
           'required' => FALSE,
         ],
@@ -477,6 +479,12 @@ Record ID',
     return $r;
   }
 
+  /**
+   * Fetch DNA-derived occurrence data HTML to include in the details pane.
+   *
+   * @return string
+   *   DNA values as HTML.
+   */
   private static function getDnaMetadataBlock() {
     $dnaBlockTitle = lang::get('DNA-derived information');
     $dnaValues = '';
@@ -794,12 +802,16 @@ JS;
   /**
    * Outputs a list of associated occurrence information (recorded interactions).
    *
-   * @param $auth
-   * @param $args
-   * @param $tabalias
-   * @param $options
+   * @param array $auth
+   *   Authorisation tokens.
+   * @param array $args
+   *   Form parameters.
+   * @param string $tabalias
+   * @param array $options
+   *   Control options.
    *
    * @return string
+   *   HTML to include on the page.
    *
    * @throws \exception
    */
@@ -834,7 +846,9 @@ JS;
    * Outputs a login form. Not displayed if already logged in.
    *
    * @param array $auth
+   *   Authorisation tokens.
    * @param array $args
+   *   Form parameters.
    * @param string $tabalias
    * @param array $options
    *   Options array passed in the configuration to the [login] control.
@@ -1158,6 +1172,14 @@ STRUCT;
     }
   }
 
+  /**
+   * Fetch DNA-derived data values from the database.
+   *
+   * @param array $args
+   *   Form arguments.
+   * @param array $auth
+   *   Read authorisation array.
+   */
   private static function loadDnaMetadata(array $args, array $auth) {
     $params = [
       'occurrence_id' => self::$record['occurrence_id'],
