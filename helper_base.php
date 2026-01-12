@@ -2357,6 +2357,7 @@ HTML;
             'Indicia configuration is incorrect.', self::$base_url), 404);
         }
         else {
+          \Drupal::logger('iform')->error('Error getting read auth tokens: @trace', ['@trace' => debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 6)]);
           throw new Exception($response['output'], $response['status']);
         }
       }
@@ -2408,7 +2409,7 @@ HTML;
     // Include user ID if logged in.
     $authTokenUserId = self::getAuthTokenUserId();
     $postargs = "website_id=$website_id";
-    $response = self::http_post(self::$base_url . 'index.php/services/security/get_read_write_nonces', $postargs);
+    $response = self::http_post(self::$base_url . 'index.php/services/security/get_read_write_nonces', $postargs, FALSE);
     if (array_key_exists('status', $response)) {
       if ($response['status'] === 404) {
         throw new Exception(lang::get('The warehouse URL {1} was not found. Either the warehouse is down or the ' .
