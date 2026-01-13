@@ -836,19 +836,18 @@ $('#delete-transect').on('click', deleteSurvey);
    */
   private static function getUserList() {
     $users = [];
-    $result = \Drupal::entityTypeManager()
-      ->getStorage('user')
-      ->getQuery()
-      ->sort('name', 'ASC')
-      ->accessCheck(FALSE)
-      ->execute();
-    $userList = \Drupal\user\Entity\User::loadMultiple($result);
-    foreach ($userList as $user) {
-      if ($user->id() != 0) {
-        $users[$user->id()] = $user->getDisplayName();
-      }
+    $query = \Drupal::database()->select('{users_field_data}', 'u');
+    $query->fields('u', ['uid', 'name']);
+    $query->condition('uid', 0, '>');
+    $query->condition('status', 1);
+    $query->orderBy('name', 'ASC');
+    $result = $query->execute();
+    foreach ($result as $record) {
+      $users[$record->uid] = $record->name;
     }
-    \Drupal::service('entity.memory_cache')->deleteAll();
+    // Case insensitive sort which maintains array key associations correctly.
+    // Avoids words beginning with capitals being grouped together in the list.
+    natcasesort($users);
     return $users;
   }
 
