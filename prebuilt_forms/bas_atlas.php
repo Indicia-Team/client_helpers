@@ -567,10 +567,17 @@ class iform_bas_atlas extends BaseDynamicDetails {
     data_entry_helper::build_species_autocomplete_item_function($opts);
 
     // Datasets
-    $ds = $_GET['ds'];
-    $tg = $_GET['tg'];
+    $ds='';
+	$tg='';
+	if (isset($_GET['ds'])) {
+		$ds = $_GET['ds'];
+	}
+	if(isset($_GET['tg'])) {
+		$tg = $_GET['tg'];
+	}
     $tlid = $_GET['taxa_taxon_list_id'];
-
+    $esFilter = '';
+	
     if ((self::$notaxon && $tlid != 'grp') || is_null($ds)) {
       return parent::get_form_html($args, $auth, $attributes);
     } else {
@@ -602,11 +609,13 @@ class iform_bas_atlas extends BaseDynamicDetails {
         $esFilter .= self::createEsFilterHtml('identification.verification_status', 'V', 'term', 'must');
       };
 
+
       // Dataset filters
       $dsa = str_split($ds);
       $srs = $dsa[0]; // 729
       $irec = $dsa[1]; // All other datasets available
       $inat = $dsa[2]; // 510
+	  $ver  = $dsa[3];  // verified 
       if ($irec == "1") {
         if ($srs == "0") {
           $esFilter .= self::createEsFilterHtml('metadata.survey.id', '729', 'term', 'must_not');
@@ -623,6 +632,10 @@ class iform_bas_atlas extends BaseDynamicDetails {
           $esFilter .= self::createEsFilterHtml('metadata.survey.id', '510', 'term', 'must');
         }
       }
+	  
+	  if ($ver=="1") {
+        $esFilter .= self::createEsFilterHtml('identification.verification_status', 'V', 'term', 'must');		  
+	  }
 
 
 
@@ -706,7 +719,10 @@ class iform_bas_atlas extends BaseDynamicDetails {
     report_helper::$javascript.="indiciaData.basAtlas.taxon.notaxon=".var_export(self::$notaxon, true).";";
     report_helper::$javascript.="indiciaData.basAtlas.taxon.preferred='". addslashes($preferred) ."';";
     report_helper::$javascript.="indiciaData.basAtlas.taxon.preferredPlain='". addslashes($preferredPlain) ."';";
-    report_helper::$javascript.="indiciaData.basAtlas.taxon.defaultCommonName='". addslashes($defaultCommonName) ."';";
+	if (!empty($defaultCommonName) ) {
+		report_helper::$javascript.="indiciaData.basAtlas.taxon.defaultCommonName='". addslashes($defaultCommonName) ."';";
+	}
+	
     foreach ($commonNames as $key => $value) {
       $name = addslashes($value);
       report_helper::$javascript.="indiciaData.basAtlas.taxon.commonNames.push('".$name."');";
@@ -729,10 +745,10 @@ class iform_bas_atlas extends BaseDynamicDetails {
   protected static function get_control_atlas($auth, $args, $tabalias, $options) {
 
 
-	if (!empty($_GET['os'])) {
+	/*if (!empty($_GET['os'])) {
 		$r=self::get_filtered_occurrences($args, $options);
 		echo "<pre>$r</pre>";exit;
-	}
+	}*/
 
     $r='<div id="bas-atlas-main">';
 
@@ -751,7 +767,7 @@ class iform_bas_atlas extends BaseDynamicDetails {
     $r .= '<input type="hidden" id="tg" name="tg"></input>';
     $r .= '<input type="hidden" id="vc" name="vc"></input>';
     $r .= '</form>';
-    $r .= '<button id="submit-taxon-search-form" type="button" onclick="indiciaFns.speciesDetailsSub()">Fetch</button>';
+    $r .= '<button id="submit-taxon-search-form" type="button" class="btn btn-primary btn-block" onclick="indiciaFns.speciesDetailsSub()">Update</button>';
 
     $r.='</div>'; // bas-atlas-species
 
@@ -769,7 +785,7 @@ class iform_bas_atlas extends BaseDynamicDetails {
     return $r;
   }
 
-  protected static function get_atlas_data($args, $options) {
+  protected static function get_atlas_data1($args, $options) {
 
     // Make options etc available in JS - also providing defaults
     iform_load_helpers(array('report_helper'));
@@ -801,7 +817,45 @@ class iform_bas_atlas extends BaseDynamicDetails {
       return $r;
     }
 
-    $optionsSourceMap = [
+
+
+$vc = filter_input(INPUT_GET, 'vc', FILTER_VALIDATE_INT, ['options' => ['default' => 0]]);
+
+// Ensure extraParams exists and is an array
+$extraParams = isset($options['extraParams']) && is_array($options['extraParams'])
+  ? $options['extraParams']
+  : [];
+
+// Ensure we have a consistently shaped ES DSL container:
+// extraParams['query']['bool']['filter'] is an array we can push into.
+if (empty($extraParams['query']) || !is_array($extraParams['query'])) {
+  $extraParams['query'] = [];
+}
+if (empty($extraParams['query']['bool']) || !is_array($extraParams['query']['bool'])) {
+  $extraParams['query']['bool'] = [];
+}
+if (empty($extraParams['query']['bool']['filter']) || !is_array($extraParams['query']['bool']['filter'])) {
+  $extraParams['query']['bool']['filter'] = [];
+}
+
+// If vc > 0, add the precision filter as a filter clause (non-scoring)
+if ($vc > 0) {
+  $extraParams['query']['bool']['filter'][] = [
+    'range' => [
+      'location.coordinate_uncertainty_in_meters' => [
+        'lte' => 2000 // change to 1000 for 1km-only
+      ]
+    ]
+  ];
+}
+
+// Put back into $options
+$options['extraParams'] = $extraParams;
+
+
+	// $options['extraParams'] = array_merge($options['extraParams'] ?? [], $precisionFilter);
+    
+	$optionsSourceMap = [
       'extraParams' => $options['extraParams'],
       'nid' => $options['nid'],
       'id' => 'mapSource',
@@ -814,10 +868,14 @@ class iform_bas_atlas extends BaseDynamicDetails {
       'proxyCacheTimeout' => 300,
     ];
 
-    if (!$_GET['vc'] ) {
-      // For national hectad maps, count the number of tetrads in each hectad
-      $optionsSourceMap['aggregation']['tetrads'] = ['cardinality' => ['field' => 'location.grid_square.2km.centre']];
-    }
+
+		// Field to inspect: OSGB-style display spatial reference
+		$gridrefField = 'location.output_sref';
+
+		if (!$_GET['vc'] ) {
+		  // For national hectad maps, count the number of tetrads in each hectad
+		  $optionsSourceMap['aggregation']['tetrads'] = ['cardinality' => ['field' => 'location.grid_square.2km.centre']];
+		}
 
     ElasticsearchReportHelper::source($optionsSourceMap);
     $optionsCustomScriptMap = [
@@ -826,11 +884,8 @@ class iform_bas_atlas extends BaseDynamicDetails {
       'source' => 'mapSource',
       'functionName' => 'populateMap',
     ];
+	
     $r = ElasticsearchReportHelper::customScript($optionsCustomScriptMap);
-
-
-
-
 
 
     if(str_contains($args['tab_types'], 'temporal')) {
@@ -847,6 +902,7 @@ class iform_bas_atlas extends BaseDynamicDetails {
         'fields' => ['event.year'],
         'proxyCacheTimeout' => 300,
       ];
+	  
       ElasticsearchReportHelper::source($optionsSourceYearly);
       $optionsCustomScriptYearly = [
         'extraParams' => $options['extraParams'],
@@ -940,6 +996,218 @@ class iform_bas_atlas extends BaseDynamicDetails {
 
     return $r;
   }
+
+
+protected static function get_atlas_data($args, $options) {
+  // Make options etc available in JS - also providing defaults
+  iform_load_helpers(['report_helper']);
+  report_helper::$javascript .= "indiciaData.basAtlas.map.mapTypes = '" . $args['map_types'] . "';";
+  report_helper::$javascript .= "indiciaData.basAtlas.map.colour1 = '" . $args['time_colour1'] . "';";
+  report_helper::$javascript .= "indiciaData.basAtlas.map.colour2 = '" . $args['time_colour2'] . "';";
+  report_helper::$javascript .= "indiciaData.basAtlas.map.colour3 = '" . $args['time_colour3'] . "';";
+  report_helper::$javascript .= "indiciaData.basAtlas.map.thresh1 =" . $args['time_thresh1'] . ";";
+  report_helper::$javascript .= "indiciaData.basAtlas.map.thresh2 =" . $args['time_thresh2'] . ";";
+  report_helper::$javascript .= "indiciaData.basAtlas.map.highstyle = '" . $args['time_highstyle'] . "';";
+  report_helper::$javascript .= "indiciaData.basAtlas.map.lowstyle = '" . $args['time_lowstyle'] . "';";
+  report_helper::$javascript .= "indiciaData.basAtlas.map.legendmouse = '" . $args['time_legendmouse'] . "';";
+  report_helper::$javascript .= "indiciaData.basAtlas.map.mapheight =" . $args['map_height'] . ";";
+  report_helper::$javascript .= "indiciaData.basAtlas.map.download =" . $args['map_download'] . ";";
+  report_helper::$javascript .= "indiciaData.basAtlas.map.downloadtext = '" . $args['download_text'] . "';";
+  report_helper::$javascript .= "indiciaData.basAtlas.map.downloadinfo =" . $args['download_info'] . ";";
+
+  report_helper::$javascript .= "indiciaData.basAtlas.data.exclude_rejected=" . $args['exclude_rejected'] . ";";
+  report_helper::$javascript .= "indiciaData.basAtlas.data.exclude_unverified=" . $args['exclude_unverified'] . ";";
+
+  data_entry_helper::add_resource('brc_atlas');
+
+  // Return now if no taxon specified
+  if (self::$notaxon) {
+    return $r;
+  }
+
+  // Validated VC (defaults to 0 = national)
+  $vc = filter_input(INPUT_GET, 'vc', FILTER_VALIDATE_INT, ['options' => ['default' => 0]]);
+
+	// Ensure bool_queries exists
+	$extraParams = isset($options['extraParams']) && is_array($options['extraParams'])
+	  ? $options['extraParams']
+	  : [];
+	if (!isset($extraParams['bool_queries']) || !is_array($extraParams['bool_queries'])) {
+	  $extraParams['bool_queries'] = [];
+	}
+
+
+	if ($vc > 0) {
+	  $extraParams['bool_queries'][] = [
+		'query_type'  => 'range',
+		'field'       => 'location.coordinate_uncertainty_in_meters',
+		'value'       => [0, 2000], // 1km-only? set to [0, 1000]
+		'bool_clause' => 'filter'
+	  ]; 
+
+		$extraParams['bool_queries'][] = [
+			'query_type'  => 'nested',
+			'path'        => 'location.higher_geography',
+			'bool_clause' => 'filter',
+			'query'       => [
+				'bool' => [
+					'filter' => [
+						['term' => ['location.higher_geography.id' => $vc]],
+						['term' => ['location.higher_geography.type.keyword' => 'Vice County']]
+					]
+				]
+			]
+		];
+
+	}
+
+
+  // Put back into options
+  $options['extraParams'] = $extraParams;
+
+  // MAP SOURCE
+  $optionsSourceMap = [
+    'extraParams'       => $options['extraParams'],
+    'nid'               => $options['nid'],
+    'id'                => 'mapSource',
+    'mode'              => 'compositeAggregation',
+    'uniqueField'       => $vc > 0
+                            ? 'location.grid_square.2km.centre'
+                            : 'location.grid_square.10km.centre',
+    'aggregation'       => [
+      'minYear' => ['min' => ['field' => 'event.date_start']],
+      'maxYear' => ['max' => ['field' => 'event.date_end']],
+    ],
+    'proxyCacheTimeout' => 300,
+  ];
+
+
+
+  // For national hectad maps, count number of tetrads in each hectad
+  if ($vc <= 0) {
+    $optionsSourceMap['aggregation']['tetrads'] = [
+      'cardinality' => ['field' => 'location.grid_square.2km.centre']
+    ];
+    // Optional: if the field is text, use the keyword subfield:
+    // 'cardinality' => ['field' => 'location.grid_square.2km.centre.keyword']
+  }
+
+  ElasticsearchReportHelper::source($optionsSourceMap);
+
+  $optionsCustomScriptMap = [
+    'extraParams'  => $options['extraParams'],
+    'nid'          => $options['nid'],
+    'source'       => 'mapSource',
+    'functionName' => 'populateMap',
+  ];
+  $r = ElasticsearchReportHelper::customScript($optionsCustomScriptMap);
+
+  // TEMPORAL TABS
+  if (str_contains($args['tab_types'], 'temporal')) {
+    data_entry_helper::add_resource('brc_charts');
+
+    $optionsSourceYearly = [
+      'extraParams'       => $options['extraParams'],
+      'nid'               => $options['nid'],
+      'id'                => 'recsbyyearSource',
+      'size'              => 0,
+      'mode'              => 'compositeAggregation',
+      'uniqueField'       => 'event.year',
+      'fields'            => ['event.year'],
+      'proxyCacheTimeout' => 300,
+    ];
+    ElasticsearchReportHelper::source($optionsSourceYearly);
+
+    $optionsCustomScriptYearly = [
+      'extraParams'  => $options['extraParams'],
+      'nid'          => $options['nid'],
+      'source'       => 'recsbyyearSource',
+      'functionName' => 'populateRecsByYearChart',
+    ];
+    $r .= ElasticsearchReportHelper::customScript($optionsCustomScriptYearly);
+
+    $optionsSourceWeekly = [
+      'extraParams'       => $options['extraParams'],
+      'nid'               => $options['nid'],
+      'id'                => 'recsthroughyearSource',
+      'size'              => 0,
+      'mode'              => 'compositeAggregation',
+      'uniqueField'       => 'event.week',
+      'fields'            => ['event.week'],
+      'proxyCacheTimeout' => 300,
+    ];
+    ElasticsearchReportHelper::source($optionsSourceWeekly);
+
+    $optionsCustomScriptWeekly = [
+      'extraParams'  => $options['extraParams'],
+      'nid'          => $options['nid'],
+      'source'       => 'recsthroughyearSource',
+      'functionName' => 'populateRecsThroughYearChart',
+    ];
+    $r .= ElasticsearchReportHelper::customScript($optionsCustomScriptWeekly);
+  }
+
+  // DATA TAB (species list)
+  if (str_contains($args['tab_types'], 'data')) {
+    data_entry_helper::add_resource('fancyDialog');
+    data_entry_helper::add_resource('brc_data');
+
+    $optionsSourceSpecies = [
+      'extraParams'       => $options['extraParams'],
+      'nid'               => $options['nid'],
+      'id'                => 'speciesListSource',
+      'size'              => 0,
+      'mode'              => 'compositeAggregation',
+      'uniqueField'       => 'taxon.accepted_name.keyword',
+      'fields'            => [
+        'taxon.accepted_name.keyword',
+        'taxon.genus',
+        'taxon.species_vernacular.keyword',
+      ],
+      'aggregation'       => [
+        'species' => [
+          'terms' => [
+            'field' => 'taxon.accepted_name.keyword',
+            'size'  => 10000
+          ],
+          'aggs'  => [
+            'first_record' => ['min' => ['field' => 'event.date_start']],
+            'last_record'  => ['max' => ['field' => 'event.date_start']],
+          ]
+        ]
+      ],
+      'proxyCacheTimeout' => 300,
+    ];
+
+    // VC filter for species tab via bool_queries (builder-safe)
+    if ($vc > 0) {
+      if (!isset($optionsSourceSpecies['extraParams']['bool_queries'])) {
+        $optionsSourceSpecies['extraParams']['bool_queries'] = [];
+      }
+      $optionsSourceSpecies['extraParams']['bool_queries'][] = [
+        'query_type'  => 'term',
+        'field'       => 'location.vice_county',
+        'value'       => $vc,
+        'bool_clause' => 'filter'
+      ];
+    }
+
+    ElasticsearchReportHelper::source($optionsSourceSpecies);
+
+    $optionsCustomScriptSpecies = [
+      'extraParams'  => $options['extraParams'],
+      'nid'          => $options['nid'],
+      'source'       => 'speciesListSource',
+      'functionName' => 'populateSpeciesList',
+    ];
+    $r .= ElasticsearchReportHelper::customScript($optionsCustomScriptSpecies);
+  }
+  
+
+
+  return $r;
+}
+
 
 
 	protected static function get_filtered_occurrences($args, $options) {

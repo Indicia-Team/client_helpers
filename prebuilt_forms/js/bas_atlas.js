@@ -1,4 +1,3 @@
-
 jQuery(document).ready(function($) {
 
 $('body').append(`
@@ -11,8 +10,43 @@ $('body').append(`
 
 		  #idcDataGrid {
 		    max-height: 100%;
+			height:100%;
+			display:block;
 		    overflow-y: auto;
 		  }
+		  
+			.modal-dialog {
+			  width: auto;        /* allow width to adjust */
+			  max-width: none;    /* remove Bootstrap's max-width */
+			  height: auto;       /* allow height to adjust */
+			  max-height: none;   /* remove Bootstrap's max-height */
+			}
+
+			.modal-content {
+			  height: 100%;       /* ensure content fills resizable dialog */
+			}
+			
+			.modal-body {
+			  overflow-y: auto;
+			}
+			
+			#mapModal .modal-dialog {
+			  width: auto;       /* start at 25% of viewport width */
+			  height: auto;       /* start at 300px high */
+			  max-width: none;  /* remove Bootstrap's max-width */
+			}
+			
+			.table-container {
+				height: auto;       /* Let height grow naturally */
+				overflow: visible;  /* No scrollbars unless needed */
+			}
+			
+			.btnDiv {
+			  text-align: right;
+			}
+
+			
+
 		</style>
 		
 		<div class="modal fade" id="mapModal" tabindex="-1" role="dialog" aria-labelledby="mapModalLabel">
@@ -20,22 +54,46 @@ $('body').append(`
 			<div class="modal-content">
 			
 			  <div class="modal-header">
-				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close" >
 				  <span aria-hidden="true">&times;</span>
 				</button>
-				<h4 class="modal-title" id="mapModalLabel">Map Records</h4>
+				<h4 class="modal-title" id="mapModalLabel"><strong>Map Records</strong></h4>
 			  </div>
 			  
 			  <div class="modal-body modal-body-a" id="modalBody" >
 				<!-- Content will be injected here -->
-				<div id="idcDataGrid" ></div>
+				<div id="idcDataGrid"  ></div>
 			  </div>
-			  
+			  <div class="modal-footer">
+			    <div class="row" >
+					<div class="col-md-4" >
+					</div>
+					<div class="col-md-4 btnDiv" >
+						<button type="button" class="btn btn-primary" onclick="downloadTableAsCSV('recordsTable', 'table.csv')" >Save to csv</button>
+						<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>									
+					</div>
+					<div class="col-md-4" >
+					</div>
+				</div>
+
+			  </div>
 			</div>
 		  </div>
 		</div>
 
 `);
+
+		$('#mapModal').on('shown.bs.modal', function () {
+		  var dialog = $(this).find('.modal-dialog');
+		  dialog.draggable({
+			handle: ".modal-header"
+		  }).resizable({
+			minHeight: 300,
+			minWidth: 300,
+			width:400,
+			height:400
+		  });
+		});
 
 
   let mapData, conservationData
@@ -108,6 +166,7 @@ $('body').append(`
     const srs = $('#dataset-srs').prop('checked') ? '1' : '0'
     const irec = $('#dataset-irec').prop('checked') ? '1' : '0'
     const inat = $('#dataset-inat').prop('checked') ? '1' : '0'
+	const ver  = $('#dataset-ver').prop('checked') ? '1' : '0'
 
     // Taxon list id
     let ttlid
@@ -127,7 +186,7 @@ $('body').append(`
     } else {
       $('#dataset-warning').html('')
       $('#taxon-search-form #taxa_taxon_list_id').val(ttlid)
-      $('#taxon-search-form #ds').val(`${srs}${irec}${inat}`)
+      $('#taxon-search-form #ds').val(`${srs}${irec}${inat}${ver}`)
       document.forms["taxon-search-form"].submit()
     }
   }
@@ -276,7 +335,7 @@ $('body').append(`
     // Map area selector
     // VC select control created by PHP but not populated
     // since easier to do here.
-    $selMapArea = $('#map-area-selector')
+/*    $selMapArea = $('#map-area-selector')
     $selMapArea.addClass('form-control')
     $selMapArea.on('change', function() {
       // Get selected value
@@ -297,6 +356,47 @@ $('body').append(`
         $opt.attr('selected', 'selected')
       }
     })
+*/
+
+
+const $selMapArea = $('#map-area-selector');
+$selMapArea.addClass('form-control');
+
+$selMapArea.on('change', function () {
+  // Get selected value
+  const mapArea = $('#map-area-selector').find(':selected').val();
+  // Store value in session storage
+  sessionStorage.setItem('bas-atlas-map-area', mapArea);
+});
+
+// Build VC list: exclude CI (those starting with 'H'), sort by name
+let vcs = indiciaData.basAtlas.other.vcs
+  .filter(vc => !vc.code?.startsWith('H')) // Keep your original exclusion
+  .sort((a, b) => a.name.localeCompare(b.name, 'en', { sensitivity: 'base' }));
+
+// If you were removing the last item before because it was CI,
+// the filter above should already exclude CI. If you still need that pop for some reason, keep it:
+// vcs.pop(); // <-- probably no longer necessary
+
+	// Prepend the "National atlas" option
+	vcs = [{ id: 0, code: '', name: 'National atlas' }, ...vcs];
+
+	// Populate the selector
+	vcs.forEach(vc => {
+	  const value = `${vc.id}-${vc.code}`;
+	  const label = `${vc.code ? 'VC' : ''}${vc.code} ${vc.name}`.trim();
+
+	  const $opt = $('<option>')
+		.attr('value', value)
+		.text(label)
+		.appendTo($selMapArea);
+
+	  if (sessionStorage.getItem('bas-atlas-map-area') === value) {
+		$opt.attr('selected', 'selected');
+	  }
+	});
+
+
 
     // Map type selector
     const $selMapType = $('<select>').appendTo($ctrlMap)
@@ -360,7 +460,7 @@ $('body').append(`
 
   function createDatasetCheckboxes() {
 
-    const $div = $('<div>').appendTo($('#bas-atlas-species'))
+    const $div = $('<div>').prependTo($('#bas-atlas-species'))
     $div.attr('id', 'dataset-cbs')
     $div.css('display', 'inline-block')
 
@@ -370,28 +470,37 @@ $('body').append(`
     checkbox('srs', 'SRS')
     checkbox('irec', 'iRec')
     checkbox('inat', 'iNat')
+    checkbox('ver','Verified')
 
     function checkbox(type, caption) {
-
+			
       let checked = sessionStorage.getItem(`bas-atlas-dataset-${type}`)
       if (checked === null) {
         checked = type === 'srs' ? true : false
+		if (type=='ver') {
+			checked=true;
+		}
       } else {
         checked = checked === 'true'
       }
+	  
+	  
 
-      const $dcb = $('<div>').appendTo($div)
-      $dcb.css('display', 'inline-block')
+		const $dcb = $('<div>').appendTo($div)
+		$dcb.css('display', type !== 'ver' ? 'inline-block' : 'block')
 
-      const $cb = $('<input type="checkbox">').appendTo($dcb)
-      $cb.attr('id', `dataset-${type}`)
-      $cb.prop('checked', checked)
-      const $label = $('<label>').appendTo($dcb)
-      $label.attr('for', `dataset-${type}`)
-      $label.text(caption)
-      $cb.click( () => {
-        sessionStorage.setItem(`bas-atlas-dataset-${type}`, $(`#dataset-${type}`).is(':checked'))
-      })
+		const $cb = $('<input type="checkbox">').appendTo($dcb)
+		$cb.attr('id', `dataset-${type}`)
+		$cb.prop('checked', checked)
+
+		const $label = $('<label>').appendTo($dcb)
+		$label.attr('for', `dataset-${type}`)
+		$label.text(caption)
+
+		$cb.click(() => {
+		  sessionStorage.setItem(`bas-atlas-dataset-${type}`, $(`#dataset-${type}`).is(':checked'))
+		})
+
     }
   }
 
@@ -529,6 +638,39 @@ $('body').append(`
       overviewmap.showBusy(false)
       zoommap.redrawMap()
     })
+  }
+  
+  function creatPendingControl($ctrlMap) {
+	  
+    const $div = $('<div>').appendTo($('#bas-atlas-species'))
+    $div.attr('id', 'dataset-cbs')
+    $div.css('display', 'inline-block')
+
+    const $divWarning = $('<div>').appendTo($('#bas-atlas-species'))
+    $divWarning.attr('id', 'dataset-warning')
+
+
+      let checked = sessionStorage.getItem(`bas-atlas-dataset-${type}`)
+      if (checked === null) {
+        checked = type === 'srs' ? true : false
+      } else {
+        checked = checked === 'true'
+      }
+
+      const $dcb = $('<div>').appendTo($div)
+      $dcb.css('display', 'inline-block')
+
+      const $cb = $('<input type="checkbox">').appendTo($dcb)
+      $cb.attr('id', `dataset-${type}`)
+      $cb.prop('checked', checked)
+      const $label = $('<label>').appendTo($dcb)
+      $label.attr('for', `dataset-${type}`)
+      $label.text(caption)
+      $cb.click( () => {
+        sessionStorage.setItem(`bas-atlas-dataset-${type}`, $(`#dataset-${type}`).is(':checked'))
+      })
+
+	
   }
 
   function createYearSliderControl($ctrlMap) {
@@ -796,7 +938,7 @@ $('body').append(`
       // constructed from the URL ds param - not the checkboxes as the user could
       // alter these before creating the image.
       const ds = urlParams.get('ds')
-      const dsa = ['SRS', 'iRecord', 'iNaturalist'].filter((d,i) => ds.substring(i).startsWith('1'))
+      const dsa = ['SRS', 'iRecord', 'iNaturalist','Ver'].filter((d,i) => ds.substring(i).startsWith('1'))
       let datasets = dsa.reduce((a,d,i) => {
         if (a) {
           if (i === dsa.length-1) {
@@ -1103,7 +1245,7 @@ $('body').append(`
   }
 
   function createAtlasMap () {
-    
+ 
     // Create atlas map
     if (typeof(brcatlas) !== "undefined") {
       const opts = {
@@ -1151,11 +1293,10 @@ $('body').append(`
       }
       overviewmap = brcatlas.svgMap(opts)
 	  
-	  triggerPopups();
-	  
       if (indiciaData.basAtlas.taxon.preferred) {
         overviewmap.showBusy(true)
       }
+		  triggerPopups();  
     }
   }
   
@@ -1173,7 +1314,7 @@ $('body').append(`
    ********************************************************************* */
 
 function popup(event,d) {
-	console.log('popup event: ',event,d);
+	//console.log('popup event: ',event,d);
 	const gridRef = event.gr;
 	const normalizedGrid = gridRef?.trim().toUpperCase();
 	
@@ -1209,6 +1350,12 @@ $('#mapModal').modal('show');
 // choose the square field from the current view
 function currentSquareField() {
   const vc = new URLSearchParams(location.search).get('vc') || '0';
+  
+  	const mapType = document.getElementById('map-type-selector').value;
+	if (mapType === 'tetradfreq') {
+		return 'location.grid_square.2km.centre';
+	}
+	
   return vc === '0'
     ? 'location.grid_square.10km.centre'
     : 'location.grid_square.2km.centre';
@@ -1258,7 +1405,6 @@ function recordsQueryFromDot(point) {
 	  };
 	}
 
-
     const centreStr = `${point.latlon[0]} ${point.latlon[1]}`; // "lon lat"
 	
 	const squareField = currentSquareField();
@@ -1279,6 +1425,7 @@ function recordsQueryFromDot(point) {
 	const srs = dsArray[0];   // 729
 	const irec = dsArray[1];  // all others
 	const inat = dsArray[2];  // 510
+	const ver = dsArray[3];  // verified
 
 	const esFilters = [];
 
@@ -1292,15 +1439,31 @@ function recordsQueryFromDot(point) {
 	  }
 	} else {
 	  if (srs === '1' && inat === '1') {
-		esFilters.push(createEsFilter('metadata.survey.id', ['729', '510'], 'terms', 'must'));
+		esFilters.push(createEsFilter('metadata.survey.id', JSON.stringify(['729', '510']), 'terms', 'must'));
 	  } else if (srs === '1') {
 		esFilters.push(createEsFilter('metadata.survey.id', '729', 'term', 'must'));
 	  } else if (inat === '1') {
 		esFilters.push(createEsFilter('metadata.survey.id', '510', 'term', 'must'));
 	  }
 	}
+	
+	if (ver==='1') {
+		esFilters.push(createEsFilter('identification.verification_status', 'V', 'term', 'must'));
+	}
 
 	esFilters.push(createEsFilter('occurrence.zero_abundance', false, 'term', 'must'));
+	
+/*	const mapType = document.getElementById('map-type-selector').value;
+	if (mapType === 'tetradfreq') {
+	  // Only allow tetrad records (gridref length = 10)
+	  esFilters.push({
+		query_type: 'term',
+		field: 'location.gridref_length',
+		value: '8',
+		bool_clause: 'must'
+	  });
+	}
+*/
 	
 //	esFilters.push(createEsFilter('date', ['01/01/1600', '31/12/2099'], 'range', 'filter'));
 	
@@ -1348,7 +1511,7 @@ function recordsQueryFromDot(point) {
   
   return query */
   
-  return esFilters;
+  return  { esFilters, sorg };
 }
 
 
@@ -1362,7 +1525,7 @@ function recordsQueryFromDot(point) {
    * @return esfilters
    *   builds part of the query for elastic search
    ********************************************************************* */
-async function fetchAllForLatLonVariants( esFilters, point ) {
+async function fetchAllForLatLonVariants({ esFilters, sorg }, point) {
 		
   let finalResult = null;
   for (let i = 0; i < point.latlonVariants.length; i++) {
@@ -1408,11 +1571,10 @@ async function fetchAllForLatLonVariants( esFilters, point ) {
   
 }
 
-
-
 async function runElasticSearchQuery(queryData) {
   if (!queryData) return [];
-
+   console.log(indiciaData.esProxyAjaxUrl + '/searchbyparams/' + (indiciaData.nid || '0'));
+console.log('Query Data',queryData);
   return new Promise((resolve, reject) => {
     $.ajax({
       url: indiciaData.esProxyAjaxUrl + '/searchbyparams/' + (indiciaData.nid || '0'),
@@ -1429,9 +1591,6 @@ async function runElasticSearchQuery(queryData) {
     });
   });
 }
-
-
-
 
 // ************* END HELPERS ****************
   
@@ -1453,7 +1612,7 @@ async function runElasticSearchQuery(queryData) {
 					.style("cursor", "pointer") // Optional: show pointer cursor
 					.on("click", popup );
 
-		}, 8000);
+		}, 5000);
   }
 
   function resizeLegend() {
@@ -1579,7 +1738,6 @@ async function runElasticSearchQuery(queryData) {
     }
   }
 
-
   function createTemporal() {
 
     // Create yearly record accumulation chart
@@ -1622,7 +1780,6 @@ async function runElasticSearchQuery(queryData) {
     }
   }
 
-
 // Assume firstDate is already a string like "2020-01-01" or "2020-07-15"
 const formatFirstDate = (firstDate) => {
   if (!firstDate || firstDate === "-") return "-";
@@ -1633,7 +1790,6 @@ const formatFirstDate = (firstDate) => {
   }
   return firstDate; // full date
 };
-
 
 function createData(speciesData) {
     const container = document.getElementById('atlas-tab-data');
@@ -1657,6 +1813,7 @@ function createData(speciesData) {
     // Create table
     const table = document.createElement('table');
     table.className = 'species-table';
+	table.id = 'dataTable';
     table.style.width = '100%';
     table.style.borderCollapse = 'collapse';
     table.innerHTML = `
@@ -1736,6 +1893,20 @@ function createData(speciesData) {
     table.appendChild(tbody);
     scrollDiv.appendChild(table);
 
+	footdiv = document.createElement('div');
+	footdiv.innerHTML = `
+				    <div class="row" >
+					<div class="col-md-4" >
+					</div>
+					<div class="col-md-4 btnDiv" >
+						<button type="button" class="btn btn-primary" onclick="downloadTableAsCSV('dataTable', 'table.csv')" >Save to csv</button>
+						<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>									
+					</div>
+					<div class="col-md-4" >
+					</div>
+				</div>
+	`;
+	scrollDiv.appendChild(footdiv);
     container.innerHTML = ''; // Clear loading message
     container.appendChild(scrollDiv);
 }
@@ -1743,76 +1914,77 @@ function createData(speciesData) {
   // ES custom script definition for map
   indiciaFns.populateMap = function (el, sourceSettings, response,d) {
 
-    console.log('ES mapping response', response)
+	console.log('ES mapping response', response)
 
-    $('.page-header').html(indiciaData.basAtlas.taxon.preferred)
+	$('.page-header').html(indiciaData.basAtlas.taxon.preferred)
 
-    const mapArea = $('#map-area-selector').find(":selected").val()
-    const vcMap = mapArea.split('-')[0] !== '0'
+	const mapArea = $('#map-area-selector').find(":selected").val()
+	const vcMap = mapArea.split('-')[0] !== '0'
 	
 	console.log('Map data: ',response.aggregations._rows.buckets);
 
-    mapData = response.aggregations._rows.buckets
-      .filter(function(s){return s.key[`location-grid_square-${vcMap?'2km':'10km'}-centre`]})
-      .map(function(s) {
-      const latlon = s.key[`location-grid_square-${vcMap?'2km':'10km'}-centre`].split(' ')
-      const gr = bigr.getGrFromCoords(Number(latlon[0]), Number(latlon[1]), 'wg', '', [2000, 10000])
-		console.log('latlon: ',latlon);
-		console.log('gr: ',vcMap ? gr.p2000 : gr.p10000 );
+	mapData = response.aggregations._rows.buckets
+	  .filter(function(s){return s.key[`location-grid_square-${vcMap?'2km':'10km'}-centre`]})
+	  .map(function(s) {
+		  console.log('S: ',s);
+	  const latlon = s.key[`location-grid_square-${vcMap?'2km':'10km'}-centre`].split(' ')
+	  const gr = bigr.getGrFromCoords(Number(latlon[0]), Number(latlon[1]), 'wg', '', [2000, 10000])
+		// console.log('latlon: ',latlon);
+		// console.log('gr: ',vcMap ? gr.p2000 : gr.p10000 );
 	 return {
-        gr: vcMap ? gr.p2000 : gr.p10000,
+		gr: vcMap ? gr.p2000 : gr.p10000,
 		latlon: latlon,
 		latlonVariants: [latlon],
 		line:1528,
-        recs: s.doc_count,
-        minYear: new Date(s.minYear.value_as_string).getFullYear(),
-        maxYear: new Date(s.maxYear.value_as_string).getFullYear(),
-        tetrads: vcMap ? 0 : s.tetrads.value
-      }
-    })
+		recs: s.doc_count,
+		minYear: new Date(s.minYear.value_as_string).getFullYear(),
+		maxYear: new Date(s.maxYear.value_as_string).getFullYear(),
+		tetrads: vcMap ? 0 : s.tetrads.value
+	  }
+	})
 
 	// console.log('mapData', JSON.parse(JSON.stringify(mapData)))
-    // Turns out that sometimes more than one lat/lon combo is returned for a single square, so
-    // can't just do a simple map. Need to reduce to single values for each square.
-    // Also filter out any values with null squares	
+	// Turns out that sometimes more than one lat/lon combo is returned for a single square, so
+	// can't just do a simple map. Need to reduce to single values for each square.
+	// Also filter out any values with null squares	
 	//  We also need to store the original lat lon somewhere to get to the individual records
 	
 
 mapData = mapData
   .filter(s => s.gr)
   .reduce((a, s) => {
-    const existing = a.find(as => as.gr === s.gr);
-    if (existing) {
-      existing.recs += s.recs;
-      existing.minYear = Math.min(existing.minYear, s.minYear);
-      existing.maxYear = Math.max(existing.maxYear, s.maxYear);
-      existing.tetrads = Math.max(existing.tetrads, s.tetrads);
+	const existing = a.find(as => as.gr === s.gr);
+	if (existing) {
+	  existing.recs += s.recs;
+	  existing.minYear = Math.min(existing.minYear, s.minYear);
+	  existing.maxYear = Math.max(existing.maxYear, s.maxYear);
+	  existing.tetrads = Math.max(existing.tetrads, s.tetrads);
 	  
 	  existing.latlonVariants.push(s.latlon);
 
-    } else {
-      a.push({
-        gr: s.gr,
-        latlon: s.latlon, // Keep original latlon
-        latlonVariants: [s.latlon], // Store all variants here
+	} else {
+	  a.push({
+		gr: s.gr,
+		latlon: s.latlon, // Keep original latlon
+		latlonVariants: [s.latlon], // Store all variants here
 		line:1565,
-        recs: s.recs,
-        minYear: s.minYear,
-        maxYear: s.maxYear,
-        tetrads: s.tetrads
-      });
-    }
-    return a;
+		recs: s.recs,
+		minYear: s.minYear,
+		maxYear: s.maxYear,
+		tetrads: s.tetrads
+	  });
+	}
+	return a;
   }, []);
 
 
-    //console.log('mapData', JSON.parse(JSON.stringify(mapData)))
+	//console.log('mapData', JSON.parse(JSON.stringify(mapData)))
 
-    overviewmap.redrawMap()
-    overviewmap.showBusy(false)
-    zoommap.redrawMap()
+	overviewmap.redrawMap()
+	overviewmap.showBusy(false)
+	zoommap.redrawMap()
 
-    resizeLegend()
+	resizeLegend()
   }
 
 	// ES custom script to get occurences at  a specific location
@@ -1820,59 +1992,63 @@ mapData = mapData
 	  const records = response.hits.hits.map(hit => hit._source);
 
 	let html = '<div class="container"><div class="row" ><h1 style="font-size:12px">Grid Ref: '+d.gr+'</h1></div>';
-//	html += '<div class="row" style="font-size:12px" ><div class="col-sm-3">'+d.latlon[1]+'</div><div class="col-sm-3">'+d.latlon[0]+'</div><div class="col-sm-6"></div></div>';
+	//	html += '<div class="row" style="font-size:12px" ><div class="col-sm-3">'+d.latlon[1]+'</div><div class="col-sm-3">'+d.latlon[0]+'</div><div class="col-sm-6"></div></div>';
 	html += '<div class="row"><div class="col" style="font-size:12px" >No of records:'+d.recs+'</div></div>';
 	html += '</div>';
 	if (records.length === 0) {
 		$(el).html(html+'<p>No records found for this location.</p>');
 		return;
-    }
+	}
 
+	html +='<div class="container table-container" height="100%" ><table id="recordsTable" class="table table-striped table-bordered occurrence-table">';
+	html += '<thead><tr>' +
+	'<th></th>' +
+	'<th>Date</th>' +
+	'<th>Grid Ref</th>' +
+	'<th>Location</th>' +
+	'<th>Sex</th>' +
+	'<th>Life stage</th>' +
+	'<th>Count</th>' +
+	'<th>Recorder</th>' +
+	'<th>Identified by</th>' +
+	'<th>Name</th>' +
+	'<th>Survey</th>' +
+	'</tr></thead><tbody>';
 
+	records.forEach(record => {
 
-html +='<table class="table table-striped table-bordered occurrence-table">';
-html += '<thead><tr>' +
-  '<th></th>' +
-  '<th>Date</th>' +
-  '<th>Grid Ref</th>' +
-  '<th>Habitat</th>' +
- // '<th>Point</th>' +
-  '<th>Recorder</th>' +
-  '<th>Identified by</th>' +
-    '<th>Name</th>' +
-    '<th>Survey</th>' +
-  '</tr></thead><tbody>';
-
-records.forEach(record => {
-  console.log(record);
-  
 	let verified = ''
 	if (record.identification.verification_status=='V') {
 		verified = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check" style="display:inline-block" viewBox="0 0 16 16">
-  <path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/>
-</svg>`;
+	<path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/>
+	</svg>`;
 	} 
-	console.log(record);
-  html += '<tr>' +
-    `<td> ${verified} </td>`+
-    `<td> ${record.event?.date_start || ''}</td>` +
-    `<td>${record.location?.output_sref || ''}</td>`;
-	
-	if (record.event?.habitat) {
-		html += `<td>${record.event?.habitat || ''}</td>`;		
+	console.log('record: ',record);
+	html += '<tr>' +
+	`<td> ${verified} </td>`+
+	`<td> ${record.event?.date_start || ''}</td>` +
+	`<td>${record.location?.output_sref || ''}</td>`;
+
+	if (record.location?.verbatim_locality) {
+		html += `<td>${record.location?.verbatim_locality || ''}</td>`;		
 	} else {
 		html += `<td>N/A</td>`;
 	}
 
-//    `<td><small>${record.location?.point || ''}</small></td>` +
-    html += `<td>${record.event?.recorded_by || ''}</td>` +
-	`<td>${record.identification?.identified_by || ''}</td>` +
-    `<td>${record.taxon?.taxon_name || ''}</td>` +
-    `<td>${record.metadata?.survey.title || ''}</td>` +
-    '</tr>';
-});
+	html += `<td>${record.occurrence?.sex || ''}</td>`;
+	html += `<td>${record.occurrence?.life_stage || ''}</td>`;
+	html += `<td>${record.occurrence?.individual_count || ''}</td>`;
 
-html += '</tbody></table>';
+
+	//    `<td><small>${record.location?.point || ''}</small></td>` +
+	html += `<td>${record.event?.recorded_by || ''}</td>` +
+	`<td>${record.identification?.identified_by || ''}</td>` +
+	`<td>${record.taxon?.taxon_name || ''}</td>` +
+	`<td>${record.metadata?.survey.title || ''}</td>` +
+	'</tr>';
+	});
+
+	html += '</tbody></table></div>';
 
 
 	  $(el).html(html);
@@ -1895,12 +2071,6 @@ html += '</tbody></table>';
 	triggerPopups();
   }
   
-  
-
-
-
-
-
 
 	indiciaFns.populateSpeciesList = function(el, sourceSettings, response) {
 		console.log('Specieslist response:', response);
@@ -1945,9 +2115,6 @@ html += '</tbody></table>';
 		return speciesData;
 	};
 
-
-
-
   // ES custom script for records through year
   indiciaFns.populateRecsThroughYearChart = function(el, sourceSettings, response) {
 
@@ -1975,8 +2142,6 @@ html += '</tbody></table>';
     };
     brcphenology.setChartOpts(opts);
   }
-
-
 
   function mapDataTimeBanded() {
 
@@ -2029,7 +2194,7 @@ html += '</tbody></table>';
       var recs = mapData.filter(function(s){return s.gr}).map(function(s) {
         var minYear = s.minYear ? s.minYear : 'no info';
         var maxYear = s.maxYear ? s.maxYear : 'no info';
-		//console.log('S: ',s);
+		console.log('S: ',s);
         return {
           gr: s.gr,
 		  recs: s.recs,
@@ -2054,7 +2219,7 @@ html += '</tbody></table>';
       const opacity = $(`#opacity-slider`).val()
 
       //console.log(shape, opacity)
-	  console.log(recs);
+	  console.log('Map recs: ', recs);
       const lfText = priority === 'recent' ? 'latest' : 'first'
       const sqText = vcCode ? '2 km' : '10 km'
       const legendSizeFact = 0.8
@@ -2229,7 +2394,8 @@ html += '</tbody></table>';
       // At this stage, there might be some records without a
       // resolved squares (possibly outside UK?) so filter these out.
       var recs = mapData.filter(function(s){return s.gr}).map(function(s) {
-		  		// console.log('S2: ',s);
+		  		// console.log('S2: ',s); 
+			
         return {
           gr: s.gr,
 		  recs: s.recs,
@@ -2288,5 +2454,59 @@ html += '</tbody></table>';
     return taxonNew
   }
   
-  triggerPopups();
 });
+
+function downloadTableAsCSV(tableId, filename = 'table.csv') {
+    // Get the table element
+    const table = document.getElementById(tableId);
+    if (!table) {
+        console.error(`Table with id "${tableId}" not found.`);
+        return;
+    }
+
+    let csv = [];
+
+    // Get headers
+    const headers = [];
+    table.querySelectorAll('thead tr th').forEach(th => {
+        headers.push(th.innerText.replace(/"/g, '""')); // Escape quotes
+    });
+    if (headers.length > 0) {
+        csv.push(headers.join(','));
+    }
+
+    // Get rows
+    table.querySelectorAll('tbody tr').forEach(row => {
+        const rowData = [];
+        row.querySelectorAll('td').forEach((cell, colIndex) => {
+            let text = cell.innerText.trim();
+
+            // 🔄 Replace icons with plain text
+            text = text.replace(/🟢/g, "Gained");
+            text = text.replace(/🔴/g, "Lost");
+
+            // You can also target specific columns by index:
+            // if (colIndex === 4) { ... }
+
+            rowData.push(`"${text.replace(/"/g, '""')}"`);
+        });
+        csv.push(rowData.join(','));
+    });
+
+    // Create CSV string
+    const csvString = csv.join('\n');
+
+    // Create a Blob and trigger download
+    const blob = new Blob([csvString], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+
+    URL.revokeObjectURL(url);
+}
+
