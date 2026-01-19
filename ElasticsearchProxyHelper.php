@@ -1924,10 +1924,9 @@ class ElasticsearchProxyHelper {
                 strtolower($value)
               );
             }
-            $fieldName = !empty($definition['date_type']) ? $esFields[$definition["{$prefix}date_type"]] : $esFields['recorded'];
             $bool['must'][] = [
               'range' => [
-                $fieldName => [
+                $esFields[$dateType] => [
                   $esOp => $value,
                 ],
               ],
