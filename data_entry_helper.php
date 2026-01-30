@@ -7975,9 +7975,10 @@ if (errors$uniq.length>0) {
         $onlyImages = TRUE;
         $savedEntity = $output['outer_table'] ?? $entity;
         foreach ($media as $idx => $item) {
+          [$type, $subtype] = explode(':', $item['media_type'] ?? 'Image:Local');
           // No need to resend an existing image, or a media link, just local files.
-          if ((empty($item['media_type']) || preg_match('/:Local$/', $item['media_type'])) && (!isset($item['id']) || empty($item['id']))) {
-            if (substr($item['media_type'], 0, 6) !== 'Image:') {
+          if ($subtype === 'Local' && empty($item['id'])) {
+            if ($type !== 'Image') {
               $onlyImages = FALSE;
             }
             // Final location is the Warehouse. Sets persist_auth to false if
