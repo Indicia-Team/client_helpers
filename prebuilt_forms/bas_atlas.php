@@ -1299,7 +1299,7 @@ protected static function get_atlas_data($args, $options) {
 
     $species_ctrl_opts = array_merge([
       'fieldname' => 'occurrence:taxa_taxon_list_id',
-      'helpText' => "Start typing, select species, click 'Fetch'",
+      'helpText' => "Start typing, select species, click 'Update'",
     ], $options);
     if (isset($species_ctrl_opts['extraParams'])) {
       $species_ctrl_opts['extraParams'] = array_merge($extraParams, $species_ctrl_opts['extraParams']);

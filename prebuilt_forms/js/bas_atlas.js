@@ -103,9 +103,8 @@ $('body').append(`
   const vcId = mapArea ? Number(mapArea.split('-')[0]) : 0
   const vcCode = mapArea ? mapArea.split('-')[1] : ''
   const baseRatio = 0.8644 // Based on aspect ration for British atlas map with insets
- // console.log('vcId', vcId, 'vcCode', vcCode)
+
   const version = d3.version;
-  // console.log("D3 version :"+version);
   // Add click handler to taxon group selection and set initial value
   const currentTaxonGroup = urlParams.get('tg') ? urlParams.get('tg') : 'spider'
 
@@ -198,7 +197,7 @@ $('body').append(`
 
   indiciaFns.createAtlas = function () {
 
-  //  console.log('indiciaData.basAtlas', indiciaData.basAtlas)
+
 
     // Initialise taxon selection control to be same as previous submission
     $('#occurrence\\:taxa_taxon_list_id\\:taxon').val(indiciaData.basAtlas.taxon.preferredPlain)
@@ -370,10 +369,15 @@ $selMapArea.on('change', function () {
 });
 
 // Build VC list: exclude CI (those starting with 'H'), sort by name
-let vcs = indiciaData.basAtlas.other.vcs
-  .filter(vc => !vc.code?.startsWith('H')) // Keep your original exclusion
-  .sort((a, b) => a.name.localeCompare(b.name, 'en', { sensitivity: 'base' }));
+//let vcs = indiciaData.basAtlas.other.vcs
+//  .filter(vc => !vc.code?.startsWith('H')) // Keep your original exclusion
+//  .sort((a, b) => a.name.localeCompare(b.name, 'en', { sensitivity: 'base' }));
 
+
+let vcs = indiciaData.basAtlas.other.vcs
+      .filter(vc => !vc.code.startsWith('H'))
+      .sort((a,b) => Number(a.code)-(Number(b.code)))
+      
 // If you were removing the last item before because it was CI,
 // the filter above should already exclude CI. If you still need that pop for some reason, keep it:
 // vcs.pop(); // <-- probably no longer necessary
@@ -395,8 +399,6 @@ let vcs = indiciaData.basAtlas.other.vcs
 		$opt.attr('selected', 'selected');
 	  }
 	});
-
-
 
     // Map type selector
     const $selMapType = $('<select>').appendTo($ctrlMap)
@@ -1022,7 +1024,7 @@ let vcs = indiciaData.basAtlas.other.vcs
       }
       taxonConservation = conservationData.filter(cd => cd['Recommended taxon version'] === ptvk)
 
-      //console.log('taxonConservation', taxonConservation)
+
 
       if (!taxonConservation.length) {
         const $noDesignations = $('<p>').appendTo($('#atlas-tab-conservation'))
@@ -1314,7 +1316,7 @@ let vcs = indiciaData.basAtlas.other.vcs
    ********************************************************************* */
 
 function popup(event,d) {
-	//console.log('popup event: ',event,d);
+	
 	const gridRef = event.gr;
 	const normalizedGrid = gridRef?.trim().toUpperCase();
 	
@@ -1548,7 +1550,7 @@ async function fetchAllForLatLonVariants({ esFilters, sorg }, point) {
 		sort: [{ 'event.date_start': 'asc' }, { '_doc': 'asc' }]
 	  };
 	
-	console.log('Query: ',query);
+
 	
 	const result = await runElasticSearchQuery(query); // your ES query function
 
@@ -1573,15 +1575,13 @@ async function fetchAllForLatLonVariants({ esFilters, sorg }, point) {
 
 async function runElasticSearchQuery(queryData) {
   if (!queryData) return [];
-   console.log(indiciaData.esProxyAjaxUrl + '/searchbyparams/' + (indiciaData.nid || '0'));
-console.log('Query Data',queryData);
+
   return new Promise((resolve, reject) => {
     $.ajax({
       url: indiciaData.esProxyAjaxUrl + '/searchbyparams/' + (indiciaData.nid || '0'),
       method: 'POST',
       data: queryData,
       success: function(response) {
-        console.log('Es response', response);
         resolve(response);
       },
       error: function(err) {
@@ -1594,26 +1594,23 @@ console.log('Query Data',queryData);
 
 // ************* END HELPERS ****************
   
-  function triggerPopups() {
-	  // *****************************************  Give the map time to draw
-		setTimeout(() => {
+    function triggerPopups() {
+        setTimeout(() => {
 
-				d3.selectAll("circle.dotCircle").on("click", popup);
-				d3.selectAll(".dotSquare").on("click", popup);
-				
-				pointerShape = $("input[name=bas-atlas-control-dot-type]").val();
+            d3.selectAll("circle.dotCircle, .dotSquare")
+                .style("cursor", "pointer")
+                .on("click", popup);
 
-				const svg = document.getElementById("atlas-leaflet-svg");
-				const paths = svg.querySelectorAll("path");
+            pointerShape = $("input[name=bas-atlas-control-dot-type]").val();
 
+            d3.select("#atlas-leaflet-svg")
+                .selectAll("path")
+                .style("cursor", "pointer")
+                .on("click", popup);
 
-				d3.select("#atlas-leaflet-svg")
-					.selectAll("path")
-					.style("cursor", "pointer") // Optional: show pointer cursor
-					.on("click", popup );
+        }, 5000);
+    }
 
-		}, 5000);
-  }
 
   function resizeLegend() {
     // The global constant 'baseRatio' represents the
@@ -1695,9 +1692,7 @@ console.log('Query Data',queryData);
 
     const $svg = $('#svgMap svg')
     const thisRatio = $svg.width()/$svg.height()
-    // console.log('thisRatio', thisRatio)
-    // console.log('baseRatio', baseRatio)
-    // console.log('thisRatio/baseRatio', thisRatio / baseRatio)
+
     overviewmap.setLegendOpts({
       display: true,
       scale: 0.8 * thisRatio / baseRatio,
@@ -1794,8 +1789,6 @@ const formatFirstDate = (firstDate) => {
 function createData(speciesData) {
     const container = document.getElementById('atlas-tab-data');
     container.innerHTML = '<p>Loading species data...</p>';
-
-    console.log('Species data:', speciesData);
 
     if (!speciesData || speciesData.length === 0) {
         container.innerHTML = '<p>No species data available.</p>';
@@ -1914,23 +1907,19 @@ function createData(speciesData) {
   // ES custom script definition for map
   indiciaFns.populateMap = function (el, sourceSettings, response,d) {
 
-	console.log('ES mapping response', response)
 
 	$('.page-header').html(indiciaData.basAtlas.taxon.preferred)
 
 	const mapArea = $('#map-area-selector').find(":selected").val()
 	const vcMap = mapArea.split('-')[0] !== '0'
 	
-	console.log('Map data: ',response.aggregations._rows.buckets);
-
 	mapData = response.aggregations._rows.buckets
 	  .filter(function(s){return s.key[`location-grid_square-${vcMap?'2km':'10km'}-centre`]})
 	  .map(function(s) {
-		  console.log('S: ',s);
+		  
 	  const latlon = s.key[`location-grid_square-${vcMap?'2km':'10km'}-centre`].split(' ')
 	  const gr = bigr.getGrFromCoords(Number(latlon[0]), Number(latlon[1]), 'wg', '', [2000, 10000])
-		// console.log('latlon: ',latlon);
-		// console.log('gr: ',vcMap ? gr.p2000 : gr.p10000 );
+
 	 return {
 		gr: vcMap ? gr.p2000 : gr.p10000,
 		latlon: latlon,
@@ -1943,7 +1932,7 @@ function createData(speciesData) {
 	  }
 	})
 
-	// console.log('mapData', JSON.parse(JSON.stringify(mapData)))
+	
 	// Turns out that sometimes more than one lat/lon combo is returned for a single square, so
 	// can't just do a simple map. Need to reduce to single values for each square.
 	// Also filter out any values with null squares	
@@ -1978,7 +1967,7 @@ mapData = mapData
   }, []);
 
 
-	//console.log('mapData', JSON.parse(JSON.stringify(mapData)))
+	
 
 	overviewmap.redrawMap()
 	overviewmap.showBusy(false)
@@ -2023,7 +2012,7 @@ mapData = mapData
 	<path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/>
 	</svg>`;
 	} 
-	console.log('record: ',record);
+
 	html += '<tr>' +
 	`<td> ${verified} </td>`+
 	`<td> ${record.event?.date_start || ''}</td>` +
@@ -2057,7 +2046,6 @@ mapData = mapData
   // ES custom script for records by year
   indiciaFns.populateRecsByYearChart = function(el, sourceSettings, response) {
 
-    //console.log('Yearly ES response', response)
 
     var yearlyData = response.aggregations._rows.buckets.filter(function(w) {return w.key['event-year']}).map(function(y) {
       return {
@@ -2073,7 +2061,7 @@ mapData = mapData
   
 
 	indiciaFns.populateSpeciesList = function(el, sourceSettings, response) {
-		console.log('Specieslist response:', response);
+
 
 		const buckets = response.aggregations._rows.buckets;
 
@@ -2107,7 +2095,6 @@ mapData = mapData
 			};
 		});
 
-		console.log('Species data:', speciesData);
 
 		// Store full species data globally
 		createData(speciesData);
@@ -2118,7 +2105,6 @@ mapData = mapData
   // ES custom script for records through year
   indiciaFns.populateRecsThroughYearChart = function(el, sourceSettings, response) {
 
-    //console.log('Weekly ES response', response)
 
     var period, periodKey;
     if (sourceSettings.uniqueField === 'event.week') {
@@ -2194,7 +2180,7 @@ mapData = mapData
       var recs = mapData.filter(function(s){return s.gr}).map(function(s) {
         var minYear = s.minYear ? s.minYear : 'no info';
         var maxYear = s.maxYear ? s.maxYear : 'no info';
-		console.log('S: ',s);
+	
         return {
           gr: s.gr,
 		  recs: s.recs,
@@ -2218,8 +2204,7 @@ mapData = mapData
       const shape = $('input[name="bas-atlas-control-dot-type"]:checked').val()
       const opacity = $(`#opacity-slider`).val()
 
-      //console.log(shape, opacity)
-	  console.log('Map recs: ', recs);
+
       const lfText = priority === 'recent' ? 'latest' : 'first'
       const sqText = vcCode ? '2 km' : '10 km'
       const legendSizeFact = 0.8
@@ -2273,7 +2258,7 @@ mapData = mapData
       // At this stage, there might be some records without a
       // resolved squares (possibly outside UK?) so filter these out.
       var recs = mapData.filter(function(s){return s.gr}).map(function(s) {
-		  	//	console.log('S1: ',s);
+		  
         return {
           gr: s.gr,
 		  recs: s.recs,
@@ -2394,7 +2379,6 @@ mapData = mapData
       // At this stage, there might be some records without a
       // resolved squares (possibly outside UK?) so filter these out.
       var recs = mapData.filter(function(s){return s.gr}).map(function(s) {
-		  		// console.log('S2: ',s); 
 			
         return {
           gr: s.gr,
@@ -2453,7 +2437,6 @@ mapData = mapData
 
     return taxonNew
   }
-  
 });
 
 function downloadTableAsCSV(tableId, filename = 'table.csv') {

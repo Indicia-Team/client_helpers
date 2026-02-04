@@ -2271,10 +2271,20 @@ HTML;
 		return '';
 	  }
 
-	  $baseUrl = \Drupal::request()->getSchemeAndHttpHost();
-	  $fileUrl = $baseUrl . '/' . trim($args['descriptionpath'], '/') . '/'
-			   . rawurlencode($parts[0] . ' ' . $parts[1] . '.txt');
-	  $content = @file_get_contents($fileUrl);
+//	  $baseUrl = \Drupal::request()->getSchemeAndHttpHost();
+//	  $fileUrl = $baseUrl . '/' . trim($args['descriptionpath'], '/') . '/'
+//			   . rawurlencode($parts[0] . ' ' . $parts[1] . '.txt');
+//	  $content = @file_get_contents($fileUrl);
+    
+    $filePath = DRUPAL_ROOT . '/' . trim($args['descriptionpath'], '/') . '/'
+              . $parts[0] . ' ' . $parts[1] . '.txt';
+
+    if (!is_readable($filePath)) {
+        return '';
+    }
+
+    $content = file_get_contents($filePath);
+
 
 	  $content = is_string($content) ? trim($content) : '';
 	  if ($content === '') {
