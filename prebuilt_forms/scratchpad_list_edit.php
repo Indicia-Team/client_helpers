@@ -87,6 +87,19 @@ class iform_scratchpad_list_edit implements PrebuiltFormInterface {
         'required' => FALSE,
       ],
       [
+        'name' => 'location_type_id',
+        'caption' => 'Location type (optional)',
+        'description' => 'Optionally select a location type to enable a location list editor on this form. The available locations will be filtered to this type.',
+        'type' => 'select',
+        'table' => 'termlists_term',
+        'captionField' => 'term',
+        'valueField' => 'id',
+        'extraParams' => [
+          'termlist_external_key' => 'indicia:location_types',
+        ],
+        'required' => FALSE,
+      ],
+      [
         'name' => 'duplicates',
         'caption' => 'Duplicate handling',
         'description' => 'Select how duplicates in the scratchpad list should be handled.',
@@ -149,6 +162,10 @@ class iform_scratchpad_list_edit implements PrebuiltFormInterface {
     $cancelLabel = lang::get('Cancel');
     $reloadPath = self::getReloadPath();
     $defaultList = '';
+    $locationListEnabled = !empty($args['location_type_id']);
+    $defaultLocationIds = [];
+    $defaultLocationLinkIds = [];
+    $defaultLocationListHtml = '';
     $r = "<form method=\"post\" id=\"entry_form\" action=\"$reloadPath\" enctype=\"multipart/form-data\">\n";
     data_entry_helper::enable_validation('entry_form');
     if (!empty($args['scratchpad_type_id'])) {
@@ -217,6 +234,47 @@ class iform_scratchpad_list_edit implements PrebuiltFormInterface {
         'fieldname' => 'scratchpad_list:id',
         'default' => $_GET['scratchpad_list_id'],
       ]);
+
+      if ($locationListEnabled) {
+        // Load any existing linked locations for this scratchpad list.
+        // Stored via the warehouse join table locations_scratchpad_lists.
+        $linkedLocations = data_entry_helper::get_population_data([
+          'table' => 'locations_scratchpad_list',
+          'extraParams' => $auth['read'] + [
+            'scratchpad_list_id' => $_GET['scratchpad_list_id'],
+            'orderby' => 'id',
+          ],
+          'caching' => FALSE,
+        ]);
+        foreach ($linkedLocations as $link) {
+          if (!empty($link['id'])) {
+            $defaultLocationLinkIds[] = $link['id'];
+          }
+          if (!empty($link['location_id'])) {
+            $defaultLocationIds[] = $link['location_id'];
+          }
+        }
+        // Load location names for display in the UI.
+        if (!empty($defaultLocationIds)) {
+          $locations = data_entry_helper::get_population_data([
+            'table' => 'location',
+            'extraParams' => $auth['read'] + [
+              'query' => json_encode(['in' => ['id' => array_values(array_unique($defaultLocationIds))]]),
+            ],
+            'caching' => FALSE,
+          ]);
+          $locationsById = [];
+          foreach ($locations as $loc) {
+            $locationsById[$loc['id']] = $loc;
+          }
+          foreach ($defaultLocationIds as $locId) {
+            if (!empty($locationsById[$locId])) {
+              $locName = htmlspecialchars($locationsById[$locId]['name']);
+              $defaultLocationListHtml .= "<li data-location-id=\"$locId\">$locName <a href=\"#\" class=\"remove\">" . lang::get('Remove') . "</a></li>\n";
+            }
+          }
+        }
+      }
     }
     $r .= data_entry_helper::hidden_text([
       'fieldname' => 'website_id',
@@ -264,21 +322,51 @@ class iform_scratchpad_list_edit implements PrebuiltFormInterface {
       'id' => 'hidden-entries-list',
       'fieldname' => 'metaFields:entries',
     ]);
+
+    if ($locationListEnabled) {
+      $r .= data_entry_helper::hidden_text([
+        'id' => 'hidden-location-ids-list',
+        'fieldname' => 'metaFields:location_ids',
+        'default' => implode(';', $defaultLocationIds),
+      ]);
+      $r .= data_entry_helper::hidden_text([
+        'id' => 'hidden-location-link-ids-list',
+        'fieldname' => 'metaFields:location_link_ids',
+        'default' => implode(';', $defaultLocationLinkIds),
+      ]);
+    }
     $r .= data_entry_helper::hidden_text([
       'fieldname' => 'scratchpad_list:entity',
       'default' => $args['entity'],
     ]);
+
+    if ($locationListEnabled) {
+      $r .= '<fieldset id="scratchpad-location-fieldset"><legend>' . lang::get('Locations') . '</legend>';
+      $r .= '<p class="helpText">' . lang::get('Add one or more locations to link to this list.') . '</p>';
+      $r .= data_entry_helper::location_autocomplete([
+        'id' => 'scratchpad-location',
+        'fieldname' => 'scratchpad_location:location_id',
+        'label' => lang::get('Location'),
+        'extraParams' => $auth['read'] + [
+          'location_type_id' => $args['location_type_id'],
+        ],
+      ]);
+      $r .= '<button id="scratchpad-location-add" type="button">' . lang::get('Add') . '</button>';
+      $r .= '<ul id="scratchpad-location-list">' . $defaultLocationListHtml . '</ul>';
+      $r .= '</fieldset>';
+    }
     $r .= <<<HTML
-      <button id="scratchpad-check" type="button">$checkLabel</button>
-      <button id="scratchpad-remove-duplicates" type="button" style="display: none">$removeDuplicatesLabel</button>
-      <button id="scratchpad-save" type="submit" disabled="disabled">$saveLabel</button>
+      <button id="scratchpad-check" class="$indicia_templates[buttonHighlightedClass]" type="button">$checkLabel</button>
+      <button id="scratchpad-remove-duplicates" class="$indicia_templates[buttonDefaultClass]" type="button" style="display: none">$removeDuplicatesLabel</button>
+      <button id="scratchpad-save" type="submit" class="$indicia_templates[buttonDefaultClass]" disabled="disabled">$saveLabel</button>
     HTML;
     if (!empty($args['redirect_on_success'])) {
       $r .= "\n<button id=\"scratchpad-cancel\" type=\"button\">$cancelLabel</button>\n";
     }
     $r .= "</form>\n";
-    data_entry_helper::$javascript .= 'indiciaData.scratchpadSettings = ' . json_encode($options) . ";\n";
-    data_entry_helper::$javascript .= 'indiciaData.ajaxUrl="' . hostsite_get_url('iform/ajax/scratchpad_list_edit') . "\";\n";
+    data_entry_helper::$indiciaData['scratchpadSettings'] = $options;
+    data_entry_helper::$indiciaData['ajaxUrl'] = hostsite_get_url('iform/ajax/scratchpad_list_edit');
+    data_entry_helper::$indiciaData['scratchpadLocationListEnabled'] = $locationListEnabled;
     return $r;
   }
 
@@ -298,7 +386,53 @@ class iform_scratchpad_list_edit implements PrebuiltFormInterface {
       'model' => 'scratchpad_list',
       'metaFields' => ['entries'],
     ];
-    return submission_builder::build_submission($values, $structure);
+
+    $submission = submission_builder::build_submission($values, $structure);
+
+    // Optional linked locations list.
+    if (!empty($args['location_type_id'])) {
+      $locationIdsRaw = trim($values['metaFields:location_ids'] ?? '');
+      $locationLinkIdsRaw = trim($values['metaFields:location_link_ids'] ?? '');
+      $locationIds = [];
+      if ($locationIdsRaw !== '') {
+        $locationIds = array_values(array_filter(array_map('trim', explode(';', $locationIdsRaw)), function ($id) {
+          return $id !== '';
+        }));
+      }
+
+      // If editing an existing scratchpad list, clear existing links then re-add.
+      if (!empty($locationLinkIdsRaw)) {
+        $linkIds = array_values(array_filter(array_map('trim', explode(';', $locationLinkIdsRaw)), function ($id) {
+          return $id !== '';
+        }));
+        if (!empty($linkIds)) {
+          if (!isset($submission['subModels'])) {
+            $submission['subModels'] = [];
+          }
+          foreach ($linkIds as $linkId) {
+            $submission['subModels'][] = [
+              'fkId' => 'scratchpad_list_id',
+              'model' => submission_builder::wrap(['id' => $linkId, 'deleted' => 't'], 'locations_scratchpad_list'),
+            ];
+          }
+        }
+      }
+
+      if (!empty($locationIds)) {
+        if (!isset($submission['subModels'])) {
+          $submission['subModels'] = [];
+        }
+        foreach ($locationIds as $locationId) {
+          $submission['subModels'][] = [
+            'fkId' => 'scratchpad_list_id',
+            'model' => submission_builder::wrap(['location_id' => $locationId], 'locations_scratchpad_list'),
+          ];
+        }
+      }
+    }
+    hostsite_show_message(var_export($submission, TRUE));
+
+    return $submission;
   }
 
   /**
@@ -339,10 +473,10 @@ class iform_scratchpad_list_edit implements PrebuiltFormInterface {
    * @return array
    *   Response from the warehouse for the check request.
    */
-  public static function ajaxCheck($website_id, $password) {
+  public static function ajax_check($website_id, $password) {
     iform_load_helpers(['data_entry_helper']);
     if (empty($_POST['params'])) {
-      return 'Report parameters not provided';
+      return ['error' => 'Report parameters not provided'];
     }
     $auth = data_entry_helper::get_read_auth($website_id, $password);
     $url = data_entry_helper::$base_url . 'index.php/services/report/requestReport?' .
