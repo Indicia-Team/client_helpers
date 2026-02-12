@@ -22,7 +22,10 @@ use IForm\prebuilt_forms\PageType;
 use IForm\prebuilt_forms\PrebuiltFormInterface;
 
 /**
- * Form for editing a scratchpad list (a list of pointers to entities in the database, e.g. a list of species or locations).
+ * Form for editing a scratchpad list.
+ *
+ * A list of pointers to entities in the database, e.g. a list of species or
+ * locations.
  */
 class iform_scratchpad_list_edit implements PrebuiltFormInterface {
 
@@ -36,9 +39,12 @@ class iform_scratchpad_list_edit implements PrebuiltFormInterface {
     return [
       'title' => 'Enter a scratchpad list',
       'category' => 'Data entry forms',
-      'description' => 'Form for creating or editing an existing scratchpad list. This allows creation of a list of ' .
-          'pointers to entities in the database, e.g. a list of species or locations',
-      'recommended' => true
+      'description' => <<<TXT
+        Form for creating or editing an existing scratchpad list.
+        This allows creation of a list of pointers to entities in the database,
+        e.g. a list of species or locations.
+      TXT,
+      'recommended' => TRUE,
     ];
   }
 
@@ -51,22 +57,23 @@ class iform_scratchpad_list_edit implements PrebuiltFormInterface {
 
   /**
    * Get the list of parameters for this form.
-   * @return array List of parameters that this form requires.
+   *
+   * @return array
+   *   List of parameters that this form requires.
    */
   public static function get_parameters() {
-    return array(
-      array(
+    return [
+      [
         'name' => 'entity',
         'caption' => 'Type of data to create a list for',
-        'description' => 'Select the type of data the scratchpad list will contain. ' .
-            'Currently only species or other taxa are supported.',
+        'description' => 'Select the type of data the scratchpad list will contain. Currently only species or other taxa are supported.',
         'type' => 'select',
-        'options' => array(
+        'options' => [
           'taxa_taxon_list' => 'Species or other taxa',
-        ),
+        ],
         'required' => TRUE,
-      ),
-      array(
+      ],
+      [
         'name' => 'scratchpad_type_id',
         'caption' => 'Scratchpad type',
         'description' => 'Select the type or category of scratchpad that new scratchpads will be saved as.',
@@ -74,43 +81,52 @@ class iform_scratchpad_list_edit implements PrebuiltFormInterface {
         'table' => 'termlists_term',
         'captionField' => 'term',
         'valueField' => 'id',
-        'extraParams' => array('termlist_external_key' => 'indicia:scratchpad_list_types'),
+        'extraParams' => [
+          'termlist_external_key' => 'indicia:scratchpad_list_types',
+        ],
         'required' => FALSE,
-      ),
-      array(
+      ],
+      [
         'name' => 'duplicates',
         'caption' => 'Duplicate handling',
-        'description' => 'Select the type of data the scratchpad list will contain. ' .
-          'Currently only species or other taxa are supported.',
+        'description' => 'Select how duplicates in the scratchpad list should be handled.',
         'type' => 'select',
-        'options' => array(
+        'options' => [
           'allow' => 'Allow duplicates',
           'highlight' => 'Allow duplicates but highlight them',
           'warn' => 'Allow duplicates but warn when they occur',
           'disallow' => 'Disallow duplicates',
-        ),
+        ],
         'default' => 'highlight',
         'required' => TRUE,
-      ),
-      array(
+      ],
+      [
         'name' => 'filters',
         'caption' => 'Filters for search query',
-        'description' => 'Additional filters to apply to the search query, e.g. taxon_list_id=&lt;n&gt; to limit to a ' .
-            'single list. Key=value pairs, one per line',
+        'description' => 'Additional filters to apply to the search query, e.g. taxon_list_id=&lt;n&gt; to limit to a single list. Key=value pairs, one per line',
         'type' => 'textarea',
         'required' => FALSE,
-      )
-    );
+      ],
+    ];
   }
 
   /**
    * Return the generated form output.
-   * @param array $args List of parameter values passed through to the form depending on how the form has been configured.
-   * This array always contains a value for language.
-   * @param object $nid The Drupal node object's ID.
-   * @param array $response When this form is reloading after saving a submission, contains the response from the service call.
-   * Note this does not apply when redirecting (in this case the details of the saved object are in the $_GET data).
-   * @return Form HTML.
+   *
+   * @param array $args
+   *   List of parameter values passed through to the form depending on how
+   *   the form has been configured. This array always contains a value for
+   *   language.
+   * @param object $nid
+   *   The Drupal node object's ID.
+   * @param array $response
+   *   When this form is reloading after saving a submission, contains the
+   *   response from the service call. Note this does not apply when
+   *   redirecting (in this case the details of the saved object are in the
+   *   $_GET data).
+   *
+   * @return string
+   *   Form HTML.
    */
   public static function get_form($args, $nid, $response = NULL) {
     data_entry_helper::add_resource('fancybox');
@@ -172,7 +188,7 @@ class iform_scratchpad_list_edit implements PrebuiltFormInterface {
           ]));
           $batchIds = [];
         }
-      };
+      }
       // Grab the final batch.
       if (count($batchIds)) {
         $taxa = array_merge($taxa, data_entry_helper::get_population_data([
@@ -187,37 +203,38 @@ class iform_scratchpad_list_edit implements PrebuiltFormInterface {
       foreach ($taxa as $taxon) {
         $sortedTaxa["ttlId:$taxon[id]"] = $taxon;
       }
-      data_entry_helper::$entity_to_load = array(
+      data_entry_helper::$entity_to_load = [
         'scratchpad_list:title' => $list[0]['title'],
-        'scratchpad_list:description' => $list[0]['description']
-      );
+        'scratchpad_list:description' => $list[0]['description'],
+      ];
       foreach ($sortedTaxa as $taxonInList) {
-        $defaultList .= "<span class=\"matched\" data-id=\"$taxonInList[id]\">" .
-          "$taxonInList[taxon]</span><br/>";
+        $defaultList .= <<<HTML
+          <span class="matched" data-id="$taxonInList[id]">$taxonInList[taxon]</span>
+          <br/>
+        HTML;
       }
-      $r .= data_entry_helper::hidden_text(array(
+      $r .= data_entry_helper::hidden_text([
         'fieldname' => 'scratchpad_list:id',
-        'default' => $_GET['scratchpad_list_id']
-      ));
+        'default' => $_GET['scratchpad_list_id'],
+      ]);
     }
-    $r .= data_entry_helper::hidden_text(array(
+    $r .= data_entry_helper::hidden_text([
       'fieldname' => 'website_id',
-      'default' => $conn['website_id']
-    ));
+      'default' => $conn['website_id'],
+    ]);
     $r .= $auth['write'];
-    $r .= data_entry_helper::text_input(array(
+    $r .= data_entry_helper::text_input([
       'fieldname' => 'scratchpad_list:title',
       'label' => lang::get('List title'),
-      'helpText' => lang::get(
-          'Provide a title that will help you remember what the list is for when you access it in future'),
+      'helpText' => lang::get('Provide a title that will help you remember what the list is for when you access it in future'),
       'class' => 'control-width-6',
-      'validation' => array('required')
-    ));
-    $r .= data_entry_helper::textarea(array(
+      'validation' => ['required'],
+    ]);
+    $r .= data_entry_helper::textarea([
       'fieldname' => 'scratchpad_list:description',
       'label' => lang::get('List description'),
-      'class' => 'control-width-6'
-    ));
+      'class' => 'control-width-6',
+    ]);
     global $indicia_templates;
     $langListOk = lang::get('List OK');
     $langTotal = lang::get('Total');
@@ -225,55 +242,71 @@ class iform_scratchpad_list_edit implements PrebuiltFormInterface {
     $langQueried = lang::get('Queried');
     $langUnmatched = lang::get('Unmatched');
     $indicia_templates['scratchpad_input'] = <<<DIV
-  <div id="scratchpad-container">
-  <div contenteditable="true" id="{id}"{class}>{default}</div>
-  <div id="scratchpad-stats" class="ui-helper-clearfix ui-helper-hidden">
-    <div id="scratchpad-stats-total"><span class="all-done">$langListOk</span> $langTotal: <span class="stat">0</span></div>
-    <div id="scratchpad-stats-matched">$langMatched: <span class="stat">0</span></div>
-    <div id="scratchpad-stats-queried">$langQueried: <span class="stat">0</span></div>
-    <div id="scratchpad-stats-unmatched">$langUnmatched: <span class="stat">0</span></div>
-  </div>
-</div>
-DIV;
-    $r .= data_entry_helper::apply_template('scratchpad_input', array(
+      <div id="scratchpad-container">
+      <div contenteditable="true" id="{id}"{class}>{default}</div>
+      <div id="scratchpad-stats" class="ui-helper-clearfix ui-helper-hidden">
+        <div id="scratchpad-stats-total"><span class="all-done">$langListOk</span> $langTotal: <span class="stat">0</span></div>
+        <div id="scratchpad-stats-matched">$langMatched: <span class="stat">0</span></div>
+        <div id="scratchpad-stats-queried">$langQueried: <span class="stat">0</span></div>
+        <div id="scratchpad-stats-unmatched">$langUnmatched: <span class="stat">0</span></div>
+      </div>
+    </div>
+    DIV;
+    $r .= data_entry_helper::apply_template('scratchpad_input', [
       'id' => 'scratchpad-input',
       'label' => lang::get('Enter the list of items'),
-      'helpText' => lang::get('Type in or paste items separated by commas or on separate lines.'),
-      'default' => $defaultList
-    ));
-    $r .= data_entry_helper::hidden_text(array(
+      'helpText' => lang::get(
+        'Type in or paste items separated by commas or on separate lines.'
+      ),
+      'default' => $defaultList,
+    ]);
+    $r .= data_entry_helper::hidden_text([
       'id' => 'hidden-entries-list',
-      'fieldname' => 'metaFields:entries'
-    ));
-    $r .= data_entry_helper::hidden_text(array(
+      'fieldname' => 'metaFields:entries',
+    ]);
+    $r .= data_entry_helper::hidden_text([
       'fieldname' => 'scratchpad_list:entity',
-      'default' => $args['entity']
-    ));
+      'default' => $args['entity'],
+    ]);
     $r .= <<<HTML
-<button id="scratchpad-check" type="button">$checkLabel</button>
-<button id="scratchpad-remove-duplicates" type="button" style="display: none">$removeDuplicatesLabel</button>
-<button id="scratchpad-save" type="submit" disabled="disabled">$saveLabel</button>
-HTML;
-    if (!empty($args['redirect_on_success']))
+      <button id="scratchpad-check" type="button">$checkLabel</button>
+      <button id="scratchpad-remove-duplicates" type="button" style="display: none">$removeDuplicatesLabel</button>
+      <button id="scratchpad-save" type="submit" disabled="disabled">$saveLabel</button>
+    HTML;
+    if (!empty($args['redirect_on_success'])) {
       $r .= "\n<button id=\"scratchpad-cancel\" type=\"button\">$cancelLabel</button>\n";
+    }
     $r .= "</form>\n";
     data_entry_helper::$javascript .= 'indiciaData.scratchpadSettings = ' . json_encode($options) . ";\n";
-    data_entry_helper::$javascript .= 'indiciaData.ajaxUrl="'.hostsite_get_url('iform/ajax/scratchpad_list_edit')."\";\n";
+    data_entry_helper::$javascript .= 'indiciaData.ajaxUrl="' . hostsite_get_url('iform/ajax/scratchpad_list_edit') . "\";\n";
     return $r;
   }
 
   /**
    * Handles the construction of a submission array from a set of form values.
-   * @param array $values Associative array of form data values.
-   * @param array $args iform parameters.
-   * @return array Submission structure.
+   *
+   * @param array $values
+   *   Associative array of form data values.
+   * @param array $args
+   *   Iform parameters.
+   *
+   * @return array
+   *   Submission structure.
    */
-  public static function get_submission($values, $args) {
-    $structure = array('model' => 'scratchpad_list', 'metaFields' => array('entries'));
+  public static function getSubmission($values, $args) {
+    $structure = [
+      'model' => 'scratchpad_list',
+      'metaFields' => ['entries'],
+    ];
     return submission_builder::build_submission($values, $structure);
-
   }
 
+  /**
+   * Get the path for page reloading.
+   *
+   * @return string
+   *   The reload path.
+   */
   protected static function getReloadPath() {
     $reload = data_entry_helper::get_reload_link_parts();
     unset($reload['params']['sample_id']);
@@ -282,12 +315,12 @@ HTML;
     unset($reload['params']['new']);
     unset($reload['params']['newLocation']);
     $reloadPath = $reload['path'];
-    if(count($reload['params'])) {
-      // decode params prior to encoding to prevent double encoding.
+    if (count($reload['params'])) {
+      // Decode params prior to encoding to prevent double encoding.
       foreach ($reload['params'] as $key => $param) {
         $reload['params'][$key] = urldecode($param);
       }
-      $reloadPath .= '?'.http_build_query($reload['params']);
+      $reloadPath .= '?' . http_build_query($reload['params']);
     }
     return $reloadPath;
   }
@@ -306,16 +339,17 @@ HTML;
    * @return array
    *   Response from the warehouse for the check request.
    */
-  public static function ajax_check($website_id, $password) {
-    iform_load_helpers(array('data_entry_helper'));
+  public static function ajaxCheck($website_id, $password) {
+    iform_load_helpers(['data_entry_helper']);
     if (empty($_POST['params'])) {
       return 'Report parameters not provided';
     }
     $auth = data_entry_helper::get_read_auth($website_id, $password);
-    $url = data_entry_helper::$base_url.'index.php/services/report/requestReport?' .
+    $url = data_entry_helper::$base_url . 'index.php/services/report/requestReport?' .
       data_entry_helper::array_to_query_string($_GET);
     $params = array_merge($_POST, $auth);
     $response = data_entry_helper::http_post($url, $params);
     return json_decode($response['output'], TRUE);
   }
+
 }
