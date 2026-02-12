@@ -4,12 +4,21 @@ jQuery(document).ready(function ($) {
   var inputClean = [];
   var totalCount = 0;
 
+  /**
+   * Simplifies an input string for matching.
+   *
+   * @param {string} text
+   * @returns {string}
+   */
   function simplify(text) {
     return text.toLowerCase().replace(/\(.+\)/g, '')
       .replace(/ae/g, 'e')
       .replace(/[^a-zA-Z0-9\+\?*]/g, '');
   }
 
+  /**
+   * Recalculates and updates the on-screen scratchpad matching statistics.
+   */
   function recalculateStats() {
     var matched = $('span.matched')
         .not(':empty').length;
@@ -31,6 +40,10 @@ jQuery(document).ready(function ($) {
     }
   }
 
+  /**
+   * Normalises the scratchpad editor contents into a clean list of tokens,
+   * preserving already-matched spans.
+   */
   function tidyInput() {
     var input;
     var inputDirty;
@@ -84,15 +97,35 @@ jQuery(document).ready(function ($) {
     $('#scratchpad-input').html(inputClean.join('<br/>'));
   }
 
+  /**
+   * Removes any subgenus component from a taxon name.
+   *
+   * @param {string} name
+   *   Taxoon name, possibly including a subgenus in parentheses.
+   *
+   * @returns {string}
+   */
   function removeSubgenus(name) {
     return name.replace(/ \(.+\)/, '');
   }
 
+  /**
+   * Determines if the form is editing an existing scratchpad list.
+   *
+   * @returns {boolean}
+   */
   function isEditMode() {
     var idCtrl = $('[name="scratchpad_list:id"]');
     return idCtrl.length > 0 && $.trim(idCtrl.val()) !== '';
   }
 
+  /**
+   * Recursively checks a DOM node (from #scratchpad-input) for any unchecked
+   * free text. Matched/unmatched spans created by the checker are ignored.
+   *
+   * @param {Node} node
+   * @returns {boolean}
+   */
   function nodeContainsUncheckedText(node) {
     var $node;
     var tag;
@@ -136,6 +169,11 @@ jQuery(document).ready(function ($) {
     return hasUnchecked;
   }
 
+  /**
+   * Returns true if the scratchpad editor contains any unchecked free text.
+   *
+   * @returns {boolean}
+   */
   function scratchpadHasUncheckedText() {
     var unchecked = false;
     $('#scratchpad-input').contents().each(function () {
@@ -148,6 +186,10 @@ jQuery(document).ready(function ($) {
     return unchecked;
   }
 
+  /**
+   * Updates the Save button enabled/disabled state based on whether the
+   * scratchpad contents have unchecked text.
+   */
   function updateSaveButtonState() {
     var unchecked = scratchpadHasUncheckedText();
     var matchedCount = $('span.matched').not(':empty').length;
@@ -165,7 +207,8 @@ jQuery(document).ready(function ($) {
   /**
    * Handles the response from the warehouse for a request to match the list of species provided against the species
    * listed in the database.
-   * @param data
+   *
+   * @param {*} data
    */
   function matchResponse(data) {
     var matches;
@@ -263,6 +306,10 @@ jQuery(document).ready(function ($) {
     $('#scratchpad-check').removeClass('checking');
   }
 
+  /**
+   * Posts the current cleaned scratchpad token list to the warehouse to
+   * attempt matching against the database.
+   */
   function matchToDb() {
     var listForDb = [];
     var simplifiedListForDb = [];
