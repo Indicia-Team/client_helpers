@@ -88,9 +88,9 @@ class iform_scratchpad_list_edit implements PrebuiltFormInterface {
       ],
       [
         'name' => 'location_type_id',
-        'caption' => 'Location type (optional)',
-        'description' => 'Optionally select a location type to enable a location list editor on this form  allowing the scratchpad list to be associated with a location. The available locations will be filtered to this type.',
-        'type' => 'select',
+        'caption' => 'Location types (optional)',
+        'description' => 'Optionally select one or more location types to enable a location list editor on this form allowing the scratchpad list to be associated with one or more locations. The available locations will be filtered to the selected types.',
+        'type' => 'checkbox_group',
         'table' => 'termlists_term',
         'captionField' => 'term',
         'valueField' => 'id',
@@ -101,9 +101,9 @@ class iform_scratchpad_list_edit implements PrebuiltFormInterface {
       ],
       [
         'name' => 'group_type_id',
-        'caption' => 'Group type (optional)',
-        'description' => 'Optionally select a group type to enable a group list editor on this form allowing the scratchpad list to be associated with a group. The available groups will be filtered to this type.',
-        'type' => 'select',
+        'caption' => 'Group types (optional)',
+        'description' => 'Optionally select one or more group types to enable a group list editor on this form allowing the scratchpad list to be associated with one or more groups. The available groups will be filtered to the selected types.',
+        'type' => 'checkbox_group',
         'table' => 'termlists_term',
         'captionField' => 'term',
         'valueField' => 'id',
@@ -167,8 +167,10 @@ class iform_scratchpad_list_edit implements PrebuiltFormInterface {
     $cancelLabel = lang::get('Cancel');
     $reloadPath = self::getReloadPath();
     $defaultList = '';
-    $locationListEnabled = !empty($args['location_type_id']);
-    $groupListEnabled = !empty($args['group_type_id']);
+    $locationTypeIds = self::normaliseIdList($args['location_type_id'] ?? []);
+    $groupTypeIds = self::normaliseIdList($args['group_type_id'] ?? []);
+    $locationListEnabled = !empty($locationTypeIds);
+    $groupListEnabled = !empty($groupTypeIds);
     $locationDefaults = ['linkIds' => [], 'defaultsForControl' => []];
     $groupDefaults = ['linkIds' => [], 'defaultsForControl' => []];
     $r = "<form method=\"post\" id=\"entry_form\" action=\"$reloadPath\" enctype=\"multipart/form-data\">\n";
@@ -258,11 +260,11 @@ class iform_scratchpad_list_edit implements PrebuiltFormInterface {
     ]);
 
     if ($locationListEnabled) {
-      $r .= self::buildLocationFieldset($auth['read'], $args, $locationDefaults['defaultsForControl']);
+      $r .= self::buildLocationFieldset($auth['read'], $locationTypeIds, $locationDefaults['defaultsForControl']);
     }
 
     if ($groupListEnabled) {
-      $r .= self::buildGroupFieldset($auth['read'], $args, $groupDefaults['defaultsForControl']);
+      $r .= self::buildGroupFieldset($auth['read'], $groupTypeIds, $groupDefaults['defaultsForControl']);
     }
     $r .= <<<HTML
       <button id="scratchpad-check" class="$indicia_templates[buttonHighlightedClass]" type="button">$checkLabel</button>
@@ -300,7 +302,8 @@ class iform_scratchpad_list_edit implements PrebuiltFormInterface {
     $submission = submission_builder::build_submission($values, $structure);
 
     // Optional linked locations list.
-    if (!empty($args['location_type_id'])) {
+    $locationTypeIds = self::normaliseIdList($args['location_type_id'] ?? []);
+    if (!empty($locationTypeIds)) {
       self::addJoinTableLinksToSubmission(
         $submission,
         'locations_scratchpad_list',
@@ -312,10 +315,11 @@ class iform_scratchpad_list_edit implements PrebuiltFormInterface {
     }
 
     // Optional linked groups list.
-    if (!empty($args['group_type_id'])) {
+    $groupTypeIds = self::normaliseIdList($args['group_type_id'] ?? []);
+    if (!empty($groupTypeIds)) {
       self::addJoinTableLinksToSubmission(
         $submission,
-        'groups_scratchpad_lists',
+        'groups_scratchpad_list',
         'scratchpad_list_id',
         'group_id',
         $values['metaFields:group_ids'] ?? [],
@@ -448,11 +452,11 @@ class iform_scratchpad_list_edit implements PrebuiltFormInterface {
     }
 
     foreach ($sortedTaxa as $taxonInList) {
-      if (!empty($taxonInList)) {
-        $defaultList .= <<<HTML
-          <span class="matched" data-id="$taxonInList[id]">$taxonInList[taxon]</span>
-          <br/>
-        HTML;
+      // The sorted list contains NULL placeholders for IDs which fail to load.
+      if (is_array($taxonInList) && isset($taxonInList['id']) && isset($taxonInList['taxon'])) {
+        $id = $taxonInList['id'];
+        $taxon = $taxonInList['taxon'];
+        $defaultList .= "<span class=\"matched\" data-id=\"$id\">$taxon</span><br/>\n";
       }
     }
 
@@ -549,7 +553,7 @@ class iform_scratchpad_list_edit implements PrebuiltFormInterface {
     // Load any existing linked groups for this scratchpad list.
     // Stored via the warehouse join table groups_scratchpad_lists.
     $linkedGroups = data_entry_helper::get_population_data([
-      'table' => 'groups_scratchpad_lists',
+      'table' => 'groups_scratchpad_list',
       'extraParams' => $readAuth + [
         'scratchpad_list_id' => $scratchpadListId,
         'orderby' => 'id',
@@ -600,15 +604,15 @@ class iform_scratchpad_list_edit implements PrebuiltFormInterface {
    *
    * @param array $readAuth
    *   Read authentication token array.
-   * @param array $args
-   *   IForm configuration parameters.
+   * @param array $locationTypeIds
+   *   List of location type term IDs that should be offered.
    * @param array $defaultLocationsForControl
    *   Default values for the sub_list.
    *
    * @return string
    *   HTML output.
    */
-  protected static function buildLocationFieldset(array $readAuth, array $args, array $defaultLocationsForControl): string {
+  protected static function buildLocationFieldset(array $readAuth, array $locationTypeIds, array $defaultLocationsForControl): string {
     $r = '<fieldset id="scratchpad-location-fieldset"><legend>' . lang::get('Locations') . '</legend>';
     $r .= '<p class="helpText">' . lang::get('Add one or more locations to link to this list.') . '</p>';
     $r .= data_entry_helper::sub_list([
@@ -618,9 +622,7 @@ class iform_scratchpad_list_edit implements PrebuiltFormInterface {
       'autocompleteControl' => 'location_autocomplete',
       'captionField' => 'name',
       'valueField' => 'id',
-      'extraParams' => $readAuth + [
-        'location_type_id' => $args['location_type_id'],
-      ],
+      'extraParams' => self::buildTypeFilterExtraParams($readAuth, 'location_type_id', $locationTypeIds),
       'default' => $defaultLocationsForControl,
     ]);
     $r .= '</fieldset>';
@@ -632,15 +634,15 @@ class iform_scratchpad_list_edit implements PrebuiltFormInterface {
    *
    * @param array $readAuth
    *   Read authentication token array.
-   * @param array $args
-   *   IForm configuration parameters.
+   * @param array $groupTypeIds
+   *   List of group type term IDs that should be offered.
    * @param array $defaultGroupsForControl
    *   Default values for the sub_list.
    *
    * @return string
    *   HTML output.
    */
-  protected static function buildGroupFieldset(array $readAuth, array $args, array $defaultGroupsForControl): string {
+  protected static function buildGroupFieldset(array $readAuth, array $groupTypeIds, array $defaultGroupsForControl): string {
     $r = '<fieldset id="scratchpad-group-fieldset"><legend>' . lang::get('Groups') . '</legend>';
     $r .= '<p class="helpText">' . lang::get('Add one or more groups to link to this list.') . '</p>';
     $r .= data_entry_helper::sub_list([
@@ -649,13 +651,40 @@ class iform_scratchpad_list_edit implements PrebuiltFormInterface {
       'table' => 'group',
       'captionField' => 'title',
       'valueField' => 'id',
-      'extraParams' => $readAuth + [
-        'group_type_id' => $args['group_type_id'],
-      ],
+      'extraParams' => self::buildTypeFilterExtraParams($readAuth, 'group_type_id', $groupTypeIds),
       'default' => $defaultGroupsForControl,
     ]);
     $r .= '</fieldset>';
     return $r;
+  }
+
+  /**
+   * Builds extraParams for filtering a list by one or more type IDs.
+   *
+   * For a single type ID, uses a simple query string parameter.
+   * For multiple IDs, uses the warehouse JSON query "in" filter.
+   *
+   * @param array $readAuth
+   *   Read authentication token array.
+   * @param string $typeField
+   *   Field name to filter on (e.g. location_type_id, group_type_id).
+   * @param array $typeIds
+   *   List of type term IDs.
+   *
+   * @return array
+   *   Extra params array suitable for passing to controls or
+   *   get_population_data.
+   */
+  protected static function buildTypeFilterExtraParams(array $readAuth, string $typeField, array $typeIds): array {
+    $typeIds = array_values($typeIds);
+    if (count($typeIds) === 1) {
+      return $readAuth + [$typeField => $typeIds[0]];
+    }
+    return $readAuth + [
+      'query' => json_encode([
+        'in' => [$typeField => $typeIds],
+      ]),
+    ];
   }
 
   /**
