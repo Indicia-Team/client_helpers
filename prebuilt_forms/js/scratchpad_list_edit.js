@@ -286,52 +286,7 @@ jQuery(document).ready(function ($) {
       entries.push($(this).attr('data-id'));
     });
     $('#hidden-entries-list').val(entries.join(';'));
-
-    if (typeof indiciaData.scratchpadLocationListEnabled !== 'undefined' && indiciaData.scratchpadLocationListEnabled) {
-      var locationIds = [];
-      $.each($('#scratchpad-location-list li[data-location-id]'), function () {
-        var locId = $(this).attr('data-location-id');
-        if (locId) {
-          locationIds.push(locId);
-        }
-      });
-      $('#hidden-location-ids-list').val(locationIds.join(';'));
-    }
   });
-
-  function locationAlreadySelected(locationId) {
-    return $('#scratchpad-location-list li[data-location-id="' + locationId + '"]').length > 0;
-  }
-
-  function addLocationToList(locationId, locationName) {
-    if (!locationId || !locationName) {
-      return;
-    }
-    if (locationAlreadySelected(locationId)) {
-      return;
-    }
-    $('#scratchpad-location-list').append(
-      '<li data-location-id="' + locationId + '">' +
-        $('<div/>').text(locationName).html() +
-        ' <a href="#" class="remove">Remove</a></li>'
-    );
-  }
-
-  if (typeof indiciaData.scratchpadLocationListEnabled !== 'undefined' && indiciaData.scratchpadLocationListEnabled) {
-    $('#scratchpad-location-add').on('click', function () {
-      var locationId = $('#scratchpad-location').val();
-      var locationName = $('#scratchpad-location\\:name').val();
-      addLocationToList(locationId, locationName);
-      // Clear the picker.
-      $('#scratchpad-location').val('');
-      $('#scratchpad-location\\:name').val('');
-    });
-
-    indiciaFns.on('click', '#scratchpad-location-list a.remove', {}, function (e) {
-      e.preventDefault();
-      $(e.currentTarget).closest('li').remove();
-    });
-  }
 
   $('#scratchpad-cancel').on('click', function () {
     window.location = indiciaData.scratchpadSettings.returnPath;

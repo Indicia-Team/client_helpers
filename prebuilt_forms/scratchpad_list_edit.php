@@ -165,7 +165,7 @@ class iform_scratchpad_list_edit implements PrebuiltFormInterface {
     $locationListEnabled = !empty($args['location_type_id']);
     $defaultLocationIds = [];
     $defaultLocationLinkIds = [];
-    $defaultLocationListHtml = '';
+    $defaultLocationsForControl = [];
     $r = "<form method=\"post\" id=\"entry_form\" action=\"$reloadPath\" enctype=\"multipart/form-data\">\n";
     data_entry_helper::enable_validation('entry_form');
     if (!empty($args['scratchpad_type_id'])) {
@@ -269,8 +269,11 @@ class iform_scratchpad_list_edit implements PrebuiltFormInterface {
           }
           foreach ($defaultLocationIds as $locId) {
             if (!empty($locationsById[$locId])) {
-              $locName = htmlspecialchars($locationsById[$locId]['name']);
-              $defaultLocationListHtml .= "<li data-location-id=\"$locId\">$locName <a href=\"#\" class=\"remove\">" . lang::get('Remove') . "</a></li>\n";
+              $defaultLocationsForControl[] = [
+                'fieldname' => 'metaFields:location_ids[]',
+                'caption' => htmlspecialchars($locationsById[$locId]['name']),
+                'default' => $locId,
+              ];
             }
           }
         }
@@ -325,11 +328,6 @@ class iform_scratchpad_list_edit implements PrebuiltFormInterface {
 
     if ($locationListEnabled) {
       $r .= data_entry_helper::hidden_text([
-        'id' => 'hidden-location-ids-list',
-        'fieldname' => 'metaFields:location_ids',
-        'default' => implode(';', $defaultLocationIds),
-      ]);
-      $r .= data_entry_helper::hidden_text([
         'id' => 'hidden-location-link-ids-list',
         'fieldname' => 'metaFields:location_link_ids',
         'default' => implode(';', $defaultLocationLinkIds),
@@ -343,16 +341,18 @@ class iform_scratchpad_list_edit implements PrebuiltFormInterface {
     if ($locationListEnabled) {
       $r .= '<fieldset id="scratchpad-location-fieldset"><legend>' . lang::get('Locations') . '</legend>';
       $r .= '<p class="helpText">' . lang::get('Add one or more locations to link to this list.') . '</p>';
-      $r .= data_entry_helper::location_autocomplete([
-        'id' => 'scratchpad-location',
-        'fieldname' => 'scratchpad_location:location_id',
-        'label' => lang::get('Location'),
+      $r .= data_entry_helper::sub_list([
+        'id' => 'scratchpad-location-list',
+        'fieldname' => 'metaFields:location_ids[]',
+        'table' => 'location',
+        'autocompleteControl' => 'location_autocomplete',
+        'captionField' => 'name',
+        'valueField' => 'id',
         'extraParams' => $auth['read'] + [
           'location_type_id' => $args['location_type_id'],
         ],
+        'default' => $defaultLocationsForControl,
       ]);
-      $r .= '<button id="scratchpad-location-add" type="button">' . lang::get('Add') . '</button>';
-      $r .= '<ul id="scratchpad-location-list">' . $defaultLocationListHtml . '</ul>';
       $r .= '</fieldset>';
     }
     $r .= <<<HTML
@@ -381,7 +381,7 @@ class iform_scratchpad_list_edit implements PrebuiltFormInterface {
    * @return array
    *   Submission structure.
    */
-  public static function getSubmission($values, $args) {
+  public static function get_submission($values, $args) {
     $structure = [
       'model' => 'scratchpad_list',
       'metaFields' => ['entries'],
@@ -391,11 +391,16 @@ class iform_scratchpad_list_edit implements PrebuiltFormInterface {
 
     // Optional linked locations list.
     if (!empty($args['location_type_id'])) {
-      $locationIdsRaw = trim($values['metaFields:location_ids'] ?? '');
+      $locationIdsRaw = $values['metaFields:location_ids'] ?? [];
       $locationLinkIdsRaw = trim($values['metaFields:location_link_ids'] ?? '');
       $locationIds = [];
-      if ($locationIdsRaw !== '') {
-        $locationIds = array_values(array_filter(array_map('trim', explode(';', $locationIdsRaw)), function ($id) {
+      if (is_array($locationIdsRaw)) {
+        $locationIds = array_values(array_filter(array_map('trim', $locationIdsRaw), function ($id) {
+          return $id !== '';
+        }));
+      }
+      elseif (is_string($locationIdsRaw) && trim($locationIdsRaw) !== '') {
+        $locationIds = array_values(array_filter(array_map('trim', explode(';', trim($locationIdsRaw))), function ($id) {
           return $id !== '';
         }));
       }
@@ -430,8 +435,6 @@ class iform_scratchpad_list_edit implements PrebuiltFormInterface {
         }
       }
     }
-    hostsite_show_message(var_export($submission, TRUE));
-
     return $submission;
   }
 
