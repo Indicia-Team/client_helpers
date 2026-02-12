@@ -88,6 +88,80 @@ jQuery(document).ready(function ($) {
     return name.replace(/ \(.+\)/, '');
   }
 
+  function isEditMode() {
+    var idCtrl = $('[name="scratchpad_list:id"]');
+    return idCtrl.length > 0 && $.trim(idCtrl.val()) !== '';
+  }
+
+  function nodeContainsUncheckedText(node) {
+    var $node;
+    var tag;
+    var hasUnchecked = false;
+
+    if (!node) {
+      return false;
+    }
+    // Text node.
+    if (node.nodeType === 3) {
+      return $.trim(node.nodeValue) !== '';
+    }
+    // Element nodes only.
+    if (node.nodeType !== 1) {
+      return false;
+    }
+    $node = $(node);
+    tag = node.nodeName.toLowerCase();
+    if (tag === 'br') {
+      return false;
+    }
+    if (tag === 'a' && $node.hasClass('non-unique-name')) {
+      // Non-unique options are created by the check, so are not unchecked text.
+      return false;
+    }
+    if (tag === 'span') {
+      // Checked content is wrapped in matched/unmatched spans.
+      if ($node.hasClass('matched') || $node.hasClass('unmatched')) {
+        return false;
+      }
+      return $.trim($node.text()) !== '';
+    }
+    // Any other element: recurse.
+    $node.contents().each(function () {
+      if (nodeContainsUncheckedText(this)) {
+        hasUnchecked = true;
+        return false;
+      }
+      return true;
+    });
+    return hasUnchecked;
+  }
+
+  function scratchpadHasUncheckedText() {
+    var unchecked = false;
+    $('#scratchpad-input').contents().each(function () {
+      if (nodeContainsUncheckedText(this)) {
+        unchecked = true;
+        return false;
+      }
+      return true;
+    });
+    return unchecked;
+  }
+
+  function updateSaveButtonState() {
+    var unchecked = scratchpadHasUncheckedText();
+    var matchedCount = $('span.matched').not(':empty').length;
+    // Allow saving an existing list without forcing a re-check, unless there
+    // is unchecked text in the editor.
+    if (unchecked) {
+      $('#scratchpad-save').attr('disabled', 'disabled');
+    } else if (isEditMode() || matchedCount > 0) {
+      $('#scratchpad-save').removeAttr('disabled');
+    } else {
+      $('#scratchpad-save').attr('disabled', 'disabled');
+    }
+  }
+
   /**
    * Handles the response from the warehouse for a request to match the list of species provided against the species
    * listed in the database.
@@ -184,6 +258,7 @@ jQuery(document).ready(function ($) {
       $('#scratchpad-input').html(output.join('<br/>'));
       recalculateStats();
       $('#scratchpad-stats')[0].scrollIntoView();
+      updateSaveButtonState();
     }
     $('#scratchpad-check').removeClass('checking');
   }
@@ -241,6 +316,12 @@ jQuery(document).ready(function ($) {
       $(el).removeClass('unmatched');
       $(el).removeAttr('data-id');
     }
+    updateSaveButtonState();
+  });
+
+  // Any edits to the contenteditable scratchpad should update the save state.
+  $('#scratchpad-input').on('input paste keyup', function () {
+    updateSaveButtonState();
   });
 
   /**
@@ -262,6 +343,7 @@ jQuery(document).ready(function ($) {
     });
     $('#scratchpad-save').removeAttr('disabled');
     recalculateStats();
+    updateSaveButtonState();
   });
 
   $('#scratchpad-check').on('click', function () {
@@ -275,6 +357,7 @@ jQuery(document).ready(function ($) {
     $('[data-state="duplicate"]').next('br').remove();
     $('[data-state="duplicate"]').remove();
     recalculateStats();
+    updateSaveButtonState();
   });
 
   /**
@@ -293,4 +376,5 @@ jQuery(document).ready(function ($) {
   });
 
   recalculateStats();
+  updateSaveButtonState();
 });
