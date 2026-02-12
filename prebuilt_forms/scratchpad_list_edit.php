@@ -89,7 +89,7 @@ class iform_scratchpad_list_edit implements PrebuiltFormInterface {
       [
         'name' => 'location_type_id',
         'caption' => 'Location type (optional)',
-        'description' => 'Optionally select a location type to enable a location list editor on this form. The available locations will be filtered to this type.',
+        'description' => 'Optionally select a location type to enable a location list editor on this form  allowing the scratchpad list to be associated with a location. The available locations will be filtered to this type.',
         'type' => 'select',
         'table' => 'termlists_term',
         'captionField' => 'term',
@@ -102,7 +102,7 @@ class iform_scratchpad_list_edit implements PrebuiltFormInterface {
       [
         'name' => 'group_type_id',
         'caption' => 'Group type (optional)',
-        'description' => 'Optionally select a group type to enable a group list editor on this form. The available groups will be filtered to this type.',
+        'description' => 'Optionally select a group type to enable a group list editor on this form allowing the scratchpad list to be associated with a group. The available groups will be filtered to this type.',
         'type' => 'select',
         'table' => 'termlists_term',
         'captionField' => 'term',
@@ -160,15 +160,7 @@ class iform_scratchpad_list_edit implements PrebuiltFormInterface {
     $conn = iform_get_connection_details($nid);
     $auth = data_entry_helper::get_read_write_auth($conn['website_id'], $conn['password']);
     $filters = data_entry_helper::explode_lines_key_value_pairs($args['filters']);
-    $options = [
-      'entity' => $args['entity'],
-      'extraParams' => [],
-      'duplicates' => $args['duplicates'],
-      'filters' => $filters,
-      'ajaxProxyUrl' => iform_ajaxproxy_url(NULL, 'scratchpad_list'),
-      'websiteId' => $args['website_id'],
-      'returnPath' => hostsite_get_url($args['redirect_on_success']),
-    ];
+    $options = self::buildScratchpadOptions($args, $filters);
     $checkLabel = lang::get('Check');
     $removeDuplicatesLabel = lang::get('Remove duplicates');
     $saveLabel = lang::get('Save');
@@ -177,12 +169,8 @@ class iform_scratchpad_list_edit implements PrebuiltFormInterface {
     $defaultList = '';
     $locationListEnabled = !empty($args['location_type_id']);
     $groupListEnabled = !empty($args['group_type_id']);
-    $defaultLocationIds = [];
-    $defaultLocationLinkIds = [];
-    $defaultLocationsForControl = [];
-    $defaultGroupIds = [];
-    $defaultGroupLinkIds = [];
-    $defaultGroupsForControl = [];
+    $locationDefaults = ['linkIds' => [], 'defaultsForControl' => []];
+    $groupDefaults = ['linkIds' => [], 'defaultsForControl' => []];
     $r = "<form method=\"post\" id=\"entry_form\" action=\"$reloadPath\" enctype=\"multipart/form-data\">\n";
     data_entry_helper::enable_validation('entry_form');
     if (!empty($args['scratchpad_type_id'])) {
@@ -191,154 +179,16 @@ class iform_scratchpad_list_edit implements PrebuiltFormInterface {
         'default' => $args['scratchpad_type_id'],
       ]);
     }
-    if (!empty($_GET['scratchpad_list_id'])) {
-      $list = data_entry_helper::get_population_data([
-        'table' => 'scratchpad_list',
-        'extraParams' => $auth['read'] + ['id' => $_GET['scratchpad_list_id']],
-        'caching' => FALSE,
-      ]);
-      $entries = data_entry_helper::get_population_data([
-        'table' => 'scratchpad_list_entry',
-        'extraParams' => $auth['read'] + [
-          'scratchpad_list_id' => $_GET['scratchpad_list_id'],
-          'orderby' => 'id',
-        ],
-        'caching' => FALSE,
-      ]);
-      $sortedTaxa = [];
-      $batchIds = [];
-      $taxa = [];
-      foreach ($entries as $entry) {
-        $batchIds[] = $entry['entry_id'];
-        $sortedTaxa["ttlId:$entry[entry_id]"] = NULL;
-        // Grab the taxon list in batches of 50.
-        if (count($batchIds) > 50) {
-          $taxa = array_merge($taxa, data_entry_helper::get_population_data([
-            'table' => 'taxa_taxon_list',
-            'extraParams' => $auth['read'] + [
-              'view' => 'cache',
-              'query' => json_encode(['in' => ['id' => $batchIds]]),
-            ],
-          ]));
-          $batchIds = [];
-        }
-      }
-      // Grab the final batch.
-      if (count($batchIds)) {
-        $taxa = array_merge($taxa, data_entry_helper::get_population_data([
-          'table' => 'taxa_taxon_list',
-          'extraParams' => $auth['read'] + [
-            'view' => 'cache',
-            'query' => json_encode(['in' => ['id' => $batchIds]]),
-          ],
-        ]));
-      }
-      // Assign taxa to sorted array.
-      foreach ($taxa as $taxon) {
-        $sortedTaxa["ttlId:$taxon[id]"] = $taxon;
-      }
-      data_entry_helper::$entity_to_load = [
-        'scratchpad_list:title' => $list[0]['title'],
-        'scratchpad_list:description' => $list[0]['description'],
-      ];
-      foreach ($sortedTaxa as $taxonInList) {
-        $defaultList .= <<<HTML
-          <span class="matched" data-id="$taxonInList[id]">$taxonInList[taxon]</span>
-          <br/>
-        HTML;
-      }
-      $r .= data_entry_helper::hidden_text([
-        'fieldname' => 'scratchpad_list:id',
-        'default' => $_GET['scratchpad_list_id'],
-      ]);
+    $scratchpadListId = self::getScratchpadListIdFromRequest();
+    if (!empty($scratchpadListId)) {
+      $defaultList = self::getDefaultListHtmlForScratchpadList($auth['read'], $scratchpadListId);
+      $r .= self::buildScratchpadListIdHidden($scratchpadListId);
 
       if ($locationListEnabled) {
-        // Load any existing linked locations for this scratchpad list.
-        // Stored via the warehouse join table locations_scratchpad_lists.
-        $linkedLocations = data_entry_helper::get_population_data([
-          'table' => 'locations_scratchpad_list',
-          'extraParams' => $auth['read'] + [
-            'scratchpad_list_id' => $_GET['scratchpad_list_id'],
-            'orderby' => 'id',
-          ],
-          'caching' => FALSE,
-        ]);
-        foreach ($linkedLocations as $link) {
-          if (!empty($link['id'])) {
-            $defaultLocationLinkIds[] = $link['id'];
-          }
-          if (!empty($link['location_id'])) {
-            $defaultLocationIds[] = $link['location_id'];
-          }
-        }
-        // Load location names for display in the UI.
-        if (!empty($defaultLocationIds)) {
-          $locations = data_entry_helper::get_population_data([
-            'table' => 'location',
-            'extraParams' => $auth['read'] + [
-              'query' => json_encode(['in' => ['id' => array_values(array_unique($defaultLocationIds))]]),
-            ],
-            'caching' => FALSE,
-          ]);
-          $locationsById = [];
-          foreach ($locations as $loc) {
-            $locationsById[$loc['id']] = $loc;
-          }
-          foreach ($defaultLocationIds as $locId) {
-            if (!empty($locationsById[$locId])) {
-              $defaultLocationsForControl[] = [
-                'fieldname' => 'metaFields:location_ids[]',
-                'caption' => htmlspecialchars($locationsById[$locId]['name']),
-                'default' => $locId,
-              ];
-            }
-          }
-        }
+        $locationDefaults = self::loadLocationDefaultsForScratchpadList($auth['read'], $scratchpadListId);
       }
-
       if ($groupListEnabled) {
-        // Load any existing linked groups for this scratchpad list.
-        // Stored via the warehouse join table groups_scratchpad_lists.
-        $linkedGroups = data_entry_helper::get_population_data([
-          'table' => 'groups_scratchpad_lists',
-          'extraParams' => $auth['read'] + [
-            'scratchpad_list_id' => $_GET['scratchpad_list_id'],
-            'orderby' => 'id',
-          ],
-          'caching' => FALSE,
-        ]);
-        foreach ($linkedGroups as $link) {
-          if (!empty($link['id'])) {
-            $defaultGroupLinkIds[] = $link['id'];
-          }
-          if (!empty($link['group_id'])) {
-            $defaultGroupIds[] = $link['group_id'];
-          }
-        }
-
-        // Load group titles for display in the UI.
-        if (!empty($defaultGroupIds)) {
-          $groupsById = [];
-          foreach (array_values(array_unique($defaultGroupIds)) as $groupId) {
-            $groupRows = data_entry_helper::get_population_data([
-              'table' => 'group',
-              'extraParams' => $auth['read'] + ['id' => $groupId],
-              'caching' => FALSE,
-            ]);
-            if (!empty($groupRows[0])) {
-              $groupsById[$groupId] = $groupRows[0];
-            }
-          }
-          foreach ($defaultGroupIds as $groupId) {
-            if (!empty($groupsById[$groupId])) {
-              $defaultGroupsForControl[] = [
-                'fieldname' => 'metaFields:group_ids[]',
-                'caption' => htmlspecialchars($groupsById[$groupId]['title']),
-                'default' => $groupId,
-              ];
-            }
-          }
-        }
+        $groupDefaults = self::loadGroupDefaultsForScratchpadList($auth['read'], $scratchpadListId);
       }
     }
     $r .= data_entry_helper::hidden_text([
@@ -392,14 +242,14 @@ class iform_scratchpad_list_edit implements PrebuiltFormInterface {
       $r .= data_entry_helper::hidden_text([
         'id' => 'hidden-location-link-ids-list',
         'fieldname' => 'metaFields:location_link_ids',
-        'default' => implode(';', $defaultLocationLinkIds),
+        'default' => implode(';', $locationDefaults['linkIds']),
       ]);
     }
     if ($groupListEnabled) {
       $r .= data_entry_helper::hidden_text([
         'id' => 'hidden-group-link-ids-list',
         'fieldname' => 'metaFields:group_link_ids',
-        'default' => implode(';', $defaultGroupLinkIds),
+        'default' => implode(';', $groupDefaults['linkIds']),
       ]);
     }
     $r .= data_entry_helper::hidden_text([
@@ -408,38 +258,11 @@ class iform_scratchpad_list_edit implements PrebuiltFormInterface {
     ]);
 
     if ($locationListEnabled) {
-      $r .= '<fieldset id="scratchpad-location-fieldset"><legend>' . lang::get('Locations') . '</legend>';
-      $r .= '<p class="helpText">' . lang::get('Add one or more locations to link to this list.') . '</p>';
-      $r .= data_entry_helper::sub_list([
-        'id' => 'scratchpad-location-list',
-        'fieldname' => 'metaFields:location_ids[]',
-        'table' => 'location',
-        'autocompleteControl' => 'location_autocomplete',
-        'captionField' => 'name',
-        'valueField' => 'id',
-        'extraParams' => $auth['read'] + [
-          'location_type_id' => $args['location_type_id'],
-        ],
-        'default' => $defaultLocationsForControl,
-      ]);
-      $r .= '</fieldset>';
+      $r .= self::buildLocationFieldset($auth['read'], $args, $locationDefaults['defaultsForControl']);
     }
 
     if ($groupListEnabled) {
-      $r .= '<fieldset id="scratchpad-group-fieldset"><legend>' . lang::get('Groups') . '</legend>';
-      $r .= '<p class="helpText">' . lang::get('Add one or more groups to link to this list.') . '</p>';
-      $r .= data_entry_helper::sub_list([
-        'id' => 'scratchpad-group-list',
-        'fieldname' => 'metaFields:group_ids[]',
-        'table' => 'group',
-        'captionField' => 'title',
-        'valueField' => 'id',
-        'extraParams' => $auth['read'] + [
-          'group_type_id' => $args['group_type_id'],
-        ],
-        'default' => $defaultGroupsForControl,
-      ]);
-      $r .= '</fieldset>';
+      $r .= self::buildGroupFieldset($auth['read'], $args, $groupDefaults['defaultsForControl']);
     }
     $r .= <<<HTML
       <button id="scratchpad-check" class="$indicia_templates[buttonHighlightedClass]" type="button">$checkLabel</button>
@@ -478,98 +301,449 @@ class iform_scratchpad_list_edit implements PrebuiltFormInterface {
 
     // Optional linked locations list.
     if (!empty($args['location_type_id'])) {
-      $locationIdsRaw = $values['metaFields:location_ids'] ?? [];
-      $locationLinkIdsRaw = trim($values['metaFields:location_link_ids'] ?? '');
-      $locationIds = [];
-      if (is_array($locationIdsRaw)) {
-        $locationIds = array_values(array_filter(array_map('trim', $locationIdsRaw), function ($id) {
-          return $id !== '';
-        }));
-      }
-      elseif (is_string($locationIdsRaw) && trim($locationIdsRaw) !== '') {
-        $locationIds = array_values(array_filter(array_map('trim', explode(';', trim($locationIdsRaw))), function ($id) {
-          return $id !== '';
-        }));
-      }
-
-      // If editing an existing scratchpad list, clear existing links then re-add.
-      if (!empty($locationLinkIdsRaw)) {
-        $linkIds = array_values(array_filter(array_map('trim', explode(';', $locationLinkIdsRaw)), function ($id) {
-          return $id !== '';
-        }));
-        if (!empty($linkIds)) {
-          if (!isset($submission['subModels'])) {
-            $submission['subModels'] = [];
-          }
-          foreach ($linkIds as $linkId) {
-            $submission['subModels'][] = [
-              'fkId' => 'scratchpad_list_id',
-              'model' => submission_builder::wrap(['id' => $linkId, 'deleted' => 't'], 'locations_scratchpad_list'),
-            ];
-          }
-        }
-      }
-
-      if (!empty($locationIds)) {
-        if (!isset($submission['subModels'])) {
-          $submission['subModels'] = [];
-        }
-        foreach ($locationIds as $locationId) {
-          $submission['subModels'][] = [
-            'fkId' => 'scratchpad_list_id',
-            'model' => submission_builder::wrap(['location_id' => $locationId], 'locations_scratchpad_list'),
-          ];
-        }
-      }
+      self::addJoinTableLinksToSubmission(
+        $submission,
+        'locations_scratchpad_list',
+        'scratchpad_list_id',
+        'location_id',
+        $values['metaFields:location_ids'] ?? [],
+        $values['metaFields:location_link_ids'] ?? ''
+      );
     }
 
     // Optional linked groups list.
     if (!empty($args['group_type_id'])) {
-      $groupIdsRaw = $values['metaFields:group_ids'] ?? [];
-      $groupLinkIdsRaw = trim($values['metaFields:group_link_ids'] ?? '');
-      $groupIds = [];
-      if (is_array($groupIdsRaw)) {
-        $groupIds = array_values(array_filter(array_map('trim', $groupIdsRaw), function ($id) {
-          return $id !== '';
-        }));
-      }
-      elseif (is_string($groupIdsRaw) && trim($groupIdsRaw) !== '') {
-        $groupIds = array_values(array_filter(array_map('trim', explode(';', trim($groupIdsRaw))), function ($id) {
-          return $id !== '';
-        }));
-      }
+      self::addJoinTableLinksToSubmission(
+        $submission,
+        'groups_scratchpad_lists',
+        'scratchpad_list_id',
+        'group_id',
+        $values['metaFields:group_ids'] ?? [],
+        $values['metaFields:group_link_ids'] ?? ''
+      );
+    }
+    return $submission;
+  }
 
-      // If editing an existing scratchpad list, clear existing links then re-add.
-      if (!empty($groupLinkIdsRaw)) {
-        $linkIds = array_values(array_filter(array_map('trim', explode(';', $groupLinkIdsRaw)), function ($id) {
-          return $id !== '';
-        }));
-        if (!empty($linkIds)) {
-          if (!isset($submission['subModels'])) {
-            $submission['subModels'] = [];
-          }
-          foreach ($linkIds as $linkId) {
-            $submission['subModels'][] = [
-              'fkId' => 'scratchpad_list_id',
-              'model' => submission_builder::wrap(['id' => $linkId, 'deleted' => 't'], 'groups_scratchpad_lists'),
-            ];
-          }
-        }
-      }
+  /**
+   * Builds the settings passed to the client-side scratchpad JS.
+   *
+   * @param array $args
+   *   IForm configuration parameters.
+   * @param array $filters
+   *   Additional filters parsed from the configuration.
+   *
+   * @return array
+   *   Scratchpad options for data_entry_helper::$indiciaData.
+   */
+  protected static function buildScratchpadOptions(array $args, array $filters): array {
+    return [
+      'entity' => $args['entity'],
+      'extraParams' => [],
+      'duplicates' => $args['duplicates'],
+      'filters' => $filters,
+      'ajaxProxyUrl' => iform_ajaxproxy_url(NULL, 'scratchpad_list'),
+      'websiteId' => $args['website_id'],
+      'returnPath' => hostsite_get_url($args['redirect_on_success']),
+    ];
+  }
 
-      if (!empty($groupIds)) {
-        if (!isset($submission['subModels'])) {
-          $submission['subModels'] = [];
-        }
-        foreach ($groupIds as $groupId) {
-          $submission['subModels'][] = [
-            'fkId' => 'scratchpad_list_id',
-            'model' => submission_builder::wrap(['group_id' => $groupId], 'groups_scratchpad_lists'),
+  /**
+   * Returns the scratchpad list ID from the request, if present.
+   *
+   * @return int|null
+   *   The scratchpad list ID.
+   */
+  protected static function getScratchpadListIdFromRequest() {
+    if (!empty($_GET['scratchpad_list_id'])) {
+      return (int) $_GET['scratchpad_list_id'];
+    }
+    return NULL;
+  }
+
+  /**
+   * Builds the hidden control containing the scratchpad list ID.
+   *
+   * @param int $scratchpadListId
+   *   The existing scratchpad list ID.
+   *
+   * @return string
+   *   HTML for the hidden input.
+   */
+  protected static function buildScratchpadListIdHidden(int $scratchpadListId): string {
+    return data_entry_helper::hidden_text([
+      'fieldname' => 'scratchpad_list:id',
+      'default' => $scratchpadListId,
+    ]);
+  }
+
+  /**
+   * Loads an existing scratchpad list and returns the default HTML for the UI.
+   *
+   * Also populates data_entry_helper::$entity_to_load with title/description.
+   *
+   * @param array $readAuth
+   *   Read authentication token array.
+   * @param int $scratchpadListId
+   *   Scratchpad list ID.
+   *
+   * @return string
+   *   Default HTML to populate the scratchpad input.
+   */
+  protected static function getDefaultListHtmlForScratchpadList(array $readAuth, int $scratchpadListId): string {
+    $defaultList = '';
+
+    $list = data_entry_helper::get_population_data([
+      'table' => 'scratchpad_list',
+      'extraParams' => $readAuth + ['id' => $scratchpadListId],
+      'caching' => FALSE,
+    ]);
+    $entries = data_entry_helper::get_population_data([
+      'table' => 'scratchpad_list_entry',
+      'extraParams' => $readAuth + [
+        'scratchpad_list_id' => $scratchpadListId,
+        'orderby' => 'id',
+      ],
+      'caching' => FALSE,
+    ]);
+
+    $sortedTaxa = [];
+    $batchIds = [];
+    $taxa = [];
+    foreach ($entries as $entry) {
+      $batchIds[] = $entry['entry_id'];
+      $sortedTaxa["ttlId:$entry[entry_id]"] = NULL;
+      // Grab the taxon list in batches of 50.
+      if (count($batchIds) > 50) {
+        $taxa = array_merge($taxa, data_entry_helper::get_population_data([
+          'table' => 'taxa_taxon_list',
+          'extraParams' => $readAuth + [
+            'view' => 'cache',
+            'query' => json_encode(['in' => ['id' => $batchIds]]),
+          ],
+        ]));
+        $batchIds = [];
+      }
+    }
+    // Grab the final batch.
+    if (count($batchIds)) {
+      $taxa = array_merge($taxa, data_entry_helper::get_population_data([
+        'table' => 'taxa_taxon_list',
+        'extraParams' => $readAuth + [
+          'view' => 'cache',
+          'query' => json_encode(['in' => ['id' => $batchIds]]),
+        ],
+      ]));
+    }
+    // Assign taxa to sorted array.
+    foreach ($taxa as $taxon) {
+      $sortedTaxa["ttlId:$taxon[id]"] = $taxon;
+    }
+
+    if (!empty($list[0])) {
+      data_entry_helper::$entity_to_load = [
+        'scratchpad_list:title' => $list[0]['title'],
+        'scratchpad_list:description' => $list[0]['description'],
+      ];
+    }
+
+    foreach ($sortedTaxa as $taxonInList) {
+      if (!empty($taxonInList)) {
+        $defaultList .= <<<HTML
+          <span class="matched" data-id="$taxonInList[id]">$taxonInList[taxon]</span>
+          <br/>
+        HTML;
+      }
+    }
+
+    return $defaultList;
+  }
+
+  /**
+   * Loads linked locations for a scratchpad list for display in the sub_list.
+   *
+   * @param array $readAuth
+   *   Read authentication token array.
+   * @param int $scratchpadListId
+   *   Scratchpad list ID.
+   *
+   * @return array
+   *   Array containing:
+   *   - linkIds: IDs of join rows (used for deletion on save)
+   *   - defaultsForControl: Default list rows for data_entry_helper::sub_list.
+   */
+  protected static function loadLocationDefaultsForScratchpadList(array $readAuth, int $scratchpadListId): array {
+    $defaultLocationIds = [];
+    $defaultLocationLinkIds = [];
+    $defaultLocationsForControl = [];
+
+    // Load any existing linked locations for this scratchpad list.
+    // Stored via the warehouse join table locations_scratchpad_list.
+    $linkedLocations = data_entry_helper::get_population_data([
+      'table' => 'locations_scratchpad_list',
+      'extraParams' => $readAuth + [
+        'scratchpad_list_id' => $scratchpadListId,
+        'orderby' => 'id',
+      ],
+      'caching' => FALSE,
+    ]);
+    foreach ($linkedLocations as $link) {
+      if (!empty($link['id'])) {
+        $defaultLocationLinkIds[] = $link['id'];
+      }
+      if (!empty($link['location_id'])) {
+        $defaultLocationIds[] = $link['location_id'];
+      }
+    }
+
+    // Load location names for display in the UI.
+    if (!empty($defaultLocationIds)) {
+      $locations = data_entry_helper::get_population_data([
+        'table' => 'location',
+        'extraParams' => $readAuth + [
+          'query' => json_encode([
+            'in' => ['id' => array_values(array_unique($defaultLocationIds))],
+          ]),
+        ],
+        'caching' => FALSE,
+      ]);
+      $locationsById = [];
+      foreach ($locations as $loc) {
+        $locationsById[$loc['id']] = $loc;
+      }
+      foreach ($defaultLocationIds as $locId) {
+        if (!empty($locationsById[$locId])) {
+          $defaultLocationsForControl[] = [
+            'fieldname' => 'metaFields:location_ids[]',
+            'caption' => htmlspecialchars($locationsById[$locId]['name']),
+            'default' => $locId,
           ];
         }
       }
     }
-    return $submission;
+
+    return [
+      'linkIds' => $defaultLocationLinkIds,
+      'defaultsForControl' => $defaultLocationsForControl,
+    ];
+  }
+
+  /**
+   * Loads linked groups for a scratchpad list for display in the sub_list.
+   *
+   * @param array $readAuth
+   *   Read authentication token array.
+   * @param int $scratchpadListId
+   *   Scratchpad list ID.
+   *
+   * @return array
+   *   Array containing:
+   *   - linkIds: IDs of join rows (used for deletion on save)
+   *   - defaultsForControl: Default list rows for data_entry_helper::sub_list.
+   */
+  protected static function loadGroupDefaultsForScratchpadList(array $readAuth, int $scratchpadListId): array {
+    $defaultGroupIds = [];
+    $defaultGroupLinkIds = [];
+    $defaultGroupsForControl = [];
+
+    // Load any existing linked groups for this scratchpad list.
+    // Stored via the warehouse join table groups_scratchpad_lists.
+    $linkedGroups = data_entry_helper::get_population_data([
+      'table' => 'groups_scratchpad_lists',
+      'extraParams' => $readAuth + [
+        'scratchpad_list_id' => $scratchpadListId,
+        'orderby' => 'id',
+      ],
+      'caching' => FALSE,
+    ]);
+    foreach ($linkedGroups as $link) {
+      if (!empty($link['id'])) {
+        $defaultGroupLinkIds[] = $link['id'];
+      }
+      if (!empty($link['group_id'])) {
+        $defaultGroupIds[] = $link['group_id'];
+      }
+    }
+
+    // Load group titles for display in the UI.
+    if (!empty($defaultGroupIds)) {
+      $groupsById = [];
+      foreach (array_values(array_unique($defaultGroupIds)) as $groupId) {
+        $groupRows = data_entry_helper::get_population_data([
+          'table' => 'group',
+          'extraParams' => $readAuth + ['id' => $groupId],
+          'caching' => FALSE,
+        ]);
+        if (!empty($groupRows[0])) {
+          $groupsById[$groupId] = $groupRows[0];
+        }
+      }
+      foreach ($defaultGroupIds as $groupId) {
+        if (!empty($groupsById[$groupId])) {
+          $defaultGroupsForControl[] = [
+            'fieldname' => 'metaFields:group_ids[]',
+            'caption' => htmlspecialchars($groupsById[$groupId]['title']),
+            'default' => $groupId,
+          ];
+        }
+      }
+    }
+
+    return [
+      'linkIds' => $defaultGroupLinkIds,
+      'defaultsForControl' => $defaultGroupsForControl,
+    ];
+  }
+
+  /**
+   * Builds the locations sub_list UI wrapped in a fieldset.
+   *
+   * @param array $readAuth
+   *   Read authentication token array.
+   * @param array $args
+   *   IForm configuration parameters.
+   * @param array $defaultLocationsForControl
+   *   Default values for the sub_list.
+   *
+   * @return string
+   *   HTML output.
+   */
+  protected static function buildLocationFieldset(array $readAuth, array $args, array $defaultLocationsForControl): string {
+    $r = '<fieldset id="scratchpad-location-fieldset"><legend>' . lang::get('Locations') . '</legend>';
+    $r .= '<p class="helpText">' . lang::get('Add one or more locations to link to this list.') . '</p>';
+    $r .= data_entry_helper::sub_list([
+      'id' => 'scratchpad-location-list',
+      'fieldname' => 'metaFields:location_ids[]',
+      'table' => 'location',
+      'autocompleteControl' => 'location_autocomplete',
+      'captionField' => 'name',
+      'valueField' => 'id',
+      'extraParams' => $readAuth + [
+        'location_type_id' => $args['location_type_id'],
+      ],
+      'default' => $defaultLocationsForControl,
+    ]);
+    $r .= '</fieldset>';
+    return $r;
+  }
+
+  /**
+   * Builds the groups sub_list UI wrapped in a fieldset.
+   *
+   * @param array $readAuth
+   *   Read authentication token array.
+   * @param array $args
+   *   IForm configuration parameters.
+   * @param array $defaultGroupsForControl
+   *   Default values for the sub_list.
+   *
+   * @return string
+   *   HTML output.
+   */
+  protected static function buildGroupFieldset(array $readAuth, array $args, array $defaultGroupsForControl): string {
+    $r = '<fieldset id="scratchpad-group-fieldset"><legend>' . lang::get('Groups') . '</legend>';
+    $r .= '<p class="helpText">' . lang::get('Add one or more groups to link to this list.') . '</p>';
+    $r .= data_entry_helper::sub_list([
+      'id' => 'scratchpad-group-list',
+      'fieldname' => 'metaFields:group_ids[]',
+      'table' => 'group',
+      'captionField' => 'title',
+      'valueField' => 'id',
+      'extraParams' => $readAuth + [
+        'group_type_id' => $args['group_type_id'],
+      ],
+      'default' => $defaultGroupsForControl,
+    ]);
+    $r .= '</fieldset>';
+    return $r;
+  }
+
+  /**
+   * Adds join-table subModels to a scratchpad list submission.
+   *
+   * Deletes any existing join rows (using a hidden list of join row IDs)
+   * then re-adds join rows for the current selections.
+   *
+   * @param array $submission
+   *   Submission array being built.
+   * @param string $joinModel
+   *   Warehouse model name for the join table.
+   * @param string $fkId
+   *   Foreign key field name used by the join model.
+   * @param string $entityIdField
+   *   Field name for the linked entity ID (e.g. location_id).
+   * @param mixed $entityIdsRaw
+   *   Raw entity IDs from the form (array or delimiter-separated string).
+   * @param mixed $joinRowIdsRaw
+   *   Raw join row IDs from the form (array or delimiter-separated string).
+   */
+  protected static function addJoinTableLinksToSubmission(
+    array &$submission,
+    string $joinModel,
+    string $fkId,
+    string $entityIdField,
+    $entityIdsRaw,
+    $joinRowIdsRaw
+  ): void {
+    $entityIds = self::normaliseIdList($entityIdsRaw);
+    $joinRowIds = self::normaliseIdList($joinRowIdsRaw);
+
+    if (empty($entityIds) && empty($joinRowIds)) {
+      return;
+    }
+
+    if (!isset($submission['subModels'])) {
+      $submission['subModels'] = [];
+    }
+
+    // When editing an existing list, remove existing join rows first.
+    foreach ($joinRowIds as $joinRowId) {
+      $submission['subModels'][] = [
+        'fkId' => $fkId,
+        'model' => submission_builder::wrap([
+          'id' => $joinRowId,
+          'deleted' => 't',
+        ], $joinModel),
+      ];
+    }
+
+    // Add join rows for current selections.
+    foreach ($entityIds as $entityId) {
+      $submission['subModels'][] = [
+        'fkId' => $fkId,
+        'model' => submission_builder::wrap([
+          $entityIdField => $entityId,
+        ], $joinModel),
+      ];
+    }
+  }
+
+  /**
+   * Normalises a list of IDs from the form into a simple array.
+   *
+   * @param mixed $raw
+   *   Raw value. Either an array (from [] fieldnames) or a delimiter-separated
+   *   string.
+   *
+   * @return array
+   *   List of non-empty trimmed IDs.
+   */
+  protected static function normaliseIdList($raw): array {
+    if (is_array($raw)) {
+      return array_values(array_filter(array_map('trim', $raw), function ($id) {
+        return $id !== '';
+      }));
+    }
+    if (is_string($raw)) {
+      $raw = trim($raw);
+      if ($raw === '') {
+        return [];
+      }
+      return array_values(array_filter(array_map('trim', explode(';', $raw)), function ($id) {
+        return $id !== '';
+      }));
+    }
+    return [];
   }
 
   /**
