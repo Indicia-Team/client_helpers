@@ -100,6 +100,19 @@ class iform_scratchpad_list_edit implements PrebuiltFormInterface {
         'required' => FALSE,
       ],
       [
+        'name' => 'group_type_id',
+        'caption' => 'Group type (optional)',
+        'description' => 'Optionally select a group type to enable a group list editor on this form. The available groups will be filtered to this type.',
+        'type' => 'select',
+        'table' => 'termlists_term',
+        'captionField' => 'term',
+        'valueField' => 'id',
+        'extraParams' => [
+          'termlist_external_key' => 'indicia:group_types',
+        ],
+        'required' => FALSE,
+      ],
+      [
         'name' => 'duplicates',
         'caption' => 'Duplicate handling',
         'description' => 'Select how duplicates in the scratchpad list should be handled.',
@@ -163,9 +176,13 @@ class iform_scratchpad_list_edit implements PrebuiltFormInterface {
     $reloadPath = self::getReloadPath();
     $defaultList = '';
     $locationListEnabled = !empty($args['location_type_id']);
+    $groupListEnabled = !empty($args['group_type_id']);
     $defaultLocationIds = [];
     $defaultLocationLinkIds = [];
     $defaultLocationsForControl = [];
+    $defaultGroupIds = [];
+    $defaultGroupLinkIds = [];
+    $defaultGroupsForControl = [];
     $r = "<form method=\"post\" id=\"entry_form\" action=\"$reloadPath\" enctype=\"multipart/form-data\">\n";
     data_entry_helper::enable_validation('entry_form');
     if (!empty($args['scratchpad_type_id'])) {
@@ -278,6 +295,51 @@ class iform_scratchpad_list_edit implements PrebuiltFormInterface {
           }
         }
       }
+
+      if ($groupListEnabled) {
+        // Load any existing linked groups for this scratchpad list.
+        // Stored via the warehouse join table groups_scratchpad_lists.
+        $linkedGroups = data_entry_helper::get_population_data([
+          'table' => 'groups_scratchpad_lists',
+          'extraParams' => $auth['read'] + [
+            'scratchpad_list_id' => $_GET['scratchpad_list_id'],
+            'orderby' => 'id',
+          ],
+          'caching' => FALSE,
+        ]);
+        foreach ($linkedGroups as $link) {
+          if (!empty($link['id'])) {
+            $defaultGroupLinkIds[] = $link['id'];
+          }
+          if (!empty($link['group_id'])) {
+            $defaultGroupIds[] = $link['group_id'];
+          }
+        }
+
+        // Load group titles for display in the UI.
+        if (!empty($defaultGroupIds)) {
+          $groupsById = [];
+          foreach (array_values(array_unique($defaultGroupIds)) as $groupId) {
+            $groupRows = data_entry_helper::get_population_data([
+              'table' => 'group',
+              'extraParams' => $auth['read'] + ['id' => $groupId],
+              'caching' => FALSE,
+            ]);
+            if (!empty($groupRows[0])) {
+              $groupsById[$groupId] = $groupRows[0];
+            }
+          }
+          foreach ($defaultGroupIds as $groupId) {
+            if (!empty($groupsById[$groupId])) {
+              $defaultGroupsForControl[] = [
+                'fieldname' => 'metaFields:group_ids[]',
+                'caption' => htmlspecialchars($groupsById[$groupId]['title']),
+                'default' => $groupId,
+              ];
+            }
+          }
+        }
+      }
     }
     $r .= data_entry_helper::hidden_text([
       'fieldname' => 'website_id',
@@ -333,6 +395,13 @@ class iform_scratchpad_list_edit implements PrebuiltFormInterface {
         'default' => implode(';', $defaultLocationLinkIds),
       ]);
     }
+    if ($groupListEnabled) {
+      $r .= data_entry_helper::hidden_text([
+        'id' => 'hidden-group-link-ids-list',
+        'fieldname' => 'metaFields:group_link_ids',
+        'default' => implode(';', $defaultGroupLinkIds),
+      ]);
+    }
     $r .= data_entry_helper::hidden_text([
       'fieldname' => 'scratchpad_list:entity',
       'default' => $args['entity'],
@@ -355,6 +424,23 @@ class iform_scratchpad_list_edit implements PrebuiltFormInterface {
       ]);
       $r .= '</fieldset>';
     }
+
+    if ($groupListEnabled) {
+      $r .= '<fieldset id="scratchpad-group-fieldset"><legend>' . lang::get('Groups') . '</legend>';
+      $r .= '<p class="helpText">' . lang::get('Add one or more groups to link to this list.') . '</p>';
+      $r .= data_entry_helper::sub_list([
+        'id' => 'scratchpad-group-list',
+        'fieldname' => 'metaFields:group_ids[]',
+        'table' => 'group',
+        'captionField' => 'title',
+        'valueField' => 'id',
+        'extraParams' => $auth['read'] + [
+          'group_type_id' => $args['group_type_id'],
+        ],
+        'default' => $defaultGroupsForControl,
+      ]);
+      $r .= '</fieldset>';
+    }
     $r .= <<<HTML
       <button id="scratchpad-check" class="$indicia_templates[buttonHighlightedClass]" type="button">$checkLabel</button>
       <button id="scratchpad-remove-duplicates" class="$indicia_templates[buttonDefaultClass]" type="button" style="display: none">$removeDuplicatesLabel</button>
@@ -367,6 +453,7 @@ class iform_scratchpad_list_edit implements PrebuiltFormInterface {
     data_entry_helper::$indiciaData['scratchpadSettings'] = $options;
     data_entry_helper::$indiciaData['ajaxUrl'] = hostsite_get_url('iform/ajax/scratchpad_list_edit');
     data_entry_helper::$indiciaData['scratchpadLocationListEnabled'] = $locationListEnabled;
+    data_entry_helper::$indiciaData['scratchpadGroupListEnabled'] = $groupListEnabled;
     return $r;
   }
 
@@ -431,6 +518,53 @@ class iform_scratchpad_list_edit implements PrebuiltFormInterface {
           $submission['subModels'][] = [
             'fkId' => 'scratchpad_list_id',
             'model' => submission_builder::wrap(['location_id' => $locationId], 'locations_scratchpad_list'),
+          ];
+        }
+      }
+    }
+
+    // Optional linked groups list.
+    if (!empty($args['group_type_id'])) {
+      $groupIdsRaw = $values['metaFields:group_ids'] ?? [];
+      $groupLinkIdsRaw = trim($values['metaFields:group_link_ids'] ?? '');
+      $groupIds = [];
+      if (is_array($groupIdsRaw)) {
+        $groupIds = array_values(array_filter(array_map('trim', $groupIdsRaw), function ($id) {
+          return $id !== '';
+        }));
+      }
+      elseif (is_string($groupIdsRaw) && trim($groupIdsRaw) !== '') {
+        $groupIds = array_values(array_filter(array_map('trim', explode(';', trim($groupIdsRaw))), function ($id) {
+          return $id !== '';
+        }));
+      }
+
+      // If editing an existing scratchpad list, clear existing links then re-add.
+      if (!empty($groupLinkIdsRaw)) {
+        $linkIds = array_values(array_filter(array_map('trim', explode(';', $groupLinkIdsRaw)), function ($id) {
+          return $id !== '';
+        }));
+        if (!empty($linkIds)) {
+          if (!isset($submission['subModels'])) {
+            $submission['subModels'] = [];
+          }
+          foreach ($linkIds as $linkId) {
+            $submission['subModels'][] = [
+              'fkId' => 'scratchpad_list_id',
+              'model' => submission_builder::wrap(['id' => $linkId, 'deleted' => 't'], 'groups_scratchpad_lists'),
+            ];
+          }
+        }
+      }
+
+      if (!empty($groupIds)) {
+        if (!isset($submission['subModels'])) {
+          $submission['subModels'] = [];
+        }
+        foreach ($groupIds as $groupId) {
+          $submission['subModels'][] = [
+            'fkId' => 'scratchpad_list_id',
+            'model' => submission_builder::wrap(['group_id' => $groupId], 'groups_scratchpad_lists'),
           ];
         }
       }
