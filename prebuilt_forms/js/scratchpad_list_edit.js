@@ -107,7 +107,7 @@ jQuery(document).ready(function ($) {
     html.push('<legend>Entry metadata</legend>');
     html.push('<div class="scratchpad-entry-metadata-help">Enter additional information for each matched entry.</div>');
     html.push('<div class="scratchpad-entry-metadata-tablewrap">');
-    html.push('<table class="scratchpad-entry-metadata-table"><thead><tr>');
+    html.push('<table class="scratchpad-entry-metadata-table table"><thead><tr>');
     html.push('<th>Entry</th>');
     $.each(metadataProperties, function (i, prop) {
       html.push('<th>' + $('<div/>').text(prop.caption || prop.name).html() + '</th>');

@@ -24,6 +24,8 @@ a.non-unique-name.disallow-data-entry:after {
 }
 #scratchpad-input {
   min-height: 400px;
+  max-height: 400px;
+  overflow-y: auto;
   -moz-appearance: textfield-multiline;
   -webkit-appearance: textarea;
   border: 1px solid gray;
@@ -96,18 +98,6 @@ a.non-unique-name.disallow-data-entry:after {
 
 .scratchpad-entry-metadata-tablewrap {
   overflow-x: auto;
-}
-
-.scratchpad-entry-metadata-table {
-  border-collapse: collapse;
-  width: 100%;
-}
-
-.scratchpad-entry-metadata-table th,
-.scratchpad-entry-metadata-table td {
-  border: solid grey 1px;
-  padding: 4px;
-  vertical-align: top;
 }
 
 .scratchpad-entry-metadata-table td.entry-label {

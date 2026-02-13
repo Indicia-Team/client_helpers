@@ -244,6 +244,9 @@ class iform_scratchpad_list_edit implements PrebuiltFormInterface {
       ),
       'default' => $defaultList,
     ]);
+    // Keep the metadata editor close to the scratchpad input. The input can
+    // become very long, so the CSS constrains it to a scrollable region.
+    $r .= '<div id="scratchpad-entry-metadata" class="scratchpad-entry-metadata" style="display:none"></div>';
     $r .= data_entry_helper::hidden_text([
       'id' => 'hidden-entries-list',
       'fieldname' => 'metaFields:entries',
@@ -271,8 +274,6 @@ class iform_scratchpad_list_edit implements PrebuiltFormInterface {
       'fieldname' => 'scratchpad_list:entity',
       'default' => $args['entity'],
     ]);
-
-    $r .= '<div id="scratchpad-entry-metadata" class="scratchpad-entry-metadata" style="display:none"></div>';
 
     if ($locationListEnabled) {
       $r .= self::buildLocationFieldset($auth['read'], $locationTypeIds, $locationDefaults['defaultsForControl']);
