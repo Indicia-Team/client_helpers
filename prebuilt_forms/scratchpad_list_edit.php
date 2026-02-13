@@ -133,6 +133,13 @@ class iform_scratchpad_list_edit implements PrebuiltFormInterface {
         'type' => 'textarea',
         'required' => FALSE,
       ],
+      [
+        'name' => 'metadata_properties',
+        'caption' => 'Entry metadata properties',
+        'description' => 'Define metadata properties that can be stored against each list entry. One per line in the format machine_name|Caption|datatype|lookup_values. Datatype must be one of integer, float, text, lookup. For lookup, provide comma-separated lookup values as the 4th part. Example: stage|Life stage|lookup|egg,larva,pupa,adult',
+        'type' => 'textarea',
+        'required' => FALSE,
+      ],
     ];
   }
 
@@ -167,12 +174,14 @@ class iform_scratchpad_list_edit implements PrebuiltFormInterface {
     $cancelLabel = lang::get('Cancel');
     $reloadPath = self::getReloadPath();
     $defaultList = '';
+    $defaultEntryMetadata = [];
     $locationTypeIds = self::normaliseIdList($args['location_type_id'] ?? []);
     $groupTypeIds = self::normaliseIdList($args['group_type_id'] ?? []);
     $locationListEnabled = !empty($locationTypeIds);
     $groupListEnabled = !empty($groupTypeIds);
     $locationDefaults = ['linkIds' => [], 'defaultsForControl' => []];
     $groupDefaults = ['linkIds' => [], 'defaultsForControl' => []];
+    $metadataProperties = self::parseMetadataPropertiesConfig($args['metadata_properties'] ?? '');
     $r = "<form method=\"post\" id=\"entry_form\" action=\"$reloadPath\" enctype=\"multipart/form-data\">\n";
     data_entry_helper::enable_validation('entry_form');
     if (!empty($args['scratchpad_type_id'])) {
@@ -183,7 +192,7 @@ class iform_scratchpad_list_edit implements PrebuiltFormInterface {
     }
     $scratchpadListId = self::getScratchpadListIdFromRequest();
     if (!empty($scratchpadListId)) {
-      $defaultList = self::getDefaultListHtmlForScratchpadList($auth['read'], $scratchpadListId);
+      $defaultList = self::getDefaultListHtmlForScratchpadList($auth['read'], $scratchpadListId, $defaultEntryMetadata);
       $r .= self::buildScratchpadListIdHidden($scratchpadListId);
 
       if ($locationListEnabled) {
@@ -239,6 +248,10 @@ class iform_scratchpad_list_edit implements PrebuiltFormInterface {
       'id' => 'hidden-entries-list',
       'fieldname' => 'metaFields:entries',
     ]);
+    $r .= data_entry_helper::hidden_text([
+      'id' => 'hidden-entries-metadata',
+      'fieldname' => 'metaFields:entries_metadata',
+    ]);
 
     if ($locationListEnabled) {
       $r .= data_entry_helper::hidden_text([
@@ -258,6 +271,8 @@ class iform_scratchpad_list_edit implements PrebuiltFormInterface {
       'fieldname' => 'scratchpad_list:entity',
       'default' => $args['entity'],
     ]);
+
+    $r .= '<div id="scratchpad-entry-metadata" class="scratchpad-entry-metadata" style="display:none"></div>';
 
     if ($locationListEnabled) {
       $r .= self::buildLocationFieldset($auth['read'], $locationTypeIds, $locationDefaults['defaultsForControl']);
@@ -279,6 +294,8 @@ class iform_scratchpad_list_edit implements PrebuiltFormInterface {
     data_entry_helper::$indiciaData['ajaxUrl'] = hostsite_get_url('iform/ajax/scratchpad_list_edit');
     data_entry_helper::$indiciaData['scratchpadLocationListEnabled'] = $locationListEnabled;
     data_entry_helper::$indiciaData['scratchpadGroupListEnabled'] = $groupListEnabled;
+    data_entry_helper::$indiciaData['scratchpadMetadataProperties'] = $metadataProperties;
+    data_entry_helper::$indiciaData['scratchpadEntryMetadata'] = $defaultEntryMetadata;
     return $r;
   }
 
@@ -296,11 +313,11 @@ class iform_scratchpad_list_edit implements PrebuiltFormInterface {
   public static function get_submission($values, $args) {
     $structure = [
       'model' => 'scratchpad_list',
-      'metaFields' => ['entries'],
+      'metaFields' => ['entries', 'entries_metadata'],
     ];
 
     $submission = submission_builder::build_submission($values, $structure);
-
+    hostsite_show_message(var_export($submission, TRUE));
     // Optional linked locations list.
     $locationTypeIds = self::normaliseIdList($args['location_type_id'] ?? []);
     if (!empty($locationTypeIds)) {
@@ -385,16 +402,20 @@ class iform_scratchpad_list_edit implements PrebuiltFormInterface {
    * Loads an existing scratchpad list and returns the default HTML for the UI.
    *
    * Also populates data_entry_helper::$entity_to_load with title/description.
+   * Optionally loads the per-entry metadata JSON.
    *
    * @param array $readAuth
    *   Read authentication token array.
    * @param int $scratchpadListId
    *   Scratchpad list ID.
+   * @param array $entryMetadataById
+   *   Output array keyed by entry_id containing decoded metadata arrays.
    *
    * @return string
    *   Default HTML to populate the scratchpad input.
    */
-  protected static function getDefaultListHtmlForScratchpadList(array $readAuth, int $scratchpadListId): string {
+  protected static function getDefaultListHtmlForScratchpadList(array $readAuth, int $scratchpadListId, array &$entryMetadataById = []): string {
+    $entryMetadataById = [];
     $defaultList = '';
 
     $list = data_entry_helper::get_population_data([
@@ -415,8 +436,19 @@ class iform_scratchpad_list_edit implements PrebuiltFormInterface {
     $batchIds = [];
     $taxa = [];
     foreach ($entries as $entry) {
-      $batchIds[] = $entry['entry_id'];
-      $sortedTaxa["ttlId:$entry[entry_id]"] = NULL;
+      if (!empty($entry['entry_id'])) {
+        $batchIds[] = $entry['entry_id'];
+        $sortedTaxa["ttlId:$entry[entry_id]"] = NULL;
+        if (isset($entry['metadata']) && $entry['metadata'] !== '' && $entry['metadata'] !== NULL) {
+          $decoded = json_decode($entry['metadata'], TRUE);
+          if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+            $entryMetadataById[] = [
+              'entry_id' => (int) $entry['entry_id'],
+              'metadata' => $decoded,
+            ];
+          }
+        }
+      }
       // Grab the taxon list in batches of 50.
       if (count($batchIds) > 50) {
         $taxa = array_merge($taxa, data_entry_helper::get_population_data([
@@ -461,6 +493,61 @@ class iform_scratchpad_list_edit implements PrebuiltFormInterface {
     }
 
     return $defaultList;
+  }
+
+  /**
+   * Parses the metadata property configuration.
+   *
+   * Each non-empty line should be:
+   * machine_name|Caption|datatype|lookup_values.
+   *
+   * @param string $raw
+   *   Raw textarea contents.
+   *
+   * @return array
+   *   Array of property definitions with keys: name, caption, datatype,
+   *   lookupValues.
+   */
+  protected static function parseMetadataPropertiesConfig(string $raw): array {
+    $raw = trim($raw);
+    if ($raw === '') {
+      return [];
+    }
+    $lines = preg_split("/\r\n|\r|\n/", $raw);
+    $props = [];
+    foreach ($lines as $line) {
+      $line = trim($line);
+      if ($line === '' || str_starts_with($line, '#')) {
+        continue;
+      }
+      $parts = array_map('trim', explode('|', $line));
+      $name = $parts[0] ?? '';
+      $caption = $parts[1] ?? '';
+      $datatype = strtolower($parts[2] ?? 'text');
+      $lookupRaw = $parts[3] ?? '';
+      if ($name === '' || $caption === '') {
+        continue;
+      }
+      if (!preg_match('/^[a-z][a-z0-9_]*$/', $name)) {
+        continue;
+      }
+      if (!in_array($datatype, ['integer', 'float', 'text', 'lookup'], TRUE)) {
+        continue;
+      }
+      $lookupValues = [];
+      if ($datatype === 'lookup' && $lookupRaw !== '') {
+        $lookupValues = array_values(array_filter(array_map('trim', explode(',', $lookupRaw)), function ($v) {
+          return $v !== '';
+        }));
+      }
+      $props[] = [
+        'name' => $name,
+        'caption' => $caption,
+        'datatype' => $datatype,
+        'lookupValues' => $lookupValues,
+      ];
+    }
+    return $props;
   }
 
   /**

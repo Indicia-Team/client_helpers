@@ -4,6 +4,198 @@ jQuery(document).ready(function ($) {
   var inputClean = [];
   var totalCount = 0;
 
+  var metadataProperties = (typeof indiciaData !== 'undefined' && indiciaData.scratchpadMetadataProperties) ? indiciaData.scratchpadMetadataProperties : [];
+
+  function normaliseEntryMetadata(raw) {
+    var map = {};
+    if (!raw) {
+      return map;
+    }
+    // Prefer list-of-objects format: [{entry_id: 123, metadata: {...}}, ...]
+    if ($.isArray(raw)) {
+      $.each(raw, function () {
+        if (this && typeof this.entry_id !== 'undefined') {
+          map[String(this.entry_id)] = (this.metadata && typeof this.metadata === 'object') ? this.metadata : {};
+        }
+      });
+      return map;
+    }
+    // Fallback to object/map format.
+    if (typeof raw === 'object') {
+      return raw;
+    }
+    return map;
+  }
+
+  var entryMetadataById = normaliseEntryMetadata((typeof indiciaData !== 'undefined') ? indiciaData.scratchpadEntryMetadata : null);
+
+  function hasMetadataProperties() {
+    return $.isArray(metadataProperties) && metadataProperties.length > 0;
+  }
+
+  function safeId(id) {
+    return String(id || '').replace(/[^a-zA-Z0-9_\-:]/g, '_');
+  }
+
+  function getMatchedEntries() {
+    var entries = [];
+    $.each($('span.matched').not(':empty'), function () {
+      var $span = $(this);
+      var entryId = $span.attr('data-id');
+      if (entryId) {
+        entries.push({
+          id: String(entryId),
+          label: $.trim($span.text())
+        });
+      }
+    });
+    return entries;
+  }
+
+  function coerceValue(datatype, raw) {
+    var val = raw;
+    if (val === null || typeof val === 'undefined') {
+      return null;
+    }
+    if (typeof val === 'string') {
+      val = $.trim(val);
+    }
+    if (val === '') {
+      return null;
+    }
+    if (datatype === 'integer') {
+      if (!String(val).match(/^-?\d+$/)) {
+        return null;
+      }
+      return parseInt(val, 10);
+    }
+    if (datatype === 'float') {
+      var f = parseFloat(val);
+      return isNaN(f) ? null : f;
+    }
+    // text / lookup
+    return String(val);
+  }
+
+  function ensureEntryMetadataObject(entryId) {
+    if (!entryMetadataById || typeof entryMetadataById !== 'object') {
+      entryMetadataById = {};
+    }
+    if (!entryMetadataById[entryId] || typeof entryMetadataById[entryId] !== 'object') {
+      entryMetadataById[entryId] = {};
+    }
+    return entryMetadataById[entryId];
+  }
+
+  function buildMetadataEditor() {
+    var $container = $('#scratchpad-entry-metadata');
+    if (!hasMetadataProperties() || !$container.length) {
+      if ($container.length) {
+        $container.hide().empty();
+      }
+      return;
+    }
+
+    var matched = getMatchedEntries();
+    if (matched.length === 0) {
+      $container.hide().empty();
+      return;
+    }
+
+    var html = [];
+    html.push('<fieldset class="scratchpad-entry-metadata-fieldset">');
+    html.push('<legend>Entry metadata</legend>');
+    html.push('<div class="scratchpad-entry-metadata-help">Enter additional information for each matched entry.</div>');
+    html.push('<div class="scratchpad-entry-metadata-tablewrap">');
+    html.push('<table class="scratchpad-entry-metadata-table"><thead><tr>');
+    html.push('<th>Entry</th>');
+    $.each(metadataProperties, function (i, prop) {
+      html.push('<th>' + $('<div/>').text(prop.caption || prop.name).html() + '</th>');
+    });
+    html.push('</tr></thead><tbody>');
+
+    $.each(matched, function (idx, row) {
+      var entryId = row.id;
+      var entryLabel = row.label || entryId;
+      var current = ensureEntryMetadataObject(entryId);
+      html.push('<tr data-entry-id="' + $('<div/>').text(entryId).html() + '">');
+      html.push('<td class="entry-label">' + $('<div/>').text(entryLabel).html() + '</td>');
+      $.each(metadataProperties, function (i, prop) {
+        var propName = prop.name;
+        var datatype = prop.datatype || 'text';
+        var currentVal = (current && typeof current[propName] !== 'undefined' && current[propName] !== null) ? current[propName] : '';
+        var controlId = 'spmd-' + safeId(entryId) + '-' + safeId(propName);
+        html.push('<td>');
+        if (datatype === 'lookup') {
+          html.push('<select id="' + controlId + '" class="scratchpad-entry-meta" data-entry-id="' + $('<div/>').text(entryId).html() + '" data-prop-name="' + $('<div/>').text(propName).html() + '" data-datatype="lookup">');
+          html.push('<option value=""></option>');
+          var options = prop.lookupValues || [];
+          $.each(options, function (j, opt) {
+            var selected = (String(currentVal) === String(opt)) ? ' selected="selected"' : '';
+            html.push('<option value="' + $('<div/>').text(opt).html() + '"' + selected + '>' + $('<div/>').text(opt).html() + '</option>');
+          });
+          html.push('</select>');
+        } else {
+          var type = 'text';
+          var step = '';
+          if (datatype === 'integer') {
+            type = 'number';
+            step = ' step="1"';
+          } else if (datatype === 'float') {
+            type = 'number';
+            step = ' step="any"';
+          }
+          html.push('<input id="' + controlId + '" class="scratchpad-entry-meta" type="' + type + '"' + step +
+            ' data-entry-id="' + $('<div/>').text(entryId).html() + '" data-prop-name="' + $('<div/>').text(propName).html() + '" data-datatype="' + $('<div/>').text(datatype).html() + '" value="' + $('<div/>').text(String(currentVal)).html() + '">');
+        }
+        html.push('</td>');
+      });
+      html.push('</tr>');
+    });
+
+    html.push('</tbody></table></div></fieldset>');
+    $container.html(html.join('')).show();
+  }
+
+  indiciaFns.on('change input', '.scratchpad-entry-meta', {}, function (e) {
+    var $ctrl = $(e.currentTarget);
+    var entryId = String($ctrl.attr('data-entry-id') || '');
+    var propName = String($ctrl.attr('data-prop-name') || '');
+    var datatype = String($ctrl.attr('data-datatype') || 'text');
+    if (!entryId || !propName) {
+      return;
+    }
+    var current = ensureEntryMetadataObject(entryId);
+    var coerced = coerceValue(datatype, $ctrl.val());
+    if (coerced === null) {
+      delete current[propName];
+    } else {
+      current[propName] = coerced;
+    }
+  });
+
+  function buildEntriesMetadataJson() {
+    var out = {};
+    var matched = getMatchedEntries();
+    $.each(matched, function (idx, row) {
+      var entryId = row.id;
+      var current = entryMetadataById && entryMetadataById[entryId] ? entryMetadataById[entryId] : null;
+      if (current && typeof current === 'object') {
+        var cleaned = {};
+        $.each(metadataProperties, function (i, prop) {
+          var propName = prop.name;
+          if (typeof current[propName] !== 'undefined' && current[propName] !== null && String(current[propName]) !== '') {
+            cleaned[propName] = current[propName];
+          }
+        });
+        if (Object.keys(cleaned).length) {
+          out[entryId] = cleaned;
+        }
+      }
+    });
+    return out;
+  }
+
   /**
    * Simplifies an input string for matching.
    *
@@ -302,6 +494,7 @@ jQuery(document).ready(function ($) {
       recalculateStats();
       $('#scratchpad-stats')[0].scrollIntoView();
       updateSaveButtonState();
+      buildMetadataEditor();
     }
     $('#scratchpad-check').removeClass('checking');
   }
@@ -391,6 +584,7 @@ jQuery(document).ready(function ($) {
     $('#scratchpad-save').removeAttr('disabled');
     recalculateStats();
     updateSaveButtonState();
+    buildMetadataEditor();
   });
 
   $('#scratchpad-check').on('click', function () {
@@ -405,6 +599,7 @@ jQuery(document).ready(function ($) {
     $('[data-state="duplicate"]').remove();
     recalculateStats();
     updateSaveButtonState();
+    buildMetadataEditor();
   });
 
   /**
@@ -416,6 +611,17 @@ jQuery(document).ready(function ($) {
       entries.push($(this).attr('data-id'));
     });
     $('#hidden-entries-list').val(entries.join(';'));
+
+    if (hasMetadataProperties()) {
+      try {
+        $('#hidden-entries-metadata').val(JSON.stringify(buildEntriesMetadataJson()));
+      } catch (ex) {
+        // If serialization fails for any reason, still allow the list to be saved.
+        $('#hidden-entries-metadata').val('{}');
+      }
+    } else {
+      $('#hidden-entries-metadata').val('{}');
+    }
   });
 
   $('#scratchpad-cancel').on('click', function () {
@@ -424,4 +630,5 @@ jQuery(document).ready(function ($) {
 
   recalculateStats();
   updateSaveButtonState();
+  buildMetadataEditor();
 });
