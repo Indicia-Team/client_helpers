@@ -317,7 +317,6 @@ class iform_scratchpad_list_edit implements PrebuiltFormInterface {
     ];
 
     $submission = submission_builder::build_submission($values, $structure);
-    hostsite_show_message(var_export($submission, TRUE));
     // Optional linked locations list.
     $locationTypeIds = self::normaliseIdList($args['location_type_id'] ?? []);
     if (!empty($locationTypeIds)) {
