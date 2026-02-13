@@ -24,6 +24,8 @@ a.non-unique-name.disallow-data-entry:after {
 }
 #scratchpad-input {
   min-height: 400px;
+  max-height: 400px;
+  overflow-y: auto;
   -moz-appearance: textfield-multiline;
   -webkit-appearance: textarea;
   border: 1px solid gray;
@@ -83,6 +85,28 @@ a.non-unique-name.disallow-data-entry:after {
   border-radius: 4px;
   font-size: 0.8em;
   font-weight: bold;
+}
+
+.scratchpad-entry-metadata-fieldset {
+  margin-top: 1em;
+  padding: 0.5em;
+}
+
+.scratchpad-entry-metadata-help {
+  margin: 0.5em 0;
+}
+
+.scratchpad-entry-metadata-tablewrap {
+  overflow-x: auto;
+}
+
+.scratchpad-entry-metadata-table td.entry-label {
+  white-space: nowrap;
+}
+
+.scratchpad-entry-meta {
+  width: 100%;
+  box-sizing: border-box;
 }
 button.checking {
   padding-right: 24px;
