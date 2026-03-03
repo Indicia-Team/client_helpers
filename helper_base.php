@@ -360,63 +360,92 @@ class helper_base {
    */
 
   /**
-   * @var boolean Flag set to true if returning content for an AJAX request. This allows the javascript to be returned
-   * direct rather than embedding in document.ready and window.onload handlers.
+   * Flag set to true if returning content for an AJAX request.
+   *
+   * This allows the JavaScript to be returned directly rather than embedding
+   * in document.ready and window.onload handlers.
+   *
+   * @var bool
    */
   public static $is_ajax = FALSE;
 
   /**
-   * @var integer Website ID, stored here to assist with caching.
+   * Website ID, stored here to assist with caching.
+   *
+   * @var int|null
    */
   public static $website_id = NULL;
 
   /**
-   * @var Array List of resources that have been identified as required by the
-   * controls used. This defines the JavaScript and stylesheets that must be
-   * added to the page. Each entry is an array containing stylesheets and
-   * javascript sub-arrays. This has public access so the Drupal module can
-   * perform Drupal specific resource output.
+   * List of resources that have been identified as required by the controls.
+   *
+   * This defines the JavaScript and stylesheets that must be added to the
+   * page. Each entry is an array containing stylesheets and JavaScript
+   * sub-arrays. This has public access so the Drupal module can perform
+   * Drupal-specific resource output.
+   *
+   * @var array
    */
   public static $required_resources = [];
 
   /**
-   * @var Array List of all available resources known. Each resource is named, and contains a sub array of
-   * deps (dependencies), stylesheets and javascripts.
+   * List of all available resources known.
+   *
+   * Each resource is named and contains a sub-array of dependencies,
+   * stylesheets, and JavaScripts.
+   *
+   * @var array|null
    */
   public static $resource_list = NULL;
 
   /**
-   * Any control that wants to access the read authorisation tokens from JavaScript can set them here. They will then
-   * be available from indiciaData.auth.read.
-   * @var Array
+   * Read authorisation tokens made available to JavaScript controls.
+   *
+   * Any control that wants to access the read authorisation tokens from
+   * JavaScript can set them here. They will then be available from
+   * indiciaData.auth.read.
+   *
+   * @var array|null
    */
   public static $js_read_tokens = NULL;
 
   /**
-   * @var string Path to Indicia JavaScript folder. If not specified, then it is
-   * calculated from the Warehouse $base_url.
-   * This path should be a full path on the server (starting with '/' exluding
+   * Path to Indicia JavaScript folder.
+   *
+   * If not specified, then it is calculated from the Warehouse $base_url.
+   * This path should be a full path on the server (starting with '/' excluding
    * the domain and ending with '/').
+   *
+   * @var string|null
    */
   public static $js_path = NULL;
 
   /**
-   * @var string Path to Indicia CSS folder. If not specified, then it is calculated from the Warehouse $base_url.
-   * This path should be a full path on the server (starting with '/' exluding the domain).
+   * Path to Indicia CSS folder.
+   *
+   * If not specified, then it is calculated from the Warehouse $base_url.
+   * This path should be a full path on the server (starting with '/' excluding
+   * the domain).
+   *
+   * @var string|null
    */
   public static $css_path = NULL;
 
   /**
    * Path to Indicia Images folder.
    *
-   * @var string
+   * If not specified, then it is calculated from the Warehouse $base_url.
+   * This path should be a full path on the server (starting with '/' excluding
+   * the domain).
+   *
+   * @var string|null
    */
   public static $images_path = NULL;
 
   /**
    * Path to Indicia cache folder. Defaults to client_helpers/cache.
    *
-   * @var string
+   * @var string|false
    */
   public static $cache_folder = FALSE;
 
@@ -2051,10 +2080,6 @@ HTML;
    *   Single item array containing the population_call param we are working on
    *   and its value replacement tag. The value will be modified if a matching
    *   report parameter is available.
-   *
-   * @return array
-   *   Single item array containing the population_call param we are working on
-   *   and its value after replacement.
    */
   private static function replacePopulationCallParamValueTags(array $extraParams, array &$extraItem) {
     if (preg_match('/^#(?P<param>.*)#$/', $extraItem[1], $matches)
@@ -3526,7 +3551,7 @@ if (typeof validator!=='undefined') {
    * @param array $cacheOpts
    *   Options array which defines the cache "key", i.e. the unique set of
    *   options being cached.
-   * @param int $expireEarlyIfLoggedIn
+   * @param int|null $expireEarlyIfLoggedIn
    *   Number of seconds earlier a cached item is treated as expired if the
    *   user is logged in. This is useful for reducing the load on the server on
    *   pages that are hit by a high volume of anonymous users where you want
@@ -3538,7 +3563,7 @@ if (typeof validator!=='undefined') {
    * @return mixed
    *   String read from the cache, or false if not read.
    */
-  public static function cacheGet(array $cacheOpts, int $expireEarlyIfLoggedIn = NULL) {
+  public static function cacheGet(array $cacheOpts, ?int $expireEarlyIfLoggedIn = NULL) {
     $key = self::getCacheKey($cacheOpts);
     $r = self::getCachedResponse($key, $cacheOpts, $expireEarlyIfLoggedIn);
     return $r === FALSE ? $r : $r['output'];
@@ -3552,10 +3577,10 @@ if (typeof validator!=='undefined') {
    *   options being cached.
    * @param string $toCache
    *   String data to cache.
-   * @param integer $cacheTimeout
+   * @param int $cacheTimeout
    *   Timeout in seconds, if overriding the default cache timeout.
    */
-  public static function cacheSet($cacheOpts, $toCache, $cacheTimeout = 0) {
+  public static function cacheSet($cacheOpts, $toCache, int $cacheTimeout = 0) {
     if (!$cacheTimeout) {
       $cacheTimeout = self::getCacheTimeOut([]);
     }
@@ -3796,7 +3821,7 @@ if (typeof validator!=='undefined') {
    * @param array $cacheOpts
    *   Options array which defines the cache "key", i.e. the unique set of
    *   options being cached.
-   * @param int $expireEarlyIfLoggedIn
+   * @param int|null $expireEarlyIfLoggedIn
    *   Number of seconds earlier a cached item is treated as expired if the
    *   user is logged in. This is useful for reducing the load on the server on
    *   pages that are hit by a high volume of anonymous users where you want
@@ -3809,7 +3834,7 @@ if (typeof validator!=='undefined') {
    *   Equivalent of call to http_post, else FALSE if data not read from the
    *   cache.
    */
-  private static function getCachedResponse($key, array $cacheOpts, int $expireEarlyIfLoggedIn = NULL) {
+  private static function getCachedResponse($key, array $cacheOpts, ?int $expireEarlyIfLoggedIn = NULL) {
     if (self::$delegate_caching_to_hostsite && function_exists('hostsite_cache_get')) {
       return hostsite_cache_get($key, $cacheOpts, $expireEarlyIfLoggedIn);
     }
@@ -3966,7 +3991,7 @@ if (typeof validator!=='undefined') {
           continue;
         }
         $lastModified = filemtime($folder . $filename);
-        $files[] = array($folder . $filename, $lastModified);
+        $files[] = [$folder . $filename, $lastModified];
       }
     }
     // Sort the file array by date, oldest first.
@@ -3987,19 +4012,24 @@ if (typeof validator!=='undefined') {
   }
 
   /**
-   * A custom PHP sorting function which uses the 2nd element in the compared array to
-   * sort by. The sorted array normally contains a list of files, with the first element
-   * of each array entry being the file path and the second the file date stamp.
-   * @param int $a Datestamp of the first file to compare.
-   * @param int $b Datestamp of the second file to compare.
+   * Date sorting comparison function.
+   *
+   * A custom PHP sorting function which uses the 2nd element in the compared
+   * array to sort by. The sorted array normally contains a list of files, with
+   * the first element of each array entry being the file path and the second
+   * the file date stamp.
+   *
+   * @param array $a
+   *   First file to compare.
+   * @param array $b
+   *   Second file to compare.
    */
-  private static function DateCmp($a, $b)
-  {
-    if ($a[1]<$b[1])
+  private static function DateCmp($a, $b) {
+    if ($a[1] < $b[1])
       $r = -1;
-    else if ($a[1]>$b[1])
+    else if ($a[1] > $b[1])
       $r = 1;
-    else $r=0;
+    else $r = 0;
     return $r;
   }
 
