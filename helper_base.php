@@ -1209,29 +1209,36 @@ class helper_base {
         'jqplot' => [
           'stylesheets' => [self::$js_path . 'jqplot/jquery.jqplot.min.css'],
           'javascript' => [
+            // Add compatibility shim for jQuery 4.
+            self::$js_path . 'jquery4-shim.js',
             self::$js_path . 'jqplot/jquery.jqplot.min.js',
           ],
         ],
         'jqplot_bar' => [
+          'deps' => ['jqplot'],
           'javascript' => [
             self::$js_path . 'jqplot/plugins/jqplot.barRenderer.js',
           ],
         ],
         'jqplot_pie' => [
+          'deps' => ['jqplot'],
           'javascript' => [
             self::$js_path . 'jqplot/plugins/jqplot.pieRenderer.js',
           ],
         ],
         'jqplot_category_axis_renderer' => [
+          'deps' => ['jqplot'],
           'javascript' => [self::$js_path . 'jqplot/plugins/jqplot.categoryAxisRenderer.js'],
         ],
         'jqplot_canvas_axis_label_renderer' => [
+          'deps' => ['jqplot'],
           'javascript' => [
             self::$js_path . 'jqplot/plugins/jqplot.canvasTextRenderer.js',
             self::$js_path . 'jqplot/plugins/jqplot.canvasAxisLabelRenderer.js',
           ],
         ],
         'jqplot_trendline' => [
+          'deps' => ['jqplot'],
           'javascript' => [
             self::$js_path . 'jqplot/plugins/jqplot.trendline.js',
           ],

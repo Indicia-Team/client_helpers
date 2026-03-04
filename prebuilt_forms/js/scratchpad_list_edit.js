@@ -12,7 +12,7 @@ jQuery(document).ready(function ($) {
       return map;
     }
     // Prefer list-of-objects format: [{entry_id: 123, metadata: {...}}, ...]
-    if ($.isArray(raw)) {
+    if (Array.isArray(raw)) {
       $.each(raw, function () {
         if (this && typeof this.entry_id !== 'undefined') {
           map[String(this.entry_id)] = (this.metadata && typeof this.metadata === 'object') ? this.metadata : {};
@@ -30,7 +30,7 @@ jQuery(document).ready(function ($) {
   var entryMetadataById = normaliseEntryMetadata((typeof indiciaData !== 'undefined') ? indiciaData.scratchpadEntryMetadata : null);
 
   function hasMetadataProperties() {
-    return $.isArray(metadataProperties) && metadataProperties.length > 0;
+    return Array.isArray(metadataProperties) && metadataProperties.length > 0;
   }
 
   function safeId(id) {
