@@ -97,7 +97,7 @@ class extension_dna_occurrences {
    *   Control options, including which fields to include.
    * @param array $mandatoryFields
    *   List of mandatory fields - other fields will be output in a collapsible
-   *   Advanced section.
+   *   Optional section.
    *
    * @return string
    *   Control HTML.
@@ -107,9 +107,8 @@ class extension_dna_occurrences {
       'fieldname' => 'dna_occurrence:id',
       'default' => data_entry_helper::$entity_to_load['dna_occurrence:id'] ?? NULL,
     ]);
-    hostsite_show_message('fields: ' . json_encode($options['fields']), 'error');
     $mainFieldsHtml .= '';
-    $advancedFieldsHtml = '';
+    $optionalFieldsHtml = '';
 
     foreach ($options['fields'] as $field) {
       self::checkFieldIsValid($field);
@@ -238,31 +237,29 @@ class extension_dna_occurrences {
         ]);
       }
       if (in_array($field, $mandatoryFields)) {
-        hostsite_show_message($field . ' found in ' . json_encode($mandatoryFields), 'error');
         $mainFieldsHtml .= $thisControl;
       }
       else {
-        hostsite_show_message($field . ' not in ' . json_encode($mandatoryFields), 'error');
-        $advancedFieldsHtml .= $thisControl;
+        $optionalFieldsHtml .= $thisControl;
       }
     }
     $r = $mainFieldsHtml;
-    if (!empty($advancedFieldsHtml)) {
+    if (!empty($optionalFieldsHtml)) {
       $lang = [
-        'Advanced DNA fields' => lang::get('Advanced DNA fields'),
-        'hideAdvancedFields' => lang::get('Hide advanced fields'),
-        'showAdvancedFields' => lang::get('Show advanced fields'),
+        'Optional DNA fields' => lang::get('Optional DNA fields'),
+        'hideOptionalFields' => lang::get('Hide optional fields'),
+        'showOptionalFields' => lang::get('Show optional fields'),
       ];
       global $indicia_templates;
       $r .= <<<HTML
         <div>
-          <button type="button" class="toggle-advanced-dna-fields $indicia_templates[buttonDefaultClass]"
-            data-lang-show="{$lang['showAdvancedFields']}"
-            data-lang-hide="{$lang['hideAdvancedFields']}">{$lang['showAdvancedFields']}</button>
-          <div class="panel panel-info advanced-dna-fields" style="display:none;">
-            <div class="panel-heading">{$lang['Advanced DNA fields']}</div>
+          <button type="button" class="toggle-optional-dna-fields $indicia_templates[buttonDefaultClass]"
+            data-lang-show="{$lang['showOptionalFields']}"
+            data-lang-hide="{$lang['hideOptionalFields']}">{$lang['showOptionalFields']}</button>
+          <div class="panel panel-info optional-dna-fields" style="display:none;">
+            <div class="panel-heading">{$lang['Optional DNA fields']}</div>
             <div class="panel-body">
-              $advancedFieldsHtml
+              $optionalFieldsHtml
             </div>
           </div>
         </div>

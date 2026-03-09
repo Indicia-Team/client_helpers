@@ -6,10 +6,10 @@
 (function ($) {
   $(document).ready(function () {
 
-    // Show/hide the advanced fields when the toggle button is clicked.
-    $('.toggle-advanced-dna-fields').on('click', function() {
-      $(this).siblings('.advanced-dna-fields').toggle();
-      $(this).text($(this).siblings('.advanced-dna-fields:visible').length ? indiciaData.lang.hideAdvancedFields : indiciaData.lang.showAdvancedFields);
+    // Show/hide the optional fields when the toggle button is clicked.
+    $('.toggle-optional-dna-fields').on('click', function() {
+      $(this).siblings('.optional-dna-fields').toggle();
+      $(this).text($(this).siblings('.optional-dna-fields:visible').length ? indiciaData.lang.hideOptionalFields : indiciaData.lang.showOptionalFields);
     });
 
   });
