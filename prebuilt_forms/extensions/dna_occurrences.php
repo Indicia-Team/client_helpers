@@ -82,6 +82,15 @@ class extension_dna_occurrences {
     return self::buildControls($options, $mandatoryFields);
   }
 
+  /**
+   * Check mandatory fields present in the configured list of fields.
+   *
+   * @param array $fields
+   *   Fields listed in the extension configuration.
+   * @param array $mandatoryFields
+   *   List of mandatory fields - if any of these are missing from $fields, an
+   *   Exception will be thrown.
+   */
   private static function checkMandatoryFieldsArePresent(array $fields, array $mandatoryFields) {
     foreach ($mandatoryFields as $mandatoryField) {
       if (!in_array($mandatoryField, $fields)) {
