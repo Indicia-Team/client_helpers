@@ -86,7 +86,7 @@ function iform_map_get_map_parameters() {
       'group' => 'Initial Map View',
       'required' => FALSE,
     ),
-    array(
+    [
       'name' => 'preset_layers',
       'caption' => 'Preset Base Layers',
       'description' => 'Select the preset base layers that are available for the map. When using Google map layers, please ensure you adhere to the '.
@@ -95,7 +95,7 @@ function iform_map_get_map_parameters() {
           'The Microsoft Virtual Earth layer is now mapped to the Bing Aerial layer so is provided for backwards compatibility only. You can '.
           'sort the layers into the order you require by dragging and dropping the layer labels.',
       'type' => 'list',
-      'options' => array(
+      'options' => [
         'google_physical' => 'Google Physical',
         'google_streets' => 'Google Streets',
         'google_hybrid' => 'Google Hybrid',
@@ -112,11 +112,12 @@ function iform_map_get_map_parameters() {
         'os_outdoor' => 'OS Outdoor',
         'os_road' => 'OS Road',
         'os_light' => 'OS Light',
-      ),
+        'esri_world_imagery' => 'ESRI World Imagery',
+      ],
       'sortable' => TRUE,
       'group' => 'Base Map Layers',
-      'required' => FALSE
-    ),
+      'required' => FALSE,
+    ],
     array(
       'name' => 'wms_base_title',
       'caption' => 'Additional WMS Base Layer Caption',

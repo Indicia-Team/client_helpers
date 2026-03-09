@@ -2420,8 +2420,9 @@ JS;
    *   Options array with the following possibilities:
    *   * presetLayers - Array of preset layers to include. Options are
    *     'google_physical', 'google_streets', 'google_hybrid',
-   *     'google_satellite', 'openlayers_wms', 'bing_aerial', 'bing_hybrid,
-   *     'bing_shaded', 'bing_os', 'osm' (for OpenStreetMap).
+   *     'google_satellite', 'openlayers_wms', 'bing_aerial', 'bing_hybrid',
+   *     'bing_shaded', 'bing_os', 'osm' (for OpenStreetMap), 'os_outdoor',
+   *     'os_road', 'os_light', 'os_leisure', 'esri_world_imagery'.
    *   * edit - True or false to include the edit controls for picking spatial
    *     references.
    *   * locate - True or false to include the geolocate controls.
