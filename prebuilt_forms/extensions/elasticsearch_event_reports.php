@@ -622,7 +622,7 @@ HTML;
             'rough_species_count' => [
               'cardinality' => [
                 'field' => 'taxon.species_taxon_id',
-                'precision_threshold' => $options['minDocCount'] * 50,
+                'precision_threshold' => 1000,
               ],
             ],
             'species_count' => [
