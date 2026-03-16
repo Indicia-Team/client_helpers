@@ -45,7 +45,7 @@ class extension_dna_occurrences {
       ]);
       if (count($dnaOccurrences) === 1) {
         foreach ($dnaOccurrences[0] as $field => $value) {
-          if ($field === 'associated_sequences' && !empty($value)) {
+          if (in_array($field, ['associated_sequences', 'preparations']) && !empty($value)) {
             $value = implode("\n", json_decode($value));
           }
           data_entry_helper::$entity_to_load["dna_occurrence:$field"] = $value;
@@ -57,10 +57,12 @@ class extension_dna_occurrences {
       }
     }
     $options['fields'] = $options['fields'] ?? [
-      'dna_occurrence:associated_sequences',
+      'occurrence:basis_of_record_id',
       'dna_occurrence:dna_sequence',
       'dna_occurrence:target_gene',
       'dna_occurrence:pcr_primer_reference',
+      'dna_occurrence:associated_sequences',
+      'dna_occurrence:preparations',
       'dna_occurrence:env_medium',
       'dna_occurrence:env_broad_scale',
       'dna_occurrence:otu_db',
@@ -74,12 +76,13 @@ class extension_dna_occurrences {
       'dna_occurrence:pcr_primer_reverse',
     ];
     $mandatoryFields = [
+      'occurrence:basis_of_record_id',
       'dna_occurrence:dna_sequence',
       'dna_occurrence:target_gene',
       'dna_occurrence:pcr_primer_reference',
     ];
     self::checkMandatoryFieldsArePresent($options['fields'], $mandatoryFields);
-    return self::buildControls($options, $mandatoryFields);
+    return self::buildControls($auth, $options, $mandatoryFields);
   }
 
   /**
@@ -102,6 +105,8 @@ class extension_dna_occurrences {
   /**
    * Builds the HTML for the DNA controls.
    *
+   * @param array $auth
+   *   Authorisation tokens.
    * @param array $options
    *   Control options, including which fields to include.
    * @param array $mandatoryFields
@@ -111,7 +116,7 @@ class extension_dna_occurrences {
    * @return string
    *   Control HTML.
    */
-  private static function buildControls(array $options, array $mandatoryFields) {
+  private static function buildControls(array $auth, array $options, array $mandatoryFields) {
     $mainFieldsHtml = data_entry_helper::hidden_text([
       'fieldname' => 'dna_occurrence:id',
       'default' => data_entry_helper::$entity_to_load['dna_occurrence:id'] ?? NULL,
@@ -122,19 +127,25 @@ class extension_dna_occurrences {
     foreach ($options['fields'] as $field) {
       self::checkFieldIsValid($field);
       $thisControl = NULL;
-      if ($field === 'dna_occurrence:associated_sequences') {
-        $thisControl = data_entry_helper::textarea([
-          'fieldname' => 'dna_occurrence:associated_sequences',
-          'label' => 'Associated sequences',
-          'helpText' => 'A list (one per line) of identifiers (publication, global unique identifier, URI) of genetic sequence information associated with the record.',
+      if ($field === 'occurrence:basis_of_record_id') {
+        $lookupValues = self::getBasisOfRecordLookupValues($auth);
+        $thisControl = data_entry_helper::select([
+          'fieldname' => 'occurrence:basis_of_record_id',
+          'label' => lang::get('Basis of record'),
+          'helpText' => lang::get('The basis of the record.'),
+          'blankText' => lang::get('- Select basis of record -'),
           'lockable' => TRUE,
+          'lookupValues' => $lookupValues,
+            'default' => array_search('MaterialSample', $lookupValues) !== FALSE
+              ? array_search('MaterialSample', $lookupValues)
+              : [],
         ]);
       }
       elseif ($field === 'dna_occurrence:dna_sequence') {
         $thisControl = data_entry_helper::textarea([
           'fieldname' => 'dna_occurrence:dna_sequence',
-          'label' => 'DNA sequence',
-          'helpText' => 'The DNA sequence.',
+          'label' => lang::get('DNA sequence'),
+          'helpText' => lang::get('The DNA sequence.'),
           'validation' => ['required'],
           'lockable' => TRUE,
         ]);
@@ -142,8 +153,8 @@ class extension_dna_occurrences {
       elseif ($field === 'dna_occurrence:target_gene') {
         $thisControl = data_entry_helper::text_input([
           'fieldname' => 'dna_occurrence:target_gene',
-          'label' => 'Target gene',
-          'helpText' => 'Targeted gene or marker name for marker-based studies.',
+          'label' => lang::get('Target gene'),
+          'helpText' => lang::get('Targeted gene or marker name for marker-based studies.'),
           'validation' => ['required'],
           'lockable' => TRUE,
         ]);
@@ -151,97 +162,113 @@ class extension_dna_occurrences {
       elseif ($field === 'dna_occurrence:pcr_primer_reference') {
         $thisControl = data_entry_helper::text_input([
           'fieldname' => 'dna_occurrence:pcr_primer_reference',
-          'label' => 'PCR primer reference',
-          'helpText' => 'Reference for the primers.',
+          'label' => lang::get('PCR primer reference'),
+          'helpText' => lang::get('Reference for the primers.'),
           'validation' => ['required'],
+          'lockable' => TRUE,
+        ]);
+      }
+      if ($field === 'dna_occurrence:associated_sequences') {
+        $thisControl = data_entry_helper::textarea([
+          'fieldname' => 'dna_occurrence:associated_sequences',
+          'label' => lang::get('Associated sequences'),
+          'helpText' => lang::get('A list (one per line) of identifiers (publication, global unique identifier, URI) of genetic sequence information associated with the record.'),
+          'lockable' => TRUE,
+        ]);
+      }
+      if ($field === 'dna_occurrence:preparations') {
+        $thisControl = data_entry_helper::textarea([
+          'fieldname' => 'dna_occurrence:preparations',
+          'label' => lang::get('Preparations'),
+          'helpText' => lang::get('A list (one per line) of preparations and preservation methods. Use "DNA - from biological specimen" or "DNA - environmental" where to indicate if DNA was extracted from a biological specimen or from an environmental sample, respectively.'),
           'lockable' => TRUE,
         ]);
       }
       elseif ($field === 'dna_occurrence:env_medium') {
         $thisControl = data_entry_helper::text_input([
           'fieldname' => 'dna_occurrence:env_medium',
-          'label' => 'Environmental medium',
-          'helpText' => 'The environmental medium which surrounded your sample or specimen prior to sampling. Should be a subclass of an ENVO material.',
+          'label' => lang::get('Environmental medium'),
+          'helpText' => lang::get('The environmental medium which surrounded your sample or specimen prior to sampling. Should be a subclass of an ENVO material.'),
           'lockable' => TRUE,
         ]);
       }
       elseif ($field === 'dna_occurrence:env_broad_scale') {
         $thisControl = data_entry_helper::text_input([
           'fieldname' => 'dna_occurrence:env_broad_scale',
-          'label' => 'Broad-scale environment',
-          'helpText' => "The broad-scale environment the sample or specimen came from. Subclass of ENVO's biome class.",
+          'label' => lang::get('Broad-scale environment'),
+          'helpText' => lang::get("The broad-scale environment the sample or specimen came from. Subclass of ENVO's biome class."),
           'lockable' => TRUE,
         ]);
       }
       elseif ($field === 'dna_occurrence:otu_db') {
         $thisControl = data_entry_helper::text_input([
           'fieldname' => 'dna_occurrence:otu_db',
-          'label' => 'OTU database',
-          'helpText' => 'The OTU database (i.e. sequences not generated as part of the current study) used to assigning taxonomy to OTUs or ASVs.',
+          'label' => lang::get('OTU database'),
+          'helpText' => lang::get('The OTU database (i.e. sequences not generated as part of the current study) used to assigning taxonomy to OTUs or ASVs.'),
           'lockable' => TRUE,
         ]);
       }
       elseif ($field === 'dna_occurrence:otu_seq_comp_appr') {
         $thisControl = data_entry_helper::text_input([
           'fieldname' => 'dna_occurrence:otu_seq_comp_appr',
-          'label' => 'OTU sequence comparison approach',
-          'helpText' => 'The OTU sequence comparison approach, such as tools and thresholds used to assign “species-level” names to OTUs or ASVs.',
+          'label' => lang::get('OTU sequence comparison approach'),
+          'helpText' => lang::get('The OTU sequence comparison approach, such as tools and thresholds used to assign “species-level” names to OTUs or ASVs.'),
           'lockable' => TRUE,
         ]);
       }
       elseif ($field === 'dna_occurrence:otu_class_appr') {
         $thisControl = data_entry_helper::text_input([
           'fieldname' => 'dna_occurrence:otu_class_appr',
-          'label' => 'OTU classification approach',
-          'helpText' => 'The OTU classification approach / algorithm and clustering level (if relevant) when defining OTUs or ASVs.',
+          'label' => lang::get('OTU classification approach'),
+          'helpText' => lang::get('The OTU classification approach / algorithm and clustering level (if relevant) when defining OTUs or ASVs.'),
           'lockable' => TRUE,
         ]);
       }
       elseif ($field === 'dna_occurrence:env_local_scale') {
         $thisControl = data_entry_helper::text_input([
           'fieldname' => 'dna_occurrence:env_local_scale',
-          'label' => 'Local-scale environment',
-          'helpText' => 'The local environmental context the sample or specimen came from. Please use terms that are present in ENVO and which are of smaller spatial grain than your entry for env_broad_scale.',
+          'label' => lang::get('Local-scale environment'),
+          'helpText' => lang::get('The local environmental context the sample or specimen came from. Please use terms that are present in ENVO and which are of smaller spatial grain than your entry for env_broad_scale.'),
           'lockable' => TRUE,
         ]);
       }
       elseif ($field === 'dna_occurrence:target_subfragment') {
         $thisControl = data_entry_helper::text_input([
           'fieldname' => 'dna_occurrence:target_subfragment',
-          'label' => 'Target subfragment',
-          'helpText' => 'Name of subfragment of a gene or marker.',
+          'label' => lang::get('Target subfragment'),
+          'helpText' => lang::get('Name of subfragment of a gene or marker.'),
           'lockable' => TRUE,
         ]);
       }
       elseif ($field === 'dna_occurrence:pcr_primer_name_forward') {
         $thisControl = data_entry_helper::text_input([
           'fieldname' => 'dna_occurrence:pcr_primer_name_forward',
-          'label' => 'Forward PCR primer name',
-          'helpText' => 'Name of the forward PCR primer that were used to amplify the sequence of the targeted gene, locus or subfragment.',
+          'label' => lang::get('Forward PCR primer name'),
+          'helpText' => lang::get('Name of the forward PCR primer that were used to amplify the sequence of the targeted gene, locus or subfragment.'),
           'lockable' => TRUE,
         ]);
       }
       elseif ($field === 'dna_occurrence:pcr_primer_forward') {
         $thisControl = data_entry_helper::text_input([
           'fieldname' => 'dna_occurrence:pcr_primer_forward',
-          'label' => 'Forward PCR primer',
-          'helpText' => 'Forward PCR primer that was used to amplify the sequence of the targeted gene, locus or subfragment.',
+          'label' => lang::get('Forward PCR primer'),
+          'helpText' => lang::get('Forward PCR primer that was used to amplify the sequence of the targeted gene, locus or subfragment.'),
           'lockable' => TRUE,
         ]);
       }
       elseif ($field === 'dna_occurrence:pcr_primer_name_reverse') {
         $thisControl = data_entry_helper::text_input([
           'fieldname' => 'dna_occurrence:pcr_primer_name_reverse',
-          'label' => 'Reverse PCR primer name',
-          'helpText' => 'Name of the reverse PCR primer that was used to amplify the sequence of the targeted gene, locus or subfragment.',
+          'label' => lang::get('Reverse PCR primer name'),
+          'helpText' => lang::get('Name of the reverse PCR primer that was used to amplify the sequence of the targeted gene, locus or subfragment.'),
           'lockable' => TRUE,
         ]);
       }
       elseif ($field === 'dna_occurrence:pcr_primer_reverse') {
         $thisControl = data_entry_helper::text_input([
           'fieldname' => 'dna_occurrence:pcr_primer_reverse',
-          'label' => 'Reverse PCR primer',
-          'helpText' => 'Reverse PCR primer that was used to amplify the sequence of the targeted gene, locus or subfragment.',
+          'label' => lang::get('Reverse PCR primer'),
+          'helpText' => lang::get('Reverse PCR primer that was used to amplify the sequence of the targeted gene, locus or subfragment.'),
           'lockable' => TRUE,
         ]);
       }
@@ -283,6 +310,44 @@ class extension_dna_occurrences {
   }
 
   /**
+   * Retrieve the basisOfRecord terms for the lookup.
+   *
+   * Limits to the terms that are suitable for DNA data.
+   *
+   * @param array $auth
+   *   Authorisation tokens.
+   *
+   * @return array
+   *   Associative array of basisOfRecord terms, with keys being the id and
+   *   values the terms.
+   */
+  private static function getBasisOfRecordLookupValues(array $auth): array {
+    $termlists = data_entry_helper::get_population_data([
+      'table' => 'termlist',
+      'extraParams' => $auth['read'] + [
+        'external_key' => 'indicia:basis_of_record'
+      ],
+      'cachingPerUser' => FALSE,
+      // Set a long cache timeout.
+      'cacheTimeout' => 24*7*7*60*60,
+    ]);
+    $terms = data_entry_helper::get_population_data([
+      'table' => 'termlists_term',
+      'extraParams' => $auth['read'] + [
+        'termlist_id' => $termlists[0]['id'] ?? 0,
+        'orderby' => "sort_order,term",
+        'view' => 'cache',
+        'query' => json_encode(['in' => ['term' => ['MaterialSample', 'FossilSpecimen', 'PreservedSpecimen', 'LivingSpecimen']]]),
+      ],
+    ]);
+    $result = [];
+    foreach ($terms as $term) {
+      $result[$term['id']] = $term['term'];
+    }
+    return $result;
+  }
+
+  /**
    * Check if a field named in @fields is valid.
    *
    * @param string $field
@@ -290,10 +355,12 @@ class extension_dna_occurrences {
    */
   private static function checkFieldIsValid($field) {
     $validFields = [
-      'dna_occurrence:associated_sequences',
+      'occurrence:basis_of_record_id',
       'dna_occurrence:dna_sequence',
       'dna_occurrence:target_gene',
       'dna_occurrence:pcr_primer_reference',
+      'dna_occurrence:associated_sequences',
+      'dna_occurrence:preparations',
       'dna_occurrence:env_medium',
       'dna_occurrence:env_broad_scale',
       'dna_occurrence:otu_db',
