@@ -86,16 +86,24 @@ function iform_map_get_map_parameters() {
       'group' => 'Initial Map View',
       'required' => FALSE,
     ),
-    array(
+    [
       'name' => 'preset_layers',
       'caption' => 'Preset Base Layers',
-      'description' => 'Select the preset base layers that are available for the map. When using Google map layers, please ensure you adhere to the '.
-          '<a href="http://code.google.com/apis/maps/terms.html">Google Maps/Google Earth APIs Terms of Service</a>. When using the Bing map layers, '.
-          'please ensure that you read and adhere to the <a href="http://www.microsoft.com/maps/product/terms.html">Bing Maps terms of use</a>. '.
-          'The Microsoft Virtual Earth layer is now mapped to the Bing Aerial layer so is provided for backwards compatibility only. You can '.
-          'sort the layers into the order you require by dragging and dropping the layer labels.',
+      'description' => <<<TXT
+        Select the preset base layers that are available for the map. You can sort the layers into
+        the order you require by dragging and dropping the layer labels. When using Google map
+        layers, Bing map layers or the Esri World Imagery layer, please ensure that you read and
+        adhere to the relevant terms of use for those layers. For Google layers, see
+        <a href="http://code.google.com/apis/maps/terms.html" target="_blank" rel="noopener noreferrer">Google Maps/Google Earth APIs Terms of Service</a>.
+        For Bing map layers, see
+        <a href="http://www.microsoft.com/maps/product/terms.html" target="_blank" rel="noopener noreferrer">Bing Maps terms of use</a>.
+        For Esri World Imagery, see
+        <a href="https://content.esri.com/arcgisonline/docs/tou_summary.pdf" target="_blank" rel="noopener noreferrer">Esri World Imagery terms of use</a>.
+        The Microsoft Virtual Earth layer is now mapped to the Bing Aerial layer, so is provided
+        for backwards compatibility only.
+      TXT,
       'type' => 'list',
-      'options' => array(
+      'options' => [
         'google_physical' => 'Google Physical',
         'google_streets' => 'Google Streets',
         'google_hybrid' => 'Google Hybrid',
@@ -112,11 +120,12 @@ function iform_map_get_map_parameters() {
         'os_outdoor' => 'OS Outdoor',
         'os_road' => 'OS Road',
         'os_light' => 'OS Light',
-      ),
+        'esri_world_imagery' => 'ESRI World Imagery',
+      ],
       'sortable' => TRUE,
       'group' => 'Base Map Layers',
-      'required' => FALSE
-    ),
+      'required' => FALSE,
+    ],
     array(
       'name' => 'wms_base_title',
       'caption' => 'Additional WMS Base Layer Caption',

@@ -113,6 +113,13 @@ class iform_scratchpad_list_edit implements PrebuiltFormInterface {
         'required' => FALSE,
       ],
       [
+        'name' => 'default_groups_label',
+        'caption' => 'Default label for groups',
+        'description' => 'Plural word to use when referring to groups. E.g. projects, activities etc. Only relevant when group types are selected above.',
+        'type' => 'text_input',
+        'default' => 'groups',
+      ],
+      [
         'name' => 'duplicates',
         'caption' => 'Duplicate handling',
         'description' => 'Select how duplicates in the scratchpad list should be handled.',
@@ -280,7 +287,7 @@ class iform_scratchpad_list_edit implements PrebuiltFormInterface {
     }
 
     if ($groupListEnabled) {
-      $r .= self::buildGroupFieldset($auth['read'], $groupTypeIds, $groupDefaults['defaultsForControl']);
+      $r .= self::buildGroupFieldset($auth['read'], $groupTypeIds, $groupDefaults['defaultsForControl'], $options['defaultGroupLabel']);
     }
     $r .= <<<HTML
       <button id="scratchpad-check" class="$indicia_templates[buttonHighlightedClass]" type="button">$checkLabel</button>
@@ -359,13 +366,14 @@ class iform_scratchpad_list_edit implements PrebuiltFormInterface {
    */
   protected static function buildScratchpadOptions(array $args, array $filters): array {
     return [
+      'ajaxProxyUrl' => iform_ajaxproxy_url(NULL, 'scratchpad_list'),
       'entity' => $args['entity'],
       'extraParams' => [],
       'duplicates' => $args['duplicates'],
       'filters' => $filters,
-      'ajaxProxyUrl' => iform_ajaxproxy_url(NULL, 'scratchpad_list'),
-      'websiteId' => $args['website_id'],
+      'defaultGroupLabel' => $args['default_groups_label'] ?? 'groups',
       'returnPath' => hostsite_get_url($args['redirect_on_success']),
+      'websiteId' => $args['website_id'],
     ];
   }
 
@@ -729,16 +737,22 @@ class iform_scratchpad_list_edit implements PrebuiltFormInterface {
    * @return string
    *   HTML output.
    */
-  protected static function buildGroupFieldset(array $readAuth, array $groupTypeIds, array $defaultGroupsForControl): string {
-    $r = '<fieldset id="scratchpad-group-fieldset"><legend>' . lang::get('Groups') . '</legend>';
-    $r .= '<p class="helpText">' . lang::get('Add one or more groups to link to this list.') . '</p>';
+  protected static function buildGroupFieldset(array $readAuth, array $groupTypeIds, array $defaultGroupsForControl, $groupsLabel): string {
+    $r = '<fieldset id="scratchpad-group-fieldset"><legend>' . lang::get(ucfirst($groupsLabel)) . '</legend>';
+    $r .= '<p class="helpText">' . lang::get('Add one or more ' . $groupsLabel . ' to link to this list.') . '</p>';
+    // Limit to groups that the user is a member of (approved) and that match
+    // the selected group types.
     $r .= data_entry_helper::sub_list([
       'id' => 'scratchpad-group-list',
       'fieldname' => 'metaFields:group_ids[]',
-      'table' => 'group',
-      'captionField' => 'title',
-      'valueField' => 'id',
-      'extraParams' => self::buildTypeFilterExtraParams($readAuth, 'group_type_id', $groupTypeIds),
+      'table' => 'groups_user',
+      'captionField' => 'group_title',
+      'valueField' => 'group_id',
+      'extraParams' => self::buildTypeFilterExtraParams($readAuth, 'group_type_id', $groupTypeIds) + [
+        'user_id' => hostsite_get_user_field('indicia_user_id'),
+        'pending' => 'f',
+        'view' => 'detail',
+      ],
       'default' => $defaultGroupsForControl,
     ]);
     $r .= '</fieldset>';

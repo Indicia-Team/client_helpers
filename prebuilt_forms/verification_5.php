@@ -1604,7 +1604,7 @@ HTML;
     if (!empty($args['other_location_type_ids'])) {
       $options['otherLocationTypeIds'] = array_map('intval', explode(',', $args['other_location_type_ids']));
     }
-    $options['taxon_list_id'] = $args['taxon_list_id'] ?? hostsite_get_config_value('iform', 'master_checklist_id', 0);
+    $options['taxon_list_id'] = empty($args['taxon_list_id']) ? hostsite_get_config_value('iform', 'master_checklist_id', 0) : $args['taxon_list_id'];
     $hiddenStuff = '';
     $r = report_filter_panel($readAuth, $options, $args['website_id'], $hiddenStuff);
     return $r . $hiddenStuff;

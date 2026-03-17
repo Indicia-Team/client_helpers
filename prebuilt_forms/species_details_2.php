@@ -1367,6 +1367,12 @@ HTML;
   /**
    * Draw Photos section of the page.
    *
+   * Set the extraParams option to pass any additional parameters needed for
+   * the report that is used to retrieve the photos. The default report used is
+   * 'reports_for_prebuilt_forms/species_details/occurrences_thumbnails_2'. For
+   * example set quality to "not_rejected" to include all photos except those
+   * attached to records that have been rejected.
+   *
    * @return string
    *   The output report grid.
    */
@@ -1377,21 +1383,22 @@ HTML;
     iform_load_helpers(['report_helper']);
     data_entry_helper::add_resource('fancybox');
     $options = array_merge([
+      'dataSource' => 'reports_for_prebuilt_forms/species_details/occurrences_thumbnails_2',
       'itemsPerPage' => 20,
       'imageSize' => 'thumb',
       'class' => 'media-gallery',
+      'extraParams' => [],
     ], $options);
     // Use this report to return the photos.
-    $reportName = 'reports_for_prebuilt_forms/species_details/occurrences_thumbnails_2';
     $media = report_helper::get_report_data([
       'readAuth' => $auth['read'],
-      'dataSource' => $reportName,
+      'dataSource' => $options['dataSource'],
       'itemsPerPage' => $options['itemsPerPage'],
-      'extraParams' => [
+      'extraParams' => array_merge([
         'external_key' => self::$externalKey,
         'limit' => $options['itemsPerPage'],
         'wantCount' => 0,
-      ],
+      ], $options['extraParams']),
     ]);
     $r = '<div class="detail-panel" id="detail-panel-photos"><h3>' . lang::get('Photos and media') . '</h3>';
     $r .= '<div class="' . $options['class'] . '"><ul>';

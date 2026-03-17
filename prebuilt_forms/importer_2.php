@@ -94,10 +94,12 @@ class iform_importer_2 implements PrebuiltFormInterface {
 // @todo Make sure the state of the advanced toggle is saved in a template
 
     $advancedFieldsDefault = <<<TXT
+      occurrence:basis_of_record_id
       occurrence:classification_event_id
       occurrence:confidential
       occurrence:created_by_id
       occurrence:determiner_id
+      occurrence:fk_basis_of_record_id
       occurrence:fk_created_by
       occurrence:fk_taxa_taxon_list:external_key
       occurrence:fk_taxa_taxon_list:genus
@@ -151,10 +153,11 @@ class iform_importer_2 implements PrebuiltFormInterface {
       sample:updated_by_id
       sample:verified_by_id
       sample:verified_on
-      dna_occurrence:associated_sequences
       dna_occurrence:dna_sequence
       dna_occurrence:target_gene
       dna_occurrence:pcr_primer_reference
+      dna_occurrence:associated_sequences
+      dna_occurrence:preparations
       dna_occurrence:env_medium
       dna_occurrence:env_broad_scale
       dna_occurrence:otu_db

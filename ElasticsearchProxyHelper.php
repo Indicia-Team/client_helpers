@@ -1077,7 +1077,7 @@ class ElasticsearchProxyHelper {
       // Apply any filter row parameters to the query.
       foreach ($query['textFilters'] as $field => $value) {
         // Exclamation mark reverses logic.
-        $logic = substr($value, 0, 1) === '!' ? 'must_not' : 'must';
+        $logic = substr($value, 0, 1) === '!' ? 'must_not' : 'filter';
         $value = preg_replace('/^!/', '', $value);
         $bool[$logic][] = [
           'simple_query_string' => [
@@ -1094,7 +1094,7 @@ class ElasticsearchProxyHelper {
       foreach ($query['numericFilters'] as $field => $value) {
         $value = str_replace(' ', '', $value);
         if (preg_match('/^(\d+(\.\d+)?)\-(\d+(\.\d+)?)$/', $value, $matches)) {
-          $bool['must'][] = [
+          $bool['filter'][] = [
             'range' => [
               $field => [
                 'gte' => $matches[1],
@@ -1105,7 +1105,7 @@ class ElasticsearchProxyHelper {
         }
         else {
           // Exclamation mark reverses logic.
-          $logic = substr($value, 0, 1) === '!' ? 'must_not' : 'must';
+          $logic = substr($value, 0, 1) === '!' ? 'must_not' : 'filter';
           $value = preg_replace('/^!/', '', $value);
           $bool[$logic][] = ['match' => [$field => $value]];
         }
@@ -1177,8 +1177,8 @@ class ElasticsearchProxyHelper {
       }
       if (!empty($qryConfig['nested']) && $qryConfig['nested'] !== 'null') {
         // Must not nested queries should be handled at outer level.
-        $outerBoolClause = $qryConfig['bool_clause'] === 'must_not' ? 'must_not' : 'must';
-        $innerBoolClause = $qryConfig['bool_clause'] === 'must_not' ? 'must' : $qryConfig['bool_clause'];
+        $outerBoolClause = $qryConfig['bool_clause'] === 'must_not' ? 'must_not' : 'filter';
+        $innerBoolClause = $qryConfig['bool_clause'] === 'must_not' ? 'filter' : $qryConfig['bool_clause'];
         $bool[$outerBoolClause][] = [
           'nested' => [
             'path' => $qryConfig['nested'],
@@ -1196,7 +1196,7 @@ class ElasticsearchProxyHelper {
     }
     unset($query['bool_queries']);
     // Apply a training mode filter.
-    $bool['must'][] = [
+    $bool['filter'][] = [
       'term' => ['metadata.trial' => hostsite_get_user_field('training') ? TRUE : FALSE],
     ];
     iform_load_helpers([]);
@@ -1217,11 +1217,11 @@ class ElasticsearchProxyHelper {
     // Apply default restrictions.
     if (!self::$confidentialFilterApplied) {
       // Unless explicitly specified in a filter, hide confidential.
-      $bool['must'][] = ['term' => ['metadata.confidential' => FALSE]];
+      $bool['filter'][] = ['term' => ['metadata.confidential' => FALSE]];
     }
     if (!self::$releaseStatusFilterApplied) {
       // Unless explicitly specified in a filter, limit to released.
-      $bool['must'][] = ['term' => ['metadata.release_status' => 'R']];
+      $bool['filter'][] = ['term' => ['metadata.release_status' => 'R']];
     }
     unset($query['user_filters']);
     unset($query['refresh_user_filters']);
@@ -1297,14 +1297,14 @@ class ElasticsearchProxyHelper {
         break;
 
       case 'p-my':
-        $bool['must'][] = [
+        $bool['filter'][] = [
           'term' => ['metadata.created_by_id' => hostsite_get_user_field('indicia_user_id')],
         ];
         self::$config['es']['scope'] = 'user';
         break;
 
       case 'p-location_collation':
-        $bool['must'][] = [
+        $bool['filter'][] = [
           'nested' => [
             'path' => 'location.higher_geography',
             'query' => [
@@ -1335,7 +1335,7 @@ class ElasticsearchProxyHelper {
           }
           if (!empty($matches['users']) && $matches['users'] === '-my') {
             // If limited to my records.
-            $bool['must'][] = [
+            $bool['filter'][] = [
               'term' => ['metadata.created_by_id' => hostsite_get_user_field('indicia_user_id')],
             ];
           }
@@ -1372,7 +1372,7 @@ class ElasticsearchProxyHelper {
    *   Query passed in proxy request, which may contain an array of
    *   user_filters (filter IDs) to convert.
    * @param array $bool
-   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   *   Bool clauses that filters can be added to (e.g. $bool['filter']).
    */
   public static function applyUserFilters(array $readAuth, array $query, array &$bool) {
     if (count($query['user_filters']) > 0) {
@@ -1424,7 +1424,7 @@ class ElasticsearchProxyHelper {
     foreach ($groupUsersData as $user) {
       $userIds[] = (integer) $user['user_id'];
     }
-    $bool['must'][] = [
+    $bool['filter'][] = [
       'terms' => ['metadata.created_by_id' => $userIds],
     ];
   }
@@ -1466,7 +1466,7 @@ class ElasticsearchProxyHelper {
     if (IndiciaConversions::toBool($groupFilter['implicit']) === FALSE) {
       // Include only records added to group linked form (with group_id set),
       // including contained groups.
-      $bool['must'][] = [
+      $bool['filter'][] = [
         'terms' => ['metadata.group.id' => $groupIdsIncludingChildren],
       ];
     }
@@ -1585,7 +1585,7 @@ class ElasticsearchProxyHelper {
    * @param array $definition
    *   Definition loaded for the Indicia filter.
    * @param array $bool
-   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   *   Bool clauses that filters can be added to (e.g. $bool['filter']).
    */
   private static function applyUserFiltersTaxonGroupList(array $definition, array &$bool) {
     $filter = self::getDefinitionFilter($definition, [
@@ -1593,7 +1593,7 @@ class ElasticsearchProxyHelper {
       'taxon_group_id',
     ]);
     if (!empty($filter)) {
-      $bool['must'][] = [
+      $bool['filter'][] = [
         'terms' => ['taxon.group_id' => explode(',', $filter['value'])],
       ];
     }
@@ -1603,7 +1603,7 @@ class ElasticsearchProxyHelper {
    * Generic function to apply a taxonomy filter to ES query.
    *
    * @param array $bool
-   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   *   Bool clauses that filters can be added to (e.g. $bool['filter']).
    * @param array $readAuth
    *   Read authentication tokens.
    * @param string $filterField
@@ -1633,7 +1633,7 @@ class ElasticsearchProxyHelper {
       $keys[] = $taxon['external_key'];
     }
     $keys = array_unique($keys);
-    $bool['must'][] = ['terms' => ['taxon.higher_taxon_ids' => $keys]];
+    $bool['filter'][] = ['terms' => ['taxon.higher_taxon_ids' => $keys]];
   }
 
   /**
@@ -1642,7 +1642,7 @@ class ElasticsearchProxyHelper {
    * @param array $definition
    *   Definition loaded for the Indicia filter.
    * @param array $bool
-   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   *   Bool clauses that filters can be added to (e.g. $bool['filter']).
    * @param array $readAuth
    *   Read authentication tokens.
    */
@@ -1664,7 +1664,7 @@ class ElasticsearchProxyHelper {
    * @param array $definition
    *   Definition loaded for the Indicia filter.
    * @param array $bool
-   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   *   Bool clauses that filters can be added to (e.g. $bool['filter']).
    * @param array $readAuth
    *   Read authentication tokens.
    */
@@ -1684,14 +1684,14 @@ class ElasticsearchProxyHelper {
    * @param array $definition
    *   Definition loaded for the Indicia filter.
    * @param array $bool
-   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   *   Bool clauses that filters can be added to (e.g. $bool['filter']).
    */
   private static function applyUserFiltersTaxaTaxonListExternalKey(array $definition, array &$bool) {
     $filter = self::getDefinitionFilter($definition, [
       'taxa_taxon_list_external_key_list',
     ]);
     if (!empty($filter)) {
-      $bool['must'][] = ['terms' => ['taxon.higher_taxon_ids' => explode(',', $filter['value'])]];
+      $bool['filter'][] = ['terms' => ['taxon.higher_taxon_ids' => explode(',', $filter['value'])]];
     }
   }
 
@@ -1701,14 +1701,14 @@ class ElasticsearchProxyHelper {
    * @param array $definition
    *   Definition loaded for the Indicia filter.
    * @param array $bool
-   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   *   Bool clauses that filters can be added to (e.g. $bool['filter']).
    */
   private static function applyUserFiltersTaxonRankSortOrder(array $definition, array &$bool) {
     $filter = self::getDefinitionFilter($definition, ['taxon_rank_sort_order']);
     // Filter op can be =, >= or <=.
     if (!empty($filter)) {
       if ($filter['op'] === '=') {
-        $bool['must'][] = [
+        $bool['filter'][] = [
           'term' => [
             'taxon.taxon_rank_sort_order' => $filter['value'],
           ],
@@ -1717,7 +1717,7 @@ class ElasticsearchProxyHelper {
       else {
         $gte = $filter['op'] === '>=' ? $filter['value'] : NULL;
         $lte = $filter['op'] === '<=' ? $filter['value'] : NULL;
-        $bool['must'][] = [
+        $bool['filter'][] = [
           'range' => [
             'taxon.taxon_rank_sort_order' => [
               'gte' => $gte,
@@ -1737,13 +1737,13 @@ class ElasticsearchProxyHelper {
    * @param array $definition
    *   Definition loaded for the Indicia filter.
    * @param array $bool
-   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   *   Bool clauses that filters can be added to (e.g. $bool['filter']).
    */
   private static function applyFlagFilter($flag, array $definition, array &$bool) {
     $filter = self::getDefinitionFilter($definition, ["{$flag}_flag"]);
     // Filter op can be =, >= or <=.
     if (!empty($filter) && $filter['value'] !== 'all') {
-      $bool['must'][] = [
+      $bool['filter'][] = [
         'term' => [
           "taxon.$flag" => $filter['value'] === 'Y',
         ],
@@ -1760,11 +1760,11 @@ class ElasticsearchProxyHelper {
    * @param array $definition
    *   Containing WKT for the searchArea in EPSG:4326.
    * @param array $bool
-   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   *   Bool clauses that filters can be added to (e.g. $bool['filter']).
    */
   private static function applyUserFiltersSearchArea($definition, array &$bool) {
     if (!empty($definition['searchArea']) || !empty($definition['bufferedSearchArea'])) {
-      $bool['must'][] = [
+      $bool['filter'][] = [
         'geo_shape' => [
           'location.geom' => [
             'shape' => $definition['bufferedSearchArea'] ?? $definition['searchArea'],
@@ -1781,12 +1781,12 @@ class ElasticsearchProxyHelper {
    * @param array $definition
    *   Definition loaded for the Indicia filter.
    * @param array $bool
-   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   *   Bool clauses that filters can be added to (e.g. $bool['filter']).
    */
   private static function applyUserFiltersLocationName(array $definition, array &$bool) {
     $filter = self::getDefinitionFilter($definition, ['location_name']);
     if (!empty($filter)) {
-      $bool['must'][] = ['match_phrase' => ['location.verbatim_locality' => $filter['value']]];
+      $bool['filter'][] = ['match_phrase' => ['location.verbatim_locality' => $filter['value']]];
     }
   }
 
@@ -1796,7 +1796,7 @@ class ElasticsearchProxyHelper {
    * @param array $definition
    *   Definition loaded for the Indicia filter.
    * @param array $bool
-   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   *   Bool clauses that filters can be added to (e.g. $bool['filter']).
    */
   private static function applyUserFiltersIndexedLocationList(array $definition, array &$bool) {
     $filter = self::getDefinitionFilter($definition, [
@@ -1804,7 +1804,7 @@ class ElasticsearchProxyHelper {
       'indexed_location_id',
     ]);
     if (!empty($filter)) {
-      $boolClause = !empty($filter['op']) && $filter['op'] === 'not in' ? 'must_not' : 'must';
+      $boolClause = !empty($filter['op']) && $filter['op'] === 'not in' ? 'must_not' : 'filter';
       $bool[$boolClause][] = [
         'nested' => [
           'path' => 'location.higher_geography',
@@ -1824,7 +1824,7 @@ class ElasticsearchProxyHelper {
    * @param array $definition
    *   Definition loaded for the Indicia filter.
    * @param array $bool
-   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   *   Bool clauses that filters can be added to (e.g. $bool['filter']).
    * @param array $readAuth
    *   Read authentication tokens.
    */
@@ -1852,7 +1852,7 @@ class ElasticsearchProxyHelper {
         $types[] = $typeTermRow['term'];
       }
       if (count($types) > 0) {
-        $bool['must'][] = [
+        $bool['filter'][] = [
           'nested' => [
             'path' => 'location.higher_geography',
             'query' => [
@@ -1874,7 +1874,7 @@ class ElasticsearchProxyHelper {
    * @param array $definition
    *   Definition loaded for the Indicia filter.
    * @param array $bool
-   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   *   Bool clauses that filters can be added to (e.g. $bool['filter']).
    */
   private static function applyUserFiltersDate(array $definition, array &$bool) {
     $esFields = [
@@ -1895,7 +1895,7 @@ class ElasticsearchProxyHelper {
           $range['lte'] = $definition["{$prefix}date_year"] . '-12-31';
         }
         if (count($range) > 0) {
-          $bool['must'][] = [
+          $bool['filter'][] = [
             'range' => [
               $esFields[$dateType] => $range,
             ],
@@ -1924,7 +1924,7 @@ class ElasticsearchProxyHelper {
                 strtolower($value)
               );
             }
-            $bool['must'][] = [
+            $bool['filter'][] = [
               'range' => [
                 $esFields[$dateType] => [
                   $esOp => $value,
@@ -1943,16 +1943,16 @@ class ElasticsearchProxyHelper {
    * @param array $definition
    *   Definition loaded for the Indicia filter.
    * @param array $bool
-   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   *   Bool clauses that filters can be added to (e.g. $bool['filter']).
    */
   private static function applyUserFiltersWho(array $definition, array &$bool) {
     if (isset($definition['my_records']) && ((string) $definition['my_records'] === '1' || (string) $definition['my_records'] === '0')) {
-      $bool[$definition['my_records'] === '1' ? 'must' : 'must_not'][] = [
+      $bool[$definition['my_records'] === '1' ? 'filter' : 'must_not'][] = [
         'term' => ['metadata.created_by_id' => hostsite_get_user_field('indicia_user_id')],
       ];
     }
     if (!empty($definition['recorder_name']) && !empty(trim($definition['recorder_name']))) {
-      $bool['must'][] = [
+      $bool['filter'][] = [
         'query_string' => [
           'default_field' => 'event.recorded_by',
           'query' => '*' . $definition['recorder_name'] . '*',
@@ -1970,20 +1970,20 @@ class ElasticsearchProxyHelper {
    * @param array $definition
    *   Definition loaded for the Indicia filter.
    * @param array $bool
-   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   *   Bool clauses that filters can be added to (e.g. $bool['filter']).
    */
   private static function applyUserFiltersOccId(array $definition, array &$bool) {
     $filter = self::getDefinitionFilter($definition, ['idlist', 'occ_id']);
     if (!empty($filter)) {
       $op = empty($filter['op']) ? '=' : $filter['op'];
       if ($op === '=') {
-        $bool['must'][] = [
+        $bool['filter'][] = [
           'terms' => ['id' => explode(',', $filter['value'])],
         ];
       }
       else {
         $translate = ['>=' => 'gte', '<=' => 'lte'];
-        $bool['must'][] = [
+        $bool['filter'][] = [
           'range' => [
             'id' => [
               $translate[$op] => $filter['value'],
@@ -2000,20 +2000,20 @@ class ElasticsearchProxyHelper {
    * @param array $definition
    *   Definition loaded for the Indicia filter.
    * @param array $bool
-   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   *   Bool clauses that filters can be added to (e.g. $bool['filter']).
    */
   private static function applyUserFiltersSmpId(array $definition, array &$bool) {
     $filter = self::getDefinitionFilter($definition, ['smp_id']);
     if (!empty($filter)) {
       $op = empty($filter['op']) ? '=' : $filter['op'];
       if ($op === '=') {
-        $bool['must'][] = [
+        $bool['filter'][] = [
           'terms' => ['event.event_id' => explode(',', $filter['value'])],
         ];
       }
       else {
         $translate = ['>=' => 'gte', '<=' => 'lte'];
-        $bool['must'][] = [
+        $bool['filter'][] = [
           'range' => [
             'event.event_id' => [
               $translate[$op] => $filter['value'],
@@ -2030,12 +2030,12 @@ class ElasticsearchProxyHelper {
    * @param array $definition
    *   Definition loaded for the Indicia filter.
    * @param array $bool
-   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   *   Bool clauses that filters can be added to (e.g. $bool['filter']).
    */
   private static function applyUserFiltersOccExternalKey(array $definition, array &$bool) {
     $filter = self::getDefinitionFilter($definition, ['occurrence_external_key']);
     if (!empty($filter)) {
-      $bool['must'][] = [
+      $bool['filter'][] = [
         'terms' => ['occurrence.source_system_key' => explode(',', $filter['value'])],
       ];
     }
@@ -2047,7 +2047,7 @@ class ElasticsearchProxyHelper {
    * @param array $definition
    *   Definition loaded for the Indicia filter.
    * @param array $bool
-   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   *   Bool clauses that filters can be added to (e.g. $bool['filter']).
    */
   private static function applyUserFiltersQuality(array $definition, array &$bool) {
     $filter = self::getDefinitionFilter($definition, ['quality']);
@@ -2067,7 +2067,7 @@ class ElasticsearchProxyHelper {
           case 'C3':
             $defs[] = [
               'bool' => [
-                'must' => [
+                'filter' => [
                   ['term' => ['identification.verification_status' => 'C']],
                   ['term' => ['identification.verification_substatus' => 3]],
                 ],
@@ -2093,7 +2093,7 @@ class ElasticsearchProxyHelper {
           case 'P':
             $defs[] = [
               'bool' => [
-                'must' => [
+                'filter' => [
                   ['term' => ['identification.verification_status' => 'C']],
                   ['term' => ['identification.verification_substatus' => 0]],
                 ],
@@ -2114,7 +2114,7 @@ class ElasticsearchProxyHelper {
           case 'R4':
             $defs[] = [
               'bool' => [
-                'must' => [
+                'filter' => [
                   ['term' => ['identification.verification_status' => 'R']],
                   ['term' => ['identification.verification_substatus' => 4]],
                 ],
@@ -2125,7 +2125,7 @@ class ElasticsearchProxyHelper {
           case 'R5':
             $defs[] = [
               'bool' => [
-                'must' => [
+                'filter' => [
                   ['term' => ['identification.verification_status' => 'R']],
                   ['term' => ['identification.verification_substatus' => 5]],
                 ],
@@ -2141,7 +2141,7 @@ class ElasticsearchProxyHelper {
           case 'V1':
             $defs[] = [
               'bool' => [
-                'must' => [
+                'filter' => [
                   ['term' => ['identification.verification_status' => 'V']],
                   ['term' => ['identification.verification_substatus' => 1]],
                 ],
@@ -2152,7 +2152,7 @@ class ElasticsearchProxyHelper {
           case 'V2':
             $defs[] = [
               'bool' => [
-                'must' => [
+                'filter' => [
                   ['term' => ['identification.verification_status' => 'V']],
                   ['term' => ['identification.verification_substatus' => 2]],
                 ],
@@ -2171,7 +2171,7 @@ class ElasticsearchProxyHelper {
                   // Or plausible.
                   [
                     'bool' => [
-                      'must' => [
+                      'filter' => [
                         ['term' => ['identification.verification_status' => 'C']],
                         ['term' => ['identification.verification_substatus' => 3]],
                       ],
@@ -2209,7 +2209,7 @@ class ElasticsearchProxyHelper {
           case 'C':
             $defs[] = [
               'bool' => [
-                'must' => [
+                'filter' => [
                   ['term' => ['identification.recorder_certainty.keyword' => 'Certain']],
                 ],
                 'must_not' => [
@@ -2235,7 +2235,7 @@ class ElasticsearchProxyHelper {
           case 'L':
             $defs[] = [
               'bool' => [
-                'must' => [
+                'filter' => [
                   [
                     'terms' => [
                       'identification.recorder_certainty.keyword' => [
@@ -2257,7 +2257,7 @@ class ElasticsearchProxyHelper {
         }
       }
       if (!empty($defs)) {
-        $boolGroup = !empty($filter['op']) && $filter['op'] === 'not in' ? 'must_not' : 'must';
+        $boolGroup = !empty($filter['op']) && $filter['op'] === 'not in' ? 'must_not' : 'filter';
         if (count($defs) === 1) {
           // Single filter can be simplified.
           $bool[$boolGroup][] = [array_keys($defs[0])[0] => array_values($defs[0])[0]];
@@ -2276,7 +2276,7 @@ class ElasticsearchProxyHelper {
    * @param array $definition
    *   Definition loaded for the Indicia filter.
    * @param array $bool
-   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   *   Bool clauses that filters can be added to (e.g. $bool['filter']).
    */
   private static function applyUserFiltersCertainty(array $definition, array &$bool) {
     $filter = self::getDefinitionFilter($definition, ['certainty']);
@@ -2299,13 +2299,13 @@ class ElasticsearchProxyHelper {
         $boolClauses['must_not'] = ['exists' => ['field' => 'identification.recorder_certainty']];
       }
       if (count($certaintyTerms)) {
-        $boolClauses['must'] = ['terms' => ['identification.recorder_certainty.keyword' => $certaintyTerms]];
+        $boolClauses['filter'] = ['terms' => ['identification.recorder_certainty.keyword' => $certaintyTerms]];
       }
       if (count($boolClauses) === 1) {
         $bool[array_keys($boolClauses)[0]][] = array_values($boolClauses)[0];
       }
       elseif (count($boolClauses) === 2) {
-        $bool['must'][] = [
+        $bool['filter'][] = [
           'bool' => [
             'should' => [
               [
@@ -2335,14 +2335,14 @@ class ElasticsearchProxyHelper {
    * @param array $definition
    *   Definition loaded for the Indicia filter.
    * @param array $bool
-   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   *   Bool clauses that filters can be added to (e.g. $bool['filter']).
    */
   private static function applyUserFiltersIdentificationDifficulty(array $definition, array &$bool) {
     $filter = self::getDefinitionFilter($definition, ['identification_difficulty']);
     if (!empty($filter) && !empty($filter['op'])) {
       if (in_array($filter['op'], ['>=', '<='])) {
         $test = $filter['op'] === '>=' ? 'gte' : 'lte';
-        $bool['must'][] = [
+        $bool['filter'][] = [
           'range' => [
             'identification.auto_checks.identification_difficulty' => [
               $test => $filter['value'],
@@ -2351,7 +2351,7 @@ class ElasticsearchProxyHelper {
         ];
       }
       else {
-        $bool['must'][] = ['term' => ['identification.auto_checks.identification_difficulty' => $filter['value']]];
+        $bool['filter'][] = ['term' => ['identification.auto_checks.identification_difficulty' => $filter['value']]];
       }
     }
   }
@@ -2362,7 +2362,7 @@ class ElasticsearchProxyHelper {
    * @param array $definition
    *   Definition loaded for the Indicia filter.
    * @param array $bool
-   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   *   Bool clauses that filters can be added to (e.g. $bool['filter']).
    */
   private static function applyUserFiltersIdentificationClassifierAgreement(array $definition, array &$bool) {
     $filter = self::getDefinitionFilter($definition, ['classifier_agreement']);
@@ -2380,7 +2380,7 @@ class ElasticsearchProxyHelper {
 
         case 'c':
           // Any record where a classifier used.
-          $bool['must'][] = [
+          $bool['filter'][] = [
             'exists' => [
               'field' => 'identification.classifier',
             ],
@@ -2391,7 +2391,7 @@ class ElasticsearchProxyHelper {
           // Filter not recognised so ignored.
           return;
       }
-      $bool['must'][] = [
+      $bool['filter'][] = [
         'term' => [
           'identification.classifier.current_determination.classifier_chosen' => $chosenFilter,
         ],
@@ -2407,7 +2407,7 @@ class ElasticsearchProxyHelper {
    * @param array $definition
    *   Definition loaded for the Indicia filter.
    * @param array $bool
-   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   *   Bool clauses that filters can be added to (e.g. $bool['filter']).
    */
   private static function applyUserFiltersRuleChecks(array $definition, array &$bool) {
     // Also check for legacy autocheck_rule filters which are now merged with
@@ -2419,13 +2419,13 @@ class ElasticsearchProxyHelper {
     if (!empty($filter)) {
       if (in_array($filter['value'], ['P', 'F'])) {
         // Pass or Fail options are auto-checks from the Data Cleaner module.
-        $bool['must'][] = [
+        $bool['filter'][] = [
           'match' => [
             'identification.auto_checks.result' => $filter['value'] === 'P',
           ],
         ];
         if ($filter['value'] === 'P') {
-          $bool['must'][] = [
+          $bool['filter'][] = [
             'query_string' => ['query' => '_exists_:identification.auto_checks.verification_rule_types_applied'],
           ];
         }
@@ -2433,7 +2433,7 @@ class ElasticsearchProxyHelper {
       elseif (in_array($filter['value'], ['PC', 'FC'])) {
         // Pass Custom or Fail Custom options are for custom verification rule
         // checks.
-        $test = $filter['value'] === 'PC' ? 'must_not' : 'must';
+        $test = $filter['value'] === 'PC' ? 'must_not' : 'filter';
         $bool[$test][] = [
           'nested' => [
             'path' => 'identification.custom_verification_rule_flags',
@@ -2450,7 +2450,7 @@ class ElasticsearchProxyHelper {
         $value = str_replace('_', '', $filter['value']);
         // Map to an alternative version in case the Record Cleaner API being used.
         $rcValue = self::mapIndiciaRuleTypeToRecordCleaner($value);
-        $bool['must'][] = [
+        $bool['filter'][] = [
           'terms' => ['identification.auto_checks.output.rule_type' => [$value,  $rcValue]],
         ];
       }
@@ -2486,7 +2486,7 @@ class ElasticsearchProxyHelper {
    * @param array $definition
    *   Definition loaded for the Indicia filter.
    * @param array $bool
-   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   *   Bool clauses that filters can be added to (e.g. $bool['filter']).
    */
   private static function applyUserFiltersWebsiteList(array $definition, array &$bool) {
     $filter = self::getDefinitionFilter($definition, [
@@ -2494,7 +2494,7 @@ class ElasticsearchProxyHelper {
       'website_id',
     ]);
     if (!empty($filter)) {
-      $boolClause = !empty($filter['op']) && $filter['op'] === 'not in' ? 'must_not' : 'must';
+      $boolClause = !empty($filter['op']) && $filter['op'] === 'not in' ? 'must_not' : 'filter';
       $bool[$boolClause][] = [
         'terms' => ['metadata.website.id' => explode(',', $filter['value'])],
       ];
@@ -2507,7 +2507,7 @@ class ElasticsearchProxyHelper {
    * @param array $definition
    *   Definition loaded for the Indicia filter.
    * @param array $bool
-   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   *   Bool clauses that filters can be added to (e.g. $bool['filter']).
    */
   private static function applyUserFiltersSurveyList(array $definition, array &$bool) {
     $filter = self::getDefinitionFilter($definition, [
@@ -2515,7 +2515,7 @@ class ElasticsearchProxyHelper {
       'survey_id',
     ]);
     if (!empty($filter)) {
-      $boolClause = !empty($filter['op']) && $filter['op'] === 'not in' ? 'must_not' : 'must';
+      $boolClause = !empty($filter['op']) && $filter['op'] === 'not in' ? 'must_not' : 'filter';
       $bool[$boolClause][] = [
         'terms' => ['metadata.survey.id' => explode(',', $filter['value'])],
       ];
@@ -2528,12 +2528,12 @@ class ElasticsearchProxyHelper {
    * @param array $definition
    *   Definition loaded for the Indicia filter.
    * @param array $bool
-   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   *   Bool clauses that filters can be added to (e.g. $bool['filter']).
    */
   private static function applyUserFiltersImportGuidList(array $definition, array &$bool) {
     $filter = self::getDefinitionFilter($definition, ['import_guid_list']);
     if (!empty($filter)) {
-      $boolClause = !empty($filter['op']) && $filter['op'] === 'not in' ? 'must_not' : 'must';
+      $boolClause = !empty($filter['op']) && $filter['op'] === 'not in' ? 'must_not' : 'filter';
       $bool[$boolClause][] = [
         'terms' => [
           'metadata.import_guid.keyword' => explode(',', str_replace("'", '', $filter['value'])),
@@ -2548,12 +2548,12 @@ class ElasticsearchProxyHelper {
    * @param array $definition
    *   Definition loaded for the Indicia filter.
    * @param array $bool
-   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   *   Bool clauses that filters can be added to (e.g. $bool['filter']).
    */
   private static function applyUserFiltersInputFormList(array $definition, array &$bool) {
     $filter = self::getDefinitionFilter($definition, ['input_form_list']);
     if (!empty($filter)) {
-      $boolClause = !empty($filter['op']) && $filter['op'] === 'not in' ? 'must_not' : 'must';
+      $boolClause = !empty($filter['op']) && $filter['op'] === 'not in' ? 'must_not' : 'filter';
       $bool[$boolClause][] = [
         'terms' => [
           'metadata.input_form' => explode(',', str_replace("'", '', $filter['value'])),
@@ -2568,12 +2568,12 @@ class ElasticsearchProxyHelper {
    * @param array $definition
    *   Definition loaded for the Indicia filter.
    * @param array $bool
-   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   *   Bool clauses that filters can be added to (e.g. $bool['filter']).
    */
   private static function applyUserFiltersGroupId(array $definition, array &$bool) {
     $filter = self::getDefinitionFilter($definition, ['group_id']);
     if (!empty($filter)) {
-      $bool['must'][] = [
+      $bool['filter'][] = [
         'terms' => ['metadata.group.id' => explode(',', $filter['value'])],
       ];
     }
@@ -2644,7 +2644,7 @@ class ElasticsearchProxyHelper {
    * @param array $definition
    *   Definition loaded for the Indicia filter.
    * @param array $bool
-   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   *   Bool clauses that filters can be added to (e.g. $bool['filter']).
    * @param array $readAuth
    *   Read authentication tokens.
    */
@@ -2674,7 +2674,7 @@ class ElasticsearchProxyHelper {
             ],
           ];
         }
-        $bool['must'][] = [
+        $bool['filter'][] = [
           'bool' => ['should' => $options],
         ];
       }
@@ -2727,7 +2727,7 @@ class ElasticsearchProxyHelper {
             ],
           ];
         }
-        $bool['must'][] = [
+        $bool['filter'][] = [
           'bool' => ['should' => $options],
         ];
       }
@@ -2740,7 +2740,7 @@ class ElasticsearchProxyHelper {
    * @param array $definition
    *   Definition loaded for the Indicia filter.
    * @param array $bool
-   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   *   Bool clauses that filters can be added to (e.g. $bool['filter']).
    */
   private static function applyUserFiltersCoordinatePrecision(array $definition, array &$bool) {
     $filter = self::getDefinitionFilter($definition, ['coordinate_precision']);
@@ -2748,13 +2748,13 @@ class ElasticsearchProxyHelper {
       // Default is same as or better than.
       $filter['op'] = $filter['op'] ?? '<=';
       if ($filter['op'] === '=') {
-        $bool['must'][] = [
+        $bool['filter'][] = [
           'term' => ['location.coordinate_uncertainty_in_meters' => $filter['value']],
         ];
       }
       else {
         $op = $filter['op'] === '<=' ? 'lte' : 'gt';
-        $bool['must'][] = [
+        $bool['filter'][] = [
           'range' => [
             'location.coordinate_uncertainty_in_meters' => [
               $op => $filter['value'],
@@ -2771,18 +2771,18 @@ class ElasticsearchProxyHelper {
    * @param array $definition
    *   Definition loaded for the Indicia filter.
    * @param array $bool
-   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   *   Bool clauses that filters can be added to (e.g. $bool['filter']).
    */
   private static function applyUserFiltersHasPhotos(array $definition, array &$bool) {
     $filter = self::getDefinitionFilter($definition, ['has_photos']);
     if (!empty($filter)) {
-      $boolClause = in_array($filter['value'], ['1', 't']) ? 'must' : 'must_not';
+      $boolClause = in_array($filter['value'], ['1', 't']) ? 'filter' : 'must_not';
       $bool[$boolClause][] = [
         'nested' => [
           'path' => 'occurrence.media',
           'query' => [
             'bool' => [
-              'must' => ['exists' => ['field' => 'occurrence.media']],
+              'filter' => ['exists' => ['field' => 'occurrence.media']],
             ],
           ],
         ],
@@ -2796,13 +2796,13 @@ class ElasticsearchProxyHelper {
    * @param array $definition
    *   Definition loaded for the Indicia filter.
    * @param array $bool
-   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   *   Bool clauses that filters can be added to (e.g. $bool['filter']).
    */
   private static function applyUserFiltersDnaDerived(array $definition, array &$bool) {
     $filter = self::getDefinitionFilter($definition, ['dna_derived']);
     if (!empty($filter)) {
       $filterValue = in_array($filter['value'], ['1', 't']) ? TRUE : FALSE;
-      $bool['must'][] = [
+      $bool['filter'][] = [
         'term' => ['occurrence.dna_derived' => $filterValue],
       ];
     }
@@ -2819,13 +2819,13 @@ class ElasticsearchProxyHelper {
    * @param array $definition
    *   Definition loaded for the Indicia filter.
    * @param array $bool
-   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   *   Bool clauses that filters can be added to (e.g. $bool['filter']).
    */
   private static function applyUserFiltersAccessRestrictions(array $definition, array &$bool) {
     $filter = self::getDefinitionFilter($definition, ['confidential']);
     if (!empty($filter)) {
       if ($filter['value'] !== 'all') {
-        $bool['must'][] = [
+        $bool['filter'][] = [
           'term' => ['metadata.confidential' => $filter['value'] === 't' ? TRUE : FALSE],
         ];
       }
@@ -2833,7 +2833,7 @@ class ElasticsearchProxyHelper {
     }
     $filter = self::getDefinitionFilter($definition, ['exclude_sensitive']);
     if (!empty($filter)) {
-      $bool['must'][] = ['term' => ['metadata.sensitive' => FALSE]];
+      $bool['filter'][] = ['term' => ['metadata.sensitive' => FALSE]];
     }
     $filter = self::getDefinitionFilter($definition, ['release_status']);
     $userId = hostsite_get_user_field('indicia_user_id');
@@ -2841,12 +2841,12 @@ class ElasticsearchProxyHelper {
       switch ($filter['value']) {
         case 'R':
           // Released.
-          $bool['must'][] = ['term' => ['metadata.release_status' => 'R']];
+          $bool['filter'][] = ['term' => ['metadata.release_status' => 'R']];
           break;
 
         case 'RM':
           // Released by other recorders plus my own unreleased records.
-          $bool['must'][] = [
+          $bool['filter'][] = [
             'query_string' => ['query' => "metadata.release_status:R OR metadata.created_by_id:$userId"],
           ];
           break;
@@ -2854,7 +2854,7 @@ class ElasticsearchProxyHelper {
         case 'U':
           // Unreleased because records belong of a project that has not yet
           // released the records.
-          $bool['must'][] = ['term' => ['metadata.release_status' => 'U']];
+          $bool['filter'][] = ['term' => ['metadata.release_status' => 'U']];
           break;
 
         case 'RU':
@@ -2865,7 +2865,7 @@ class ElasticsearchProxyHelper {
 
         case 'P':
           // Recorder has requested a precheck before release.
-          $bool['must'][] = ['term' => ['metadata.release_status' => 'P']];
+          $bool['filter'][] = ['term' => ['metadata.release_status' => 'P']];
           break;
 
         case 'RP':
@@ -2894,7 +2894,7 @@ class ElasticsearchProxyHelper {
    * @param array $definition
    *   Definition loaded for the Indicia filter.
    * @param array $bool
-   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   *   Bool clauses that filters can be added to (e.g. $bool['filter']).
    * @param array $readAuth
    *   Read authentication tokens.
    */
@@ -2924,7 +2924,7 @@ class ElasticsearchProxyHelper {
       foreach ($taxonData as $taxon) {
         $keys[] = $taxon['external_key'];
       }
-      $bool['must'][] = ['terms' => ['taxon.higher_taxon_ids' => $keys]];
+      $bool['filter'][] = ['terms' => ['taxon.higher_taxon_ids' => $keys]];
     }
   }
 
@@ -3262,7 +3262,7 @@ class ElasticsearchProxyHelper {
       }
       $boolForThisKey = [];
       if (!empty($boolMust)) {
-        $boolForThisKey['must'] = $boolMust;
+        $boolForThisKey['filter'] = $boolMust;
       }
       if (!empty($boolMustNot)) {
         $boolForThisKey['must_not'] = $boolMustNot;
@@ -3277,10 +3277,10 @@ class ElasticsearchProxyHelper {
     if (!isset($query['query']['bool'])) {
       $query['query']['bool'] = [];
     }
-    if (!isset($query['query']['bool']['must'])) {
-      $query['query']['bool']['must'] = [];
+    if (!isset($query['query']['bool']['filter'])) {
+      $query['query']['bool']['filter'] = [];
     }
-    $query['query']['bool']['must'][] = [
+    $query['query']['bool']['filter'][] = [
       'bool' => [
         'should' => $allKeyQueries,
       ],

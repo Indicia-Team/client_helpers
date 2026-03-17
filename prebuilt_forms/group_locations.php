@@ -82,8 +82,15 @@ class iform_group_locations implements PrebuiltFormInterface {
       ],
       [
         'name' => 'location_type_ids',
-        'caption' => 'Allow selection of existing sites of type',
-        'description' => 'Comma separated list of location type IDs which the available existing sites to add will be limited to.',
+        'caption' => 'Limit adding user created sites to these location types',
+        'description' => 'Comma separated list of location type IDs which the available user-created existing sites to add will be limited to.',
+        'type' => 'string',
+        'required' => FALSE,
+      ],
+      [
+        'name' => 'predefined_location_type_ids',
+        'caption' => 'Limit adding predefined sites to these location types',
+        'description' => 'Comma separated list of location type IDs which the available predefined sites to add will be limited to.',
         'type' => 'string',
         'required' => FALSE,
       ],
@@ -192,17 +199,33 @@ class iform_group_locations implements PrebuiltFormInterface {
       if (!empty($args['location_type_ids'])) {
         $params['location_type_ids'] = $args['location_type_ids'];
       }
-      $leftcol .= data_entry_helper::select([
+      $controlOptions = [
         'label' => lang::get('Or, add an existing site'),
         'fieldname' => 'add_existing_location_id',
-        'report' => 'library/locations/locations_available_for_group',
+        'report' => 'reports_for_prebuilt_forms/group_locations/locations_available_for_group',
         'caching' => FALSE,
         'blankText' => lang::get('<please select>'),
         'valueField' => 'location_id',
         'captionField' => 'name',
         'extraParams' => $readAuth + $params,
-        'afterControl' => '<button id="add-existing">Add</button>',
-      ]);
+        'afterControl' => "<button id=\"add-existing\" class=\"$indicia_templates[buttonHighlightedClass]\" >Add</button>",
+      ];
+      if (empty($args['predefined_location_type_ids'])) {
+        $leftcol .= data_entry_helper::select($controlOptions + [
+          'caching' => FALSE,
+          'captionField' => 'name',
+          'blankText' => lang::get('<please select>'),
+        ]);
+      }
+      else {
+        $params['predefined_location_type_ids'] = $args['predefined_location_type_ids'];
+        // As we have potentially large numbers of predefined sites available,
+        // switch to a search.
+        $leftcol .= data_entry_helper::autocomplete($controlOptions + [
+          'captionField' => 'name_with_type',
+          'helpText' => lang::get('Start typing the name of a site, then select it and click Add to add it to the group.'),
+        ]);
+      }
       $leftcol .= '</fieldset>';
     }
     // @todo Link existing My Site to group. Need a new report to list sites I created, with sites already in the group

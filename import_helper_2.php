@@ -55,6 +55,11 @@ class import_helper_2 extends helper_base {
     'occurrence:machine_involvement',
     'occurrence:metadata',
     'occurrence:record_decision_source',
+    'dna_occurrence:occurrence_id',
+    'dna_occurrence:fk_occurrence',
+    'dna_occurrence:created_by_id',
+    'dna_occurrence:fk_created_by',
+    'dna_occurrence:updated_by_id',
     'sample:fk_parent',
     'sample:fk_parent:external_key',
     'id',
@@ -575,8 +580,7 @@ class import_helper_2 extends helper_base {
       'config-id' => $configId,
     ];
     $response = self::http_post($serviceUrl, $data, FALSE);
-    $output = json_decode($response['output'], TRUE);
-    if (!isset($response['result']) || $output['status'] !== 204) {
+    if ($response['status'] !== 204) {
       \Drupal::logger('iform')->error('Response from abandon_background_import attempt: ' . var_export($response, TRUE));
       if (isset($response['output'])) {
         $responseOutput = json_decode($response['output']);

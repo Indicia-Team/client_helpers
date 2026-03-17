@@ -261,6 +261,10 @@ class ElasticsearchReportHelper {
       'caption' => 'Species common name',
       'description' => 'Species name associated with the current identification of this record. Will still return the species ranked name where the record is of a taxon below species level.',
     ],
+    '#associations#' => [
+      'caption' => 'Associations',
+      'descriptions' => "Lists any occurrences that were recorded as associated with this occurrence, e.g. a fungi's host.",
+    ],
     'location.verbatim_locality' => [
       'caption' => 'Location name',
       'description' => 'Location name associated with the record.',
