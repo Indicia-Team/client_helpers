@@ -8278,7 +8278,7 @@ if (errors$uniq.length>0) {
    * customised submissions that only need to build sub-samples for some grids. The grid id comes from the @id option given
    * to the species grid.
    */
-    public static function wrap_species_checklist_with_subsamples($arr, $include_if_any_data = FALSE,
+  public static function wrap_species_checklist_with_subsamples($arr, $include_if_any_data = FALSE,
           $zeroAttrs = TRUE, $zeroValues = ['0', 'none', 'absent', 'not seen'], $gridsToExclude = []) {
     if (array_key_exists('website_id', $arr)) {
       $website_id = $arr['website_id'];
