@@ -44,31 +44,33 @@ class report_helper extends helper_base {
    */
   public static $filterParamsToGloballySkip = [];
 
- /**
-  * Control which outputs a treeview of the reports available on the warehouse, with
-  * radio buttons for selecting a report. The title and description of the currently selected
-  * report are displayed alongside.
-  *
-  * @param array $options Options array which accepts the following standard options: id,
-  * fieldname, class, default, readAuth.
-  */
+  /**
+   * Outputs a tree view of available reports with radio button selection.
+   *
+   * The currently selected report title and description are displayed
+   * alongside the tree.
+   *
+   * @param array $options
+   *   Options array which accepts: id, fieldname, class, default, readAuth.
+   */
   public static function report_picker($options) {
     self::add_resource('reportPicker');
-    $options = array_merge(array(
+    $options = array_merge([
       'id' => 'report-picker',
       'fieldname' => 'report_name',
       'default' => '',
-      'class' => ''
-    ), $options);
-    // add class rather than replacing existing
+      'class' => '',
+    ], $options);
+    // Add class rather than replacing existing.
     $options['class'] .= ' report-picker-container ui-widget ui-widget-content ui-helper-clearfix';
     $reports = '';
-    $response = self::http_post(self::$base_url.'index.php/services/report/report_list?nonce='.
-        $options['readAuth']['nonce'].'&auth_token='.$options['readAuth']['auth_token']);
+    $response = self::http_post(self::$base_url . 'index.php/services/report/report_list?nonce=' .
+        $options['readAuth']['nonce'] . '&auth_token=' . $options['readAuth']['auth_token']);
     if (isset($response['output'])) {
-      $output = json_decode($response['output'], true);
-      if (isset($output['error']))
+      $output = json_decode($response['output'], TRUE);
+      if (isset($output['error'])) {
         return $output['error'];
+      }
       $reports .= self::get_report_list_level($options['id'], $options['fieldname'], $options['default'], $output);
     }
     self::$javascript .= <<<JS
@@ -78,41 +80,50 @@ class report_helper extends helper_base {
       $('#$options[id] > ul input[checked="checked"]').parents('#$options[id] ul').show();
 
     JS;
-    $options['reports']=$reports;
-    $options['moreinfo']=lang::get('More info');
+    $options['reports'] = $reports;
+    $options['moreinfo'] = lang::get('More info');
     return self::apply_template('report_picker', $options);
   }
 
   /**
-   * Outputs a single level of the hierarchy of available reports, then iterates into sub-
-   * folders.
-   * @param string $ctrlId The fieldname for the report_picker control (=HTML form value)
-   * @param string $default Name of the report to be initially selected
-   * @param array $list Array of the reports and folders within the level to be output.
-   * @return string HTML for the unordered list containing the level.
-   * @access private
+   * Outputs one level of the hierarchy of available reports.
+   *
+   * Iterates into sub-folders recursively.
+   *
+   * @param string $ctrlId
+   *   Fieldname for the report picker control (HTML form value).
+   * @param string $fieldName
+   *   Name of the form field.
+   * @param string $default
+   *   Name of the report to be initially selected.
+   * @param array $list
+   *   Reports and folders within the level to be output.
+   *
+   * @return string
+   *   HTML for the unordered list containing the level.
    */
   private static function get_report_list_level($ctrlId, $fieldName, $default, $list) {
     $r = '';
-    foreach($list as $name=>$item) {
-      if ($item['type']=='report') {
-        $id = 'opt_'.str_replace('/','_',$item['path']);
-        $checked = $item['path']==$default ? ' checked="checked"' : '';
-        $r .= '<li><label class="ui-helper-reset auto">'.
-            '<input type="radio" id="'.$id.'" name="'.$fieldName.'" value="'.$item['path'].
-            '" onclick="displayReportMetadata(\'' . $ctrlId . '\', \'' . $item['path'] . '\');" ' . $checked . '/>'.
+    foreach ($list as $name => $item) {
+      if ($item['type'] == 'report') {
+        $id = 'opt_' . str_replace('/', '_', $item['path']);
+        $checked = $item['path'] == $default ? ' checked="checked"' : '';
+        $r .= '<li><label class="ui-helper-reset auto">' .
+            '<input type="radio" id="' . $id . '" name="' . $fieldName . '" value="' . $item['path'] .
+            '" onclick="displayReportMetadata(\'' . $ctrlId . '\', \'' . $item['path'] . '\');" ' . $checked . '/>' .
             htmlspecialchars($item['title']) .
-            "</label></li>\n";
+            "</label>\n";
       }
       else {
         $name = ucwords(str_replace('_', ' ', $name));
         $r .= "<li>$name\n";
         $r .= self::get_report_list_level($ctrlId, $fieldName, $default, $item['content']);
-        $r .= "</li>\n";
+        $r .= "\n";
       }
     }
-    if (!empty($r))
+    if (!empty($r)) {
       $r = "<ul>\n$r\n</ul>\n";
+    }
     return $r;
   }
 
@@ -139,13 +150,13 @@ class report_helper extends helper_base {
    */
   public static function report_download_link($options) {
     static $report_download_link_index = 1;
-    $options = array_merge(array(
+    $options = array_merge([
       'caption' => 'Download this report',
       'format' => 'csv',
       'itemsPerPage' => 20000,
       'class' => '',
       'id' => 'report-download-link-' . $report_download_link_index++,
-    ), $options);
+    ], $options);
     // Option for a special report for downloading.
     if (!empty($options['dataSourceDownloadLink'])) {
       $origDataSource = $options['dataSource'];
@@ -186,16 +197,16 @@ class report_helper extends helper_base {
    * @param int $rowId
    *   Record ID.
    *
-   * @param string
+   * @return string
    *   HTML for thumbnails.
    */
   public static function mediaToThumbnails(array $mediaPaths, $preset, $entity, $rowId) {
     $imagePath = self::get_uploaded_image_folder();
-    $imgclass = count($mediaPaths)>1 ? 'multi' : 'single';
-    $group = count($mediaPaths)>1 && !empty($rowId) ? "group-$rowId" : '';
+    $imgclass = count($mediaPaths) > 1 ? 'multi' : 'single';
+    $group = count($mediaPaths) > 1 && !empty($rowId) ? "group-$rowId" : '';
     $r = '';
-    foreach($mediaPaths as $path) {
-      // Attach info so the file's caption and licence can be loaded
+    foreach ($mediaPaths as $path) {
+      // Attach info so the file's caption and licence can be loaded.
       // on view. We can only do this if we know the row's ID.
       $mediaInfoAttr = '';
       if (!empty($rowId) && !empty($entity)) {
@@ -233,7 +244,7 @@ HTML;
     return $r;
   }
 
- /**
+  /**
   * Outputs a grid that loads the content of a report or Indicia table.
   *
   * The grid supports a simple pagination footer as well as column title sorting through PHP. If
@@ -245,39 +256,39 @@ HTML;
   *
   * The grid operation will be handled by AJAX calls when possible to avoid reloading the web page.
   *
-  * @param array $options Options array with the following possibilities:<ul>
-  * <li><b>id</b><br/>
+  * @param array $options Options array with the following possibilities:
+  * - **id**
   * Optional unique identifier for the grid's container div. This is required if there is more than
   * one grid on a single web page to allow separation of the page and sort $_GET parameters in the URLs
-  * generated.</li>
-  * <li><b>reportGroup</b><br/>
+  * generated.
+  * - **reportGroup**
   * When joining multiple reports together, this can be used on a report that has autoParamsForm set to false to bind the report to the
   * parameters form from a different report by giving both report controls the same reportGroup string. This will only work when all
-  * parameters required by this report are covered by the other report's parameters form.</li>
-  * <li><b>rememberParamsReportGroup</b><br/>
+  * parameters required by this report are covered by the other report's parameters form.
+  * - **rememberParamsReportGroup**
   * Enter any value in this parameter to allow the report to save its parameters for the next time the report is loaded.
   * The parameters are saved site wide, so if several reports share the same value and the same report group then the parameter
   * settings will be shared across the reports even if they are on different pages of the site. For example if several reports on the
   * site have an ownData boolean parameter which filters the data to the user's own data, this can be set so that the reports all
-  * share the setting. This functionality requires cookies to be enabled on the browser.</li>
-  * <li><b>rememberGridPosition</b><br/>
+  * share the setting. This functionality requires cookies to be enabled on the browser.
+  * - **rememberGridPosition**
   * If true, then the grid's last paging position, row filter and sort
   * information are stored in a cookie and recalled the next time the page is
-  * visited.</li>
-  * <li><b>mode</b><br/>
-  * Pass report for a report, or direct for an Indicia table or view. Default is report.</li>
-  * <li><b>readAuth</b><br/>
-  * Read authorisation tokens.</li>
-  * <li><b>dataSource</b><br/>
-  * Name of the report file or singular form of the table/view.</li>
-  * <li><b>dataSourceDownloadLink</b><br/>
-  * Optionally use a different data source for the download link displayed beneath the grid..</li>
-  * <li><b>view</b>
+  * visited.
+  * - **mode**
+  * Pass report for a report, or direct for an Indicia table or view. Default is report.
+  * - **readAuth**
+  * Read authorisation tokens.
+  * - **dataSource**
+  * Name of the report file or singular form of the table/view.
+  * - **dataSourceDownloadLink**
+  * Optionally use a different data source for the download link displayed beneath the grid..
+  * - **view**
   * When loading from a view, specify list, gv or detail to determine which view variant is loaded. Default is list.
-  * </li>
-  * <li><b>itemsPerPage</b><br/>
-  * Number of rows to display per page. Defaults to 20.</li>
-  * <li><b>columns</b><br/>
+  * 
+  * - **itemsPerPage**
+  * Number of rows to display per page. Defaults to 20.
+  * - **columns**
   * Optional. Specify a list of the columns you want to output if you need more control over the columns, for example to
   * specify the order, change the caption or build a column with a configurable data display using a template.
   * Pass an array to this option, with each array entry containing an associative array that specifies the
@@ -331,8 +342,8 @@ HTML;
   *  - img: set to true if the column contains a path to an image (relative to the warehouse upload folder). If so then the
   *      path is replaced by an image thumbnail with a fancybox zoom to the full image. Multiple images can be included by
   *      separating each path with a comma.
-  * </li>
-  * <li><b>rowId</b>
+  * 
+  * - **rowId**
   * Optional. Names the field in the data that contains the unique identifier
   * for each row. If set, then the &lt;tr&gt; elements have their id attributes
   * set to row + this field value, e.g. row37. This is used to allow
@@ -340,8 +351,8 @@ HTML;
   * the same data - the map should also have its @rowId property set to the
   * same field. Also used to obtain media data (caption and licence info)
   * when showing a popup after clicking on a media thumbnail.
-  * </li>
-  * <li><b>entity</b>
+  * 
+  * - **entity**
   * If the report grid contains a media column with thumbnails, then the rowId
   * is used to determine how to load the media's caption and licence info from
   * the database. If rowId is of the form '<table>_id', e.g. 'sample_id', then
@@ -349,19 +360,19 @@ HTML;
   * unnecessary. However if rowId is just set to 'id' or some other form, then
   * the code will default the entity to 'occurrence' so will need to be
   * overridden for data from other tables.
-  * <li><b>includeAllColumns</b>
+  * - **includeAllColumns**
   * Defaults to true. If true, then any columns in the report, view or table which are not in the columns
   * option array are automatically added to the grid after any columns specified in the columns option array.
   * Therefore the default state for a report_grid control is to include all the report, view or table columns
-  * in their default state, since the columns array will be empty.</li>
-  * <li><b>headers</b>
+  * in their default state, since the columns array will be empty.
+  * - **headers**
   * Should a header row be included? Defaults to true.
-  * <li><b>sortable</b>
+  * - **sortable**
   * If a header is included, should columns which allow sorting be sortable by clicking? Defaults to true.
-  * <li><b>galleryColCount</b>
+  * - **galleryColCount**
   * If set to a value greater than one, then each grid row will contain more than one record of data from the database, allowing
   * a gallery style view to be built. Defaults to 1.
-  * <li><b>autoParamsForm</b>
+  * - **autoParamsForm**
   * Defaults to true. If true, then if a report requires parameters, a parameters input form will be auto-generated
   * at the top of the grid. If set to false, then it is possible to manually build a parameters entry HTML form if you
   * follow the following guidelines. First, you need to specify the id option for the report grid, so that your
@@ -372,107 +383,107 @@ HTML;
   * a parameter called survey will need an input or select control with the name attribute set to 'param-my-grid-survey'.
   * The submit button for the form should have the method set to "get" and should post back to the same page.
   * As a final alternative, if parameters are required by the report but some can be hard coded then
-  * those may be added to the filters array.</li>
-  * <li><b>fieldsetClass</b><br/>
-  * Optional. Class name(s) to add to fieldsets generated by the auto parameters form.</li>
-  * <li><b>filters</b><br/>
+  * those may be added to the filters array.
+  * - **fieldsetClass**
+  * Optional. Class name(s) to add to fieldsets generated by the auto parameters form.
+  * - **filters**
   * Array of key value pairs to include as a filter against the data.
-  * </li>
-  * <li><b>extraParams</b><br/>
+  * 
+  * - **extraParams**
   * Array of additional key value pairs to attach to the request. This should include fixed values which cannot be
   * changed by the user and therefore are not needed in the parameters form. extraParams can be overridden by loaded
   * context filters (permissions filters, e.g. for verification).
-  * </li>
-  * <li><b>immutableParams</b><br/>
+  * 
+  * - **immutableParams**
   * Immutable parameters are parameters to apply to the report grid which cannot be changed under any circumstance.
-  * </li>
-  * <li><b>paramDefaults</b>
-  * Optional associative array of parameter default values. Default values appear in the parameter form and can be overridden.</li>
-  * <li><b>paramsOnly</b>
+  * 
+  * - **paramDefaults**
+  * Optional associative array of parameter default values. Default values appear in the parameter form and can be overridden.
+  * - **paramsOnly**
   * Defaults to false. If true, then this method will only return the parameters form, not the grid content. autoParamsForm
-  * is ignored if this flag is set.</li>
-  * <li><b>ignoreParams</b>
+  * is ignored if this flag is set.
+  * - **ignoreParams**
   * Array that can be set to a list of the report parameter names that should not be included in the parameters form. Useful
   * when using paramsOnly=true to display a parameters entry form, but the system has default values for some of the parameters
   * which the user does not need to be asked about. Can also be used to provide parameter values that can be overridden only via
-  * a URL parameter.</li>
-  * <li><b>completeParamsForm</b>
+  * a URL parameter.
+  * - **completeParamsForm**
   * Defaults to true. If false, the control HTML is returned for the params form without being wrapped in a <form> and
-  * without the Run Report button, allowing it to be embedded into another form.</li>
-  * <li><b>paramsFormButtonCaption</b>
+  * without the Run Report button, allowing it to be embedded into another form.
+  * - **paramsFormButtonCaption**
   * Caption of the button to run the report on the report parameters form. Defaults to Run Report. This caption
   * is localised when appropriate.
-  * <li><b>paramsInMapToolbar</b>
+  * - **paramsInMapToolbar**
   * If set to true, then the parameters for this report are not output, but are passed to a map_panel control
   * (which must therefore exist on the same web page) and are output as part of the map's toolbar.
-  * </li>
-  * <li><b>footer</b>
+  * 
+  * - **footer**
   * Additional HTML to include in the report footer area. {currentUrl} is replaced by the
   * current page's URL, {rootFolder} is replaced by the folder on the server that the current PHP page
-  * is running from.</li>
-  * </li>
-  * <li><b>downloadLink</b>
-  * Should a download link be included in the report footer? Defaults to false.</li>
-  * <li><b>sharing</b>
+  * is running from.
+  * 
+  * - **downloadLink**
+  * Should a download link be included in the report footer? Defaults to false.
+  * - **sharing**
   * Assuming the report has been written to take account of website sharing agreements, set this to define the task
   * you are performing with the report and therefore the type of sharing to allow. Options are reporting (default),
-  * verification, moderation, peer_review, data_flow, editing, website (this website only) or me (my data only).</li>
-  * <li><b>UserId</b>
+  * verification, moderation, peer_review, data_flow, editing, website (this website only) or me (my data only).
+  * - **UserId**
   * If sharing=me, then this must contain the Indicia user ID of the user to return data for.
-  * </li>
-  * <li><b>sendOutputToMap</b>
+  * 
+  * - **sendOutputToMap**
   * Default false. If set to true, then the records visible on the current page are drawn onto a map. This is different to the
   * report_map method when linked to a report_grid, which loads its own report data for display on a map, just using the same input parameters
   * as other reports. In this case the report_grid's report data is used to draw the features on the map, so only 1 report request is made.
-  * </li>
-  * <li><b>linkFilterToMap</b>
+  * 
+  * - **linkFilterToMap**
   * Default true but requires a rowId to be set. If true, then filtering the grid causes the map to also filter.
-  * </li>
-  * <li><b>includePopupFilter</b>
+  * 
+  * - **includePopupFilter**
   * Set to true if you want to include a filter in the report header that
   * displays a popup allowing the user to select exactly what data they want to
   * display on the report.
-  * </li>
-  * <li><b>zoomMapToOutput</b>
+  * 
+  * - **zoomMapToOutput**
   * Default true. When combined with sendOutputToMap=true, defines that the map will automatically zoom to show the records.
-  * </li>
-  * <li><b>rowClass</b>
+  * 
+  * - **rowClass**
   * A CSS class to add to each row in the grid. Can include field value replacements in braces, e.g. {certainty} to construct classes from
   * field values, e.g. to colour rows in the grid according to the data.
-  * </li>
-  * <li><b>callback</b>
+  * 
+  * - **callback**
   * Set to the name of a JavaScript function that should already exist which
   * will be called each time the grid reloads (e.g. when paginating or sorting).
-  * </li>
-  * <li><b>linkToReportPath</b>
+  * 
+  * - **linkToReportPath**
   * Allows drill down into reports. Holds the URL of the report that is called when the user clicks on
   * a report row. When this is not set, the report click functionality is disabled. The replacement #param# will
   * be filled in with the row ID of the clicked on row.
-  * </li>
-  * <li><b>ajax</b>
+  * 
+  * - **ajax**
   * If true, then the first page of records is loaded via an AJAX call after the initial page load, otherwise
   * they are loaded using PHP during page build. This means the grid load will be delayed till after the
   * rest of the page, speeding up the load time of the rest of the page. If used on a tabbed output then
   * the report will load when the tab is first viewed.
   * Default false.
-  * </li>
-  * <li><b>ajaxLinksOnly</b>
+  * 
+  * - **ajaxLinksOnly**
   * If true, then sort and pagination links designed for use when JavaScript is disabled will be ommitted. Useful
   * on public facing pages to prevent search engines navigating links.
   * Default false.
-  * </li>
-  * <li><b>autoloadAjax</b>
+  * 
+  * - **autoloadAjax**
   * Set to true to prevent autoload of the grid in Ajax mode. You would then need to call the grid's ajaxload() method
   * when ready to load. This might be useful e.g. if a parameter is obtained from some other user input beforehand.
   * Default false.
-  * </li>
-  * <li><b>pager</b>
+  * 
+  * - **pager**
   * Include a pager? Default true. Removing the pager can have a big improvement on performance where there are lots of records to count.
-  * </li>
-  * <li><b>imageThumbPreset</b>
+  * 
+  * - **imageThumbPreset**
   * Defaults to thumb. Preset name for the image to be loaded from the warehouse as the preview thumbnail for images, e.g. thumb or med.
-  * </li>
-  * <li><b>responsiveOpts</b>
+  * 
+  * - **responsiveOpts**
   * Set to an array of options to pass to FooTable to make the table responsive.
   * Used in conjunction with the columns['responsive-hide'] option to determine
   * which columns are hidden at different breakpoints.
@@ -480,13 +491,12 @@ HTML;
   *   - breakpoints: an array keyed by breakpoint name with values of screen
   *     width at which to apply the breakpoint. Footable defaults apply if
   *     omitted.
-  * </li>
-  * <li><b>includeColumnsPicker</b>
+  * 
+  * - **includeColumnsPicker**
   * Adds a menu button to the header which allows the user to pick which columns are visible.
   * When using this option you must set the id option as well to a unique identifier
   * for the grid in order to enable saving of the settings in a cookie.
-  * </li>
-  * </ul>
+  * 
   */
   public static function report_grid($options) {
     global $indicia_templates;
@@ -498,27 +508,33 @@ HTML;
     }
     $sortAndPageUrlParams = self::getReportGridSortPageUrlParams($options);
     $extras = self::getReportSortingPagingParams($options, $sortAndPageUrlParams);
-    if ($options['ajax'])
-      $options['extraParams']['limit']=0;
+    if ($options['ajax']) {
+      $options['extraParams']['limit'] = 0;
+    }
     // Request report data.
     self::request_report(
       $response,
       $options,
       $currentParamValues,
-      // Only get a count if doing a pager and not doing Ajax population as Ajax can update the pager later.
+      // Only get a count if using a pager and not using Ajax population.
       $options['pager'] && !$options['ajax'],
       $extras
     );
     if (isset($response['count'])) {
-      // Pass knownCount into any subsequent AJAX calls as this allows better performance
+      // Pass knownCount into subsequent AJAX calls for better performance.
       $options['extraParams']['knownCount'] = $response['count'];
     }
-    if ($options['ajax'])
+    if ($options['ajax']) {
       unset($options['extraParams']['limit']);
-    if (isset($response['error'])) return $response['error'];
+    }
+    if (isset($response['error'])) {
+      return $response['error'];
+    }
     $r = self::paramsFormIfRequired($response, $options, $currentParamValues);
-    // return the params form, if that is all that is being requested, or the parameters are not complete.
-    if ((isset($options['paramsOnly']) && $options['paramsOnly']) || !isset($response['records'])) return $r;
+    // Return the params form if that is all that is being requested.
+    if ((isset($options['paramsOnly']) && $options['paramsOnly']) || !isset($response['records'])) {
+      return $r;
+    }
     $records = $response['records'];
     self::report_grid_get_columns($response, $options);
     $pageUrl = self::reportGridGetReloadUrl($sortAndPageUrlParams);
@@ -528,28 +544,29 @@ HTML;
     $thead = '';
     $tbody = '';
     $tfoot = '';
-    if ($options['headers']!==false) {
-      //$thead .= "\n<thead class=\"$thClass\">\n";
-      // build a URL with just the sort order bit missing, so it can be added for each table heading link
+    if ($options['headers'] !== FALSE) {
+      // $thead .= "\n<thead class=\"$thClass\">\n";
+      // Build a URL with only the sort order part missing.
       $sortUrl = $pageUrl . ($sortAndPageUrlParams['page']['value'] ?
-          $sortAndPageUrlParams['page']['name'].'='.$sortAndPageUrlParams['page']['value'].'&' :
+          $sortAndPageUrlParams['page']['name'] . '=' . $sortAndPageUrlParams['page']['value'] . '&' :
           ''
       );
       $sortdirval = $sortAndPageUrlParams['sortdir']['value'] ? strtolower($sortAndPageUrlParams['sortdir']['value']) : 'asc';
-      // Flag if we know any column data types and therefore can display a filter row
-      $wantFilterRow=false;
-      $filterRow='';
-      $imgPath = empty(self::$images_path) ? self::relative_client_helper_path()."../media/images/" : self::$images_path;
-      // Output the headers. Repeat if galleryColCount>1;
-      for ($i=0; $i<$options['galleryColCount']; $i++) {
+      // Flag if we know any column data types and can display a filter row.
+      $wantFilterRow = FALSE;
+      $filterRow = '';
+      $imgPath = empty(self::$images_path) ? self::relative_client_helper_path() . "../media/images/" : self::$images_path;
+      // Output headers. Repeat if galleryColCount > 1.
+      for ($i = 0; $i < $options['galleryColCount']; $i++) {
         foreach ($options['columns'] as &$field) {
-          if (isset($field['visible']) && ($field['visible'] === 'false' || $field['visible'] === false)) {
-             // skip this column as marked invisible
+          if (isset($field['visible']) && ($field['visible'] === 'false' || $field['visible'] === FALSE)) {
+            // Skip this column as marked invisible.
             continue;
           }
-          if (isset($field['actions']))
+          if (isset($field['actions'])) {
             report_helper::translateActions($field['actions']);
-          // allow the display caption to be overriden in the column specification
+          }
+          // Allow the display caption to be overridden in the column spec.
           if (empty($field['display']) && empty($field['fieldname'])) {
             $caption = '';
           }
@@ -561,25 +578,25 @@ HTML;
             if (empty($field['orderby'])) {
               $field['orderby'] = $field['fieldname'];
             }
-            $sortLink = $sortUrl.$sortAndPageUrlParams['orderby']['name'].'='.$field['orderby'];
-            // reverse sort order if already sorted by this field in ascending dir
+            $sortLink = $sortUrl . $sortAndPageUrlParams['orderby']['name'] . '=' . $field['orderby'];
+            // Reverse sort order if already sorted by this field ascending.
             if ($sortAndPageUrlParams['orderby']['value'] == $field['orderby'] && $sortAndPageUrlParams['sortdir']['value'] != 'DESC') {
-              $sortLink .= '&'.$sortAndPageUrlParams['sortdir']['name']."=DESC";
+              $sortLink .= '&' . $sortAndPageUrlParams['sortdir']['name'] . "=DESC";
             }
             $sortHref = self::getGridNavHref($sortLink, $options['ajaxLinksOnly']);
-            // store the field in a hidden input field
+            // Store the field in a hidden input field.
             $sortBy = lang::get("Sort by {1}", $caption);
             $captionLink = "<input type=\"hidden\" value=\"$field[orderby]\"/>" .
                 "<a$sortHref title=\"$sortBy\">$caption</a>";
-            // set a style for the sort order
-            $orderStyle = ($sortAndPageUrlParams['orderby']['value'] == $field['orderby']) ? ' '.$sortdirval : '';
+            // Set a style for the sort order.
+            $orderStyle = ($sortAndPageUrlParams['orderby']['value'] == $field['orderby']) ? ' ' . $sortdirval : '';
             $orderStyle .= ' sortable';
             $fieldId = ' id="' . $options['id'] . '-th-' . $field['orderby'] . '"';
           }
           else {
             $orderStyle = '';
             $fieldId = '';
-            $captionLink=$caption;
+            $captionLink = $caption;
           }
           $colClass = isset($field['fieldname']) ? " col-$field[fieldname]" : '';
           if (!$colClass && isset($field['actions'])) {
@@ -590,7 +607,7 @@ HTML;
           $datahide = '';
           if (isset($field['responsive-hide'])) {
             $datahide = implode(',', array_keys(array_filter($field['responsive-hide'])));
-            if($datahide != '') {
+            if ($datahide != '') {
               $datahide = " data-hide=\"$datahide\" data-editable=\"true\"";
             }
           }
@@ -610,40 +627,48 @@ HTML;
                 $title = lang::get("Search on {1} - either enter an exact number, use >, >=, <, or <= before the number to filter for " .
                       "{1} more or less than your search value, or enter a range such as 1000-2000.", $caption);
             }
-            $title = htmlspecialchars(lang::get('Type here to filter then press Tab or Return to apply the filter.').' '.$title);
+            $title = htmlspecialchars(lang::get('Type here to filter then press Tab or Return to apply the filter.') . ' ' . $title);
             // Filter, which when clicked, displays a popup with a series of
             // checkboxes representing a distinct set of data from a column on
             // the report. The user can then deselect these checkboxes to
             // remove data from the report.
-            if (!empty($options['includePopupFilter'])&&$options['includePopupFilter']===true) {
-              self::$javascript.="indiciaData.includePopupFilter=true;";
-              $popupFilterIcon = $imgPath."desc.gif";
-              $popupFilterIconHtml='<img class="col-popup-filter" id="col-popup-filter-'.$field['fieldname'].'-'.$options['id'].'" src="'.$popupFilterIcon.'"  >';
+            if (!empty($options['includePopupFilter']) && $options['includePopupFilter'] === TRUE) {
+              self::$javascript .= "indiciaData.includePopupFilter=true;";
+              $popupFilterIcon = $imgPath . "desc.gif";
+              $popupFilterIconHtml = '<img class="col-popup-filter" id="col-popup-filter-' . $field['fieldname'] . '-' . $options['id'] . '" src="' . $popupFilterIcon . '"  >';
             }
-            if (empty($popupFilterIconHtml))
-              $popupFilterIconHtml='';
-            //The filter's input id includes the grid id ($options['id']) in its id as there maybe more than one grid and we need to make the id unique.
-            $filterRow .= "<th class=\"$colClass\"><input title=\"$title\" type=\"text\" class=\"col-filter\" id=\"col-filter-".$field['fieldname']."-".$options['id']."\"/>$popupFilterIconHtml</th>";//Add a icon for the popup filter
-            $wantFilterRow = true;
-          } else
+            if (empty($popupFilterIconHtml)) {
+              $popupFilterIconHtml = '';
+            }
+            // Include grid id in filter input id to ensure uniqueness.
+            $filterRow .= "<th class=\"$colClass\"><input title=\"$title\" type=\"text\" class=\"col-filter\" id=\"col-filter-" . $field['fieldname'] . "-" . $options['id'] . "\"/>$popupFilterIconHtml</th>";
+            // Add an icon for the popup filter.
+            $wantFilterRow = TRUE;
+          }
+          else {
             $filterRow .= "<th class=\"$colClass\"></th>";
+          }
         }
         // Clean up dangling reference variable
         unset($field);
       }
-      $thead = str_replace(array('{class}','{title}','{content}'), array('','',$thead), $indicia_templates['report-thead-tr']);
-      if ($wantFilterRow && (!isset($options["forceNoFilterRow"]) || !$options["forceNoFilterRow"]))
-        $thead .= str_replace(array('{class}','{title}','{content}'),
-            array(' class="filter-row"',' title="'.lang::get('Use this row to filter the grid').'"',$filterRow), $indicia_templates['report-thead-tr']);
-      $thead = str_replace(array('{class}', '{content}'), array(" class=\"$thClass\"", $thead), $indicia_templates['report-thead']);
+      $thead = str_replace(['{class}', '{title}', '{content}'], ['', '', $thead], $indicia_templates['report-thead-tr']);
+      if ($wantFilterRow && (!isset($options['forceNoFilterRow']) || !$options['forceNoFilterRow'])) {
+        $thead .= str_replace(
+          ['{class}', '{title}', '{content}'],
+          [' class="filter-row"', ' title="' . lang::get('Use this row to filter the grid') . '"', $filterRow],
+          $indicia_templates['report-thead-tr']
+        );
+      }
+      $thead = str_replace(['{class}', '{content}'], [" class=\"$thClass\"", $thead], $indicia_templates['report-thead']);
     }
     $currentUrl = self::get_reload_link_parts();
     // automatic handling for Drupal clean urls.
-    $pathParam = (function_exists('variable_get') && variable_get('clean_url', 0)=='0') ? 'q' : '';
+    $pathParam = (function_exists('variable_get') && variable_get('clean_url', 0) == '0') ? 'q' : '';
     $rootFolder = self::getRootFolder(true);
     // amend currentUrl path if we have Drupal 6/7 dirty URLs so javascript will work properly
-    if (isset($currentUrl['params']['q']) && strpos($currentUrl['path'], '?')===false) {
-      $currentUrl['path'] = $currentUrl['path'].'?q='.$currentUrl['params']['q'];
+    if (isset($currentUrl['params']['q']) && strpos($currentUrl['path'], '?') === FALSE) {
+      $currentUrl['path'] = $currentUrl['path'] . '?q=' . $currentUrl['params']['q'];
     }
     $tfoot .= '<tfoot>';
     $tfoot .= '<tr><td colspan="'.count($options['columns'])*$options['galleryColCount'].'">'.self::outputPager($options, $pageUrl, $sortAndPageUrlParams, $response).'</td></tr>'.
@@ -1264,73 +1289,73 @@ JS;
   * single series.</p>
   * <p>For summary reports, the user can optionally setup clicking functionality so that another report is called when the user clicks on the chart.</p>
   *
-  * @param array $options Options array with the following possibilities:<ul>
-  * <li><b>mode</b><br/>
-  * Pass report to retrieve the underlying chart data from a report, or direct for an Indicia table or view. Default is report.</li>
-  * <li><b>readAuth</b><br/>
-  * Read authorisation tokens.</li>
-  * <li><b>dataSource</b><br/>
-  * Name of the report file or table/view(s) to retrieve underlying data. Can be an array for multi-series charts.</li>
-  * <li><b>class</b><br/>
-  * CSS class to apply to the outer div.</li>
-  * <li><b>headerClass</b><br/>
-  * CSS class to apply to the box containing the header.</li>
-  * <li><b>reportGroup</b><br/>
+  * @param array $options Options array with the following possibilities:
+  * - **mode**
+  * Pass report to retrieve the underlying chart data from a report, or direct for an Indicia table or view. Default is report.
+  * - **readAuth**
+  * Read authorisation tokens.
+  * - **dataSource**
+  * Name of the report file or table/view(s) to retrieve underlying data. Can be an array for multi-series charts.
+  * - **class**
+  * CSS class to apply to the outer div.
+  * - **headerClass**
+  * CSS class to apply to the box containing the header.
+  * - **reportGroup**
   * When joining multiple reports together, this can be used on a report that has autoParamsForm set to false to bind the report to the
   * parameters form from a different report by giving both report controls the same reportGroup string. This will only work when all
-  * parameters required by this report are covered by the other report's parameters form.</li>
-  * <li><b>rememberParamsReportGroup</b><br/>
+  * parameters required by this report are covered by the other report's parameters form.
+  * - **rememberParamsReportGroup**
   * Enter any value in this parameter to allow the report to save its parameters for the next time the report is loaded.
   * The parameters are saved site wide, so if several reports share the same value and the same report group then the parameter
   * settings will be shared across the reports even if they are on different pages of the site. For example if several reports on the
   * site have an ownData boolean parameter which filters the data to the user's own data, this can be set so that the reports all
-  * share the setting. This functionality requires cookies to be enabled on the browser.</li>
-  * <li><b>height</b><br/>
-  * Chart height in pixels.</li>
-  * <li><b>width</b><br/>
-  * Chart width in pixels or as a percentage followed by a % symbol.</li>
-  * <li><b>chartType</b><br/>
-  * Currently supports line, bar or pie.</li>
-  * <li><b>rendererOptions</b><br/>
+  * share the setting. This functionality requires cookies to be enabled on the browser.
+  * - **height**
+  * Chart height in pixels.
+  * - **width**
+  * Chart width in pixels or as a percentage followed by a % symbol.
+  * - **chartType**
+  * Currently supports line, bar or pie.
+  * - **rendererOptions**
   * Associative array of options to pass to the jqplot renderer.
-  * </li>
-  * <li><b>gridOptions</b><br/>
+  * 
+  * - **gridOptions**
   * Associative array of options to pass to the jqplot grid object.
-  * </li>
-  * <li><b>legendOptions</b><br/>
+  * 
+  * - **legendOptions**
   * Associative array of options to pass to the jqplot legend. For more information see links below.
-  * </li>
-  * <li><b>seriesOptions</b><br/>
+  * 
+  * - **seriesOptions**
   * For line and bar charts, associative array of options to pass to the jqplot series. For example:<br/>
   * 'seriesOptions' => array(array('label' => 'My first series','label' => 'My 2nd series'))<br/>
   * For more information see links below.
-  * </li>
-  * <li><b>seriesColors</b><br/>
+  * 
+  * - **seriesColors**
   * JSON array of CSS colour specifications for each consecutive data point in the series.
-  * </li>
-  * <li><b>axesOptions</b><br/>
+  * 
+  * - **axesOptions**
   * For line and bar charts, associative array of options to pass to the jqplot axes. For example:<br/>
   * 'axesOptions' => array('yaxis'=>array('min' => 0, 'max' => '3', 'tickInterval' => 1))<br/>
   * For more information see links below.
-  * </li>
-  * <li><b>yValues</b><br/>
+  * 
+  * - **yValues**
   * Report or table field name(s) which contains the data values for the y-axis (or the pie segment sizes). Can be
-  * an array for multi-series charts.</li>
-  * <li><b>xValues</b><br/>
+  * an array for multi-series charts.
+  * - **xValues**
   * Report or table field name(s) which contains the data values for the x-axis. Only used where the x-axis has a numerical value
-  * rather than showing arbitrary categories. Can be an array for multi-series charts.</li>
-  * <li><b>xLabels</b><br/>
+  * rather than showing arbitrary categories. Can be an array for multi-series charts.
+  * - **xLabels**
   * When the x-axis shows arbitrary category names (e.g. a bar chart), then this indicates the report or view/table
   * field(s) which contains the labels. Also used for pie chart segment names. Can be an array for multi-series
-  * charts.</li>
-  * <li><b>sharing</b>
+  * charts.
+  * - **sharing**
   * Assuming the report has been written to take account of website sharing agreements, set this to define the task
   * you are performing with the report and therefore the type of sharing to allow. Options are reporting (default),
-  * verification, moderation, peer_review, data_flow, editing, website (this website only) or me (my data only).</li>
-  * <li><b>UserId</b>
+  * verification, moderation, peer_review, data_flow, editing, website (this website only) or me (my data only).
+  * - **UserId**
   * If sharing=me, then this must contain the Indicia user ID of the user to return data for.
-  * </li>
-  * <li><b>linkToReportPath</b>
+  * 
+  * - **linkToReportPath**
   * Allows drill down into reports. Holds the URL of the report that is called when the user clicks on
   * a chart data item. When this is not set, the report click functionality is disabled. The path will have replacement
   * tokens replaced where the token is the report output field name wrapped in # and the token will be replaced by the
@@ -1338,12 +1363,11 @@ JS;
   * parameter to receive the id field in the report output. In addition, create a global JavaScript function
   * on the page called handle_chart_click_path and this will be called with the path, series index, point index and row data as parameters. It can
   * then return the modified path, so you can write custom logic, e.g. to map the series index to a specific report filter.
-  * </li>
-  * <li><b>responsive</b>
+  * 
+  * - **responsive**
   * If set to true, redraws plot to fit screen width.
-  * </li>
-  * </ul>
-  * @todo look at the ReportEngine to check it is not prone to SQL injection (eg. offset, limit).
+  * 
+    * @todo look at the ReportEngine to check it is not prone to SQL injection (eg. offset, limit).
   * @link http://www.jqplot.com/docs/files/jqplot-core-js.html#Series
   * @link http://www.jqplot.com/docs/files/jqplot-core-js.html#Axis
   * @link http://www.jqplot.com/docs/files/plugins/jqplot-barRenderer-js.html
@@ -3015,60 +3039,59 @@ if (typeof mapSettingsHooks!=='undefined') {
   * define a different id in the options for each grid.</p>
   * <p>The grid operation has NOT been AJAXified.</p>
   *
-  * @param array $options Options array with the following possibilities:<ul>
-  * <li><b>year</b><br/>
-  * The year to output the calendar for. Default is this year.</li>
-  * <li><b>id</b><br/>
+  * @param array $options Options array with the following possibilities:
+  * - **year**
+  * The year to output the calendar for. Default is this year.
+  * - **id**
   * Optional unique identifier for the grid's container div. This is required if there is more than
   * one grid on a single web page to allow separation of the page and sort $_GET parameters in the URLs
-  * generated.</li>
-  * <li><b>mode</b><br/>
-  * Pass report for a report, or direct for an Indicia table or view. Default is report.</li>
-  * <li><b>readAuth</b><br/>
-  * Read authorisation tokens.</li>
-  * <li><b>dataSource</b><br/>
+  * generated.
+  * - **mode**
+  * Pass report for a report, or direct for an Indicia table or view. Default is report.
+  * - **readAuth**
+  * Read authorisation tokens.
+  * - **dataSource**
   * Name of the report file or table/view. when used, any user_id must refer to the CMS user ID, not the Indicia
-  * User.</li>
-  * <li><b>view</b>
+  * User.
+  * - **view**
   * When loading from a view, specify list, gv or detail to determine which view variant is loaded. Default is list.
-  * </li>
-  * <li><b>extraParams</b><br/>
+  * 
+  * - **extraParams**
   * Array of additional key value pairs to attach to the request. This should include fixed values which cannot be changed by the
   * user and therefore are not needed in the parameters form.
-  * </li>
-  * <li><b>paramDefaults</b>
-  * Optional associative array of parameter default values. Default values appear in the parameter form and can be overridden.</li>
-  * <li><b>includeWeekNumber</b>
-  * Should a Week Number column be included in the grid? Defaults to false.</li>
-  * <li><b>weekstart</b>
+  * 
+  * - **paramDefaults**
+  * Optional associative array of parameter default values. Default values appear in the parameter form and can be overridden.
+  * - **includeWeekNumber**
+  * Should a Week Number column be included in the grid? Defaults to false.
+  * - **weekstart**
   * Defines the first day of the week. There are 2 options.<br/>'.
   *  weekday=<n> where <n> is a number between 1 (for Monday) and 7 (for Sunday). Default is 'weekday=7'
-  *  date=MMM-DD where MMM-DD is a month/day combination: e.g. choosing Apr-1 will start each week on the day of the week on which the 1st of April occurs.</li>
-  * <li><b>weekOneContains</b>
+  *  date=MMM-DD where MMM-DD is a month/day combination: e.g. choosing Apr-1 will start each week on the day of the week on which the 1st of April occurs.
+  * - **weekOneContains**
   * Defines week one as the week which contains this date. Format should be MMM-DD, which is a month/day combination: e.g. choosing Apr-1 will define
-  * week one as being the week containing the 1st of April. Defaults to the 1st of January.</li>
-  * <li><b>weekNumberFilter</b>
+  * week one as being the week containing the 1st of April. Defaults to the 1st of January.
+  * - **weekNumberFilter**
   * Restrict displayed weeks to between 2 weeks defined by their week numbers. Colon separated.
   * Leaving an empty value means the end of the year.
   * Examples: "1:30" - Weeks one to thirty inclusive.
   * "4:" - Week four onwards.
-  * ":5" - Upto and including week five.</li>
-  * <li><b>viewPreviousIfTooEarly</b>
+  * ":5" - Upto and including week five.
+  * - **viewPreviousIfTooEarly**
   * Boolean. When using week filters, it is possible to bring up a calendar for this year which is entirely in the future. This
   * option will cause the display of the previous year.
-  * <li><b>newURL</b>
+  * - **newURL**
   * The URL to invoke when selecting a date which does not have a previous sample associated with it.
-  * To the end of this will be appended "&date=<X>" whose value will be the date selected.</li>
-  * <li><b>existingURL</b>
+  * To the end of this will be appended "&date=<X>" whose value will be the date selected.
+  * - **existingURL**
   * The URL to invoke when selecting an existing sample.
   * To the end of this will be appended "&sample_id=<n>".
-  * <li><b>buildLinkFunc</b>
+  * - **buildLinkFunc**
   * A callback (taking 3 arguments - record array, options, and baseline cell contents - just the date as a string)
   * to generate the link. This is optional. Can be used if special classes are to be added, or to
   * handle extra filter constraints.
-  * </li>
-  * </ul>
-  * @todo Future Enhancements? Allow restriction to month.
+  * 
+    * @todo Future Enhancements? Allow restriction to month.
   */
   public static function report_calendar_grid($options) {
     global $indicia_templates;
@@ -3545,57 +3568,56 @@ JS;
   * <p>If you need 2 grids on one page, then you must define a different id in the options for each grid.</p>
   * <p>The grid operation has NOT been AJAXified. There is no download option.</p>
   *
-  * @param array $options Options array with the following possibilities:<ul>
-  * <li><b>id</b><br/>
+  * @param array $options Options array with the following possibilities:
+  * - **id**
   * Optional unique identifier for the grid's container div. This is required if there is more than
   * one grid on a single web page to allow separation of the page and sort $_GET parameters in the URLs
-  * generated.</li>
-  * <li><b>mode</b><br/>
-  * Pass report for a report, or direct for an Indicia table or view. Default is report.</li>
-  * <li><b>readAuth</b><br/>
-  * Read authorisation tokens.</li>
-  * <li><b>dataSource</b><br/>
+  * generated.
+  * - **mode**
+  * Pass report for a report, or direct for an Indicia table or view. Default is report.
+  * - **readAuth**
+  * Read authorisation tokens.
+  * - **dataSource**
   * Name of the report file or table/view. when used, any user_id must refer to the CMS user ID, not the Indicia
-  * User.</li>
-  * <li><b>view</b>
+  * User.
+  * - **view**
   * When loading from a view, specify list, gv or detail to determine which view variant is loaded. Default is list.
-  * </li>
-  * <li><b>extraParams</b><br/>
+  * 
+  * - **extraParams**
   * Array of additional key value pairs to attach to the request. This should include fixed values which cannot be changed by the
   * user and therefore are not needed in the parameters form.
-  * </li>
-  * <li><b>paramDefaults</b>
-  * Optional associative array of parameter default values. Default values appear in the parameter form and can be overridden.</li>
-  * <li><b>tableHeaders</b>
+  * 
+  * - **paramDefaults**
+  * Optional associative array of parameter default values. Default values appear in the parameter form and can be overridden.
+  * - **tableHeaders**
   * Defines which week column headers should be included: date, number or both
-  * <li><b>weekstart</b>
+  * - **weekstart**
   * Defines the first day of the week. There are 2 options.<br/>'.
   *  weekday=<n> where <n> is a number between 1 (for Monday) and 7 (for Sunday). Default is 'weekday=7'
-  *  date=MMM-DD where MMM-DD is a month/day combination: e.g. choosing Apr-1 will start each week on the day of the week on which the 1st of April occurs.</li>
-  * <li><b>weekOneContains</b>
+  *  date=MMM-DD where MMM-DD is a month/day combination: e.g. choosing Apr-1 will start each week on the day of the week on which the 1st of April occurs.
+  * - **weekOneContains**
   * Defines week one as the week which contains this date. Format should be MMM-DD, which is a month/day combination: e.g. choosing Apr-1 will define
-  * week one as being the week containing the 1st of April. Defaults to the 1st of January.</li>
-  * <li><b>weekNumberFilter</b>
+  * week one as being the week containing the 1st of April. Defaults to the 1st of January.
+  * - **weekNumberFilter**
   * Restrict displayed weeks to between 2 weeks defined by their week numbers. Colon separated.
   * Leaving an empty value means the end of the year.
   * Examples: "1:30" - Weeks one to thirty inclusive.
   * "4:" - Week four onwards.
-  * ":5" - Upto and including week five.</li>
-  * <li><b>rowGroupColumn</b>
-  * The column in the report which is used as the label for the vertical axis on the grid.</li>
-  * <li><b>rowGroupID</b>
-  * The column in the report which is used as the id for the vertical axis on the grid.</li>
-  * <li><b>countColumn</b>
+  * ":5" - Upto and including week five.
+  * - **rowGroupColumn**
+  * The column in the report which is used as the label for the vertical axis on the grid.
+  * - **rowGroupID**
+  * The column in the report which is used as the id for the vertical axis on the grid.
+  * - **countColumn**
   * OPTIONAL: The column in the report which contains the count for this occurrence. If omitted then the default
-  * is to assume one occurrence = count of 1</li>
-  * <li><b>includeChartItemSeries</b>
+  * is to assume one occurrence = count of 1
+  * - **includeChartItemSeries**
   * Defaults to true. Include a series for each item in the report output.
-  * </li>
-  * <li><b>includeChartTotalSeries</b>
+  * 
+  * - **includeChartTotalSeries**
   * Defaults to true. Include a series for the total of each item in the report output.
-  * </li>
-  * </ul>
-  * @todo: Future Enhancements? Allow restriction to month.
+  * 
+    * @todo: Future Enhancements? Allow restriction to month.
   */
   public static function report_calendar_summary($options) {
     // I know that there are better ways to approach some of the date manipulation, but they are PHP 5.3+.
@@ -4796,57 +4818,56 @@ jQuery('#".$options['chartID']."-series-disable').on('click', function(){
    * <p>If you need 2 grids on one page, then you must define a different id in the options for each grid.</p>
    * <p>The grid operation has NOT been AJAXified. There is no download option.</p>
    *
-   * @param array $options Options array with the following possibilities:<ul>
-   * <li><b>id</b><br/>
+   * @param array $options Options array with the following possibilities:
+   * - **id**
    * Optional unique identifier for the grid's container div. This is required if there is more than
    * one grid on a single web page to allow separation of the page and sort $_GET parameters in the URLs
-   * generated.</li>
-   * <li><b>mode</b><br/>
-   * Pass report for a report, or direct for an Indicia table or view. Default is report.</li>
-   * <li><b>readAuth</b><br/>
-   * Read authorisation tokens.</li>
-   * <li><b>dataSource</b><br/>
+   * generated.
+   * - **mode**
+   * Pass report for a report, or direct for an Indicia table or view. Default is report.
+   * - **readAuth**
+   * Read authorisation tokens.
+   * - **dataSource**
    * Name of the report file or table/view. when used, any user_id must refer to the CMS user ID, not the Indicia
-   * User.</li>
-   * <li><b>view</b>
+   * User.
+   * - **view**
    * When loading from a view, specify list, gv or detail to determine which view variant is loaded. Default is list.
-   * </li>
-   * <li><b>extraParams</b><br/>
+   * 
+   * - **extraParams**
    * Array of additional key value pairs to attach to the request. This should include fixed values which cannot be changed by the
    * user and therefore are not needed in the parameters form.
-   * </li>
-   * <li><b>paramDefaults</b>
-   * Optional associative array of parameter default values. Default values appear in the parameter form and can be overridden.</li>
-   * <li><b>tableHeaders</b>
+   * 
+   * - **paramDefaults**
+   * Optional associative array of parameter default values. Default values appear in the parameter form and can be overridden.
+   * - **tableHeaders**
    * Defines which week column headers should be included: date, number or both
-   * <li><b>weekOneContains</b>
+   * - **weekOneContains**
    * Defines week one as the week which contains this date. Format should be MMM-DD, which is a month/day combination: e.g. choosing Apr-1 will define
-   * week one as being the week containing the 1st of April. Defaults to the 1st of January.</li>
-   * <li><b>weekNumberFilter</b>
+   * week one as being the week containing the 1st of April. Defaults to the 1st of January.
+   * - **weekNumberFilter**
    * Restrict displayed weeks to between 2 weeks defined by their week numbers. Colon separated.
    * Leaving an empty value means the end of the year.
    * Examples: "1:30" - Weeks one to thirty inclusive.
    * "4:" - Week four onwards.
-   * ":5" - Upto and including week five.</li>
-   * <li><b>inSeasonFilter</b>
+   * ":5" - Upto and including week five.
+   * - **inSeasonFilter**
    * Optional colon separated number pair. Used to produce an additional In-season total column in Estimates grid.
    * Leave blank to omit the column. If provided, both numbers must be given.
-   * Examples: "1:26" - Weeks one to twemty-six inclusive.</li>
-   * <li><b>rowGroupColumn</b>
-   * The column in the report which is used as the label for the vertical axis on the grid.</li>
-   * <li><b>rowGroupID</b>
-   * The column in the report which is used as the id for the vertical axis on the grid.</li>
-   * <li><b>countColumn</b>
+   * Examples: "1:26" - Weeks one to twemty-six inclusive.
+   * - **rowGroupColumn**
+   * The column in the report which is used as the label for the vertical axis on the grid.
+   * - **rowGroupID**
+   * The column in the report which is used as the id for the vertical axis on the grid.
+   * - **countColumn**
    * OPTIONAL: The column in the report which contains the count for this occurrence. If omitted then the default
-   * is to assume one occurrence = count of 1</li>
-   * <li><b>includeChartItemSeries</b>
+   * is to assume one occurrence = count of 1
+   * - **includeChartItemSeries**
    * Defaults to TRUE. Include a series for each item in the report output.
-   * </li>
-   * <li><b>includeChartTotalSeries</b>
+   * 
+   * - **includeChartTotalSeries**
    * Defaults to TRUE. Include a series for the total of each item in the report output.
-   * </li>
-   * </ul>
-   * @todo: Future Enhancements? Allow restriction to month.
+   * 
+      * @todo: Future Enhancements? Allow restriction to month.
    */
   public static function report_calendar_summary2($options) {
     $r = "";
