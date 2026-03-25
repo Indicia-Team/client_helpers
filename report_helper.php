@@ -2367,8 +2367,8 @@ JS;
                 // Remove all columns from record which are not needed.
                 $record = array_intersect_key($record, $colsToInclude);
               }
-
-              $addFeaturesJs.= "div.addPt(features, ".json_encode($record).", '$wktCol', $opts" . (empty($options['rowId']) ? '' : ", '" . $record[$options['rowId']] . "'") . ");\n";
+              $rowId = isset($options['rowId']) && isset($record[$options['rowId']]) ? $record[$options['rowId']] : null;
+              $addFeaturesJs.= "div.addPt(features, ".json_encode($record).", '$wktCol', $opts" . (empty($rowId) ? '' : ", '$rowId'") . ");\n";
             }
           }
           self::$javascript .= 'indiciaData.geoms=['.implode(',',$geoms)."];\n";
