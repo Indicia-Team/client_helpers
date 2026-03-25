@@ -6685,29 +6685,29 @@ HTML;
   }
 
   /**
-  * Helper function to output a set of controls for handling the sensitivity of a record. Includes
-  * a checkbox plus a control for setting the amount to blur the record by for public viewing.
-  * The output of this control can be configured using the following templates:
-  * <ul>
-  * <li><b>hidden_text</b></br>
-  * HTML template used to generate the hidden input element.
-  * </li>
-  * </ul>
-  *
-  * @param array $options Options array with the following possibilities:<ul>
-  * <li><b>fieldname</b><br/>
-  * Required. The name of the database field this control is bound to. Defaults to occurrence:sensitivity_precision.</li>
-  * <li><b>defaultBlur</b><br/>
-  * Optional. The initial value to blur a record by when assigning sensitivity. Defaults to 10000.</li>
-  * <li><b>additionalControls</b><br/>
-  * Optional. Any additional controls to include in the div which is disabled when a record is not sensitive. An example use of this
-  * might be a Reason for sensitivity custom attribute. Provide the controls as an HTML string.</li>
-  * <li><b>precisions</b><br/>
-  * Array of precisions that are available to pick from. Defaults to [100, 1000, 2000, 1000, 10000].</li>
-  * </ul>
-  *
-  * @return string HTML to insert into the page for the hidden text control.
-  */
+   * Helper function to output a set of controls for handling the sensitivity of a record. Includes
+   * a checkbox plus a control for setting the amount to blur the record by for public viewing.
+   * The output of this control can be configured using the following templates:
+   * <ul>
+   * <li><b>hidden_text</b></br>
+   * HTML template used to generate the hidden input element.
+   * </li>
+   * </ul>
+   *
+   * @param array $options Options array with the following possibilities:<ul>
+   * <li><b>fieldname</b><br/>
+   * Required. The name of the database field this control is bound to. Defaults to occurrence:sensitivity_precision.</li>
+   * <li><b>defaultBlur</b><br/>
+   * Optional. The initial value to blur a record by when assigning sensitivity. Defaults to 10000.</li>
+   * <li><b>additionalControls</b><br/>
+   * Optional. Any additional controls to include in the div which is disabled when a record is not sensitive. An example use of this
+   * might be a Reason for sensitivity custom attribute. Provide the controls as an HTML string.</li>
+   * <li><b>precisions</b><br/>
+   * Array of precisions that are available to pick from. Defaults to [100, 1000, 2000, 1000, 10000].</li>
+   * </ul>
+   *
+   * @return string HTML to insert into the page for the hidden text control.
+   */
   public static function sensitivity_input($options) {
     $options = array_merge(array(
       'fieldname' => 'occurrence:sensitivity_precision',
@@ -8278,7 +8278,7 @@ if (errors$uniq.length>0) {
    * customised submissions that only need to build sub-samples for some grids. The grid id comes from the @id option given
    * to the species grid.
    */
-    public static function wrap_species_checklist_with_subsamples($arr, $include_if_any_data = FALSE,
+  public static function wrap_species_checklist_with_subsamples($arr, $include_if_any_data = FALSE,
           $zeroAttrs = TRUE, $zeroValues = ['0', 'none', 'absent', 'not seen'], $gridsToExclude = []) {
     if (array_key_exists('website_id', $arr)) {
       $website_id = $arr['website_id'];
