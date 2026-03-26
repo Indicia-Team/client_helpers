@@ -1421,8 +1421,6 @@ JS;
     self::addLanguageStringsToJs('fileClassifier', [
       'cancel' => 'Cancel',
       'classifierRequestFailed' => 'The classifier failed to process the image. It has been added to the grid as Unknown.',
-      'classifyBtnCaption' => 'Classify',
-      'classifyBtnTitle' => 'Start classifying files.',
       'dialogBtnOk' => 'Okay',
       'dialogEnd' => 'Your files have been processed. Review the identifications and check the abundances.',
       'dialogStart' => 'Your files are being sent to a classification service which will try to identify the species.',
