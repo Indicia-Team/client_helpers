@@ -1366,7 +1366,9 @@ JS;
       [
         'id' => 'file_classifier',
         'table' => 'occurrence_medium',
-        'maxFileCount' => 9999,
+        // Limit to 1 photo for single mode, as classifier code only currently
+        // supports 1 image per request.
+        'maxFileCount' => ($options['checklist'] ?? TRUE) ? 9999 : 1,
       ],
       $options,
       $classifier_options
@@ -1460,7 +1462,7 @@ JS;
         'identify the species and add them to the grid. Files featuring the specimen with minimal ' .
         'background will be most successful.'
         ) : lang::get(
-        'Add files here then click the classify button and we will attempt to automatically ' .
+        'Add a photo here then click the classify button and we will attempt to automatically ' .
         'identify the species and add it to the record. Files featuring the specimen with minimal ' .
         'background will be most successful.'
         ),
