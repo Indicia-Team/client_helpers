@@ -1052,7 +1052,6 @@ class ElasticsearchProxyHelper {
       'bool_queries' => [],
     ], $post);
     $bool = [
-      'must' => [],
       'should' => [],
       'must_not' => [],
       'filter' => [],
@@ -1505,7 +1504,7 @@ class ElasticsearchProxyHelper {
    * @param array $definition
    *   PG filter definition.
    * @param array $bool
-   *   ES bool query definintion.
+   *   ES bool query definition which will be updated with the ES bool query.
    */
   public static function applyFilterDef(array $readAuth, array $definition, array &$bool) {
     self::convertLocationListToSearchArea($definition, $readAuth);
