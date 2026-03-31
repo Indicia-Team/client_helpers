@@ -3,6 +3,13 @@
 This document describes changes to the code structure for developers and is not intended as a
 complete feature change log. The full change log is available in the GitHub releases.
 
+## Version x.y.z
+*2026-03-31*
+
+* Additional controls added to dynamic_location prebuilt form to support links 
+  between parent and child locations.
+
+
 ## Version 9.4.0
 *2024-09-25*
 
