@@ -689,7 +689,7 @@ function switchToSatelliteBaseLayerForZoom(map) {
     ]);
     $r .= '<form>';
     $r .= '<input type="button" value="' . lang::get('LANG_Add_Location') . '" ' .
-            'onclick="window.location.href=\'' . hostsite_get_url('node/' . ($nid->nid), ['new' => '1']) . '\'">';
+            'onclick="window.location.href=\'' . hostsite_get_url('node/' . $nid, ['new' => '1']) . '\'">';
     $r .= '</form>';
     return $r;
   }
