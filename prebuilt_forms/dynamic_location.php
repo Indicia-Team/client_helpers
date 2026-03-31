@@ -150,6 +150,22 @@ class iform_dynamic_location extends iform_dynamic {
           'group' => 'User Interface',
         ],
         [
+          'name' => 'location_type_id_filter',
+          'caption' => 'Location type filter',
+          'type' => 'select',
+          'table' => 'termlists_term',
+          'captionField' => 'term',
+          'valueField' => 'id',
+          'extraParams' => ['termlist_external_key' => 'indicia:location_types'],
+          'required' => FALSE,
+          'helpText' => 'Only show locations of this type in the grid. To ' .
+          'use this, the selected report must have a location_type_id  ' .
+          'parameter. See reports_for_prebuilt_forms/simple_location_list_2 ' .
+          'for an example.',
+
+          'group' => 'User Interface',
+        ],
+        [
           'name' => 'defaults',
           'caption' => 'Default Values',
           'description' => 'Supply default values for each field as required. ' .
@@ -674,6 +690,10 @@ function switchToSatelliteBaseLayerForZoom(map) {
     if (!$args['list_all_locations']) {
       // The option to list all locations is denied so enforce selection of own data.
       $extraParams['ownData'] = '1';
+    }
+    if (isset($args['location_type_id_filter'])) {
+      // The option to filter by location type is set.
+      $extraParams['location_type_id'] = $args['location_type_id_filter'];
     }
     iform_load_helpers(['report_helper']);
     $r .= report_helper::report_grid([
