@@ -174,7 +174,7 @@ class iform_dynamic_location extends iform_dynamic {
         [
           'name' => 'linkToParent',
           'caption' => 'Link the location to a parent',
-          'description' => 'Allow the location to be saved under a parent by providing a location_id parameter in the URL query parameters.',
+          'description' => 'Allow the location to be saved under a parent by providing a parent_id parameter in the URL query parameters.',
           'type' => 'checkbox',
           'required' => FALSE,
         ],
