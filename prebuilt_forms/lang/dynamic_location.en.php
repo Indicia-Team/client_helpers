@@ -29,7 +29,11 @@ $custom_terms = array_merge($custom_terms, [
   'LANG_Location_Code' => 'Location Code',
   'LANG_Location_Type' => 'Location Type',
   'LANG_Location_Parent' => 'Parent Location',
+  'LANG_Child_Locations' => 'Child Locations',
   'LANG_Add_Location' => 'Add New Location',
+  'LANG_Add_Child_Location' => 'Add New Child Location',
+  'LANG_Parent_Location' => 'This is a child location of ',
+  'LANG_No_Parent_Location' => 'This location does not have a parent.',
   'LANG_No_User_Id' => 'This form is configured to show the user a grid of ' .
   'their existing records which they can add to or edit. To do this, the ' .
   'form requires that a function hostsite_get_user_field exists and returns ' .

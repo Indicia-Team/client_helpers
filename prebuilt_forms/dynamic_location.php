@@ -95,6 +95,8 @@ class iform_dynamic_location extends iform_dynamic {
               '&nbsp;&nbsp;<strong>[location parent]</strong> - a list to select the location parent (use e.g. @extraParams={"location_type_id":16516} to filter the list).<br/>' .
               '&nbsp;&nbsp;<strong>[location comment]</strong> - a text box for comments.<br/>' .
               '&nbsp;&nbsp;<strong>[location photo]</strong> - a photo upload for location images. <br/>' .
+              '&nbsp;&nbsp;<strong>[child grid]</strong> - a list of child locations. The id of the parent must be in a locaion_id url parameter. Provide an option, @child_nid, to specify the node id of a page for adding/editing children. <br/>' .
+              '&nbsp;&nbsp;<strong>[[parent link]</strong> - a link to the parent location. An option, @parent_nid, is required to specify the node id of a page for editing the parent. <br/>' .
           '<strong>@option=value</strong> on the line(s) following any control allows you to override one of the options passed to the control. The options ' .
           'available depend on the control. For example @label=Abundance would set the untranslated label of a control to Abundance. Where the ' .
           'option value is an array, use valid JSON to encode the value. For example an array of strings could be passed as @occAttrClasses=["class1","class2"] ' .
@@ -587,6 +589,131 @@ function switchToSatelliteBaseLayerForZoom(map) {
       'readAuth' => $auth['read'],
       'caption' => lang::get('File upload'),
     ], $options));
+  }
+
+  /**
+   * Get a child-location grid control.
+   * 
+   * If $options['child_nid'] is set to the node ID where child locations can
+   * be added/edited then links to allow this will be displayed.
+   */
+  protected static function get_control_childgrid($auth, $args, $tabalias, $options) {
+    // Only displays when we are editing a parent location.
+    if (!empty($_GET['location_id'])) {
+      iform_load_helpers(['report_helper']);
+
+      if (isset($options['child_nid'])) {
+        // Enable edit links for child locations.
+        $nid = $options['child_nid'];
+        $childNodeUrl = hostsite_get_url('node/' . $nid, [], FALSE, TRUE);
+        $columns = [
+          [
+            'display' => 'Actions',
+            'actions' => [
+              [
+                'caption' => lang::get('Edit'),
+                'url' => $childNodeUrl,
+                'urlParams' => [
+                  'location_id' => '{id}',
+                  'parent_id' => $_GET['location_id'],
+                ],
+                'visibility_field' => 'editable',
+              ],
+            ],
+          ],
+        ];
+      }
+
+      // Prepare the options for the report grid.
+      // The selected report must allow filtering by parent_id.
+      $options = array_merge([
+        'readAuth' => $auth['read'],
+        'dataSource' => 'reports_for_prebuilt_forms/simple_location_list_2',
+        'columns' => isset($columns) ? $columns : [], 
+      ]);
+  
+      $extraParams = [
+        'parent_id' => $_GET['location_id'],
+        'website_id' => $args['website_id'],
+        'iUserID' => hostsite_get_user_field('indicia_user_id'),
+        # List all children, not just own children.
+        'ownData' => '0',
+       ];
+      if (array_key_exists('extraParams', $options)) {
+        $extraParams = array_merge($extraParams, $options['extraParams']);
+      }
+      $options['extraParams'] = $extraParams;
+
+      // Get the list of child locations.
+      $grid = report_helper::report_grid($options);
+
+      // Build the HTML output
+      $r = '<div class="iform-child-grid-container">';
+      $r .= '<h3>' . lang::get('LANG_Child_Locations') . '</h3>';
+      $r .=  $grid;
+      if (isset($nid)) {
+        // Add a button to add a new child location.
+        $childNodeUrl = hostsite_get_url(
+          'node/' . $nid, 
+          [
+            'new' => '1',
+            'parent_id' => $_GET['location_id'],
+          ]
+        );
+        $r .= '<input type="button" ' .
+              'value="' . lang::get('LANG_Add_Child_Location') . '" ' .
+              'onclick="window.location.href=\'' . $childNodeUrl . '\'">';
+      }
+      $r .= '</div>';
+      return $r;
+    }
+  }
+
+  /**
+   * Get a link to a parent-location node.
+   *
+   * $options['parent_nid'] must be set to the node ID where parent locations
+   * can be edited.
+   */
+  protected static function get_control_parentlink($auth, $args, $tabalias, $options) {
+    if (!isset($options['parent_nid'])) {
+      // Control needs configuring.
+      return '<p> Configure the [parent link] control with a @parent_nid ' .
+      'option. </p>';
+    }
+    else {
+      $nid = $options['parent_nid'];
+      if (
+        !array_key_exists('parent_id', $_GET) && 
+        !array_key_exists('location_id', $_GET)
+      ) {
+        // Creating a new location without a parent. 
+        return  '<p>' . lang::get('LANG_No_Parent_Location') . '</p>';
+      }
+      elseif (!array_key_exists('location_id', $_GET)) {
+        // Creating a new location with a parent.
+        $parentId = $_GET['parent_id'];
+        $loc = data_entry_helper::get_population_data([
+          'table' => 'location',
+          'extraParams' => $auth['read'] + ['id' => $parentId],
+        ]);        
+        $parentName = $loc[0]['name'];
+      }
+      else {
+        // Editing an existing location.
+        $parentId = data_entry_helper::$entity_to_load['location:parent_id'];
+        $parentName = data_entry_helper::$entity_to_load['location:parent'];
+      }
+
+      $parentNodeUrl = hostsite_get_url(
+        'node/' . $nid, 
+        ['location_id' => $parentId], 
+        FALSE, 
+        TRUE
+      );
+      $link = '<a href="' . $parentNodeUrl . '">' . $parentName . '</a>';
+      return '<p>' . lang::get('LANG_Parent_Location') . $link . '</p>';
+    }
   }
 
   /**
