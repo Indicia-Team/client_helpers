@@ -93,9 +93,11 @@ class iform_group_edit implements PrebuiltFormInterface {
       [
         'name' => 'parent_group_type',
         'caption' => 'Parent group type',
-        'description' => 'Type of group that this form can create children of. Requires that you set the parent relationship type ' .
-            'as well. Only used when accessing the form without a from_group_id, in which case a drop down control allows the user ' .
-            'to pick the parent group.',
+        'description' => <<<TXT
+          Type of group that this form can create children of. Requires that you set the parent relationship type
+          as well. Only used when accessing the form without a from_group_id, in which case a drop down control allows
+          the user to pick the parent group.
+          TXT,
         'type' => 'select',
         'table' => 'termlists_term',
         'valueField' => 'id',
@@ -106,10 +108,12 @@ class iform_group_edit implements PrebuiltFormInterface {
       [
         'name' => 'parent_group_relationship_type',
         'caption' => 'Parent relationship type',
-        'description' => 'If you are using this form to create groups which will be the children of other groups, then when you call this '.
-            'page pass from_group_id=... in the URL to set the parent group\'s ID, which must of course exist. Set the parent relationship '.
-            'type here to define what relationship type to create between the parent and child groups. If this is set, then the from_group_id '.
-            'in the URL parameters is required.',
+        'description' => <<<TXT
+          If you are using this form to create groups which will be the children of other groups, then when you call
+          this page pass from_group_id=... in the URL to set the parent group's ID, which must of course exist. Set the
+          parent relationship type here to define what relationship type to create between the parent and child groups.
+          If this is set, then the from_group_id in the URL parameters is required.
+          TXT,
         'type' => 'select',
         'table' => 'termlists_term',
         'valueField' => 'id',
@@ -120,9 +124,11 @@ class iform_group_edit implements PrebuiltFormInterface {
       [
         'name' => 'can_attach_to_multiple_parents',
         'caption' => 'Can attach to multiple parents',
-        'description' => 'If this option is set and the page loads with a from_group_id in the URL parameters, ' .
-          'then it is possible to attach the activity to multiple parents. The list of parents offered is the ' .
-          'hierarchy of children and other descendants of the group pointed to by from_group_id.',
+        'description' => <<<TXT
+          If this option is set and the page loads with a from_group_id in the URL parameters, then it is possible to
+          attach the activity to multiple parents. The list of parents offered is the hierarchy of children and other
+          descendants of the group pointed to by from_group_id.
+          TXT,
         'type' => 'boolean',
         'required' => FALSE,
       ],
@@ -144,23 +150,29 @@ class iform_group_edit implements PrebuiltFormInterface {
       [
         'name' => 'inherit_admin_privileges',
         'caption' => 'Inherit admin privileges from parents',
-        'description' => 'If this option is set then you can edit the group if you are an admin of the group or any of ' .
-            'its parents.',
+        'description' => 'If this option is set then you can edit the group if you are an admin of the group or any of its parents.',
         'type' => 'boolean',
         'required' => FALSE,
-      ], [
+      ],
+      [
         'name' => 'join_methods',
         'caption' => 'Available joining methods',
-        'description' => 'Which joining methods are available for created groups? Put one option per line, with the option code ' .
-            '(P, R, I, A) followed by an equals sign then the text description given. Option P is a public group which ' .
-            'anyone can join, R is a group which anyone can browse to find and request to join but the admin must approve ' .
-            'new members, I is an invite only group and A is a group where the administrator creates the list of members ' .
-            'manually. The latter should only be used in cases where it is appropriate for a group membership to be setup ' .
-            'without explicit member approval. If you allow only one joining method, then the group creator will not need ' .
-            'to pick one so the options control will be hidden on the edit form.',
+        'description' => <<<TXT
+          Which joining methods are available for created groups? Put one option per line, with the option code
+          (P, R, I, A) followed by an equals sign then the text description given. Option P is a public group which
+          anyone can join, R is a group which anyone can browse to find and request to join but the admin must approve
+          new members, I is an invite only group and A is a group where the administrator creates the list of members
+          manually. The latter should only be used in cases where it is appropriate for a group membership to be setup
+          without explicit member approval. If you allow only one joining method, then the group creator will not need
+          to pick one so the options control will be hidden on the edit form.
+          TXT,
         'type' => 'textarea',
-        'default' => "P=Anyone can join without needing approval\nR=Anyone can request to join but a group administrator must approve their membership\n" .
-            "I=The group is closed and membership is by invite only\nA=Administrator will set up the members manually",
+        'default' => <<<TXT
+          P=Anyone can join without needing approval
+          R=Anyone can request to join but a group administrator must approve their membership
+          I=The group is closed and membership is by invite only
+          A=Administrator will set up the members manually
+          TXT,
         'required' => TRUE,
       ],
       [
@@ -238,8 +250,10 @@ class iform_group_edit implements PrebuiltFormInterface {
       [
         'name' => 'include_administrators',
         'caption' => 'Include admins control',
-        'description' => 'Include a control for setting up a list of the admins for this group? If not set, then the group ' .
-          'creator automatically gets assigned as the administrator.',
+        'description' => <<<TXT
+          Include a control for setting up a list of the admins for this group? If not set, then the group creator
+          automatically gets assigned as the administrator.
+          TXT,
         'type' => 'checkbox',
         'default' => FALSE,
         'required' => FALSE,
@@ -247,10 +261,12 @@ class iform_group_edit implements PrebuiltFormInterface {
       [
         'name' => 'include_members',
         'caption' => 'Include members control',
-        'description' => 'Include a control for setting up a list of the members for this group? If not set, then the group ' .
-          'creator automatically gets assigned as the administrator. Do not use this option for group joining methods that ' .
-          'involve the members requesting or being invited - this is only appropriate when the group admin explicitly controls ' .
-          'the group membership.',
+        'description' => <<<TXT
+          Include a control for setting up a list of the members for this group? If not set, then the group creator
+          automatically gets assigned as the administrator. Do not use this option for group joining methods that
+          involve the members requesting or being invited - this is only appropriate when the group admin explicitly
+          controls the group membership.
+          TXT,
         'type' => 'checkbox',
         'default' => FALSE,
         'required' => FALSE,
@@ -258,8 +274,10 @@ class iform_group_edit implements PrebuiltFormInterface {
       [
         'name' => 'include_licence',
         'caption' => 'Include licence control',
-        'description' => 'Include a control for selecting a licence to apply to all records in the group. Licences must be ' .
-          'configured for the website on the warehouse first.',
+        'description' => <<<TXT
+          Include a control for selecting a licence to apply to all records in the group. Licences must be configured
+          for the website on the warehouse first.
+          TXT,
         'type' => 'checkbox',
         'default' => FALSE,
         'required' => FALSE,
@@ -311,9 +329,10 @@ class iform_group_edit implements PrebuiltFormInterface {
       [
         'name' => 'taxon_list_id',
         'caption' => 'Taxon list ID',
-        'description' => 'If you need to override the default taxon list used on this site for the filter builder, ' .
-          'specify the ID here. This allows you to filter to species, higher taxa and families from the ' .
-          'alternative list',
+        'description' => <<<TXT
+          If you need to override the default taxon list used on this site for the filter builder, specify the ID here.
+          This allows you to filter to species, higher taxa and families from the alternative list.
+          TXT,
         'type' => 'text_input',
       ],
       [
@@ -321,23 +340,24 @@ class iform_group_edit implements PrebuiltFormInterface {
         'caption' => 'Default linked pages',
         'description' => "Create a list of pages you would like to be added to each group's page list as a default starting point.",
         'type' => 'jsonwidget',
-        'schema' => '
-{
-  "type":"seq",
-  "title":"Pages list",
-  "sequence":
-  [
-    {
-      "type":"map",
-      "title":"Page",
-      "mapping": {
-        "path": {"type":"str","desc":"Path to the page which should be a group-enabled Indicia page."},
-        "caption": {"type":"str","desc":"Caption to display for this page."},
-        "administrator": {"type":"bool","desc":"Tick if this page is only for administrator use."}
-      }
-    }
-  ]
-}'
+        'schema' => <<<JSON
+          {
+            "type":"seq",
+            "title":"Pages list",
+            "sequence":
+            [
+              {
+                "type":"map",
+                "title":"Page",
+                "mapping": {
+                  "path": {"type":"str","desc":"Path to the page which should be a group-enabled Indicia page."},
+                  "caption": {"type":"str","desc":"Caption to display for this page."},
+                  "administrator": {"type":"bool","desc":"Tick if this page is only for administrator use."}
+                }
+              }
+            ]
+          }
+        JSON,
       ],
       [
         'name' => 'groups_page_path',
@@ -552,7 +572,7 @@ class iform_group_edit implements PrebuiltFormInterface {
         'lookupValues' => [
           '' => lang::get('Blogging is disabled'),
           'A' => lang::get('Group admins can post blogs'),
-          'M' =>  lang::get('All group members can post blogs'),
+          'M' => lang::get('All group members can post blogs'),
         ],
       ]);
     }
@@ -654,13 +674,23 @@ $('#entry_form').submit(function() {
     return $r;
   }
 
+  /**
+   * If reloading an existing child group, reload its parent relationships.
+   *
+   * @param array $auth
+   *   Authentication tokens.
+   *
+   * @return array
+   *   Array keyed by group ID of parent group, with value being the group
+   *   relation ID.
+   */
   private static function loadExistingMultipleParents($auth) {
     $r = [];
-    $parents = data_entry_helper::get_population_data(array(
+    $parents = data_entry_helper::get_population_data([
       'table' => 'group_relation',
-      'extraParams' => $auth['read'] + array('to_group_id' => $_GET['group_id']),
-      'caching' => FALSE
-    ));
+      'extraParams' => $auth['read'] + ['to_group_id' => $_GET['group_id']],
+      'caching' => FALSE,
+    ]);
     foreach ($parents as $parent) {
       $r[$parent['from_group_id']] = $parent['id'];
     }
@@ -668,9 +698,20 @@ $('#entry_form').submit(function() {
   }
 
   /**
-   * @param $args
-   * @param $auth
+   * Allow selection of multiple parents for group being added to a hieararchy.
+   *
+   * If adding a group to a parent (e.g. organisation) group and the group has
+   * children (e.g. centres), then the group being added can be optionally
+   * linked to any of the centres.
+   *
+   * @param array $args
+   *   Form settings.
+   * @param array $auth
+   *   Authentication tokens.
+   *
    * @return string
+   *   HTML for the block of checkboxes to select parents.
+   *
    * @todo need to reload properly on edit
    * @todo save to database
    */
@@ -678,15 +719,15 @@ $('#entry_form').submit(function() {
     $existing = empty($_GET['group_id']) ? [] : self::loadExistingMultipleParents($auth);
     $r = '<fieldset id="group-parents-fieldset"><legend>' . lang::get('{1} parents', ucfirst(self::$groupType)) . ':</legend><ul>';
     // Retrieve list of entire hierarchy.
-    $params = array('parent_group_id' => $_GET['from_group_id']);
+    $params = ['parent_group_id' => $_GET['from_group_id']];
     if (!empty($args['allowed_multiple_parent_group_types'])) {
       $params['group_type_ids'] = $args['allowed_multiple_parent_group_types'];
     }
-    $groups = report_helper::get_report_data(array(
+    $groups = report_helper::get_report_data([
       'readAuth' => $auth['read'],
       'dataSource' => 'library/groups/groups_list_hierarchy',
-      'extraParams' => $params
-    ));
+      'extraParams' => $params,
+    ]);
     // Output the checkboxes.
     $lastLevel = 0;
     foreach ($groups as $group) {
@@ -703,19 +744,19 @@ $('#entry_form').submit(function() {
         $r .= '<span>' . lang::get('This {1} is linked to <strong>{2}</strong>. ' .
             'If you want to also link the {1} to other descendents of <strong>{2}</strong> ' .
             'you can select them below.', self::$groupType, $group['title']) . '</span>';
-        $r .= data_entry_helper::checkbox(array(
+        $r .= data_entry_helper::checkbox([
           'fieldname' => "check-all-groups",
-          'afterControl' => "<label for=\"check-all-groups\" class=\"auto\">Check/uncheck all</label>"
-        ));
+          'afterControl' => "<label for=\"check-all-groups\" class=\"auto\">Check/uncheck all</label>",
+        ]);
       }
       else {
         $existingGroupRelationId = array_key_exists($group['id'], $existing) ? $existing[$group['id']] : '';
-        $r .= data_entry_helper::checkbox(array(
-            'fieldname' => "parent_group:$existingGroupRelationId:$group[id]",
-            'afterControl' => "<label for=\"parent_group:$existingGroupRelationId:$group[id]\" class=\"auto\">$group[title]</label>",
-            'default' => $existingGroupRelationId ? TRUE : FALSE,
-            'class' => 'parent-checkbox'
-          ));
+        $r .= data_entry_helper::checkbox([
+          'fieldname' => "parent_group:$existingGroupRelationId:$group[id]",
+          'afterControl' => "<label for=\"parent_group:$existingGroupRelationId:$group[id]\" class=\"auto\">$group[title]</label>",
+          'default' => $existingGroupRelationId ? TRUE : FALSE,
+          'class' => 'parent-checkbox',
+        ]);
       }
     }
     while ($lastLevel > 0) {
@@ -744,7 +785,7 @@ $('#entry_form').submit(function() {
               $page['caption'] = $page['path'];
             $default[] = [
               'fieldname' => "groupComplex:pages:",
-              'default' => json_encode(array($page['path'], $page['caption'], $page['administrator'])),
+              'default' => json_encode([$page['path'], $page['caption'], $page['administrator']]),
             ];
           }
         }
@@ -757,7 +798,7 @@ $('#entry_form').submit(function() {
           'label' => lang::get('Form'),
           'datatype' => 'lookup',
           'lookupValues' => $pages,
-          'validation' => array('unique'),
+          'validation' => ['unique'],
         ], [
           'label' => lang::get('Link caption'),
           'datatype' => 'text',
@@ -773,25 +814,25 @@ $('#entry_form').submit(function() {
         ],
       ];
       if ($args['include_page_access_levels']) {
-        $values = array(
+        $values = [
           '0' => lang::get('0 - no additional access level required'),
-        );
+        ];
         for ($i = 1; $i <= 10; $i++) {
           $values[$i] = lang::get('Requires access level {1} or higher', $i);
         }
-        $columns[] = array(
+        $columns[] = [
           'label' => lang::get('Additional minimum page access level'),
           'datatype' => 'lookup',
           'lookupValues' => $values,
           'default' => '0',
-        );
+        ];
       }
-      $r .= data_entry_helper::complex_attr_grid(array(
+      $r .= data_entry_helper::complex_attr_grid([
         'fieldname' => 'group:pages[]',
         'columns' => $columns,
         'default' => $default,
         'defaultRows' => min(3, count($pages)),
-      ));
+      ]);
       $r .= '</fieldset>';
     }
     return $r;
@@ -801,28 +842,28 @@ $('#entry_form').submit(function() {
    * Retrieve the pages linked to this group from the database.
    */
   private static function getGroupPages($auth) {
-    $pages = data_entry_helper::get_population_data(array(
+    $pages = data_entry_helper::get_population_data([
       'table' => 'group_page',
-      'extraParams' => $auth['read'] + array('group_id' => $_GET['group_id']),
+      'extraParams' => $auth['read'] + ['group_id' => $_GET['group_id']],
       'nocache' => TRUE,
-    ));
+    ]);
     $r = [];
     foreach ($pages as $page) {
-      $r[] = array(
+      $r[] = [
         'fieldname' => "groupComplex:pages:$page[id]",
-        'default' => json_encode(array($page['path'], $page['caption'], $page['administrator'], $page['access_level'])),
-      );
+        'default' => json_encode([$page['path'], $page['caption'], $page['administrator'], $page['access_level']]),
+      ];
     }
     return $r;
   }
 
   private static function groupLogoControl($args) {
     if ($args['include_logo_controls']) {
-      return data_entry_helper::image_upload(array(
+      return data_entry_helper::image_upload([
         'fieldname' => 'group:logo_path',
         'label' => lang::get('Logo'),
         'existingFilePreset' => 'med',
-      ));
+      ]);
     }
     else {
       return '';
@@ -849,13 +890,13 @@ $('#entry_form').submit(function() {
       $r .= '<input type="hidden" name="group:joining_method" value="' . $methods[0] . '"/>';
     }
     else {
-      $r .= data_entry_helper::radio_group(array(
+      $r .= data_entry_helper::radio_group([
         'label' => ucfirst(lang::get('How users join this {1}', self::$groupType)),
         'fieldname' => 'group:joining_method',
         'lookupValues' => $joinMethods,
         'sep' => '<br/>',
         'validation' => ['required'],
-      ));
+      ]);
     }
     return $r;
   }
@@ -872,35 +913,38 @@ $('#entry_form').submit(function() {
    */
   private static function inclusionMethodControl($args) {
     if ($args['data_inclusion_mode'] !== 'choose') {
-      $mappings = array('' => '', 'implicit' => 't', 'explicit' => 'f');
-      $r = data_entry_helper::hidden_text(array(
+      $mappings = ['' => '', 'implicit' => 't', 'explicit' => 'f'];
+      $r = data_entry_helper::hidden_text([
         'fieldname' => 'group:implicit_record_inclusion',
-        'default' => $mappings[$args['data_inclusion_mode']]
-      ));
-    } else {
+        'default' => $mappings[$args['data_inclusion_mode']],
+      ]);
+    }
+    else {
       $r = '<fieldset id="group-records-fieldset"><legend>' . lang::get('How to decide which records to include in the {1} reports', self::$groupType) . '</legend>';
       $r .= '<p>' . lang::get('LANG_Record_Inclusion_Instruct_1', self::$groupType, lang::get(self::$groupType . "'s")) . ' ';
-      if ($args['include_sensitivity_controls'])
+      if ($args['include_sensitivity_controls']) {
         $r .= lang::get('LANG_Record_Inclusion_Instruct_Sensitive', self::$groupType) . ' ';
-      $r .= lang::get('LANG_Record_Inclusion_Instruct_2', self::$groupType, ucfirst(self::$groupType))  . '</p>';
+      }
+      $r .= lang::get('LANG_Record_Inclusion_Instruct_2', self::$groupType, ucfirst(self::$groupType)) . '</p>';
       if (isset(data_entry_helper::$entity_to_load) &&
           array_key_exists('group:implicit_record_inclusion', data_entry_helper::$entity_to_load) &&
-          is_null(data_entry_helper::$entity_to_load['group:implicit_record_inclusion']))
+          is_null(data_entry_helper::$entity_to_load['group:implicit_record_inclusion'])) {
         data_entry_helper::$entity_to_load['group:implicit_record_inclusion'] = '';
-      $r .= data_entry_helper::radio_group(array(
+      }
+      $r .= data_entry_helper::radio_group([
         'fieldname' => 'group:implicit_record_inclusion',
         'label' => lang::get('Include records on reports if'),
-        'lookupValues' => array(
+        'lookupValues' => [
           'f' => lang::get('they were posted by a group member and match the filter defined above ' .
             'and they were submitted via a data entry form for the {1}', self::$groupType),
           't' => lang::get('they were posted by a group member and match the filter defined above, ' .
             'but it doesn\'t matter which recording form was used', self::$groupType),
           '' => lang::get('they match the filter defined above but it doesn\'t matter who ' .
             'posted the record or via which form', self::$groupType),
-        ),
+        ],
         'default' => 'f',
-        'validation' => array('required'),
-      ));
+        'validation' => ['required'],
+      ]);
       $r .= ' </fieldset>';
     }
     return $r;
@@ -919,24 +963,24 @@ $('#entry_form').submit(function() {
     $r = '';
     if ($args['include_dates']) {
       $r .= '<p>' . lang::get('If the {1} will only be active for a limited period of time (e.g. an event or bioblitz) ' .
-          'then please fill in the start and or end date of this period in the controls below. This helps to prevent people joining after '.
+          'then please fill in the start and or end date of this period in the controls below. This helps to prevent people joining after ' .
           'the {2}.', self::$groupType, lang::get('group is no longer active')) . '</p>';
       $r .= '<div id="ctrl-wrap-group-from-to" class="form-row ctrl-wrap">';
-      $r .= data_entry_helper::date_picker(array(
+      $r .= data_entry_helper::date_picker([
         'label' => ucfirst(lang::get('{1} active from', self::$groupType)),
         'fieldname' => 'group:from_date',
         'controlWrapTemplate' => 'justControl',
         'helpText' => lang::get('LANG_From_Field_Instruct'),
         'allowFuture' => TRUE,
-      ));
-      $r .= data_entry_helper::date_picker(array(
+      ]);
+      $r .= data_entry_helper::date_picker([
         'label' => lang::get('to'),
         'fieldname' => 'group:to_date',
         'labelClass' => 'auto',
         'controlWrapTemplate' => 'justControl',
         'helpText' => lang::get('LANG_To_Field_Instruct'),
         'allowFuture' => TRUE,
-      ));
+      ]);
       $r .= '</div>';
     }
     return $r;
@@ -953,13 +997,13 @@ $('#entry_form').submit(function() {
     $class = empty(data_entry_helper::$validation_errors['groups_user:general']) ? 'control-width-5' : 'ui-state-error control-width-5';
     if ($args['include_administrators']) {
       $me = hostsite_get_user_field('last_name') . ', ' . hostsite_get_user_field('first_name') . ' (' . hostsite_get_user_field('mail') . ')';
-      $r .= data_entry_helper::sub_list(array(
+      $r .= data_entry_helper::sub_list([
         'fieldname' => 'groups_user:admin_user_id',
         'label' => ucfirst(lang::get('{1} administrators', self::$groupType)),
         'table' => 'user',
         'captionField' => 'person_name_unique',
         'valueField' => 'id',
-        'extraParams' => $auth['read']+array('view' => 'detail'),
+        'extraParams' => $auth['read'] + ['view' => 'detail'],
         'helpText' => lang::get('LANG_Admins_Field_Instruct', self::$groupType),
         'addToTable' => FALSE,
         'class' => $class,
@@ -968,23 +1012,23 @@ $('#entry_form').submit(function() {
           'default' => hostsite_get_user_field('indicia_user_id'),
           'caption' => $me,
         ]],
-      ));
+      ]);
     }
     if ($args['include_members']) {
-      $r .= data_entry_helper::sub_list(array(
+      $r .= data_entry_helper::sub_list([
         'fieldname' => 'groups_user:user_id',
         'label' => lang::get('Other {1} members', self::$groupType),
         'table' => 'user',
         'captionField' => 'person_name_unique',
         'valueField' => 'id',
-        'extraParams' => $auth['read'] + array('view' => 'detail'),
+        'extraParams' => $auth['read'] + ['view' => 'detail'],
         'helpText' => lang::get('LANG_Members_Field_Instruct'),
         'addToTable' => FALSE,
         'class' => $class,
-      ));
+      ]);
     }
     if ($args['include_licence']) {
-      $r .= data_entry_helper::select(array(
+      $r .= data_entry_helper::select([
         'blankText' => '<' . lang::get('No licence selected') . '>',
         'label' => lang::get('Licence for records'),
         'helpText' => lang::get('Choose a licence to apply to all records added explicitly to this {1}.', self::$groupType),
@@ -994,7 +1038,7 @@ $('#entry_form').submit(function() {
         'captionField' => 'title',
         'valueField' => 'id',
         'validation' => ['required'],
-      ));
+      ]);
     }
     if (!empty(data_entry_helper::$validation_errors['groups_user:general'])) {
       global $indicia_templates;
@@ -1025,7 +1069,7 @@ $('#entry_form').submit(function() {
       $r .= '<p>' . lang::get('LANG_Filter_Instruct', lang::get(self::$groupType), lang::get(self::$groupType . "'s")) . '</p>';
       $indexedLocationTypeIds = array_map('intval', explode(',', $args['indexed_location_type_ids']));
       $otherLocationTypeIds = array_map('intval', explode(',', $args['other_location_type_ids']));
-      $options = array(
+      $options = [
         'allowLoad' => FALSE,
         'allowSave' => FALSE,
         'filterTypes' => $args['filter_types'],
@@ -1033,14 +1077,14 @@ $('#entry_form').submit(function() {
         'indexedLocationTypeIds' => $indexedLocationTypeIds,
         'otherLocationTypeIds' => $otherLocationTypeIds,
         'includeSitesCreatedByUser' => $args['include_sites_created_by_user'],
-      );
+      ];
       if (!empty($args['taxon_list_id']) && preg_match('/^\d+$/', trim($args['taxon_list_id']))) {
         $options['taxon_list_id'] = $args['taxon_list_id'];
       }
       $r .= report_filter_panel($auth['read'], $options, $args['website_id'], $hiddenPopupDivs);
       // Fields to auto-create a filter record for this group's defined set of
       // records.
-      $r .= data_entry_helper::hidden_text(array('fieldname' => 'filter:id'));
+      $r .= data_entry_helper::hidden_text(['fieldname' => 'filter:id']);
       $r .= '<input type="hidden" name="filter:title" id="filter-title-val"/>';
       $r .= '<input type="hidden" name="filter:definition" id="filter-def-val"/>';
       $r .= '<input type="hidden" name="filter:sharing" value="R"/>';
@@ -1061,13 +1105,13 @@ $('#entry_form').submit(function() {
    * @todo On resave, clear any unchecked multiple parents
    */
   public static function get_submission($values, $args) {
-    $struct = array(
-      'model' => 'group'
-    );
+    $struct = [
+      'model' => 'group',
+    ];
     if (!empty($values['filter:title']))
-      $struct['superModels'] = array(
-        'filter' => array('fk' => 'filter_id')
-      );
+      $struct['superModels'] = [
+        'filter' => ['fk' => 'filter_id'],
+      ];
     // for new group records, auto join to the parent identified by from_group_Id
     if (!empty($args['parent_group_relationship_type']) && !empty($_REQUEST['from_group_id']) &&
         empty($_GET['group_id'])) {
@@ -1075,9 +1119,9 @@ $('#entry_form').submit(function() {
       $from_group_id = empty($_GET['from_group_id'])
           ? $_POST['from_group_id']
           : $_GET['from_group_id'];
-      $struct['subModels'] = array(
-        'group_relation' => array('fk' => 'to_group_id')
-      );
+      $struct['subModels'] = [
+        'group_relation' => ['fk' => 'to_group_id'],
+      ];
       $values['group_relation:from_group_id'] = $from_group_id;
       $values['group_relation:relationship_type_id'] = $args['parent_group_relationship_type'];
     }
@@ -1089,24 +1133,24 @@ $('#entry_form').submit(function() {
         preg_match('/^parent_group:(?P<group_relation_id>\d*):(?P<parent_group_id>\d+)$/', $key, $matches);
         // if a checked parent, or a previously existing one that is now unchecked
         if ($values[$key] === '1' || !empty($matches['group_relation_id'])) {
-          $fields = array(
-            'website_id' => array('value' => $args['website_id']),
-            'from_group_id' => array('value' => $matches['parent_group_id']),
-            'relationship_type_id' => array('value' => $args['parent_group_relationship_type']),
-          );
+          $fields = [
+            'website_id' => ['value' => $args['website_id']],
+            'from_group_id' => ['value' => $matches['parent_group_id']],
+            'relationship_type_id' => ['value' => $args['parent_group_relationship_type']],
+          ];
           if ($values[$key] === '0') {
             $fields['deleted'] = 't';
           }
           if (!empty($matches['group_relation_id'])) {
             $fields['id'] = $matches['group_relation_id'];
           }
-          $s['subModels'][] = array(
+          $s['subModels'][] = [
             'fkId' => 'to_group_id',
             'model' => [
               'id' => 'group_relation',
               'fields' => $fields,
             ],
-          );
+          ];
         }
       }
     }
@@ -1120,17 +1164,17 @@ $('#entry_form').submit(function() {
       // non-deletions of any row.
       if ((!empty($values[$key]) || preg_match('/^groupComplex:pages:(\d+)/', $key))
           && !preg_match('/::(\d+):deleted$/', $key)
-          && !(preg_match('/:deleted$/', $key) && $values[$key]==='f')) {
+          && !(preg_match('/:deleted$/', $key) && $values[$key] === 'f')) {
         // Get the key without the column index, so we can access any column we want.
         $base = preg_replace('/(0|deleted)$/', '', $key);
         if ((isset($values[$base . 'deleted']) && $values[$base . 'deleted']==='t') || empty($values[$base . '0'])) {
           $page = ['deleted' => 't'];
         }
         else {
-          $tokens = explode(':', $values[$base.'0']);
+          $tokens = explode(':', $values[$base . '0']);
           $path = $tokens[0];
           $caption = empty($values[$base . '1']) ? $tokens[1] : $values[$base . '1'];
-          $administrator = explode(':', $values[$base.'2']);
+          $administrator = explode(':', $values[$base . '2']);
           $administrator = empty($administrator) ? NULL : $administrator[0];
           $access_level = isset($values[$base . '3']) ? explode(':', $values[$base . '3']) : NULL;
           $access_level = empty($access_level) ? NULL : $access_level[0];
@@ -1207,7 +1251,7 @@ $('#entry_form').submit(function() {
             $values = ['user_id' => $userId, 'administrator' => $isAdmin];
             $s['subModels'][] = [
               'fkId' => 'group_id',
-              'model' => submission_builder::wrap($values, 'groups_user')
+              'model' => submission_builder::wrap($values, 'groups_user'),
             ];
             $count++;
           }
@@ -1368,26 +1412,26 @@ $('#entry_form').submit(function() {
       // User did not create group. So, check they are an admin, either in just this group, or if the option is
       // enabled also look in the hierarchical parents.
       if (!empty($args['inherit_admin_privileges']) && $args['inherit_admin_privileges']) {
-        $groupUsersCheck = report_helper::get_report_data(array(
+        $groupUsersCheck = report_helper::get_report_data([
           'dataSource' => 'library/groups/group_membership_by_parents',
           'readAuth' => $auth['read'],
-          'extraParams' => array(
+          'extraParams' => [
             'group_id' => $group['id'],
-            'user_id' => hostsite_get_user_field('indicia_user_id')
-          )
-        ));
+            'user_id' => hostsite_get_user_field('indicia_user_id'),
+          ],
+        ]);
         $isAdmin = $groupUsersCheck[0]['admin'] === 't';
       }
       else {
-        $groupUsersCheck = data_entry_helper::get_population_data(array(
+        $groupUsersCheck = data_entry_helper::get_population_data([
           'table' => 'groups_user',
-          'extraParams' => $auth['read'] + array(
-              'group_id' => $group['id'],
-              'administrator' => 't',
-              'user_id' => hostsite_get_user_field('indicia_user_id')
-            ),
-          'nocache' => TRUE
-        ));
+          'extraParams' => $auth['read'] + [
+            'group_id' => $group['id'],
+            'administrator' => 't',
+            'user_id' => hostsite_get_user_field('indicia_user_id'),
+          ],
+          'nocache' => TRUE,
+        ]);
         $isAdmin = count($groupUsersCheck);
       }
       if (!$isAdmin)
@@ -1396,7 +1440,7 @@ $('#entry_form').submit(function() {
   }
 
   public static function get_perms() {
-    return array('IForm groups admin');
+    return ['IForm groups admin'];
   }
 
   private static function createBreadcrumb($args, $auth) {
@@ -1407,10 +1451,10 @@ $('#entry_form').submit(function() {
       if (strpos($parentPageTitle, '{group}') !== FALSE && !empty($_GET['dynamic-from_group_id'])) {
         // Parent page title has a token in it that should be replaced by the
         // group's title.
-        $data = data_entry_helper::get_population_data(array(
+        $data = data_entry_helper::get_population_data([
           'table' => 'group',
-          'extraParams' => $auth['read'] + array('id' => $_GET['dynamic-from_group_id'])
-        ));
+          'extraParams' => $auth['read'] + ['id' => $_GET['dynamic-from_group_id']],
+        ]);
         if (count($data)) {
           $parentPageTitle = str_replace('{group}', $data[0]['title'], $parentPageTitle);
         }
@@ -1439,12 +1483,12 @@ $('#entry_form').submit(function() {
       echo 'Email value not provided';
       return;
     }
-    iform_load_helpers(array('data_entry_helper'));
+    iform_load_helpers(['data_entry_helper']);
     $readAuth = data_entry_helper::get_read_auth($website_id, $password);
-    $data = data_entry_helper::get_population_data(array(
+    $data = data_entry_helper::get_population_data([
       'table' => 'user',
-      'extraParams' => $readAuth + array('view' => 'detail', 'email_address' => $_GET['email'])
-    ));
+      'extraParams' => $readAuth + ['view' => 'detail', 'email_address' => $_GET['email']],
+    ]);
     return $data;
   }
 
