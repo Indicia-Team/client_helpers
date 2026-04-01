@@ -675,9 +675,7 @@ $('#entry_form').submit(function() {
    * @todo save to database
    */
   private static function chooseParentsFromHierarchyBlock($args, $auth) {
-    if (!empty($_GET['group_id'])) {
-      $existing = self::loadExistingMultipleParents($auth);
-    }
+    $existing = empty($_GET['group_id']) ? [] : self::loadExistingMultipleParents($auth);
     $r = '<fieldset id="group-parents-fieldset"><legend>' . lang::get('{1} parents', ucfirst(self::$groupType)) . ':</legend><ul>';
     // Retrieve list of entire hierarchy.
     $params = array('parent_group_id' => $_GET['from_group_id']);
