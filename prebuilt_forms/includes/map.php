@@ -410,7 +410,7 @@ indiciaFns.zoomToBounds = function(mapdiv, bounds) {
       ) {
     if (mapdiv.map.getZoomForExtent(bounds) > mapdiv.settings.maxZoom) {
       // if showing something small, don't zoom in too far
-      mapdiv.map.setCenter(bounds.getCenterLonLat(), div.settings.maxZoom);
+      mapdiv.map.setCenter(bounds.getCenterLonLat(), mapdiv.settings.maxZoom);
     }
     else {
       // Set the default view to show the feature we are loading
