@@ -374,8 +374,7 @@ class iform_sectioned_transects_edit_transect implements PrebuiltFormInterface {
       self::$branchCmsUserAttrId = $settings['branchCmsUserAttr']['attributeId'];
     }
 
-    data_entry_helper::$javascript .= "indiciaData.sections = {};\n";
-    data_entry_helper::$javascript .= "indiciaData.insertingSection = false;\n";
+    data_entry_helper::$indiciaData['insertingSection'] = FALSE;
     $settings['sections'] = [];
     $settings['numSectionsAttr'] = "";
     $settings['maxSectionCount'] = $args['maxSectionCount'];
@@ -449,16 +448,23 @@ class iform_sectioned_transects_edit_transect implements PrebuiltFormInterface {
         ],
         'nocache' => TRUE,
       ]);
+      $sectionsForJs = [];
       foreach ($sections as $section) {
         $code = $section['code'];
-        data_entry_helper::$javascript .= "indiciaData.sections.$code = {'geom':'".$section['boundary_geom']."','id':'".$section['id']."','sref':'".$section['centroid_sref']."','system':'".$section['centroid_sref_system']."'};\n";
+        $sectionsForJs[$code] = [
+          'geom' => $section['boundary_geom'],
+          'id' => $section['id'],
+          'sref' => $section['centroid_sref'],
+          'system' => $section['centroid_sref_system'],
+        ];
         $settings['sections'][$code] = $section;
         $sectionIds[$section['code']] = $section['id'];
       }
+      data_entry_helper::$indiciaData['sections'] = $sectionsForJs;
     }
     else {
       // Not an existing site therefore no walks. On initial save, no section data is created.
-      foreach($settings['attributes'] as $attr) {
+      foreach ($settings['attributes'] as $attr) {
         if ($attr['caption']==='No. of sections') {
           $settings['numSectionsAttr'] = $attr['fieldname'];
           data_entry_helper::$javascript .= "$('#".str_replace(':','\\\\:',$attr['id'])."').attr('min',1).attr('max',".$args['maxSectionCount'].");\n";
@@ -499,6 +505,7 @@ class iform_sectioned_transects_edit_transect implements PrebuiltFormInterface {
       'sectionChangeConfirm' => 'Do you wish to save the currently unsaved changes you have made to the Section Details?',
       'sectionDeleteConfirm' => 'Are you sure you wish to delete section {1}?',
       'sectionInsertConfirm' => 'Are you sure you wish to insert a new section after section {1}?',
+      'transectDeleteConfirm' => 'Are you sure you wish to delete this transect and all its sections?',
     ]);
 
     // Inform JS where to post data to for AJAX form saving.
@@ -513,7 +520,9 @@ class iform_sectioned_transects_edit_transect implements PrebuiltFormInterface {
     data_entry_helper::$indiciaData['autocalcSectionLengthAttrId'] = $settings['autocalcSectionLengthAttrId'];
     data_entry_helper::$indiciaData['defaultSectionGridRef'] = $settings['defaultSectionGridRef'];
     data_entry_helper::$indiciaData['checkLocationNameUnique'] = !empty($args['check_location_name_unique']);
+    data_entry_helper::$indiciaData['sitesListUrl'] = hostsite_get_url($args['sites_list_path']);
     if ($settings['locationId']) {
+      data_entry_helper::$indiciaData['locationId'] = $settings['locationId'];
       data_entry_helper::$javascript .= "selectSection('S1', true);\n";
     }
     return $r;
@@ -674,23 +683,6 @@ class iform_sectioned_transects_edit_transect implements PrebuiltFormInterface {
     $r .= '</div>'; // site-details
     // This must go after the map panel, so it has created its toolbar.
     data_entry_helper::$onload_javascript .= "$('#current-section').on('change', selectSection);\n";
-    if ($settings['canEditBody'] && $settings['locationId']) {
-      $sectionIDs = [];
-      foreach($settings['sections'] as $code => $section)
-        $sectionIDs[] = $section['id'];
-      data_entry_helper::$javascript .= "
-deleteSurvey = function(){
-  if(confirm(\"" . lang::get('Are you sure you wish to delete this location?') . "\")){
-    deleteSections([" . implode(',', $sectionIDs) . "]);
-    $('#delete-transect').html('Deleting Transect');
-    deleteLocation(" . $settings['locationId'] . ");
-    $('#delete-transect').html('Done');
-    window.location='" . hostsite_get_url($args['sites_list_path']) . "';
-  };
-};
-$('#delete-transect').on('click', deleteSurvey);
-";
-    }
     return $r;
   }
 
