@@ -3,7 +3,7 @@
 var selectedFeature = null;
 var sectionDetailsChanged = false;
 var clearSection, loadSectionDetails, confirmSelectSection, selectSection, syncPost,
-    deleteLocation, deleteSections, deleteSection;
+    deleteLocation, deleteSection;
 
 (function ($) {
 
@@ -194,14 +194,33 @@ deleteLocation = function(ID) {
   syncPost(indiciaData.ajaxFormPostUrl, data);
 };
 
-// delete a set of sections. Does not re-index the other section codes.
-deleteSections = function(sectionIDs) {
-  $.each(sectionIDs, function(i, sectionID) {
-    $('#delete-transect').html('Deleting Sections ' + (Math.round(i/sectionIDs.length*100) + '%'));
-    deleteLocation(sectionID);
+/**
+ * When deleting a transect, ensure the contained sections are deleted.
+ */
+deleteSections = function() {
+  var sectionsToDelete = [];
+  $.each(indiciaData.sections, function() {
+    if (typeof this.id !== 'undefined') {
+      sectionsToDelete.push(this);
+    }
   });
-  $('#delete-transect').html('Deleting Sections 100%');
+  $.each(sectionsToDelete, function(i, section) {
+    $('#delete-transect').html('Deleting sections ' + (Math.round(i / sectionsToDelete.length * 100) + '%'));
+    deleteLocation(section.id);
+  });
+  $('#delete-transect').html('Deleting sections 100%');
 };
+
+deleteTransect = function() {
+  if (confirm(indiciaData.lang.sectionedTransectsEditTransect.transectDeleteConfirm)) {
+    deleteSections();
+    $('#delete-transect').html('Deleting Transect');
+    deleteLocation(indiciaData.locationId);
+    $('#delete-transect').html('Done');
+    window.location = indiciaData.sitesListUrl;
+  };
+};
+$('#delete-transect').on('click', deleteTransect);
 
 findTotalSectionLength = function() {
   var transectLen = 0;
