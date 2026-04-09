@@ -650,17 +650,22 @@ $(document).ready(function() {
         // Measure each edge in a section's line to find the half-way point, so
         // we can attach the main section label.
         var geomToCentreLabelOn;
-        for (var i = 0; i < sectionFeature.geometry.components.length - 1; i++) {
-          var thisLineLength = sectionFeature.geometry.components[i].distanceTo(sectionFeature.geometry.components[i + 1]);
-          if (measuredLength + thisLineLength >= sectionFeature.geometry.getLength() / 2) {
-            // Calculate ratio along this line that the half way crossing point is.
-            var ratioAlongThisLine = ((sectionFeature.geometry.getLength() / 2) - measuredLength) / thisLineLength;
-            var x = sectionFeature.geometry.components[i].x + ratioAlongThisLine * (sectionFeature.geometry.components[i + 1].x - sectionFeature.geometry.components[i].x);
-            var y = sectionFeature.geometry.components[i].y + ratioAlongThisLine * (sectionFeature.geometry.components[i + 1].y - sectionFeature.geometry.components[i].y);
-            geomToCentreLabelOn = OpenLayers.Geometry.fromWKT('POINT(' + x + ' ' + y + ')');
-            break;
+        if (typeof sectionFeature.geometry.components === 'undefined' || sectionFeature.geometry.components.length===0) {
+          // No components, so just attach to the centroid.
+          geomToCentreLabelOn = sectionFeature.geometry.getCentroid();
+        } else {
+          for (var i = 0; i < sectionFeature.geometry.components.length - 1; i++) {
+            var thisLineLength = sectionFeature.geometry.components[i].distanceTo(sectionFeature.geometry.components[i + 1]);
+            if (measuredLength + thisLineLength >= sectionFeature.geometry.getLength() / 2) {
+              // Calculate ratio along this line that the half way crossing point is.
+              var ratioAlongThisLine = ((sectionFeature.geometry.getLength() / 2) - measuredLength) / thisLineLength;
+              var x = sectionFeature.geometry.components[i].x + ratioAlongThisLine * (sectionFeature.geometry.components[i + 1].x - sectionFeature.geometry.components[i].x);
+              var y = sectionFeature.geometry.components[i].y + ratioAlongThisLine * (sectionFeature.geometry.components[i + 1].y - sectionFeature.geometry.components[i].y);
+              geomToCentreLabelOn = OpenLayers.Geometry.fromWKT('POINT(' + x + ' ' + y + ')');
+              break;
+            }
+            measuredLength += thisLineLength;
           }
-          measuredLength += thisLineLength;
         }
         // Main label attached to mid-point geometry.
         const label = new OpenLayers.Feature.Vector(geomToCentreLabelOn, {
