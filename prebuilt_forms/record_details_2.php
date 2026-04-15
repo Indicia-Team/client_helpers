@@ -353,6 +353,8 @@ Record ID',
       'location_name' => lang::get('Site name'),
       'sample_comment' => lang::get('Sample comment'),
       'licence_code' => lang::get('Licence'),
+      'import_guid' => lang::get('Import ID'),
+      'import_description' => lang::get('Import description'),
     ];
     self::load_record($auth, $args);
     if (!empty(self::$record['sensitivity_precision'] && !$args['allow_sensitive_full_precision'])) {
