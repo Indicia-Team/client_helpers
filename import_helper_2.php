@@ -1061,6 +1061,7 @@ class import_helper_2 extends helper_base {
     // Find the controls that we can accept global values for, depending on the
     // entity we are importing into.
     $formArray = self::getGlobalValuesFormControlArray($options);
+    hostsite_show_message(var_export($formArray, TRUE));
     $form = self::globalValuesFormControls($formArray, $options);
     self::$indiciaData['processUploadedInterimFiles'] = $_POST['interim-file'];
     return <<<HTML
@@ -1250,14 +1251,38 @@ class import_helper_2 extends helper_base {
   private static function getRestrictedLookupValues($lookupValues, array $restrictToKeys) {
     $originalLookups = explode(',', $lookupValues);
     $originalLookupsAssoc = [];
+    $originalLookupKeysByLower = [];
     foreach ($originalLookups as $lookup) {
-      $lookup = explode(':', $lookup);
-      $originalLookupsAssoc[$lookup[0]] = $lookup[1];
+      $lookup = trim($lookup);
+      if ($lookup === '') {
+        continue;
+      }
+      $parts = explode(':', $lookup, 2);
+      if (count($parts) < 2) {
+        hostsite_show_message("Warning: invalid lookup value '$lookup'. Expected format key:value.");
+        continue;
+      }
+      $lookupKey = trim($parts[0]);
+      if ($lookupKey === '') {
+        hostsite_show_message("Warning: invalid lookup value '$lookup'. Empty key found.");
+        continue;
+      }
+      $originalLookupsAssoc[$lookupKey] = $parts[1];
+      $originalLookupKeysByLower[strtolower($lookupKey)] = $lookupKey;
     }
     $newLookupList = [];
     foreach ($restrictToKeys as $key) {
       if (strpos($key, ':') === FALSE) {
-        $newLookupList[] = "$key:" . $originalLookupsAssoc[$key];
+        $requestedKey = trim($key);
+        if ($requestedKey === '') {
+          continue;
+        }
+        $matchingKey = $originalLookupKeysByLower[strtolower($requestedKey)] ?? NULL;
+        if ($matchingKey === NULL) {
+          hostsite_show_message("Warning: restricted lookup key '$requestedKey' was not found in available lookup values.");
+          continue;
+        }
+        $newLookupList[] = "$requestedKey:" . $originalLookupsAssoc[$matchingKey];
       }
       else {
         $newLookupList[] = $key;
