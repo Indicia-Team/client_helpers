@@ -172,4 +172,30 @@ jQuery(document).ready(function ($) {
     });
   }
 
+  if (typeof indiciaData.groupSites !== 'undefined') {
+    // If the form has group sites information, we need to add the layer to the map.
+    mapInitialisationHooks.push(function(div) {
+      const features = [];
+      indiciaData.groupSites.forEach(function(groupSite) {
+        div.addPt(features, groupSite, 'geom', {}, groupSite.id);
+      });
+      const layer = new OpenLayers.Layer.Vector(
+        indiciaData.lang.groupLocations.layerTitle,
+        {
+          style: {
+            fillOpacity : 0,
+            strokeOpacity : 0.5,
+            strokeColor : '#0000ee',
+            strokeDashstyle : 'dash',
+            strokeWidth : 2
+          },
+          sphericalMercator: true,
+          displayInLayerSwitcher: true
+        }
+      );
+      layer.addFeatures(features);
+      div.map.addLayer(layer);
+    });
+  }
+
 });

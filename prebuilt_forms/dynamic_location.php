@@ -490,7 +490,46 @@ function switchToSatelliteBaseLayerForZoom(map) {
         'id="imp-boundary-geom" ' .
         'value="' . $impBoundaryGeomVal . '"/>';
     }
+    self::includeGroupSitesLayer($auth['read']);
     return $r;
+  }
+
+  /**
+   * When adding recording group sites, show other group site boundaries.
+   *
+   * @param array $readAuth
+   *   Read authorisation tokens.
+   */
+  private static function includeGroupSitesLayer(array $readAuth) {
+    if (!empty($_GET['group_id'])) {
+      require_once 'includes/groups.php';
+      if (group_get_user_membership($_GET['group_id'], $readAuth, FALSE) !== GroupMembership::NonMember) {
+        $groupSites = data_entry_helper::get_population_data([
+          'report' => 'library/locations/locations_for_groups',
+          'extraParams' => $readAuth + [
+            'group_id' => $_GET['group_id'],
+            'columns' => 'location_id,name,geom',
+          ],
+          'caching' => FALSE,
+        ]);
+        // Remove the current location from the group sites list if location_id
+        // is specified.
+        if (!empty($_GET['location_id'])) {
+          $currentLocationId = $_GET['location_id'];
+          $groupSites = array_filter($groupSites, function ($site) use ($currentLocationId) {
+            return $site['location_id'] != $currentLocationId;
+          });
+          // Re-index the array after filtering.
+          $groupSites = array_values($groupSites);
+        }
+        if (count($groupSites) > 0) {
+          data_entry_helper::$indiciaData['groupSites'] = $groupSites;
+          data_entry_helper::addLanguageStringsToJs('groupLocations', [
+            'layerTitle' => 'Other site boundaries',
+          ]);
+        }
+      }
+    }
   }
 
   protected static function get_control_locationname($auth, $args, $tabalias, $options) {
@@ -593,7 +632,7 @@ function switchToSatelliteBaseLayerForZoom(map) {
 
   /**
    * Get a child-location grid control.
-   * 
+   *
    * If $options['child_nid'] is set to the node ID where child locations can
    * be added/edited then links to allow this will be displayed.
    */
@@ -629,9 +668,9 @@ function switchToSatelliteBaseLayerForZoom(map) {
       $options = array_merge([
         'readAuth' => $auth['read'],
         'dataSource' => 'reports_for_prebuilt_forms/simple_location_list_2',
-        'columns' => isset($columns) ? $columns : [], 
+        'columns' => isset($columns) ? $columns : [],
       ]);
-  
+
       $extraParams = [
         'parent_id' => $_GET['location_id'],
         'website_id' => $args['website_id'],
@@ -654,7 +693,7 @@ function switchToSatelliteBaseLayerForZoom(map) {
       if (isset($nid)) {
         // Add a button to add a new child location.
         $childNodeUrl = hostsite_get_url(
-          'node/' . $nid, 
+          'node/' . $nid,
           [
             'new' => '1',
             'parent_id' => $_GET['location_id'],
@@ -684,10 +723,10 @@ function switchToSatelliteBaseLayerForZoom(map) {
     else {
       $nid = $options['parent_nid'];
       if (
-        !array_key_exists('parent_id', $_GET) && 
+        !array_key_exists('parent_id', $_GET) &&
         !array_key_exists('location_id', $_GET)
       ) {
-        // Creating a new location without a parent. 
+        // Creating a new location without a parent.
         return  '<p>' . lang::get('LANG_No_Parent_Location') . '</p>';
       }
       elseif (!array_key_exists('location_id', $_GET)) {
@@ -696,7 +735,7 @@ function switchToSatelliteBaseLayerForZoom(map) {
         $loc = data_entry_helper::get_population_data([
           'table' => 'location',
           'extraParams' => $auth['read'] + ['id' => $parentId],
-        ]);        
+        ]);
         $parentName = $loc[0]['name'];
       }
       else {
@@ -706,9 +745,9 @@ function switchToSatelliteBaseLayerForZoom(map) {
       }
 
       $parentNodeUrl = hostsite_get_url(
-        'node/' . $nid, 
-        ['location_id' => $parentId], 
-        FALSE, 
+        'node/' . $nid,
+        ['location_id' => $parentId],
+        FALSE,
         TRUE
       );
       $link = '<a href="' . $parentNodeUrl . '">' . $parentName . '</a>';
