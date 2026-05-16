@@ -396,9 +396,9 @@ class ElasticsearchReportHelper {
           'imageClassifierDisagrees' => 'Image classifier conflicts with identification provided.',
           'noClassifierInfoAvailable' => 'No image classifier information is available for this record.',
           'probability' => 'Probability',
-          'suggestionClassifierChosen' => 'Classifier chosen',
+          'suggestionClassifierChosen' => 'Classifier suggestion',
           'suggestionHumanChosen' => 'Human chosen',
-          'suggestionNotChosen' => 'Suggestion not chosen',
+          'suggestionNotChosen' => 'Classifier alternative',
         ]);
         self::$proxyEnabled = TRUE;
       }
