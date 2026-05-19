@@ -322,6 +322,7 @@ class iform_species_details_3 extends BaseDynamicDetails {
           "&nbsp;&nbsp;<strong>[dualemap]</strong> - a toggle that switches between hectadmap and exploremap<br/>" .
           "&nbsp;&nbsp;<strong>[map]</strong> - a map that links to the spatial reference and location<br/>" .
           "&nbsp;&nbsp;<strong>[occurrenceassociations]</strong> - a list of associated species, drawn from the occurrence associations data.<br/>" .
+          "&nbsp;&nbsp;<strong>[counties]</strong> - vice county distribution<br/>" . 
           "<strong>=tab/page name=</strong> is used to specify the name of a tab or wizard page (alpha-numeric characters only). " .
           "If the page interface type is set to one page, then each tab/page name is displayed as a seperate section on the page. " .
           "Note that in one page mode, the tab/page names are not displayed on the screen.<br/>" .
@@ -335,7 +336,10 @@ class iform_species_details_3 extends BaseDynamicDetails {
 [habitat]
 
 [photos]
+
 [atlas]
+
+[counties]
 
 [hectadmap]
 
@@ -556,7 +560,7 @@ class iform_species_details_3 extends BaseDynamicDetails {
    *   Page HTML.
    */
 
-  public static function get_form($args, $nid) {
+  public static function get_form($args, $nid) {    
   iform_load_helpers(['ElasticsearchReportHelper']);
 
   // Start timer as early as possible
@@ -564,9 +568,11 @@ class iform_species_details_3 extends BaseDynamicDetails {
 
   // 1. Try cache FIRST
   $cached = self::read_species_cache($args);
+  
   if ($cached !== null) {
+    
     $elapsed = round((microtime(true) - $start) * 1000, 1);
-
+    
     // Add debug info
     $cached .= "\n<!-- Species cache: HIT | {$elapsed} ms -->";
 
@@ -581,7 +587,7 @@ class iform_species_details_3 extends BaseDynamicDetails {
   $enabled = ElasticsearchReportHelper::enableElasticsearchProxy($nid);
   if ($enabled) {
     $html = parent::get_form($args, $nid);
-
+  
     $elapsed = round((microtime(true) - $start) * 1000, 1);
 
     // Add debug info
@@ -601,7 +607,7 @@ class iform_species_details_3 extends BaseDynamicDetails {
   private static function getTaxaTaxonListIdFromName($args,$speciesName) {
 		  $preferredTaxonName = trim($speciesName);
 		  $expectedRank   ='Species';
-		
+
 		  // --- Exact preferred-name pass -------------------------------------------
 		  $paramsExact = [
 			'taxon_list_id'   => $args['list_id'],
@@ -615,7 +621,7 @@ class iform_species_details_3 extends BaseDynamicDetails {
 		  $rawExact  = self::fetchData('/index.php/services/rest/taxa/search', $paramsExact, 'GET');
 		  $rowsExact = self::decodeRows($rawExact);
 		  
-		//	echo "<pre>"; print_r($rowsExact);echo "</pre>";exit;
+
 			  
 			// Defensively handle empty response
 			if (!is_array($rowsExact) || empty($rowsExact[0])) {
@@ -683,6 +689,7 @@ class iform_species_details_3 extends BaseDynamicDetails {
  * @return 
 */ 
     protected static function runEsProxyQuery(array $params, $nid = 0) {
+      
       $proxyUrl = \Drupal::request()->getSchemeAndHttpHost()
         . '/iform/esproxy/searchbyparams/' . intval($nid);
 
@@ -850,6 +857,7 @@ class iform_species_details_3 extends BaseDynamicDetails {
  */
   protected static function get_form_html($args, $auth, $attributes) {
     
+
     // Set global flag if no taxon is specified in URL or form.
     if (empty($_GET['taxa_taxon_list_id']) &&
       empty($_GET['taxon_meaning_id']) &&
@@ -861,7 +869,9 @@ class iform_species_details_3 extends BaseDynamicDetails {
       self::$notaxon = FALSE;
     }
 
-	self::set_theme_settings();
+      self::$taxaTaxonListId = null;
+      
+      self::set_theme_settings();
 
 
     // Apply options and build species autocomplete formatting function
@@ -884,7 +894,7 @@ class iform_species_details_3 extends BaseDynamicDetails {
 		self::$taxaTaxonListId = $_GET['taxa_taxon_list_id'];
       } else {
 		  if (isset($_GET['species_name'])) {
-			self::$taxaTaxonListId = self::getTaxaTaxonListIdFromName($args,$_GET['species_name']);
+  			self::$taxaTaxonListId = self::getTaxaTaxonListIdFromName($args,ucfirst($_GET['species_name']) );
 		  }
 	  } 
 	  // Get information on species names
@@ -957,6 +967,7 @@ class iform_species_details_3 extends BaseDynamicDetails {
  * @return void
  */
   protected static function getNames($auth,$taxa_taxon_list_id) {
+   
     iform_load_helpers(['report_helper']);
     self::$preferred = lang::get('Unknown');
     // Get all the different names for the species.
@@ -977,6 +988,7 @@ class iform_species_details_3 extends BaseDynamicDetails {
       $extraParams['external_key'] = $_GET['external_key'];
       self::$externalKey = $_GET['external_key'];
     }
+    
     $species_details = report_helper::get_report_data([
       'readAuth' => $auth['read'],
       'class' => 'species-details-fields',
@@ -2259,6 +2271,8 @@ HTML;
  */
 protected static function read_species_cache($args) {
   
+  self::clear_species_cache();
+  
   $filename = self::getSpeciesCacheFilename();
   
     if (
@@ -2272,7 +2286,6 @@ protected static function read_species_cache($args) {
   $relativeDir  = rtrim(self::$cachePath, '/');
   $absoluteFile = DRUPAL_ROOT . $relativeDir . '/' . $filename;
   
- // echo $absoluteFile;exit;
   
   if (!is_readable($absoluteFile)) {
     return null;
@@ -2377,6 +2390,34 @@ protected static function canonicalSpeciesSlug(): ?string {
   // Convert to slug
   return strtolower(str_replace(' ', '-', $name));
 }
+
+  /**
+   * Clear all species cache files if clearcache=t is present.
+   *
+   * @return void
+   */
+  protected static function clear_species_cache(): void {
+    if (empty($_GET['clearcache']) || $_GET['clearcache'] !== 't') {
+      return;
+    }
+
+    $relativeDir = rtrim(self::$cachePath, '/');
+    $absoluteDir = DRUPAL_ROOT . $relativeDir;
+
+    if (!is_dir($absoluteDir)) {
+      return;
+    }
+
+    /** @var \Drupal\Core\File\FileSystemInterface $fs */
+    $fs = \Drupal::service('file_system');
+
+    // Only remove .html cache files
+    foreach (glob($absoluteDir . '/*.html') as $file) {
+      if (is_file($file)) {
+        @unlink($file);
+      }
+    }
+  }
 
   
   /**
@@ -2738,17 +2779,21 @@ $rare ='';
  */
   protected static function get_control_numericstats($auth,$args,$tabalias,$options) {
     if (self::$notaxon) {
-      return '';
+      return 'No data';
     }
 
     $taxonMeaningId = self::$taxonMeaningId ?? null;
     $speciesName    = self::$preferred ?? null;
+    
+    $nid = $args['nid'] ?? self::getNidFromAlias('/species');
 
     if (empty($taxonMeaningId) && empty($speciesName)) {
         return []; // No species context
     }
 
-	  
+    $options['taxonMeaningId'] = $taxonMeaningId;
+    $options['speciesName'] = $speciesName;
+    
 	  $stats = self::get_stats_from_summary($auth, $args,  $options );
 
 		$national = $stats['national'] ?? [];
@@ -2809,11 +2854,14 @@ $rare ='';
  */
 	protected static function get_stats_from_summary($auth, $args, array $options = [])
 	{
+    
+    $nid = $args['nid'] ?? self::getNidFromAlias('/species');
+    
 		// -----------------------------------------
 		// 1. Resolve taxon context
 		// -----------------------------------------
 		$ttlId = self::$taxaTaxonListId
-			?? ($_GET['taxa_taxon_list_id'] ?? null);
+			?? ($args['list_id'] ?? null);
 
 		if (empty($ttlId)) {
 			return [
@@ -2926,13 +2974,10 @@ $rare ='';
 		// -----------------------------------------
 		// 3. Call the ES proxy
 		// -----------------------------------------
-		$nid = $args['nid'] ?? \Drupal::routeMatch()->getParameter('node')->id();
-		$payload = self::runEsProxyQuery($params, $nid);
+		
+    $payload = self::runEsProxyQuery($params, $nid);
 
-
-			$data = $payload;
-
-
+		$data = $payload;
 
 			$firstIso = $data['aggregations']['first_record']['value_as_string'] ?? null;
 			$lastIso  = $data['aggregations']['last_record']['value_as_string'] ?? null;
@@ -2953,6 +2998,30 @@ $rare ='';
 				],
 			];
 	}
+
+
+    /*
+     * Resolve the node ID for a given base alias.
+     *
+     * Works regardless of current URL (e.g. /species, /species/foo, /species?x=y)
+     */
+	protected static function getNidFromAlias(string $alias = '/species'): ?int {
+      // Normalise alias
+      if ($alias[0] !== '/') {
+        $alias = '/' . $alias;
+      }
+
+      // Convert alias → system path (e.g. /node/123)
+      $system_path = \Drupal::service('path_alias.manager')->getPathByAlias($alias);
+
+      // Extract nid
+      if (preg_match('/^\/node\/(\d+)$/', $system_path, $matches)) {
+        return (int) $matches[1];
+      }
+
+      return NULL;
+    }
+
 
 /**
  * Renders a panel listing vice county statistics for the selected species.
@@ -3065,6 +3134,9 @@ $rare ='';
  * }
  */
   protected static function get_counties($auth, $args, array $options = [])	{
+    
+    $nid = $args['nid'] ?? self::getNidFromAlias('/species');
+        
 		// -----------------------------------------
 		// 1. Resolve taxon context
 		// -----------------------------------------
@@ -3172,7 +3244,6 @@ $rare ='';
 		// -----------------------------------------
 		// 3. Call the ES proxy
 		// -----------------------------------------
-			$nid = $args['nid'] ?? \Drupal::routeMatch()->getParameter('node')->id();
 			
 		$payload = self::runEsProxyQuery($params, $nid);
 		$data = is_string($payload) ? json_decode($payload, true) : $payload;
@@ -3322,6 +3393,10 @@ $rare ='';
  * }
  */ 
 	protected static function get_habitats($auth, $args, array $options = [])	{
+
+    $nid = $args['nid'] ?? self::getNidFromAlias('/species');
+          
+          
 		// -----------------------------------------
 		// 1. Resolve taxon context
 		// -----------------------------------------
@@ -3393,7 +3468,7 @@ $rare ='';
 		// -----------------------------------------
 		// 3. Call the ES proxy
 		// -----------------------------------------
-			$nid = $args['nid'] ?? \Drupal::routeMatch()->getParameter('node')->id();
+
 			$payload = self::runEsProxyQuery($params, $nid);
 
 			$data = is_string($payload) ? json_decode($payload, true) : $payload;
