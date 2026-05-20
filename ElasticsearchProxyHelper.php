@@ -197,6 +197,10 @@ class ElasticsearchProxyHelper {
 
       $url = self::getEsUrl();
 
+      if (empty($url)) {
+        return self::$esAvailable;
+      }
+      
       $ch = curl_init();
 
       curl_setopt_array($ch, [
@@ -205,11 +209,14 @@ class ElasticsearchProxyHelper {
         CURLOPT_NOBODY => true,
         CURLOPT_TIMEOUT => 3,
         CURLOPT_CONNECTTIMEOUT => 2,
+        CURLOPT_SSL_VERIFYPEER => true,
+        CURLOPT_SSL_VERIFYHOST => 2,
       ]);
 
       // Auth
-      if (self::$config['es']['auth_method'] === 'directClient') {
-        curl_setopt($ch, CURLOPT_USERPWD,
+      if (!empty(self::$config['es']['auth_method']) &&
+        self::$config['es']['auth_method'] === 'directClient') {
+          curl_setopt($ch, CURLOPT_USERPWD,
           self::$config['es']['user'] . ':' . self::$config['es']['secret']
         );
       }
@@ -224,7 +231,7 @@ class ElasticsearchProxyHelper {
       $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
       curl_close($ch);
 
-      $result = ($status >= 200 && $status < 500);
+        $result = ($status >= 200 && $status < 500); // Treat 2xx–4xx as reachable, 5xx as unavailable
 
       return self::$esAvailable = $result; //  correct caching
     }  
