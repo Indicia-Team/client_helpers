@@ -370,45 +370,84 @@ class ElasticsearchReportHelper {
    *
    * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-enableelasticsearchproxy
    */
-  public static function enableElasticsearchProxy($nid = NULL) {
-    if (!self::$proxyEnabled && !self::$proxyEnableFailed) {
-      // Retrieve the Elasticsearch mappings.
-      try {
-        $config = hostsite_get_es_config($nid);
-        self::getMappings($config);
-        helper_base::add_resource('datacomponents');
-        // Prepare the stuff we need to pass to the JavaScript.
-        $mappings = self::$esMappings;
-        $esProxyAjaxUrl = hostsite_get_url('iform/esproxy');
-        helper_base::$indiciaData['esProxyAjaxUrl'] = $esProxyAjaxUrl;
-        helper_base::$indiciaData['esSources'] = [];
-        helper_base::$indiciaData['esMappings'] = $mappings;
-        helper_base::$indiciaData['gridMappingFields'] = self::MAPPING_FIELDS;
-        foreach (helper_base::$indiciaData['gridMappingFields'] as &$field) {
-          $field['caption'] = lang::get($field['caption']);
+      public static function enableElasticsearchProxy($nid = NULL) {
+
+        if (!self::$proxyEnabled && !self::$proxyEnableFailed) {
+          try {
+            // added so that we only have one place where we check eleasticSearch availability which is in the ElasticsearchProxyHelper 
+            require_once 'ElasticsearchProxyHelper.php';             
+            $config = hostsite_get_es_config($nid);
+            ElasticsearchProxyHelper::$config = $config;
+            
+            // Check availability (use self, not proxy class)
+              if (!ElasticsearchProxyHelper::isEsAvailable()) {
+                
+              self::$proxyEnableFailed = TRUE;
+              self::$proxyEnabled = FALSE;
+
+              helper_base::$indiciaData['esAvailable'] = false;
+
+              \Drupal::logger('iform')->warning(
+                'Elasticsearch not available – proxy disabled'
+              );
+
+              return FALSE;
+            }
+
+            // Normal setup
+            self::getMappings($config);
+            helper_base::add_resource('datacomponents');
+
+            $mappings = self::$esMappings;
+            $esProxyAjaxUrl = hostsite_get_url('iform/esproxy');
+
+            helper_base::$indiciaData['esProxyAjaxUrl'] = $esProxyAjaxUrl;
+            helper_base::$indiciaData['esSources'] = [];
+            helper_base::$indiciaData['esMappings'] = $mappings;
+            helper_base::$indiciaData['gridMappingFields'] = self::MAPPING_FIELDS;
+
+            foreach (helper_base::$indiciaData['gridMappingFields'] as &$field) {
+              $field['caption'] = lang::get($field['caption']);
+            }
+
+            helper_base::$indiciaData['esVersion'] = (int) $config['es']['version'];
+            helper_base::$indiciaData['esScope'] = $config['es']['scope'];
+
+
+            helper_base::addLanguageStringsToJs('classifier', [
+              'classifierSuggestions' => 'Classifier suggestions',
+              'clickToRedetermineAs' => 'Click to redetermine the record as this suggestion.',
+              'imageClassifierAgrees' => 'Image classifier agrees with identification provided.',
+              'imageClassifierDisagrees' => 'Image classifier conflicts with identification provided.',
+              'noClassifierInfoAvailable' => 'No image classifier information is available for this record.',
+              'probability' => 'Probability',
+              'suggestionClassifierChosen' => 'Classifier suggestion',
+              'suggestionHumanChosen' => 'Human chosen',
+              'suggestionNotChosen' => 'Classifier alternative',
+            ]);
+        
+            // Explicit success flag
+            helper_base::$indiciaData['esAvailable'] = true;
+
+            self::$proxyEnabled = TRUE;
+          }
+          catch (Exception $e) {
+            self::$proxyEnableFailed = TRUE;
+            self::$proxyEnabled = FALSE;
+
+            helper_base::$indiciaData['esAvailable'] = false;
+
+            \Drupal::logger('iform')->error(
+              'Elasticsearch proxy enable failed: ' . $e->getMessage()
+            );
+          }
         }
-        helper_base::$indiciaData['esVersion'] = (int) $config['es']['version'];
-        helper_base::$indiciaData['esScope'] = $config['es']['scope'];
-        helper_base::addLanguageStringsToJs('classifier', [
-          'classifierSuggestions' => 'Classifier suggestions',
-          'clickToRedetermineAs' => 'Click to redetermine the record as this suggestion.',
-          'imageClassifierAgrees' => 'Image classifier agrees with identification provided.',
-          'imageClassifierDisagrees' => 'Image classifier conflicts with identification provided.',
-          'noClassifierInfoAvailable' => 'No image classifier information is available for this record.',
-          'probability' => 'Probability',
-          'suggestionClassifierChosen' => 'Classifier suggestion',
-          'suggestionHumanChosen' => 'Human chosen',
-          'suggestionNotChosen' => 'Classifier alternative',
-        ]);
-        self::$proxyEnabled = TRUE;
+
+
+        
+        return self::$proxyEnabled;
+
       }
-      catch (Exception $e) {
-        self::$proxyEnableFailed = TRUE;
-        \Drupal::logger('iform')->error('Elasticsearch proxy enable failed: ' . $e->getMessage());
-      }
-    }
-    return self::$proxyEnabled;
-  }
 
   /**
    * An Elasticsearch bulk editor tool.
