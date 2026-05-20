@@ -13,7 +13,7 @@
  * GNU General Public License for more details.
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
- * //AVBL, is this licensing correct
+ *
  * @package Client
  * @subpackage PrebuiltForms
  * @author Indicia Team
@@ -31,12 +31,16 @@
 
 require_once 'includes/dynamic.php';
 
+use IForm\prebuilt_forms\PageType;
+
 /**
  * Store remembered field settings, since these need to be accessed from a hook function which runs outside the class.
  *
  * @var string
  */
 global $remembered;
+
+const taxa_taxon_list_attribute = 'taxa_taxon_list_attribute';
 
 class iform_dgfm_attr_manager extends iform_dynamic {
 
@@ -48,12 +52,19 @@ class iform_dgfm_attr_manager extends iform_dynamic {
    */
   
   public static function get_dgfm_attr_manager_definition() {
-    return array(
+    return [
       'title' => 'DGfM Attr Manager',
       'category' => 'Utilities',
       'description' => 'Tool for creating new attributes, and organising attributes into groups (templates) for DGfM.',
       'recommended' => false
-    );
+    ];
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function getPageType(): PageType {
+    return PageType::DataEntry;
   }
 
   /* TODO
@@ -75,54 +86,55 @@ class iform_dgfm_attr_manager extends iform_dynamic {
   public static function get_parameters() {
     $retVal = array_merge(
         parent::get_parameters(),
-      array(
-        array(
+      [
+        [
           'name' => 'taxon_list_id',
           'caption' => 'Taxon List_id',
           'description' => 'ID of the taxon list to load taxa taxon list attributes from.',
           'type' => 'string',
           'required' => true,
           'group' => 'Config IDs'
-        ),
-        array(
+        ],
+        [
           'name' => 'survey_id',
           'caption' => 'Survey ID',
           'description' => 'ID of the survey for attribute_set taxon restrictions.',
           'type' => 'string',
           'required' => true,
           'group' => 'Config IDs'
-        ),
-        //AVB I think this is incorrectly being used instead of the Repoerting Catergory, search for source_termlist_id in code to see
-        array(
+        ],
+        //AVB I think this is incorrectly being used instead of the Reporting Catergory, search for source_termlist_id in code to see
+        [
           'name' => 'source_termlist_id',
           'caption' => 'Attribute Sources termlist ID',
           'description' => 'ID of attribute sources termlist.',
           'type' => 'string',
           'required' => true,
           'group' => 'Config IDs'
-        ),
-        array(
+        ],
+        [
           'name' => 'reporting_category_termlist_id',
           'caption' => 'Attribute Reporting Category termlist ID',
           'description' => 'ID of attribute sources termlist.',
           'type' => 'string',
           'required' => true,
           'group' => 'Config IDs'
-        ),
-        array(
+        ],
+        [
           'name' => 'life_stage_termlist_id',
           'caption' => 'Life stages termlist ID',
           'description' => 'ID of the Life Stages termlist.',
           'type' => 'string',
           'required' => true,
           'group' => 'Config IDs'
-        )
-      )
+        ]
+      ]
     );
     return $retVal;
   }
 
   public static function get_form($args, $nid) {
+    $imgPath = empty(data_entry_helper::$images_path) ? data_entry_helper::relative_client_helper_path() . "../media/images/" : data_entry_helper::$images_path;
     $readAuth = data_entry_helper::get_read_auth($args['website_id'], $args['password']);
     global $indicia_templates;
     iform_load_helpers(['data_entry_helper', 'report_helper']);
@@ -139,8 +151,10 @@ class iform_dgfm_attr_manager extends iform_dynamic {
     data_entry_helper::$javascript .= "indiciaData.survey_id = '".$args['survey_id']."';\n";
     data_entry_helper::$javascript .= "indiciaData.indiciaSvc = '".data_entry_helper::getRootFolder() . data_entry_helper::client_helper_path() . "proxy.php?url=".data_entry_helper::$base_url."';\n";
     data_entry_helper::$javascript .= "indiciaData.readAuth = {nonce: '".$readAuth['nonce']."', auth_token: '".$readAuth['auth_token']."'};\n";
-    $id = self::initial_value($values, "taxa_taxon_list_attribute:id");
-    $disabled_input = self::initial_value($values, 'metaFields:disabled_input');
+    if (!empty($values)) {
+      $id = self::initial_value($values, "taxa_taxon_list_attribute:id");
+      $disabled_input = self::initial_value($values, 'metaFields:disabled_input');
+    }
     $enabled = ($disabled_input === 'YES') ? 'disabled="disabled"' : '';
     if ($disabled_input === 'YES') : 
       $r .= '<div class="alert alert-warning">The attribute was created by another user so you don\'t have permission to change the
@@ -160,36 +174,38 @@ class iform_dgfm_attr_manager extends iform_dynamic {
     $r .= '<div id="attributes-grids-container">';
       $checkboxTemplate='<input class="attr-template-selection-checkbox" value="{attribute_id}" type="checkbox">';
       //$loadForEditingButtonTemplate='<button attributeId={attribute_id} class="load-attr-button">Edit</button>';
-      $loadForEditingButtonTemplate='
-      <a attributeId={attribute_id} class="load-attr-button">
-        <img src="/modules/iform/media/images/nuvola/package_editors-22px.png" title="Edit this attribute">
-      </a>';
+      $packageEditorIconPath = $imgPath . 'nuvola/package_editors-22px.png';
+      $loadForEditingButtonTemplate="
+      <a attributeId={attribute_id} class=\"load-attr-button\">
+        <img src=\"$packageEditorIconPath\" title=\"Edit this attribute\">
+      </a>";
 
       $htmlGridTitle = '<h4>'.lang::get('All characters').'</h4>';
       $dataSource = 'reports_for_prebuilt_forms/dgfm/show_all_attributes';
       $gridId = 'all_attributes_grid';
       $saveIntoTemplateButtonId = "save-attributes-into-template";
       $saveIntoTemplateButtonLabel = lang::get("Save characters into group");
-      $extraParams = array(
-        'taxon_list_id'=>$args['taxon_list_id']);
+      $extraParams = [
+        'taxon_list_id' => $args['taxon_list_id'],
+      ];
       $r .= self::draw_all_grid_and_button($args['website_id'], $args['password'], $checkboxTemplate, $loadForEditingButtonTemplate, $htmlGridTitle, $dataSource, $gridId, 
       $saveIntoTemplateButtonId, $saveIntoTemplateButtonLabel, $extraParams, false,  $args['life_stage_termlist_id']);
-      $htmlGridTitle = '<h4>'.lang::get('Characters in group').'</h4>';
+      $htmlGridTitle = '<h4>' . lang::get('Characters in group') . '</h4>';
       $dataSource = 'reports_for_prebuilt_forms/dgfm/show_attributes_for_group';
       $gridId = 'template_attributes_grid';
-      $extraParams = array(
-        'taxon_list_id'=>$args['taxon_list_id'],
+      $extraParams = [
+        'taxon_list_id' =>$args['taxon_list_id'],
         // Initially set to -1 so we don't load anything onto the grid until a template is selected
-        'attribute_set_id'=>-1);
-      $checkboxTemplate='<input class="remove-attr-from-group-checkbox" value="{attribute_sets_taxa_taxon_list_attribute_id}" type="checkbox">';
+        'attribute_set_id' => -1];
+      $checkboxTemplate = '<input class="remove-attr-from-group-checkbox" value="{attribute_sets_taxa_taxon_list_attribute_id}" type="checkbox">';
       $deleteButtonHtml = '<input type="button" class="btn-default" id="delete-attr-set-taxa-taxon-list-attr" value="'.lang::get('Remove attribute from group')."\" />\n"; 
       $r .= self::draw_template_attributes_grid($args['website_id'], $args['password'], $checkboxTemplate, $htmlGridTitle, $dataSource, $gridId, $deleteButtonHtml, $extraParams);
       $r .= '<hr>';
     $r .= '</div>';
     // AVB put this into its own function
     $r .= '<div id="display-taxon-section-button">';
-    $r .= '<input class="btn-primary" value="'.lang::get('Add taxa to a group').'" type="button"><br>';
-    $r .= '<small><em>'.lang::get('Click on this button to open a screen that lets you add taxa into a group').'</em></small><br>';
+    $r .= '<input class="btn-primary" value="' . lang::get('Add taxa to a group') . '" type="button"><br>';
+    $r .= '<small><em>' . lang::get('Click on this button to open a screen that lets you add taxa into a group') . '</em></small><br>';
     $r .= '</div>';
     $r .= '<div id="taxon-controls-container">';
     $checkboxTemplate='<input class="taxa-template-selection-checkbox" value="{taxon_meaning_id}" type="checkbox">';
@@ -198,19 +214,21 @@ class iform_dgfm_attr_manager extends iform_dynamic {
     $gridId = 'all_taxa_grid';
     $saveIntoTemplateButtonId = "save-taxa-into-template";
     $saveIntoTemplateButtonLabel = lang::get("Associate these taxa with this group of characters");
-    $extraParams = array(
-      'taxon_list_id'=>$args['taxon_list_id'],
-      'survey_id'=>$args['survey_id']);
+    $extraParams = [
+      'taxon_list_id' => $args['taxon_list_id'],
+      'survey_id' => $args['survey_id'],
+    ];
     $r .= self::draw_all_grid_and_button($args['website_id'], $args['password'], $checkboxTemplate, null, $htmlGridTitle, 
         $dataSource, $gridId, $saveIntoTemplateButtonId, $saveIntoTemplateButtonLabel, $extraParams, true, $args['life_stage_termlist_id']);
     $htmlGridTitle = '<h4>'.lang::get('Taxa associated with the currently selected group of characters').'</h4>';
     $dataSource = 'reports_for_prebuilt_forms/dgfm/load_taxa_with_restrictions';
     $gridId = 'template_taxa_grid';
-    $extraParams = array(
-      'taxon_list_id'=>$args['taxon_list_id'],
-      'survey_id'=>$args['survey_id'],
+    $extraParams = [
+      'taxon_list_id' => $args['taxon_list_id'],
+      'survey_id' => $args['survey_id'],
       // Initially set to -1 so we don't load anything onto the grid until a template is selected
-      'attribute_set_id'=>-1);
+      'attribute_set_id' => -1
+      ];
     $checkboxTemplate='<input class="attr-set-taxon-restrict-checkbox" value="{attribute_sets_taxon_restriction_id}" type="checkbox">';
     $deleteButtonHtml = '<input type="button" class="btn-default" id="delete-attr-set-taxon-restrict" value="'.lang::get('Remove taxa from group')."\" />\n"; 
     $r .= self::draw_template_attributes_grid($args['website_id'], $args['password'], $checkboxTemplate, $htmlGridTitle, $dataSource, $gridId, $deleteButtonHtml, $extraParams);
@@ -538,7 +556,7 @@ TXT;
       'table' => 'termlist',
       'captionField' => 'title',
       'valueField' => 'id',
-		'extraParams' => $readAuth + array('orderby'=>'title'),
+		'extraParams' => $readAuth + ['orderby' => 'title'],
       'nocache' => true
     ]);
     //AVBH, need to do a terms setup page
@@ -687,7 +705,6 @@ TXT;
       'helpText' => 'Ensure that the value provided is a valid time format.',
     ]);*/
     $r .= '</fieldset>';
-    //AVB need to resinstate this field
     $r .= '<fieldset>';
     $r .= data_entry_helper::checkbox([
       'fieldname' => 'add_occ_attr_checkbox',
@@ -719,28 +736,29 @@ TXT;
   }
   
   public static function get_area_sub_area_data($readAuth, $termlist, $idField) {
-    $extraParams = $readAuth + array(
+    iform_load_helpers(['report_helper']);
+    $extraParams = $readAuth + [
       'termlist_id' => $termlist
-    );
-    $termlists_terms = data_entry_helper::get_report_data(array(
+    ];
+    $termlists_terms = report_helper::get_report_data([
       'dataSource' => 'reports_for_prebuilt_forms/dgfm/get_area_sub_area_drop_down_data',
       'extraParams' => $extraParams
-    ));
+    ]);
     foreach ($termlists_terms as $idx => $termlists_term) {
-      $minified[$termlists_term[$idField]]=$termlists_term['area_sub_area_fullname'];
+      $minified[$termlists_term[$idField]] = $termlists_term['area_sub_area_fullname'];
     }
     return $minified;
   }
 
   public static function get_termlist_terms_data($readAuth, $termlist, $idField) {
-    $extraParams = $readAuth + array(
+    $extraParams = $readAuth + [
       'view' => 'detail',
       'termlist_id' => $termlist
-    );
-    $termlists_terms = data_entry_helper::get_population_data(array(
+    ];
+    $termlists_terms = data_entry_helper::get_population_data([
       'table' => 'termlists_term',
       'extraParams' => $extraParams
-    ));
+    ]);
     foreach ($termlists_terms as $idx => $termlists_term) {
       $minified[$termlists_term[$idField]]=$termlists_term['term'];
     }
@@ -748,16 +766,17 @@ TXT;
   }
 
   protected static function draw_existing_attribute_set_drop_down($website_id, $password, $survey_id) {
+    iform_load_helpers(['report_helper']);  
     $readAuth = data_entry_helper::get_read_auth($website_id, $password);
-    $attributeSetData = data_entry_helper::get_report_data(array (
+    $attributeSetData = report_helper::get_report_data([
       'dataSource' => 'reports_for_prebuilt_forms/dgfm/load_attribute_sets',
       'readAuth' => $readAuth,
-      'extraParams' => array(
+      'extraParams' => [
           'website_id' => $website_id,
-          'survey_id' => $survey_id
-      )
-    ));
-    $r = '<label for="existing_attribute_set">'.lang::get('Existing groups of characters')."</label>\n";
+          'survey_id' => $survey_id,
+      ]
+    ]);
+    $r = '<label for="existing_attribute_set">' . lang::get('Existing groups of characters') . "</label>\n";
     $r .= '<select id="existing_attribute_set" class=" form-control " name="existing_attribute_set">';
     $r .= '<option value="">-none-</option>';
     foreach($attributeSetData as $attributeSetData){
@@ -801,22 +820,22 @@ TXT;
       $lifeStageTermlistId) {
     $r = $htmlGridTitle;
     $readAuth = data_entry_helper::get_read_auth($website_id, $password);
-    $columns = array(
-      array(
+    $columns = [
+      [
         'display'=>'Select',
-        'template'=>$checkboxTemplate
-      )
-    );
+        'template'=>$checkboxTemplate,
+      ]
+    ];
 
     if (!empty($loadForEditingButtonTemplate)) {
-      $columns = array_merge ($columns, array(
-        array(
+      $columns = array_merge ($columns, [
+        [
           'display'=>'Load',
           'template'=>$loadForEditingButtonTemplate
-        )
-      ));
+        ]
+      ]);
     }
-     $r .= report_helper::report_grid(array(
+     $r .= report_helper::report_grid([
       'dataSource' => $dataSource,
       'id' => $gridId,
       //'rowId' => 'attribute_id',
@@ -827,7 +846,7 @@ TXT;
       'itemsPerPage' => 20,
       'extraParams'=>$extraParams,
       'columns' => $columns
-    ));
+    ]);
     $r .= '<br>';
     if ($includeTaxaButtons===true) {
       $r .= data_entry_helper::select([
@@ -850,7 +869,7 @@ TXT;
   private static function draw_template_attributes_grid($website_id, $password, $checkboxTemplate, $htmlGridTitle, $dataSource, $gridId, $deleteButtonHtml, $extraParams) {
     $r = $htmlGridTitle;
     $readAuth = data_entry_helper::get_read_auth($website_id, $password);
-    $reportOptions=array(
+    $reportOptions=[
       'dataSource' => $dataSource,
       'id' => $gridId,
       'rowId' => 'attribute_id',
@@ -860,17 +879,17 @@ TXT;
       'readAuth' => $readAuth,
       'itemsPerPage' => 20,
       'extraParams'=>$extraParams
-    );
+    ];
     if (!empty($checkboxTemplate)) {
-      $columns = array(
-        array(
+      $columns = [
+        [
           'display'=>'Select',
           'template'=>$checkboxTemplate
-        )
-      );
-      $reportOptions = array_merge($reportOptions, array(
+        ]
+      ];
+      $reportOptions = array_merge($reportOptions, [
         'columns' => $columns  
-      ));
+      ]);
     }
     $r .= report_helper::report_grid($reportOptions);
     if (!empty($deleteButtonHtml)) {
@@ -1017,11 +1036,11 @@ TXT;
    *   main one. E.g.'taxon:description' would load the $model->taxon->description field.
    */
   public static function initial_value($values, $fieldname) {
-    if (array_key_exists($fieldname, $values)) {
-      return self::specialchars($values[$fieldname]);
-    }
-    else {
-      return NULL;
+    //AVB2, this needs checking, new check
+    if (!empty($values)) {
+      if (array_key_exists($fieldname, $values)) {
+        return self::specialchars($values[$fieldname]);
+      }
     }
   }
   
@@ -1092,7 +1111,7 @@ HTML;
                     else
                     {
                             $str = preg_replace('/&(?!(?:#\d++|[a-z]++);)/ui', '&amp;', $str);
-                            $str = str_replace(array('<', '>', '\'', '"'), array('&lt;', '&gt;', '&#39;', '&quot;'), $str);
+                            $str = str_replace(['<', '>', '\'', '"'], ['&lt;', '&gt;', '&#39;', '&quot;'], $str);
                     }
             }
 

@@ -13,7 +13,7 @@
  * GNU General Public License for more details.
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
- * //AVBL, is this licensing correct
+ *
  * @package Client
  * @subpackage PrebuiltForms
  * @author Indicia Team
@@ -30,6 +30,8 @@
  */
 
 require_once 'includes/dynamic.php';
+
+use IForm\prebuilt_forms\PageType;
 
 /**
  * Store remembered field settings, since these need to be accessed from a hook function which runs outside the class.
@@ -48,12 +50,19 @@ class iform_dgfm_attr_value_manager extends iform_dynamic {
    */
   
   public static function get_dgfm_attr_value_manager_definition() {
-    return array(
+    return [
       'title' => 'DGfM Attr Value Manager',
       'category' => 'Utilities',
       'description' => 'Tool for managing taxa_taxon_list_attribute_values for DGfM.',
-      'recommended' => false
-    );
+      'recommended' => FALSE,
+    ];
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  public static function getPageType(): PageType {
+    return PageType::DataEntry;
   }
 
   /* TODO
@@ -75,54 +84,55 @@ class iform_dgfm_attr_value_manager extends iform_dynamic {
   public static function get_parameters() {
     $retVal = array_merge(
         parent::get_parameters(),
-      array(
-        array(
+      [
+        [
           'name' => 'taxon_list_id',
           'caption' => 'Taxon List_id',
           'description' => 'ID of the taxon list to load taxa taxon list attributes from.',
           'type' => 'string',
           'required' => true,
-          'group' => 'Config IDs'
-        ),
-        array(
+          'group' => 'Config IDs',
+        ],
+        [
           'name' => 'survey_id',
           'caption' => 'Survey ID',
           'description' => 'ID of the survey for attribute_set taxon restrictions.',
           'type' => 'string',
           'required' => true,
           'group' => 'Config IDs'
-        ),
+        ],
         //AVB I think this is incorrectly being used instead of the Repoerting Catergory, search for source_termlist_id in code to see
-        array(
+        [
           'name' => 'source_termlist_id',
           'caption' => 'Attribute Sources termlist ID',
           'description' => 'ID of attribute sources termlist.',
           'type' => 'string',
           'required' => true,
           'group' => 'Config IDs'
-        ),
-        array(
+        ],
+        [
           'name' => 'reporting_category_termlist_id',
           'caption' => 'Attribute Reporting Category termlist ID',
           'description' => 'ID of attribute sources termlist.',
           'type' => 'string',
           'required' => true,
           'group' => 'Config IDs'
-        ),
-        array(
+        ],
+        [
           'name' => 'life_stage_termlist_id',
           'caption' => 'Life stages termlist ID',
           'description' => 'ID of the Life Stages termlist.',
           'type' => 'string',
           'required' => true,
-          'group' => 'Config IDs'
-        )
-      )
+          'group' => 'Config IDs',
+        ]
+      ]
     );
     return $retVal;
   }
 
   public static function get_form($args, $nid) {
+    $imgPath = empty(data_entry_helper::$images_path) ? data_entry_helper::relative_client_helper_path() . "../media/images/" : data_entry_helper::$images_path;
     $readAuth = data_entry_helper::get_read_auth($args['website_id'], $args['password']);
     global $indicia_templates;
     iform_load_helpers(['data_entry_helper', 'report_helper']);
@@ -152,28 +162,32 @@ class iform_dgfm_attr_value_manager extends iform_dynamic {
     $r .= '<div id="taxon-controls-container">';
     //$checkboxTemplate='<input class="taxa-template-selection-checkbox" value="{taxon_meaning_id}" type="checkbox">';
     //$loadForEditingButtonTemplate='<button attributeId={attribute_id} class="load-attr-button">Edit</button>';
-    $loadForEditingButtonTemplate='
-    <a taxonId={taxon_id} class="load-taxon-attr-button">
-      <img src="/modules/iform/media/images/nuvola/package_editors-22px.png" title="Edit attributes for this taxon">
-    </a>';
+    hostsite_show_message($imgPath);
+    $packageEditorIconPath = $imgPath . 'nuvola/package_editors-22px.png';
+    $loadForEditingButtonTemplate="
+    <a taxonId={taxon_id} class=\"load-taxon-attr-button\">
+      <img src=\"$packageEditorIconPath\" title=\"Edit attributes for this taxon\">
+    </a>";
     $htmlGridTitle = '<h4>'.lang::get('Taxa').'</h4>';
     $dataSource = 'reports_for_prebuilt_forms/dgfm/load_taxa';
     $gridId = 'all_taxa_grid';
     $saveIntoTemplateButtonId = "save-taxa-into-template";
     $saveIntoTemplateButtonLabel = lang::get("Associate these taxa with this group of characters");
-    $extraParams = array(
-      'taxon_list_id'=>$args['taxon_list_id'],
-      'survey_id'=>$args['survey_id']);
+    $extraParams = [
+      'taxon_list_id' => $args['taxon_list_id'],
+      'survey_id' => $args['survey_id'],
+    ];
     $r .= self::draw_all_grid_and_button($args['website_id'], $args['password'], $checkboxTemplate, null, $htmlGridTitle, 
         $dataSource, $gridId, $saveIntoTemplateButtonId, $saveIntoTemplateButtonLabel, $extraParams, false, $args['life_stage_termlist_id']);
     $htmlGridTitle = '<h4>'.lang::get('Taxa associated with the currently selected group of characters').'</h4>';
     $dataSource = 'reports_for_prebuilt_forms/dgfm/load_taxa_with_restrictions';
     $gridId = 'template_taxa_grid';
-    $extraParams = array(
+    $extraParams = [
       'taxon_list_id'=>$args['taxon_list_id'],
       'survey_id'=>$args['survey_id'],
       // Initially set to -1 so we don't load anything onto the grid until a template is selected
-      'attribute_set_id'=>-1);
+      'attribute_set_id'=>-1
+    ];
     //$r .= self::draw_template_attributes_grid($args['website_id'], $args['password'], $htmlGridTitle, $dataSource, $gridId, $extraParams);
     $r .= '</div">';
 
@@ -194,10 +208,10 @@ class iform_dgfm_attr_value_manager extends iform_dynamic {
     $r .= '<div id="attributes-grids-container">';
       $checkboxTemplate='<input class="attr-template-selection-checkbox" value="{attribute_id}" type="checkbox">';
       //$loadForEditingButtonTemplate='<button attributeId={attribute_id} class="load-attr-button">Edit</button>';
-      $loadForEditingButtonTemplate='
-      <a attributeId={attribute_id} class="load-attr-button">
-        <img src="/modules/iform/media/images/nuvola/package_editors-22px.png" title="Edit this attribute">
-      </a>';
+      $loadForEditingButtonTemplate="
+      <a attributeId={attribute_id} class=\"load-attr-button\">
+        <img src=\"$packageEditorIconPath\" title=\"Edit this attribute\">
+      </a>";
 
       /*$htmlGridTitle = '<h4>'.lang::get('All characters').'</h4>';
       $dataSource = 'reports_for_prebuilt_forms/dgfm/load_attributes';
@@ -703,14 +717,14 @@ TXT;
   }
   
   public static function get_termlist_terms_data($readAuth, $termlist, $idField) {
-    $extraParams = $readAuth + array(
+    $extraParams = $readAuth + [
       'view' => 'detail',
       'termlist_id' => $termlist
-    );
-    $termlists_terms = data_entry_helper::get_population_data(array(
+    ];
+    $termlists_terms = data_entry_helper::get_population_data([
       'table' => 'termlists_term',
-      'extraParams' => $extraParams
-    ));
+      'extraParams' => $extraParams,
+    ]);
     foreach ($termlists_terms as $idx => $termlists_term) {
       $minified[$termlists_term[$idField]]=$termlists_term['term'];
     }
@@ -722,10 +736,10 @@ TXT;
     $attributeSetData = data_entry_helper::get_report_data(array (
       'dataSource' => 'reports_for_prebuilt_forms/dgfm/load_attribute_sets',
       'readAuth' => $readAuth,
-      'extraParams' => array(
+      'extraParams' => [
           'website_id' => $website_id,
-          'survey_id' => $survey_id
-      )
+          'survey_id' => $survey_id,
+      ]
     ));
     $r = '<label for="existing_attribute_set">'.lang::get('Existing groups of characters')."</label>\n";
     $r .= '<select id="existing_attribute_set" class=" form-control " name="existing_attribute_set">';
@@ -788,22 +802,22 @@ TXT;
       $lifeStageTermlistId) {
     $r = $htmlGridTitle;
     $readAuth = data_entry_helper::get_read_auth($website_id, $password);
-    $columns = array(
-      array(
+    $columns = [
+      [
         'display'=>'Select',
-        'template'=>$checkboxTemplate
-      )
-    );
+        'template'=>$checkboxTemplate,
+      ]
+    ];
 
     if (!empty($loadForEditingButtonTemplate)) {
-      $columns = array_merge ($columns, array(
-        array(
-          'display'=>'Load',
-          'template'=>$loadForEditingButtonTemplate
-        )
-      ));
+      $columns = array_merge($columns, [
+        [
+          'display'=> 'Load' ,
+          'template' => $loadForEditingButtonTemplate,
+        ]
+      ])
     }
-     $r .= report_helper::report_grid(array(
+     $r .= report_helper::report_grid([
       'dataSource' => $dataSource,
       'id' => $gridId,
       //'rowId' => 'attribute_id',
@@ -813,8 +827,8 @@ TXT;
       'readAuth' => $readAuth,
       'itemsPerPage' => 20,
       'extraParams'=>$extraParams,
-      'columns' => $columns
-    ));
+      'columns' => $columns,
+    ]);
     $r .= '<br>';
     /*if ($includeTaxaButtons===true) {
       $r .= data_entry_helper::select([
@@ -837,7 +851,7 @@ TXT;
   private static function draw_template_attributes_grid($website_id, $password, $htmlGridTitle, $dataSource, $gridId, $extraParams) {
     $r = $htmlGridTitle;
     $readAuth = data_entry_helper::get_read_auth($website_id, $password);
-    $r .= report_helper::report_grid(array(
+    $r .= report_helper::report_grid([
       'dataSource' => $dataSource,
       'id' => $gridId,
       'rowId' => 'attribute_id',
@@ -847,7 +861,7 @@ TXT;
       'readAuth' => $readAuth,
       'itemsPerPage' => 20,
       'extraParams'=>$extraParams
-    ));
+    ]);
     return $r;
   }
 
@@ -1064,7 +1078,7 @@ HTML;
                     else
                     {
                             $str = preg_replace('/&(?!(?:#\d++|[a-z]++);)/ui', '&amp;', $str);
-                            $str = str_replace(array('<', '>', '\'', '"'), array('&lt;', '&gt;', '&#39;', '&quot;'), $str);
+                            $str = str_replace(['<', '>', '\'', '"'], ['&lt;', '&gt;', '&#39;', '&quot;'], $str);
                     }
             }
 
