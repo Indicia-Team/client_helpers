@@ -40,7 +40,7 @@ class ElasticsearchProxyHelper {
    *
    * @var array
    */
-  private static $config;
+  public static $config;
 
   /**
    * Track if filter applied specifies confidential flag.
@@ -69,6 +69,15 @@ class ElasticsearchProxyHelper {
    *   Filter ID.
    */
   private static $setScopeUsingFilter;
+  
+  /**
+   * Cache the availability of elasticsearch
+   *
+   * @var bool
+   *
+   */
+   
+   private static $esAvailable = null;
 
   /**
    * Route into the functions provided by the proxy.
@@ -86,6 +95,12 @@ class ElasticsearchProxyHelper {
     if (empty(self::$config['es']['endpoint']) ||
         (self::$config['es']['auth_method'] === 'directClient' && (empty(self::$config['es']['user']) || empty(self::$config['es']['secret'])))) {
       throw new ElasticsearchProxyAbort('Method not allowed as server configuration incomplete', 405);
+    }
+
+    if (!self::isEsAvailable()) {
+      throw new ElasticsearchProxyAbort(
+        'Elasticsearch endpoint unavailable', 503
+      );
     }
 
     switch ($method) {
@@ -160,34 +175,86 @@ class ElasticsearchProxyHelper {
     }
   }
 
-  /**
-   * Retrieve the Elasticsearch endpoint to use.
-   *
-   * @return string
-   *   The endpoint name (e.g. es-occurrences).
-   */
-  private static function getEsEndpoint() {
-    // Request can modify the endpoint, but only if on a list of allowed
-    // endpoints.
-    if (!empty($_GET['endpoint']) && !empty(self::$config['es']['alternative_endpoints'])
-        && in_array($_GET['endpoint'], helper_base::explode_lines(self::$config['es']['alternative_endpoints']))) {
-      return $_GET['endpoint'];
-    }
-    else {
-      return self::$config['es']['endpoint'];
-    }
-  }
 
-  /**
-   * Returns the URL required to call the Elasticsearch service.
-   *
-   * @return string
-   *   URL.
-   */
-  private static function getEsUrl() {
-    $endpoint = self::getEsEndpoint();
-    return self::$config['indicia']['base_url'] . "index.php/services/rest/$endpoint";
-  }
+    /**
+     * Checks whether the configured Elasticsearch endpoint is reachable.
+     *
+     * Performs a lightweight HTTP HEAD request to the Elasticsearch service
+     * and caches the result for the duration of the request to avoid repeated checks.
+     *
+     * @return bool
+     *   TRUE if the Elasticsearch endpoint is reachable, FALSE otherwise.
+     */
+
+    public static function isEsAvailable(): bool {
+
+      if (self::$esAvailable !== null) {
+        return self::$esAvailable;
+      }
+
+      $url = self::getEsUrl();
+
+      $ch = curl_init();
+
+      curl_setopt_array($ch, [
+        CURLOPT_URL => $url,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_NOBODY => true,
+        CURLOPT_TIMEOUT => 3,
+        CURLOPT_CONNECTTIMEOUT => 2,
+      ]);
+
+      // Auth
+      if (self::$config['es']['auth_method'] === 'directClient') {
+        curl_setopt($ch, CURLOPT_USERPWD,
+          self::$config['es']['user'] . ':' . self::$config['es']['secret']
+        );
+      }
+
+      curl_exec($ch);
+
+      if (curl_errno($ch)) {
+        curl_close($ch);
+        return self::$esAvailable = false; //  cache result
+      }
+
+      $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+      curl_close($ch);
+
+      $result = ($status >= 200 && $status < 500);
+
+      return self::$esAvailable = $result; //  correct caching
+    }  
+    
+    
+    /**
+     * Retrieve the Elasticsearch endpoint to use.
+     *
+     * @return string
+     *   The endpoint name (e.g. es-occurrences).
+     */
+    private static function getEsEndpoint() {
+      // Request can modify the endpoint, but only if on a list of allowed
+      // endpoints.
+      if (!empty($_GET['endpoint']) && !empty(self::$config['es']['alternative_endpoints'])
+          && in_array($_GET['endpoint'], helper_base::explode_lines(self::$config['es']['alternative_endpoints']))) {
+        return $_GET['endpoint'];
+      }
+      else {
+        return self::$config['es']['endpoint'];
+      }
+    }
+
+    /**
+     * Returns the URL required to call the Elasticsearch service.
+     *
+     * @return string
+     *   URL.
+     */
+    private static function getEsUrl() {
+      $endpoint = self::getEsEndpoint();
+      return self::$config['indicia']['base_url'] . "index.php/services/rest/$endpoint";
+    }
 
   /**
    * Ajax method which echoes custom attribute data to the client.
