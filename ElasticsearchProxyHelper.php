@@ -3648,10 +3648,39 @@ class ElasticsearchProxyHelper {
   }
 
   /**
+   * Get map overlay data for standardParams filter selections.
+   *
+   * @param array $readAuth
+   *   Read authentication tokens.
+   * @param string $selectionKey
+   *   Stable identifier for this selection.
+   *
+   * @return array|null
+   *   Overlay definition or NULL when no standard params are provided.
+   */
+  private static function getMapOverlayFromStandardParams(array $readAuth, $selectionKey) {
+    $searchArea = !empty($_GET['standard_search_area']) ? $_GET['standard_search_area'] : NULL;
+    $locationIds = !empty($_GET['standard_location_ids'])
+      ? self::parseLocationIdsFromString($_GET['standard_location_ids'])
+      : [];
+    if (empty($searchArea) && empty($locationIds)) {
+      return NULL;
+    }
+    return [
+      'selection_key' => $selectionKey,
+      'source_type' => 'standard',
+      'filter_id' => NULL,
+      'search_area' => $searchArea,
+      'location_ids' => array_map('intval', $locationIds),
+      'location_geoms' => self::getLocationGeometriesForMapOverlays($locationIds, $readAuth),
+    ];
+  }
+
+  /**
    * Parse overlay selections from request.
    *
-   * New format is overlay_keys[]=source|value, where source is user or
-   * permission. Supports legacy filter_ids as user selections.
+  * New format is overlay_keys[]=source|value, where source is user,
+  * permission or standard. Supports legacy filter_ids as user selections.
    *
    * @return array
    *   List of valid selection keys.
@@ -3661,7 +3690,7 @@ class ElasticsearchProxyHelper {
     if (!empty($_GET['overlay_keys'])) {
       $rawKeys = is_array($_GET['overlay_keys']) ? $_GET['overlay_keys'] : [$_GET['overlay_keys']];
       foreach ($rawKeys as $key) {
-        if (preg_match('/^(user|permission)\|[A-Za-z0-9_\-]+$/', (string) $key)) {
+        if (preg_match('/^(user|permission|standard)\|[A-Za-z0-9_\-]+$/', (string) $key)) {
           $selectionKeys[] = $key;
         }
       }
@@ -3702,6 +3731,9 @@ class ElasticsearchProxyHelper {
       if ($sourceType === 'permission') {
         $overlay = self::getMapOverlayFromPermissionsValue($selectionValue, $readAuth, $selectionKey);
       }
+      elseif ($sourceType === 'standard') {
+        $overlay = self::getMapOverlayFromStandardParams($readAuth, $selectionKey);
+      }
       else {
         $overlay = preg_match('/^\d+$/', $selectionValue)
           ? self::getMapOverlayFromFilterId((int) $selectionValue, $readAuth, 'user', $selectionKey)
@@ -3718,7 +3750,14 @@ class ElasticsearchProxyHelper {
         // Keep endpoint responses specific to the selected overlay keys and
         // current user to avoid stale or cross-user boundary reuse.
         'max-age' => 3600,
-        'contexts' => ['route', 'url.query_args:overlay_keys', 'url.query_args:filter_ids', 'user'],
+        'contexts' => [
+          'route',
+          'url.query_args:overlay_keys',
+          'url.query_args:filter_ids',
+          'url.query_args:standard_search_area',
+          'url.query_args:standard_location_ids',
+          'user',
+        ],
       ],
     ];
   }
