@@ -155,6 +155,9 @@ class ElasticsearchProxyHelper {
       case 'getLocationBoundaryGeom':
         return self::getLocationBoundaryGeom($nid);
 
+      case 'getUserFilterMapOverlays':
+        return self::getUserFilterMapOverlays($nid);
+
       default:
         throw new ElasticsearchProxyAbort('Method not found', 404);
     }
@@ -3455,7 +3458,267 @@ class ElasticsearchProxyHelper {
       'boundary_geom' => $response[0]['geom'],
       '#cache' => [
         'max-age' => 3600,
-        'contexts' => ['route'],
+        'contexts' => ['route', 'url.query_args:location_id'],
+      ],
+    ];
+  }
+
+  /**
+   * Parse a comma separated list of location IDs to a unique numeric array.
+   *
+   * @param string $value
+   *   Comma separated location IDs.
+   *
+   * @return array
+   *   List of location IDs.
+   */
+  private static function parseLocationIdsFromString($value) {
+    $ids = array_map('trim', explode(',', $value));
+    $ids = array_filter($ids, function ($id) {
+      return preg_match('/^\d+$/', $id);
+    });
+    return array_values(array_unique($ids));
+  }
+
+  /**
+   * Get all location IDs from user filter definition keys.
+   *
+   * Includes legacy synonyms location_id and indexed_location_id.
+   *
+   * @param array $definition
+   *   Filter definition.
+   *
+   * @return array
+   *   List of location IDs.
+   */
+  private static function getDefinitionLocationIds(array $definition) {
+    $ids = [];
+    $keys = [
+      'location_list',
+      'location_id',
+      'indexed_location_list',
+      'indexed_location_id',
+    ];
+    foreach ($keys as $key) {
+      if (!empty($definition[$key])) {
+        $ids = array_merge($ids, self::parseLocationIdsFromString($definition[$key]));
+      }
+    }
+    return array_values(array_unique($ids));
+  }
+
+  /**
+   * Retrieve projected boundaries for a list of location IDs.
+   *
+   * @param array $locationIds
+   *   List of location IDs.
+   * @param array $readAuth
+   *   Read authentication tokens.
+   *
+   * @return array
+   *   List of associative arrays containing id and geom.
+   */
+  private static function getLocationGeometriesForMapOverlays(array $locationIds, array $readAuth) {
+    require_once 'report_helper.php';
+    $geometries = [];
+    foreach ($locationIds as $locationId) {
+      $boundaryData = report_helper::get_report_data([
+        'dataSource' => '/library/locations/locations_combined_boundary_transformed',
+        'extraParams' => [
+          'location_ids' => $locationId,
+        ],
+        'readAuth' => $readAuth,
+        'caching' => TRUE,
+        'cachePerUser' => FALSE,
+      ]);
+      if (!empty($boundaryData) && !empty($boundaryData[0]['geom'])) {
+        $geometries[] = [
+          'id' => (int) $locationId,
+          'geom' => $boundaryData[0]['geom'],
+        ];
+      }
+    }
+    return $geometries;
+  }
+
+  /**
+   * Build map overlay data from a specific user filter ID.
+   *
+   * @param int $filterId
+   *   User filter ID.
+   * @param array $readAuth
+   *   Read authentication tokens.
+   * @param string $sourceType
+   *   Selection source type, e.g. user or permission.
+   * @param string $selectionKey
+   *   Stable identifier for this selection.
+   *
+   * @return array|null
+   *   Overlay definition or NULL if no data found.
+   */
+  private static function getMapOverlayFromFilterId($filterId, array $readAuth, $sourceType, $selectionKey) {
+    require_once 'report_helper.php';
+    $filterData = report_helper::get_report_data([
+      'dataSource' => '/library/filters/filter_with_transformed_searcharea',
+      'extraParams' => [
+        'filter_id' => $filterId,
+      ],
+      'readAuth' => $readAuth,
+      'caching' => TRUE,
+      'cachePerUser' => FALSE,
+    ]);
+    if (empty($filterData)) {
+      return NULL;
+    }
+    $definition = json_decode($filterData[0]['definition'], TRUE);
+    if (!is_array($definition)) {
+      $definition = [];
+    }
+    $searchArea = !empty($definition['searchArea'])
+      ? $definition['searchArea']
+      : (!empty($filterData[0]['search_area']) ? $filterData[0]['search_area'] : NULL);
+    $locationIds = self::getDefinitionLocationIds($definition);
+    return [
+      'selection_key' => $selectionKey,
+      'source_type' => $sourceType,
+      'filter_id' => (int) $filterId,
+      'search_area' => $searchArea,
+      'location_ids' => array_map('intval', $locationIds),
+      'location_geoms' => self::getLocationGeometriesForMapOverlays($locationIds, $readAuth),
+    ];
+  }
+
+  /**
+   * Get map overlay data for a selected permissions filter value.
+   *
+   * @param string $value
+   *   Permissions filter value.
+   * @param array $readAuth
+   *   Read authentication tokens.
+   * @param string $selectionKey
+   *   Stable identifier for this selection.
+   *
+   * @return array|null
+   *   Overlay definition or NULL.
+   */
+  private static function getMapOverlayFromPermissionsValue($value, array $readAuth, $selectionKey) {
+    if (preg_match('/^\d+$/', $value)) {
+      return self::getMapOverlayFromFilterId((int) $value, $readAuth, 'permission', $selectionKey);
+    }
+    if (preg_match('/^f\-(\d+)$/', $value, $matches)) {
+      return self::getMapOverlayFromFilterId((int) $matches[1], $readAuth, 'permission', $selectionKey);
+    }
+    if ($value === 'p-location_collation') {
+      $locationId = hostsite_get_user_field('location_collation');
+      if (preg_match('/^\d+$/', (string) $locationId)) {
+        return [
+          'selection_key' => $selectionKey,
+          'source_type' => 'permission',
+          'filter_id' => NULL,
+          'search_area' => NULL,
+          'location_ids' => [(int) $locationId],
+          'location_geoms' => self::getLocationGeometriesForMapOverlays([(int) $locationId], $readAuth),
+        ];
+      }
+      return NULL;
+    }
+    if (preg_match('/^g(?:\-(?:my|all))?\-(\d+)$/', $value, $matches)) {
+      require_once 'report_helper.php';
+      $groupBoundaryData = report_helper::get_report_data([
+        'dataSource' => '/library/groups/group_boundary_transformed',
+        'extraParams' => [
+          'group_id' => $matches[1],
+        ],
+        'readAuth' => $readAuth,
+        'caching' => TRUE,
+        'cachePerUser' => FALSE,
+      ]);
+      if (!empty($groupBoundaryData) && !empty($groupBoundaryData[0]['boundary'])) {
+        return [
+          'selection_key' => $selectionKey,
+          'source_type' => 'permission',
+          'filter_id' => NULL,
+          'search_area' => $groupBoundaryData[0]['boundary'],
+          'location_ids' => [],
+          'location_geoms' => [],
+        ];
+      }
+    }
+    return NULL;
+  }
+
+  /**
+   * Parse overlay selections from request.
+   *
+   * New format is overlay_keys[]=source|value, where source is user or
+   * permission. Supports legacy filter_ids as user selections.
+   *
+   * @return array
+   *   List of valid selection keys.
+   */
+  private static function getOverlaySelectionKeysFromRequest() {
+    $selectionKeys = [];
+    if (!empty($_GET['overlay_keys'])) {
+      $rawKeys = is_array($_GET['overlay_keys']) ? $_GET['overlay_keys'] : [$_GET['overlay_keys']];
+      foreach ($rawKeys as $key) {
+        if (preg_match('/^(user|permission)\|[A-Za-z0-9_\-]+$/', (string) $key)) {
+          $selectionKeys[] = $key;
+        }
+      }
+    }
+    // Backward compatibility for numeric filter IDs.
+    if (count($selectionKeys) === 0 && !empty($_GET['filter_ids']) && preg_match('/^\d+(,\d+)*$/', $_GET['filter_ids'])) {
+      foreach (self::parseLocationIdsFromString($_GET['filter_ids']) as $id) {
+        $selectionKeys[] = "user|$id";
+      }
+    }
+    return array_values(array_unique($selectionKeys));
+  }
+
+  /**
+   * Get map overlay geometry for selected user filters.
+   *
+   * Returns searchArea WKT and per-location boundary WKT so the client can
+   * render temporary map overlays while a user filter is active.
+   *
+   * @param int $nid
+   *   Node ID.
+   *
+   * @return array
+   *   Overlay definitions keyed by filter ID.
+   */
+  private static function getUserFilterMapOverlays($nid) {
+    $selectionKeys = self::getOverlaySelectionKeysFromRequest();
+    if (count($selectionKeys) === 0) {
+      http_response_code(400);
+      return ['code' => 400, 'message' => 'Bad Request'];
+    }
+    iform_load_helpers(['helper_base', 'report_helper']);
+    $conn = iform_get_connection_details($nid);
+    $readAuth = helper_base::get_read_auth($conn['website_id'], $conn['password']);
+    $overlays = [];
+    foreach ($selectionKeys as $selectionKey) {
+      list($sourceType, $selectionValue) = explode('|', $selectionKey, 2);
+      if ($sourceType === 'permission') {
+        $overlay = self::getMapOverlayFromPermissionsValue($selectionValue, $readAuth, $selectionKey);
+      }
+      else {
+        $overlay = preg_match('/^\d+$/', $selectionValue)
+          ? self::getMapOverlayFromFilterId((int) $selectionValue, $readAuth, 'user', $selectionKey)
+          : NULL;
+      }
+      if (!empty($overlay)) {
+        $overlays[] = $overlay;
+      }
+    }
+    return [
+      'message' => 'OK',
+      'overlays' => $overlays,
+      '#cache' => [
+        // Keep endpoint responses specific to the selected overlay keys and
+        // current user to avoid stale or cross-user boundary reuse.
+        'max-age' => 3600,
+        'contexts' => ['route', 'url.query_args:overlay_keys', 'url.query_args:filter_ids', 'user'],
       ],
     ];
   }
