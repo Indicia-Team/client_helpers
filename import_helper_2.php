@@ -1061,7 +1061,6 @@ class import_helper_2 extends helper_base {
     // Find the controls that we can accept global values for, depending on the
     // entity we are importing into.
     $formArray = self::getGlobalValuesFormControlArray($options);
-    hostsite_show_message(var_export($formArray, TRUE));
     $form = self::globalValuesFormControls($formArray, $options);
     self::$indiciaData['processUploadedInterimFiles'] = $_POST['interim-file'];
     return <<<HTML
