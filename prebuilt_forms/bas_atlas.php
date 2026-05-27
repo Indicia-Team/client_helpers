@@ -569,19 +569,23 @@ class iform_bas_atlas extends BaseDynamicDetails {
     $ds = $_GET['ds'];
     $tg = $_GET['tg'];
     $tlid = $_GET['taxa_taxon_list_id'];
-
+    
     if ((self::$notaxon && $tlid != 'grp') || is_null($ds)) {
       return parent::get_form_html($args, $auth, $attributes);
     } else {
       // Get information on species names
       self::getNames($auth);
 
+      while (strlen($ds) < 4) {
+        $ds .= '0';
+      }
+
       // VC filter
       $vcId = $_GET['vc'];
       if ($vcId) {
         $esFilter = self::vcFilter($vcId);
       }
-
+      
       // Add any general ES taxon filters for taxon/group specified in URL.
       if ($tlid == 'grp') {
         $esFilter .= self::createEsFilterHtml('taxon.order', self::$orders[$tg]['esFilter'], 'match_phrase', 'must');
@@ -596,16 +600,26 @@ class iform_bas_atlas extends BaseDynamicDetails {
       if($args['exclude_rejected'] == "1") {
         $esFilter .= self::createEsFilterHtml('identification.verification_status', 'R', 'term', 'must_not');
       };
-      // Exclude unverified records in ES queries?
-      if($args['exclude_unverified'] == "1") {
-        $esFilter .= self::createEsFilterHtml('identification.verification_status', 'V', 'term', 'must');
-      };
 
       // Dataset filters
       $dsa = str_split($ds);
       $srs = $dsa[0]; // 729
       $irec = $dsa[1]; // All other datasets available
       $inat = $dsa[2]; // 510
+      $ver  = $dsa[3]; //  Verified only
+ 
+
+
+        if ($ver === "1" || $args['exclude_unverified'] == "1") {
+          $esFilter .= self::createEsFilterHtml(
+            'identification.verification_status',
+            'V',
+            'term',
+            'must'
+          );
+        }
+
+      
       if ($irec == "1") {
         if ($srs == "0") {
           $esFilter .= self::createEsFilterHtml('metadata.survey.id', '729', 'term', 'must_not');
@@ -622,7 +636,6 @@ class iform_bas_atlas extends BaseDynamicDetails {
           $esFilter .= self::createEsFilterHtml('metadata.survey.id', '510', 'term', 'must');
         }
       }
-
 
 
       return $esFilter . parent::get_form_html($args, $auth, $attributes);
