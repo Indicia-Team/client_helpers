@@ -9624,17 +9624,19 @@ TXT;
       // for sample attributes, we want all which have null in the restrict_to_sample_method_id,
       // or where the supplied sample method matches the attribute's.
       $methods = array(NULL);
-      if (isset($options['sample_method_id']))
+      if (isset($options['sample_method_id']) && (is_int($options['sample_method_id']) || (is_string($options['sample_method_id']) && ctype_digit($options['sample_method_id'])))) {
         $methods[] = $options['sample_method_id'];
+      }
       $query['in']['restrict_to_sample_method_id'] = $methods;
     }
     if ($options['attrtable'] === 'location_attribute') {
       // for location attributes, we want all which have null in the restrict_to_location_type_id,
       // or where the supplied location type matches the attribute's.
-      $methods = array(NULL);
-      if (isset($options['location_type_id']))
-        $methods[] = $options['location_type_id'];
-      $query['in']['restrict_to_location_type_id'] = $methods;
+      $types = array(NULL);
+      if (isset($options['location_type_id']) && (is_int($options['location_type_id']) || (is_string($options['location_type_id']) && ctype_digit($options['location_type_id'])))) {
+        $types[] = $options['location_type_id'];
+      }
+      $query['in']['restrict_to_location_type_id'] = $types;
     }
 
     // As of 2.0.0 the attribute views now sort according to the display weights, including blocks
