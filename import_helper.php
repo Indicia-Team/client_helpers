@@ -352,7 +352,14 @@ class import_helper extends helper_base {
       'Used in lookup of existing data?',
     ]);
     self::addLanguageStringsToJs('import', [
+      'lookup_selected_help' => '{1} with the same {2} as rows in the import file will be updated.',
+      'lookup_unavailable_reason' => 'Looking up {1} based on {2} requires {3} to match but {4} {5} in your import.',
+      'not_available_plural' => 'are not available',
+      'not_available_singular' => 'is not available',
       'not_imported' => 'Not imported',
+      'value_plural' => 'values',
+      'value_singular' => 'value',
+      'unavailable_lookup_options' => 'Unavailable lookup options',
     ]);
     $filename = basename($_SESSION['uploaded_file']);
     $mappingsAndSettings = self::getMappingsAndSettings($options);
@@ -583,10 +590,16 @@ HTML;
               // Each possible field for existing record lookup has the list of
               // fields that need to be filled in for it to work specified as
               // json in its value.
-              $r .= "<option value=\"" . htmlspecialchars(json_encode($combination['fields'])) . "\">" . lang::get($combination['description']) . "</option>";
+              $optionLabel = self::getLookupOptionLabel($model, $combination['description']);
+              $r .= "<option value=\"" . htmlspecialchars(json_encode($combination['fields'])) . "\">" . htmlspecialchars($optionLabel) . "</option>";
             }
           }
-          $r .= "</select><br/>";
+          $r .= "</select>";
+          $r .= '<div id="lookupHelplookupSelect' . $model . '" class="lookup-selected-help alert alert-info" style="display:none"></div>';
+          $r .= '<div><a href="#" id="lookupReasonTogglelookupSelect' . $model . '" class="lookup-reason-toggle" style="display:none">' .
+            lang::get('Explain why some options are disabled') . '</a></div>';
+          $r .= '<div id="lookupReasonlookupSelect' . $model . '" class="lookup-disabled-reason" style="display:none"></div>';
+          $r .= "<br/>";
         }
       }
       $r .= "</fieldset>";
@@ -596,7 +609,9 @@ indiciaData.enableExistingDataLookup = true;
 
 JS;
       foreach ($settings as $key => $value) {
-        self::$javascript .= "indiciaData.presetFields.push(\"$key\");\n";
+        if (!is_array($value) && trim((string) $value) !== '') {
+          self::$javascript .= "indiciaData.presetFields.push(\"$key\");\n";
+        }
       }
     }
     else {
@@ -1012,6 +1027,28 @@ JS;
     return $r;
   }
 
+  /**
+   * Render a summary of import outcomes.
+   *
+   * @param array $output
+   *   Parsed output from get_upload_result service.
+   *
+   * @return string
+   *   HTML summary list.
+   */
+  private static function getImportSummaryMessage(array $output) {
+    $matched = isset($output['matched']) ? (int) $output['matched'] : 0;
+    $inserted = isset($output['inserted']) ? (int) $output['inserted'] : 0;
+    $lookupDataErrors = isset($output['lookup_data_errors']) ? (int) $output['lookup_data_errors'] : 0;
+    $r = '<h3>' . lang::get('Import summary') . '</h3>';
+    $r .= '<ul>';
+    $r .= '<li>' . lang::get('Existing records matched for update') . ': ' . $matched . '</li>';
+    $r .= '<li>' . lang::get('New records inserted') . ': ' . $inserted . '</li>';
+    $r .= '<li>' . lang::get('Rows errored due to missing lookup data') . ': ' . $lookupDataErrors . '</li>';
+    $r .= '</ul>';
+    return $r;
+  }
+
   /*
    * Jump to the results screen if errors have been detected.
    *
@@ -1054,6 +1091,7 @@ JS;
           hostsite_show_message(lang::get('Some of the rows in the import file could not be imported.'), 'error');
         }
         $r = self::getErrorsMessage($output, 'partial_commits_download_error_file_instructions');
+        $r .= self::getImportSummaryMessage($output);
       }
       else {
         $class = 'upload-results-success';
@@ -1063,6 +1101,7 @@ JS;
         else {
           $r = lang::get('The upload was successful.');
         }
+        $r .= self::getImportSummaryMessage($output);
       }
     }
     else {
@@ -1542,6 +1581,26 @@ TD;
    */
   private static function processLabel($text) {
     return ucfirst(preg_replace('/[\s_]+/', ' ', $text));
+  }
+
+  /**
+   * Returns concise labels for existing-record lookup options.
+   *
+   * @param string $model
+   *   Model name, e.g. location.
+   * @param string $description
+   *   Option description from importDuplicateCheckCombinations.
+   *
+   * @return string
+   *   Concise option label.
+   */
+  private static function getLookupOptionLabel($model, $description) {
+    $label = lang::get($description);
+    $prefix = ucfirst(preg_replace('/_+/', ' ', $model)) . ' ';
+    if (stripos($label, $prefix) === 0) {
+      $label = substr($label, strlen($prefix));
+    }
+    return trim($label);
   }
 
   /**
