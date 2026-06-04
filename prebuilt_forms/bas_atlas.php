@@ -106,15 +106,15 @@ class iform_bas_atlas extends BaseDynamicDetails {
           'default'  => TRUE,
           'group' => 'Record selection',
         ],
-        [
-          'name' => 'exclude_unverified',
-          'caption' => 'Exclude unverified records',
-          'description' => 'Indicates whether or not to exclude unverified records from atlas data.',
-          'type' => 'boolean',
-          'required' => TRUE,
-          'default'  => FALSE,
-          'group' => 'Record selection',
-        ],
+ //       [
+ //         'name' => 'exclude_unverified',
+ //         'caption' => 'Exclude unverified records',
+ //         'description' => 'Indicates whether or not to exclude unverified records from atlas data.',
+ //         'type' => 'boolean',
+ //         'required' => TRUE,
+ //         'default'  => FALSE,
+ //         'group' => 'Record selection',
+ //       ],
         // Mapping
         [
           'name' => 'map_types',
@@ -504,143 +504,161 @@ class iform_bas_atlas extends BaseDynamicDetails {
   /**
    * Override the get_form_html function.
    */
-  protected static function get_form_html($args, $auth, $attributes) {
+    protected static function get_form_html($args, $auth, $attributes) {
 
-    // For the atlas, the controls and layout interface are not configurable
-    // and are set here.
-    $args['interface'] = 'one_page';
-    $args['structure'] = '[atlas]';
+        \Drupal::service('page_cache_kill_switch')->trigger();
+        
 
-    // In Drupal 9, markup cannot be used in page title, so remove em tags.
-    // $repArray = ['<em>', '</em>'];
-    // $preferredClean = str_replace($repArray, '', self::$preferred);
-    // $titleName = isset(self::$defaultCommonName) ? self::$defaultCommonName . " ($preferredClean)" : $preferredClean;
-    hostsite_set_page_title(' ');
+      //  $response = \Drupal::service('response');
+      //  $response->headers->set('Cache-Control', 'no-cache, must-revalidate');
+     //   $response->headers->set('Pragma', 'no-cache');
+      //  $response->headers->set('Expires', '0');
+        
+        
+      // For the atlas, the controls and layout interface are not configurable
+      // and are set here.
+      $args['interface'] = 'one_page';
+      $args['structure'] = '[atlas]';
 
-    // Set up object for JS data
-    iform_load_helpers(array('report_helper'));
-    report_helper::$javascript.="indiciaData.basAtlas={};";
-    report_helper::$javascript.="indiciaData.basAtlas.taxon={};";
-    report_helper::$javascript.="indiciaData.basAtlas.taxon.commonNames=[];";
-    report_helper::$javascript.="indiciaData.basAtlas.taxon.synonyms=[];";
-    report_helper::$javascript.="indiciaData.basAtlas.map = {};";
-    report_helper::$javascript.="indiciaData.basAtlas.other = {};";
-    report_helper::$javascript.="indiciaData.basAtlas.other.vcs = [];";
-    report_helper::$javascript.="indiciaData.basAtlas.data = {};";
+      // In Drupal 9, markup cannot be used in page title, so remove em tags.
+      // $repArray = ['<em>', '</em>'];
+      // $preferredClean = str_replace($repArray, '', self::$preferred);
+      // $titleName = isset(self::$defaultCommonName) ? self::$defaultCommonName . " ($preferredClean)" : $preferredClean;
+      hostsite_set_page_title(' ');
 
-    report_helper::$javascript.="indiciaData.basAtlas.other.accounts_location = '" . $args['accounts_location'] . "';";
-    report_helper::$javascript.="indiciaData.basAtlas.other.conservation_csv = '" . $args['conservation_csv'] . "';";
-    report_helper::$javascript.="indiciaData.basAtlas.other.tab_types = '" . $args['tab_types'] . "';";
+      // Set up object for JS data
+      iform_load_helpers(array('report_helper'));
+      report_helper::$javascript.="indiciaData.basAtlas={};";
+      report_helper::$javascript.="indiciaData.basAtlas.taxon={};";
+      report_helper::$javascript.="indiciaData.basAtlas.taxon.commonNames=[];";
+      report_helper::$javascript.="indiciaData.basAtlas.taxon.synonyms=[];";
+      report_helper::$javascript.="indiciaData.basAtlas.map = {};";
+      report_helper::$javascript.="indiciaData.basAtlas.other = {};";
+      report_helper::$javascript.="indiciaData.basAtlas.other.vcs = [];";
+      report_helper::$javascript.="indiciaData.basAtlas.data = {};";
 
-
-
-
-		if (!empty($_GET['os'])) {
-			$osGridRef = $_GET['os'];
-			$esFilter .= self::createEsFilterHtml('location.grid_reference', $osGridRef, 'match_phrase', 'must');
-			$esFilter .= self::createEsFilterHtml('taxon.order', self::$orders[$tg]['esFilter'], 'match_phrase', 'must');
-			$esFilter .= self::createEsFilterHtml('taxon.accepted_taxon_id', self::$externalKey, 'match_phrase', 'must');	
-			      return $esFilter . parent::get_form_html($args, $auth, $attributes);
-		}
-		
+      report_helper::$javascript.="indiciaData.basAtlas.other.accounts_location = '" . $args['accounts_location'] . "';";
+      report_helper::$javascript.="indiciaData.basAtlas.other.conservation_csv = '" . $args['conservation_csv'] . "';";
+      report_helper::$javascript.="indiciaData.basAtlas.other.tab_types = '" . $args['tab_types'] . "';";      
+  
+	
 
 
-    // Set global flag if no taxon is specified in URL or form.
-    if (empty($_GET['taxa_taxon_list_id']) &&
-      empty($_GET['taxon_meaning_id']) &&
-      empty($_GET['external_key']) &&
-      empty($_GET['occurrence:taxa_taxon_list_id']) ) {
-      self::$notaxon = TRUE;
-    } else {
-      self::$notaxon = FALSE;
-    }
-
-    // Apply options and build species autocomplete formatting function
-    $opts = [
-      'speciesIncludeAuthorities' => isset($args['species_include_authorities']) ?
-        $args['species_include_authorities'] : FALSE,
-      'speciesIncludeBothNames' => $args['species_include_both_names'],
-      'speciesIncludeTaxonGroup' => $args['species_include_taxon_group'],
-      'speciesIncludeIdDiff' => $args['species_include_id_diff'],
-    ];
-    data_entry_helper::build_species_autocomplete_item_function($opts);
-
-    // Datasets
-    $ds = $_GET['ds'];
-    $tg = $_GET['tg'];
-    $tlid = $_GET['taxa_taxon_list_id'];
-    
-    if ((self::$notaxon && $tlid != 'grp') || is_null($ds)) {
-      return parent::get_form_html($args, $auth, $attributes);
-    } else {
-      // Get information on species names
-      self::getNames($auth);
-
-      while (strlen($ds) < 4) {
-        $ds .= '0';
-      }
-
-      // VC filter
-      $vcId = $_GET['vc'];
-      if ($vcId) {
-        $esFilter = self::vcFilter($vcId);
+      if (!empty($_GET['os'])) {
+        $osGridRef = $_GET['os'];
+        $esFilter .= self::createEsFilterHtml('location.grid_reference', $osGridRef, 'match_phrase', 'must');
+        $esFilter .= self::createEsFilterHtml('taxon.order', self::$orders[$tg]['esFilter'], 'match_phrase', 'must');
+        $esFilter .= self::createEsFilterHtml('taxon.accepted_taxon_id', self::$externalKey, 'match_phrase', 'must');	
+              return $esFilter . parent::get_form_html($args, $auth, $attributes);
       }
       
-      // Add any general ES taxon filters for taxon/group specified in URL.
-      if ($tlid == 'grp') {
-        $esFilter .= self::createEsFilterHtml('taxon.order', self::$orders[$tg]['esFilter'], 'match_phrase', 'must');
+
+
+      // Set global flag if no taxon is specified in URL or form.
+      if (empty($_GET['taxa_taxon_list_id']) &&
+        empty($_GET['taxon_meaning_id']) &&
+        empty($_GET['external_key']) &&
+        empty($_GET['occurrence:taxa_taxon_list_id']) ) {
+        self::$notaxon = TRUE;
       } else {
-        $esFilter .= self::createEsFilterHtml('taxon.accepted_taxon_id', self::$externalKey, 'match_phrase', 'must');
+        self::$notaxon = FALSE;
       }
 
-      // Filter to exclude zero abundance records
-      $esFilter .= self::createEsFilterHtml('occurrence.zero_abundance', 'false', 'term', 'must');
+      // Apply options and build species autocomplete formatting function
+      $opts = [
+        'speciesIncludeAuthorities' => isset($args['species_include_authorities']) ?
+          $args['species_include_authorities'] : FALSE,
+        'speciesIncludeBothNames' => $args['species_include_both_names'],
+        'speciesIncludeTaxonGroup' => $args['species_include_taxon_group'],
+        'speciesIncludeIdDiff' => $args['species_include_id_diff'],
+      ];
+      data_entry_helper::build_species_autocomplete_item_function($opts);
 
-      // Exclude rejected records in ES queries?
-      if($args['exclude_rejected'] == "1") {
-        $esFilter .= self::createEsFilterHtml('identification.verification_status', 'R', 'term', 'must_not');
-      };
+      // Datasets
+      $ds = $_GET['ds'];
+      $tg = $_GET['tg'];
+      $tlid = $_GET['taxa_taxon_list_id'];
+      
+      if ((self::$notaxon && $tlid != 'grp') || is_null($ds)) {
+        return parent::get_form_html($args, $auth, $attributes);
+      } else {
+        // Get information on species names
+        self::getNames($auth);
 
-      // Dataset filters
-      $dsa = str_split($ds);
-      $srs = $dsa[0]; // 729
-      $irec = $dsa[1]; // All other datasets available
-      $inat = $dsa[2]; // 510
-      $ver  = $dsa[3]; //  Verified only
- 
+        while (strlen($ds) < 4) {
+          $ds .= '0';
+        }
+
+        // VC filter
+        $vcId = $_GET['vc'];
+        if ($vcId) {
+          $esFilter = self::vcFilter($vcId);
+        }
+        
+        // Add any general ES taxon filters for taxon/group specified in URL.
+        if ($tlid == 'grp') {
+          $esFilter .= self::createEsFilterHtml('taxon.order', self::$orders[$tg]['esFilter'], 'match_phrase', 'must');
+        } else {
+          $esFilter .= self::createEsFilterHtml('taxon.accepted_taxon_id', self::$externalKey, 'match_phrase', 'must');
+        }
+
+        // Filter to exclude zero abundance records
+        $esFilter .= self::createEsFilterHtml('occurrence.zero_abundance', 'false', 'term', 'must');
 
 
-        if ($ver === "1" || $args['exclude_unverified'] == "1") {
+
+
+        $dsa = str_split($ds);
+        $srs = $dsa[0]; // 729
+        $irec = $dsa[1]; // All other datasets available iRec
+        $inat = $dsa[2]; // 510
+        $ver  = $dsa[3]; // Verified only
+
+        $surveyIds = [];
+
+        if ($srs === "1") {
+          $surveyIds[] = 729;
+        }
+
+        if ($irec === "1") {
+          $surveyIds[] = 42;   // iRecord general data
+          $surveyIds[] = 52;  // Non native species portal
+          $surveyIds[] = 93;  // iRecord Import
+          $surveyIds[] = 374; // iRecord App
+
+        }
+
+        if ($inat === "1") {
+          $surveyIds[] = 510;
+        }
+        
+        if (!empty($surveyIds)) {
           $esFilter .= self::createEsFilterHtml(
-            'identification.verification_status',
-            'V',
-            'term',
-            'must'
+            'metadata.survey.id',
+            json_encode($surveyIds)  ,  // ✅ important
+            'terms',
+            'filter'
           );
         }
-
-      
-      if ($irec == "1") {
-        if ($srs == "0") {
-          $esFilter .= self::createEsFilterHtml('metadata.survey.id', '729', 'term', 'must_not');
-        }
-        if ($inat == "0") {
-          $esFilter .= self::createEsFilterHtml('metadata.survey.id', '510', 'term', 'must_not');
-        }
-      } else {
-        if ($srs == "1" && $inat == "1") {
-          $esFilter .= self::createEsFilterHtml('metadata.survey.id', '[729, 510]', 'terms', 'must');
-        } else if ($srs == "1") {
-          $esFilter .= self::createEsFilterHtml('metadata.survey.id', '729', 'term', 'must');
-        } else if ($inat == "1") {
-          $esFilter .= self::createEsFilterHtml('metadata.survey.id', '510', 'term', 'must');
-        }
+        
+          if ($ver === "1" || $args['exclude_unverified'] == "1") {
+            // Verified only
+            $esFilter .= self::createEsFilterHtml(
+              'identification.verification_status',
+              json_encode(['V']),
+              'terms',
+              'must'
+            );
+          }
+          
+        // Exclude rejected records in ES queries?
+        if ($args['exclude_rejected'] == "1")  {
+          $esFilter .= self::createEsFilterHtml('identification.verification_status', 'R', 'term', 'must_not');
+        };
+        
+         return $esFilter . parent::get_form_html($args, $auth, $attributes);
       }
-
-
-      return $esFilter . parent::get_form_html($args, $auth, $attributes);
     }
-  }
 
   /**
    * Obtains details of all names for this species from the database.
@@ -706,6 +724,7 @@ class iform_bas_atlas extends BaseDynamicDetails {
         $defaultCommonName = $speciesData['default_common_name'];
       }
     }
+    
     // Remove default common name from $commonNames array.
     if (isset($defaultCommonName)) {
       if (($key = array_search($defaultCommonName, $commonNames)) !== FALSE) {
@@ -719,6 +738,7 @@ class iform_bas_atlas extends BaseDynamicDetails {
     report_helper::$javascript.="indiciaData.basAtlas.taxon.preferred='". addslashes($preferred) ."';";
     report_helper::$javascript.="indiciaData.basAtlas.taxon.preferredPlain='". addslashes($preferredPlain) ."';";
     report_helper::$javascript.="indiciaData.basAtlas.taxon.defaultCommonName='". addslashes($defaultCommonName) ."';";
+    
     foreach ($commonNames as $key => $value) {
       $name = addslashes($value);
       report_helper::$javascript.="indiciaData.basAtlas.taxon.commonNames.push('".$name."');";
@@ -800,7 +820,7 @@ class iform_bas_atlas extends BaseDynamicDetails {
     report_helper::$javascript.="indiciaData.basAtlas.map.downloadinfo =" . $args['download_info'] . ";";
 
     report_helper::$javascript.="indiciaData.basAtlas.data.exclude_rejected=". $args['exclude_rejected'] . ";";
-    report_helper::$javascript.="indiciaData.basAtlas.data.exclude_unverified=" . $args['exclude_unverified'] . ";";
+  //  report_helper::$javascript.="indiciaData.basAtlas.data.exclude_unverified=" . $args['exclude_unverified'] . ";";
 
     // 'download' => 'false',
 
@@ -839,11 +859,6 @@ class iform_bas_atlas extends BaseDynamicDetails {
       'functionName' => 'populateMap',
     ];
     $r = ElasticsearchReportHelper::customScript($optionsCustomScriptMap);
-
-
-
-
-
 
     if(str_contains($args['tab_types'], 'temporal')) {
 
@@ -1127,11 +1142,13 @@ HTML;
    *   Hidden input HTML.
    */
   protected static function createEsFilterHtml($field, $value, $queryType, $boolClause) {
-    $r = <<<HTML
-<input type="hidden" class="es-filter-param" value="$value"
-  data-es-bool-clause="$boolClause" data-es-field="$field" data-es-query-type="$queryType" />
+    $safeValue = htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
 
-HTML;
+    $r = <<<HTML
+  <input type="hidden" class="es-filter-param" value="$safeValue"
+    data-es-bool-clause="$boolClause" data-es-field="$field" data-es-query-type="$queryType" />
+
+  HTML;
     return $r;
   }
 

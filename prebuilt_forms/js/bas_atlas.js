@@ -1,4 +1,8 @@
+
+
 jQuery(document).ready(function($) {
+    window.indiciaData = window.indiciaData || {};
+   
 
 $('body').append(`
 		<style>
@@ -83,6 +87,7 @@ $('body').append(`
 
 `);
 
+
 		$('#mapModal').on('shown.bs.modal', function () {
 		  var dialog = $(this).find('.modal-dialog');
 		  dialog.draggable({
@@ -165,7 +170,7 @@ $('body').append(`
     const srs = $('#dataset-srs').prop('checked') ? '1' : '0'
     const irec = $('#dataset-irec').prop('checked') ? '1' : '0'
     const inat = $('#dataset-inat').prop('checked') ? '1' : '0'
-	const ver  = $('#dataset-ver').prop('checked') ? '1' : '0'
+    const ver  = $('#dataset-ver').prop('checked') ? '1' : '0'
 
     // Taxon list id
     let ttlid
@@ -1024,8 +1029,6 @@ let vcs = indiciaData.basAtlas.other.vcs
       }
       taxonConservation = conservationData.filter(cd => cd['Recommended taxon version'] === ptvk)
 
-
-
       if (!taxonConservation.length) {
         const $noDesignations = $('<p>').appendTo($('#atlas-tab-conservation'))
         $noDesignations.text(`There are no reported conservation designations for this taxon.`)
@@ -1402,7 +1405,8 @@ function recordsQueryFromDot(point) {
 	  return {
 		query_type: queryType,
 		field: field,
-		value: Array.isArray(value) ? value : String(value),
+	//	value: Array.isArray(value) ? value : String(value),
+    value : value,
 		bool_clause: boolClause
 	  };
 	}
@@ -1434,52 +1438,52 @@ function recordsQueryFromDot(point) {
 
         const esFilters = [];
 
-        // Survey IDs
-        const SURVEY_SRS  = '729';
-        const SURVEY_INAT = '510';
+        const SURVEY_SRS  = 729;
+        const SURVEY_INAT = 510;
+        const SURVEY_IREC = [42,52,93,374];
 
         // Build included surveys list
         const includeSurveys = [];
+
         if (srs)  includeSurveys.push(SURVEY_SRS);
+        if (irec) includeSurveys.push(...SURVEY_IREC);
         if (inat) includeSurveys.push(SURVEY_INAT);
 
-        // ✅ Clean logic
-
-        if (!irec) {
-          // Only explicitly selected datasets
-          if (includeSurveys.length > 0) {
-            esFilters.push(createEsFilter(
-              'metadata.survey.id',
-              includeSurveys,
-              'terms',
-              'must'
-            ));
-          }
-        } else {
-          // iRecord ON → include everything except unticked ones
-
-          if (!srs) {
-            esFilters.push(createEsFilter(
-              'metadata.survey.id',
-              SURVEY_SRS,
-              'term',
-              'must_not'
-            ));
-          }
-
-          if (!inat) {
-            esFilters.push(createEsFilter(
-              'metadata.survey.id',
-              SURVEY_INAT,
-              'term',
-              'must_not'
-            ));
-          }
+        // Dataset filter
+        if (includeSurveys.length > 0) {
+          esFilters.push(createEsFilter(
+            'metadata.survey.id',
+            JSON.stringify(includeSurveys),
+            'terms',
+            'filter'
+          ));
         }
 
-	if (ver) {
-		esFilters.push(createEsFilter('identification.verification_status', 'V', 'term', 'must'));
-	}
+        if (ver) {
+          // Only verified
+          esFilters.push(createEsFilter(
+            'identification.verification_status',
+            JSON.stringify(['V']),
+            'terms',
+            'must'
+          ));
+
+
+          // Include everything except rejected
+          
+          if (window.indiciaData.basAtlas.data.exclude_rejected) {
+            esFilters.push(createEsFilter(
+              'identification.verification_status',
+              'R',
+              'term',
+              'must_not'
+            ));
+          }
+
+
+
+                    
+        } 
 
 	esFilters.push(createEsFilter('occurrence.zero_abundance', false, 'term', 'must'));
 	
@@ -1523,23 +1527,6 @@ function recordsQueryFromDot(point) {
 	}
 	
 
-/*  query =  {
-    size: 100,
-    bool_queries: [
-	  sorg ,
-		{
-		  query_type: "match_phrase",
-		  field: "location.grid_square.10km.centre",
-		  value: centreStr,
-		  bool_clause: "must"
-		}, 
-	  ...esFilters
-
-    ],
-    sort: [{ 'event.date_start': 'asc' }, { '_doc': 'asc' }]
-  };
-  
-  return query */
   
   return  { esFilters, sorg };
 }
@@ -1567,7 +1554,7 @@ async function fetchAllForLatLonVariants({ esFilters, sorg }, point) {
 		bool_queries: [
 		  sorg ,
 			{
-			  query_type: "term",
+			  query_type: "match_phrase",
 			  field: currentSquareField(),
 			  value: centreStr,
 			  bool_clause: "must"
@@ -1578,10 +1565,7 @@ async function fetchAllForLatLonVariants({ esFilters, sorg }, point) {
 		sort: [{ 'event.date_start': 'asc' }, { '_doc': 'asc' }]
 	  };
 	
-
-	
 	const result = await runElasticSearchQuery(query); // your ES query function
-
 
 		if (i === 0) {
 		  // First iteration: keep full structure
@@ -2042,7 +2026,7 @@ mapData = mapData
 	} 
 
 	html += '<tr>' +
-	`<td> ${verified} </td>`+
+	`<td> ${verified} ${record.identification.verification_status || ''} </td>`+
 	`<td> ${record.event?.date_start || ''}</td>` +
 	`<td>${record.location?.output_sref || ''}</td>`;
 
@@ -2074,7 +2058,6 @@ mapData = mapData
   // ES custom script for records by year
   indiciaFns.populateRecsByYearChart = function(el, sourceSettings, response) {
 
-
     var yearlyData = response.aggregations._rows.buckets.filter(function(w) {return w.key['event-year']}).map(function(y) {
       return {
         taxon: 'taxon',
@@ -2087,9 +2070,7 @@ mapData = mapData
 	triggerPopups();
   }
   
-
 	indiciaFns.populateSpeciesList = function(el, sourceSettings, response) {
-
 
 		const buckets = response.aggregations._rows.buckets;
 
@@ -2465,6 +2446,7 @@ mapData = mapData
 
     return taxonNew
   }
+
 });
 
 function downloadTableAsCSV(tableId, filename = 'table.csv') {
