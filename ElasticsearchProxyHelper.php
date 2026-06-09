@@ -708,7 +708,7 @@ class ElasticsearchProxyHelper {
         ];
       }
     }
-    if (empty($payload)) {
+    if (!isset($payload)) {
       throw new ElasticsearchProxyAbort('Missing decisions file or fileId parameter', 400);
     }
     return self::curlPost($url, $payload, [], TRUE);
