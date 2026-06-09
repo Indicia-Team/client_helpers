@@ -827,17 +827,22 @@ class ElasticsearchProxyHelper {
   private static function internalModifyListOnEs(array $ids, array $statuses, $websiteIdToModify) {
     $url = self::getEsUrl() . "/_update_by_query";
     $scripts = [];
+    $scriptParams = [];
     if (!empty($statuses['verification_status'])) {
-      $scripts[] = "ctx._source.identification.verification_status = '" . $statuses['verification_status'] . "'";
+      $scripts[] = 'ctx._source.identification.verification_status = params.verification_status';
+      $scriptParams['verification_status'] = $statuses['verification_status'];
     }
     if (!empty($statuses['verification_substatus'])) {
-      $scripts[] = "ctx._source.identification.verification_substatus = '" . $statuses['verification_substatus'] . "'";
+      $scripts[] = 'ctx._source.identification.verification_substatus = params.verification_substatus';
+      $scriptParams['verification_substatus'] = $statuses['verification_substatus'];
     }
     if (!empty($statuses['query'])) {
-      $scripts[] = "ctx._source.identification.query = '" . $statuses['query'] . "'";
+      $scripts[] = 'ctx._source.identification.query = params.query';
+      $scriptParams['query'] = $statuses['query'];
     }
     if ($websiteIdToModify !== NULL) {
-      $scripts[] = "ctx._source.metadata.website.id = '" . $websiteIdToModify . "'";
+      $scripts[] = 'ctx._source.metadata.website.id = params.website_id';
+      $scriptParams['website_id'] = $websiteIdToModify;
     }
     if (empty($scripts)) {
       throw new Exception('Unsupported field for update. ' . var_export($_POST['doc'], TRUE));
@@ -851,7 +856,8 @@ class ElasticsearchProxyHelper {
     }
     $doc = [
       'script' => [
-        'source' => implode("; ", $scripts),
+        'source' => implode('; ', $scripts),
+        'params' => $scriptParams,
         'lang' => 'painless',
       ],
       'query' => [
