@@ -1036,7 +1036,6 @@ class ElasticsearchProxyHelper {
       curl_setopt($session, CURLOPT_POSTFIELDS, $multipart ? $data : json_encode($data));
       curl_setopt($session, CURLOPT_HTTPHEADER, self::getHttpRequestHeaders(self::$config, $multipart ? 'multipart/form-data' : 'application/json'));
       curl_setopt($session, CURLOPT_REFERER, $_SERVER['HTTP_HOST']);
-      curl_setopt($session, CURLOPT_SSL_VERIFYPEER, FALSE);
       curl_setopt($session, CURLOPT_HEADER, FALSE);
       curl_setopt($session, CURLOPT_RETURNTRANSFER, TRUE);
       // Do the POST and then close the session.
