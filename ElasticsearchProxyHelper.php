@@ -194,7 +194,7 @@ class ElasticsearchProxyHelper {
     $url = self::getEsUrl();
 
     if (empty($url)) {
-      return self::$esAvailable;
+      return self::$esAvailable = FALSE;
     }
 
     $ch = curl_init();
