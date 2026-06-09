@@ -52,9 +52,9 @@ class ElasticsearchProxyHelper {
   private static $confidentialFilterApplied = FALSE;
 
   /**
-   * Track if filter applied specifies releast_status flag.
+   * Track if filter applied specifies release_status flag.
    *
-   * If not specified, then code can apply a default releast_status=R filter.
+   * If not specified, then code can apply a default release_status=R filter.
    *
    * @var bool
    */
@@ -69,15 +69,13 @@ class ElasticsearchProxyHelper {
    *   Filter ID.
    */
   private static $setScopeUsingFilter;
-  
+
   /**
    * Cache the availability of elasticsearch
    *
    * @var bool
-   *
    */
-   
-   private static $esAvailable = null;
+  private static $esAvailable = NULL;
 
   /**
    * Route into the functions provided by the proxy.
@@ -178,72 +176,71 @@ class ElasticsearchProxyHelper {
     }
   }
 
+  /**
+   * Checks whether the configured Elasticsearch endpoint is reachable.
+   *
+   * Performs a lightweight HTTP HEAD request to the Elasticsearch service
+   * and caches the result for the duration of the request to avoid repeated
+   * checks.
+   *
+   * @return bool
+   *   TRUE if the Elasticsearch endpoint is reachable, FALSE otherwise.
+   */
+  public static function isEsAvailable(): bool {
+    if (self::$esAvailable !== NULL) {
+      return self::$esAvailable;
+    }
 
-    /**
-     * Checks whether the configured Elasticsearch endpoint is reachable.
-     *
-     * Performs a lightweight HTTP HEAD request to the Elasticsearch service
-     * and caches the result for the duration of the request to avoid repeated checks.
-     *
-     * @return bool
-     *   TRUE if the Elasticsearch endpoint is reachable, FALSE otherwise.
-     */
+    $url = self::getEsUrl();
 
-    public static function isEsAvailable(): bool {
+    if (empty($url)) {
+      return self::$esAvailable;
+    }
 
-      if (self::$esAvailable !== null) {
-        return self::$esAvailable;
-      }
+    $ch = curl_init();
 
-      $url = self::getEsUrl();
+    curl_setopt_array($ch, [
+      CURLOPT_URL => $url,
+      CURLOPT_RETURNTRANSFER => TRUE,
+      CURLOPT_NOBODY => TRUE,
+      CURLOPT_TIMEOUT => 3,
+      CURLOPT_CONNECTTIMEOUT => 2,
+      CURLOPT_SSL_VERIFYPEER => TRUE,
+      CURLOPT_SSL_VERIFYHOST => 2,
+    ]);
 
-      if (empty($url)) {
-        return self::$esAvailable;
-      }
-      
-      $ch = curl_init();
+    // Auth.
+    if (!empty(self::$config['es']['auth_method']) &&
+      self::$config['es']['auth_method'] === 'directClient') {
+      curl_setopt($ch, CURLOPT_USERPWD,
+        self::$config['es']['user'] . ':' . self::$config['es']['secret']
+      );
+    }
 
-      curl_setopt_array($ch, [
-        CURLOPT_URL => $url,
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_NOBODY => true,
-        CURLOPT_TIMEOUT => 3,
-        CURLOPT_CONNECTTIMEOUT => 2,
-        CURLOPT_SSL_VERIFYPEER => true,
-        CURLOPT_SSL_VERIFYHOST => 2,
-      ]);
+    curl_exec($ch);
 
-      // Auth
-      if (!empty(self::$config['es']['auth_method']) &&
-        self::$config['es']['auth_method'] === 'directClient') {
-          curl_setopt($ch, CURLOPT_USERPWD,
-          self::$config['es']['user'] . ':' . self::$config['es']['secret']
-        );
-      }
-
-      curl_exec($ch);
-
-      if (curl_errno($ch)) {
-        curl_close($ch);
-        return self::$esAvailable = false; //  cache result
-      }
-
-      $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    if (curl_errno($ch)) {
       curl_close($ch);
+      // Return and cache the result.
+      return self::$esAvailable = FALSE;
+    }
 
-        $result = ($status >= 200 && $status < 500); // Treat 2xx–4xx as reachable, 5xx as unavailable
+    $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
 
-      return self::$esAvailable = $result; //  correct caching
-    }  
-    
-    
-    /**
-     * Retrieve the Elasticsearch endpoint to use.
-     *
-     * @return string
-     *   The endpoint name (e.g. es-occurrences).
-     */
-    private static function getEsEndpoint() {
+    // Treat 2xx-4xx as reachable, 5xx as unavailable.
+    $result = ($status >= 200 && $status < 500);
+
+    return self::$esAvailable = $result;
+  }
+
+  /**
+   * Retrieve the Elasticsearch endpoint to use.
+   *
+   * @return string
+   *   The endpoint name (e.g. es-occurrences).
+   */
+  private static function getEsEndpoint() {
       // Request can modify the endpoint, but only if on a list of allowed
       // endpoints.
       if (!empty($_GET['endpoint']) && !empty(self::$config['es']['alternative_endpoints'])
@@ -255,16 +252,16 @@ class ElasticsearchProxyHelper {
       }
     }
 
-    /**
-     * Returns the URL required to call the Elasticsearch service.
-     *
-     * @return string
-     *   URL.
-     */
-    private static function getEsUrl() {
-      $endpoint = self::getEsEndpoint();
-      return self::$config['indicia']['base_url'] . "index.php/services/rest/$endpoint";
-    }
+  /**
+   * Returns the URL required to call the Elasticsearch service.
+   *
+   * @return string
+   *   URL.
+   */
+  private static function getEsUrl() {
+    $endpoint = self::getEsEndpoint();
+    return self::$config['indicia']['base_url'] . "index.php/services/rest/$endpoint";
+  }
 
   /**
    * Ajax method which echoes custom attribute data to the client.
@@ -843,7 +840,7 @@ class ElasticsearchProxyHelper {
       $scripts[] = "ctx._source.metadata.website.id = '" . $websiteIdToModify . "'";
     }
     if (empty($scripts)) {
-      throw new exception('Unsupported field for update. ' . var_export($_POST['doc'], TRUE));
+      throw new Exception('Unsupported field for update. ' . var_export($_POST['doc'], TRUE));
     }
     $_ids = [];
     // Convert Indicia IDs to the document _ids for ES. Also make a 2nd version
@@ -916,7 +913,7 @@ class ElasticsearchProxyHelper {
     $postargs = helper_base::array_to_query_string(array_merge($data, $auth['write_tokens']), TRUE);
     $response = helper_base::http_post($request, $postargs);
     if ($response['output'] !== 'OK') {
-      throw new exception($response['output']);
+      throw new Exception($response['output']);
     }
   }
 
@@ -998,7 +995,7 @@ class ElasticsearchProxyHelper {
    * @param array $getParams
    *   Optional query string parameters to add to the URL, e.g. _source.
    * @param bool $multipart
-   *   Set to TRUE if doint a multi-part form submission.
+   *   Set to TRUE if doing a multi-part form submission.
    */
   public static function curlPost($url, array $data, array $getParams = [], $multipart = FALSE) {
     $curlResponse = FALSE;
@@ -1463,7 +1460,7 @@ class ElasticsearchProxyHelper {
           'caching' => $query['refresh_user_filters'] === 'true' ? 'store' : TRUE,
         ]);
         if (count($filterData) === 0) {
-          throw new exception("Filter with ID $userFilter could not be loaded.");
+          throw new Exception("Filter with ID $userFilter could not be loaded.");
         }
         $definition = json_decode($filterData[0]['definition'], TRUE);
         // Can't be both searchArea (freehand) and location area.
@@ -1531,7 +1528,7 @@ class ElasticsearchProxyHelper {
         ],
         'cachePerUser' => FALSE,
       ]);
-      foreach($containedGroups as $g) {
+      foreach ($containedGroups as $g) {
         $groupIdsIncludingChildren[] = $g['id'];
       }
     }
@@ -1563,7 +1560,7 @@ class ElasticsearchProxyHelper {
       'cachePerUser' => FALSE,
     ]);
     if (count($groupData) === 0) {
-      throw new exception("Group $groupFilter[id] not found");
+      throw new Exception("Group $groupFilter[id] not found");
     }
     // Load the filter into user filters, so it gets applied with the rest.
     foreach ($groupData as $g) {
