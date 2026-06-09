@@ -40,7 +40,7 @@ class ElasticsearchProxyHelper {
    *
    * @var array
    */
-  private static $config;
+  public static $config;
 
   /**
    * Track if filter applied specifies confidential flag.
@@ -52,9 +52,9 @@ class ElasticsearchProxyHelper {
   private static $confidentialFilterApplied = FALSE;
 
   /**
-   * Track if filter applied specifies releast_status flag.
+   * Track if filter applied specifies release_status flag.
    *
-   * If not specified, then code can apply a default releast_status=R filter.
+   * If not specified, then code can apply a default release_status=R filter.
    *
    * @var bool
    */
@@ -69,6 +69,13 @@ class ElasticsearchProxyHelper {
    *   Filter ID.
    */
   private static $setScopeUsingFilter;
+
+  /**
+   * Cache the availability of elasticsearch
+   *
+   * @var bool
+   */
+  private static $esAvailable = NULL;
 
   /**
    * Route into the functions provided by the proxy.
@@ -86,6 +93,12 @@ class ElasticsearchProxyHelper {
     if (empty(self::$config['es']['endpoint']) ||
         (self::$config['es']['auth_method'] === 'directClient' && (empty(self::$config['es']['user']) || empty(self::$config['es']['secret'])))) {
       throw new ElasticsearchProxyAbort('Method not allowed as server configuration incomplete', 405);
+    }
+
+    if (!self::isEsAvailable()) {
+      throw new ElasticsearchProxyAbort(
+        'Elasticsearch endpoint unavailable', 503
+      );
     }
 
     switch ($method) {
@@ -155,9 +168,70 @@ class ElasticsearchProxyHelper {
       case 'getLocationBoundaryGeom':
         return self::getLocationBoundaryGeom($nid);
 
+      case 'getUserFilterMapOverlays':
+        return self::getUserFilterMapOverlays($nid);
+
       default:
         throw new ElasticsearchProxyAbort('Method not found', 404);
     }
+  }
+
+  /**
+   * Checks whether the configured Elasticsearch endpoint is reachable.
+   *
+   * Performs a lightweight HTTP HEAD request to the Elasticsearch service
+   * and caches the result for the duration of the request to avoid repeated
+   * checks.
+   *
+   * @return bool
+   *   TRUE if the Elasticsearch endpoint is reachable, FALSE otherwise.
+   */
+  public static function isEsAvailable(): bool {
+    if (self::$esAvailable !== NULL) {
+      return self::$esAvailable;
+    }
+
+    $url = self::getEsUrl();
+
+    if (empty($url)) {
+      return self::$esAvailable = FALSE;
+    }
+
+    $ch = curl_init();
+
+    curl_setopt_array($ch, [
+      CURLOPT_URL => $url,
+      CURLOPT_RETURNTRANSFER => TRUE,
+      CURLOPT_NOBODY => TRUE,
+      CURLOPT_TIMEOUT => 3,
+      CURLOPT_CONNECTTIMEOUT => 2,
+      CURLOPT_SSL_VERIFYPEER => TRUE,
+      CURLOPT_SSL_VERIFYHOST => 2,
+    ]);
+
+    // Auth.
+    if (!empty(self::$config['es']['auth_method']) &&
+      self::$config['es']['auth_method'] === 'directClient') {
+      curl_setopt($ch, CURLOPT_USERPWD,
+        self::$config['es']['user'] . ':' . self::$config['es']['secret']
+      );
+    }
+
+    curl_exec($ch);
+
+    if (curl_errno($ch)) {
+      curl_close($ch);
+      // Return and cache the result.
+      return self::$esAvailable = FALSE;
+    }
+
+    $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    // Treat 2xx-4xx as reachable, 5xx as unavailable.
+    $result = ($status >= 200 && $status < 500);
+
+    return self::$esAvailable = $result;
   }
 
   /**
@@ -167,16 +241,16 @@ class ElasticsearchProxyHelper {
    *   The endpoint name (e.g. es-occurrences).
    */
   private static function getEsEndpoint() {
-    // Request can modify the endpoint, but only if on a list of allowed
-    // endpoints.
-    if (!empty($_GET['endpoint']) && !empty(self::$config['es']['alternative_endpoints'])
-        && in_array($_GET['endpoint'], helper_base::explode_lines(self::$config['es']['alternative_endpoints']))) {
-      return $_GET['endpoint'];
+      // Request can modify the endpoint, but only if on a list of allowed
+      // endpoints.
+      if (!empty($_GET['endpoint']) && !empty(self::$config['es']['alternative_endpoints'])
+          && in_array($_GET['endpoint'], helper_base::explode_lines(self::$config['es']['alternative_endpoints']))) {
+        return $_GET['endpoint'];
+      }
+      else {
+        return self::$config['es']['endpoint'];
+      }
     }
-    else {
-      return self::$config['es']['endpoint'];
-    }
-  }
 
   /**
    * Returns the URL required to call the Elasticsearch service.
@@ -634,7 +708,7 @@ class ElasticsearchProxyHelper {
         ];
       }
     }
-    if (empty($payload)) {
+    if (!isset($payload)) {
       throw new ElasticsearchProxyAbort('Missing decisions file or fileId parameter', 400);
     }
     return self::curlPost($url, $payload, [], TRUE);
@@ -753,20 +827,25 @@ class ElasticsearchProxyHelper {
   private static function internalModifyListOnEs(array $ids, array $statuses, $websiteIdToModify) {
     $url = self::getEsUrl() . "/_update_by_query";
     $scripts = [];
+    $scriptParams = [];
     if (!empty($statuses['verification_status'])) {
-      $scripts[] = "ctx._source.identification.verification_status = '" . $statuses['verification_status'] . "'";
+      $scripts[] = 'ctx._source.identification.verification_status = params.verification_status';
+      $scriptParams['verification_status'] = $statuses['verification_status'];
     }
     if (!empty($statuses['verification_substatus'])) {
-      $scripts[] = "ctx._source.identification.verification_substatus = '" . $statuses['verification_substatus'] . "'";
+      $scripts[] = 'ctx._source.identification.verification_substatus = params.verification_substatus';
+      $scriptParams['verification_substatus'] = $statuses['verification_substatus'];
     }
     if (!empty($statuses['query'])) {
-      $scripts[] = "ctx._source.identification.query = '" . $statuses['query'] . "'";
+      $scripts[] = 'ctx._source.identification.query = params.query';
+      $scriptParams['query'] = $statuses['query'];
     }
     if ($websiteIdToModify !== NULL) {
-      $scripts[] = "ctx._source.metadata.website.id = '" . $websiteIdToModify . "'";
+      $scripts[] = 'ctx._source.metadata.website.id = params.website_id';
+      $scriptParams['website_id'] = $websiteIdToModify;
     }
     if (empty($scripts)) {
-      throw new exception('Unsupported field for update. ' . var_export($_POST['doc'], TRUE));
+      throw new Exception('Unsupported field for update. ' . var_export($_POST['doc'], TRUE));
     }
     $_ids = [];
     // Convert Indicia IDs to the document _ids for ES. Also make a 2nd version
@@ -777,7 +856,8 @@ class ElasticsearchProxyHelper {
     }
     $doc = [
       'script' => [
-        'source' => implode("; ", $scripts),
+        'source' => implode('; ', $scripts),
+        'params' => $scriptParams,
         'lang' => 'painless',
       ],
       'query' => [
@@ -839,7 +919,7 @@ class ElasticsearchProxyHelper {
     $postargs = helper_base::array_to_query_string(array_merge($data, $auth['write_tokens']), TRUE);
     $response = helper_base::http_post($request, $postargs);
     if ($response['output'] !== 'OK') {
-      throw new exception($response['output']);
+      throw new Exception($response['output']);
     }
   }
 
@@ -921,7 +1001,7 @@ class ElasticsearchProxyHelper {
    * @param array $getParams
    *   Optional query string parameters to add to the URL, e.g. _source.
    * @param bool $multipart
-   *   Set to TRUE if doint a multi-part form submission.
+   *   Set to TRUE if doing a multi-part form submission.
    */
   public static function curlPost($url, array $data, array $getParams = [], $multipart = FALSE) {
     $curlResponse = FALSE;
@@ -956,7 +1036,6 @@ class ElasticsearchProxyHelper {
       curl_setopt($session, CURLOPT_POSTFIELDS, $multipart ? $data : json_encode($data));
       curl_setopt($session, CURLOPT_HTTPHEADER, self::getHttpRequestHeaders(self::$config, $multipart ? 'multipart/form-data' : 'application/json'));
       curl_setopt($session, CURLOPT_REFERER, $_SERVER['HTTP_HOST']);
-      curl_setopt($session, CURLOPT_SSL_VERIFYPEER, FALSE);
       curl_setopt($session, CURLOPT_HEADER, FALSE);
       curl_setopt($session, CURLOPT_RETURNTRANSFER, TRUE);
       // Do the POST and then close the session.
@@ -1386,7 +1465,7 @@ class ElasticsearchProxyHelper {
           'caching' => $query['refresh_user_filters'] === 'true' ? 'store' : TRUE,
         ]);
         if (count($filterData) === 0) {
-          throw new exception("Filter with ID $userFilter could not be loaded.");
+          throw new Exception("Filter with ID $userFilter could not be loaded.");
         }
         $definition = json_decode($filterData[0]['definition'], TRUE);
         // Can't be both searchArea (freehand) and location area.
@@ -1454,7 +1533,7 @@ class ElasticsearchProxyHelper {
         ],
         'cachePerUser' => FALSE,
       ]);
-      foreach($containedGroups as $g) {
+      foreach ($containedGroups as $g) {
         $groupIdsIncludingChildren[] = $g['id'];
       }
     }
@@ -1486,7 +1565,7 @@ class ElasticsearchProxyHelper {
       'cachePerUser' => FALSE,
     ]);
     if (count($groupData) === 0) {
-      throw new exception("Group $groupFilter[id] not found");
+      throw new Exception("Group $groupFilter[id] not found");
     }
     // Load the filter into user filters, so it gets applied with the rest.
     foreach ($groupData as $g) {
@@ -3455,7 +3534,306 @@ class ElasticsearchProxyHelper {
       'boundary_geom' => $response[0]['geom'],
       '#cache' => [
         'max-age' => 3600,
-        'contexts' => ['route'],
+        'contexts' => ['route', 'url.query_args:location_id'],
+      ],
+    ];
+  }
+
+  /**
+   * Parse a comma separated list of location IDs to a unique numeric array.
+   *
+   * @param string $value
+   *   Comma separated location IDs.
+   *
+   * @return array
+   *   List of location IDs.
+   */
+  private static function parseLocationIdsFromString($value) {
+    $ids = array_map('trim', explode(',', $value));
+    $ids = array_filter($ids, function ($id) {
+      return preg_match('/^\d+$/', $id);
+    });
+    return array_values(array_unique($ids));
+  }
+
+  /**
+   * Get all location IDs from user filter definition keys.
+   *
+   * Includes legacy synonyms location_id and indexed_location_id.
+   *
+   * @param array $definition
+   *   Filter definition.
+   *
+   * @return array
+   *   List of location IDs.
+   */
+  private static function getDefinitionLocationIds(array $definition) {
+    $ids = [];
+    $keys = [
+      'location_list',
+      'location_id',
+      'indexed_location_list',
+      'indexed_location_id',
+    ];
+    foreach ($keys as $key) {
+      if (!empty($definition[$key])) {
+        $ids = array_merge($ids, self::parseLocationIdsFromString($definition[$key]));
+      }
+    }
+    return array_values(array_unique($ids));
+  }
+
+  /**
+   * Retrieve projected boundaries for a list of location IDs.
+   *
+   * @param array $locationIds
+   *   List of location IDs.
+   * @param array $readAuth
+   *   Read authentication tokens.
+   *
+   * @return array
+   *   List of associative arrays containing id and geom.
+   */
+  private static function getLocationGeometriesForMapOverlays(array $locationIds, array $readAuth) {
+    require_once 'report_helper.php';
+    $geometries = [];
+    foreach ($locationIds as $locationId) {
+      $boundaryData = report_helper::get_report_data([
+        'dataSource' => '/library/locations/locations_combined_boundary_transformed',
+        'extraParams' => [
+          'location_ids' => $locationId,
+        ],
+        'readAuth' => $readAuth,
+        'caching' => TRUE,
+        'cachePerUser' => FALSE,
+      ]);
+      if (!empty($boundaryData) && !empty($boundaryData[0]['geom'])) {
+        $geometries[] = [
+          'id' => (int) $locationId,
+          'geom' => $boundaryData[0]['geom'],
+        ];
+      }
+    }
+    return $geometries;
+  }
+
+  /**
+   * Build map overlay data from a specific user filter ID.
+   *
+   * @param int $filterId
+   *   User filter ID.
+   * @param array $readAuth
+   *   Read authentication tokens.
+   * @param string $sourceType
+   *   Selection source type, e.g. user or permission.
+   * @param string $selectionKey
+   *   Stable identifier for this selection.
+   *
+   * @return array|null
+   *   Overlay definition or NULL if no data found.
+   */
+  private static function getMapOverlayFromFilterId($filterId, array $readAuth, $sourceType, $selectionKey) {
+    require_once 'report_helper.php';
+    $filterData = report_helper::get_report_data([
+      'dataSource' => '/library/filters/filter_with_transformed_searcharea',
+      'extraParams' => [
+        'filter_id' => $filterId,
+      ],
+      'readAuth' => $readAuth,
+      'caching' => TRUE,
+      'cachePerUser' => FALSE,
+    ]);
+    if (empty($filterData)) {
+      return NULL;
+    }
+    $definition = json_decode($filterData[0]['definition'], TRUE);
+    if (!is_array($definition)) {
+      $definition = [];
+    }
+    $searchArea = !empty($definition['searchArea'])
+      ? $definition['searchArea']
+      : (!empty($filterData[0]['search_area']) ? $filterData[0]['search_area'] : NULL);
+    $locationIds = self::getDefinitionLocationIds($definition);
+    return [
+      'selection_key' => $selectionKey,
+      'source_type' => $sourceType,
+      'filter_id' => (int) $filterId,
+      'search_area' => $searchArea,
+      'location_ids' => array_map('intval', $locationIds),
+      'location_geoms' => self::getLocationGeometriesForMapOverlays($locationIds, $readAuth),
+    ];
+  }
+
+  /**
+   * Get map overlay data for a selected permissions filter value.
+   *
+   * @param string $value
+   *   Permissions filter value.
+   * @param array $readAuth
+   *   Read authentication tokens.
+   * @param string $selectionKey
+   *   Stable identifier for this selection.
+   *
+   * @return array|null
+   *   Overlay definition or NULL.
+   */
+  private static function getMapOverlayFromPermissionsValue($value, array $readAuth, $selectionKey) {
+    if (preg_match('/^\d+$/', $value)) {
+      return self::getMapOverlayFromFilterId((int) $value, $readAuth, 'permission', $selectionKey);
+    }
+    if (preg_match('/^f\-(\d+)$/', $value, $matches)) {
+      return self::getMapOverlayFromFilterId((int) $matches[1], $readAuth, 'permission', $selectionKey);
+    }
+    if ($value === 'p-location_collation') {
+      $locationId = hostsite_get_user_field('location_collation');
+      if (preg_match('/^\d+$/', (string) $locationId)) {
+        return [
+          'selection_key' => $selectionKey,
+          'source_type' => 'permission',
+          'filter_id' => NULL,
+          'search_area' => NULL,
+          'location_ids' => [(int) $locationId],
+          'location_geoms' => self::getLocationGeometriesForMapOverlays([(int) $locationId], $readAuth),
+        ];
+      }
+      return NULL;
+    }
+    if (preg_match('/^g(?:\-(?:my|all))?\-(\d+)$/', $value, $matches)) {
+      require_once 'report_helper.php';
+      $groupBoundaryData = report_helper::get_report_data([
+        'dataSource' => '/library/groups/group_boundary_transformed',
+        'extraParams' => [
+          'group_id' => $matches[1],
+        ],
+        'readAuth' => $readAuth,
+        'caching' => TRUE,
+        'cachePerUser' => FALSE,
+      ]);
+      if (!empty($groupBoundaryData) && !empty($groupBoundaryData[0]['boundary'])) {
+        return [
+          'selection_key' => $selectionKey,
+          'source_type' => 'permission',
+          'filter_id' => NULL,
+          'search_area' => $groupBoundaryData[0]['boundary'],
+          'location_ids' => [],
+          'location_geoms' => [],
+        ];
+      }
+    }
+    return NULL;
+  }
+
+  /**
+   * Get map overlay data for standardParams filter selections.
+   *
+   * @param array $readAuth
+   *   Read authentication tokens.
+   * @param string $selectionKey
+   *   Stable identifier for this selection.
+   *
+   * @return array|null
+   *   Overlay definition or NULL when no standard params are provided.
+   */
+  private static function getMapOverlayFromStandardParams(array $readAuth, $selectionKey) {
+    $searchArea = !empty($_GET['standard_search_area']) ? $_GET['standard_search_area'] : NULL;
+    $locationIds = !empty($_GET['standard_location_ids'])
+      ? self::parseLocationIdsFromString($_GET['standard_location_ids'])
+      : [];
+    if (empty($searchArea) && empty($locationIds)) {
+      return NULL;
+    }
+    return [
+      'selection_key' => $selectionKey,
+      'source_type' => 'standard',
+      'filter_id' => NULL,
+      'search_area' => $searchArea,
+      'location_ids' => array_map('intval', $locationIds),
+      'location_geoms' => self::getLocationGeometriesForMapOverlays($locationIds, $readAuth),
+    ];
+  }
+
+  /**
+   * Parse overlay selections from request.
+   *
+  * New format is overlay_keys[]=source|value, where source is user,
+  * permission or standard. Supports legacy filter_ids as user selections.
+   *
+   * @return array
+   *   List of valid selection keys.
+   */
+  private static function getOverlaySelectionKeysFromRequest() {
+    $selectionKeys = [];
+    if (!empty($_GET['overlay_keys'])) {
+      $rawKeys = is_array($_GET['overlay_keys']) ? $_GET['overlay_keys'] : [$_GET['overlay_keys']];
+      foreach ($rawKeys as $key) {
+        if (preg_match('/^(user|permission|standard)\|[A-Za-z0-9_\-]+$/', (string) $key)) {
+          $selectionKeys[] = $key;
+        }
+      }
+    }
+    // Backward compatibility for numeric filter IDs.
+    if (count($selectionKeys) === 0 && !empty($_GET['filter_ids']) && preg_match('/^\d+(,\d+)*$/', $_GET['filter_ids'])) {
+      foreach (self::parseLocationIdsFromString($_GET['filter_ids']) as $id) {
+        $selectionKeys[] = "user|$id";
+      }
+    }
+    return array_values(array_unique($selectionKeys));
+  }
+
+  /**
+   * Get map overlay geometry for selected user filters.
+   *
+   * Returns searchArea WKT and per-location boundary WKT so the client can
+   * render temporary map overlays while a user filter is active.
+   *
+   * @param int $nid
+   *   Node ID.
+   *
+   * @return array
+   *   Overlay definitions keyed by filter ID.
+   */
+  private static function getUserFilterMapOverlays($nid) {
+    $selectionKeys = self::getOverlaySelectionKeysFromRequest();
+    if (count($selectionKeys) === 0) {
+      http_response_code(400);
+      return ['code' => 400, 'message' => 'Bad Request'];
+    }
+    iform_load_helpers(['helper_base', 'report_helper']);
+    $conn = iform_get_connection_details($nid);
+    $readAuth = helper_base::get_read_auth($conn['website_id'], $conn['password']);
+    $overlays = [];
+    foreach ($selectionKeys as $selectionKey) {
+      list($sourceType, $selectionValue) = explode('|', $selectionKey, 2);
+      if ($sourceType === 'permission') {
+        $overlay = self::getMapOverlayFromPermissionsValue($selectionValue, $readAuth, $selectionKey);
+      }
+      elseif ($sourceType === 'standard') {
+        $overlay = self::getMapOverlayFromStandardParams($readAuth, $selectionKey);
+      }
+      else {
+        $overlay = preg_match('/^\d+$/', $selectionValue)
+          ? self::getMapOverlayFromFilterId((int) $selectionValue, $readAuth, 'user', $selectionKey)
+          : NULL;
+      }
+      if (!empty($overlay)) {
+        $overlays[] = $overlay;
+      }
+    }
+    return [
+      'message' => 'OK',
+      'overlays' => $overlays,
+      '#cache' => [
+        // Keep endpoint responses specific to the selected overlay keys and
+        // current user to avoid stale or cross-user boundary reuse.
+        'max-age' => 3600,
+        'contexts' => [
+          'route',
+          'url.query_args:overlay_keys',
+          'url.query_args:filter_ids',
+          'url.query_args:standard_search_area',
+          'url.query_args:standard_location_ids',
+          'user',
+        ],
       ],
     ];
   }

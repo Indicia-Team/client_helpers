@@ -372,23 +372,45 @@ class ElasticsearchReportHelper {
    */
   public static function enableElasticsearchProxy($nid = NULL) {
     if (!self::$proxyEnabled && !self::$proxyEnableFailed) {
-      // Retrieve the Elasticsearch mappings.
       try {
+        // Keep Elasticsearch checks centralised in the proxy helper.
+        require_once 'ElasticsearchProxyHelper.php';
         $config = hostsite_get_es_config($nid);
+        ElasticsearchProxyHelper::$config = $config;
+
+        // Check availability before doing any further setup.
+        if (!ElasticsearchProxyHelper::isEsAvailable()) {
+          self::$proxyEnableFailed = TRUE;
+          self::$proxyEnabled = FALSE;
+
+          helper_base::$indiciaData['esAvailable'] = FALSE;
+
+          \Drupal::logger('iform')->warning(
+            'Elasticsearch not available – proxy disabled'
+          );
+
+          return FALSE;
+        }
+
+        // Normal setup.
         self::getMappings($config);
         helper_base::add_resource('datacomponents');
-        // Prepare the stuff we need to pass to the JavaScript.
+
         $mappings = self::$esMappings;
         $esProxyAjaxUrl = hostsite_get_url('iform/esproxy');
+
         helper_base::$indiciaData['esProxyAjaxUrl'] = $esProxyAjaxUrl;
         helper_base::$indiciaData['esSources'] = [];
         helper_base::$indiciaData['esMappings'] = $mappings;
         helper_base::$indiciaData['gridMappingFields'] = self::MAPPING_FIELDS;
+
         foreach (helper_base::$indiciaData['gridMappingFields'] as &$field) {
           $field['caption'] = lang::get($field['caption']);
         }
+
         helper_base::$indiciaData['esVersion'] = (int) $config['es']['version'];
         helper_base::$indiciaData['esScope'] = $config['es']['scope'];
+
         helper_base::addLanguageStringsToJs('classifier', [
           'classifierSuggestions' => 'Classifier suggestions',
           'clickToRedetermineAs' => 'Click to redetermine the record as this suggestion.',
@@ -396,17 +418,28 @@ class ElasticsearchReportHelper {
           'imageClassifierDisagrees' => 'Image classifier conflicts with identification provided.',
           'noClassifierInfoAvailable' => 'No image classifier information is available for this record.',
           'probability' => 'Probability',
-          'suggestionClassifierChosen' => 'Classifier chosen',
+          'suggestionClassifierChosen' => 'Classifier suggestion',
           'suggestionHumanChosen' => 'Human chosen',
-          'suggestionNotChosen' => 'Suggestion not chosen',
+          'suggestionNotChosen' => 'Classifier alternative',
         ]);
+
+        // Explicit success flag.
+        helper_base::$indiciaData['esAvailable'] = TRUE;
+
         self::$proxyEnabled = TRUE;
       }
       catch (Exception $e) {
         self::$proxyEnableFailed = TRUE;
-        \Drupal::logger('iform')->error('Elasticsearch proxy enable failed: ' . $e->getMessage());
+        self::$proxyEnabled = FALSE;
+
+        helper_base::$indiciaData['esAvailable'] = FALSE;
+
+        \Drupal::logger('iform')->error(
+          'Elasticsearch proxy enable failed: ' . $e->getMessage()
+        );
       }
     }
+
     return self::$proxyEnabled;
   }
 
@@ -916,7 +949,7 @@ HTML;
    *   Set to false to disable checking that the current page path is an iform
    *   page linked to the group.
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-groupintegration
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-groupintegration.
    *
    * @return string
    *   Control HTML
@@ -949,7 +982,7 @@ HTML;
         'extraParams' => $options['readAuth'] + [
           'view' => 'detail',
           'id' => $group_id,
-        ]
+        ],
       ]);
       if (!count($groups)) {
         hostsite_show_message(lang::get('The link you have followed is invalid.'), 'warning', TRUE);
@@ -1049,14 +1082,23 @@ JS;
     if ($membership === GroupMembership::NonMember && ($group['joining_method'] === 'P' || $group['joining_method'] === 'I')) {
       $titleForLink = trim(preg_replace('/[^a-z0-9\-]/', '', preg_replace('/[ ]/', '-', strtolower($group['title']))), '-');
       $titleEscaped = htmlspecialchars($group['title']);
-      $links["/join/$titleForLink"] = ['label' => "Join $titleEscaped", 'icon' => '<i class="fas fa-file-signature"></i>'];
+      $links["/join/$titleForLink"] = [
+        'label' => "Join $titleEscaped",
+        'icon' => '<i class="fas fa-file-signature"></i>',
+      ];
     }
     if ($membership === GroupMembership::Admin && isset($options['editPath'])) {
       $editLink = helper_base::getRootFolder() . $options['editPath'] . "?group_id=$group[id]&redirect_on_success=" . hostsite_get_current_page_path();
-      $links[$editLink] = ['label' => lang::get('Edit'), 'icon' => '<i class="fas fa-pen"></i>'];
+      $links[$editLink] = [
+        'label' => lang::get('Edit'),
+        'icon' => '<i class="fas fa-pen"></i>',
+      ];
       if (!empty($group['container'])) {
         $addSubGroupLink = helper_base::getRootFolder() . $options['editPath'] . "?container_group_id=$group[id]&redirect_on_success=" . hostsite_get_current_page_path();
-        $links[$addSubGroupLink] = ['label' => lang::get('Add {1}', $options['containedGroupLabel']), 'icon' => '<i class="fas fa-folder-plus"></i>'];
+        $links[$addSubGroupLink] = [
+          'label' => lang::get('Add {1}', $options['containedGroupLabel']),
+          'icon' => '<i class="fas fa-folder-plus"></i>',
+        ];
       }
     }
     $thisPage = empty($options['nid']) ? '' : hostsite_get_alias($options['nid']);
@@ -1247,7 +1289,7 @@ JS;
       'gridSquareSizeHelp' => 'This mode limits how far the map can be zoomed out - use the 10 km or Auto display options to zoom out further.',
       'impreciseMapRefHandling' => 'When using “Auto” mode, the map switches to show records in the full available precision when zoomed in.  When viewing records at full precision',
       'impreciseMapRefHandlingLimitTo1kmOrBetter' => 'Hide imprecise records that are larger than 1 km square precision',
-      'impreciseMapRefHandlingNotLimited' => 'Show all records irrespective of precision'
+      'impreciseMapRefHandlingNotLimited' => 'Show all records irrespective of precision',
     ]);
     $dataOptions = helper_base::getOptionsForJs($options, [
       'baseLayerConfig',
@@ -2337,7 +2379,7 @@ HTML;
       'valueField' => 'id',
       'attributes' => [
         'placeholder' => lang::get('Type to search'),
-      ]
+      ],
     ]);
     $uploadButton = empty($options['includeUploadButton']) ? '' : <<<HTML
       <button class="upload-decisions $btnClass" title="$lang[uploadVerificationDecisions]"><span class="fas fa-file-upload"></span>$lang[upload]</button>
