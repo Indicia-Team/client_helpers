@@ -561,49 +561,51 @@ class iform_species_details_3 extends BaseDynamicDetails {
    */
 
   public static function get_form($args, $nid) {    
-  iform_load_helpers(['ElasticsearchReportHelper']);
+      iform_load_helpers(['ElasticsearchReportHelper']);
 
-  // Start timer as early as possible
-  $start = microtime(true);
+      // Start timer as early as possible
+      $start = microtime(true);
 
-  // 1. Try cache FIRST
-  $cached = self::read_species_cache($args);
-  
-  if ($cached !== null) {
-    
-    $elapsed = round((microtime(true) - $start) * 1000, 1);
-    
-    // Add debug info
-    $cached .= "\n<!-- Species cache: HIT | {$elapsed} ms -->";
+      // 1. Try cache FIRST
+      $cached = self::read_species_cache($args);
+     
+      if ($cached !== null) {
+        
+        $elapsed = round((microtime(true) - $start) * 1000, 1);
+        
+        // Add debug info
+        $cached .= "\n<!-- Species cache: HIT | {$elapsed} ms -->";
 
-    // Also add an HTTP header (very useful)
-    \Drupal::service('page_cache_kill_switch'); // ensure headers sent
-    header("X-Species-Cache: HIT; {$elapsed}ms");
+        // Also add an HTTP header (very useful)
+        \Drupal::service('page_cache_kill_switch'); // ensure headers sent
+        header("X-Species-Cache: HIT; {$elapsed}ms");
 
-    return $cached;
+        return $cached;
+      }
+
+      // Cache miss
+      $enabled = ElasticsearchReportHelper::enableElasticsearchProxy($nid);
+      if ($enabled) {
+        $html = parent::get_form($args, $nid);
+   
+        $elapsed = round((microtime(true) - $start) * 1000, 1);
+
+        // Add debug info
+        $html .= "\n<!-- Species cache: MISS | {$elapsed} ms -->";
+        header("X-Species-Cache: MISS; {$elapsed}ms");
+
+        return self::write_species_cache($args, $html);
+      }
+
+      global $indicia_templates;
+      return str_replace(
+        '{message}',
+        lang::get('This page cannot be accessed due to the server being unavailable.'),
+        $indicia_templates['warningBox']
+      );
   }
-
-  // Cache miss
-  $enabled = ElasticsearchReportHelper::enableElasticsearchProxy($nid);
-  if ($enabled) {
-    $html = parent::get_form($args, $nid);
   
-    $elapsed = round((microtime(true) - $start) * 1000, 1);
-
-    // Add debug info
-    $html .= "\n<!-- Species cache: MISS | {$elapsed} ms -->";
-    header("X-Species-Cache: MISS; {$elapsed}ms");
-
-    return self::write_species_cache($args, $html);
-  }
-
-  global $indicia_templates;
-  return str_replace(
-    '{message}',
-    lang::get('This page cannot be accessed due to the server being unavailable.'),
-    $indicia_templates['warningBox']
-  );
-}
+  
   private static function getTaxaTaxonListIdFromName($args,$speciesName) {
 		  $preferredTaxonName = trim($speciesName);
 		  $expectedRank   ='Species';
@@ -698,13 +700,12 @@ class iform_species_details_3 extends BaseDynamicDetails {
       $ch = curl_init($proxyUrl);
       curl_setopt_array($ch, [
         CURLOPT_POST            => true,
-        CURLOPT_POSTFIELDS      => $body,
+CURLOPT_POSTFIELDS => http_build_query($params),
+CURLOPT_HTTPHEADER => [
+  'Content-Type: application/x-www-form-urlencoded',
+  'Accept: application/json',
+],
         CURLOPT_RETURNTRANSFER  => true,
-        CURLOPT_HTTPHEADER      => [
-          'Content-Type: application/json',
-          'Accept: application/json',
-        ],
-
         CURLOPT_CONNECTTIMEOUT  => 3, // seconds to connect
         CURLOPT_TIMEOUT         => 6, // max total time
 
@@ -2781,7 +2782,7 @@ $rare ='';
     if (self::$notaxon) {
       return 'No data';
     }
-
+ 
     $taxonMeaningId = self::$taxonMeaningId ?? null;
     $speciesName    = self::$preferred ?? null;
     
@@ -2793,7 +2794,7 @@ $rare ='';
 
     $options['taxonMeaningId'] = $taxonMeaningId;
     $options['speciesName'] = $speciesName;
-    
+
 	  $stats = self::get_stats_from_summary($auth, $args,  $options );
 
 		$national = $stats['national'] ?? [];
@@ -2826,8 +2827,13 @@ $rare ='';
 		  $html .= '        <dt>' . lang::get('Last recorded') . '</dt>';
 		  $html .= '        <dd>' . htmlspecialchars($national['last_seen']) . '</dd>';
 		}
+
+ //   $html.= "<pre>OPtions: ".json_encode($options, JSON_PRETTY_PRINT);
+ //   $html.= "Table: ".json_encode($tabalis, JSON_PRETTY_PRINT);
+ //   $html.= "Args: ".json_encode($args, JSON_PRETTY_PRINT);
+ //   $html .= "</pre>";
     
-		$html .= '        <dt>' . lang::get('Total records') . '</dt>';
+		$html .= '        <dt>' . lang::get('Total records') .  '</dt>';
 		$html .= '        <dd>' . number_format((int)$national['record_count']) . '</dd>';
 
 		$html .= '        <dt>' . lang::get('Total visits') . '</dt>';
@@ -2971,12 +2977,65 @@ $rare ='';
         "proxyCacheTimeout" => 300,
     ];
 
+    $params = [
+        "textFilters" => [],
+        "numericFilters" => [],
+
+        "bool_queries" => [
+            [
+                "bool_clause" => "must",
+                "field"       => "taxon.taxa_taxon_list_id",
+                "query_type"  => "term",
+                "value"       => (int)$ttlId,
+            ],
+            [
+                "bool_clause" => "must",
+                "field"       => "metadata.survey.id",
+                "query_type"  => "term",
+                "value"       => 729,
+            ],
+            [
+                "bool_clause" => "must",
+                "field"       => "identification.verification_status",
+                "query_type"  => "term",
+                "value"       => "V",
+            ]
+        ],
+
+        "user_filters" => [],
+        "refresh_user_filters" => false,
+        "size" => 0,
+        "_source" => false,
+        "filter_def" => [],
+
+        "aggs" => [
+            "first_record" => [
+                "min" => ["field" => "event.date_start"]
+            ],
+            "last_record" => [
+                "max" => ["field" => "event.date_start"]
+            ],
+            "event_count" => [
+                "cardinality" => ["field" => "event.event_id"]
+            ],
+            "record_count" => [
+                "value_count" => ["field" => "id"]
+            ]
+        ],
+
+        "proxyCacheTimeout" => 600,
+    ];
+    
+    
 		// -----------------------------------------
 		// 3. Call the ES proxy
 		// -----------------------------------------
-		
-    $payload = self::runEsProxyQuery($params, $nid);
+//    echo json_encode($params,JSON_PRETTY_PRINT);;
 
+    $payload = self::runEsProxyQuery($params, $nid);
+//    echo json_encode($payload,JSON_PRETTY_PRINT);
+//    echo $nid;exit;    
+    
 		$data = $payload;
 
 			$firstIso = $data['aggregations']['first_record']['value_as_string'] ?? null;
