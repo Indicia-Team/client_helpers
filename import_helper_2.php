@@ -1405,7 +1405,7 @@ HTML;
           <p>$lang[requiredFieldsInstructions]</p>
           <ul>
           </ul>
-          <p class="alert alert-info" id="selected-field-messages" style="display: none"></p>
+          <p class="alert alert-warning" id="selected-field-messages" style="display: none"></p>
         </div>
       </div>
     </div>
