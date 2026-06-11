@@ -74,7 +74,9 @@ class ElasticsearchProxyHelper {
    * Cache the availability of elasticsearch
    *
    * @var bool
+   * 
    */
+
   private static $esAvailable = NULL;
 
   /**
@@ -193,9 +195,11 @@ class ElasticsearchProxyHelper {
 
     $url = self::getEsUrl();
 
+
     if (empty($url)) {
-      return self::$esAvailable = FALSE;
+      return self::$esAvailable ?? FALSE;
     }
+
 
     $ch = curl_init();
 
