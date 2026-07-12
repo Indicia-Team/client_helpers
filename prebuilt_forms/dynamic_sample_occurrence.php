@@ -1979,6 +1979,10 @@ HTML;
    */
   protected static function get_control_species_checklist(array $auth, array $args, array $extraParams, array $options) {
     $r = '';
+    // Allow specific grid to prevent client taxon filter use.
+    if (isset($options['clientTaxonFilter'])) {
+      $args['client_taxon_filter'] = $options['clientTaxonFilter'];
+    }
     if ($args['client_taxon_filter'] == TRUE) {
       /* Add control to allow taxon list to be loaded at runtime.
       To enable this functionality, check the Client Selects Taxon Filter
