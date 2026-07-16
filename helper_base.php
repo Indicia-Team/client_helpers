@@ -2339,15 +2339,7 @@ HTML;
     $authTokenUserId = self::getAuthTokenUserId();
     $postargs = "website_id=$website_id";
     $response = self::http_post(self::$base_url . 'index.php/services/security/get_nonce', $postargs);
-    if (isset($response['status'])) {
-      if ($response['status'] === 404) {
-        throw new Exception(lang::get('The warehouse URL {1} was not found. Either the warehouse is down or the ' .
-          'Indicia configuration is incorrect.', self::$base_url), 404);
-      }
-      else {
-        throw new Exception($response['output'], $response['status']);
-      }
-    }
+    self::checkWarehouseResponse($response);
     $nonce = $response['output'];
     $authToken = sha1("$nonce:$password$authTokenUserId") . $authTokenUserId;
     $result = <<<HTML
@@ -2383,16 +2375,7 @@ HTML;
       }
       $postargs = "website_id=$website_id";
       $response = self::http_post(self::$base_url . 'index.php/services/security/get_read_nonce', $postargs, FALSE);
-      if (isset($response['status'])) {
-        if ($response['status'] === 404) {
-          throw new Exception(lang::get('The warehouse URL {1} was not found. Either the warehouse is down or the ' .
-            'Indicia configuration is incorrect.', self::$base_url), 404);
-        }
-        else {
-          \Drupal::logger('iform')->error('Error getting read auth tokens: @trace', ['@trace' => debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 6)]);
-          throw new Exception($response['output'], $response['status']);
-        }
-      }
+      self::checkWarehouseResponse($response);
       $nonce = $response['output'];
       if (substr($nonce, 0, 9) === '<!DOCTYPE') {
         throw new Exception(lang::get('Could not authenticate against the warehouse. Is the server down?'));
@@ -2442,15 +2425,7 @@ HTML;
     $authTokenUserId = self::getAuthTokenUserId();
     $postargs = "website_id=$website_id";
     $response = self::http_post(self::$base_url . 'index.php/services/security/get_read_write_nonces', $postargs, FALSE);
-    if (array_key_exists('status', $response)) {
-      if ($response['status'] === 404) {
-        throw new Exception(lang::get('The warehouse URL {1} was not found. Either the warehouse is down or the ' .
-          'Indicia configuration is incorrect.', self::$base_url), 404);
-      }
-      else {
-        throw new Exception($response['output'], $response['status']);
-      }
-    }
+    self::checkWarehouseResponse($response);
     $nonces = json_decode($response['output'], TRUE);
     $writeAuthToken = sha1("$nonces[write]:$password$authTokenUserId") . $authTokenUserId;
     $readAuthToken = sha1("$nonces[read]:$password$authTokenUserId") . $authTokenUserId;
@@ -2471,6 +2446,44 @@ HTML;
         'nonce' => $nonces['write'],
       ],
     ];
+  }
+
+  /**
+   * Check authentication token request responses.
+   *
+   * Checks the response from the warehouse for authentication token requests
+   * and throws exceptions if there are errors.
+   *
+   * @param mixed $response
+   *   Response from http_post() call to get a nonce from the warehouse.
+   */
+  private static function checkWarehouseResponse($response) {
+    // If the response contains a status, it was something other than 200
+    // Success.
+    if (isset($response['status'])) {
+      \Drupal::logger('iform')->error('Error accessing the warehouse: @response', ['@response' => var_export($response, TRUE)]);
+      if ($response['status'] === 404) {
+        throw new Exception(lang::get('The warehouse URL {1} was not found. Either the warehouse is down or the ' .
+          'Indicia configuration is incorrect.', self::$base_url), 404);
+      }
+      elseif (($response['status'] === 503 || ($response['errno'] ?? 0 === 6)) && isset($response['output'])) {
+        // Handle service unavailable or could not resolve host.
+        if ($response['errno'] ?? 0 === 6) {
+          // Could not resolve host. Treat as service unavailable.
+          $message = 'The warehouse URL is not reachable.';
+        }
+        else {
+          // A planned downtime.
+          $r = json_decode($response['output'], TRUE);
+          $message = $r['message'] ?? 'Service unavailable';
+        }
+        throw new Exception(lang::get($message), 503);
+      }
+      else {
+        // Generic error.
+        throw new Exception($response['output'], $response['status']);
+      }
+    }
   }
 
   /**
@@ -3700,6 +3713,7 @@ if (typeof validator!=='undefined') {
       $response = self::http_post($newURL, $postArgs);
     }
     $r = json_decode($response['output'], TRUE);
+    self::checkWarehouseResponse($r);
     if (!is_array($r)) {
       $response['request'] = $request;
       throw new Exception('Invalid response received from Indicia Warehouse. '.print_r($response, TRUE));
