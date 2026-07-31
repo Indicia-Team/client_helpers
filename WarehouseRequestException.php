@@ -60,7 +60,9 @@ final class WarehouseRequestException extends \RuntimeException {
    *   True when this is a 503 response or host is unavailable, otherwise false.
    */
   public function isUnavailable(): bool {
-    return $this->httpStatus === 503
+    // Treat 502 Bad Gateway, 503 Service Unavailable, and 504 Gateway Timeout
+    // as warehouse unavailable errors.
+    return in_array($this->httpStatus, [502, 503, 504], TRUE)
       || in_array($this->curlErrno, [
         CURLE_COULDNT_RESOLVE_HOST,
         CURLE_COULDNT_CONNECT,
