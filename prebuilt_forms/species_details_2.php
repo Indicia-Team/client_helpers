@@ -818,7 +818,6 @@ class iform_species_details_2 extends BaseDynamicDetails {
     if ($hideOtherCommon == FALSE && !empty(self::$commonNames)) {
       $label = 'Other common names';
       $otherCommonNames = array_merge(self::$commonNames);
-      array_shift($otherCommonNames);
       if (!empty($otherCommonNames)) {
         $r .= str_replace(
           ['{caption}', '{value}', '{class}'],
