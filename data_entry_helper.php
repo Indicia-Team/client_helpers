@@ -1599,7 +1599,7 @@ JS;
     }
     self::add_resource('indiciaMapPanel');
     // Dynamically build a resource to link us to the driver js file.
-    self::$required_resources[] = 'georeference_default_' . $options['driver'];
+    self::add_resource('georeference_default_' . $options['driver']);
     // We need to see if there is a resource in the resource list for any
     // special files required by this driver. This will do nothing if the
     // resource is absent.
@@ -10386,7 +10386,7 @@ HTML;
     self::get_resources();
     foreach ($handlers as $code) {
       // Dynamically find a resource to link us to the handler js file.
-      self::$required_resources[] = 'sref_handlers_'.$code;
+      self::add_resource('sref_handlers_'.$code);
     }
   }
 
