@@ -1102,7 +1102,7 @@ class helper_base {
           'javascript' => [self::$js_path . "createPersonalSites.js"],
         ],
         'autocomplete' => [
-          'deps' => ['jquery'],
+          'deps' => ['jquery', 'jquery_ui'],
           'stylesheets' => [self::$css_path . "jquery.autocomplete.css"],
           'javascript' => [self::$js_path . "jquery.autocomplete.js"],
         ],
