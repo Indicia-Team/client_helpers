@@ -996,7 +996,7 @@ JS;
       'default' => '',
       'isFormControl' => TRUE,
       'allowFuture' => FALSE,
-      'minDate' => '',      
+      'minDate' => '',
       'attributes' => [],
       'vagueLabel' => lang::get('Vague date mode'),
     ], $options);
@@ -7964,8 +7964,16 @@ if (errors$uniq.length>0) {
           $media[] = array('path' => $file['name']);
         }
       }
+      $uploadableMedia = [];
+      foreach ($media as $item) {
+        [$type, $subtype] = explode(':', $item['media_type'] ?? 'Image:Local');
+        // No need to resend an existing image, or a media link, just local files.
+        if ($subtype === 'Local' && empty($item['id'])) {
+          $uploadableMedia[] = $item;
+        }
+      }
       // if there are images, we will send them after the main post, so we need to persist the write nonce
-      if (count($media) > 0) {
+      if (count($uploadableMedia) > 0) {
         $postargs .= '&persist_auth=true';
       }
       $response = self::http_post($request, $postargs, FALSE);
@@ -7982,21 +7990,18 @@ if (errors$uniq.length>0) {
         $image_errors = [];
         $onlyImages = TRUE;
         $savedEntity = $output['outer_table'] ?? $entity;
-        foreach ($media as $idx => $item) {
+        foreach ($uploadableMedia as $idx => $item) {
           [$type, $subtype] = explode(':', $item['media_type'] ?? 'Image:Local');
-          // No need to resend an existing image, or a media link, just local files.
-          if ($subtype === 'Local' && empty($item['id'])) {
-            if ($type !== 'Image') {
-              $onlyImages = FALSE;
-            }
-            // Final location is the Warehouse. Sets persist_auth to false if
-            // the last file.
-            $success = self::send_file_to_warehouse($item['path'], $idx < count($media) - 1, $writeTokens);
-            if ($success !== TRUE) {
-              // Record all files that fail to move successfully.
-              $image_overall_success = FALSE;
-              $image_errors[] = $success;
-            }
+          if ($type !== 'Image') {
+            $onlyImages = FALSE;
+          }
+          // Final location is the Warehouse. Sets persist_auth to false if
+          // the last file.
+          $success = self::send_file_to_warehouse($item['path'], $idx < count($uploadableMedia) - 1, $writeTokens);
+          if ($success !== TRUE) {
+            // Record all files that fail to move successfully.
+            $image_overall_success = FALSE;
+            $image_errors[] = $success;
           }
         }
         if (!$image_overall_success) {
