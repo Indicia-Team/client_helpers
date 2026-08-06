@@ -721,7 +721,7 @@ mapInitialisationHooks.push(function (div) {
     }
 
     // with the AJAX code, we deal with the validation semi manually: Form name is meant be invalid as we only want code included.
-    data_entry_helper::enable_validation(null);
+    data_entry_helper::enableValidation(null);
     $r .= "<div id=\"controls\">\n";
     $activeTab = 'survey'; // mode 1 = new Sample, display sample.
     if($mode == 2){ // have specified a sample ID

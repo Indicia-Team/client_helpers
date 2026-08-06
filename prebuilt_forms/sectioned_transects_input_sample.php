@@ -252,7 +252,8 @@ class iform_sectioned_transects_input_sample implements PrebuiltFormInterface {
     $r .= '<input type="hidden" name="sample:sample_method_id" value="'.$sampleMethods[0]['id'].'" />';
     $r .= '<input type="submit" value="'.lang::get('Next').'" class="ui-state-default ui-corner-all" />';
     $r .= '</form>';
-    data_entry_helper::enable_validation('sample');
+    helper_base::preventFormDoubleSubmit('sample');
+    helper_base::enableValidation('sample');
     return $r;
   }
 

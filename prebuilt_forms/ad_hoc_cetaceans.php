@@ -174,10 +174,11 @@ class iform_ad_hoc_cetaceans implements PrebuiltFormInterface {
    */
   public static function get_form($args, $nid, $response=null) {
     global $indicia_templates, $user;
-    data_entry_helper::enable_validation('entry_form');
+    helper_base::preventFormDoubleSubmit('entry_form');
+    helper_base::enableValidation('entry_form');
     $protocol = empty($_SERVER['HTTPS']) || $_SERVER['HTTPS']==='off' ? 'http' : 'https';
     $url = "$protocol://$_SERVER[SERVER_NAME]$_SERVER[REQUEST_URI]";
-    $r .= "<form method=\"post\" id=\"entry_form\" action=\"$url\">\n";
+    $r = "<form method=\"post\" id=\"entry_form\" action=\"$url\">\n";
     $readAuth = data_entry_helper::get_read_auth($args['website_id'], $args['password']);
     $r .= "<div id=\"controls\">\n";
     if ($args['interface']!='one_page') {

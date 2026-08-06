@@ -436,11 +436,13 @@ check_attrs = function(){
     $r .= self::get_site_tab($auth, $args, $settings);
     if ($settings['locationId']) {
       $r .= self::get_site_trees_tab($auth, $args, $settings);
-      data_entry_helper::enable_validation('tree-form');
+      helper_base::preventFormDoubleSubmit('tree-form');
+      helper_base::enableValidation('tree-form');
       data_entry_helper::setup_jquery_validation_js();
     }
     $r .= '</div>'; // controls
-    data_entry_helper::enable_validation('input-form');
+    helper_base::preventFormDoubleSubmit('input-form');
+    helper_base::enableValidation('input-form');
     if (function_exists('drupal_set_breadcrumb')) {
       $breadcrumb = [];
       $breadcrumb[] = l(lang::get('Home'), '<front>');

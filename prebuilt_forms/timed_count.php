@@ -731,7 +731,8 @@ if($('#C1\\\\:sample\\\\:date').val() != '') {
     }
 
     $r .= '</form>';
-    data_entry_helper::enable_validation('sample');
+    helper_base::preventFormDoubleSubmit('sample');
+    helper_base::enableValidation('sample');
     return $r;
   }
 
@@ -982,7 +983,8 @@ indiciaData.indiciaSvc = '".data_entry_helper::$base_url."';\n";
     }
     $r .= '<input type="submit" value="'.lang::get('Save').'" />';
     $r .= '<a href="'.$args['summary_page'].'"><button type="button" class="ui-state-default ui-corner-all" />'.lang::get('Cancel').'</button></a></form>';
-    data_entry_helper::enable_validation('subsamples');
+    helper_base::preventFormDoubleSubmit('subsamples');
+    helper_base::enableValidation('subsamples');
     data_entry_helper::$javascript .= "initButtons();\nprocessDeleted();\n";
     return $r;
   }

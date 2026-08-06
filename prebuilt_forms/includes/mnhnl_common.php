@@ -347,8 +347,10 @@ function iform_mnhnl_getParameters() {
 }
 function iform_mnhnl_locModTool($auth, $args, $node) {
   global $indicia_templates;
-  if (!isset($args['clientSideValidation']) || $args['clientSideValidation'])
-      data_entry_helper::enable_validation('entry_form');
+  helper_base::preventFormDoubleSubmit('entry_form');
+  if (!isset($args['clientSideValidation']) || $args['clientSideValidation']) {
+    helper_base::enableValidation('entry_form');
+  }
   if($args['locationMode']=='multi') $args['locationMode']='parent';
   data_entry_helper::$entity_to_load=[];
   $retVal = "<div id=\"locations\">";
