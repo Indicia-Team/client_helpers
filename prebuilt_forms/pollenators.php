@@ -490,7 +490,8 @@ jQuery('#".$id."').on('click', function(){
 
 	if($args['language'] != 'en')
 		data_entry_helper::add_resource('jquery_ui_'.$args['language']);
-	data_entry_helper::enable_validation('cc-1-collection-details'); // don't care about ID itself, just want resources
+  helper_base::preventFormDoubleSubmit('cc-1-collection-details');
+	helper_base::enableValidation('cc-1-collection-details'); // don't care about ID itself, just want resources
 
 	if($args['help_module'] != '' && $args['help_inclusion_function'] != '' && hostsite_module_exists($args['help_module']) && function_exists($args['help_inclusion_function'])) {
     	$use_help = true;

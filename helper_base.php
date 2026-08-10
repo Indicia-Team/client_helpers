@@ -1102,7 +1102,7 @@ class helper_base {
           'javascript' => [self::$js_path . "createPersonalSites.js"],
         ],
         'autocomplete' => [
-          'deps' => ['jquery'],
+          'deps' => ['jquery', 'jquery_ui'],
           'stylesheets' => [self::$css_path . "jquery.autocomplete.css"],
           'javascript' => [self::$js_path . "jquery.autocomplete.js"],
         ],
@@ -3012,9 +3012,21 @@ if (typeof validator!=='undefined') {
   }
 
   /**
+   * Prevents accidental double submission of a form.
+   *
+   * @param string $formId
+   *   Form element ID.
+   */
+  public static function preventFormDoubleSubmit($formId) {
+    self::$javascript .= <<<JS
+      indiciaFns.preventFormDoubleSubmit('#$formId');
+    JS;
+  }
+
+  /**
    * Enable browser validation for forms.
    *
-   * Call the enable_validation method to turn on client-side validation for
+   * Call the enableValidation method to turn on client-side validation for
    * any controls with validation rules defined.
    * To specify validation on each control, set the control's options array
    * to contain a 'validation' entry. This must be set to an array of
@@ -3024,20 +3036,9 @@ if (typeof validator!=='undefined') {
    * @param string $form_id
    *   @form_id Id of the form the validation is being attached to.
    */
-  public static function enable_validation($form_id) {
+  public static function enableValidation($form_id) {
     self::$validated_form_id = $form_id;
-    self::$javascript .= "indiciaData.validatedFormId = '" . self::$validated_form_id . "';\n";
-    // Prevent double submission of the form.
-    self::$javascript .= "$('#$form_id').submit(function(e) {
-  if (typeof $('#$form_id').valid === 'undefined' || $('#$form_id').valid()) {
-    if (typeof indiciaData.formSubmitted==='undefined' || !indiciaData.formSubmitted) {
-      indiciaData.formSubmitted = true;
-    } else {
-      e.preventDefault();
-      return false;
-    }
-  }
-});\n";
+    self::$indiciaData['validatedFormId'] = self::$validated_form_id;
     self::add_resource('validation');
     // Allow i18n on validation messages.
     if (lang::get('validation_required') != 'validation_required') {

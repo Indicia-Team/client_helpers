@@ -309,8 +309,9 @@ locationLayer = new OpenLayers.Layer.Vector(\"".lang::get("LANG_Location_Layer")
     if(array_key_exists('sample:id', data_entry_helper::$entity_to_load)){
     	$r .= "<input type=\"hidden\" id=\"sample:id\" name=\"sample:id\" value=\"".data_entry_helper::$entity_to_load['sample:id']."\" />\n";
     }
+    helper_base::preventFormDoubleSubmit('entry_form');
     // request automatic JS validation
-    data_entry_helper::enable_validation('entry_form');
+    helper_base::enableValidation('entry_form');
     $attributes = data_entry_helper::getAttributes(array(
     	'id' => data_entry_helper::$entity_to_load['sample:id']
        ,'valuetable' => 'sample_attribute_value'

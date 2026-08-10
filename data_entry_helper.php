@@ -996,6 +996,7 @@ JS;
       'default' => '',
       'isFormControl' => TRUE,
       'allowFuture' => FALSE,
+      'minDate' => '',
       'attributes' => [],
       'vagueLabel' => lang::get('Vague date mode'),
     ], $options);
@@ -1030,6 +1031,12 @@ JS;
       $dateTime = new DateTime();
       $attrArrayDate[] = 'max="' . $dateTime->format('Y-m-d') . '"';
     }
+
+    if (!empty($options['minDate'])) {
+      $attrArrayDate[] = 'min="' . $options['minDate'] . '"';
+    }
+
+
     $options['attribute_list'] = implode(' ', $attrArray);
     // Options for date control if using a free text vague date input.
     $options['attribute_list_date'] = implode(' ', $attrArrayDate);
@@ -1592,7 +1599,7 @@ JS;
     }
     self::add_resource('indiciaMapPanel');
     // Dynamically build a resource to link us to the driver js file.
-    self::$required_resources[] = 'georeference_default_' . $options['driver'];
+    self::add_resource('georeference_default_' . $options['driver']);
     // We need to see if there is a resource in the resource list for any
     // special files required by this driver. This will do nothing if the
     // resource is absent.
@@ -8013,8 +8020,16 @@ if (errors$uniq.length>0) {
           $media[] = array('path' => $file['name']);
         }
       }
+      $uploadableMedia = [];
+      foreach ($media as $item) {
+        [$type, $subtype] = explode(':', $item['media_type'] ?? 'Image:Local');
+        // No need to resend an existing image, or a media link, just local files.
+        if ($subtype === 'Local' && empty($item['id'])) {
+          $uploadableMedia[] = $item;
+        }
+      }
       // if there are images, we will send them after the main post, so we need to persist the write nonce
-      if (count($media) > 0) {
+      if (count($uploadableMedia) > 0) {
         $postargs .= '&persist_auth=true';
       }
       $response = self::http_post($request, $postargs, FALSE);
@@ -8031,21 +8046,18 @@ if (errors$uniq.length>0) {
         $image_errors = [];
         $onlyImages = TRUE;
         $savedEntity = $output['outer_table'] ?? $entity;
-        foreach ($media as $idx => $item) {
+        foreach ($uploadableMedia as $idx => $item) {
           [$type, $subtype] = explode(':', $item['media_type'] ?? 'Image:Local');
-          // No need to resend an existing image, or a media link, just local files.
-          if ($subtype === 'Local' && empty($item['id'])) {
-            if ($type !== 'Image') {
-              $onlyImages = FALSE;
-            }
-            // Final location is the Warehouse. Sets persist_auth to false if
-            // the last file.
-            $success = self::send_file_to_warehouse($item['path'], $idx < count($media) - 1, $writeTokens);
-            if ($success !== TRUE) {
-              // Record all files that fail to move successfully.
-              $image_overall_success = FALSE;
-              $image_errors[] = $success;
-            }
+          if ($type !== 'Image') {
+            $onlyImages = FALSE;
+          }
+          // Final location is the Warehouse. Sets persist_auth to false if
+          // the last file.
+          $success = self::send_file_to_warehouse($item['path'], $idx < count($uploadableMedia) - 1, $writeTokens);
+          if ($success !== TRUE) {
+            // Record all files that fail to move successfully.
+            $image_overall_success = FALSE;
+            $image_errors[] = $success;
           }
         }
         if (!$image_overall_success) {
@@ -10435,7 +10447,7 @@ HTML;
     self::get_resources();
     foreach ($handlers as $code) {
       // Dynamically find a resource to link us to the handler js file.
-      self::$required_resources[] = 'sref_handlers_'.$code;
+      self::add_resource('sref_handlers_'.$code);
     }
   }
 

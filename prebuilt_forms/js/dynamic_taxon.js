@@ -281,7 +281,7 @@ indiciaFns.hookDynamicAttrsAfterLoad = [];
               });
               scrolled = true;
             }
-            indiciaData.formSubmitted = false;
+            indiciaFns.resetFormSubmission($(el).closest('form')[0]);
             e.preventDefault();
           }
         });

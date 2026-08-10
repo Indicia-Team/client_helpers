@@ -297,7 +297,8 @@ class iform_mnhnl_citizen_science_1 implements PrebuiltFormInterface {
     }
 
     // Request automatic JS validation.
-    data_entry_helper::enable_validation('entry_form');
+    helper_base::preventFormDoubleSubmit('entry_form');
+    helper_base::enableValidation('entry_form');
 
     $r .= "<div id=\"controls\">\n";
 

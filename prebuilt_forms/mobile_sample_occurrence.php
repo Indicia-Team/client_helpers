@@ -603,8 +603,9 @@ EOD
    */
   protected static function renderHeader($args) {
     $r = "";
+    helper_base::preventFormDoubleSubmit('entry_form');
     // request automatic JS validation
-    data_entry_helper::enable_validation('entry_form');
+    helper_base::enableValidation('entry_form');
     return $r;
   }
 
