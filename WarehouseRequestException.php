@@ -47,8 +47,19 @@ final class WarehouseRequestException extends \RuntimeException {
     public readonly string $curlError,
     public readonly string $responseBody = '',
   ) {
+    $message = NULL;
+    if ($this->responseBody) {
+      $decoded = json_decode($this->responseBody, TRUE);
+      if (is_array($decoded) && isset($decoded['msg'])) {
+        $message = $decoded['msg'];
+      }
+    }
+    if (!$message) {
+      $message = $curlError ?: "Warehouse request failed with HTTP {$httpStatus}.";
+    }
+
     parent::__construct(
-      $curlError ?: "Warehouse request failed with HTTP {$httpStatus}.",
+      $message,
       $httpStatus ?: $curlErrno,
     );
   }
