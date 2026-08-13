@@ -7,7 +7,9 @@ jQuery(document).ready(function($) {
   }
 
   var hectadData;
-  var brcmap, brcyearly, brcphenology;
+  var brcmap;
+  var brcyearly;
+  var brcphenology = {};
 
   // Translate any attribute names
   fieldTransations = {};
@@ -67,7 +69,9 @@ jQuery(document).ready(function($) {
 
   // Attach hectad map priority event handlers
   $('#brc-hectad-map-priority').on('change', e => {
-    brcmap.redrawMap();
+    if (brcmap) {
+      brcmap.redrawMap();
+    }
   })
 
   // Attach hectad map threshold event handlers
@@ -104,7 +108,9 @@ jQuery(document).ready(function($) {
     } else {
       txt += 'Rejected records are excluded from this map. Unverified records are included.'
     }
-
+    if (!brcmap) {
+      return;
+    }
     brcmap.saveMap(false, {
       text: txt,
       //img: '/sites/default/files/irecord_logo.png',
@@ -127,7 +133,9 @@ jQuery(document).ready(function($) {
     if (getThresh(1) >= getThresh(2)) {
       setThresh(1, getThresh(2)-1);
     }
-    brcmap.redrawMap();
+    if (brcmap) {
+      brcmap.redrawMap();
+    }
   }
   function getThresh(n) {
     return Number($('#brc-hectad-map-thresh' + n).val())
@@ -171,7 +179,7 @@ jQuery(document).ready(function($) {
   periods.forEach(function(p) {
     var selector = ".brc-recsby" + p.id + "-chart";
     if (typeof(brccharts) !== "undefined" && $(selector).length) {
-      brcphenology = brccharts.phen1({
+      brcphenology[p.id] = brccharts.phen1({
         selector: selector,
         taxa: ['taxon'],
         width: 500,
@@ -267,12 +275,14 @@ jQuery(document).ready(function($) {
       val[period] = y.key[periodKey];
       return val;
     });
-    const completedData = normalisePhenologyData(phenData);
+    const completedData = normalisePhenologyData(phenData, period);
     var opts = {
       data: completedData,
       metrics: [{ prop: 'records', label: '', colour: 'blue' },],
     };
-    brcphenology.setChartOpts(opts);
+    if (brcphenology[period]) {
+      brcphenology[period].setChartOpts(opts);
+    }
   }
 
   /**
@@ -282,26 +292,25 @@ jQuery(document).ready(function($) {
    *
    * @param array data
    *   Phenology data.
+   * @param string period
+   *   Period type, either 'week' or 'month'.
    *
    * @returns
    *   Completed data.
    */
-  function normalisePhenologyData(data) {
-    const MAX_WEEKS = 53;
-
-    // Convert array to a lookup by week
-    const weekMap = data.reduce((acc, d) => {
-      acc[d.week] = d.records;
+  function normalisePhenologyData(data, period) {
+    const maxPeriods = period === 'week' ? 53 : 12;
+    const periodMap = data.reduce(function(acc, item) {
+      acc[item[period]] = item.records;
       return acc;
     }, {});
 
-    // Fill missing weeks
-    return Array.from({ length: MAX_WEEKS }, (_, i) => {
-      const week = i + 1;
+    return Array.from({length: maxPeriods}, function(_, index) {
+      const value = index + 1;
       return {
         taxon: data[0]?.taxon ?? null,
-        week,
-        records: weekMap[week] ?? 0
+        [period]: value,
+        records: periodMap[value] ?? 0
       };
     });
   }
