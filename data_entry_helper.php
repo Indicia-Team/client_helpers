@@ -1031,12 +1031,9 @@ JS;
       $dateTime = new DateTime();
       $attrArrayDate[] = 'max="' . $dateTime->format('Y-m-d') . '"';
     }
-
     if (!empty($options['minDate'])) {
       $attrArrayDate[] = 'min="' . $options['minDate'] . '"';
     }
-
-
     $options['attribute_list'] = implode(' ', $attrArray);
     // Options for date control if using a free text vague date input.
     $options['attribute_list_date'] = implode(' ', $attrArrayDate);
