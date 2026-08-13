@@ -611,7 +611,8 @@ class iform_group_edit implements PrebuiltFormInterface {
     $r .= '</form>';
     $r .= $hiddenPopupDivs;
 
-    data_entry_helper::enable_validation('entry_form');
+    helper_base::preventFormDoubleSubmit('entry_form');
+    helper_base::enableValidation('entry_form');
     // JavaScript to grab the filter definition and store in the form for
     // posting when the form is submitted.
     data_entry_helper::$javascript .= "

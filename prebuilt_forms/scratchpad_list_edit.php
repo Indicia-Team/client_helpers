@@ -190,7 +190,8 @@ class iform_scratchpad_list_edit implements PrebuiltFormInterface {
     $groupDefaults = ['linkIds' => [], 'defaultsForControl' => []];
     $metadataProperties = self::parseMetadataPropertiesConfig($args['metadata_properties'] ?? '');
     $r = "<form method=\"post\" id=\"entry_form\" action=\"$reloadPath\" enctype=\"multipart/form-data\">\n";
-    data_entry_helper::enable_validation('entry_form');
+    helper_base::preventFormDoubleSubmit('entry_form');
+    helper_base::enableValidation('entry_form');
     if (!empty($args['scratchpad_type_id'])) {
       $r .= data_entry_helper::hidden_text([
         'fieldname' => 'scratchpad_list:scratchpad_type_id',

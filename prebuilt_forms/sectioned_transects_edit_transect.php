@@ -499,7 +499,8 @@ class iform_sectioned_transects_edit_transect implements PrebuiltFormInterface {
         $r .= self::get_section_details_tab($auth, $args, $settings);
     }
     $r .= '</div>'; // controls
-    data_entry_helper::enable_validation('input-form');
+    helper_base::preventFormDoubleSubmit('input-form');
+    helper_base::enableValidation('input-form');
     helper_base::addLanguageStringsToJs('sectionedTransectsEditTransect', [
       'duplicateNameWarning' => 'There is already a transect with this name in the system. Please make your transect name unique before saving.',
       'sectionChangeConfirm' => 'Do you wish to save the currently unsaved changes you have made to the Section Details?',

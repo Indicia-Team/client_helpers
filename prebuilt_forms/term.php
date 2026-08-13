@@ -128,8 +128,9 @@ class iform_term implements PrebuiltFormInterface {
     $r .= data_entry_helper::hidden_text(array(
       'fieldname' => 'meaning:id'
     ));
-    // request automatic JS validation
-    data_entry_helper::enable_validation('entry_form');
+    helper_base::preventFormDoubleSubmit('entry_form');
+    // request automatic JS validation.
+    helper_base::enableValidation('entry_form');
     $r .= data_entry_helper::text_input(array(
       'label' => lang::get('Term'),
       'fieldname' => 'term:term',
@@ -139,7 +140,7 @@ class iform_term implements PrebuiltFormInterface {
     ));
     $r .= "<input type=\"submit\" name=\"form-submit\" id=\"delete\" value=\"Delete\" />\n";
     $r .= "<input type=\"submit\" name=\"form-submit\" value=\"Save\" />\n";
-    $r .= '<form>';
+    $r .= '</form>';
     self::set_breadcrumb($args);
     return $r;
   }

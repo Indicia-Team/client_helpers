@@ -996,6 +996,7 @@ JS;
       'default' => '',
       'isFormControl' => TRUE,
       'allowFuture' => FALSE,
+      'minDate' => '',
       'attributes' => [],
       'vagueLabel' => lang::get('Vague date mode'),
     ], $options);
@@ -1029,6 +1030,9 @@ JS;
     if (!$options['allowFuture']) {
       $dateTime = new DateTime();
       $attrArrayDate[] = 'max="' . $dateTime->format('Y-m-d') . '"';
+    }
+    if (!empty($options['minDate'])) {
+      $attrArrayDate[] = 'min="' . $options['minDate'] . '"';
     }
     $options['attribute_list'] = implode(' ', $attrArray);
     // Options for date control if using a free text vague date input.
@@ -1592,7 +1596,7 @@ JS;
     }
     self::add_resource('indiciaMapPanel');
     // Dynamically build a resource to link us to the driver js file.
-    self::$required_resources[] = 'georeference_default_' . $options['driver'];
+    self::add_resource('georeference_default_' . $options['driver']);
     // We need to see if there is a resource in the resource list for any
     // special files required by this driver. This will do nothing if the
     // resource is absent.
@@ -7260,8 +7264,10 @@ JS;
   }
 
   /**
-   * Method which populates data_entry_helper::$entity_to_load with the values from an existing
-   * record. Useful when reloading data to edit.
+   * Load existing record data from the database.
+   *
+   * Method which populates data_entry_helper::$entity_to_load with the values
+   * from an existing record. Useful when reloading data to edit.
    *
    * @param array $readAuth
      * Read authorisation tokens
@@ -7280,15 +7286,16 @@ JS;
    * @param bool $loadImages
    *   If set to true, then image information is loaded as well.
    */
-  public static function load_existing_record($readAuth, $entity, $id, $view = 'detail', $sharing = FALSE, $loadImages = FALSE) {
+  public static function load_existing_record(array $readAuth, $entity, $id, $view = 'detail', $sharing = FALSE, $loadImages = FALSE) {
     $records = self::get_population_data(array(
       'table' => $entity,
       'extraParams' => $readAuth + array('id' => $id, 'view' => $view),
       'nocache' => TRUE,
       'sharing' => $sharing
     ));
-    if (empty($records))
-      throw new exception(lang::get('The record you are trying to load does not exist.'));
+    if (empty($records)) {
+      throw new Exception(lang::get('The record you are trying to load does not exist.'));
+    }
     self::load_existing_record_from($records[0], $readAuth, $entity, $id, $view, $sharing, $loadImages);
   }
 
@@ -7317,8 +7324,8 @@ JS;
   /**
    * Build array of form data from loaded record query.
    *
-   * Version of load_existing_record which accepts an already queried record array from the database
-   * as an input parameter.
+   * Version of load_existing_record which accepts an already queried record
+   * array from the database as an input parameter.
    *
    * @param array $record
    *   Record loaded from the db.
@@ -7343,12 +7350,12 @@ JS;
     if (isset($record['error'])) {
       throw new Exception($record['error']);
     }
-    // set form mode
+    // Set form mode.
     if (self::$form_mode === NULL) {
       self::$form_mode = 'RELOAD';
     }
     $mappings = self::getControlFieldKeyMappings();
-    // populate the entity to load with the record data
+    // Populate the entity to load with the record data.
     foreach ($record as $key => $value) {
       self::$entity_to_load[array_key_exists("$entity:$key", $mappings) ? $mappings["$entity:$key"] : "$entity:$key"] = $value;
     }
@@ -7357,14 +7364,15 @@ JS;
       // @todo Would allow better localisation if the vague date formatting could be applied on the client.
       self::$entity_to_load['sample:date'] = empty(self::$entity_to_load['sample:display_date']) ?
         self::$entity_to_load['sample:date_start'] : self::$entity_to_load['sample:display_date'];
-      // If not a vague date, then the ISO formatted string from the db needs converting to local format.
+      // If not a vague date, then the ISO formatted string from the db needs
+      // converting to local format.
       if (isset(self::$entity_to_load['sample:date']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', self::$entity_to_load['sample:date'])) {
         $d = new DateTime(self::$entity_to_load['sample:date']);
         self::$entity_to_load['sample:date'] = $d->format(self::$date_format);
       }
     }
     elseif ($entity === 'occurrence') {
-      // prepare data to work in autocompletes
+      // Prepare data to work in autocompletes.
       if (!empty(self::$entity_to_load['occurrence:taxon']) && empty(self::$entity_to_load['occurrence:taxa_taxon_list:taxon']))
         self::$entity_to_load['occurrence:taxa_taxon_list_id:taxon'] = self::$entity_to_load['occurrence:taxon'];
     }
@@ -7417,7 +7425,8 @@ JS;
     }
     else {
       if (array_key_exists('parentControlId', $options)) {
-        // still want linked lists, even though we will have some items initially populated
+        // Still want linked lists, even though we will have some items
+        // initially populated.
         self::initLinkedLists($options);
       }
       $lookupItems = self::getListItemsFromOptions($options, 'selected');
@@ -7466,7 +7475,7 @@ JS;
     }
     $sortHandle = !empty($options['sortable']) ? '<span class="sort-handle"></span>' : '';
     if (isset($options['lookupValues'])) {
-      // lookup values are provided, so run these through the item template
+      // Lookup values are provided, so run these through the item template.
       foreach ($options['lookupValues'] as $key => $caption) {
         $selected = self::get_list_item_selected_attribute($key, $selectedItemAttribute, $options, $itemFieldname);
         $r[$key] = str_replace(
@@ -7477,13 +7486,15 @@ JS;
       }
     }
     else {
-      // lookup values need to be obtained from the database. ParentControlId indicates a linked list parent control whose value
-      // would filter this list.
+      // Lookup values need to be obtained from the database. ParentControlId
+      // indicates a linked list parent control whose value would filter this
+      // list.
       if (isset($options['parentControlId']) && !empty(data_entry_helper::$entity_to_load[$options['parentControlId']])) {
         $options['extraParams'][$options['filterField']] = data_entry_helper::$entity_to_load[$options['parentControlId']];
       }
       $response = self::get_population_data($options);
-      // if the response is empty, and a language has been set, try again without the language but asking for the preferred values.
+      // If the response is empty, and a language has been set, try again
+      // without the language but asking for the preferred values.
       if(count($response) === 0 &&
           (array_key_exists('iso', $options['extraParams']) || array_key_exists('language_iso', $options['extraParams']))) {
         unset($options['extraParams']['iso']);
@@ -7507,7 +7518,8 @@ JS;
             }
             $value = $record[$options['valueField']];
             $selected = self::get_list_item_selected_attribute($value, $selectedItemAttribute, $options, $itemFieldname);
-            // If an array field and we are loading an existing value, then the value needs to store the db ID otherwise we loose the link
+            // If an array field and we are loading an existing value, then the
+            // value needs to store the db ID otherwise we loose the link.
             if ($itemFieldname)
               $value .= ":$itemFieldname";
             if (!empty($record['preferred_image_path']) && !empty($options['termImageSize'])) {
@@ -7540,15 +7552,24 @@ HTML;
   }
 
   /**
-   * Returns the selected="selected" or checked="checked" attribute required to set a default item in a list.
-   * @param string $value The current item's value.
-   * @param string $selectedItemAttribute Name of the attribute that should be set in each list element if the item is selected/checked. For
-   * option elements, pass "selected", for checkbox inputs, pass "checked".
-   * @param mixed $itemFieldname Will return the fieldname that must be associated with this particular value if using an array input
-   * such as a listbox (multiselect select).
-   * @param array $options Control options array which contains the "default" entry.
+   * Gets the selected or checked attribute for a list item if selected.
+   *
+   * Returns the selected="selected" or checked="checked" attribute required to
+   * set a default item in a list.
+   *
+   * @param string $value
+   *   The current item's value.
+   * @param string $selectedItemAttribute
+   *   Name of the attribute that should be set in each list element if the
+   *   item is selected/checked. For option elements, pass "selected", for
+   *   checkbox inputs, pass "checked".
+   * @param array $options
+   *   Control options array which contains the "default" entry.
+   * @param mixed $itemFieldname
+   *   Will return the fieldname that must be associated with this particular
+   *   value if using an array input such as a listbox (multiselect select).
    */
-  private static function get_list_item_selected_attribute($value, $selectedItemAttribute, $options, &$itemFieldname) {
+  private static function get_list_item_selected_attribute($value, $selectedItemAttribute, array $options, &$itemFieldname) {
     $itemFieldname = FALSE;
     if (isset($options['default'])) {
       $default = $options['default'];
@@ -7556,8 +7577,9 @@ HTML;
       if (is_array($default)) {
         $selected = FALSE;
         foreach ($default as $defVal) {
-          // default value array entries can be themselves an array, so that they store the fieldname as well as the value.
-          // Or they can be just a plain value.
+          // Default value array entries can be themselves an array, so that
+          // they store the fieldname as well as the value. Or they can be just
+          // a plain value.
           if (is_array($defVal)) {
             if ($defVal['default'] == $value) {
               $selected = TRUE;
@@ -7581,11 +7603,15 @@ HTML;
   }
 
   /**
-   * Where there are 2 linked lists on a page, initialise the JavaScript required to link the lists.
+   * Initialise linked list UI elements.
    *
-   * @param array Options array of the child linked list.
+   * Where there are 2 linked lists on a page, initialise the JavaScript
+   * required to link the lists.
+   *
+   * @param array $options
+   *   Options array of the child linked list.
    */
-  private static function initLinkedLists($options) {
+  private static function initLinkedLists(array $options) {
     // Setup JavaScript to do the population when the parent control changes.
     $parentControlId = str_replace(':', '\\:', $options['parentControlId']);
     if (!empty($options['report'])) {
@@ -7648,13 +7674,18 @@ HTML;
 
   /**
    * Internal method to output either a checkbox group or a radio group.
-   * @param array $options Control options array
-   * @param string $type Name of the input element's type attribute, e.g. radio or checkbox.
-   * When selected, an additional textarea attribute can be shown to capture the "Other" information.
+   *
+   * @param array $options
+   *   Control options array
+   * @param string $type
+   *   Name of the input element's type attribute, e.g. radio or checkbox. When
+   *   selected, an additional textarea attribute can be shown to capture the
+   *   "Other" information.
    */
-  private static function check_or_radio_group($options, $type) {
+  private static function check_or_radio_group(array $options, $type) {
     $checkboxOtherIdx = FALSE;
-    // Checkboxes are inherantly multivalue, whilst radio buttons are single value.
+    // Checkboxes are inherantly multivalue, whilst radio buttons are single
+    // value.
     $options = array_merge(
       array(
         'sep' => ' ', // space allows lines to flow, otherwise all one line.
@@ -7666,9 +7697,10 @@ HTML;
       ),
       $options
     );
-    // class picks up a default of blank, so we can't use array_merge to overwrite it
+    // Class picks up a default of blank, so we can't use array_merge to
+    // overwrite it.
     $options['class'] = trim($options['class'] . ' control-box');
-    // We want to apply validation to the inner items, not the outer control
+    // We want to apply validation to the inner items, not the outer control.
     if (array_key_exists('validation', $options)) {
       $itemClass = self::build_validation_class($options);
       unset($options['validation']);
@@ -7698,19 +7730,24 @@ HTML;
         $checkboxOtherIdx = $idx - 1;
     }
     $options['items'] = $items;
-    // We don't want to output for="" in the top label, as it is not directly associated to a button
+    // We don't want to output for="" in the top label, as it is not directly
+    // associated to a button.
     $options['labelTemplate'] = (isset($options['label']) && substr($options['label'], -1) == '?' ? 'toplabelNoColon' : 'toplabel');
     if (isset($itemClass) && !empty($itemClass) && strpos($itemClass, 'required') !== FALSE) {
       $options['suffixTemplate'] = 'requiredsuffix';
     }
     $r = self::apply_template($options['template'], $options);
-    // reset the old template
+    // Reset the old template.
     unset($options['labelTemplate']);
-    // Is there an option for "Other", which requires an additional attribute to display to capture the other information?
+    // Is there an option for "Other", which requires an additional attribute
+    // to display to capture the other information?
     if (!empty($options['otherItemId'])&&!empty($options['otherValueAttrId'])) {
-      //Code elsewhere can automatically draw attributes to the page if the user has specified the * option in the form structure.
-      //However the sample attribute that holds the "other" value is already linked to the checkbox group. Save the id of the Other value
-      //sample attribute so that the automatic attribute display code knows not to draw it, otherwise it would appear twice.
+      // Code elsewhere can automatically draw attributes to the page if the
+      // user has specified the * option in the form structure. However the
+      // sample attribute that holds the "other" value is already linked to the
+      // checkbox group. Save the id of the Other value sample attribute so
+      // that the automatic attribute display code knows not to draw it,
+      // otherwise it would appear twice.
       self::$handled_attributes[] = $options['otherValueAttrId'];
       // find out the attr table we are concerned with
       switch (substr($options['otherValueAttrId'], 0, 3)) {
@@ -7719,14 +7756,16 @@ HTML;
         case 'loc': $otherAttrTable='location'; break;
         default: throw new exception($options['otherValueAttrId'] . ' not supported for otherValueAttrId option.');
       }
-      //When in edit mode then we need to collect the Other value the user previously filled in.
+      // When in edit mode then we need to collect the Other value the user
+      // previously filled in.
       if (!empty(self::$entity_to_load["{$otherAttrTable}:id"])) {
         $readAuth['auth_token'] = $options['extraParams']['auth_token'];
         $readAuth['nonce'] = $options['extraParams']['nonce'];
         $entityId = self::$entity_to_load["{$otherAttrTable}:id"];
-        // $options['otherValueAttrId'] is like xxxAttr:n where n is the attribute Id.
+        // $options['otherValueAttrId'] is like xxxAttr:n where n is the
+        // attribute Id.
         $attrId = substr($options['otherValueAttrId'], 8);
-        //Get the existing value for the Other textbox
+        // Get the existing value for the Other textbox.
         $otherAttributeData = data_entry_helper::get_population_data([
           'table' => "{$otherAttrTable}_attribute_value",
           'extraParams' => $readAuth + [
@@ -7735,11 +7774,13 @@ HTML;
           'nocache' => TRUE,
         ]);
       }
-      //Finally draw the Other textbox to the screen, then use jQuery to hide/show the box at the appropriate time.
+      // Finally draw the Other textbox to the screen, then use jQuery to hide
+      // or show the box at the appropriate time.
       $otherBoxOptions['id'] = $options['otherValueAttrId'];
       $otherBoxOptions['fieldname'] = $options['otherValueAttrId'];
-      // When the field is populated with existing data, the name includes the sample_attribute_value id, this is used on submission.
-      // Don't include it if it isn't pre-populated.
+      // When the field is populated with existing data, the name includes the
+      // sample_attribute_value id, this is used on submission. Don't include
+      // it if it isn't pre-populated.
       if (isset($otherAttributeData[0]['id'])) {
         $otherBoxOptions['fieldname'] .= ':'.$otherAttributeData[0]['id'];
       }
@@ -7755,13 +7796,15 @@ HTML;
       $otherAttributeIdSafe = helper_base::jq_esc($options['otherValueAttrId']);
       // Unique javascript function name needed for each instance.
       $showHideFn = 'show_hide_other_' . str_replace(':', '', $options['otherValueAttrId']) . '()';
-      //Set the visibility of the "Other" textbox based on the checkbox when the page loads, but also when the checkbox changes.
+      // Set the visibility of the "Other" textbox based on the checkbox when
+      // the page loads, but also when the checkbox changes.
       self::$javascript .= $showHideFn . ';
         $("input[name='.$mainAttributeNameSafe.']").on("change", function() {
           ' . $showHideFn . ';
         });
       ';
-      //Function that will show and hide the "Other" textbox depending on the value of the checkbox.
+      // Function that will show and hide the "Other" textbox depending on the
+      // value of the checkbox.
       self::$javascript .= '
       function ' . $showHideFn . ' {
         if ($("#'.$mainAttributeIdSafe.'\\\\:'.$checkboxOtherIdx.'").is(":checked")) {
@@ -7778,27 +7821,30 @@ HTML;
   }
 
   /**
+   * Enable jQuery tabs for the form.
+   *
    * Helper method to enable the support for tabbed interfaces for a div.
-   * The jQuery documentation describes how to specify a list within the div which defines the tabs that are present.
-   * This method also automatically selects the first tab that contains validation errors if the form is being
+   *
+   * The jQuery documentation describes how to specify a list within the div
+   * which defines the tabs that are present. This method also automatically
+   * selects the first tab that contains validation errors if the form is being
    * reloaded after a validation attempt.
    *
-   * @param array $options Options array with the following possibilities:<ul>
-   * <li><b>divId</b><br/>
-   * Optional. The id of the div which will be tabbed. If not specified then the caller is
-   * responsible for calling the jQuery tabs plugin - this method just links the appropriate
-   * jQuery files.</li>
-   * <li><b>style</b><br/>
-   * Optional. Possible values are tabs (default) or wizard. If set to wizard, then the tab header
-   * is not displayed and the navigation should be provided by the tab_button control. This
-   * must be manually added to each tab page div.</li>
-   * <li><b>navButtons</b>
-   * Are Next and Previous buttons used to move between pages? Always true for wizard style otherwise
-   * navigation is impossible and defaults to false for tabs style.</li>
-   * <li><b>progressBar</b><br/>
-   * Optional. Set to true to output a progress header above the tabs/wizard which shows which
-   * stage the user is on out of the sequence of steps in the wizard.</li>
-   * </ul>
+   * @param array $options
+   *   Options array with the following possibilities:
+   *   * *divId* - Optional. The id of the div which will be tabbed. If not
+   *     specified then the caller is responsible for calling the jQuery tabs
+   *     plugin - this method just links the appropriate jQuery files.
+   *   * *style* - Optional. Possible values are tabs (default) or wizard. If
+   *     set to wizard, then the tab header is not displayed and the navigation
+   *     should be provided by the tab_button control. This must be manually
+   *     added to each tab page div.
+   *   * *navButtons* - Are Next and Previous buttons used to move between
+   *     pages? Always true for wizard style otherwise navigation is impossible
+   *     and defaults to false for tabs style.
+   *   * *progressBar* - Optional. Set to true to output a progress header
+   *     above the tabs/wizard which shows which stage the user is on out of
+   *     the sequence of steps in the wizard.
    *
    * @link http://docs.jquery.com/UI/Tabs
    */
@@ -7813,33 +7859,39 @@ HTML;
       $options['navButtons'] = $options['style'] === 'wizard';
     // Only do anything if the id of the div to be tabified is specified
     if (!empty($options['divId'])) {
-      // A jquery selector for the element which must be at the top of the page when moving to the next page.
-      // Could be the progress bar or the tabbed div itself.
+      // A jquery selector for the element which must be at the top of the page
+      // when moving to the next page. Could be the progress bar or the tabbed
+      // div itself.
       $topSelector = $options['progressBar'] ? '.wiz-prog' : '#'.$options['divId'];
       $divId = $options['divId'];
-      // Scroll to the top of the page. This may be required if subsequent tab pages are longer than the first one, meaning the
-      // browser scroll bar is too long making it possible to load the bottom blank part of the page if the user accidentally
-      // drags the scroll bar while the page is loading.
+      // Scroll to the top of the page. This may be required if subsequent tab
+      // pages are longer than the first one, meaning the browser scroll bar is
+      // too long making it possible to load the bottom blank part of the page
+      // if the user accidentally drags the scroll bar while the page is loading.
       self::$javascript .= "scroll(0,0);\n";
 
-      // Client-side validation only works on active tabs so validate on tab change
+      // Client-side validation only works on active tabs so validate on tab
+      // change.
       if ($options['style'] === 'wizard' || $options['navButtons']) {
         //Add javascript for moving through wizard
         self::$javascript .= "setupTabsNextPreviousButtons('$divId', '$topSelector');\n";
       }
-      //Add javascript for validation on changing tabs and linking the wizard submit button to form submit
+      // Add javascript for validation on changing tabs and linking the wizard
+      // submit button to form submit.
       self::$javascript .= "setupTabsBeforeActivate('$divId');\n";
       self::$javascript .= "indiciaData.langErrorsOnTab = '".lang::get('Before continuing, some of the values in the input ' .
           'boxes on this page need checking. They have been highlighted on the form for you.') . "';\n";
 
-      // We put this javascript into $late_javascript so that it can come after the other controls.
-      // This prevents some obscure bugs - e.g. OpenLayers maps cannot be centered properly on hidden
-      // tabs because they have no size
+      // We put this javascript into $late_javascript so that it can come after
+      // the other controls. This prevents some obscure bugs - e.g. OpenLayers
+      // maps cannot be centered properly on hidden tabs because they have no
+      // size.
       $uniq = preg_replace("/[^a-z]+/", "", strtolower($divId));
       self::$late_javascript .= "var tabs$uniq = $(\"#$divId\").tabs();\n";
-      // find any errors on the tabs.
+      // Find any errors on the tabs.
       self::$late_javascript .= "var errors$uniq=$(\"#$divId .ui-state-error\");\n";
-      // select the tab containing the first error, if validation errors are present
+      // Select the tab containing the first error, if validation errors are
+      // present.
       self::$late_javascript .= "
 if (errors$uniq.length>0) {
   indiciaFns.activeTab(tabs$uniq, $(errors{$uniq}[0]).parents('.ui-tabs-panel')[0].id);
@@ -7856,7 +7908,8 @@ if (errors$uniq.length>0) {
         self::$late_javascript .= "$('#$divId .ui-tabs-nav').hide();\n";
       }
     }
-    // add a progress bar to indicate how many steps are complete in the wizard
+    // Add a progress bar to indicate how many steps are complete in the
+    // wizard.
     if (isset($options['progressBar']) && $options['progressBar'] === TRUE) {
       data_entry_helper::add_resource('wizardprogress');
       $progressBarOptions = array_merge(array('divId' => $divId), $options['progressBarOptions']);
@@ -7868,11 +7921,15 @@ if (errors$uniq.length>0) {
   }
 
   /**
-   * Outputs the ul element that needs to go inside a tabified div control to define the header tabs.
-   * This is required for wizard interfaces as well.
-   * @param array $options Options array with the following possibilities:<ul>
-   * <li><b>tabs</b><br/>
-   * Array of tabs, with each item being the tab title, keyed by the tab ID including the #.</li>
+   * Output the header for a set of tabs.
+   *
+   * Outputs the ul element that needs to go inside a tabified div control to
+   * define the header tabs. This is required for wizard interfaces as well.
+   *
+   * @param array $options
+   *   Options array with the following possibilities:
+   *   * *tabs* - Array of tabs, with each item being the tab title, keyed by
+   *   the tab ID including the #.
    */
   public static function tab_header($options) {
     $options = self::check_options($options);
@@ -7894,8 +7951,11 @@ if (errors$uniq.length>0) {
   }
 
   /**
-   * Either takes the passed in submission, or creates it from the post data if this is null, and forwards
-   * it to the data services for saving as a member of the entity identified.
+   * POST data to the Indicia waraehouse.
+   *
+   * Either takes the passed in submission, or creates it from the post data if
+   * this is null, and forwards it to the data services for saving as a member
+   * of the entity identified.
 
    * @param string $entity
    *   Name of the top level entity being submitted, e.g. sample or occurrence.
@@ -7957,8 +8017,16 @@ if (errors$uniq.length>0) {
           $media[] = array('path' => $file['name']);
         }
       }
+      $uploadableMedia = [];
+      foreach ($media as $item) {
+        [$type, $subtype] = explode(':', $item['media_type'] ?? 'Image:Local');
+        // No need to resend an existing image, or a media link, just local files.
+        if ($subtype === 'Local' && empty($item['id'])) {
+          $uploadableMedia[] = $item;
+        }
+      }
       // if there are images, we will send them after the main post, so we need to persist the write nonce
-      if (count($media) > 0) {
+      if (count($uploadableMedia) > 0) {
         $postargs .= '&persist_auth=true';
       }
       $response = self::http_post($request, $postargs, FALSE);
@@ -7975,21 +8043,18 @@ if (errors$uniq.length>0) {
         $image_errors = [];
         $onlyImages = TRUE;
         $savedEntity = $output['outer_table'] ?? $entity;
-        foreach ($media as $idx => $item) {
+        foreach ($uploadableMedia as $idx => $item) {
           [$type, $subtype] = explode(':', $item['media_type'] ?? 'Image:Local');
-          // No need to resend an existing image, or a media link, just local files.
-          if ($subtype === 'Local' && empty($item['id'])) {
-            if ($type !== 'Image') {
-              $onlyImages = FALSE;
-            }
-            // Final location is the Warehouse. Sets persist_auth to false if
-            // the last file.
-            $success = self::send_file_to_warehouse($item['path'], $idx < count($media) - 1, $writeTokens);
-            if ($success !== TRUE) {
-              // Record all files that fail to move successfully.
-              $image_overall_success = FALSE;
-              $image_errors[] = $success;
-            }
+          if ($type !== 'Image') {
+            $onlyImages = FALSE;
+          }
+          // Final location is the Warehouse. Sets persist_auth to false if
+          // the last file.
+          $success = self::send_file_to_warehouse($item['path'], $idx < count($uploadableMedia) - 1, $writeTokens);
+          if ($success !== TRUE) {
+            // Record all files that fail to move successfully.
+            $image_overall_success = FALSE;
+            $image_errors[] = $success;
           }
         }
         if (!$image_overall_success) {
@@ -10379,7 +10444,7 @@ HTML;
     self::get_resources();
     foreach ($handlers as $code) {
       // Dynamically find a resource to link us to the handler js file.
-      self::$required_resources[] = 'sref_handlers_'.$code;
+      self::add_resource('sref_handlers_'.$code);
     }
   }
 

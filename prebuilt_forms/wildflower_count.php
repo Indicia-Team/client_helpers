@@ -209,7 +209,8 @@ class iform_wildflower_count implements PrebuiltFormInterface {
     global $indicia_templates;
     $indicia_templates['starredSuffix']="*<br/>\n";
     $indicia_templates['validation_message'] = "<span class=\"ui-state-error-text\">{error}</span>\n";
-    data_entry_helper::enable_validation('entry-form');
+    helper_base::preventFormDoubleSubmit('entry-form');
+    helper_base::enableValidation('entry-form');
     $r .= '<form method="post" action="" id="entry-form">';
     $r .= '<div id="tabs">';
     data_entry_helper::enable_tabs(array('divId' => 'tabs','navButtons'=>true));

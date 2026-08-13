@@ -973,7 +973,8 @@ class iform_wwt_colour_marked_report implements PrebuiltFormInterface {
     }
     // request automatic JS validation
     if (!isset($args['clientSideValidation']) || $args['clientSideValidation']) {
-      data_entry_helper::enable_validation('entry_form');
+      helper_base::preventFormDoubleSubmit('entry_form');
+      helper_base::enableValidation('entry_form');
       // override the default invalidHandler to activate the first accordion panels which has an error
       global $indicia_templates;
       $indicia_templates['invalid_handler_javascript'] = "function(form, validator) {

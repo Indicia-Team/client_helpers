@@ -101,7 +101,8 @@ class iform_custom_verification_ruleset_edit implements PrebuiltFormInterface {
     $auth = data_entry_helper::get_read_write_auth($conn['website_id'], $conn['password']);
     $config = \Drupal::config('iform.settings');
     $reloadPath = self::getReloadPath();
-    data_entry_helper::enable_validation('entry_form');
+    helper_base::preventFormDoubleSubmit('entry_form');
+    helper_base::enableValidation('entry_form');
     if (!empty($_GET['custom_verification_ruleset_id'])) {
       self::loadExistingRuleset($_GET['custom_verification_ruleset_id'], $auth);
     }

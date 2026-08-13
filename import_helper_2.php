@@ -1025,6 +1025,8 @@ class import_helper_2 extends helper_base {
   private static function globalValuesForm(array $options) {
     self::addLanguageStringsToJs('import_helper_2', [
       'backgroundProcessingDone' => 'Background processing done',
+      'chooseDifferentFile' => 'Choose a different file',
+      'configInitialisationFailed' => 'This import could not be prepared. Choose a different file to try again.',
       'extractingFile' => 'Extracting the data from the Zip file.',
       'errorExtractingZip' => 'An error occurred on the server whilst extracting the Zip file',
       'errorUploadingFile' => 'An error occurred on the server whilst uploading the file',

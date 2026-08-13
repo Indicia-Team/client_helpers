@@ -385,7 +385,8 @@ class iform_subscribe_species_alert implements PrebuiltFormInterface {
     $form .= "</fieldset>\n";
     $form .= '<input type="Submit" value="Subscribe" />';
     $form .= '</form>';
-    data_entry_helper::enable_validation('entry_form');
+    helper_base::preventFormDoubleSubmit('entry_form');
+    helper_base::enableValidation('entry_form');
     iform_load_helpers(['map_helper']);
     $mapOptions = iform_map_get_map_options($args, $auth['read']);
     $map = map_helper::map_panel($mapOptions);

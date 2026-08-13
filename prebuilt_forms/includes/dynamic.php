@@ -514,9 +514,10 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
     if (call_user_func([self::$called_class, 'getPageType']) === PageType::DataEntry) {
       // Make sure the form action points back to this page.
       $reloadPath = call_user_func([self::$called_class, 'getReloadPath'], $args['available_for_groups']);
+      helper_base::preventFormDoubleSubmit('entry_form');
       // Request automatic JS validation.
       if (!isset($args['clientSideValidation']) || $args['clientSideValidation']) {
-        data_entry_helper::enable_validation('entry_form');
+        helper_base::enableValidation('entry_form');
       }
       return "<form method=\"post\" id=\"entry_form\" action=\"$reloadPath\" enctype=\"multipart/form-data\">\n";
     }

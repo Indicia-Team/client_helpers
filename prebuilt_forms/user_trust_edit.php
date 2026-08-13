@@ -179,7 +179,8 @@ class iform_user_trust_edit implements PrebuiltFormInterface {
       });\n";
     }
     $r .= '</form>';
-    data_entry_helper::enable_validation('entry_form');
+    helper_base::preventFormDoubleSubmit('entry_form');
+    helper_base::enableValidation('entry_form');
     return $r;
   }
 

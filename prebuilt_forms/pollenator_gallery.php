@@ -485,13 +485,15 @@ class iform_pollenator_gallery implements PrebuiltFormInterface {
     $language = iform_lang_iso_639_2($args['language']);
 
 	drupal_add_js(\Drupal::service('extension.path.resolver')->getPath('module', 'iform') .'/media/js/jquery.form.js', 'module');
-	data_entry_helper::link_default_stylesheet();
-	data_entry_helper::add_resource('jquery_form');
-	data_entry_helper::add_resource('jquery_ui');
-	if($args['language'] != 'en')
-		data_entry_helper::add_resource('jquery_ui_'.$args['language']);
-	data_entry_helper::enable_validation('new-comments-form'); // don't care about ID itself, just want resources
-	data_entry_helper::add_resource('autocomplete');
+	helper_base::link_default_stylesheet();
+	helper_base::add_resource('jquery_form');
+	helper_base::add_resource('jquery_ui');
+	if ($args['language'] != 'en') {
+		helper_base::add_resource('jquery_ui_'.$args['language']);
+	}
+	helper_base::preventFormDoubleSubmit('new-comments-form');
+	helper_base::enableValidation('new-comments-form'); // don't care about ID itself, just want resources
+	helper_base::add_resource('autocomplete');
 	iform_load_helpers(['map_helper']);
 
 	$occID= '';

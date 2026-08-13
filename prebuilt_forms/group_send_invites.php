@@ -115,7 +115,9 @@ class iform_group_send_invites implements PrebuiltFormInterface {
     $r .= '<button type="button" class="' . $indicia_templates['buttonDefaultClass'] . '" id="not-now-button" ' .
         'onclick="window.location.href=\'' . hostsite_get_url($args['redirect_on_success']) . '\'">' . lang::get('Not Now') . "</button>\n";
     $r .= '</form>';
-    data_entry_helper::enable_validation('entry_form');
+
+    helper_base::preventFormDoubleSubmit('entry_form');
+    helper_base::enableValidation('entry_form');
     return $r;
   }
 

@@ -126,19 +126,20 @@ class iform_pollenator_reidentify implements PrebuiltFormInterface {
   public static function get_form($args, $nid) {
 	$r = '';
 	drupal_add_js(\Drupal::service('extension.path.resolver')->getPath('module', 'iform') .'/media/js/jquery.form.js', 'module');
-	data_entry_helper::link_default_stylesheet();
-	data_entry_helper::add_resource('jquery_form');
-	data_entry_helper::add_resource('jquery_ui');
-	data_entry_helper::add_resource('openlayers');
-	data_entry_helper::enable_validation('new-comments-form'); // don't care about ID itself, just want resources
-	data_entry_helper::add_resource('autocomplete');
+	helper_base::link_default_stylesheet();
+	helper_base::add_resource('jquery_form');
+	helper_base::add_resource('jquery_ui');
+	helper_base::add_resource('openlayers');
+	helper_base::preventFormDoubleSubmit('new-comments-form');
+	helper_base::enableValidation('new-comments-form'); // don't care about ID itself, just want resources
+	helper_base::add_resource('autocomplete');
 
 	$uid = hostsite_get_user_field('id');
 	$email = hostsite_get_user_field('mail');
 	$username = hostsite_get_user_field('name');
 	// Get authorisation tokens to update and read from the Warehouse.
-	$readAuth = data_entry_helper::get_read_auth($args['website_id'], $args['password']);
-	$svcUrl = data_entry_helper::$base_url.'/index.php/services';
+	$readAuth = helper_base::get_read_auth($args['website_id'], $args['password']);
+	$svcUrl = helper_base::$base_url.'/index.php/services';
 
 	// note we have to proxy the post. Every time a write transaction is carried out, the write nonce is trashed.
 	// For security reasons we don't want to give the user the ability to generate their own nonce, so we use
