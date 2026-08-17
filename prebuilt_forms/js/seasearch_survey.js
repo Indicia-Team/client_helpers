@@ -14,7 +14,6 @@ jQuery(document).ready(function($) {
       id : 'sample_medium-sample_medium-' + habitatIndex,
       upload : '1',
       maxFileCount : '4',
-      autoupload : '1',
       msgUploadError : 'An error occurred uploading the file.',
       msgFileTooBig : 'The image file cannot be uploaded because it is larger than the maximum file size allowed.',
       runtimes : 'html5,flash,silverlight,html4',
