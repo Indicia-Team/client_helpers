@@ -1082,8 +1082,6 @@ JS;
    *     to the translated string for "Files".
    *   * uploadSelectBtnCaption - Set this to override the caption for the
    *     button for selecting files to upload.
-   *   * uploadStartBtnCaption - Set this to override the caption for the start
-   *     upload button, which is only visible if autoUpload is false.
    *   * useFancybox - Defaults to true. If true, then image previews use the
    *     Fancybox plugin to display a "lightbox" effect when clicked on.
    *   * imageWidth - Defaults to 200. Number of pixels wide the image previews
@@ -1100,9 +1098,6 @@ JS;
    *     to 8. Set to false to allow unlimited files.
    *   * maxUploadSize - Maximum file size to allow in bytes. This limits file
    *     selection. PHP settings on server may limit upload.
-   *   * autoupload - Defaults to true. If false, then a button is displayed
-   *     which the user must click to initiate upload of the files currently in
-   *     the queue.
    *   * msgUploadError - Use this to override the message displayed for a
    *     generic file upload error.
    *   * msgFileTooBig - Use this to override the message displayed when the
@@ -1184,7 +1179,6 @@ JS;
       'msgUploadError' => lang::get('upload error'),
       'msgFileTooBig' => lang::get('file too big for warehouse'),
       'runtimes' => ['html5', 'flash', 'silverlight', 'html4'],
-      'autoupload' => TRUE,
       'imageWidth' => 200,
       'uploadScript' => "{$relpath}upload.php",
       'destinationFolder' => self::getInterimImageFolder('domain'),
@@ -1236,7 +1230,7 @@ JS;
       // Just pass the options array through.
       $idx = 0;
       foreach ($options as $option => $value) {
-        if (is_array($value) || is_object($value) || is_null($value)) {
+        if (is_array($value) || is_object($value) || is_null($value) || is_bool($value)) {
           $value = json_encode($value);
         }
         else {
@@ -1345,6 +1339,9 @@ JS;
    *     against.
    *   * taxonControlId - Required. The control to update with the result of
    *     the image classification.
+   *   * mediaControlId - Optional. The file upload control to receive
+   *     classified images in single-record mode. Defaults to
+   *     occurrence_medium-default.
    *   * checklist - set to true if taxonControlId points to a species
    *     checklist or false if taxonControlId is a single record input. Default
    *     is true.
