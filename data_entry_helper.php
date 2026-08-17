@@ -1339,6 +1339,9 @@ JS;
    *     against.
    *   * taxonControlId - Required. The control to update with the result of
    *     the image classification.
+   *   * mediaControlId - Optional. The file upload control to receive
+   *     classified images in single-record mode. Defaults to
+   *     occurrence_medium-default.
    *   * checklist - set to true if taxonControlId points to a species
    *     checklist or false if taxonControlId is a single record input. Default
    *     is true.
