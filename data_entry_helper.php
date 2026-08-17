@@ -1236,7 +1236,7 @@ JS;
       // Just pass the options array through.
       $idx = 0;
       foreach ($options as $option => $value) {
-        if (is_array($value) || is_object($value) || is_null($value)) {
+        if (is_array($value) || is_object($value) || is_null($value) || is_bool($value)) {
           $value = json_encode($value);
         }
         else {
