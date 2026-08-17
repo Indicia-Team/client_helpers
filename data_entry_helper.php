@@ -8224,7 +8224,7 @@ if (errors$uniq.length>0) {
       $hasDataIgnoreAttrs = array_key_exists($tableId, $allHasDataIgnoreAttrs) ?
         $allHasDataIgnoreAttrs[$tableId] : [];
       // use default value of $include_if_any_data or override with a table specific value
-      $include_if_any_data = array_key_exists($tableId, $allRowInclusionCheck) && $allRowInclusionCheck[$tableId] = 'hasData' ?
+      $include_if_any_data = array_key_exists($tableId, $allRowInclusionCheck) && $allRowInclusionCheck[$tableId] === 'hasData' ?
           TRUE : $include_if_any_data;
       // Determine if this record is for presence, absence or nothing.
       $present = self::wrap_species_checklist_record_present($record, $include_if_any_data,
