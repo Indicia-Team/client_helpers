@@ -733,9 +733,11 @@ HTML;
         'applyFilterRowToSources',
         'availableColumns',
         'columns',
+        'pageChangeScrollPosition',
         'responsiveOptions',
         'rowClasses',
         'rowsPerPageOptions',
+        'selectFirstOnPageChange',
       ]
     );
     if (!empty($options['scrollY']) && !preg_match('/^-?\d+px$/', $options['scrollY'])) {
@@ -791,11 +793,13 @@ HTML;
       'includeMultiSelectTool',
       'includePager',
       'keyboardNavigation',
+      'pageChangeScrollPosition',
       'popupImageGrouping',
       'responsive',
       'responsiveOptions',
       'rowClasses',
       'rowsPerPageOptions',
+      'selectFirstOnPageChange',
       'scrollY',
       'source',
       'sortable',
