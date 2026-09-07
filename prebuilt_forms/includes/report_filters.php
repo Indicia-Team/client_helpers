@@ -1223,24 +1223,26 @@ class filter_source extends FilterBase {
     </li>
 HTML;
         }
-        $r .= <<<HTML
-<div id="filter-websites" class="filter-popup-columns">
-  <h3>$lang[websites]</h3>
-  $websitesFilterInput
-  $websitesOpSelect
-  <ul id="website-list-checklist">
-    $websiteListItems
-  </ul>
-</div>
-
-HTML;
+        $websiteListStyle = '';
         $selectWebsiteFirstInfo = "<p class=\"alert alert-info\" style=\"display: none\">$lang[selectWebsiteToLoadSurveys]</p>";
       }
       else {
-        $website = $websites[0];
-        $r .= "<div id=\"website-list-checklist\" style=\"display: none\"><input type=\"checkbox\" value=\"$website[id]\" id=\"check-website-$website[id]\" checked/></div>";
+        $websiteListItems = empty($websites) ? '' : '<li><input type="checkbox" value="' . $websites[0]['id'] . '" id="check-website-' . $websites[0]['id'] . '" checked/></li>';
+        $websiteListStyle = ' style="display: none"';
         $selectWebsiteFirstInfo = '';
       }
+      $r .= <<<HTML
+        <div id="filter-websites" class="filter-popup-columns"$websiteListStyle>
+          <h3>$lang[websites]</h3>
+          $websitesFilterInput
+          $websitesOpSelect
+          <ul id="website-list-checklist">
+            $websiteListItems
+          </ul>
+          <p id="website-list-status" class="alert alert-info" style="display: none"></p>
+        </div>
+
+        HTML;
     }
     else {
       // If running on the warehouse then use a single website id (as the user
@@ -1686,20 +1688,12 @@ function report_filter_panel(array $readAuth, $options, $website_id, &$hiddenStu
   if ($options['allowSave'] && $options['admin']) {
     if (empty($_GET['filters_user_id'])) {
       // New filter to create, so sharing type can be edited.
-      $reload = data_entry_helper::get_reload_link_parts();
-      $reloadPath = $reload['path'];
-      if (count($reload['params'])) {
-        $reloadPath .= '?' . data_entry_helper::array_to_query_string($reload['params']);
-      }
-      $r .= "<form action=\"$reloadPath\" method=\"post\" >";
       $r .= data_entry_helper::select([
         'label' => lang::get('Select filter type'),
         'fieldname' => 'filter:sharing',
         'lookupValues' => $options['adminCanSetSharingTo'],
-        'afterControl' => '<input type="submit" value="Go"/>',
         'default' => $options['sharingCode'],
       ]);
-      $r .= '</form>';
     }
     else {
       // Existing filter to edit, type is therefore fixed. JS will fill these
@@ -1981,6 +1975,7 @@ HTML;
     'filterDeleted' => 'The filter has been deleted',
     'filterExistsOverwrite' => 'A filter with that name already exists. Would you like to overwrite it?',
     'filterSaved' => 'The filter has been saved',
+    'loadingWebsites' => 'Loading available websites...',
     'licenceIs' => 'Licence is',
     'mediaLicenceIs' => 'Media licence is',
     'modifyFilter' => 'Modify filter',
@@ -2001,6 +1996,7 @@ HTML;
     'quality_op:not in' => 'Exclude',
     'recorderCertaintyWas' => 'Recorder certainty was',
     'sameAsOrBetterThan' => 'same as or better than',
+    'sharingLoadFailed' => 'The controls for this sharing mode could not be loaded. Please try again.',
     'worseThan' => 'worse than',
   ]);
   if (function_exists('iform_ajaxproxy_url')) {
@@ -2008,6 +2004,7 @@ HTML;
     report_helper::$javascript .= "indiciaData.filterAndUserPostUrl='" . iform_ajaxproxy_url(NULL, 'filter_and_user') . "';\n";
   }
   report_helper::$javascript .= "indiciaData.filterSharing='" . strtoupper(substr($options['sharing'], 0, 1)) . "';\n";
+  report_helper::$javascript .= "indiciaData.filterSharingDefault=indiciaData.filterSharing;\n";
   if (function_exists('hostsite_get_user_field')) {
     report_helper::$javascript .= "indiciaData.user_id='" . hostsite_get_user_field('indicia_user_id') . "';\n";
   }
