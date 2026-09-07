@@ -480,9 +480,13 @@ class ElasticsearchReportHelper {
       'noUpdatesSpecified' => 'Please specify the values you would like to update using the form before previewing the changes.',
       'noValue' => '-value not set-',
       'preparing' => 'Preparing to edit the records...',
-      'promptAllowSampleSplit' => '<p>The list of records to update contains occurrences which belong to samples that contain other occurrences which are not being updated. ' .
-        'For example, sample {1} contains an occurrence {2} which is being updated, but it also contains occurrence {3} which is not being updated.</p>' .
-        '<p>Please confirm that you would like to split the samples so that the data values for the list of records you are editing can be updated without affecting other occurrences in the same samples.</p>',
+      'promptAllowSampleSplit' => <<<HTML
+        <p>The list of records to update contains occurrences which belong to samples that contain other occurrences
+        which are not being updated. For example, sample {1} contains an occurrence {2} which is being updated, but it
+        also contains occurrence {3} which is not being updated.</p>
+        <p>Please confirm that you would like to split the samples so that the data values for the list of records you
+        are editing can be updated without affecting other occurrences in the same samples.</p>
+      HTML,
       'warningNoChanges' => 'Please define at least one field value that you would like to change when bulk editing the records.',
       'warningNothingToDo' => 'There are no selected records to edit.',
     ]);
