@@ -1357,11 +1357,14 @@ JS;
    *
    * @param array $options
    *   Options for the [permissionFilters] control.
+   * @param array|null $permissionFilterSharing
+   *   Optional output array mapping permission filter option values to sharing
+   *   codes.
    *
    * @return array
    *   Associative array of options.
    */
-  public static function getPermissionFiltersOptions(array $options) {
+  public static function getPermissionFiltersOptions(array $options, ?array &$permissionFilterSharing = NULL) {
     require_once 'prebuilt_forms/includes/report_filters.php';
     $options = array_merge([
       'includeFiltersForGroups' => FALSE,
@@ -1415,6 +1418,9 @@ JS;
             ? $sharingTypes[$sharingCode] . ' - ' . $filter['title']
             : $filter['title'];
           $optionArr["f-$filter[id]"] = $filterTitle;
+          if ($permissionFilterSharing !== NULL) {
+            $permissionFilterSharing["f-$filter[id]"] = $sharingCode;
+          }
         }
       }
     }
@@ -1471,9 +1477,12 @@ JS;
       'useSharingPrefix' => TRUE,
       'label' => lang::get('Records to access'),
       'notices' => '[]',
+      'permissionFilterSharing' => [],
     ], $options);
 
-    $optionArr = self::getPermissionFiltersOptions($options);
+    $permissionFilterSharing = [];
+    $optionArr = self::getPermissionFiltersOptions($options, $permissionFilterSharing);
+    $options['permissionFilterSharing'] = $permissionFilterSharing;
     // Return the select control. There will always be at least one option (my
     // records).
     $controlOptions = [
@@ -1492,7 +1501,7 @@ JS;
 
 HTML;
 
-    $dataOptions = helper_base::getOptionsForJs($options, ['notices'], TRUE);
+    $dataOptions = helper_base::getOptionsForJs($options, ['notices', 'permissionFilterSharing'], TRUE);
     return self::getControlContainer('permissionFilters', $wrapperOptions, $dataOptions, $html);
   }
 
