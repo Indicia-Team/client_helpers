@@ -497,8 +497,13 @@ class ElasticsearchReportHelper {
       'editing' => lang::get('Editing records'),
       'editInstructions' => 'Specify values to apply to all the edited records in the following controls, or leave blank for the data values to remain unchanged.',
       'preview' => lang::get('Preview'),
-      'previewInfo' => lang::get('The following table shows a selection of the records you are about to bulk edit. This is just a sample of the records about to be updated.'),
+      'previewInfoComplete' => lang::get('The following table shows the records you are about to bulk edit.'),
+      'previewInfoPartial' => lang::get('The following table shows a selection of the records you are about to bulk edit - clicking Proceed will update <strong>{1}</strong> records in total.'),
       'proceed' => lang::get('Proceed'),
+      'verifiedRecordsWarning' => lang::get(<<<TXT
+        Note that some these records have already been verified, the bulk edit will reset them to pending - please only
+        make bulk edits to verified records where necessary.
+      TXT),
     ];
     helper_base::add_resource('fancybox');
     $recorderNameControl = data_entry_helper::text_input([
@@ -533,7 +538,13 @@ class ElasticsearchReportHelper {
       $srefControl
     </div>
     <div class="preview-output" style="display: none">
-      <p class="alert alert-warning"><i class="fas fa-exclamation-triangle fa-2x"></i> $lang[previewInfo]</p>
+      <div class="alert alert-warning preview-messages"><i class="fas fa-exclamation-triangle fa-2x"></i>
+        <div class="preview-message-text">
+          <p class="preview-info-complete">$lang[previewInfoComplete]</p>
+          <p class="preview-info-partial">$lang[previewInfoPartial]</p>
+          <p class="preview-info-verified">$lang[verifiedRecordsWarning]</p>
+        </div>
+      </div>
       <table class="table">
         <thead>
           <tr>

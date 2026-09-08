@@ -3200,6 +3200,7 @@ class ElasticsearchProxyHelper {
       'hits.hits._source.event.recorded_by',
       'hits.hits._source.location.verbatim_locality',
       'hits.hits._source.location.input_sref',
+      'aggregations',
     ]);
     $r = self::curlPost($url, $query);
     return self::organiseBulkEditPreview($r, $allKeys);
@@ -3363,6 +3364,39 @@ class ElasticsearchProxyHelper {
         'should' => $allKeyQueries,
       ],
     ];
+    $query['aggs']['has_verified_records'] = [
+      'filter' => [
+        'bool' => [
+          'should' => [
+            [
+              'bool' => [
+                'filter' => [
+                  ['exists' => ['field' => 'identification.verification_status']],
+                ],
+                'must_not' => [
+                  'term' => [
+                    'identification.verification_status' => 'C',
+                  ],
+                ],
+              ],
+            ],
+            [
+              'bool' => [
+                'filter' => [
+                  ['exists' => ['field' => 'identification.verification_substatus']],
+                ],
+                'must_not' => [
+                  'term' => [
+                    'identification.verification_substatus' => '0',
+                  ],
+                ],
+              ],
+            ],
+          ],
+          'minimum_should_match' => 1,
+        ],
+      ],
+    ];
     return $query;
   }
 
@@ -3402,7 +3436,10 @@ class ElasticsearchProxyHelper {
         }
       }
     }
-    return $organisedList;
+    return [
+      'records' => $organisedList,
+      'aggregations' => $data->aggregations,
+    ];
   }
 
   /**
