@@ -743,6 +743,8 @@ JS;
    *     is overridden when reloading a record with existing data for this
    *     control.
    *   * class - Optional. CSS class names to add to the control.
+   *   * labelPosition - Optional. Set to after to output the checkbox before
+   *     its label. Defaults to before for backwards compatibility.
    *   * template - Optional. Name of the template entry used to build the HTML
    *     for the control. Defaults to checkbox.
    *
@@ -750,11 +752,28 @@ JS;
    *   HTML to insert into the page for the checkbox control.
    */
   public static function checkbox(array $options) {
+    global $indicia_templates;
     $options = self::check_options($options);
     $default = isset($options['default']) ? $options['default'] : '';
     $value = self::check_default_value($options['fieldname'], $default);
     $options['checked'] = ($value === 'on' || $value === 1 || $value === '1' || $value === 't' || $value === TRUE) ? ' checked="checked"' : '';
-    $options['template'] = array_key_exists('template', $options) ? $options['template'] : 'checkbox';
+    $labelPosition = $options['labelPosition'] ?? 'before';
+    $positionedTemplate = "checkbox_label_$labelPosition";
+    if (!array_key_exists('template', $options) && !empty($options['label']) && isset($indicia_templates[$positionedTemplate])) {
+      $options['template'] = $positionedTemplate;
+      $options['checkboxLabel'] = $options['label'];
+      if ($labelPosition === 'before' && substr($options['checkboxLabel'], -1) !== '?') {
+        $options['checkboxLabel'] .= ':';
+      }
+      $options['label'] = '';
+      $checkboxClass = trim(($indicia_templates['checkboxClass'] ?? '') . ' ' . $options['class']);
+      $options['checkboxClass'] = empty($checkboxClass) ? '' : " class=\"$checkboxClass\"";
+      $options['checkboxLabelClass'] = empty($options['labelClass']) ? '' : " class=\"$options[labelClass]\"";
+      $options['checkboxLabelClassValue'] = empty($options['labelClass']) ? '' : " $options[labelClass]";
+    }
+    else {
+      $options['template'] = $options['template'] ?? 'checkbox';
+    }
     return self::apply_template($options['template'], $options);
   }
 
