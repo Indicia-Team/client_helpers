@@ -3960,6 +3960,7 @@ RIJS;
       $grid = self::get_species_checklist_header($options, $occAttrs, $onlyImages);
       $rows = [];
       $imageRowIdxs = [];
+      $mediaRowIdxs = [];
       $rowIdx = 0;
       // Tell the addTowToGrid javascript how many rows are already used, so it
       // has a unique index for new rows.
@@ -4318,7 +4319,9 @@ HTML;
             }
             else {
               // Create a cell containing the existing images.
-              $row .= '<td class="scMediaCell">' . self::getSpeciesChecklistExistingRowPhotoUploader($options, $txIdx, $loadedTxIdx, $existingRecordId) . '</td>';
+              $row .= '<td class="scMediaCell"><div class="scMedia">' .
+                self::getSpeciesChecklistExistingRowPhotoUploader($options, $txIdx, $loadedTxIdx, $existingRecordId) .
+                '</div></td>';
             }
           }
         }
@@ -4331,6 +4334,9 @@ HTML;
         // Are we in the first column of a multicolumn grid, or doing single column grid? If so start new row.
         if ($colIdx === 0) {
           $rows[$rowIdx] = $row;
+          if ($options['responsive'] && $options['mediaTypes'] && count($existingImages) > 0) {
+            $mediaRowIdxs[] = $rowIdx;
+          }
         }
         else {
           $rows[$rowIdx % (ceil(count($taxonRows) / $options['columns']))] .= $row;
@@ -4351,7 +4357,7 @@ HTML;
       }
       $grid .= "\n<tbody>\n";
       if (count($rows) > 0) {
-        $grid .= self::species_checklist_implode_rows($rows, $imageRowIdxs);
+        $grid .= self::species_checklist_implode_rows($rows, $imageRowIdxs, $mediaRowIdxs);
       }
       $grid .= "</tbody>\n";
       $grid = str_replace(
@@ -4871,10 +4877,17 @@ JS;
   /**
    * Implode the rows we are putting into the species checklist, with application of classes to image rows.
    */
-  public static function species_checklist_implode_rows($rows, $imageRowIdxs) {
+  public static function species_checklist_implode_rows($rows, $imageRowIdxs, $mediaRowIdxs = []) {
     $r = '';
     foreach ($rows as $idx => $row) {
-      $class = in_array($idx, $imageRowIdxs) ? ' class="supplementary-row"' : '';
+      $classes = [];
+      if (in_array($idx, $imageRowIdxs)) {
+        $classes[] = 'supplementary-row';
+      }
+      if (in_array($idx, $mediaRowIdxs)) {
+        $classes[] = 'has-media';
+      }
+      $class = count($classes) > 0 ? ' class="' . implode(' ', $classes) . '"' : '';
       $r .= "<tr$class>$row</tr>\n";
     }
     return $r;
