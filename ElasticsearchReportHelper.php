@@ -468,6 +468,7 @@ class ElasticsearchReportHelper {
       'restrictToOwnData',
     ], TRUE);
     helper_base::addLanguageStringsToJs('bulkEditor', [
+      'addComment' => 'The following comment will be added to all affected records',
       'allowSampleSplitting' => 'Allow sample splitting?',
       'bulkEditorDialogMessageAll' => 'You are about to edit the entire list of <span>{1}</span> records.',
       'bulkEditorDialogMessageSelected' => 'You are about to edit <span>{1}</span> selected records.',
@@ -500,6 +501,7 @@ class ElasticsearchReportHelper {
       'previewInfoComplete' => lang::get('The following table shows the records you are about to bulk edit.'),
       'previewInfoPartial' => lang::get('The following table shows a selection of the records you are about to bulk edit - clicking Proceed will update <strong>{1}</strong> records in total.'),
       'proceed' => lang::get('Proceed'),
+      'skipReverifyWarning' => lang::get('Reverification will be skipped for the affected records because Skip reverify was selected.'),
       'verifiedRecordsWarning' => lang::get(<<<TXT
         Note that some these records have already been verified, the bulk edit will reset them to pending - please only
         make bulk edits to verified records where necessary.
@@ -523,6 +525,20 @@ class ElasticsearchReportHelper {
       'label' => lang::get('Spatial reference'),
       'findMeButton' => FALSE,
     ]);
+    $commentControl = data_entry_helper::textarea([
+      'fieldname' => 'append-comment',
+      'label' => lang::get('Add comment'),
+      'helpText' => lang::get('Any information given here will be appended to the comments for the record.'),
+    ]);
+    $skipReverifyControl = data_entry_helper::checkbox([
+      'fieldname' => 'skip-reverify',
+      'label' => lang::get('Skip reverify'),
+      'labelPosition' => 'after',
+      'helpText' => lang::get(<<<TXT
+        If checked, verified records will not be reset to pending when bulk edited. This option is not available if
+        changing the date or spatial reference.
+      TXT),
+    ]);
     global $indicia_templates;
     $html = <<<HTML
 <button type="button" class="bulk-edit-records-btn $indicia_templates[buttonHighlightedClass]">$lang[bulkEditRecords]</button>
@@ -537,12 +553,15 @@ class ElasticsearchReportHelper {
       $locationNameControl
       $srefControl
     </div>
+    $commentControl
+    $skipReverifyControl
     <div class="preview-output" style="display: none">
       <div class="alert alert-warning preview-messages"><i class="fas fa-exclamation-triangle fa-2x"></i>
         <div class="preview-message-text">
           <p class="preview-info-complete">$lang[previewInfoComplete]</p>
           <p class="preview-info-partial">$lang[previewInfoPartial]</p>
           <p class="preview-info-verified">$lang[verifiedRecordsWarning]</p>
+          <p class="preview-info-skip-reverify">$lang[skipReverifyWarning]</p>
         </div>
       </div>
       <table class="table">
@@ -569,6 +588,7 @@ class ElasticsearchReportHelper {
     <div class="post-bulk-edit-info">
       <h2>$lang[editing]</h2>
       <div class="output"></div>
+
       <div class="form-buttons">
         <button type="button" class="$indicia_templates[buttonHighlightedClass] close-bulk-edit-dlg" disabled="disabled">$lang[close]</button>
       </div>
