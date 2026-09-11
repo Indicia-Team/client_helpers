@@ -1616,7 +1616,7 @@ class helper_base {
         echo "Server response<br/>";
         echo $response . '</div>';
       }
-      if (in_array($curlErrno, [CURLE_COULDNT_RESOLVE_HOST, CURLE_COULDNT_CONNECT]) || $httpCode >= 400) {
+      elseif (in_array($curlErrno, [CURLE_COULDNT_RESOLVE_HOST, CURLE_COULDNT_CONNECT]) || $httpCode >= 400) {
         throw new WarehouseRequestException(
           $httpCode,
           $curlErrno,
