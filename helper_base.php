@@ -2285,8 +2285,9 @@ HTML;
         }
       }
     }
-    if ($removeLocalCopy) {
-      unlink(realpath($interimPath . $path));
+    $localFile = realpath($interimPath . $path);
+    if ($removeLocalCopy && $localFile !== FALSE) {
+      @unlink($localFile);
     }
     return $r;
   }
