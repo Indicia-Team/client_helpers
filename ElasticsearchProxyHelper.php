@@ -952,12 +952,11 @@ class ElasticsearchProxyHelper {
     }
     elseif ($config['es']['auth_method'] === 'directWebsite') {
       iform_load_helpers(['helper_base']);
-      $conn = iform_get_connection_details();
       $tokens = [
         'WEBSITE_ID',
-        $conn['website_id'],
+        $config['indicia']['website_id'],
         'SECRET',
-        $conn['password'],
+        $config['indicia']['password'],
       ];
       if (isset($config['es']['scope'])) {
         $tokens[] = 'SCOPE';
@@ -1050,12 +1049,19 @@ class ElasticsearchProxyHelper {
         'output' => $response,
         'headers' => curl_getinfo($session),
         'httpCode' => curl_getinfo($session, CURLINFO_HTTP_CODE),
+        'curlErrno' => curl_errno($session),
+        'curlError' => curl_error($session),
       ];
       curl_close($session);
     }
     // Check for an error, or check if the http response was not OK.
-    if ($curlResponse['httpCode'] != 200) {
-      http_response_code($curlResponse['httpCode']);
+    if ($curlResponse['httpCode'] != 200 || !empty($curlResponse['curlErrno'])) {
+      throw new \IForm\WarehouseRequestException(
+        $curlResponse['httpCode'],
+        $curlResponse['curlErrno'] ?? 0,
+        $curlResponse['curlError'] ?? '',
+        $curlResponse['output'] === FALSE ? '' : $curlResponse['output'],
+      );
     }
     elseif ($cacheTimeout) {
       helper_base::array_to_query_string($cacheKey);
