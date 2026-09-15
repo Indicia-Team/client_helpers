@@ -684,7 +684,10 @@ class ElasticsearchProxyHelper {
    * should continue until the response contains state=done.
    */
   private static function proxyVerifySpreadsheet($nid) {
+    iform_load_helpers(['helper_base']);
     $url = self::$config['indicia']['base_url'] . 'index.php/services/rest/occurrences/verify-spreadsheet';
+    $indiciaUserId = (int) hostsite_get_user_field('indicia_user_id', 0);
+    $drupalUserId = (int) hostsite_get_user_field('id', 0);
 
     if (empty(self::$config['es']['endpoint'])
         || empty(self::$config['es']['warehouse_prefix'])) {
@@ -697,7 +700,7 @@ class ElasticsearchProxyHelper {
       $payload = [
         'decisions' => curl_file_create($file['tmp_name'], $file['type'], $file['name']),
         'filter_id' => $_POST['filter_id'],
-        'user_id' => hostsite_get_user_field('indicia_user_id'),
+        'user_id' => $indiciaUserId,
         'es_endpoint' => self::$config['es']['endpoint'],
         'id_prefix' => self::$config['es']['warehouse_prefix'],
       ];
@@ -705,15 +708,48 @@ class ElasticsearchProxyHelper {
     else {
       if (!empty($_POST['fileId'])) {
         // Subsequent processing request.
+        $fileId = $_POST['fileId'];
+        if (!is_string($fileId)) {
+          throw new ElasticsearchProxyAbort('Invalid spreadsheet fileId parameter', 400);
+        }
+        $cacheKey = [
+          'iform_verify_spreadsheet' => $fileId,
+        ];
+        $ownership = helper_base::cacheGet($cacheKey);
+        $ownership = $ownership === FALSE ? FALSE : json_decode($ownership, TRUE);
+        if (!is_array($ownership)
+            || $ownership['nid'] !== (int) $nid
+            || $ownership['drupal_user_id'] !== $drupalUserId
+            || $ownership['indicia_user_id'] !== $indiciaUserId) {
+          throw new ElasticsearchProxyAbort('Spreadsheet upload not found or not owned by the current user', 403);
+        }
         $payload = [
-          'fileId' => $_POST['fileId'],
+          'fileId' => $fileId,
         ];
       }
     }
     if (!isset($payload)) {
       throw new ElasticsearchProxyAbort('Missing decisions file or fileId parameter', 400);
     }
-    return self::curlPost($url, $payload, [], TRUE);
+    $response = self::curlPost($url, $payload, [], TRUE);
+
+    if (isset($_FILES['decisions'])) {
+      $metadata = json_decode($response, TRUE);
+      if (is_array($metadata) && !empty($metadata['fileId'])) {
+        helper_base::cacheSet(
+          [
+            'iform_verify_spreadsheet' => $metadata['fileId'],
+          ],
+          json_encode([
+            'nid' => (int) $nid,
+            'drupal_user_id' => $drupalUserId,
+            'indicia_user_id' => $indiciaUserId,
+          ]),
+          3600
+        );
+      }
+    }
+    return $response;
   }
 
   /**
