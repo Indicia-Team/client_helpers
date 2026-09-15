@@ -2150,14 +2150,7 @@ HTML;
     $requiredOptions = ['showSelectedRow'];
     $config = hostsite_get_es_config($options['nid']);
     helper_base::$indiciaData['idPrefix'] = $config['es']['warehouse_prefix'];
-    if (!empty($options['includeUploadButton'])) {
-      helper_base::$indiciaData['esEndpoint'] = $config['es']['endpoint'];
-      $requiredOptions[] = 'warehouseName';
-    }
     self::checkOptions('verificationButtons', $options, $requiredOptions, []);
-    if (!empty($options['includeUploadButton'])) {
-      helper_base::$indiciaData['warehouseName'] = $options['warehouseName'];
-    }
     $options = array_merge([
       'redeterminerNameAttributeHandling' => 'overwriteOnRedet',
       'taxon_list_id' => hostsite_get_config_value('iform', 'master_checklist_id'),

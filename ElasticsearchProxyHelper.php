@@ -127,7 +127,7 @@ class ElasticsearchProxyHelper {
         return self::proxyVerifyAll($nid);
 
       case 'verifyspreadsheet':
-        return self::proxyVerifySpreadsheet();
+        return self::proxyVerifySpreadsheet($nid);
 
       case 'verifyids':
         return self::proxyVerifyIds();
@@ -683,8 +683,13 @@ class ElasticsearchProxyHelper {
    * in the response metadata). This will process the file in chunks, which
    * should continue until the response contains state=done.
    */
-  private static function proxyVerifySpreadsheet() {
+  private static function proxyVerifySpreadsheet($nid) {
     $url = self::$config['indicia']['base_url'] . 'index.php/services/rest/occurrences/verify-spreadsheet';
+
+    if (empty(self::$config['es']['endpoint'])
+        || empty(self::$config['es']['warehouse_prefix'])) {
+      throw new ElasticsearchProxyAbort('Method not allowed as server configuration incomplete', 405);
+    }
 
     if (isset($_FILES['decisions'])) {
       // Initial file upload.
@@ -693,9 +698,8 @@ class ElasticsearchProxyHelper {
         'decisions' => curl_file_create($file['tmp_name'], $file['type'], $file['name']),
         'filter_id' => $_POST['filter_id'],
         'user_id' => hostsite_get_user_field('indicia_user_id'),
-        'es_endpoint' => $_POST['es_endpoint'],
-        'id_prefix' => $_POST['id_prefix'],
-        'warehouse_name' => $_POST['warehouse_name'],
+        'es_endpoint' => self::$config['es']['endpoint'],
+        'id_prefix' => self::$config['es']['warehouse_prefix'],
       ];
     }
     else {
