@@ -516,13 +516,11 @@ class ElasticsearchProxyHelper {
       throw new ElasticsearchProxyAbort('Method not allowed as server configuration incomplete', 405);
     }
     $statuses = $_POST['doc']['identification'] ?? [];
-    return [
-      'updated' => self::internalModifyListOnEs(
-        $_POST['ids'],
-        $statuses,
-        $_POST['doc']['metadata']['website']['id'] ?? NULL
-      ),
-    ];
+    return self::internalModifyListOnEs(
+      $_POST['ids'],
+      $statuses,
+      $_POST['doc']['metadata']['website']['id'] ?? NULL
+    );
   }
 
   /**
@@ -726,9 +724,7 @@ class ElasticsearchProxyHelper {
     }
     // Set website ID to 0, basically disabling the ES copy of the record until
     // a proper update with correct taxonomy information comes through.
-    return [
-      'updated' => self::internalModifyListOnEs($_POST['ids'], [], 0),
-    ];
+    return self::internalModifyListOnEs($_POST['ids'], [], 0);
   }
 
   /**
@@ -821,8 +817,9 @@ class ElasticsearchProxyHelper {
    *   If changing the website ID (i.e. setting to 0 to temporarily hide the
    *   record), set it here.
    *
-   * @return int
-   *   Number of records updated.
+   * @return array
+   *   Array containing the number of records updated, total records, version
+   *   conflicts, and failures.
    */
   private static function internalModifyListOnEs(array $ids, array $statuses, $websiteIdToModify) {
     $url = self::getEsUrl() . "/_update_by_query";
@@ -874,7 +871,12 @@ class ElasticsearchProxyHelper {
     // Since the verification alias can only see 1 copy of each record (e.g.
     // full precision), the total in the response will correspond to the number
     // of occurrences updated.
-    return $rObj->updated;
+    return [
+      'updated' => $rObj->updated,
+      'total' => $rObj->total,
+      'version_conflicts' => $rObj->version_conflicts,
+      'failures' => $rObj->failures,
+    ];
   }
 
   /**
