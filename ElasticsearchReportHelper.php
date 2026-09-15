@@ -867,8 +867,9 @@ HTML;
     // columns template.
     if (!empty($options['columnsTemplate']) && is_array($options['columnsTemplate'])) {
       $availableColTypes = [
-        "easy-download" => lang::get("Standard download format"),
-        "mapmate" => lang::get("Simple download format"),
+        'easy-download' => lang::get('Standard download format'),
+        'mapmate' => lang::get('Simple download format'),
+        'easy-download-dna' => lang::get('Standard download format with DNA fields'),
       ];
       $optionArr = [];
       foreach ($options['columnsTemplate'] as $colType) {
