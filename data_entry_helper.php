@@ -1339,7 +1339,7 @@ JS;
    * species_checklist for each new identified species. If the same species is
    * identified again, the count of the record is incremented. The attribute to
    * increment is determined by it having the system function for
-   * sex-stagge-count set in the warehouse. A classification result is created
+   * sex-stage-count set in the warehouse. A classification result is created
    * for each file and the file is added to the occurrence. Where a file is not
    * identified, a record of the unknown taxon is created.
    *
@@ -1370,13 +1370,24 @@ JS;
    *     English if not specified. If specified but not available, defaults to
    *     preferred name.
    *   * readAuth - Read authentication array with nonce and token.
-   *   * collapsible - set to true to place the classifier inside a collapsed
-   *     div initially so it does not get in the way when not used.
+   *   * collapsible - Set to true to place the classifier inside a collapsed
+   *     div initially so it does not get in the way when not used. Defaults
+   *     to true.
    */
   public static function file_classifier(array $options) {
-    // Ensure some settings have required values.
-    if (empty($options['taxonControlId'])) {
-      throw new Exception('A taxonControlId must be provided for an image classifier.');
+    // Ensure all settings required to build the classifier are present before
+    // passing them to the option preparation helpers.
+    $requiredOptions = [
+      'url',
+      'taxonListId',
+      'taxonControlId',
+      'unknownMeaningId',
+      'readAuth',
+    ];
+    foreach ($requiredOptions as $requiredOption) {
+      if (empty($options[$requiredOption])) {
+        throw new Exception("A $requiredOption must be provided for an image classifier.");
+      }
     }
 
     // Obtain default options.
@@ -1411,14 +1422,16 @@ JS;
       $javascript = self::file_box($options);
       // Wrap the script in an event handler so we only execute it when
       // the tab is displayed.
-      $javascript .=
-        "var uploaderTabHandler = function(event, ui) { \n" .
-        "  panel = typeof ui.newPanel === 'undefined' ? ui.panel : ui.newPanel[0];\n" .
-        "  if ($(panel).attr('id') === '{$options['tabDiv']}') {\n    " .
-        $javascript .
-        "    indiciaFns.unbindTabsActivate($('#{$options['tabDiv']}').parent(), uploaderTabHandler);\n" .
-        "  }\n};\n" .
-        "indiciaFns.bindTabsActivate($('#{$options['tabDiv']}').parent(), uploaderTabHandler);\n";
+      $javascript = <<<JS
+        var uploaderTabHandler = function(event, ui) {
+          panel = typeof ui.newPanel === 'undefined' ? ui.panel : ui.newPanel[0];
+          if ($(panel).attr('id') === '{$options['tabDiv']}') {
+            $javascript
+            indiciaFns.unbindTabsActivate($('#{$options['tabDiv']}').parent(), uploaderTabHandler);
+          }
+        };
+        indiciaFns.bindTabsActivate($('#{$options['tabDiv']}').parent(), uploaderTabHandler);
+      JS;
       // Insert this script at the beginning, because it must be done before
       // the tabs are initialised or the first tab cannot fire the event.
       self::$javascript = $javascript . self::$javascript;
@@ -1446,6 +1459,7 @@ JS;
       'dialogStart' => 'Your files are being sent to a classification service which will try to identify the species.',
       'dialogTitle' => 'Requesting classification',
       'percentProbability' => '{1}% probability',
+      'multipleSuggestionsTitle' => 'Multiple possibilities found',
       'multipleSuggestionInstructions' => 'Classification of the following image(s) has returned more than one suggestion. Please click on the one that you would like to use or press Cancel to skip this classification.'
     ]);
     return $r;
