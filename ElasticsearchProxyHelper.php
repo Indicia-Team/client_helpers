@@ -1012,7 +1012,7 @@ class ElasticsearchProxyHelper {
         $keyFile = \Drupal::service('file_system')->realpath("private://") . '/rsa_private.pem';
       }
       if (!file_exists($keyFile)) {
-        \Drupal::logger('iform')->error('Missing private key file for jwtUser Elasticsearch authentication.');
+        hostsite_log('error', 'Missing private key file for jwtUser Elasticsearch authentication.');
         throw new ElasticsearchProxyAbort('Method not allowed as server configuration incomplete', 405);
       }
       $privateKey = file_get_contents($keyFile);

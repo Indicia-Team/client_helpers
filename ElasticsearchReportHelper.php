@@ -382,13 +382,8 @@ class ElasticsearchReportHelper {
         if (!ElasticsearchProxyHelper::isEsAvailable()) {
           self::$proxyEnableFailed = TRUE;
           self::$proxyEnabled = FALSE;
-
           helper_base::$indiciaData['esAvailable'] = FALSE;
-
-          \Drupal::logger('iform')->warning(
-            'Elasticsearch not available – proxy disabled'
-          );
-
+          hostsite_log('warning', 'Elasticsearch not available – proxy disabled.');
           return FALSE;
         }
 
@@ -434,9 +429,7 @@ class ElasticsearchReportHelper {
 
         helper_base::$indiciaData['esAvailable'] = FALSE;
 
-        \Drupal::logger('iform')->error(
-          'Elasticsearch proxy enable failed: ' . $e->getMessage()
-        );
+        hostsite_log('error', 'Elasticsearch proxy enable failed: @message', ['@message' => $e->getMessage()]);
       }
     }
 

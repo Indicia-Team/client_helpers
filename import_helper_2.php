@@ -22,6 +22,7 @@
  */
 
 use IForm\IndiciaConversions;
+use IForm\WarehouseRequestException;
 
 /**
  * Link in other required php files.
@@ -51,6 +52,7 @@ class import_helper_2 extends helper_base {
     'occurrence:fk_classification_event',
     'occurrence:downloaded_flag',
     'occurrence:downloaded_on',
+    'occurrence:import_guid',
     'occurrence:last_verification_check_date',
     'occurrence:machine_involvement',
     'occurrence:metadata',
@@ -62,6 +64,7 @@ class import_helper_2 extends helper_base {
     'dna_occurrence:updated_by_id',
     'sample:fk_parent',
     'sample:fk_parent:external_key',
+    'sample:import_guid',
     'id',
     'created_by_id',
     'deleted',
@@ -385,8 +388,8 @@ class import_helper_2 extends helper_base {
     $response = self::http_post($serviceUrl, $data, FALSE);
     $output = json_decode($response['output'], TRUE);
     if (!$response['result']) {
-      \Drupal::logger('iform')->notice('Error in initServerConfig: ' . var_export($response, TRUE));
-      throw new exception($output['msg'] ?? $response['output'], $response['status'] ?? 0);
+      hostsite_log('error', 'Error in import initServerConfig - response: @detail', ['@detail' => var_export($response, TRUE)]);
+      throw new Exception($output['msg'] ?? $response['output'], $response['status'] ?? 0);
     }
     return $output;
   }
@@ -410,7 +413,7 @@ class import_helper_2 extends helper_base {
     $response = self::http_post($serviceUrl, $data, FALSE);
     $output = json_decode($response['output'], TRUE);
     if (!$response['result']) {
-      \Drupal::logger('iform')->notice('Error in loadChunkToTempTable: ' . var_export($response, TRUE));
+      hostsite_log('error', 'Error in loadChunkToTempTable - response: @detail', ['@detail' => var_export($response, TRUE)]);
     }
     return $output;
   }
@@ -435,7 +438,7 @@ class import_helper_2 extends helper_base {
     $response = self::http_post($serviceUrl, $data, FALSE);
     $output = json_decode($response['output'], TRUE);
     if (!$response['result']) {
-      \Drupal::logger('iform')->notice('Error in processLookupMatching: ' . var_export($response, TRUE));
+      hostsite_log('error', 'Error in processLookupMatching - response: @detail', ['@detail' => var_export($response, TRUE)]);
     }
     return $output;
   }
@@ -459,7 +462,7 @@ class import_helper_2 extends helper_base {
     $response = self::http_post($serviceUrl, $data, FALSE);
     $output = json_decode($response['output'], TRUE);
     if (!$response['result']) {
-      \Drupal::logger('iform')->notice('Error in saveLookupMatchesGroup: ' . var_export($response, TRUE));
+      hostsite_log('error', 'Error in saveLookupMatchesGroup - response: @detail', ['@detail' => var_export($response, TRUE)]);
       throw new exception($output['msg'] ?? $response['output']);
     }
     return $output;
@@ -487,7 +490,7 @@ class import_helper_2 extends helper_base {
     $response = self::http_post($serviceUrl, $data, FALSE);
     $output = json_decode($response['output'], TRUE);
     if (!$response['result']) {
-      \Drupal::logger('iform')->notice('Error in preprocess: ' . var_export($response, TRUE));
+      hostsite_log('error', 'Error in preprocess - response: @detail', ['@detail' => var_export($response, TRUE)]);
     }
     return $output;
   }
@@ -547,7 +550,21 @@ class import_helper_2 extends helper_base {
     if ($params['restart']) {
       $data['restart'] = 't';
     }
-    $response = self::http_post($serviceUrl, $data, FALSE);
+    try {
+      $response = self::http_post($serviceUrl, $data, FALSE);
+    }
+    catch (WarehouseRequestException $e) {
+      hostsite_log('error', 'Exception in importChunk: @detail', ['@detail' => $e->responseBody]);
+      $errorResponse = [
+        'status' => 'error',
+        'msg' => $e->getMessage(),
+      ];
+      $body = json_decode($e->responseBody, TRUE);
+      if ($body && isset($body['rowErrorsCount'])) {
+        $errorResponse['rowErrorsCount'] = $body['rowErrorsCount'] ?? 0;
+      }
+      return $errorResponse;
+    }
     $output = json_decode($response['output'], TRUE);
     if (!$response['result']) {
       if (isset($response['status']) && $response['status'] === 409 && $output['msg'] === 'An import template with that title already exists') {
@@ -559,7 +576,7 @@ class import_helper_2 extends helper_base {
         ];
       }
       else {
-        \Drupal::logger('iform')->notice('Error in importChunk: ' . var_export($response, TRUE));
+        hostsite_log('error', 'Error in importChunk: @detail', ['@detail' => var_export($response, TRUE)]);
         throw new exception($output['msg'] ?? $response['output']);
       }
     }
@@ -581,7 +598,7 @@ class import_helper_2 extends helper_base {
     ];
     $response = self::http_post($serviceUrl, $data, FALSE);
     if ($response['status'] !== 204) {
-      \Drupal::logger('iform')->error('Response from abandon_background_import attempt: ' . var_export($response, TRUE));
+      hostsite_log('error', 'Abandon background import failed: response @detail', ['@detail' => var_export($response, TRUE)]);
       if (isset($response['output'])) {
         $responseOutput = json_decode($response['output']);
         throw new Exception($responseOutput->msg ?? 'Internal Server Error', $response['status'] ?? 500);
@@ -1656,7 +1673,7 @@ HTML;
     ]);
     $output = json_decode($response['output'], TRUE);
     if (($output['status'] ?? '') !== 'ok') {
-      \Drupal::logger('iform')->error('Error in saveMappings: ' . var_export($output, TRUE));
+      hostsite_log('error', 'Error in saveMappings: @detail', ['@detail' => var_export($output, TRUE)]);
       throw new Exception('Saving column mappings failed');
     }
   }
