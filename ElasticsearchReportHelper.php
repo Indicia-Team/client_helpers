@@ -705,11 +705,15 @@ HTML;
         'rowClasses',
         'rowsPerPageOptions',
         'selectFirstOnPageChange',
+        'saveFilterCookies'=>FALSE,     
       ]
     );
     if (!empty($options['scrollY']) && !preg_match('/^-?\d+px$/', $options['scrollY'])) {
       throw new Exception('Control [dataGrid] @scrollY parameter must be of CSS pixel format, e.g. 100px');
     }
+    if (!isset($options['saveFilterCookies']) ) {
+        $options['saveFilterCookies']=FALSE;
+    }     
     if (isset($options['columns'])) {
       foreach ($options['columns'] as &$columnDef) {
         if (empty($columnDef['field'])) {
@@ -767,6 +771,7 @@ HTML;
       'rowsPerPageOptions',
       'selectFirstOnPageChange',
       'scrollY',
+      'saveFilterCookies',      
       'source',
       'sortable',
     ], TRUE);
