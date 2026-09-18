@@ -9,7 +9,7 @@ jQuery(document).ready(function($) {
     if (!row.logo_path) {
       return '<i class="fas fa-user-friends fa-2x"></i>';
     } else {
-      return '<img src="' + indiciaData.warehouseUrl + 'upload/' + row.logo_path +'" title="' + row.title + '" alt="' + row.title + ' logo" />'
+      return '<img src="' + indiciaData.warehouseUrl + 'upload/med-' + row.logo_path +'" title="' + row.title + '" alt="' + row.title + ' logo" />'
     }
   };
 
