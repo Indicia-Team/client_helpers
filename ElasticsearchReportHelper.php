@@ -1107,7 +1107,11 @@ JS;
     $links = [];
     $options = array_merge([
       'containedGroupLabel' => 'sub-group',
+      'excludedGroupPagePaths' => [],
     ], $options);
+    $excludedGroupPagePaths = array_map(function ($path) {
+      return trim($path, '/');
+    }, $options['excludedGroupPagePaths']);
     if ($membership === GroupMembership::NonMember && ($group['joining_method'] === 'P' || $group['joining_method'] === 'I')) {
       $titleForLink = trim(preg_replace('/[^a-z0-9\-]/', '', preg_replace('/[ ]/', '-', strtolower($group['title']))), '-');
       $titleEscaped = htmlspecialchars($group['title']);
@@ -1132,9 +1136,11 @@ JS;
     }
     $thisPage = empty($options['nid']) ? '' : hostsite_get_alias($options['nid']);
     foreach ($pageData as $page) {
-      // Don't link to the current page, plus block member-only pages for
-      // non-members.
-      if ($page['path'] !== $thisPage && ($membership !== GroupMembership::NonMember || $page['administrator'] === NULL)) {
+      // Don't link to the current page or any excluded pages, plus block
+      // member-only pages for non-members.
+      if (!in_array(trim($page['path'], '/'), $excludedGroupPagePaths, TRUE)
+          && $page['path'] !== $thisPage
+          && ($membership !== GroupMembership::NonMember || $page['administrator'] === NULL)) {
         $pageLink = hostsite_get_url($page['path'], [
           'group_id' => $group['id'],
           'implicit' => $group['implicit_record_inclusion'],
