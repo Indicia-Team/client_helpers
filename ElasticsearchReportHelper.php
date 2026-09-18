@@ -608,6 +608,7 @@ HTML;
       [
         'actions',
         'columns',
+        'includeExpandTool',
         'rowsPerPageOptions',
       ]
     );
@@ -637,6 +638,7 @@ HTML;
       'columns',
       'class',
       'includeFieldCaptions',
+      'includeExpandTool',
       'includeFullScreenTool',
       'includeImageClassifierInfo',
       'includeMultiSelectTool',
