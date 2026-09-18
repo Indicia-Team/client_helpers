@@ -3066,23 +3066,34 @@ if (typeof validator!=='undefined') {
   }
 
   /**
-   * Explodes a value on several lines into an array split on the lines. Tolerates any line ending.
-   * @param string $value A multi-line string to be split.
-   * @return array An array with one entry per line in $value.
+   * Explodes a value on several lines into an array split on the lines.
+   *
+   * Tolerates any line ending.
+   *
+   * @param string $value
+   *   A multi-line string to be split.
+   *
+   * @return array
+   *   An array with one entry per line in $value.
    */
-  public static function explode_lines($value) {
-    $structure = str_replace("\r\n", "\n", $value);
-    $structure = str_replace("\r", "\n", $structure);
-    return explode("\n", trim($structure));
+  public static function explode_lines(string $value) {
+    return preg_split('/\R/', trim($value));
   }
 
   /**
-   * Explodes a value with key=value several lines into an array split on the lines. Tolerates any line ending.
-   * @param string $value A multi-line string to be split.
-   * @return array An associative array with one entry per line in $value. Array keys are the items before the = on each line,
-   * and values are the data after the = on each line.
+   * Explodes a value with key=value lines into an array split on the lines.
+   *
+   * Tolerates any line ending.
+   *
+   * @param string $value
+   *   A multi-line string to be split.
+   *
+   * @return array
+   *   An associative array with one entry per line in $value. Array keys are
+   *   the items before the = on each line, and values are the data after the =
+   *   on each line.
    */
-  public static function explode_lines_key_value_pairs($value) {
+  public static function explode_lines_key_value_pairs(string $value) {
     preg_match_all("/([^=\r\n]+)=([^\r\n]+)/", $value, $pairs);
     $pairs[1] = array_map('trim', $pairs[1]);
     $pairs[2] = array_map('trim', $pairs[2]);
