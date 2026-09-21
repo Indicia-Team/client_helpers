@@ -29,7 +29,8 @@
 }
 .card-gallery ul li .panel-heading img {
   object-fit: cover;
-  max-height: 120px;
+  object-position: 50% 0%;
+  max-height: 200px;
   width: 100%;
   margin: 0;
 }
