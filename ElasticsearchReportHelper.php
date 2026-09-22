@@ -656,9 +656,11 @@ HTML;
 $('#$options[id]').idcCardGallery('bindControls');
 
 JS;
+    $navButtonsContainerId = $options['id'] . '-card-nav-buttons-cntr';
+    $navButtonsId = $options['id'] . '-card-nav-buttons';
     return self::getControlContainer('cardGallery', $options, $dataOptions, '<div class="es-card-gallery"></div>') . <<<HTML
-<div id="card-nav-buttons-cntr" style="display: none">
-  <div id="card-nav-buttons">
+<div id="$navButtonsContainerId" style="display: none">
+  <div id="$navButtonsId">
     <button class="nav-prev indicia-button" title="$lang[prev]"><span class="fas fa-caret-left"></span></button>
     <button class="nav-next indicia-button" title="$lang[next]"><span class="fas fa-caret-right"></span></button>
   </div>
