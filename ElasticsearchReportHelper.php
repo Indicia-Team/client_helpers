@@ -739,7 +739,6 @@ HTML;
         'responsiveOptions',
         'rowClasses',
         'rowsPerPageOptions',
-        'selectFirstOnPageChange',
       ]
     );
     if (!empty($options['scrollY']) && !preg_match('/^-?\d+px$/', $options['scrollY'])) {
