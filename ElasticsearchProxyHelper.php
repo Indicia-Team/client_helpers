@@ -3168,7 +3168,7 @@ class ElasticsearchProxyHelper {
   private static function bulkEditIds($nid, array $ids, array $updates, array $options) {
     $response = self::bulkProcessIds($nid, $ids, 'bulk_edit', [
       'updates' => json_encode($updates),
-      'options' => json_encode($options),
+      'options' => json_encode(empty($options) ? new \stdClass() : $options),
     ]);
     return json_decode($response, TRUE);
   }
