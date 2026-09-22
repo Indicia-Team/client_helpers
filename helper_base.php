@@ -939,6 +939,8 @@ class helper_base {
    *   * jqplot_category_axis_renderer
    *   * jqplot_canvas_axis_label_renderer
    *   * jqplot_trendline
+   *   * persistPageState
+   *   * reportFilters
    *   * reportgrid
    *   * freeformReport
    *   * tabs
@@ -1259,6 +1261,10 @@ class helper_base {
           'deps' => ['reportgrid'],
           'stylesheets' => [self::$css_path . 'report-filters.css'],
           'javascript' => [self::$js_path . 'reportFilters.js'],
+        ],
+        'persistPageState' => [
+          'deps' => ['datacomponents', 'reportfilters'],
+          'javascript' => [self::$js_path . 'indicia.datacomponents/idc.pageState.js'],
         ],
         'tabs' => [
           'deps' => ['jquery_ui'],
@@ -2659,10 +2665,18 @@ if (typeof indiciaFns.initDataSources !== 'undefined') {
 }
 $javascript
 $late_javascript
+if (typeof indiciaFns.initPageStateControls !== 'undefined') {
+  // Sources and output controls now exist, so provider defaults can be read.
+  indiciaFns.initPageStateControls();
+  indiciaFns.bindPageStateControls();
+}
 indiciaFns.setupTabLazyLoad();
 // Elasticsearch source population.
 if (typeof indiciaFns.hookupDataSources !== 'undefined') {
   indiciaFns.hookupDataSources();
+  if (typeof indiciaFns.restorePageStateControls !== 'undefined') {
+    indiciaFns.restorePageStateControls();
+  }
   // Populate unless a report filter builder present as that will do it for us.
   if (!indiciaData.lang.reportFilters) {
     indiciaFns.populateDataSources();

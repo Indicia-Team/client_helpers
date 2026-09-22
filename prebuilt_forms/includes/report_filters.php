@@ -2051,7 +2051,13 @@ JS;
   }
   else {
     report_helper::$onload_javascript .= <<<JS
-if ($('#select-filter').val()) {
+var pageStateRestored = typeof indiciaFns.restorePageStateControls !== 'undefined'
+  && indiciaFns.restorePageStateControls();
+if (pageStateRestored) {
+  // The coordinator restored the complete filter definition and source state.
+  indiciaFns.applyFilterToReports(false, false, false);
+  indiciaFns.populateDataSources();
+} else if ($('#select-filter').val()) {
   loadFilter($('#select-filter').val(), $getParams);
 } else {
   $.each($('#filter-panes .pane'), function (idx, pane) {

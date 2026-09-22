@@ -1958,6 +1958,87 @@ HTML;
   }
 
   /**
+   * Enables optional persistence of Elasticsearch page state.
+   *
+   * This control is a coordinator rather than a data output control. The
+   * JavaScript resource receives the configuration here and coordinates state
+   * providers owned by the individual controls.
+   *
+   * @param array $options
+   *   Control options. The state category options are selectedFilter,
+   *   filterDefinition, filterPanelVisibility, sort, gridFilterRow, page and
+   *   rowsPerPage. All default to TRUE. resetButton defaults to TRUE.
+   *   expires is the cookie lifetime in days and defaults to 30. storageKey
+   *   can override the page-derived cookie key.
+   *
+   * @return string
+   *   HTML for the control container and optional reset button.
+   */
+  public static function persistPageState(array $options) {
+    self::checkOptions('persistPageState', $options, [], []);
+
+    $stateOptions = [
+      'selectedFilter',
+      'filterDefinition',
+      'filterPanelVisibility',
+      'sort',
+      'gridFilterRow',
+      'page',
+      'rowsPerPage',
+      'resetButton',
+    ];
+    $options = array_merge([
+      'selectedFilter' => TRUE,
+      'filterDefinition' => TRUE,
+      'filterPanelVisibility' => TRUE,
+      'sort' => TRUE,
+      'gridFilterRow' => TRUE,
+      'page' => TRUE,
+      'rowsPerPage' => TRUE,
+      'resetButton' => TRUE,
+      'expires' => 30,
+      'storageKey' => '',
+    ], $options);
+
+    foreach ($stateOptions as $optionName) {
+      if (is_bool($options[$optionName])) {
+        continue;
+      }
+      $booleanValue = filter_var($options[$optionName], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+      if ($booleanValue === NULL) {
+        throw new InvalidArgumentException("@$optionName option for [persistPageState] must be boolean.");
+      }
+      $options[$optionName] = $booleanValue;
+    }
+    if (filter_var($options['expires'], FILTER_VALIDATE_INT) === FALSE || $options['expires'] < 0) {
+      throw new InvalidArgumentException('@expires option for [persistPageState] must be a non-negative integer.');
+    }
+    if (!is_string($options['storageKey'])) {
+      throw new InvalidArgumentException('@storageKey option for [persistPageState] must be a string.');
+    }
+
+    helper_base::add_resource('persistPageState');
+    helper_base::addLanguageStringsToJs('persistPageState', [
+      'reset' => 'Reset page state',
+    ]);
+    $dataOptions = helper_base::getOptionsForJs($options, array_merge($stateOptions, [
+      'expires',
+      'storageKey',
+    ]), TRUE);
+    global $indicia_templates;
+    $resetLabel = lang::get('Reset page state');
+    $resetButton = $options['resetButton'] ? <<<HTML
+<button type="button" class="$indicia_templates[buttonDefaultClass] persist-page-state-reset">$resetLabel</button>
+HTML : '';
+
+    return <<<HTML
+<div id="$options[id]" class="idc-control idc-persistPageState" data-idc-class="idcPersistPageState" data-idc-config="$dataOptions">
+  $resetButton
+</div>
+HTML;
+  }
+
+  /**
    * A standard parameters filter toolbar for use on Elasticsearch pages.
    *
    * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-standardparams
