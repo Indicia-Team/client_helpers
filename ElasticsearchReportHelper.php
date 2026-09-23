@@ -2020,24 +2020,26 @@ HTML;
     }
 
     helper_base::add_resource('persistPageState');
-    helper_base::addLanguageStringsToJs('persistPageState', [
-      'reset' => 'Reset page state',
-    ]);
     $dataOptions = helper_base::getOptionsForJs($options, array_merge($stateOptions, [
       'expires',
       'storageKey',
     ]), TRUE);
     global $indicia_templates;
-    $resetLabel = lang::get('Reset page state');
+    $resetLabel = htmlspecialchars(lang::get('Reset all'), ENT_QUOTES, 'UTF-8');
+    $resetTooltip = htmlspecialchars(
+      lang::get('Click to reset all filters, sort and paging options on the page'),
+      ENT_QUOTES,
+      'UTF-8'
+    );
     $resetButton = $options['resetButton'] ? <<<HTML
-<button type="button" class="$indicia_templates[buttonDefaultClass] persist-page-state-reset">$resetLabel</button>
-HTML : '';
+      <button type="button" class="$indicia_templates[buttonDefaultClass] persist-page-state-reset" title="$resetTooltip">$resetLabel</button>
+      HTML : '';
 
     return <<<HTML
-<div id="$options[id]" class="idc-control idc-persistPageState" data-idc-class="idcPersistPageState" data-idc-config="$dataOptions">
-  $resetButton
-</div>
-HTML;
+      <div id="$options[id]" class="idc-control idc-persistPageState" data-idc-class="idcPersistPageState" data-idc-config="$dataOptions">
+        $resetButton
+      </div>
+      HTML;
   }
 
   /**
