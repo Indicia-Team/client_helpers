@@ -2039,11 +2039,11 @@ HTML;
     report_helper::$initialFilterParamsToApply = array_merge(report_helper::$initialFilterParamsToApply, $allParams);
     $json = json_encode($allParams);
     report_helper::$onload_javascript .= <<<JS
-var params = $json;
-indiciaData.filter.def = $.extend(indiciaData.filter.def, params);
-indiciaData.filter.resetParams = $.extend({}, params);
+      var params = $json;
+      indiciaData.filter.def = $.extend(indiciaData.filter.def, params);
+      indiciaData.filter.resetParams = $.extend({}, params);
 
-JS;
+    JS;
   }
   $getParams = empty($getParams) ? '{}' : json_encode($getParams);
   if (!empty($options['filters_user_id']) && isset($fu)) {
@@ -2051,28 +2051,28 @@ JS;
   }
   else {
     report_helper::$onload_javascript .= <<<JS
-var pageStateRestored = typeof indiciaFns.restorePageStateControls !== 'undefined'
-  && indiciaFns.restorePageStateControls();
-if (pageStateRestored) {
-  // The coordinator restored the complete filter definition and source state.
-  indiciaFns.applyFilterToReports(false, false, false);
-  indiciaFns.populateDataSources();
-} else if ($('#select-filter').val()) {
-  loadFilter($('#select-filter').val(), $getParams);
-} else {
-  $.each($('#filter-panes .pane'), function (idx, pane) {
-    var name = pane.id.replace(/^pane-filter_/, '');
-    if (indiciaData.filterParser[name].fixLegacyFilter) {
-      indiciaData.filterParser[name].fixLegacyFilter(indiciaData.filter.def);
-    }
-  });
-  indiciaFns.applyFilterToReports(false);
-}
-// Set initial description in the quality filter input.
-$('.quality-filter').val(indiciaData.filterParser.quality.statusDescriptionFromFilter(
-    indiciaData.filter.def.quality, indiciaData.filter.def.quality_op));
+      var pageStateRestored = typeof indiciaFns.restorePageStateControls !== 'undefined'
+        && indiciaFns.restorePageStateControls();
+      if (pageStateRestored) {
+        // The coordinator restored the complete filter definition and source state.
+        indiciaFns.applyFilterToReports(false, false, false);
+        indiciaFns.populateDataSources();
+      } else if ($('#select-filter').val()) {
+        loadFilter($('#select-filter').val(), $getParams);
+      } else {
+        $.each($('#filter-panes .pane'), function (idx, pane) {
+          var name = pane.id.replace(/^pane-filter_/, '');
+          if (indiciaData.filterParser[name].fixLegacyFilter) {
+            indiciaData.filterParser[name].fixLegacyFilter(indiciaData.filter.def);
+          }
+        });
+        indiciaFns.applyFilterToReports(false);
+      }
+      // Set initial description in the quality filter input.
+      $('.quality-filter').val(indiciaData.filterParser.quality.statusDescriptionFromFilter(
+          indiciaData.filter.def.quality, indiciaData.filter.def.quality_op));
 
-JS;
+    JS;
   }
   // Any standard parameters we supply get activated, so ensure they don't
   // appear on a params form.

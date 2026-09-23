@@ -420,12 +420,13 @@ class map_helper extends helper_base {
       $srefId = empty($options['srefId']) ? '$.fn.indiciaMapPanel.defaults.srefId' : "'{$options['srefId']}'";
       if (!(isset($options['switchOffSrefRetrigger']) && $options['switchOffSrefRetrigger'] == TRUE)) {
         $mapSetupJs .= <<<JS
-var srefId = $srefId;
-if (srefId && $('#' + srefId).length && $('#' + srefId).val()!==''
-    && indiciaData.mapdiv.settings.initialBoundaryWkt===null && indiciaData.mapdiv.settings.initialFeatureWkt===null) {
-  jQuery('#'+srefId).trigger('change');
-}
-JS;
+          var srefId = $srefId;
+          if (srefId && $('#' + srefId).length && $('#' + srefId).val()!==''
+              && indiciaData.mapdiv.settings.initialBoundaryWkt===null && indiciaData.mapdiv.settings.initialFeatureWkt===null) {
+            jQuery('#'+srefId).trigger('change');
+          }
+
+        JS;
       }
       // If the map is displayed on a tab, so we must only generate it when the tab is displayed as creating the
       // map on a hidden div can cause problems. Also, the map must not be created until onload or later. So

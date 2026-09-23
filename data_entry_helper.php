@@ -10484,7 +10484,7 @@ HTML;
     $systems = unserialize(strtolower(serialize(array_keys($systems))));
     // Find the systems that have client-side JavaScript handlers.
     $handlers = array_intersect($systems, ['osgb','osie','4326','2169']);
-    self::get_resources();
+    self::getResources();
     foreach ($handlers as $code) {
       // Dynamically find a resource to link us to the handler js file.
       self::add_resource('sref_handlers_'.$code);
