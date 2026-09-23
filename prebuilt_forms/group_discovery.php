@@ -94,7 +94,7 @@ class iform_group_discovery implements PrebuiltFormInterface {
     $searchControl = data_entry_helper::text_input([
       'label' => lang::get('Search'),
       'fieldname' => 'group-search',
-      'afterControl' => '<button type="button" id="group-search-go"><i class="fas fa-search"></i></button>'
+      'afterControl' => '<button type="button" id="group-search-go" aria-label="' . lang::get('Search') . '" title="' . lang::get('Search') . '"><i class="fas fa-search"></i></button><button type="button" id="group-search-clear" class="group-search-clear" aria-label="' . lang::get('Clear search') . '" title="' . lang::get('Clear search') . '" style="display: none"><i class="fas fa-times"></i></button>',
     ]);
     $scopeSwitchControl = data_entry_helper::radio_group([
       'label' => lang::get('Show'),

@@ -127,7 +127,7 @@ class ElasticsearchProxyHelper {
         return self::proxyVerifyAll($nid);
 
       case 'verifyspreadsheet':
-        return self::proxyVerifySpreadsheet();
+        return self::proxyVerifySpreadsheet($nid);
 
       case 'verifyids':
         return self::proxyVerifyIds();
@@ -516,13 +516,11 @@ class ElasticsearchProxyHelper {
       throw new ElasticsearchProxyAbort('Method not allowed as server configuration incomplete', 405);
     }
     $statuses = $_POST['doc']['identification'] ?? [];
-    return [
-      'updated' => self::internalModifyListOnEs(
-        $_POST['ids'],
-        $statuses,
-        $_POST['doc']['metadata']['website']['id'] ?? NULL
-      ),
-    ];
+    return self::internalModifyListOnEs(
+      $_POST['ids'],
+      $statuses,
+      $_POST['doc']['metadata']['website']['id'] ?? NULL
+    );
   }
 
   /**
@@ -685,8 +683,16 @@ class ElasticsearchProxyHelper {
    * in the response metadata). This will process the file in chunks, which
    * should continue until the response contains state=done.
    */
-  private static function proxyVerifySpreadsheet() {
+  private static function proxyVerifySpreadsheet($nid) {
+    iform_load_helpers(['helper_base']);
     $url = self::$config['indicia']['base_url'] . 'index.php/services/rest/occurrences/verify-spreadsheet';
+    $indiciaUserId = (int) hostsite_get_user_field('indicia_user_id', 0);
+    $drupalUserId = (int) hostsite_get_user_field('id', 0);
+
+    if (empty(self::$config['es']['endpoint'])
+        || empty(self::$config['es']['warehouse_prefix'])) {
+      throw new ElasticsearchProxyAbort('Method not allowed as server configuration incomplete', 405);
+    }
 
     if (isset($_FILES['decisions'])) {
       // Initial file upload.
@@ -694,24 +700,56 @@ class ElasticsearchProxyHelper {
       $payload = [
         'decisions' => curl_file_create($file['tmp_name'], $file['type'], $file['name']),
         'filter_id' => $_POST['filter_id'],
-        'user_id' => hostsite_get_user_field('indicia_user_id'),
-        'es_endpoint' => $_POST['es_endpoint'],
-        'id_prefix' => $_POST['id_prefix'],
-        'warehouse_name' => $_POST['warehouse_name'],
+        'user_id' => $indiciaUserId,
+        'es_endpoint' => self::$config['es']['endpoint'],
+        'id_prefix' => self::$config['es']['warehouse_prefix'],
       ];
     }
     else {
       if (!empty($_POST['fileId'])) {
         // Subsequent processing request.
+        $fileId = $_POST['fileId'];
+        if (!is_string($fileId)) {
+          throw new ElasticsearchProxyAbort('Invalid spreadsheet fileId parameter', 400);
+        }
+        $cacheKey = [
+          'iform_verify_spreadsheet' => $fileId,
+        ];
+        $ownership = helper_base::cacheGet($cacheKey);
+        $ownership = $ownership === FALSE ? FALSE : json_decode($ownership, TRUE);
+        if (!is_array($ownership)
+            || $ownership['nid'] !== (int) $nid
+            || $ownership['drupal_user_id'] !== $drupalUserId
+            || $ownership['indicia_user_id'] !== $indiciaUserId) {
+          throw new ElasticsearchProxyAbort('Spreadsheet upload not found or not owned by the current user', 403);
+        }
         $payload = [
-          'fileId' => $_POST['fileId'],
+          'fileId' => $fileId,
         ];
       }
     }
     if (!isset($payload)) {
       throw new ElasticsearchProxyAbort('Missing decisions file or fileId parameter', 400);
     }
-    return self::curlPost($url, $payload, [], TRUE);
+    $response = self::curlPost($url, $payload, [], TRUE);
+
+    if (isset($_FILES['decisions'])) {
+      $metadata = json_decode($response, TRUE);
+      if (is_array($metadata) && !empty($metadata['fileId'])) {
+        helper_base::cacheSet(
+          [
+            'iform_verify_spreadsheet' => $metadata['fileId'],
+          ],
+          json_encode([
+            'nid' => (int) $nid,
+            'drupal_user_id' => $drupalUserId,
+            'indicia_user_id' => $indiciaUserId,
+          ]),
+          3600
+        );
+      }
+    }
+    return $response;
   }
 
   /**
@@ -726,9 +764,7 @@ class ElasticsearchProxyHelper {
     }
     // Set website ID to 0, basically disabling the ES copy of the record until
     // a proper update with correct taxonomy information comes through.
-    return [
-      'updated' => self::internalModifyListOnEs($_POST['ids'], [], 0),
-    ];
+    return self::internalModifyListOnEs($_POST['ids'], [], 0);
   }
 
   /**
@@ -821,8 +857,9 @@ class ElasticsearchProxyHelper {
    *   If changing the website ID (i.e. setting to 0 to temporarily hide the
    *   record), set it here.
    *
-   * @return int
-   *   Number of records updated.
+   * @return array
+   *   Array containing the number of records updated, total records, version
+   *   conflicts, and failures.
    */
   private static function internalModifyListOnEs(array $ids, array $statuses, $websiteIdToModify) {
     $url = self::getEsUrl() . "/_update_by_query";
@@ -874,7 +911,12 @@ class ElasticsearchProxyHelper {
     // Since the verification alias can only see 1 copy of each record (e.g.
     // full precision), the total in the response will correspond to the number
     // of occurrences updated.
-    return $rObj->updated;
+    return [
+      'updated' => $rObj->updated,
+      'total' => $rObj->total,
+      'version_conflicts' => $rObj->version_conflicts,
+      'failures' => $rObj->failures,
+    ];
   }
 
   /**
@@ -946,12 +988,11 @@ class ElasticsearchProxyHelper {
     }
     elseif ($config['es']['auth_method'] === 'directWebsite') {
       iform_load_helpers(['helper_base']);
-      $conn = iform_get_connection_details();
       $tokens = [
         'WEBSITE_ID',
-        $conn['website_id'],
+        $config['indicia']['website_id'],
         'SECRET',
-        $conn['password'],
+        $config['indicia']['password'],
       ];
       if (isset($config['es']['scope'])) {
         $tokens[] = 'SCOPE';
@@ -971,7 +1012,7 @@ class ElasticsearchProxyHelper {
         $keyFile = \Drupal::service('file_system')->realpath("private://") . '/rsa_private.pem';
       }
       if (!file_exists($keyFile)) {
-        \Drupal::logger('iform')->error('Missing private key file for jwtUser Elasticsearch authentication.');
+        hostsite_log('error', 'Missing private key file for jwtUser Elasticsearch authentication.');
         throw new ElasticsearchProxyAbort('Method not allowed as server configuration incomplete', 405);
       }
       $privateKey = file_get_contents($keyFile);
@@ -1044,12 +1085,19 @@ class ElasticsearchProxyHelper {
         'output' => $response,
         'headers' => curl_getinfo($session),
         'httpCode' => curl_getinfo($session, CURLINFO_HTTP_CODE),
+        'curlErrno' => curl_errno($session),
+        'curlError' => curl_error($session),
       ];
       curl_close($session);
     }
     // Check for an error, or check if the http response was not OK.
-    if ($curlResponse['httpCode'] != 200) {
-      http_response_code($curlResponse['httpCode']);
+    if ($curlResponse['httpCode'] != 200 || !empty($curlResponse['curlErrno'])) {
+      throw new \IForm\WarehouseRequestException(
+        $curlResponse['httpCode'],
+        $curlResponse['curlErrno'] ?? 0,
+        $curlResponse['curlError'] ?? '',
+        $curlResponse['output'] === FALSE ? '' : $curlResponse['output'],
+      );
     }
     elseif ($cacheTimeout) {
       helper_base::array_to_query_string($cacheKey);
@@ -3120,7 +3168,7 @@ class ElasticsearchProxyHelper {
   private static function bulkEditIds($nid, array $ids, array $updates, array $options) {
     $response = self::bulkProcessIds($nid, $ids, 'bulk_edit', [
       'updates' => json_encode($updates),
-      'options' => json_encode($options),
+      'options' => json_encode(empty($options) ? new \stdClass() : $options),
     ]);
     return json_decode($response, TRUE);
   }
@@ -3200,6 +3248,7 @@ class ElasticsearchProxyHelper {
       'hits.hits._source.event.recorded_by',
       'hits.hits._source.location.verbatim_locality',
       'hits.hits._source.location.input_sref',
+      'aggregations',
     ]);
     $r = self::curlPost($url, $query);
     return self::organiseBulkEditPreview($r, $allKeys);
@@ -3363,6 +3412,39 @@ class ElasticsearchProxyHelper {
         'should' => $allKeyQueries,
       ],
     ];
+    $query['aggs']['has_verified_records'] = [
+      'filter' => [
+        'bool' => [
+          'should' => [
+            [
+              'bool' => [
+                'filter' => [
+                  ['exists' => ['field' => 'identification.verification_status']],
+                ],
+                'must_not' => [
+                  'term' => [
+                    'identification.verification_status' => 'C',
+                  ],
+                ],
+              ],
+            ],
+            [
+              'bool' => [
+                'filter' => [
+                  ['exists' => ['field' => 'identification.verification_substatus']],
+                ],
+                'must_not' => [
+                  'term' => [
+                    'identification.verification_substatus' => '0',
+                  ],
+                ],
+              ],
+            ],
+          ],
+          'minimum_should_match' => 1,
+        ],
+      ],
+    ];
     return $query;
   }
 
@@ -3402,7 +3484,10 @@ class ElasticsearchProxyHelper {
         }
       }
     }
-    return $organisedList;
+    return [
+      'records' => $organisedList,
+      'aggregations' => $data->aggregations,
+    ];
   }
 
   /**

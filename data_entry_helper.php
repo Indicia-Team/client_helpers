@@ -743,6 +743,8 @@ JS;
    *     is overridden when reloading a record with existing data for this
    *     control.
    *   * class - Optional. CSS class names to add to the control.
+   *   * labelPosition - Optional. Set to after to output the checkbox before
+   *     its label. Defaults to before for backwards compatibility.
    *   * template - Optional. Name of the template entry used to build the HTML
    *     for the control. Defaults to checkbox.
    *
@@ -750,11 +752,28 @@ JS;
    *   HTML to insert into the page for the checkbox control.
    */
   public static function checkbox(array $options) {
+    global $indicia_templates;
     $options = self::check_options($options);
     $default = isset($options['default']) ? $options['default'] : '';
     $value = self::check_default_value($options['fieldname'], $default);
     $options['checked'] = ($value === 'on' || $value === 1 || $value === '1' || $value === 't' || $value === TRUE) ? ' checked="checked"' : '';
-    $options['template'] = array_key_exists('template', $options) ? $options['template'] : 'checkbox';
+    $labelPosition = $options['labelPosition'] ?? 'before';
+    $positionedTemplate = "checkbox_label_$labelPosition";
+    if (!array_key_exists('template', $options) && !empty($options['label']) && isset($indicia_templates[$positionedTemplate])) {
+      $options['template'] = $positionedTemplate;
+      $options['checkboxLabel'] = $options['label'];
+      if ($labelPosition === 'before' && substr($options['checkboxLabel'], -1) !== '?') {
+        $options['checkboxLabel'] .= ':';
+      }
+      $options['label'] = '';
+      $checkboxClass = trim(($indicia_templates['checkboxClass'] ?? '') . ' ' . $options['class']);
+      $options['checkboxClass'] = empty($checkboxClass) ? '' : " class=\"$checkboxClass\"";
+      $options['checkboxLabelClass'] = empty($options['labelClass']) ? '' : " class=\"$options[labelClass]\"";
+      $options['checkboxLabelClassValue'] = empty($options['labelClass']) ? '' : " $options[labelClass]";
+    }
+    else {
+      $options['template'] = $options['template'] ?? 'checkbox';
+    }
     return self::apply_template($options['template'], $options);
   }
 
@@ -1320,7 +1339,7 @@ JS;
    * species_checklist for each new identified species. If the same species is
    * identified again, the count of the record is incremented. The attribute to
    * increment is determined by it having the system function for
-   * sex-stagge-count set in the warehouse. A classification result is created
+   * sex-stage-count set in the warehouse. A classification result is created
    * for each file and the file is added to the occurrence. Where a file is not
    * identified, a record of the unknown taxon is created.
    *
@@ -1351,13 +1370,24 @@ JS;
    *     English if not specified. If specified but not available, defaults to
    *     preferred name.
    *   * readAuth - Read authentication array with nonce and token.
-   *   * collapsible - set to true to place the classifier inside a collapsed
-   *     div initially so it does not get in the way when not used.
+   *   * collapsible - Set to true to place the classifier inside a collapsed
+   *     div initially so it does not get in the way when not used. Defaults
+   *     to true.
    */
   public static function file_classifier(array $options) {
-    // Ensure some settings have required values.
-    if (empty($options['taxonControlId'])) {
-      throw new Exception('A taxonControlId must be provided for an image classifier.');
+    // Ensure all settings required to build the classifier are present before
+    // passing them to the option preparation helpers.
+    $requiredOptions = [
+      'url',
+      'taxonListId',
+      'taxonControlId',
+      'unknownMeaningId',
+      'readAuth',
+    ];
+    foreach ($requiredOptions as $requiredOption) {
+      if (empty($options[$requiredOption])) {
+        throw new Exception("A $requiredOption must be provided for an image classifier.");
+      }
     }
 
     // Obtain default options.
@@ -1392,14 +1422,16 @@ JS;
       $javascript = self::file_box($options);
       // Wrap the script in an event handler so we only execute it when
       // the tab is displayed.
-      $javascript .=
-        "var uploaderTabHandler = function(event, ui) { \n" .
-        "  panel = typeof ui.newPanel === 'undefined' ? ui.panel : ui.newPanel[0];\n" .
-        "  if ($(panel).attr('id') === '{$options['tabDiv']}') {\n    " .
-        $javascript .
-        "    indiciaFns.unbindTabsActivate($('#{$options['tabDiv']}').parent(), uploaderTabHandler);\n" .
-        "  }\n};\n" .
-        "indiciaFns.bindTabsActivate($('#{$options['tabDiv']}').parent(), uploaderTabHandler);\n";
+      $javascript = <<<JS
+        var uploaderTabHandler = function(event, ui) {
+          panel = typeof ui.newPanel === 'undefined' ? ui.panel : ui.newPanel[0];
+          if ($(panel).attr('id') === '{$options['tabDiv']}') {
+            $javascript
+            indiciaFns.unbindTabsActivate($('#{$options['tabDiv']}').parent(), uploaderTabHandler);
+          }
+        };
+        indiciaFns.bindTabsActivate($('#{$options['tabDiv']}').parent(), uploaderTabHandler);
+      JS;
       // Insert this script at the beginning, because it must be done before
       // the tabs are initialised or the first tab cannot fire the event.
       self::$javascript = $javascript . self::$javascript;
@@ -1427,6 +1459,7 @@ JS;
       'dialogStart' => 'Your files are being sent to a classification service which will try to identify the species.',
       'dialogTitle' => 'Requesting classification',
       'percentProbability' => '{1}% probability',
+      'multipleSuggestionsTitle' => 'Multiple possibilities found',
       'multipleSuggestionInstructions' => 'Classification of the following image(s) has returned more than one suggestion. Please click on the one that you would like to use or press Cancel to skip this classification.'
     ]);
     return $r;
@@ -3941,6 +3974,7 @@ RIJS;
       $grid = self::get_species_checklist_header($options, $occAttrs, $onlyImages);
       $rows = [];
       $imageRowIdxs = [];
+      $mediaRowIdxs = [];
       $rowIdx = 0;
       // Tell the addTowToGrid javascript how many rows are already used, so it
       // has a unique index for new rows.
@@ -4299,7 +4333,9 @@ HTML;
             }
             else {
               // Create a cell containing the existing images.
-              $row .= '<td class="scMediaCell">' . self::getSpeciesChecklistExistingRowPhotoUploader($options, $txIdx, $loadedTxIdx, $existingRecordId) . '</td>';
+              $row .= '<td class="scMediaCell"><div class="scMedia">' .
+                self::getSpeciesChecklistExistingRowPhotoUploader($options, $txIdx, $loadedTxIdx, $existingRecordId) .
+                '</div></td>';
             }
           }
         }
@@ -4312,6 +4348,9 @@ HTML;
         // Are we in the first column of a multicolumn grid, or doing single column grid? If so start new row.
         if ($colIdx === 0) {
           $rows[$rowIdx] = $row;
+          if ($options['responsive'] && $options['mediaTypes'] && count($existingImages) > 0) {
+            $mediaRowIdxs[] = $rowIdx;
+          }
         }
         else {
           $rows[$rowIdx % (ceil(count($taxonRows) / $options['columns']))] .= $row;
@@ -4332,7 +4371,7 @@ HTML;
       }
       $grid .= "\n<tbody>\n";
       if (count($rows) > 0) {
-        $grid .= self::species_checklist_implode_rows($rows, $imageRowIdxs);
+        $grid .= self::species_checklist_implode_rows($rows, $imageRowIdxs, $mediaRowIdxs);
       }
       $grid .= "</tbody>\n";
       $grid = str_replace(
@@ -4852,10 +4891,17 @@ JS;
   /**
    * Implode the rows we are putting into the species checklist, with application of classes to image rows.
    */
-  public static function species_checklist_implode_rows($rows, $imageRowIdxs) {
+  public static function species_checklist_implode_rows($rows, $imageRowIdxs, $mediaRowIdxs = []) {
     $r = '';
     foreach ($rows as $idx => $row) {
-      $class = in_array($idx, $imageRowIdxs) ? ' class="supplementary-row"' : '';
+      $classes = [];
+      if (in_array($idx, $imageRowIdxs)) {
+        $classes[] = 'supplementary-row';
+      }
+      if (in_array($idx, $mediaRowIdxs)) {
+        $classes[] = 'has-media';
+      }
+      $class = count($classes) > 0 ? ' class="' . implode(' ', $classes) . '"' : '';
       $r .= "<tr$class>$row</tr>\n";
     }
     return $r;
@@ -8224,7 +8270,7 @@ if (errors$uniq.length>0) {
       $hasDataIgnoreAttrs = array_key_exists($tableId, $allHasDataIgnoreAttrs) ?
         $allHasDataIgnoreAttrs[$tableId] : [];
       // use default value of $include_if_any_data or override with a table specific value
-      $include_if_any_data = array_key_exists($tableId, $allRowInclusionCheck) && $allRowInclusionCheck[$tableId] = 'hasData' ?
+      $include_if_any_data = array_key_exists($tableId, $allRowInclusionCheck) && $allRowInclusionCheck[$tableId] === 'hasData' ?
           TRUE : $include_if_any_data;
       // Determine if this record is for presence, absence or nothing.
       $present = self::wrap_species_checklist_record_present($record, $include_if_any_data,
@@ -10438,7 +10484,7 @@ HTML;
     $systems = unserialize(strtolower(serialize(array_keys($systems))));
     // Find the systems that have client-side JavaScript handlers.
     $handlers = array_intersect($systems, ['osgb','osie','4326','2169']);
-    self::get_resources();
+    self::getResources();
     foreach ($handlers as $code) {
       // Dynamically find a resource to link us to the handler js file.
       self::add_resource('sref_handlers_'.$code);

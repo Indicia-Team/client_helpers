@@ -939,6 +939,8 @@ class helper_base {
    *   * jqplot_category_axis_renderer
    *   * jqplot_canvas_axis_label_renderer
    *   * jqplot_trendline
+   *   * persistPageState
+   *   * reportFilters
    *   * reportgrid
    *   * freeformReport
    *   * tabs
@@ -976,7 +978,7 @@ class helper_base {
       self::$indiciaFnsDone = TRUE;
       self::add_resource('indiciaFns');
     }
-    $resourceList = self::get_resources();
+    $resourceList = self::getResources();
     // If this is an available resource and we have not already included it,
     // then add it to the list.
     if (array_key_exists($resource, $resourceList) && !in_array($resource, self::$required_resources)) {
@@ -992,7 +994,7 @@ class helper_base {
   /**
    * List of external resources including stylesheets and js files used by the data entry helper class.
    */
-  public static function get_resources() {
+  public static function getResources() {
     if (self::$resource_list === NULL) {
       $base = self::$base_url;
       if (!self::$js_path) {
@@ -1022,15 +1024,35 @@ class helper_base {
       if (substr($indicia_theme_path, -1) !== '/') {
         $indicia_theme_path .= '/';
       }
+      // List of all resources, in dependency order.
       self::$resource_list = [
-        'indiciaFns' => [
-          'deps' => ['jquery'],
-          'javascript' => [self::$js_path . "indicia.functions.js"],
-        ],
         'jquery' => [
           'javascript' => [
             self::$js_path . 'jquery.js',
           ],
+        ],
+        'indiciaFns' => [
+          'deps' => ['jquery'],
+          'javascript' => [self::$js_path . "indicia.functions.js"],
+        ],
+        'jquery_cookie' => [
+          'deps' => ['jquery'],
+          'javascript' => [self::$js_path . "jquery.cookie.js"],
+        ],
+        'jquery_ui' => [
+          'deps' => ['jquery'],
+          'stylesheets' => [
+            self::$css_path . 'jquery-ui.min.css',
+            "$indicia_theme_path$indicia_theme/jquery-ui.theme.min.css",
+          ],
+          'javascript' => [
+            self::$js_path . 'jquery-ui.min.js',
+            self::$js_path . 'jquery-ui.effects.js',
+          ]
+        ],
+        'jquery_ui_fr' => [
+          'deps' => ['jquery_ui'],
+          'javascript' => [self::$js_path . "jquery.ui.datepicker-fr.js"]
         ],
         'datepicker' => [
           'deps' => ['jquery_cookie'],
@@ -1073,6 +1095,19 @@ class helper_base {
           'deps' => ['openlayers'],
           'javascript' => [self::$js_path . 'hoverControl.js'],
         ],
+        'validation-lib' => [
+          'deps' => ['jquery'],
+          'javascript' => [
+            self::$js_path . 'jquery.metadata.js',
+            self::$js_path . 'jquery.validate.js',
+          ],
+        ],
+        'validation' => [
+          'deps' => ['validation-lib'],
+          'javascript' => [
+            self::$js_path . 'additional-methods.js',
+          ],
+        ],
         'addrowtogrid' => [
           'deps' => ['validation'],
           'javascript' => [self::$js_path . "addRowToGrid.js"],
@@ -1113,35 +1148,12 @@ class helper_base {
           'javascript' => [self::$js_path . "import.js"],
         ],
         'indicia_locks' => [
-          'deps' => ['jquery_cookie', 'json'],
+          'deps' => ['jquery_cookie'],
           'javascript' => [self::$js_path . "indicia.locks.js"],
-        ],
-        'jquery_cookie' => [
-          'deps' => ['jquery'],
-          'javascript' => [self::$js_path . "jquery.cookie.js"],
-        ],
-        'jquery_ui' => [
-          'deps' => ['jquery'],
-          'stylesheets' => [
-            self::$css_path . 'jquery-ui.min.css',
-            "$indicia_theme_path$indicia_theme/jquery-ui.theme.min.css",
-          ],
-          'javascript' => [
-            self::$js_path . 'jquery-ui.min.js',
-            self::$js_path . 'jquery-ui.effects.js',
-          ]
-        ],
-        'jquery_ui_fr' => [
-          'deps' => ['jquery_ui'],
-          'javascript' => [self::$js_path . "jquery.ui.datepicker-fr.js"]
         ],
         'jquery_form' => [
           'deps' => ['jquery'],
           'javascript' => [self::$js_path . "jquery.form.js"],
-        ],
-        'reportPicker' => [
-          'deps' => ['treeview', 'fancybox'],
-          'javascript' => [self::$js_path . "reportPicker.js"],
         ],
         'treeview' => [
           'deps' => ['jquery'],
@@ -1155,13 +1167,17 @@ class helper_base {
             self::$js_path."jquery.treeview.edit.js",
           ],
         ],
-        'googlemaps' => [
-          'javascript' => ["https://maps.google.com/maps/api/js?v=3" . (empty(self::$google_maps_api_key) ? '' : '&key=' . self::$google_maps_api_key)],
-        ],
         'fancybox' => [
           'deps' => ['jquery'],
           'stylesheets' => [self::$js_path . 'fancybox/dist/jquery.fancybox.min.css'],
           'javascript' => [self::$js_path . 'fancybox/dist/jquery.fancybox.min.js'],
+        ],
+        'reportPicker' => [
+          'deps' => ['treeview', 'fancybox'],
+          'javascript' => [self::$js_path . "reportPicker.js"],
+        ],
+        'googlemaps' => [
+          'javascript' => ["https://maps.google.com/maps/api/js?v=3" . (empty(self::$google_maps_api_key) ? '' : '&key=' . self::$google_maps_api_key)],
         ],
         'treeBrowser' => [
           'deps' => ['jquery', 'jquery_ui'],
@@ -1173,18 +1189,13 @@ class helper_base {
             self::$css_path . 'theme-generic.css'
           ],
         ],
-        'validation-lib' => [
-          'deps' => ['jquery'],
-          'javascript' => [
-            self::$js_path . 'jquery.metadata.js',
-            self::$js_path . 'jquery.validate.js',
+        'dmUploader' => [
+          'stylesheets' => [
+            self::$js_path . 'uploader/dist/css/jquery.dm-uploader.min.css',
           ],
-        ],
-        'validation' => [
-          'deps' => ['validation-lib'],
           'javascript' => [
-            self::$js_path . 'additional-methods.js',
-          ],
+            self::$js_path . 'uploader/dist/js/jquery.dm-uploader.min.js',
+          ]
         ],
         'plupload' => [
           'deps' => ['jquery_ui', 'fancybox'],
@@ -1198,14 +1209,6 @@ class helper_base {
           'javascript' => [
             self::$js_path . 'uploader.js',
           ],
-        ],
-        'dmUploader' => [
-          'stylesheets' => [
-            self::$js_path . 'uploader/dist/css/jquery.dm-uploader.min.css',
-          ],
-          'javascript' => [
-            self::$js_path . 'uploader/dist/js/jquery.dm-uploader.min.js',
-          ]
         ],
         'jqplot' => [
           'stylesheets' => [self::$js_path . 'jqplot/jquery.jqplot.min.css'],
@@ -1254,6 +1257,10 @@ class helper_base {
           'javascript' => [
             self::$js_path . 'jquery.freeformReport.js',
           ]
+        ],
+        'persistPageState' => [
+          'deps' => ['indiciaFns', 'jquery_cookie'],
+          'javascript' => [self::$js_path . 'indicia.datacomponents/idc.pageState.js'],
         ],
         'reportfilters' => [
           'deps' => ['reportgrid'],
@@ -1386,6 +1393,7 @@ class helper_base {
             'indiciaFootableReport',
             'jquery_cookie',
             'proj4',
+            'persistPageState',
           ],
           'javascript' => [
             self::$js_path . 'indicia.datacomponents/idc.core.js',
@@ -1418,6 +1426,16 @@ class helper_base {
             self::$js_path . 'jquery.fileClassifier.js',
           ],
         ],
+        'd3' => [
+          'javascript' => [
+            'https://d3js.org/d3.v5.min.js',
+          ],
+        ],
+        'bigr' => [
+          'javascript' => [
+            'https://unpkg.com/brc-atlas-bigr@2.4.0/dist/bigr.min.umd.js',
+          ],
+        ],
         'brc_atlas' => [
           'deps' => [
             'd3',
@@ -1442,20 +1460,15 @@ class helper_base {
             'https://cdn.jsdelivr.net/gh/biologicalrecordscentre/brc-charts@latest/dist/brccharts.umd.min.js',
           ],
         ],
-        'd3' => [
-          'javascript' => [
-            'https://d3js.org/d3.v5.min.js',
-          ],
-        ],
-        'bigr' => [
-          'javascript' => [
-            'https://unpkg.com/brc-atlas-bigr@2.4.0/dist/bigr.min.umd.js',
-          ],
-        ],
         'html2canvas' => [
           'javascript' => [
             'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',
            ],
+        ],
+        'd3_v7' => [
+          'javascript' => [
+            'https://d3js.org/d3.v7.min.js',
+          ],
         ],
         'brc_atlas_e' => [
           'deps' => [
@@ -1466,11 +1479,6 @@ class helper_base {
           ],
           'javascript' => [
             'https://cdn.jsdelivr.net/gh/biologicalrecordscentre/brc-atlas@1.1.6/dist/brcatlas_e.umd.min.js',
-          ],
-        ],
-        'd3_v7' => [
-          'javascript' => [
-            'https://d3js.org/d3.v7.min.js',
           ],
         ],
       ];
@@ -1616,7 +1624,7 @@ class helper_base {
         echo "Server response<br/>";
         echo $response . '</div>';
       }
-      if (in_array($curlErrno, [CURLE_COULDNT_RESOLVE_HOST, CURLE_COULDNT_CONNECT]) || $httpCode >= 400) {
+      elseif (in_array($curlErrno, [CURLE_COULDNT_RESOLVE_HOST, CURLE_COULDNT_CONNECT]) || $httpCode >= 400) {
         throw new WarehouseRequestException(
           $httpCode,
           $curlErrno,
@@ -2285,8 +2293,9 @@ HTML;
         }
       }
     }
-    if ($removeLocalCopy) {
-      unlink(realpath($interimPath . $path));
+    $localFile = realpath($interimPath . $path);
+    if ($removeLocalCopy && $localFile !== FALSE) {
+      @unlink($localFile);
     }
     return $r;
   }
@@ -2585,7 +2594,7 @@ JS;
     $libraries = '';
     $stylesheets = '';
     if (isset($resources)) {
-      $resourceList = self::get_resources();
+      $resourceList = self::getResources();
       foreach ($resources as $resource) {
         if (!in_array($resource, self::$dumped_resources)) {
           if (isset($resourceList[$resource]['stylesheets'])) {
@@ -2652,30 +2661,40 @@ JS;
         $script .= "\n$(document).ready(function() {\n";
       }
       $script .= <<<JS
-indiciaData.documentReady = 'started';
-if (typeof indiciaFns.initDataSources !== 'undefined') {
-  indiciaFns.initDataSources();
-}
-$javascript
-$late_javascript
-indiciaFns.setupTabLazyLoad();
-// Elasticsearch source population.
-if (typeof indiciaFns.hookupDataSources !== 'undefined') {
-  indiciaFns.hookupDataSources();
-  // Populate unless a report filter builder present as that will do it for us.
-  if (!indiciaData.lang.reportFilters) {
-    indiciaFns.populateDataSources();
-  }
-}
-// if window.onload already happened before document.ready, ensure any hooks are still run.
-if (indiciaData.windowLoaded === 'done') {
-  $.each(indiciaData.onloadFns, function(idx, fn) {
-    fn();
-  });
-}
-indiciaData.documentReady = 'done';
+        indiciaData.documentReady = 'started';
+        if (typeof indiciaFns.initDataSources !== 'undefined') {
+          indiciaFns.initDataSources();
+        }
+        $javascript
+        $late_javascript
+        if (typeof indiciaFns.initPageStateControls !== 'undefined') {
+          // Sources and output controls now exist, so provider defaults can be read.
+          indiciaFns.initPageStateControls();
+          indiciaFns.bindPageStateControls();
+        }
+        indiciaFns.setupTabLazyLoad();
+        // Elasticsearch source population.
+        if (typeof indiciaFns.hookupDataSources !== 'undefined') {
+          indiciaFns.hookupDataSources();
+          if (typeof indiciaFns.restorePageStateControls !== 'undefined' && !indiciaData.lang.reportFilters) {
+            // Reload page state from cookies, but if report filters present then skip
+            // this step as the restore will be done after the filter loaded.
+            indiciaFns.restorePageStateControls();
+          }
+          // Populate unless a report filter builder present as that will do it for us.
+          if (!indiciaData.lang.reportFilters) {
+            indiciaFns.populateDataSources();
+          }
+        }
+        // if window.onload already happened before document.ready, ensure any hooks are still run.
+        if (indiciaData.windowLoaded === 'done') {
+          $.each(indiciaData.onloadFns, function(idx, fn) {
+            fn();
+          });
+        }
+        indiciaData.documentReady = 'done';
 
-JS;
+        JS;
       if (!self::$is_ajax) {
         $script .= "});\n";
       }
@@ -2690,10 +2709,11 @@ JS;
           // it directly in the onload in case another form is added to the
           // same page which overwrites onload.
           $script .= <<<JS
-indiciaData.onloadFns.push(function() {
-  $onload_javascript
-});
-JS;
+            indiciaData.onloadFns.push(function() {
+              $onload_javascript
+            });
+
+            JS;
         }
       }
       $script .= <<<JS
@@ -3065,23 +3085,34 @@ if (typeof validator!=='undefined') {
   }
 
   /**
-   * Explodes a value on several lines into an array split on the lines. Tolerates any line ending.
-   * @param string $value A multi-line string to be split.
-   * @return array An array with one entry per line in $value.
+   * Explodes a value on several lines into an array split on the lines.
+   *
+   * Tolerates any line ending.
+   *
+   * @param string $value
+   *   A multi-line string to be split.
+   *
+   * @return array
+   *   An array with one entry per line in $value.
    */
-  public static function explode_lines($value) {
-    $structure = str_replace("\r\n", "\n", $value);
-    $structure = str_replace("\r", "\n", $structure);
-    return explode("\n", trim($structure));
+  public static function explode_lines(string $value) {
+    return preg_split('/\R/', trim($value));
   }
 
   /**
-   * Explodes a value with key=value several lines into an array split on the lines. Tolerates any line ending.
-   * @param string $value A multi-line string to be split.
-   * @return array An associative array with one entry per line in $value. Array keys are the items before the = on each line,
-   * and values are the data after the = on each line.
+   * Explodes a value with key=value lines into an array split on the lines.
+   *
+   * Tolerates any line ending.
+   *
+   * @param string $value
+   *   A multi-line string to be split.
+   *
+   * @return array
+   *   An associative array with one entry per line in $value. Array keys are
+   *   the items before the = on each line, and values are the data after the =
+   *   on each line.
    */
-  public static function explode_lines_key_value_pairs($value) {
+  public static function explode_lines_key_value_pairs(string $value) {
     preg_match_all("/([^=\r\n]+)=([^\r\n]+)/", $value, $pairs);
     $pairs[1] = array_map('trim', $pairs[1]);
     $pairs[2] = array_map('trim', $pairs[2]);

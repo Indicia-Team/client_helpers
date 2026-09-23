@@ -29,7 +29,8 @@
 }
 .card-gallery ul li .panel-heading img {
   object-fit: cover;
-  max-height: 120px;
+  object-position: 50% 0%;
+  max-height: 200px;
   width: 100%;
   margin: 0;
 }
@@ -71,7 +72,25 @@
 }
 #group-search {
   min-width: 300px;
+  padding-right: 36px;
 }
 #ctrl-wrap-group-search {
   margin-right: 15px;
+}
+#ctrl-wrap-group-search .input-group {
+  position: relative;
+}
+#ctrl-wrap-group-search .group-search-clear {
+  background: transparent;
+  border: 0;
+  height: 100%;
+  padding: 0 10px;
+  position: absolute;
+  right: 38px;
+  top: 0;
+  z-index: 3;
+}
+#ctrl-wrap-group-search .group-search-clear i {
+  border: 0;
+  color: inherit;
 }

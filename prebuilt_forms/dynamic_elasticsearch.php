@@ -380,6 +380,18 @@ TXT;
   }
 
   /**
+   * Enables persistence of page state for Elasticsearch controls.
+   *
+   * @return string
+   *   HTML for the page-state control and, when enabled, its reset button.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-persistpagestate
+   */
+  protected static function get_control_persistPageState($auth, $args, $tabalias, $options) {
+    return ElasticsearchReportHelper::persistPageState($options);
+  }
+
+  /**
    * A control for flexibly outputting data formatted using a JS function.
    *
    * @return string

@@ -24,7 +24,7 @@ use IForm\prebuilt_forms\PrebuiltFormInterface;
 require_once 'includes/map.php';
 
 /**
- * A form for subscribing to notifications when a certain species is recorded.
+ * A form for subscribing to notifications when a species is recorded.
  */
 class iform_subscribe_species_alert implements PrebuiltFormInterface {
 
@@ -38,8 +38,11 @@ class iform_subscribe_species_alert implements PrebuiltFormInterface {
     return [
       'title' => 'Subscribe to a species alert',
       'category' => 'Miscellaneous',
-      'description' => 'Provides a simple form for picking a species and optional geographic filter to subscribe to receive an alert notification ' .
-          'when that species is recorded or verified.'
+        'description' => <<<TXT
+          Provides a form for subscribing to alerts when an individual species, or any species in a
+          configured species list, is recorded. Alerts can be configured for initial entry and/or
+          verification, with optional survey and geographic filters.
+        TXT,
     ];
   }
 
@@ -54,7 +57,7 @@ class iform_subscribe_species_alert implements PrebuiltFormInterface {
    * Get the list of parameters for this form.
    *
    * @return array
-   *   List of parameters that this form requires.
+   *   List of parameters that configure this form.
    */
   public static function get_parameters() {
     return array_merge(
@@ -108,7 +111,7 @@ class iform_subscribe_species_alert implements PrebuiltFormInterface {
             'hierarchical_select' => 'Hierarchical drop-down select',
             'autocomplete' => 'Autocomplete search box',
           ],
-          'requred' => TRUE,
+          'required' => TRUE,
           'default' => 'select',
           'group' => 'Lookups',
         ],
@@ -298,7 +301,7 @@ class iform_subscribe_species_alert implements PrebuiltFormInterface {
       ]);
     }
 
-    if (!empty($args['include_location_type_select'])) {
+    if (!empty($args['include_location_type_select']) && !empty($args['location_type_id'])) {
       $form .= data_entry_helper::select([
         'label' => lang::get('Location type'),
         'helpText' => lang::get('If you want to restrict the alerts to records within a certain boundary, choose the type of location to choose the boundary from.'),
@@ -339,7 +342,7 @@ class iform_subscribe_species_alert implements PrebuiltFormInterface {
       if (!empty($args['include_location_type_select'])) {
         $locationCtrlOptions['disabled'] = ' disabled="disabled"';
       }
-      else {
+      elseif (!empty($args['location_type_id'])) {
         $locationCtrlOptions['extraParams']['query'] = json_encode([
           'in' => ['location_type_id', $args['location_type_id']],
         ]);
@@ -354,7 +357,7 @@ class iform_subscribe_species_alert implements PrebuiltFormInterface {
           'filterField' => 'location_type_id',
         ];
       }
-      else {
+      elseif (!empty($args['location_type_id'])) {
         $locationCtrlOptions['extraParams']['location_type_id'] = $args['location_type_id'];
       }
       if (!empty($args['location_control']) && $args['location_control'] === 'hierarchical_select') {
@@ -405,16 +408,39 @@ class iform_subscribe_species_alert implements PrebuiltFormInterface {
    * @throws \exception
    */
   private static function subscribe(array $args, array $auth) {
+    $firstName = is_string($_POST['first_name'] ?? NULL) ? trim($_POST['first_name']) : '';
+    $surname = is_string($_POST['surname'] ?? NULL) ? trim($_POST['surname']) : '';
+    $email = is_string($_POST['email'] ?? NULL) ? trim($_POST['email']) : '';
+    $alertOnEntry = !empty($_POST['species_alert:alert_on_entry'] ?? FALSE);
+    $alertOnVerify = !empty($_POST['species_alert:alert_on_verify'] ?? FALSE);
+    $hasSpecies = !empty($_POST['taxa_taxon_list_id'] ?? NULL) ||
+      !empty($_POST['species_alert:external_key'] ?? NULL) ||
+      !empty($_POST['species_alert:taxon_meaning_id'] ?? NULL) ||
+      !empty($_POST['species_alert:taxon_list_id'] ?? NULL);
+
+    if ($firstName === '' || $surname === '' || $email === '') {
+      throw new Exception(lang::get('First name, last name and email are required.'));
+    }
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+      throw new Exception(lang::get('Please provide a valid email address.'));
+    }
+    if (!$alertOnEntry && !$alertOnVerify) {
+      throw new Exception(lang::get('Select at least one alert type.'));
+    }
+    if (!$hasSpecies) {
+      throw new Exception(lang::get('Select a species or species list for the alert.'));
+    }
+
     $url = data_entry_helper::$base_url . 'index.php/services/species_alerts/register?';
     $params = [
       'auth_token' => $auth['write_tokens']['auth_token'],
       'nonce' => $auth['write_tokens']['nonce'],
-      'first_name' => $_POST['first_name'],
-      'surname' => $_POST['surname'],
-      'email' => $_POST['email'],
+      'first_name' => $firstName,
+      'surname' => $surname,
+      'email' => $email,
       'website_id' => $args['website_id'],
-      'alert_on_entry' => $_POST['species_alert:alert_on_entry'] ? 't' : 'f',
-      'alert_on_verify' => $_POST['species_alert:alert_on_verify'] ? 't' : 'f',
+      'alert_on_entry' => $alertOnEntry ? 't' : 'f',
+      'alert_on_verify' => $alertOnVerify ? 't' : 'f',
     ];
     if (!empty($_POST['species_alert:id'])) {
       $params['id'] = $_POST['species_alert:id'];

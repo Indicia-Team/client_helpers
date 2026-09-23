@@ -382,13 +382,8 @@ class ElasticsearchReportHelper {
         if (!ElasticsearchProxyHelper::isEsAvailable()) {
           self::$proxyEnableFailed = TRUE;
           self::$proxyEnabled = FALSE;
-
           helper_base::$indiciaData['esAvailable'] = FALSE;
-
-          \Drupal::logger('iform')->warning(
-            'Elasticsearch not available – proxy disabled'
-          );
-
+          hostsite_log('warning', 'Elasticsearch not available – proxy disabled.');
           return FALSE;
         }
 
@@ -434,9 +429,7 @@ class ElasticsearchReportHelper {
 
         helper_base::$indiciaData['esAvailable'] = FALSE;
 
-        \Drupal::logger('iform')->error(
-          'Elasticsearch proxy enable failed: ' . $e->getMessage()
-        );
+        hostsite_log('error', 'Elasticsearch proxy enable failed: @message', ['@message' => $e->getMessage()]);
       }
     }
 
@@ -468,6 +461,7 @@ class ElasticsearchReportHelper {
       'restrictToOwnData',
     ], TRUE);
     helper_base::addLanguageStringsToJs('bulkEditor', [
+      'addComment' => 'The following comment will be added to all affected records',
       'allowSampleSplitting' => 'Allow sample splitting?',
       'bulkEditorDialogMessageAll' => 'You are about to edit the entire list of <span>{1}</span> records.',
       'bulkEditorDialogMessageSelected' => 'You are about to edit <span>{1}</span> selected records.',
@@ -480,9 +474,13 @@ class ElasticsearchReportHelper {
       'noUpdatesSpecified' => 'Please specify the values you would like to update using the form before previewing the changes.',
       'noValue' => '-value not set-',
       'preparing' => 'Preparing to edit the records...',
-      'promptAllowSampleSplit' => '<p>The list of records to update contains occurrences which belong to samples that contain other occurrences which are not being updated. ' .
-        'For example, sample {1} contains an occurrence {2} which is being updated, but it also contains occurrence {3} which is not being updated.</p>' .
-        '<p>Please confirm that you would like to split the samples so that the data values for the list of records you are editing can be updated without affecting other occurrences in the same samples.</p>',
+      'promptAllowSampleSplit' => <<<HTML
+        <p>The list of records to update contains occurrences which belong to samples that contain other occurrences
+        which are not being updated. For example, sample {1} contains an occurrence {2} which is being updated, but it
+        also contains occurrence {3} which is not being updated.</p>
+        <p>Please confirm that you would like to split the samples so that the data values for the list of records you
+        are editing can be updated without affecting other occurrences in the same samples.</p>
+      HTML,
       'warningNoChanges' => 'Please define at least one field value that you would like to change when bulk editing the records.',
       'warningNothingToDo' => 'There are no selected records to edit.',
     ]);
@@ -493,8 +491,14 @@ class ElasticsearchReportHelper {
       'editing' => lang::get('Editing records'),
       'editInstructions' => 'Specify values to apply to all the edited records in the following controls, or leave blank for the data values to remain unchanged.',
       'preview' => lang::get('Preview'),
-      'previewInfo' => lang::get('The following table shows a selection of the records you are about to bulk edit. This is just a sample of the records about to be updated.'),
+      'previewInfoComplete' => lang::get('The following table shows the records you are about to bulk edit.'),
+      'previewInfoPartial' => lang::get('The following table shows a selection of the records you are about to bulk edit - clicking Proceed will update <strong>{1}</strong> records in total.'),
       'proceed' => lang::get('Proceed'),
+      'skipReverifyWarning' => lang::get('Reverification will be skipped for the affected records because Skip reverify was selected.'),
+      'verifiedRecordsWarning' => lang::get(<<<TXT
+        Note that some these records have already been verified, the bulk edit will reset them to pending - please only
+        make bulk edits to verified records where necessary.
+      TXT),
     ];
     helper_base::add_resource('fancybox');
     $recorderNameControl = data_entry_helper::text_input([
@@ -514,6 +518,20 @@ class ElasticsearchReportHelper {
       'label' => lang::get('Spatial reference'),
       'findMeButton' => FALSE,
     ]);
+    $commentControl = data_entry_helper::textarea([
+      'fieldname' => 'append-comment',
+      'label' => lang::get('Add comment'),
+      'helpText' => lang::get('Any information given here will be appended to the comments for the record.'),
+    ]);
+    $skipReverifyControl = data_entry_helper::checkbox([
+      'fieldname' => 'skip-reverify',
+      'label' => lang::get('Skip reverify'),
+      'labelPosition' => 'after',
+      'helpText' => lang::get(<<<TXT
+        If checked, verified records will not be reset to pending when bulk edited. This option is not available if
+        changing the date or spatial reference.
+      TXT),
+    ]);
     global $indicia_templates;
     $html = <<<HTML
 <button type="button" class="bulk-edit-records-btn $indicia_templates[buttonHighlightedClass]">$lang[bulkEditRecords]</button>
@@ -528,8 +546,17 @@ class ElasticsearchReportHelper {
       $locationNameControl
       $srefControl
     </div>
+    $commentControl
+    $skipReverifyControl
     <div class="preview-output" style="display: none">
-      <p class="alert alert-warning"><i class="fas fa-exclamation-triangle fa-2x"></i> $lang[previewInfo]</p>
+      <div class="alert alert-warning preview-messages"><i class="fas fa-exclamation-triangle fa-2x"></i>
+        <div class="preview-message-text">
+          <p class="preview-info-complete">$lang[previewInfoComplete]</p>
+          <p class="preview-info-partial">$lang[previewInfoPartial]</p>
+          <p class="preview-info-verified">$lang[verifiedRecordsWarning]</p>
+          <p class="preview-info-skip-reverify">$lang[skipReverifyWarning]</p>
+        </div>
+      </div>
       <table class="table">
         <thead>
           <tr>
@@ -554,6 +581,7 @@ class ElasticsearchReportHelper {
     <div class="post-bulk-edit-info">
       <h2>$lang[editing]</h2>
       <div class="output"></div>
+
       <div class="form-buttons">
         <button type="button" class="$indicia_templates[buttonHighlightedClass] close-bulk-edit-dlg" disabled="disabled">$lang[close]</button>
       </div>
@@ -580,6 +608,7 @@ HTML;
       [
         'actions',
         'columns',
+        'includeExpandTool',
         'rowsPerPageOptions',
       ]
     );
@@ -608,13 +637,17 @@ HTML;
       'actions',
       'columns',
       'class',
+      'allowCardSelection',
       'includeFieldCaptions',
+      'includeExpandTool',
       'includeFullScreenTool',
       'includeImageClassifierInfo',
       'includeMultiSelectTool',
       'includePager',
       'includeSortTool',
       'keyboardNavigation',
+      'openImageOnClick',
+      'popupImageGrouping',
       'rowsPerPageOptions',
       'source',
     ], TRUE);
@@ -623,9 +656,11 @@ HTML;
 $('#$options[id]').idcCardGallery('bindControls');
 
 JS;
+    $navButtonsContainerId = $options['id'] . '-card-nav-buttons-cntr';
+    $navButtonsId = $options['id'] . '-card-nav-buttons';
     return self::getControlContainer('cardGallery', $options, $dataOptions, '<div class="es-card-gallery"></div>') . <<<HTML
-<div id="card-nav-buttons-cntr" style="display: none">
-  <div id="card-nav-buttons">
+<div id="$navButtonsContainerId" style="display: none">
+  <div id="$navButtonsId">
     <button class="nav-prev indicia-button" title="$lang[prev]"><span class="fas fa-caret-left"></span></button>
     <button class="nav-next indicia-button" title="$lang[next]"><span class="fas fa-caret-right"></span></button>
   </div>
@@ -761,6 +796,7 @@ HTML;
       'includePager',
       'keyboardNavigation',
       'pageChangeScrollPosition',
+      'popupImageGrouping',
       'responsive',
       'responsiveOptions',
       'rowClasses',
@@ -836,8 +872,9 @@ HTML;
     // columns template.
     if (!empty($options['columnsTemplate']) && is_array($options['columnsTemplate'])) {
       $availableColTypes = [
-        "easy-download" => lang::get("Standard download format"),
-        "mapmate" => lang::get("Simple download format"),
+        'easy-download' => lang::get('Standard download format'),
+        'mapmate' => lang::get('Simple download format'),
+        'easy-download-dna' => lang::get('Standard download format with DNA fields'),
       ];
       $optionArr = [];
       foreach ($options['columnsTemplate'] as $colType) {
@@ -1082,7 +1119,11 @@ JS;
     $links = [];
     $options = array_merge([
       'containedGroupLabel' => 'sub-group',
+      'excludedGroupPagePaths' => [],
     ], $options);
+    $excludedGroupPagePaths = array_map(function ($path) {
+      return trim($path, '/');
+    }, $options['excludedGroupPagePaths']);
     if ($membership === GroupMembership::NonMember && ($group['joining_method'] === 'P' || $group['joining_method'] === 'I')) {
       $titleForLink = trim(preg_replace('/[^a-z0-9\-]/', '', preg_replace('/[ ]/', '-', strtolower($group['title']))), '-');
       $titleEscaped = htmlspecialchars($group['title']);
@@ -1107,9 +1148,11 @@ JS;
     }
     $thisPage = empty($options['nid']) ? '' : hostsite_get_alias($options['nid']);
     foreach ($pageData as $page) {
-      // Don't link to the current page, plus block member-only pages for
-      // non-members.
-      if ($page['path'] !== $thisPage && ($membership !== GroupMembership::NonMember || $page['administrator'] === NULL)) {
+      // Don't link to the current page or any excluded pages, plus block
+      // member-only pages for non-members.
+      if (!in_array(trim($page['path'], '/'), $excludedGroupPagePaths, TRUE)
+          && $page['path'] !== $thisPage
+          && ($membership !== GroupMembership::NonMember || $page['administrator'] === NULL)) {
         $pageLink = hostsite_get_url($page['path'], [
           'group_id' => $group['id'],
           'implicit' => $group['implicit_record_inclusion'],
@@ -1361,11 +1404,14 @@ JS;
    *
    * @param array $options
    *   Options for the [permissionFilters] control.
+   * @param array|null $permissionFilterSharing
+   *   Optional output array mapping permission filter option values to sharing
+   *   codes.
    *
    * @return array
    *   Associative array of options.
    */
-  public static function getPermissionFiltersOptions(array $options) {
+  public static function getPermissionFiltersOptions(array $options, ?array &$permissionFilterSharing = NULL) {
     require_once 'prebuilt_forms/includes/report_filters.php';
     $options = array_merge([
       'includeFiltersForGroups' => FALSE,
@@ -1419,6 +1465,9 @@ JS;
             ? $sharingTypes[$sharingCode] . ' - ' . $filter['title']
             : $filter['title'];
           $optionArr["f-$filter[id]"] = $filterTitle;
+          if ($permissionFilterSharing !== NULL) {
+            $permissionFilterSharing["f-$filter[id]"] = $sharingCode;
+          }
         }
       }
     }
@@ -1475,9 +1524,12 @@ JS;
       'useSharingPrefix' => TRUE,
       'label' => lang::get('Records to access'),
       'notices' => '[]',
+      'permissionFilterSharing' => [],
     ], $options);
 
-    $optionArr = self::getPermissionFiltersOptions($options);
+    $permissionFilterSharing = [];
+    $optionArr = self::getPermissionFiltersOptions($options, $permissionFilterSharing);
+    $options['permissionFilterSharing'] = $permissionFilterSharing;
     // Return the select control. There will always be at least one option (my
     // records).
     $controlOptions = [
@@ -1496,7 +1548,7 @@ JS;
 
 HTML;
 
-    $dataOptions = helper_base::getOptionsForJs($options, ['notices'], TRUE);
+    $dataOptions = helper_base::getOptionsForJs($options, ['notices', 'permissionFilterSharing'], TRUE);
     return self::getControlContainer('permissionFilters', $wrapperOptions, $dataOptions, $html);
   }
 
@@ -1907,6 +1959,93 @@ HTML;
   }
 
   /**
+   * Enables optional persistence of Elasticsearch page state.
+   *
+   * This control is a coordinator rather than a data output control. The
+   * JavaScript resource receives the configuration here and coordinates state
+   * providers owned by the individual controls.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-persistpagestate
+   *
+   * @param array $options
+   *   Control options. The state category options are selectedFilter,
+   *   filterDefinition, filterPanelVisibility, customFilterControls, sort,
+   *   gridFilterRow, page and rowsPerPage. All default to TRUE. resetButton
+   *   defaults to TRUE. expires is the cookie lifetime in days and defaults
+   *   to 30. storageKey can override the page-derived cookie key.
+   *
+   * @return string
+   *   HTML for the control container and optional reset button.
+   */
+  public static function persistPageState(array $options) {
+    self::checkOptions('persistPageState', $options, [], []);
+
+    $stateOptions = [
+      'selectedFilter',
+      'filterDefinition',
+      'filterPanelVisibility',
+      'customFilterControls',
+      'sort',
+      'gridFilterRow',
+      'page',
+      'rowsPerPage',
+      'resetButton',
+    ];
+    $options = array_merge([
+      'selectedFilter' => TRUE,
+      'filterDefinition' => TRUE,
+      'filterPanelVisibility' => TRUE,
+      'customFilterControls' => TRUE,
+      'sort' => TRUE,
+      'gridFilterRow' => TRUE,
+      'page' => TRUE,
+      'rowsPerPage' => TRUE,
+      'resetButton' => TRUE,
+      'expires' => 30,
+      'storageKey' => '',
+    ], $options);
+
+    foreach ($stateOptions as $optionName) {
+      if (is_bool($options[$optionName])) {
+        continue;
+      }
+      $booleanValue = filter_var($options[$optionName], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+      if ($booleanValue === NULL) {
+        throw new InvalidArgumentException("@$optionName option for [persistPageState] must be boolean.");
+      }
+      $options[$optionName] = $booleanValue;
+    }
+    if (filter_var($options['expires'], FILTER_VALIDATE_INT) === FALSE || $options['expires'] < 0) {
+      throw new InvalidArgumentException('@expires option for [persistPageState] must be a non-negative integer.');
+    }
+    if (!is_string($options['storageKey'])) {
+      throw new InvalidArgumentException('@storageKey option for [persistPageState] must be a string.');
+    }
+
+    helper_base::add_resource('persistPageState');
+    $dataOptions = helper_base::getOptionsForJs($options, array_merge($stateOptions, [
+      'expires',
+      'storageKey',
+    ]), TRUE);
+    global $indicia_templates;
+    $resetLabel = htmlspecialchars(lang::get('Reset all'), ENT_QUOTES, 'UTF-8');
+    $resetTooltip = htmlspecialchars(
+      lang::get('Click to reset all filters, sort and paging options on the page'),
+      ENT_QUOTES,
+      'UTF-8'
+    );
+    $resetButton = $options['resetButton'] ? <<<HTML
+      <button type="button" class="$indicia_templates[buttonDefaultClass] persist-page-state-reset" title="$resetTooltip">$resetLabel</button>
+      HTML : '';
+
+    return <<<HTML
+      <div id="$options[id]" class="idc-control idc-persistPageState" data-idc-class="idcPersistPageState" data-idc-config="$dataOptions">
+        $resetButton
+      </div>
+      HTML;
+  }
+
+  /**
    * A standard parameters filter toolbar for use on Elasticsearch pages.
    *
    * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-standardparams
@@ -2110,14 +2249,7 @@ HTML;
     $requiredOptions = ['showSelectedRow'];
     $config = hostsite_get_es_config($options['nid']);
     helper_base::$indiciaData['idPrefix'] = $config['es']['warehouse_prefix'];
-    if (!empty($options['includeUploadButton'])) {
-      helper_base::$indiciaData['esEndpoint'] = $config['es']['endpoint'];
-      $requiredOptions[] = 'warehouseName';
-    }
     self::checkOptions('verificationButtons', $options, $requiredOptions, []);
-    if (!empty($options['includeUploadButton'])) {
-      helper_base::$indiciaData['warehouseName'] = $options['warehouseName'];
-    }
     $options = array_merge([
       'redeterminerNameAttributeHandling' => 'overwriteOnRedet',
       'taxon_list_id' => hostsite_get_config_value('iform', 'master_checklist_id'),

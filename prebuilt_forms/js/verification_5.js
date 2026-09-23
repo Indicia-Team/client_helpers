@@ -109,8 +109,8 @@ indiciaData.rowIdToReselect = false;
       $('#record-details-toolbar').append('<div class="loading-spinner"><div>Loading...</div></div>');
     }
     rowRequest = $.getJSON(
-      indiciaData.ajaxUrl + '/details/' + indiciaData.nid + urlSep + 'occurrence_id=' + occurrenceId,
-      null,
+      indiciaData.ajaxUrl + '/details/' + indiciaData.nid + urlSep + 'occurrence_id=' + occurrenceId
+    ).done(
       function (data) {
         // refind the row, as $(tr) sometimes gets obliterated.
         var $row = $('#row' + data.data.Record[0].value);
@@ -201,7 +201,16 @@ indiciaData.rowIdToReselect = false;
         }
         $('#record-details-toolbar .loading-spinner').remove();
       }
-    );
+    ).fail(
+      function (jqXHR, textStatus, errorThrown) {
+        console.error('Details request failed', {
+          status: jqXHR.status,
+          textStatus: textStatus,
+          errorThrown: errorThrown,
+          response: jqXHR.responseText
+        });
+      }
+    )
   }
 
   function removeStatusClasses(selector, prefix, items) {

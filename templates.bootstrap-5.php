@@ -18,6 +18,22 @@ $indicia_templates['two-col-50-js'] =
 $indicia_templates['textarea'] =
   '<textarea id="{id}" name="{fieldname}"{class} {disabled} rows="{rows}" {title}>{default|escape}</textarea>' . "\n";
 
+$indicia_templates['checkboxClass'] = 'form-check-input';
+$indicia_templates['checkbox_label_before'] = <<<HTML
+  <input type="hidden" name="{fieldname}" value="0"/>
+  <div class="form-check checkbox-label-before">
+    <label class="form-check-label{checkboxLabelClassValue}" for="{id}">{checkboxLabel}</label>
+    <input type="checkbox" id="{id}" name="{fieldname}" value="1"{checkboxClass}{checked}{disabled} {title} />
+  </div>
+HTML;
+$indicia_templates['checkbox_label_after'] = <<<HTML
+  <input type="hidden" name="{fieldname}" value="0"/>
+  <div class="form-check checkbox-label-after">
+    <input type="checkbox" id="{id}" name="{fieldname}" value="1"{checkboxClass}{checked}{disabled} {title} />
+    <label class="form-check-label{checkboxLabelClassValue}" for="{id}">{checkboxLabel}</label>
+  </div>
+HTML;
+
 // Switch to Bootstrap button classes.
 $indicia_templates['buttonDefaultClass'] = 'indicia-button btn btn-light';
 $indicia_templates['buttonHighlightedClass'] = 'indicia-button btn btn-primary';

@@ -9,7 +9,7 @@ jQuery(document).ready(function($) {
     if (!row.logo_path) {
       return '<i class="fas fa-user-friends fa-2x"></i>';
     } else {
-      return '<img src="' + indiciaData.warehouseUrl + 'upload/' + row.logo_path +'" title="' + row.title + '" alt="' + row.title + ' logo" />'
+      return '<img src="' + indiciaData.warehouseUrl + 'upload/med-' + row.logo_path +'" title="' + row.title + '" alt="' + row.title + ' logo" />'
     }
   };
 
@@ -125,13 +125,31 @@ jQuery(document).ready(function($) {
     doSearch(false);
   }
 
+  /**
+   * Update visibility of the search clear button based on the search value.
+   */
+  function updateSearchClearButton() {
+    $('#group-search-clear').toggle($('#group-search').val().length > 0);
+  }
+
   // Return key or Go button click does a search.
   $('#group-search').on('keyup', function(e) {
+    updateSearchClearButton();
     if ((e.keyCode || e.which) == 13) {
       newSearch();
     }
   });
+  $('#group-search').on('input', updateSearchClearButton);
   $('#group-search-go').on('click', newSearch);
+
+  /**
+   * Clear search handler.
+   */
+  $('#group-search-clear').on('click', function() {
+    $('#group-search').val('').trigger('focus');
+    updateSearchClearButton();
+    newSearch();
+  });
 
   // Changing the filter mode also re-triggers search.
   $('input[type=radio][name=group-scope]').on('change', newSearch);
