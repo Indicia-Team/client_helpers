@@ -1263,7 +1263,7 @@ class helper_base {
           'javascript' => [self::$js_path . 'reportFilters.js'],
         ],
         'persistPageState' => [
-          'deps' => ['datacomponents', 'reportfilters'],
+          'deps' => ['datacomponents'],
           'javascript' => [self::$js_path . 'indicia.datacomponents/idc.pageState.js'],
         ],
         'tabs' => [

@@ -1966,10 +1966,10 @@ HTML;
    *
    * @param array $options
    *   Control options. The state category options are selectedFilter,
-   *   filterDefinition, filterPanelVisibility, sort, gridFilterRow, page and
-   *   rowsPerPage. All default to TRUE. resetButton defaults to TRUE.
-   *   expires is the cookie lifetime in days and defaults to 30. storageKey
-   *   can override the page-derived cookie key.
+   *   filterDefinition, filterPanelVisibility, customFilterControls, sort,
+   *   gridFilterRow, page and rowsPerPage. All default to TRUE. resetButton
+   *   defaults to TRUE. expires is the cookie lifetime in days and defaults
+   *   to 30. storageKey can override the page-derived cookie key.
    *
    * @return string
    *   HTML for the control container and optional reset button.
@@ -1981,6 +1981,7 @@ HTML;
       'selectedFilter',
       'filterDefinition',
       'filterPanelVisibility',
+      'customFilterControls',
       'sort',
       'gridFilterRow',
       'page',
@@ -1991,6 +1992,7 @@ HTML;
       'selectedFilter' => TRUE,
       'filterDefinition' => TRUE,
       'filterPanelVisibility' => TRUE,
+      'customFilterControls' => TRUE,
       'sort' => TRUE,
       'gridFilterRow' => TRUE,
       'page' => TRUE,
