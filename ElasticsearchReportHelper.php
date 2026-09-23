@@ -1964,6 +1964,8 @@ HTML;
    * JavaScript resource receives the configuration here and coordinates state
    * providers owned by the individual controls.
    *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-persistpagestate
+   *
    * @param array $options
    *   Control options. The state category options are selectedFilter,
    *   filterDefinition, filterPanelVisibility, customFilterControls, sort,
