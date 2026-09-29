@@ -631,8 +631,9 @@ class ElasticsearchProxyHelper {
    *   records after redetermination, until Logstash fills in the taxonomy
    *   again.
    *
-   * @return int
-   *   Number of updated records.
+   * @return array
+   *   Batch result containing the number of updated records and, when more
+   *   records remain, the search_after values for the next batch.
    */
   private static function processWholeEsFilter($nid, array $statuses, $websiteIdToModify = NULL) {
     if (empty(self::$config['es']['warehouse_prefix'])) {
@@ -641,7 +642,17 @@ class ElasticsearchProxyHelper {
     if (empty($_POST['website_id'])) {
       throw new ElasticsearchProxyAbort('Missing website_id parameter', 400);
     }
-    $ids = self::getOccurrenceIdsFromFilter($nid, $_POST['occurrence:idsFromElasticFilter']);
+    $batchInfo = self::getOccurrenceIdPageFromFilter(
+      $nid,
+      $_POST['occurrence:idsFromElasticFilter'],
+      $_POST['search_after'] ?? NULL,
+    );
+
+    if (empty($batchInfo['ids'])) {
+      return ['updated' => 0];
+    }
+
+    $ids = $batchInfo['ids'];
 
     self::internalModifyListOnEs($ids, $statuses, $websiteIdToModify);
     try {
@@ -650,7 +661,13 @@ class ElasticsearchProxyHelper {
     catch (Exception $e) {
       throw new ElasticsearchProxyAbort('Error whilst updating warehouse records: ' . $e->getMessage(), 500);
     }
-    return count($ids);
+    $result = [
+      'updated' => count($ids),
+    ];
+    if (!empty($batchInfo['search_after'])) {
+      $result['search_after'] = $batchInfo['search_after'];
+    }
+    return $result;
   }
 
   /**
@@ -668,9 +685,7 @@ class ElasticsearchProxyHelper {
       'verification_status' => $_POST['occurrence:record_status'],
       'verification_substatus' => empty($_POST['occurrence:record_substatus']) ? 0 : $_POST['occurrence:record_substatus'],
     ];
-    return [
-      'updated' => self::processWholeEsFilter($nid, $statuses),
-    ];
+    return self::processWholeEsFilter($nid, $statuses);
   }
 
   /**
@@ -773,9 +788,7 @@ class ElasticsearchProxyHelper {
   private static function proxyRedetAll($nid) {
     // Set website ID to 0, basically disabling the ES copy of the record until
     // a proper update with correct taxonomy information comes through.
-    return [
-      'updated' => self::processWholeEsFilter($nid, [], 0),
-    ];
+    return self::processWholeEsFilter($nid, [], 0);
   }
 
   /**
