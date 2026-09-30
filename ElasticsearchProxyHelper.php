@@ -71,7 +71,7 @@ class ElasticsearchProxyHelper {
   private static $setScopeUsingFilter;
 
   /**
-   * Cache the availability of elasticsearch
+   * Cache the availability of elasticsearch.
    *
    * @var bool
    */
@@ -93,12 +93,6 @@ class ElasticsearchProxyHelper {
     if (empty(self::$config['es']['endpoint']) ||
         (self::$config['es']['auth_method'] === 'directClient' && (empty(self::$config['es']['user']) || empty(self::$config['es']['secret'])))) {
       throw new ElasticsearchProxyAbort('Method not allowed as server configuration incomplete', 405);
-    }
-
-    if (!self::isEsAvailable()) {
-      throw new ElasticsearchProxyAbort(
-        'Elasticsearch endpoint unavailable', 503
-      );
     }
 
     switch ($method) {
@@ -202,6 +196,7 @@ class ElasticsearchProxyHelper {
     curl_setopt_array($ch, [
       CURLOPT_URL => $url,
       CURLOPT_RETURNTRANSFER => TRUE,
+      // This is a HEAD request just to check status.
       CURLOPT_NOBODY => TRUE,
       CURLOPT_TIMEOUT => 3,
       CURLOPT_CONNECTTIMEOUT => 2,
@@ -209,27 +204,27 @@ class ElasticsearchProxyHelper {
       CURLOPT_SSL_VERIFYHOST => 2,
     ]);
 
-    // Auth.
-    if (!empty(self::$config['es']['auth_method']) &&
-      self::$config['es']['auth_method'] === 'directClient') {
-      curl_setopt($ch, CURLOPT_USERPWD,
-        self::$config['es']['user'] . ':' . self::$config['es']['secret']
-      );
-    }
+    // Set up HTTP headers for authentication.
+    curl_setopt($ch, CURLOPT_HTTPHEADER, self::getHttpRequestHeaders(self::$config));
 
     curl_exec($ch);
 
     if (curl_errno($ch)) {
-      curl_close($ch);
       // Return and cache the result.
+      hostsite_log('error', 'Elasticsearch availability check failed: @error', [
+        '@error' => curl_error($ch),
+      ]);
       return self::$esAvailable = FALSE;
     }
 
     $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-
     // Treat 2xx-4xx as reachable, 5xx as unavailable.
     $result = ($status >= 200 && $status < 500);
+    if (!$result) {
+      hostsite_log('error', 'Elasticsearch availability check returned HTTP status: @status', [
+        '@status' => $status,
+      ]);
+    }
 
     return self::$esAvailable = $result;
   }
@@ -241,16 +236,16 @@ class ElasticsearchProxyHelper {
    *   The endpoint name (e.g. es-occurrences).
    */
   private static function getEsEndpoint() {
-      // Request can modify the endpoint, but only if on a list of allowed
-      // endpoints.
-      if (!empty($_GET['endpoint']) && !empty(self::$config['es']['alternative_endpoints'])
-          && in_array($_GET['endpoint'], helper_base::explode_lines(self::$config['es']['alternative_endpoints']))) {
-        return $_GET['endpoint'];
-      }
-      else {
-        return self::$config['es']['endpoint'];
-      }
+    // Request can modify the endpoint, but only if on a list of allowed
+    // endpoints.
+    if (!empty($_GET['endpoint']) && !empty(self::$config['es']['alternative_endpoints'])
+        && in_array($_GET['endpoint'], helper_base::explode_lines(self::$config['es']['alternative_endpoints']))) {
+      return $_GET['endpoint'];
     }
+    else {
+      return self::$config['es']['endpoint'];
+    }
+  }
 
   /**
    * Returns the URL required to call the Elasticsearch service.
