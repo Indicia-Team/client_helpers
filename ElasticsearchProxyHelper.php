@@ -202,7 +202,6 @@ class ElasticsearchProxyHelper {
       CURLOPT_CONNECTTIMEOUT => 2,
       CURLOPT_SSL_VERIFYPEER => TRUE,
       CURLOPT_SSL_VERIFYHOST => 2,
-      CURLOPT_HEADER => TRUE,
     ]);
 
     // Set up HTTP headers for authentication.
