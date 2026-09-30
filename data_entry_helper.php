@@ -2891,6 +2891,10 @@ JS;
       self::includeSrefHandlerJs($options['systems']);
     }
     else {
+      // If ID specified, ensure system has it's own ID.
+      if (isset($options['id'])) {
+        $options['id'] = $options['id'] . '-system';
+      }
       $r .= self::sref_system_select($options);
       // Put an outer container to keep them together.
       global $indicia_templates;

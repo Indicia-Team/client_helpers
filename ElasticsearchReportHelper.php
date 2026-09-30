@@ -502,24 +502,25 @@ class ElasticsearchReportHelper {
     ];
     helper_base::add_resource('fancybox');
     $recorderNameControl = data_entry_helper::text_input([
-      'fieldname' => 'edit-recorder-name',
+      'fieldname' => 'bulk-edit-recorder-name',
       'label' => lang::get('Recorder name'),
     ]);
     $dateControl = data_entry_helper::date_picker([
-      'fieldname' => 'edit-date',
+      'fieldname' => 'bulk-edit-date',
       'label' => lang::get('Date'),
     ]);
     $locationNameControl = data_entry_helper::text_input([
-      'fieldname' => 'edit-location-name',
+      'fieldname' => 'bulk-edit-location-name',
       'label' => lang::get('Location name'),
     ]);
     $srefControl = data_entry_helper::sref_and_system([
-      'fieldname' => 'edit-sref',
+      'id' => 'bulk-edit-sref',
+      'fieldname' => 'bulk-edit-sref',
       'label' => lang::get('Spatial reference'),
       'findMeButton' => FALSE,
     ]);
     $commentControl = data_entry_helper::textarea([
-      'fieldname' => 'append-comment',
+      'fieldname' => 'bulk-edit-append-comment',
       'label' => lang::get('Add comment'),
       'helpText' => lang::get('Any information given here will be appended to the comments for the record.'),
     ]);
