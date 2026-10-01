@@ -1926,6 +1926,8 @@ HTML;
     ], $options);
     self::applySourceModeDefaults($options);
     helper_base::addLanguageStringsToJs('esDataSource', [
+      'elasticsearchQueryFailed' => 'Elasticsearch query failed.',
+      'permissionsIssue' => 'You do not have permission to access data on this page.',
       'searchFailedTitle' => 'Oops! That search didn’t work.',
       'searchPhraseInvalid' => 'It looks like your search for "%query%" uses characters or formatting we don’t recognize. Try checking your search syntax or removing special symbols, then give it another go.',
     ]);
