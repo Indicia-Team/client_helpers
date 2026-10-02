@@ -112,7 +112,7 @@ class ElasticsearchProxyHelper {
         return self::proxyMediaAndComments($nid);
 
       case 'rawsearch':
-        return self::proxyRawsearch($nid);
+        return self::proxyRawsearch();
 
       case 'searchbyparams':
         return self::proxySearchByParams($nid);
@@ -423,11 +423,11 @@ class ElasticsearchProxyHelper {
    * @return string
    *   JSON string data returned by Elasticsearch.
    */
-  private static function proxyRawsearch($nid) {
+  private static function proxyRawsearch() {
     iform_load_helpers(['helper_base']);
-    $conn = iform_get_connection_details($nid);
-    $readAuth = helper_base::get_read_auth($conn['website_id'], $conn['password']);
-    self::checkPermissionsFilter($_POST, $readAuth, $nid);
+    if (self::containsTopHitsAggregation($_POST)) {
+      throw new ElasticsearchProxyAbort('top_hits aggregations are not supported for rawsearch endpoint', 400);
+    }
     $url = self::getEsUrl() . '/_search';
     $query = array_merge($_POST);
     $query['size'] = 0;
@@ -1360,6 +1360,36 @@ class ElasticsearchProxyHelper {
       $query['query'] = ['bool' => $bool];
     }
     return $query;
+  }
+
+  /**
+   * Check request data, including JSON-encoded values, for top_hits.
+   *
+   * A raw_search request is not filtered to a user's normal permissions, so
+   * only supports aggregations. Prevent top_hits from cheating this and
+   * bypassing the intended restrictions.
+   *
+   * @param mixed $value
+   *   Request data to inspect.
+   *
+   * @return bool
+   *   TRUE if a top_hits aggregation is present.
+   */
+  private static function containsTopHitsAggregation($value) {
+    if (is_array($value)) {
+      foreach ($value as $key => $item) {
+        if ($key === 'top_hits' || self::containsTopHitsAggregation($item)) {
+          return TRUE;
+        }
+      }
+    }
+    elseif (is_string($value)) {
+      $decoded = json_decode($value, TRUE);
+      if (json_last_error() === JSON_ERROR_NONE && self::containsTopHitsAggregation($decoded)) {
+        return TRUE;
+      }
+    }
+    return FALSE;
   }
 
   /**
