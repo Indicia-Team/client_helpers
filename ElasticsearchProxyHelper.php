@@ -112,7 +112,7 @@ class ElasticsearchProxyHelper {
         return self::proxyMediaAndComments($nid);
 
       case 'rawsearch':
-        return self::proxyRawsearch();
+        return self::proxyRawsearch($nid);
 
       case 'searchbyparams':
         return self::proxySearchByParams($nid);
@@ -423,8 +423,11 @@ class ElasticsearchProxyHelper {
    * @return string
    *   JSON string data returned by Elasticsearch.
    */
-  private static function proxyRawsearch() {
+  private static function proxyRawsearch($nid) {
     iform_load_helpers(['helper_base']);
+    $conn = iform_get_connection_details($nid);
+    $readAuth = helper_base::get_read_auth($conn['website_id'], $conn['password']);
+    self::checkPermissionsFilter($_POST, $readAuth, $nid);
     $url = self::getEsUrl() . '/_search';
     $query = array_merge($_POST);
     $query['size'] = 0;
@@ -3226,6 +3229,10 @@ class ElasticsearchProxyHelper {
    *   List of record data for the bulk edit preview.
    */
   private static function proxyBulkEditPreview() {
+    $indiciaUserId = (int) hostsite_get_user_field('indicia_user_id', 0);
+    if ($indiciaUserId <= 0) {
+      throw new ElasticsearchProxyAbort('Unauthorised - an Indicia user account is required', 401);
+    }
     $url = self::getEsUrl() . '/_search';
     $query = self::getBulkEditPreviewAggregateDataQuery();
     $r = self::curlPost($url, $query);
@@ -3272,6 +3279,7 @@ class ElasticsearchProxyHelper {
         ],
       ];
     }
+    self::ensureFilteredToCurrentUser($query);
     $termsToAggregateOn = [];
     if (!empty($_POST['updates']['recorder_name'])) {
       $termsToAggregateOn[] = ['field' => 'event.recorded_by.keyword', 'missing' => '~N/A~'];
@@ -3312,6 +3320,27 @@ class ElasticsearchProxyHelper {
       ];
     }
     return $query;
+  }
+
+  /**
+   * Ensures that the query is limited to records created by the current user.
+   *
+   * @param array $query
+   *   The Elasticsearch query array to be modified.
+   */
+  private static function ensureFilteredToCurrentUser(array &$query) {
+    $query['query']['bool'] = $query['query']['bool'] ?? [];
+    $query['query']['bool']['filter'] = $query['query']['bool']['filter'] ?? [];
+    foreach ($query['query']['bool']['filter'] as &$filter) {
+      if (isset($filter['term']['metadata.created_by_id']) && $filter['term']['metadata.created_by_id'] === (int) hostsite_get_user_field('indicia_user_id')) {
+        // Existing filter for current user found.
+        return;
+      }
+    }
+    // Existing filter wasn't found, so enforce it.
+    $query['query']['bool']['filter'][] = [
+      'term' => ['metadata.created_by_id' => (int) hostsite_get_user_field('indicia_user_id')],
+    ];
   }
 
   /**
@@ -3440,6 +3469,7 @@ class ElasticsearchProxyHelper {
         ],
       ],
     ];
+    self::ensureFilteredToCurrentUser($query);
     return $query;
   }
 
