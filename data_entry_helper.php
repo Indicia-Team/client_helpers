@@ -8563,7 +8563,7 @@ if (errors$uniq.length>0) {
               }
             }
           }
-          if (in_array(strtolower($value), $zeroValues))
+          if (!is_array($value) && in_array(strtolower($value), $zeroValues))
             $zeroCount++;
           else
             $nonZeroCount++;
