@@ -23,6 +23,7 @@
 
 use Firebase\JWT\JWT;
 use IForm\IndiciaConversions;
+use GuzzleHttp\Exception\RequestException;
 
 /**
  * Exception class for request abort.
@@ -71,7 +72,7 @@ class ElasticsearchProxyHelper {
   private static $setScopeUsingFilter;
 
   /**
-   * Cache the availability of elasticsearch
+   * Cache the availability of elasticsearch.
    *
    * @var bool
    */
@@ -93,12 +94,6 @@ class ElasticsearchProxyHelper {
     if (empty(self::$config['es']['endpoint']) ||
         (self::$config['es']['auth_method'] === 'directClient' && (empty(self::$config['es']['user']) || empty(self::$config['es']['secret'])))) {
       throw new ElasticsearchProxyAbort('Method not allowed as server configuration incomplete', 405);
-    }
-
-    if (!self::isEsAvailable()) {
-      throw new ElasticsearchProxyAbort(
-        'Elasticsearch endpoint unavailable', 503
-      );
     }
 
     switch ($method) {
@@ -186,7 +181,9 @@ class ElasticsearchProxyHelper {
    * @return bool
    *   TRUE if the Elasticsearch endpoint is reachable, FALSE otherwise.
    */
+
   public static function isEsAvailable(): bool {
+    
     if (self::$esAvailable !== NULL) {
       return self::$esAvailable;
     }
@@ -194,44 +191,34 @@ class ElasticsearchProxyHelper {
     $url = self::getEsUrl();
 
     if (empty($url)) {
-      return self::$esAvailable = FALSE;
+      self::$esAvailable = FALSE;
+      return self::$esAvailable;
     }
 
-    $ch = curl_init();
+    try {
+      $response = \Drupal::httpClient()->request('HEAD', $url, [
+        'headers' => self::getHttpRequestHeaders(self::$config),
+        'timeout' => 3,
+        'connect_timeout' => 2,
+        'verify' => TRUE,
+        'http_errors' => FALSE,
+      ]);
 
-    curl_setopt_array($ch, [
-      CURLOPT_URL => $url,
-      CURLOPT_RETURNTRANSFER => TRUE,
-      CURLOPT_NOBODY => TRUE,
-      CURLOPT_TIMEOUT => 3,
-      CURLOPT_CONNECTTIMEOUT => 2,
-      CURLOPT_SSL_VERIFYPEER => TRUE,
-      CURLOPT_SSL_VERIFYHOST => 2,
-    ]);
+      $status_code = $response->getStatusCode();
 
-    // Auth.
-    if (!empty(self::$config['es']['auth_method']) &&
-      self::$config['es']['auth_method'] === 'directClient') {
-      curl_setopt($ch, CURLOPT_USERPWD,
-        self::$config['es']['user'] . ':' . self::$config['es']['secret']
+      // Consider 200 OK and 401 Unauthorized as available.
+      self::$esAvailable = in_array($status_code, [200, 401], TRUE);
+    }
+    catch (\Exception $e) {
+      \Drupal::logger('iform')->error(
+        'Elasticsearch availability check failed: @error',
+        ['@error' => $e->getMessage()]
       );
+
+      self::$esAvailable = FALSE;
     }
 
-    curl_exec($ch);
-
-    if (curl_errno($ch)) {
-      curl_close($ch);
-      // Return and cache the result.
-      return self::$esAvailable = FALSE;
-    }
-
-    $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-
-    // Treat 2xx-4xx as reachable, 5xx as unavailable.
-    $result = ($status >= 200 && $status < 500);
-
-    return self::$esAvailable = $result;
+    return self::$esAvailable;
   }
 
   /**
@@ -241,16 +228,16 @@ class ElasticsearchProxyHelper {
    *   The endpoint name (e.g. es-occurrences).
    */
   private static function getEsEndpoint() {
-      // Request can modify the endpoint, but only if on a list of allowed
-      // endpoints.
-      if (!empty($_GET['endpoint']) && !empty(self::$config['es']['alternative_endpoints'])
-          && in_array($_GET['endpoint'], helper_base::explode_lines(self::$config['es']['alternative_endpoints']))) {
-        return $_GET['endpoint'];
-      }
-      else {
-        return self::$config['es']['endpoint'];
-      }
+    // Request can modify the endpoint, but only if on a list of allowed
+    // endpoints.
+    if (!empty($_GET['endpoint']) && !empty(self::$config['es']['alternative_endpoints'])
+        && in_array($_GET['endpoint'], helper_base::explode_lines(self::$config['es']['alternative_endpoints']))) {
+      return $_GET['endpoint'];
     }
+    else {
+      return self::$config['es']['endpoint'];
+    }
+  }
 
   /**
    * Returns the URL required to call the Elasticsearch service.
@@ -631,9 +618,8 @@ class ElasticsearchProxyHelper {
    *   records after redetermination, until Logstash fills in the taxonomy
    *   again.
    *
-   * @return array
-   *   Batch result containing the number of updated records and, when more
-   *   records remain, the search_after values for the next batch.
+   * @return int
+   *   Number of updated records.
    */
   private static function processWholeEsFilter($nid, array $statuses, $websiteIdToModify = NULL) {
     if (empty(self::$config['es']['warehouse_prefix'])) {
@@ -642,17 +628,7 @@ class ElasticsearchProxyHelper {
     if (empty($_POST['website_id'])) {
       throw new ElasticsearchProxyAbort('Missing website_id parameter', 400);
     }
-    $batchInfo = self::getOccurrenceIdPageFromFilter(
-      $nid,
-      $_POST['occurrence:idsFromElasticFilter'],
-      $_POST['search_after'] ?? NULL,
-    );
-
-    if (empty($batchInfo['ids'])) {
-      return ['updated' => 0];
-    }
-
-    $ids = $batchInfo['ids'];
+    $ids = self::getOccurrenceIdsFromFilter($nid, $_POST['occurrence:idsFromElasticFilter']);
 
     self::internalModifyListOnEs($ids, $statuses, $websiteIdToModify);
     try {
@@ -661,13 +637,7 @@ class ElasticsearchProxyHelper {
     catch (Exception $e) {
       throw new ElasticsearchProxyAbort('Error whilst updating warehouse records: ' . $e->getMessage(), 500);
     }
-    $result = [
-      'updated' => count($ids),
-    ];
-    if (!empty($batchInfo['search_after'])) {
-      $result['search_after'] = $batchInfo['search_after'];
-    }
-    return $result;
+    return count($ids);
   }
 
   /**
@@ -685,7 +655,9 @@ class ElasticsearchProxyHelper {
       'verification_status' => $_POST['occurrence:record_status'],
       'verification_substatus' => empty($_POST['occurrence:record_substatus']) ? 0 : $_POST['occurrence:record_substatus'],
     ];
-    return self::processWholeEsFilter($nid, $statuses);
+    return [
+      'updated' => self::processWholeEsFilter($nid, $statuses),
+    ];
   }
 
   /**
@@ -788,7 +760,9 @@ class ElasticsearchProxyHelper {
   private static function proxyRedetAll($nid) {
     // Set website ID to 0, basically disabling the ES copy of the record until
     // a proper update with correct taxonomy information comes through.
-    return self::processWholeEsFilter($nid, [], 0);
+    return [
+      'updated' => self::processWholeEsFilter($nid, [], 0),
+    ];
   }
 
   /**
