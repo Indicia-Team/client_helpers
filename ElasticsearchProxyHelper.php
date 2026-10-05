@@ -3106,8 +3106,23 @@ class ElasticsearchProxyHelper {
   private static function bulkProcessIds($nid, array $ids, $service, array $data) {
     // Now do the move on the warehouse.
     iform_load_helpers(['helper_base']);
-    $request = helper_base::$base_url . "index.php/services/data_utils/$service";
     $conn = iform_get_connection_details($nid);
+    $readAuth = helper_base::get_read_auth($conn['website_id'], $conn['password']);
+    $permissionFilter = [
+      'permissions_filter' => $_POST['permissions_filter'] ?? 'p-all',
+      'bool_queries' => [[
+        'query_type' => 'terms',
+        'field' => 'id',
+        'value' => json_encode(array_values($ids)),
+        'bool_clause' => 'filter',
+      ]],
+    ];
+    self::checkPermissionsFilter($permissionFilter, $readAuth, $nid);
+    $authorisedIds = self::getOccurrenceIdsFromFilter($nid, $permissionFilter);
+    if (count($authorisedIds) !== count(array_unique($ids))) {
+      throw new ElasticsearchProxyAbort('Unauthorised record ID supplied', 401);
+    }
+    $request = helper_base::$base_url . "index.php/services/data_utils/$service";
     $auth = helper_base::get_read_write_auth($conn['website_id'], $conn['password']);
     $postargs = helper_base::array_to_query_string(array_merge([
       'occurrence:ids' => implode(',', $ids),
