@@ -1505,6 +1505,8 @@ JS;
       'interimImagePath' => self::$interim_image_folder,
       'mode' => $isChecklist ? 'multi:checklist:append' : "single:$options[taxonControlId]:add",
     ];
+    // Get rid of linefeeds in helpText
+    $defaults['helpText'] = str_replace(["\r", "\n"], ' ', $defaults['helpText']);
     $classifier_options = array_merge($defaults, $options, $requirements);
 
     // Obtain taxon information for unknown species in current language.
