@@ -474,6 +474,7 @@ class ElasticsearchReportHelper {
       'noUpdatesSpecified' => 'Please specify the values you would like to update using the form before previewing the changes.',
       'noValue' => '-value not set-',
       'preparing' => 'Preparing to edit the records...',
+      'previewFailed' => 'The preview could not be loaded. Please try again.',
       'promptAllowSampleSplit' => <<<HTML
         <p>The list of records to update contains occurrences which belong to samples that contain other occurrences
         which are not being updated. For example, sample {1} contains an occurrence {2} which is being updated, but it
@@ -540,16 +541,17 @@ class ElasticsearchReportHelper {
   <div id="$options[id]-dlg" class="bulk-editor-dlg">
     <h2>$lang[bulkEditRecords]</h2>
     <p class="message"></p>
-    <p>$lang[editInstructions]</p>
     <div class="bulk-edit-form-controls">
+      <p class="edit-instructions">$lang[editInstructions]</p>
       $recorderNameControl
       $dateControl
       $locationNameControl
       $srefControl
+      $commentControl
+      $skipReverifyControl
     </div>
-    $commentControl
-    $skipReverifyControl
     <div class="preview-output" style="display: none">
+      <div class="preview-loading loading-spinner" style="display: none"><div>Loading...</div></div>
       <div class="alert alert-warning preview-messages"><i class="fas fa-exclamation-triangle fa-2x"></i>
         <div class="preview-message-text">
           <p class="preview-info-complete">$lang[previewInfoComplete]</p>
