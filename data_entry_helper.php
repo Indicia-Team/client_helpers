@@ -1490,14 +1490,16 @@ JS;
     // Provide default settings for other options which can be overwritten.
     $defaults = [
       'caption' => lang::get('Image classifier'),
-      'helpText' => $isChecklist ? lang::get(
-        'Add files here then click the classify button and we will attempt to automatically ' .
-        'identify the species and add them to the grid. Files featuring the specimen with minimal ' .
-        'background will be most successful.'
-        ) : lang::get(
-        'Add a photo here then click the classify button and we will attempt to automatically ' .
-        'identify the species and add it to the record. Files featuring the specimen with minimal ' .
-        'background will be most successful.'
+      'helpText' => $isChecklist ? lang::get(<<<TXT
+          Add photos here then click the classify button and we will attempt to automatically
+          identify the species and add them to the grid. Files featuring the specimen with minimal
+          background will be most successful.
+        TXT
+        ) : lang::get(<<<TXT
+          Add a single photo here then click the classify button and we will attempt to automatically
+          identify the species and add it to the record. Files featuring the specimen with minimal
+          background will be most successful.
+        TXT
         ),
       'interimImagePath' => self::$interim_image_folder,
       'mode' => $isChecklist ? 'multi:checklist:append' : "single:$options[taxonControlId]:add",
