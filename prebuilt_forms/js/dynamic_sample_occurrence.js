@@ -6,8 +6,9 @@
 indiciaFns.hookDynamicAttrsAfterLoad = [];
 
 jQuery(document).ready(function docReady($) {
+  var taxonInputSelector = '[name="occurrence\\:taxa_taxon_list_id"]';
   var sexStageInputSelectors = '.system-function-sex, .system-function-stage, .system-function-sex_stage';
-  var taxonRestrictionInputSelectors = '#occurrence\\:taxa_taxon_list_id, ' + sexStageInputSelectors;
+  var taxonRestrictionInputSelectors = taxonInputSelector + ', ' + sexStageInputSelectors;
   var hasDynamicAttrs = $('.species-dynamic-attributes').length > 0;
 
   /**
@@ -48,7 +49,7 @@ jQuery(document).ready(function docReady($) {
     var urlSep = indiciaData.ajaxUrl.indexOf('?') === -1 ? '?' : '&';
     var sexStageAttrs = $(sexStageInputSelectors);
     var sexStageVals = [];
-    if ($('#occurrence\\:taxa_taxon_list_id').val() !== '') {
+    if ($(taxonInputSelector).val() !== '') {
       $.each(sexStageAttrs, function grabSexStageAttrVal() {
         if ($(this).val() !== '') {
           sexStageVals.push($(this).val());
@@ -60,7 +61,7 @@ jQuery(document).ready(function docReady($) {
         // 0 is a fake nid, since we don't care.
         $.get(indiciaData.ajaxUrl + '/dynamicattrs/' + indiciaData.nid + urlSep +
             'survey_id=' + $('#survey_id').val() +
-            '&taxa_taxon_list_id=' + $('#occurrence\\:taxa_taxon_list_id').val() +
+            '&taxa_taxon_list_id=' + $(taxonInputSelector).val() +
             '&type=' + type +
             '&stage_termlists_term_ids=' + JSON.stringify(sexStageVals) +
             '&validate_against_taxa=' + (indiciaData.validateAgainstTaxa ? 't' : 'f') +
@@ -350,7 +351,7 @@ jQuery(document).ready(function docReady($) {
   $('#taxonListSelect').on('change', changeTaxonList);
 
   // In single species mode need to put line through verification information to show it is no longer valid
-  $('#occurrence\\:taxa_taxon_list_id\\:taxon').on('change', function() {
+  $('[name="occurrence\\:taxa_taxon_list_id\\:taxon"]').on('change', function() {
     $('#occurrence\\:verified_by').wrapInner('<strike>');
     $('#occurrence\\:verified_on').wrapInner('<strike>');
   });
