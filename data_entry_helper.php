@@ -1406,6 +1406,7 @@ JS;
     );
     // Load javascript for the classifier.
     self::add_resource('file_classifier');
+    self::add_resource('font_awesome');
     // We need to call the initialisation function.
     $containerId = 'container-' .
       ($options['table'] ?? 'occurrence_medium') . '-' .
@@ -1444,7 +1445,7 @@ JS;
       global $indicia_templates;
       $buttonLabel = lang::get('Get assistance with photo identification');
       $r = <<<HTML
-        <button type="button" class="show-classifier $indicia_templates[buttonDefaultClass]">$buttonLabel</button>
+        <button type="button" class="show-classifier $indicia_templates[buttonHighlightedClass]"><i class="fas fa-magic"></i>$buttonLabel</button>
         <div class="classifier-container" style="display: none">
           $r
         </div>
