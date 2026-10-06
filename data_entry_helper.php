@@ -1456,6 +1456,7 @@ JS;
       'cancel' => 'Cancel',
       'classifierRequestFailed' => 'The classifier failed to process the image. It has been added to the grid as Unknown.',
       'dialogBtnOk' => 'Okay',
+      'dialogCancelled' => 'The classification was cancelled.',
       'dialogEnd' => 'Your files have been processed. Review the identifications and check the abundances.',
       'dialogStart' => 'Your files are being sent to a classification service which will try to identify the species.',
       'dialogTitle' => 'Requesting classification',
