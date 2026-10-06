@@ -6574,17 +6574,34 @@ HTML;
       foreach (data_entry_helper::$entity_to_load as $key => $value) {
         $a = explode(':', $key, 4);
         if (count($a) === 4  && $a[0] === 'sc' && $a[3] == 'sample:entered_sref') {
+          // Sub-sample detected.
           $sampleId = $a[2];
+          $value = htmlspecialchars($value);
           $geomKey = "$a[0]:$a[1]:$sampleId:sample:geom";
-          $idKey = "$a[0]:$a[1]:$sampleId:sample:id";
+          $geomValue = htmlspecialchars(data_entry_helper::$entity_to_load[$geomKey] ?? '');
+          $inputs = <<<HTML
+            <input type="text" value="$value" readonly="readonly" name="$key">
+            <input type="hidden" value="$geomValue" name="$geomKey">
+          HTML;
+          // If reloading after a validation failure, ensure deletion state of
+          // sub-sample preserved.
           $deletedKey = "$a[0]:$a[1]:$sampleId:sample:deleted";
-          $blocks .= '<div id="scm-' . $a[1] . '-block" class="scm-block">' .
-                    '<label>' . lang::get('Spatial ref') . ':</label> ' .
-                    '<input type="text" value="' . $value . '" readonly="readonly" name="' . $key . '">' .
-                    '<input type="hidden" value="' . data_entry_helper::$entity_to_load[$geomKey] . '" name="' . $geomKey . '">' .
-                    '<input type="hidden" value="' . (data_entry_helper::$entity_to_load[$deletedKey] ?? 'f') . '" name="' . $deletedKey . '">' .
-                    (isset(data_entry_helper::$entity_to_load[$idKey]) ? '<input type="hidden" value="' . data_entry_helper::$entity_to_load[$idKey] . '" name="' . $idKey . '">' : '');
+          $deletedValue = data_entry_helper::$entity_to_load[$deletedKey] ?? '';
+          if (in_array(strtolower((string) $deletedValue), ['1', 'true', 't'], TRUE)) {
+            $inputs .= <<<HTML
 
+              <input type="hidden" value="t" name="$deletedKey">
+            HTML;
+          }
+          // Preserve sub-sample key if editing.
+          $idKey = "$a[0]:$a[1]:$sampleId:sample:id";
+          if (filter_var(data_entry_helper::$entity_to_load[$idKey] ?? NULL, FILTER_VALIDATE_INT) !== false) {
+            $idValue = data_entry_helper::$entity_to_load[$idKey];
+            $inputs .= <<<HTML
+
+              <input type="hidden" value="$idValue" name="$idKey">
+            HTML;
+          }
           if (!empty($options['sample_method_id'])) {
             $sampleAttrs = self::getMultiplePlacesSpeciesChecklistSubsampleAttrs($options, empty($sampleId) ? NULL : $sampleId);
             foreach ($sampleAttrs as &$attr) {
@@ -6602,19 +6619,25 @@ HTML;
               ]);
             }
             $sampleCtrls .= get_attribute_html($sampleAttrs, [], ['extraParams' => $options['readAuth']], NULL, $attrOptions);
-            $blocks .= <<<HTML
-<div class="subsample-ctrl-cntr">
-  $sampleCtrls
-</div>
-HTML;
+            $inputs .= <<<HTML
+              <div class="subsample-ctrl-cntr">
+                $sampleCtrls
+              </div>
+            HTML;
           }
           if ($options['samplePhotos']) {
-            $blocks .= self::file_box([
+            $inputs .= self::file_box([
               'table' => "$a[0]:$a[1]:$sampleId:sample_medium",
               'readAuth' => $options['readAuth'],
             ]);
           }
-          $blocks .= '</div>';
+          $srefLabel = lang::get('Spatial ref');
+          $blocks .= <<<HTML
+            <div id="scm-$a[1]-block" class="scm-block">
+              <label>$srefLabel:</label>
+                $inputs
+            </div>
+          HTML;
         }
       }
     }
@@ -8491,9 +8514,20 @@ if (errors$uniq.length>0) {
       }
       $subModel = array('fkId' => 'parent_id', 'model' => $subSample);
       $copyFields = [];
-      if(!isset($sampleRecord['date'])) $copyFields = array('date_start' => 'date_start','date_end' => 'date_end','date_type' => 'date_type');
-      if(!isset($sampleRecord['survey_id'])) $copyFields['survey_id'] = 'survey_id';
-      if(count($copyFields)>0) $subModel['copyFields'] = $copyFields; // from parent->to child
+      if (!isset($sampleRecord['date'])) {
+        $copyFields = [
+          'date_start' => 'date_start',
+          'date_end' => 'date_end',
+          'date_type' => 'date_type'
+        ];
+      }
+      if (!isset($sampleRecord['survey_id'])) {
+        $copyFields['survey_id'] = 'survey_id';
+      }
+      if (count($copyFields) > 0) {
+        // From parent->to child.
+        $subModel['copyFields'] = $copyFields;
+      }
       $subModels[] = $subModel;
     }
     return $subModels;
