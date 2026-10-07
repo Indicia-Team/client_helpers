@@ -2207,6 +2207,7 @@ HTML;
     $sharingCodes = explode(',', $options['sharingCode']);
     $optionArr = [];
     foreach ($sharingCodes as $sharingCode) {
+      $sharingCode = trim($sharingCode);
       $filterData = report_filters_load_existing($options['readAuth'], $sharingCode, TRUE);
       foreach ($filterData as $filter) {
         if (($filter['defines_permissions'] === 't') === $options['definesPermissions']) {
