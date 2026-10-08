@@ -2427,6 +2427,8 @@ HTML;
       'unknown' => 'Unknown',
       'updatingMultipleInParentSampleWarning' => lang::get('This verification decision will be applied to a total of {1} records of the same taxon within the parent sample (e.g. within the transect or timed count)!'),
       'uploadError' => 'An error occurred whilst uploading your spreadsheet.',
+      'verificationDecisionUpdateFailed' => 'Failed to update verification decision',
+      'verificationDecisionUpdateFailedMsg' => 'An error occurred while updating the verification decision: ',
       'C3' => 'marked as plausible',
       'DT' => 'redetermined',
     ]);
