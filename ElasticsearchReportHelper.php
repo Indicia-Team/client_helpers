@@ -2377,6 +2377,11 @@ HTML;
     ];
 
     helper_base::addLanguageStringsToJs('verificationButtons', [
+      'ajaxProxyPermissions403' => <<<TXT
+        Access was denied while updating the verification decision. Please check that your Drupal
+        user role has the “IForm AJAX Proxy passthrough” permission, and that you are still signed
+        in.
+      TXT,
       'cancel' => 'Cancel',
       'close' => 'Close',
       'copyPlaceholder' => 'Copy &quot;{{ placeholder }}&quot; to the clipboard.',
@@ -2433,6 +2438,7 @@ HTML;
       'saveTemplateErrorMsg' => 'An error occurred when saving your template to the database. Please try later.',
       'templateNameTextRequired' => 'Template details required',
       'unknown' => 'Unknown',
+      'unknownError' => 'Unknown error',
       'updatingMultipleInParentSampleWarning' => lang::get('This verification decision will be applied to a total of {1} records of the same taxon within the parent sample (e.g. within the transect or timed count)!'),
       'uploadError' => 'An error occurred whilst uploading your spreadsheet.',
       'verificationDecisionUpdateFailed' => 'Failed to update verification decision',
