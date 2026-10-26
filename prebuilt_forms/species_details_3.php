@@ -48,16 +48,16 @@ use Drupal\Core\Session\AccountInterface;
  * - Displays a list of counties where the species has been found
  */
 class iform_species_details_3 extends BaseDynamicDetails {
-  
+
   /**
    * Default path for storing cached species pages
    *
    * @var cachePath
    *
    */
-   
+
    private static $cachePath = '/sites/default/files/speciescach';
-  
+
 
   /**
    * Stores a value to indicate of no taxon identified.
@@ -99,9 +99,9 @@ class iform_species_details_3 extends BaseDynamicDetails {
    *
    * @var bootstrap
    */
-   
+
    private static $isBootstrap = 0;
-   
+
   /**
    * Stores the common names of the taxon.
    *
@@ -121,7 +121,7 @@ class iform_species_details_3 extends BaseDynamicDetails {
    *
    * @var taxaTaxonListId
    */
-  private static $taxaTaxonListId;  
+  private static $taxaTaxonListId;
 
   /**
    * Stores the taxon_meaning_id of the taxon.
@@ -152,7 +152,7 @@ class iform_species_details_3 extends BaseDynamicDetails {
       'recommended' => TRUE,
     ];
   }
-  
+
   public static function set_theme_settings() {
     $theme = \Drupal::theme()->getActiveTheme();
     $theme_name = $theme->getName();
@@ -280,7 +280,7 @@ class iform_species_details_3 extends BaseDynamicDetails {
           'type' => 'string',
           'default' => '',
           'group' => 'Fields for Species details',
-        ],	
+        ],
         [
           'name' => 'conservationstatuspath',
           'caption' => 'Path to conservation designations file',
@@ -288,7 +288,7 @@ class iform_species_details_3 extends BaseDynamicDetails {
           'type' => 'string',
           'default' => '',
           'group' => 'Fields for Species details',
-        ],		
+        ],
         [
           'name' => 'testagainst',
           'caption' => 'Test attributes against',
@@ -322,7 +322,7 @@ class iform_species_details_3 extends BaseDynamicDetails {
           "&nbsp;&nbsp;<strong>[dualemap]</strong> - a toggle that switches between hectadmap and exploremap<br/>" .
           "&nbsp;&nbsp;<strong>[map]</strong> - a map that links to the spatial reference and location<br/>" .
           "&nbsp;&nbsp;<strong>[occurrenceassociations]</strong> - a list of associated species, drawn from the occurrence associations data.<br/>" .
-          "&nbsp;&nbsp;<strong>[counties]</strong> - vice county distribution<br/>" . 
+          "&nbsp;&nbsp;<strong>[counties]</strong> - vice county distribution<br/>" .
           "<strong>=tab/page name=</strong> is used to specify the name of a tab or wizard page (alpha-numeric characters only). " .
           "If the page interface type is set to one page, then each tab/page name is displayed as a seperate section on the page. " .
           "Note that in one page mode, the tab/page names are not displayed on the screen.<br/>" .
@@ -373,7 +373,7 @@ class iform_species_details_3 extends BaseDynamicDetails {
           'type' => 'boolean',
           'required' => FALSE,
           'default' => TRUE,
-          'group' => 'User Interface',          
+          'group' => 'User Interface',
         ],
         [
           'name' => 'include_layer_list',
@@ -560,7 +560,7 @@ class iform_species_details_3 extends BaseDynamicDetails {
    *   Page HTML.
    */
 
-  public static function get_form($args, $nid) {    
+  public static function get_form($args, $nid) {
   iform_load_helpers(['ElasticsearchReportHelper']);
 
   // Start timer as early as possible
@@ -568,11 +568,11 @@ class iform_species_details_3 extends BaseDynamicDetails {
 
   // 1. Try cache FIRST
   $cached = self::read_species_cache($args);
-  
+
   if ($cached !== null) {
-    
+
     $elapsed = round((microtime(true) - $start) * 1000, 1);
-    
+
     // Add debug info
     $cached .= "\n<!-- Species cache: HIT | {$elapsed} ms -->";
 
@@ -587,7 +587,7 @@ class iform_species_details_3 extends BaseDynamicDetails {
   $enabled = ElasticsearchReportHelper::enableElasticsearchProxy($nid);
   if ($enabled) {
     $html = parent::get_form($args, $nid);
-  
+
     $elapsed = round((microtime(true) - $start) * 1000, 1);
 
     // Add debug info
@@ -620,9 +620,9 @@ class iform_species_details_3 extends BaseDynamicDetails {
 
 		  $rawExact  = self::fetchData('/index.php/services/rest/taxa/search', $paramsExact, 'GET');
 		  $rowsExact = self::decodeRows($rawExact);
-		  
 
-			  
+
+
 			// Defensively handle empty response
 			if (!is_array($rowsExact) || empty($rowsExact[0])) {
 				return null; // or throw, or try a fallback search
@@ -675,7 +675,7 @@ class iform_species_details_3 extends BaseDynamicDetails {
 
 		return is_array($rows) ? $rows : [];
 	}
-  
+
 /**
  * Executes a query against the Elasticsearch proxy and returns the response data.
  *
@@ -686,10 +686,10 @@ class iform_species_details_3 extends BaseDynamicDetails {
  * @param array $params The query parameters to be sent to the Elasticsearch proxy.
  * @param int $nid Optional node ID for context or filtering (default: 0).
  *
- * @return 
-*/ 
+ * @return
+*/
     protected static function runEsProxyQuery(array $params, $nid = 0) {
-      
+
       $proxyUrl = \Drupal::request()->getSchemeAndHttpHost()
         . '/iform/esproxy/searchbyparams/' . intval($nid);
 
@@ -733,7 +733,7 @@ class iform_species_details_3 extends BaseDynamicDetails {
 
       curl_close($ch);
       return json_decode($response, true);
-    }  
+    }
 
 /**
  * Sends an HTTP request to a specified endpoint and retrieves the response.
@@ -798,8 +798,8 @@ class iform_species_details_3 extends BaseDynamicDetails {
     curl_close($session);
     return $response;
   }
-  
-  
+
+
 /**
  * Builds the HTTP request headers for API calls.
  *
@@ -832,7 +832,7 @@ class iform_species_details_3 extends BaseDynamicDetails {
 		$headers[] = 'Authorization: ' . implode(':', $tokens);
 		return $headers;
 	}
-	
+
 /**
  * Generates the HTML for the species summary form.
  *
@@ -856,7 +856,7 @@ class iform_species_details_3 extends BaseDynamicDetails {
  * @return string The generated HTML for the species summary form.
  */
   protected static function get_form_html($args, $auth, $attributes) {
-    
+
 
     // Set global flag if no taxon is specified in URL or form.
     if (empty($_GET['taxa_taxon_list_id']) &&
@@ -870,7 +870,7 @@ class iform_species_details_3 extends BaseDynamicDetails {
     }
 
       self::$taxaTaxonListId = null;
-      
+
       self::set_theme_settings();
 
 
@@ -887,19 +887,19 @@ class iform_species_details_3 extends BaseDynamicDetails {
     if (self::$notaxon) {
       return parent::get_form_html($args, $auth, $attributes);
     } else {
-		
+
 	  self::$taxaTaxonListId = null;
-	  
+
 	  if (isset($_GET['taxa_taxon_list_id']) ) {
 		self::$taxaTaxonListId = $_GET['taxa_taxon_list_id'];
       } else {
 		  if (isset($_GET['species_name'])) {
   			self::$taxaTaxonListId = self::getTaxaTaxonListIdFromName($args,ucfirst($_GET['species_name']) );
 		  }
-	  } 
+	  }
 	  // Get information on species names
 
-	  
+
       self::getNames($auth, self::$taxaTaxonListId);
       if (is_null(self::$externalKey)){
         // Some lists have no TVKs
@@ -907,7 +907,7 @@ class iform_species_details_3 extends BaseDynamicDetails {
         \Drupal::messenger()->addMessage('There is no external key corresponding to this taxon.');
         return parent::get_form_html($args, $auth, $attributes);
       }
-	  
+
       // Make the preferred and default common name available via
       // hidden controls.
       $taxonNames = '<input type="hidden" id="species-details-preferred-name" value="' . strip_tags(self::$preferred,'<em>') . '"/>';
@@ -942,7 +942,7 @@ class iform_species_details_3 extends BaseDynamicDetails {
       else {
         hostsite_set_page_title(lang::get('Summary details for {1}', $titleName));
       }
-      
+
       return $taxonNames . $esFilter . $groupIntegration . parent::get_form_html($args, $auth, $attributes);
     }
   }
@@ -967,7 +967,7 @@ class iform_species_details_3 extends BaseDynamicDetails {
  * @return void
  */
   protected static function getNames($auth,$taxa_taxon_list_id) {
-   
+
     iform_load_helpers(['report_helper']);
     self::$preferred = lang::get('Unknown');
     // Get all the different names for the species.
@@ -988,7 +988,7 @@ class iform_species_details_3 extends BaseDynamicDetails {
       $extraParams['external_key'] = $_GET['external_key'];
       self::$externalKey = $_GET['external_key'];
     }
-    
+
     $species_details = report_helper::get_report_data([
       'readAuth' => $auth['read'],
       'class' => 'species-details-fields',
@@ -1070,7 +1070,7 @@ class iform_species_details_3 extends BaseDynamicDetails {
       return '';
     }
     global $indicia_templates;
-    
+
     $options = array_merge([
       'includeAttributes' => TRUE,
     ], $options);
@@ -1477,14 +1477,14 @@ class iform_species_details_3 extends BaseDynamicDetails {
     $title = lang::get($options['title']);
 
 	$bootstrapClass="";
-	$bootstrapClass1="";	
-	
+	$bootstrapClass1="";
+
 	if (static::$isBootstrap) {
 		$bootstrapClass  = "panel panel-info";
 		$bootstrapClass1 = "panel-heading";
 		$bootstrapClass2 = "panel-body";
 	}
-	
+
     $r = <<<HTML
 		  <div class="detail-panel $bootstrapClass" id="detail-panel-recsbyyear" >
         <div class="$bootstrapClass1" >
@@ -1538,17 +1538,17 @@ HTML;
       'functionName' => 'populateRecsThroughYearChart',
     ];
     $customScript = ElasticsearchReportHelper::customScript($optionsCustomScript);
-	
+
 	$bootstrapClass="";
-	$bootstrapClass1="";	
-	
+	$bootstrapClass1="";
+
 	if (static::$isBootstrap) {
 		$bootstrapClass  = "panel panel-info";
 		$bootstrapClass1 = "panel-heading";
 		$bootstrapClass2 = "panel-body";
 	}
 
-	  
+
     $r = <<<HTML
 	  <div class="detail-panel $bootstrapClass" id="detail-panel-recsthroughyear">
 		  <div class=" $bootstrapClass1">
@@ -1585,17 +1585,17 @@ HTML;
 
 	$bootstrapClass  = "";
 	$bootstrapClass1 = "";
-	
+
 	if (static::$isBootstrap) {
 		$bootstrapClass  = "panel panel-default";
 		$bootstrapClass1 = "panel-body";
 	}
-	
+
 	$r 	= "<div class='$bootstrapClass' >";
     $r .= "<div class='detail-panel $bootstrapClass1' id='detail-panel-exploremap'><h3>" . lang::get('Explore map') . "</h3>";
     $r .= self::get_exploremap_html($auth, $args, $tabalias, $options);
 	$r .= "</div>";
-	
+
     return $r;
   }
 
@@ -1668,12 +1668,12 @@ HTML;
     if (self::$notaxon) {
       return '';
     }
-	
+
 	if (static::$isBootstrap) {
 		$bootstrapClass  = "panel panel-default";
 		$bootstrapClass1 = "panel-body";
 	}
-	
+
 	$r  = '<div class="$bootstrapClass" >';
     $r .= '<div class="detail-panel $bootstrapClass1" id="detail-panel-dualmap"><h3>' . lang::get('Ftempora distribution of records') . '</h3>';
     $r .= '<div class="btn-group btn-group-toggle" data-toggle="buttons" style="margin-bottom: 0.5em">';
@@ -1708,25 +1708,25 @@ HTML;
       'info' => '',
       'download' => 'false',
     ], $options);
-	
+
     $bootstrapClass  = "";
     $bootstrapClass1 = "";
-    
+
     if (static::$isBootstrap) {
       $bootstrapClass  = "panel panel-info";
       $bootstrapClass1 = "panel-heading";
       $bootstrapClass2 = "panel-body";
     }
-    
+
     $r .= "<div class='detail-panel $bootstrapClass' id='detail-panel-hectadmap' >";
     $r .= " <div class='$bootstrapClass1' >";
     $r .= "   <h3>" . lang::get($options['title']) . "</h3>";
-    $r .= " </div>";	
-    $r .= " <div class='$detailClass2' >";	
+    $r .= " </div>";
+    $r .= " <div class='$detailClass2' >";
     $r .= self::get_hectadmap_html($auth, $args, $tabalias, $options);
     $r .= " </div>";
     $r .= "</div>";
-      
+
     return $r;
   }
 
@@ -1934,24 +1934,24 @@ HTML;
         'wantCount' => 0,
       ],
     ]);
-	
+
 	$bootstrapClass="";
-	$bootstrapClass1="";	
-	$bootstrapClass2="";	
-	
+	$bootstrapClass1="";
+	$bootstrapClass2="";
+
 	if (static::$isBootstrap) {
 		$bootstrapClass  = "panel panel-info";
 		$bootstrapClass2 = "panel-body ";
 		$bootstrapClass1 = "panel-heading ";
 	}
-	
+
   $r = "<div class='detail-panel $bootstrapClass' id='detail-panel-photos'>";
 	$r.= "<div class='$bootstrapClass1' >";
 	$r .= " <h3>";
 	$r .= "   ".lang::get('Photos and media');
 	$r .= " </h3>";
 	$r .= "</div>";
-	
+
   $r .= " <div class=' $bootstrapClass2  ". $options['class'] . " '>";
   $r .= "   <ul>";
 
@@ -1966,7 +1966,7 @@ HTML;
     $r .= "     </ul>";
     $r .= "   </div> <!-- bootstrap1 -->";
     $r .= "</div> <!-- Bootstrap -->";
-    
+
     return $r;
   }
 
@@ -2066,7 +2066,7 @@ HTML;
     if (self::$notaxon) {
       return '';
     }
-	
+
     // Draw a map by calling Indicia report when Geoserver isn't available.
     if (isset($options['noGeoserver']) && $options['noGeoserver'] === TRUE) {
       return self::mapWithoutGeoserver($auth, $args, $tabalias, $options);
@@ -2118,15 +2118,15 @@ HTML;
 	$bootstrapClass  = "";
 	$bootstrapClass1 = "";
 	$bootstrapClass2 = "";
-	
+
 	if (static::$isBootstrap) {
 		$bootstrapClass  = "panel panel-success";
 		$bootstrapClass1 = "panel-heading";
 		$bootstrapClass2 = "panel-body";
 	}
-	
+
     $r = "<div class='$bootstrapClass detail-panel' id='detail-panel-map'>";
-	
+
 	$r .= "<div class='$bootstrapClass1' >";
 	$r .= "<h3>" . lang::get('Map') . "</h3>";
 	$r .= "</div>";
@@ -2231,7 +2231,7 @@ HTML;
 	$bootstrapClass  = "";
 	$bootstrapClass1 = "";
 	$bootstrapClass2 = "";
-	
+
 	if (static::$isBootstrap) {
 		$bootstrapClass  = "panel panel-info";
 		$bootstrapClass1 = "panel-heading";
@@ -2259,9 +2259,9 @@ HTML;
       return self::$preferred;
     }
   }
- 
 
-  
+
+
 /**
  * If enabled, attempt to read a cached species page and return it.
  *
@@ -2269,11 +2269,11 @@ HTML;
  *   Cached HTML if available, otherwise NULL.
  */
 protected static function read_species_cache($args) {
-  
+
   self::clear_species_cache();
-  
+
   $filename = self::getSpeciesCacheFilename();
-  
+
     if (
         !$filename ||
         !empty($_GET['nocache']) ||
@@ -2284,8 +2284,8 @@ protected static function read_species_cache($args) {
 
   $relativeDir  = rtrim(self::$cachePath, '/');
   $absoluteFile = DRUPAL_ROOT . $relativeDir . '/' . $filename;
-  
-  
+
+
   if (!is_readable($absoluteFile)) {
     return null;
   }
@@ -2305,9 +2305,9 @@ protected static function read_species_cache($args) {
  *   Original HTML (unchanged).
  */
 protected static function write_species_cache($args, $html) {
-  
+
   $filename = self::getSpeciesCacheFilename();
- 
+
   if (!$filename) {
     return $html;
   }
@@ -2334,7 +2334,7 @@ protected static function write_species_cache($args, $html) {
 
   return $html;
 }
-  
+
 protected static function getSpeciesCacheFilename(): ?string {
   $slug = self::canonicalSpeciesSlug();
   $key  = self::buildSpeciesCacheKey();
@@ -2345,7 +2345,7 @@ protected static function getSpeciesCacheFilename(): ?string {
 
   return $slug . '.html';
 }
-  
+
 protected static function buildSpeciesCacheKey(): ?string {
   $speciesId =
     self::$taxaTaxonListId
@@ -2418,7 +2418,7 @@ protected static function canonicalSpeciesSlug(): ?string {
     }
   }
 
-  
+
   /**
    * Draw the Atlas button on the page.
    *
@@ -2429,9 +2429,9 @@ protected static function canonicalSpeciesSlug(): ?string {
     if (self::$notaxon) {
       return '';
     }
-    
+
     // ?taxa_taxon_list_id=242590&ds=1001&tg=spider&vc=0
-    
+
     if (!empty($args['atlas_url']) && !empty($args['atlas_param_name'])) {
       $url = $args['atlas_url'];
       if (strcasecmp(substr($url, 0, 12), '{rootfolder}') !== 0 && strcasecmp(substr($url, 0, 4), 'http') !== 0) {
@@ -2441,13 +2441,13 @@ protected static function canonicalSpeciesSlug(): ?string {
       $url .= (strpos($url, '?') === FALSE) ? '?' : '&';
       $url .= $args['atlas_param_name']. self::$taxaTaxonListId;
       global $indicia_templates;
-      
+
     $bootstrapClass  = "";
 
     if (static::$isBootstrap) {
       $bootstrapClass  = "btn btn-info";
     }
-    
+
       $btnLabel = lang::get('Atlas', self::get_best_name());
       $r = <<<HTML
 <div id="atlas-button" >
@@ -2460,7 +2460,7 @@ HTML;
     }
     return $r;
   }
-  
+
 
 
 /**
@@ -2536,7 +2536,7 @@ HTML;
 //	  $fileUrl = $baseUrl . '/' . trim($args['descriptionpath'], '/') . '/'
 //			   . rawurlencode($parts[0] . ' ' . $parts[1] . '.txt');
 //	  $content = @file_get_contents($fileUrl);
-    
+
     $filePath = DRUPAL_ROOT . '/' . trim($args['descriptionpath'], '/') . '/'
               . $parts[0] . ' ' . $parts[1] . '.txt';
 
@@ -2566,14 +2566,14 @@ HTML;
 	  $html = preg_replace("/(\n\s*\n)+/", "<br/><br/>", $html);
 
 	$bootstrapClass="";
-	$bootstrapClass1="";	
-	
+	$bootstrapClass1="";
+
 	if (static::$isBootstrap) {
 		$bootstrapClass  = "panel panel-default";
 		$bootstrapClass1 = "panel-heading";
 		$bootstrapClass2 = "panel-body";
 	}
-	
+
 	$r = "<div class='$bootstrapClass' ><div class='$bootstrapClass1'></div><div class='$bootstrapClass2' >".$html."</div></div>";
 	  // Return raw HTML (no panel wrapper, no caption row).
 	  return $r;
@@ -2640,7 +2640,7 @@ protected static function get_control_conservationstatus($auth, $args, $tabalias
     return '<div><br></div>';
   }
 
-  $header = fgetcsv($fh);
+  $header = fgetcsv($fh, escape: "\\");
   if ($header === FALSE) {
     fclose($fh);
     return '<div><br></div>';
@@ -2675,7 +2675,7 @@ protected static function get_control_conservationstatus($auth, $args, $tabalias
 
   $matches = [];
 
-  while (($row = fgetcsv($fh)) !== FALSE) {
+  while (($row = fgetcsv($fh, escape: "\\")) !== FALSE) {
     $designated = trim((string) ($row[$nameCol] ?? ''));
     if ($designated === '') {
       continue;
@@ -2705,24 +2705,24 @@ protected static function get_control_conservationstatus($auth, $args, $tabalias
   }
 
 	$bootstrapClass="";
-	$bootstrapClass1="";	
-	$bootstrapClass2="";	
-	$bootstrapClass3="";	
-	
+	$bootstrapClass1="";
+	$bootstrapClass2="";
+	$bootstrapClass3="";
+
 	if (static::$isBootstrap) {
 		$bootstrapClass  = "panel panel-danger";
 		$bootstrapClass1 = "panel-body table-responsive";
 		$bootstrapClass2 = "table table-striped";
 		$bootstrapClass3 = "panel-heading";
 	}
-	
+
   // Render plain HTML (no repeated species column).
   $out = [];
   $out[] = "<div class='$bootstrapClass' >";
   $out[] = "<div class='$bootstrapClass3' >";
   $out[] = '<h3>Conservation status</h3>';
   $out[] = '</div>';
-  $out[] = "<div class='$bootstrapClass1' >"; 
+  $out[] = "<div class='$bootstrapClass1' >";
   $out[] = '<div><strong>' . $esc($parts[0] . ' ' . $parts[1]) . '</strong></div>';
 
   $out[] = "<table class='$bootstrapClass2' style='border-spacing:0 0.75em; border-collapse:separate;' >";
@@ -2783,7 +2783,7 @@ $rare ='';
 
     $taxonMeaningId = self::$taxonMeaningId ?? null;
     $speciesName    = self::$preferred ?? null;
-    
+
     $nid = $args['nid'] ?? self::getNidFromAlias('/species');
 
     if (empty($taxonMeaningId) && empty($speciesName)) {
@@ -2792,28 +2792,28 @@ $rare ='';
 
     $options['taxonMeaningId'] = $taxonMeaningId;
     $options['speciesName'] = $speciesName;
-    
+
 	  $stats = self::get_stats_from_summary($auth, $args,  $options );
 
 		$national = $stats['national'] ?? [];
-		
+
 	$bootstrapClass="";
-	$bootstrapClass1="";	
-	$bootstrapClass2="";	
-	
+	$bootstrapClass1="";
+	$bootstrapClass2="";
+
 	if (static::$isBootstrap) {
 		$bootstrapClass  = "panel panel-info";
 		$bootstrapClass1 = "panel-heading ";
 		$bootstrapClass2 = "panel-body ";
 	}
-	
+
 		$html = '';
 
-		$html .= "<div class='detail-panel $bootstrapClass' id='detail-panel-speciesstats' >";		
+		$html .= "<div class='detail-panel $bootstrapClass' id='detail-panel-speciesstats' >";
 		$html .= "  <div class='$bootstrapClass1' >";
 		$html .= '    <h3>' . lang::get('Stats') . '</h3>';
-		$html .= '  </div>';		
-		$html .= "  <div class='$bootstrapClass2' >";		
+		$html .= '  </div>';
+		$html .= "  <div class='$bootstrapClass2' >";
 		$html .= '    <dl class="dl-horizontal">';
 
 		if (!empty($national['first_seen'])) {
@@ -2825,7 +2825,7 @@ $rare ='';
 		  $html .= '        <dt>' . lang::get('Last recorded') . '</dt>';
 		  $html .= '        <dd>' . htmlspecialchars($national['last_seen']) . '</dd>';
 		}
-    
+
 		$html .= '        <dt>' . lang::get('Total records') . '</dt>';
 		$html .= '        <dd>' . number_format((int)$national['record_count']) . '</dd>';
 
@@ -2853,9 +2853,9 @@ $rare ='';
  */
 	protected static function get_stats_from_summary($auth, $args, array $options = [])
 	{
-    
+
     $nid = $args['nid'] ?? self::getNidFromAlias('/species');
-    
+
 		// -----------------------------------------
 		// 1. Resolve taxon context
 		// -----------------------------------------
@@ -2973,7 +2973,7 @@ $rare ='';
 		// -----------------------------------------
 		// 3. Call the ES proxy
 		// -----------------------------------------
-		
+
     $payload = self::runEsProxyQuery($params, $nid);
 
 		$data = $payload;
@@ -3133,9 +3133,9 @@ $rare ='';
  * }
  */
   protected static function get_counties($auth, $args, array $options = [])	{
-    
+
     $nid = $args['nid'] ?? self::getNidFromAlias('/species');
-        
+
 		// -----------------------------------------
 		// 1. Resolve taxon context
 		// -----------------------------------------
@@ -3243,7 +3243,7 @@ $rare ='';
 		// -----------------------------------------
 		// 3. Call the ES proxy
 		// -----------------------------------------
-			
+
 		$payload = self::runEsProxyQuery($params, $nid);
 		$data = is_string($payload) ? json_decode($payload, true) : $payload;
 
@@ -3318,23 +3318,23 @@ $rare ='';
         return []; // No species context
     }
 
-	  
+
 	  $stats = self::get_habitats($auth, $args,  $options );
 
 	$habitats = $stats['habitats'] ?? [];
 
 	$html = '';
-	
+
 	$bootstrapClass="";
-	$bootstrapClass1="";	
-	$bootstrapClass2="";	
-	
+	$bootstrapClass1="";
+	$bootstrapClass2="";
+
 	if (static::$isBootstrap) {
 		$bootstrapClass  = "panel panel-info";
 		$bootstrapClass1 = "panel-body ";
 		$bootstrapClass2 = "panel-heading ";
 	}
-	
+
 	$html  .= "<div class='detail-panel $bootstrapClass' id='detail-panel-habitat '>";
 	// Habitat breakdown
 	if (!empty($habitats)) {
@@ -3369,7 +3369,7 @@ $rare ='';
 
 	return $html;
   }
- 
+
 /**
  * Retrieves per‑habitat record counts for the current taxon from Elasticsearch.
  *
@@ -3390,12 +3390,12 @@ $rare ='';
  *     @type int    $count   Number of matching records.
  *   }
  * }
- */ 
+ */
 	protected static function get_habitats($auth, $args, array $options = [])	{
 
     $nid = $args['nid'] ?? self::getNidFromAlias('/species');
-          
-          
+
+
 		// -----------------------------------------
 		// 1. Resolve taxon context
 		// -----------------------------------------
@@ -3492,7 +3492,7 @@ $rare ='';
 	  'habitats' => $habitats,
 	];
 	}
-	 	 
+
 	/*
    * Control returns all the images associated with a particular taxon meaning
    * in the taxon_images table.
@@ -3535,9 +3535,9 @@ $rare ='';
         'taxon_meaning_id' => self::$taxonMeaningId,
       ],
     ]);
-    
-    
-    
+
+
+
     return '<div class="detail-panel" id="detail-panel-speciesphotos"><h3>' . lang::get('Photos and media') . '</h3>' .
         $reportResults . '</div>';
   }
@@ -3569,7 +3569,7 @@ $rare ='';
     $species_ctrl_opts = array_merge([
       'fieldname' => 'occurrence:taxa_taxon_list_id',
     ], $options);
-    
+
     if (isset($species_ctrl_opts['extraParams'])) {
       $species_ctrl_opts['extraParams'] = array_merge($extraParams, $species_ctrl_opts['extraParams']);
     }
@@ -3594,7 +3594,7 @@ $rare ='';
     $r .= '</form>';
     global $indicia_templates;
     $r .= "<button id=\"submit-taxon-search-form\" type=\"button\" onclick=\"indiciaFns.speciesDetailsSub()\" class=\"$indicia_templates[buttonHighlightedClass]\">Get details</button>";
-$r=" __ <!-- ".serialize($options)." -->"; 
+$r=" __ <!-- ".serialize($options)." -->";
  return $r;
   }
 
