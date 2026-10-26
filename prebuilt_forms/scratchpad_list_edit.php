@@ -921,8 +921,10 @@ class iform_scratchpad_list_edit implements PrebuiltFormInterface {
       return ['error' => 'Report parameters not provided'];
     }
     $auth = data_entry_helper::get_read_auth($website_id, $password);
+    $query = $_GET;
+    unset($query['auth_token'], $query['nonce']);
     $url = data_entry_helper::$base_url . 'index.php/services/report/requestReport?' .
-      data_entry_helper::array_to_query_string($_GET);
+      data_entry_helper::array_to_query_string($query);
     $params = array_merge($_POST, $auth);
     $response = data_entry_helper::http_post($url, $params);
     return json_decode($response['output'], TRUE);
