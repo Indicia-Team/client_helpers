@@ -150,7 +150,7 @@ class iform_group_receive_invite_response implements PrebuiltFormInterface {
     $r .= <<<HTML
 <form id="entry_form" action="$reloadPath" method="POST">
   <input type="hidden" name="token" value="$_GET[token]"/>
-  <input type="submit" id="btn-accept" class="$indicia_templates[buttonPrimaryClass]" name="accept" value="$lang[accept]"/>
+  <input type="submit" id="btn-accept" class="$indicia_templates[buttonHighlightedClass]" name="accept" value="$lang[accept]"/>
   <input type="submit" id="btn-reject" class="$indicia_templates[buttonDefaultClass]" name="reject" value="$lang[reject]"/>
   <input type="submit" id="btn-maybe" class="$indicia_templates[buttonDefaultClass]" name="maybe" value="$lang[later]"/>
 </form>
