@@ -1974,8 +1974,13 @@ HTML;
    *   Control options. The state category options are selectedFilter,
    *   filterDefinition, filterPanelVisibility, customFilterControls, sort,
    *   gridFilterRow, page and rowsPerPage. All default to TRUE. resetButton
-   *   defaults to TRUE. expires is the cookie lifetime in days and defaults
-   *   to 30. storageKey can override the page-derived cookie key.
+   *   defaults to TRUE. Only overrides of the initialized page defaults are
+   *   saved; returning to those defaults clears saved state. State is stored in
+   *   localStorage, subject to the site's
+   *   cookie-consent setting. expires is the lifetime in days and defaults to
+   *   30; zero uses tab-scoped sessionStorage instead. storageKey can override
+   *   the page-derived storage key. Custom filter controls marked with
+   *   exclude-page-state are not persisted but are still reset by Reset all.
    *
    * @return string
    *   HTML for the control container and optional reset button.
