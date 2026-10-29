@@ -2047,18 +2047,31 @@ HTML;
   }
   $getParams = empty($getParams) ? '{}' : json_encode($getParams);
   if (!empty($options['filters_user_id']) && isset($fu)) {
-    report_helper::$onload_javascript .= "loadFilterUser(" . json_encode($fu[0]) . ", $getParams);\n";
+    $fuEncoded = json_encode($fu[0]);
+    report_helper::$onload_javascript .= <<<JS
+      loadFilterUser($fuEncoded, $getParams);
+      if (typeof indiciaFns.restorePageStateControls !== 'undefined') {
+        // An explicitly edited filter takes precedence over saved page state.
+        indiciaFns.restorePageStateControls(false);
+      }
+
+    JS;
   }
   else {
     report_helper::$onload_javascript .= <<<JS
-      var pageStateRestored = typeof indiciaFns.restorePageStateControls !== 'undefined'
-        && indiciaFns.restorePageStateControls();
-      if (pageStateRestored) {
-        // The coordinator restored the complete filter definition and source state.
-        indiciaFns.applyFilterToReports(false, false, false);
-        indiciaFns.populateDataSources();
-      } else if ($('#select-filter').val()) {
-        loadFilter($('#select-filter').val(), $getParams);
+      function populateInitialFilter(reloadReports) {
+        if (typeof indiciaFns.restorePageStateControls !== 'undefined') {
+          indiciaFns.restorePageStateControls();
+        }
+        indiciaFns.applyFilterToReports(reloadReports === true, false, false);
+        if (typeof indiciaFns.populateDataSources === 'function') {
+          indiciaFns.populateDataSources();
+        }
+      }
+      if ($('#select-filter').val()) {
+        loadFilter($('#select-filter').val(), $getParams, function() {
+          populateInitialFilter(true);
+        });
       } else {
         $.each($('#filter-panes .pane'), function (idx, pane) {
           var name = pane.id.replace(/^pane-filter_/, '');
@@ -2066,7 +2079,8 @@ HTML;
             indiciaData.filterParser[name].fixLegacyFilter(indiciaData.filter.def);
           }
         });
-        indiciaFns.applyFilterToReports(false);
+        indiciaFns.applyFilterToReports(false, false, false);
+        populateInitialFilter();
       }
       // Set initial description in the quality filter input.
       $('.quality-filter').val(indiciaData.filterParser.quality.statusDescriptionFromFilter(
