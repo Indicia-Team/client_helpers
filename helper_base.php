@@ -2677,7 +2677,7 @@ JS;
         if (typeof indiciaFns.hookupDataSources !== 'undefined') {
           indiciaFns.hookupDataSources();
           if (typeof indiciaFns.restorePageStateControls !== 'undefined' && !indiciaData.lang.reportFilters) {
-            // Reload page state from cookies, but if report filters present then skip
+            // Reload page state from browser storage, but if report filters present then skip
             // this step as the restore will be done after the filter loaded.
             indiciaFns.restorePageStateControls();
           }
