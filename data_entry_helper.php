@@ -6544,27 +6544,29 @@ HTML;
       'singleRecordSubsamples' => FALSE,
     ], $options);
     self::addLanguageStringsToJs('speciesMap', [
-      'AddLabel' => 'Add records to map',
+      'AddLabel' => 'Add recording point',
       'AddMessage' => 'Please click on the map where you would like to add your records. Zoom the map in for greater precision.',
-      'AddDataMessage' => 'Please enter all the species records for this position into the grid below. When you have finished, click the Finish button to return to the map where you may choose another grid reference to enter data for.',
+      'AddDataMessage' => 'Please enter all the species records for this position into the grid below. When you have finished, click the Done with this point button to return to the map where you may choose another grid reference to enter data for.',
 
-      'MoveLabel' => 'Move records',
+      'MoveLabel' => 'Move point',
       'MoveMessage1' => 'Please select the records on the map you wish to move.',
-      'MoveMessage2' => 'Please click on the map to choose the new position. Press the Cancel button to choose another set of records to move instead.',
+      'MoveMessage2' => 'Please click on the map to choose the new position. Press the Cancel move button to choose another set of records to move instead.',
 
-      'ModifyLabel' => 'Modify records',
-      'ModifyMessage1' => 'Please select the records on the map you wish to change.',
-      'ModifyMessage2' => 'Change (or add to) the records for this position. When you have finished, click the Finish button which will return you to the map where you may choose another set of records to change.',
+      'ModifyLabel' => 'Edit records',
+      'ModifyMessage1' => 'Please select the point on the map you wish to change the records at.',
+      'ModifyMessage2' => 'Change (or add to) the records for this point. When you have finished, click the Done with this point button which will return you to the map where you may choose another set of records to change.',
 
-      'DeleteLabel' => 'Delete records',
-      'DeleteMessage' => 'Please select the records on the map you wish to delete.',
-      'ConfirmDeleteTitle' => 'Confirm deletion of records',
-      'ConfirmDeleteText' => 'Are you sure you wish to delete all the records at {OLD}?',
+      'DeleteLabel' => 'Delete point',
+      'DeleteMessage' => 'Please select the point on the map you wish to delete. This will also delete the records at that point.',
+      'ConfirmDeleteTitle' => 'Confirm deletion of point and list of records',
+      'ConfirmDeleteText' => 'Are you sure you wish to delete the point and all the records at {OLD}?',
 
-      'ClusterMessage' => 'You selected a cluster of places on the map, pick one of them to work with.',
+      'ClusterMessage' => 'You selected a cluster of points on the map, pick one of them to work with.',
 
       'CancelLabel' => 'Cancel',
-      'FinishLabel' => 'Finish',
+      'CancelLabelWhenAdding' => 'Discard this point',
+      'CancelLabelWhenMoving' => 'Cancel move',
+      'DoneLabel' => 'Done with this point',
       'Yes' => 'Yes',
       'No' => 'No',
       'SRefLabel' => 'Spatial ref',
