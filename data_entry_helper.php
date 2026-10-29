@@ -3986,10 +3986,9 @@ RIJS;
       $imageRowIdxs = [];
       $mediaRowIdxs = [];
       $rowIdx = 0;
-      // Tell the addTowToGrid javascript how many rows are already used, so it
-      // has a unique index for new rows.
+      // Initialise counters used to generate unique row and sub-sample indices.
       self::$javascript .= "indiciaData['gridCounter-$options[id]'] = " . count($taxonRows) . ";\n";
-      self::$javascript .= "indiciaData['gridSampleCounter-$options[id]'] = " . count($subSampleRows) . ";\n";
+      self::$javascript .= "indiciaData['gridSampleCounter-$options[id]'] = " . self::getSpeciesChecklistNextSubSampleIndex($subSampleRows) . ";\n";
       // If subspecies are stored, then need to load up the parent species info
       // into the $taxonRows data.
       if ($options['subSpeciesColumn']) {
@@ -4486,6 +4485,19 @@ HTML;
     else {
       return $taxalist['error'];
     }
+  }
+
+  /**
+   * Get the next unused sub-sample index, including after validation errors.
+   */
+  private static function getSpeciesChecklistNextSubSampleIndex(array $subSampleRows) {
+    $nextIndex = count($subSampleRows);
+    foreach (self::$entity_to_load ?? [] as $fieldname => $value) {
+      if (preg_match('/^sc:(\d+):\d*:sample:/', $fieldname, $matches)) {
+        $nextIndex = max($nextIndex, (int) $matches[1] + 1);
+      }
+    }
+    return $nextIndex;
   }
 
   /**
