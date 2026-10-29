@@ -41,6 +41,7 @@ jQuery(document).ready(function($) {
       $(el).find('.species').append(speciesString.replace('{1}', response.aggregations.species_count.value));
       $(el).find('.photos').append(photosString.replace('{1}', response.aggregations.photo_count.doc_count));
       $(el).find('.recorders').append(recordersString.replace('{1}', response.aggregations.recorder_count.value));
+      $(el).children('div').addClass('loaded');
     }
   };
 

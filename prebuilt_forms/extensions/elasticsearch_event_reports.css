@@ -6,3 +6,21 @@
   margin: 8px 15px;
   white-space: nowrap;
 }
+.totals-block.loaded {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));
+  gap: 12px;
+  margin: 16px 0;
+}
+.totals-block.loaded > div {
+  min-width: 0;
+  padding: 16px 20px;
+  border-radius: 8px;
+  background: #276B8A;
+  color: #FFFFFF;
+  font-size: 1.125em;
+  font-weight: 600;
+  line-height: 1.5;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
