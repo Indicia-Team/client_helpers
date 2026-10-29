@@ -6419,8 +6419,8 @@ HTML;
       // Add a template for the form section for a new subsample.
       $r .= "<div id=\"$options[id]-subsample-ctrls\" style=\"display: none\" class=\"subsample-ctrl-cntr\">$sampleCtrls</div>";
     }
-    $enteredSref = self::check_default_value('sample:entered_sref', '');
-    $geom = self::check_default_value('sample:geom', '');
+    $enteredSref = htmlspecialchars(self::check_default_value('sample:entered_sref', '') ?? '');
+    $geom = htmlspecialchars(self::check_default_value('sample:geom', '') ?? '');
     $buttonCtrls = self::getMultiplePlacesSpeciesChecklistButtons($options);
     $r .= <<<TXT
 <div id="$options[id]-cluster" style="display: none"></div>
