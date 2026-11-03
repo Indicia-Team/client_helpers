@@ -37,10 +37,10 @@ jQuery(document).ready(function($) {
       speciesString = response.aggregations.species_count.value === 1 ? indiciaData.lang.esTotalsBlock.speciesSingle : indiciaData.lang.esTotalsBlock.speciesMulti;
       photosString = response.aggregations.photo_count.doc_count === 1 ? indiciaData.lang.esTotalsBlock.photosSingle : indiciaData.lang.esTotalsBlock.photosMulti;
       recordersString = response.aggregations.recorder_count.value === 1 ? indiciaData.lang.esTotalsBlock.recordersSingle : indiciaData.lang.esTotalsBlock.recordersMulti;
-      $(el).find('.occurrences').append(occsString.replace('{1}', occs));
-      $(el).find('.species').append(speciesString.replace('{1}', response.aggregations.species_count.value));
-      $(el).find('.photos').append(photosString.replace('{1}', response.aggregations.photo_count.doc_count));
-      $(el).find('.recorders').append(recordersString.replace('{1}', response.aggregations.recorder_count.value));
+      $(el).find('.occurrences').html(occsString.replace('{1}', occs));
+      $(el).find('.species').html(speciesString.replace('{1}', response.aggregations.species_count.value));
+      $(el).find('.photos').html(photosString.replace('{1}', response.aggregations.photo_count.doc_count));
+      $(el).find('.recorders').html(recordersString.replace('{1}', response.aggregations.recorder_count.value));
       $(el).children('div').addClass('loaded');
     }
   };
