@@ -6370,7 +6370,7 @@ HTML;
    *   the default. Options same as sampleOnClusterButtonContents.
    * * **samplePhotos** - set to true to add a photos upload control for each
    *   sub-sample.
-   * * **location_name** - set to true to add a location name input control for
+   * * **locationName** - set to true to add a location name input control for
    *   each sub-sample.
    * * **hideMapWhenEditingSubsample** - defaults to true. Set to false to
    *   leave the map visible whilst a sub-sample's create/update form is
@@ -6394,6 +6394,7 @@ HTML;
       'hideMapWhenEditingSubsample' => TRUE,
       'base_url' => self::$base_url,
       'samplePhotos' => FALSE,
+      'sample_method_id' => '',
     ], $options);
     $attrOptions = self::getAttrSpecificOptions($options);
     $speciesListEntryCtrl = data_entry_helper::species_checklist($options);
@@ -6401,7 +6402,7 @@ HTML;
     // handled js files.
     self::includeSrefHandlerJs([$options['spatialSystem'] => '']);
     $r = '';
-    if (isset($options['sample_method_id'])) {
+    if (isset($options['sample_method_id']) && $options['sample_method_id'] !== '') {
       require_once 'prebuilt_forms/includes/form_generation.php';
       $sampleAttrs = self::getMultiplePlacesSpeciesChecklistSubsampleAttrs($options);
       foreach ($sampleAttrs as &$attr) {
@@ -6622,7 +6623,7 @@ HTML;
               <input type="hidden" value="$idValue" name="$idKey">
             HTML;
           }
-          if (!empty($options['sample_method_id'])) {
+          if (isset($options['sample_method_id']) && $options['sample_method_id'] !== '') {
             $sampleAttrs = self::getMultiplePlacesSpeciesChecklistSubsampleAttrs($options, empty($sampleId) ? NULL : $sampleId);
             foreach ($sampleAttrs as &$attr) {
               $attr['fieldname'] = "sc:$a[1]:$a[2]:$attr[fieldname]";
