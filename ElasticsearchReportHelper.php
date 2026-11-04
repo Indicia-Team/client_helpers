@@ -2313,6 +2313,7 @@ HTML;
       'accepted' => lang::get('Accepted'),
       'acceptedConsideredCorrect' => lang::get('Accepted :: considered correct'),
       'acceptedCorrect' => lang::get('Accepted :: correct'),
+      'actions' => lang::get('Actions'),
       'addComment' => lang::get('Add comment'),
       'all' => lang::get('all'),
       'applyThisDecisionToParentSample' => lang::get(
@@ -2330,6 +2331,7 @@ HTML;
       'emailPlaceholder' => lang::get('Enter the email address to send the record to'),
       'emailSubject' => lang::get('Email subject'),
       'emailTabTitle' => lang::get('Email record details'),
+      'excelOrCsvFile' => lang::get('Excel or CSV file'),
       'forceLinkedLocation' => lang::get('Force this record to be linked to a selected location boundary.'),
       'forceLinkedLocationTitle' => lang::get('Link record to boundary'),
       'help' => lang::get('Help'),
@@ -2339,6 +2341,7 @@ HTML;
       'plausible' => lang::get('Plausible'),
       'raiseQuery' => lang::get('Raise a query with the recorder'),
       'redet' => lang::get('Redet.'),
+      'redetermineThisRecord' => lang::get('Redetermine this record'),
       'saveLocationLink' => lang::get('Save link to location'),
       'saveStatus' => lang::get('Save status'),
       'saveTemplate' => lang::get('Save template'),
@@ -2371,6 +2374,7 @@ HTML;
       'templateHelpTokenSref' => lang::get('will be replaced by the standardised output map reference of the record.'),
       'templateHelpTokenTaxon' => lang::get('will be replaced by the identification name given to the record as originally entered.'),
       'templateHelpClose' => lang::get('Close help'),
+      'tickUntickAll' => lang::get('Tick/untick all'),
       'updatingMultipleWarning' => lang::get('You are updating multiple records!'),
       'upload' => lang::get('Upload'),
       'uploadVerificationDecisions' => lang::get('Upload a file of verification decisions'),
@@ -2425,7 +2429,7 @@ HTML;
       'recordRedetermined' => 'This record has been redetermined.',
       'redetErrorMsg' => 'An error occurred on the server when redetermining the records.',
       'redetPartialListInfo' => 'This record was originally input using a taxon checklist which may not be a complete list of all species. If you cannot find the species you wish to redetermine it to using the search box below, then please tick the "Search all species" checkbox and try again.',
-      'requestManualEmail' => 'The webserver is not correctly configured to send emails. Please send the following email usual your email client:',
+      'requestManualEmail' => 'The webserver is not correctly configured to send emails. Please send the following email using your email client:',
       'saveQueryToComments' => 'Save query to comments log',
       'sendQueryAsEmail' => 'Send query as email',
       'saveTemplateError' => 'Save template error',
@@ -2445,16 +2449,17 @@ HTML;
     }
     $btnClass = $indicia_templates['buttonHighlightedClass'];
     $btnClassDefault = $indicia_templates['buttonDefaultClass'];
+    $btnClassSm = $indicia_templates['buttonSmallClass'];
     // Work out any extra buttons we need for provided links.
     $optionalLinkArray = [];
     if (!empty($options['editPath']) || $options['useLocalFormPaths'] !== 'never') {
-      $optionalLinkArray[] = "<a class=\"edit $btnClassDefault\" title=\"$lang[editThisRecord]\" target=\"_blank\"><span class=\"fas fa-edit\"></span></a>";
+      $optionalLinkArray[] = "<a class=\"edit $btnClassDefault\" title=\"$lang[editThisRecord]\" target=\"_blank\" rel=\"noopener\"><span class=\"fas fa-edit\"></span></a>";
     }
     if (!empty($options['viewPath'])) {
-      $optionalLinkArray[] = "<a class=\"view $btnClassDefault\" target=\"_blank\" title=\"$lang[viewRecordDetails]\" target=\"_blank\"><span class=\"fas fa-file-invoice\"></span></a>";
+      $optionalLinkArray[] = "<a class=\"view $btnClassDefault\" title=\"$lang[viewRecordDetails]\" target=\"_blank\" rel=\"noopener\"><span class=\"fas fa-file-invoice\"></span></a>";
     }
     if (!empty($options['speciesPath'])) {
-      $optionalLinkArray[] = "<a class=\"species $btnClassDefault\" target=\"_blank\" title=\"$lang[viewSpeciesPage]\" target=\"_blank\"><span class=\"fas fa-file\"></span></a>";
+      $optionalLinkArray[] = "<a class=\"species $btnClassDefault\" title=\"$lang[viewSpeciesPage]\" target=\"_blank\" rel=\"noopener\"><span class=\"fas fa-file\"></span></a>";
     }
     $optionalLinks = implode("\n  ", $optionalLinkArray);
     // Build some controls for the various forms.
@@ -2529,14 +2534,14 @@ HTML;
     ]);
     $uploadButton = empty($options['includeUploadButton']) ? '' : <<<HTML
       <button class="upload-decisions $btnClass" title="$lang[uploadVerificationDecisions]"><span class="fas fa-file-upload"></span>$lang[upload]</button>
-HTML;
+    HTML;
     if ($options['verificationTemplates']) {
       $loadVerifyTemplateDropdown = self::getTemplateSelect('verify-template');
       $loadRedetTemplateDropdown = self::getTemplateSelect('redet-template');
       $loadQueryTemplateDropdown = self::getTemplateSelect('query-template');
       $saveTemplateButtons = <<<HTML
-<button type="button" class="save-template $indicia_templates[buttonDefaultClass]"><i class="fas fa-save" title="$lang[saveTemplate]"></i></button>
-<button type="button" class="cancel-save-template $indicia_templates[buttonDefaultClass]" title="$lang[cancelSaveTemplate]"><i class="fas fa-window-close"></i></button>
+<button type="button" class="save-template $btnClassDefault"><i class="fas fa-save" title="$lang[saveTemplate]"></i></button>
+<button type="button" class="cancel-save-template $btnClassDefault" title="$lang[cancelSaveTemplate]"><i class="fas fa-window-close"></i></button>
 HTML;
       $templateSaveFilenameInput = data_entry_helper::text_input([
         'label' => lang::get('Enter a name for your template'),
@@ -2546,10 +2551,10 @@ HTML;
       ]);
       $commentTools = <<<HTML
 <div class="comment-tools">
-  <button type="button" class="comment-show-preview $indicia_templates[buttonDefaultClass] $indicia_templates[buttonSmallClass]">$lang[showPreview]</button>
-  <button type="button" class="comment-edit $indicia_templates[buttonDefaultClass] $indicia_templates[buttonSmallClass]" style="display: none">$lang[edit]</button>
-  <button type="button" class="comment-save-template $indicia_templates[buttonDefaultClass] $indicia_templates[buttonSmallClass]">$lang[saveTemplate]</button>
-  <button type="button" class="comment-help $indicia_templates[buttonDefaultClass] $indicia_templates[buttonSmallClass]">$lang[help]</button>
+  <button type="button" class="comment-show-preview $btnClassDefault $btnClassSm">$lang[showPreview]</button>
+  <button type="button" class="comment-edit $btnClassDefault $btnClassSm" style="display: none">$lang[edit]</button>
+  <button type="button" class="comment-save-template $btnClassDefault $btnClassSm">$lang[saveTemplate]</button>
+  <button type="button" class="comment-help $btnClassDefault $btnClassSm">$lang[help]</button>
 </div>
 <div class="template-save-cntr" style="display: none">
   $templateSaveFilenameInput
@@ -2564,33 +2569,33 @@ HTML;
       $commentTools = '';
     }
     $forceLinkedLocationButton = empty($options['allowForceLinkedLocationsUsingLocTypeId']) ? '' : <<<HTML
-      <button class="force-linked-location $btnClassDefault" title="$lang[forceLinkedLocation]"><span class="fas fa-map-marked-alt"></span></button>
+      <button class="force-linked-location $btnClassDefault $btnClassSm" title="$lang[forceLinkedLocation]"><span class="fas fa-map-marked-alt"></span></button>
     HTML;
     $r = <<<HTML
 <div id="$options[id]" class="idc-control idc-verificationButtons" data-idc-class="idcVerificationButtons" style="display: none;" data-idc-config="$dataOptions">
   <div id="$options[id]-buttons" class="verification-buttons-cntr">
     <div class="selection-buttons-placeholder">
       <div class="all-selected-buttons idc-verificationButtons-row">
-        <button class="$btnClassDefault multi-only multiselect-all">Tick/untick all</button>
-        Actions:
+        <button class="$btnClassDefault multi-only multiselect-all">$lang[tickUntickAll]</button>
+        $lang[actions]:
         <span class="fas fa-toggle-on toggle fa-2x" title="Toggle additional status levels"></span>
-        <button class="verify l1 $btnClassDefault btn-sm" data-status="V" title="$lang[accepted]"><span class="far fa-check-circle status-V"></span></button>
-        <button class="verify l2 $btnClassDefault" data-status="V1" title="$lang[acceptedCorrect]"><span class="fas fa-check-double status-V1"></span></button>
-        <button class="verify l2 $btnClassDefault" data-status="V2" title="$lang[acceptedConsideredCorrect]"><span class="fas fa-check status-V2"></span></button>
-        <button class="verify $btnClassDefault" data-status="C3" title="$lang[plausible]"><span class="fas fa-check-square status-C3"></span></button>
-        <button class="verify l1 $btnClassDefault" data-status="R" title="$lang[notAccepted]"><span class="far fa-times-circle status-R"></span></button>
-        <button class="verify l2 $btnClassDefault" data-status="R4" title="$lang[notAcceptedUnableToVerify]"><span class="fas fa-times status-R4"></span></button>
-        <button class="verify l2 $btnClassDefault" data-status="R5" title="$lang[notAcceptedIncorrect]"><span class="fas fa-times status-R5"></span></button>
-        <button class="apply-to-parent-sample-contents single-only $btnClassDefault" title="$lang[applyThisDecisionToParentSample]" disabled="disabled"><span class="fas fa-sitemap"></span></button>
+        <button class="verify l1 $btnClassDefault $btnClassSm" data-status="V" title="$lang[accepted]" aria-label="$lang[accepted]"><span class="far fa-check-circle status-V"></span></button>
+        <button class="verify l2 $btnClassDefault $btnClassSm" data-status="V1" title="$lang[acceptedCorrect]" aria-label="$lang[acceptedCorrect]"><span class="fas fa-check-double status-V1"></span></button>
+        <button class="verify l2 $btnClassDefault $btnClassSm" data-status="V2" title="$lang[acceptedConsideredCorrect]" aria-label="$lang[acceptedConsideredCorrect]"><span class="fas fa-check status-V2"></span></button>
+        <button class="verify $btnClassDefault $btnClassSm" data-status="C3" title="$lang[plausible]" aria-label="$lang[plausible]"><span class="fas fa-check-square status-C3"></span></button>
+        <button class="verify l1 $btnClassDefault $btnClassSm" data-status="R" title="$lang[notAccepted]" aria-label="$lang[notAccepted]"><span class="far fa-times-circle status-R"></span></button>
+        <button class="verify l2 $btnClassDefault $btnClassSm" data-status="R4" title="$lang[notAcceptedUnableToVerify]" aria-label="$lang[notAcceptedUnableToVerify]"><span class="fas fa-times status-R4"></span></button>
+        <button class="verify l2 $btnClassDefault $btnClassSm" data-status="R5" title="$lang[notAcceptedIncorrect]" aria-label="$lang[notAcceptedIncorrect]"><span class="fas fa-times status-R5"></span></button>
+        <button class="apply-to-parent-sample-contents single-only $btnClassDefault $btnClassSm" title="$lang[applyThisDecisionToParentSample]" aria-label="$lang[applyThisDecisionToParentSample]" disabled="disabled"><span class="fas fa-sitemap"></span></button>
         <span class="sep"></span>
-        <button class="redet $btnClassDefault" title="Redetermine this record">$lang[redet]</button>
-        <button class="query $btnClassDefault" data-query="Q" title="$lang[raiseQuery]"><span class="fas fa-question-circle query-Q"></span></button>
+        <button class="redet $btnClassDefault $btnClassSm" title="$lang[redetermineThisRecord]" aria-label="$lang[redetermineThisRecord]">$lang[redet]</button>
+        <button class="query $btnClassDefault $btnClassSm" data-query="Q" title="$lang[raiseQuery]" aria-label="$lang[raiseQuery]"><span class="fas fa-question-circle query-Q"></span></button>
         $forceLinkedLocationButton
         <div class="multi-only apply-to">
           <span>$lang[applyTo]:</span>
-          <button class="multi-mode-selected active $btnClassDefault">$lang[selected]</button>
+          <button class="multi-mode-selected active $btnClassDefault $btnClassSm">$lang[selected]</button>
           |
-          <button class="multi-mode-table $btnClassDefault">$lang[all]</button>
+          <button class="multi-mode-table $btnClassDefault $btnClassSm">$lang[all]</button>
         </div>
       </div>
     </div>
@@ -2675,7 +2680,7 @@ HTML;
         <p class="alert alert-info"></p>
         <div class="form-group">
           <label for="email-to">$lang[sendEmailTo]:</label>
-          <input id="email-to" class="form-control email required" placeholder="$lang[emailPlaceholder]">
+          <input type="email" id="email-to" class="form-control email required" placeholder="$lang[emailPlaceholder]">
         </div>
         <div class="form-group">
           <label for="email-subject">$lang[emailSubject]:</label>
@@ -2718,7 +2723,6 @@ HTML;
     <p>$lang[templateHelpIntroExample]</p>
     <code>$lang[templateHelpExample]</code>
     <p>$lang[templateHelpIntroAvailableTokens]</p>
-    </p>
     <ul>
       <li><code>{{ date }}</code> $lang[templateHelpTokenDate]</li>
       <li><code>{{ sref }}</code> $lang[templateHelpTokenSref]</li>
@@ -2764,7 +2768,7 @@ TXT;
   <div id="upload-decisions-form">
     <div class="instruct">$instruct</div>
     <div class="form-group">
-      <label for="decisions-file">Excel or CSV file:</label>
+      <label for="decisions-file">$lang[excelOrCsvFile]</label>
       <input type="file" class="form-control" id="decisions-file" accept=".csv, .xls, .xlsx" />
     </div>
     <button type="button" id="upload-decisions-file" class="btn btn-primary">Upload</button>
