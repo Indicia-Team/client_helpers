@@ -1031,7 +1031,7 @@ JS;
       self::$indiciaData['enableVagueDateToggle'] = TRUE;
     }
     // Date pickers should be limited width, otherwise icon too far to right.
-    $options['wrapClasses'] = ['not-full-width-' . ($options['allowVagueDates'] ? 'md' : 'sm')];
+    $options['wrapClasses'] = ['not-full-width-' . ($options['allowVagueDates'] ? 'md' : 'date')];
     $dateFormatLabel = str_replace(['d', 'm', 'Y'], ['dd', 'mm', 'yyyy'], helper_base::$date_format);
     if (!isset($options['placeholder'])) {
       $options['placeholder'] = $options['allowVagueDates'] ? lang::get('{1} or vague date', $dateFormatLabel) : $dateFormatLabel;
