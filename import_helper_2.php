@@ -1028,6 +1028,26 @@ class import_helper_2 extends helper_base {
   }
 
   /**
+   * Renders the background processing panel using the active theme template.
+   *
+   * @param bool $showProgress
+   *   Whether to include the file transfer progress indicator.
+   *
+   * @return string
+   *   HTML.
+   */
+  private static function backgroundProcessingPanel(bool $showProgress = FALSE) {
+    global $indicia_templates;
+    return strtr($indicia_templates['backgroundProcessing'], [
+      '{backgroundProcessing}' => lang::get('Background processing in progress...'),
+      '{moreInfo}' => lang::get('More info...'),
+      '{progress}' => $showProgress
+        ? '<progress id="file-progress" class="background-progress" value="0" max="100"></progress>'
+        : '',
+    ]);
+  }
+
+  /**
    * Fetch the HTML form for the settings form that captures global values.
    *
    * Global values are imported data values that apply to every record in the
@@ -1058,9 +1078,7 @@ class import_helper_2 extends helper_base {
       'uploadingFile' => 'Uploading the file {1} to the server.',
     ]);
     $lang = [
-      'backgroundProcessing' => lang::get('Background processing in progress...'),
       'instructions' => lang::get($options['globalValuesFormIntro']),
-      'moreInfo' => lang::get('More info...'),
       'next' => lang::get('Next step'),
       'setting' => lang::get('Setting'),
       'settingsFromTemplate' => lang::get('The following settings required for this page are being loaded from the selected template.'),
@@ -1082,19 +1100,13 @@ class import_helper_2 extends helper_base {
     $formArray = self::getGlobalValuesFormControlArray($options);
     $form = self::globalValuesFormControls($formArray, $options);
     self::$indiciaData['processUploadedInterimFiles'] = $_POST['interim-file'];
+    $backgroundProcessing = self::backgroundProcessingPanel(TRUE);
     return <<<HTML
       <h3>$lang[title]</h3>
       <p>$lang[instructions]</p>
       <form id="settings-form" method="POST">
         $form
-        <div class="panel panel-info background-processing">
-          <div class="panel-heading">
-            <span>$lang[backgroundProcessing]</span>
-            <progress id="file-progress" class="progress" value="0" max="100"></progress>
-            <br/><a data-toggle="collapse" class="small" href="#background-extra">$lang[moreInfo]</a>
-          </div>
-          <div id="background-extra" class="panel-body panel-collapse collapse"></div>
-        </div>
+        $backgroundProcessing
         <input type="submit" class="btn btn-primary" id="next-step" value="$lang[next]" disabled />
         <input type="hidden" name="next-import-step" value="mappingsForm" />
         <input type="hidden" name="config-id" id="config-id" value="" />
@@ -1713,26 +1725,19 @@ HTML;
       'typeSpeciesNameToSearch' => 'Type the start of a species or taxon name to search',
     ]);
     $lang = [
-      'backgroundProcessing' => lang::get('Background processing in progress...'),
       'instructions' => lang::get($options['lookupMatchingFormIntro']),
-      'moreInfo' => lang::get('More info...'),
       'next' => lang::get('Next step'),
       'title' => lang::get('Value matching'),
     ];
     self::$indiciaData['configId'] = $_POST['config-id'];
+    $backgroundProcessing = self::backgroundProcessingPanel();
     return <<<HTML
 <h3>$lang[title]</h3>
 <p id="instructions">$lang[instructions]</p>
 <form method="POST" id="lookup-matching-form">
   <div id="matching-area">
   </div>
-  <div class="panel panel-info background-processing">
-    <div class="panel-heading">
-      <span>$lang[backgroundProcessing]</span>
-      <br/><a data-toggle="collapse" class="small" href="#background-extra">$lang[moreInfo]</a>
-    </div>
-    <div id="background-extra" class="panel-body panel-collapse collapse"></div>
-  </div>
+  $backgroundProcessing
   <input type="submit" class="btn btn-primary" id="next-step" value="$lang[next]" disabled />
   <input type="hidden" name="next-import-step" value="preprocessPage" />
   <input type="hidden" name="config-id" id="config-id" value="{$_POST['config-id']}" />
@@ -1754,24 +1759,17 @@ HTML;
       'preprocessingImport' => 'Preparing to import',
     ]);
     $lang = [
-      'backgroundProcessing' => lang::get('Background processing in progress...'),
       'instructions' => lang::get($options['preprocessPageIntro']),
-      'moreInfo' => lang::get('More info...'),
       'next' => lang::get('Next step'),
       'title' => lang::get('Preparing to import'),
     ];
     self::$indiciaData['configId'] = $_POST['config-id'];
+    $backgroundProcessing = self::backgroundProcessingPanel();
     return <<<HTML
 <h3>$lang[title]</h3>
 <p id="instructions">$lang[instructions]</p>
 <form method="POST" id="preprocessing-form">
-  <div class="panel panel-info background-processing">
-    <div class="panel-heading">
-      <span>$lang[backgroundProcessing]</span>
-      <br/><a data-toggle="collapse" class="small" href="#background-extra">$lang[moreInfo]</a>
-    </div>
-    <div id="background-extra" class="panel-body panel-collapse collapse"></div>
-  </div>
+  $backgroundProcessing
   <input type="submit" class="btn btn-primary" id="next-step" value="$lang[next]" style="display: none" />
   <input type="hidden" name="next-import-step" value="summaryPage" />
   <input type="hidden" name="config-id" id="config-id" value="{$_POST['config-id']}" />
