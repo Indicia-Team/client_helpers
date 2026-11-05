@@ -58,42 +58,47 @@ jQuery(document).ready(function docReady($) {
         var type = $(this).hasClass('attr-type-sample') ? 'sample' : 'occurrence';
         var div = this;
         // 0 is a fake nid, since we don't care.
-        $.get(indiciaData.ajaxUrl + '/dynamicattrs/' + indiciaData.nid + urlSep +
+        const url = indiciaData.ajaxUrl + '/dynamicattrs/' + indiciaData.nid + urlSep +
             'survey_id=' + $('#survey_id').val() +
             '&taxa_taxon_list_id=' + $('#occurrence\\:taxa_taxon_list_id').val() +
             '&type=' + type +
             '&stage_termlists_term_ids=' + JSON.stringify(sexStageVals) +
             '&validate_against_taxa=' + (indiciaData.validateAgainstTaxa ? 't' : 'f') +
             '&language=' + indiciaData.currentLanguage3 +
-            '&options=' + JSON.stringify(indiciaData['dynamicAttrOptions' + type]), null,
-          function getAttrsReportCallback(data) {
-            var oldVals = {};
-            // Reset any controls affected by earlier loading of attrs for a
-            // different taxon.
-            $('.dynamically-replaced').show();
-            $('.dynamically-replaced :input').prop('disabled', false);
-            $('.dynamically-moved').remove();
-            // Ensure page level onload functions don't run again.
-            indiciaData.onloadFns = [];
-            // Grab existing values so they can be reset.
-            $.each($(div).find(':input'), function() {
-              if ($(this).val()) {
-                oldVals[$(this).attr('name')] = $(this).val();
-              }
-            });
-            $(div).html(data);
-            $.each($(div).find(':input'), function() {
-              if (typeof oldVals[$(this).attr('name')] !== 'undefined') {
-                $(this).val(oldVals[$(this).attr('name')]);
-              }
-            });
-            repositionDynamicAttributes(div);
-            $.each(indiciaFns.hookDynamicAttrsAfterLoad, function callHook() {
-              this(div, type);
-            });
-          },
-          'text'
-        );
+            '&options=' + JSON.stringify(indiciaData['dynamicAttrOptions' + type]);
+        $.ajax({
+          url: url,
+          dataType: 'text'
+        })
+        .done(function getAttrsReportCallback(data) {
+          var oldVals = {};
+          // Reset any controls affected by earlier loading of attrs for a
+          // different taxon.
+          $('.dynamically-replaced').show();
+          $('.dynamically-replaced :input').prop('disabled', false);
+          $('.dynamically-moved').remove();
+          // Ensure page level onload functions don't run again.
+          indiciaData.onloadFns = [];
+          // Grab existing values so they can be reset.
+          $.each($(div).find(':input'), function() {
+            if ($(this).val()) {
+              oldVals[$(this).attr('name')] = $(this).val();
+            }
+          });
+          $(div).html(data);
+          $.each($(div).find(':input'), function() {
+            if (typeof oldVals[$(this).attr('name')] !== 'undefined') {
+              $(this).val(oldVals[$(this).attr('name')]);
+            }
+          });
+          repositionDynamicAttributes(div);
+          $.each(indiciaFns.hookDynamicAttrsAfterLoad, function callHook() {
+            this(div, type);
+          });
+        })
+        .fail(function (jqXHR, textStatus, errorThrown) {
+          console.error('dynamic attributes failed', textStatus, errorThrown);
+        });
       });
     }
   }
