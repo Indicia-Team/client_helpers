@@ -479,18 +479,24 @@ jQuery(document).ready(function docReady($) {
       $.each($('.taxon-dynamic-attributes'), function loadAttrDiv() {
         var div = this;
         // 0 is a fake nid, since we don't care.
-        $.get(indiciaData.ajaxUrl + '/dynamicattrs/' + indiciaData.nid + urlSep +
+        const url = indiciaData.ajaxUrl + '/dynamicattrs/' + indiciaData.nid + urlSep +
             'taxon_list_id=' + $('#taxa_taxon_list\\:taxon_list_id').val() +
             '&taxa_taxon_list_id=' + $('#taxa_taxon_list\\:parent_id').val() +
             '&language=' + indiciaData.currentLanguage3 +
-            '&options=' + JSON.stringify(indiciaData.dynamicAttrOptions), null,
-          function getAttrsReportCallback(data) {
-            $(div).html(data);
-            $.each(indiciaFns.hookDynamicAttrsAfterLoad, function callHook() {
-              this(div);
-            });
-          }
-        );
+            '&options=' + JSON.stringify(indiciaData.dynamicAttrOptions);
+         $.ajax({
+          url: url,
+          dataType: 'text'
+        })
+        .done(function getAttrsReportCallback(data) {
+          $(div).html(data);
+          $.each(indiciaFns.hookDynamicAttrsAfterLoad, function callHook() {
+            this(div);
+          });
+        })
+        .fail(function (jqXHR, textStatus, errorThrown) {
+          console.error('dynamic attributes failed', textStatus, errorThrown);
+        });
       });
     }
   }
