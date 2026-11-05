@@ -73,6 +73,18 @@ $indicia_templates = [
   // Message boxes.
   'messageBox' => '<div class="page-notice ui-state-default ui-corner-all">{message}</div>',
   'warningBox' => '<div class="page-notice ui-state-highlight ui-corner-all"><span class="fas fa-exclamation-triangle"></span>{message}</div>',
+  'backgroundProcessing' => <<<HTML
+    <div class="panel panel-info background-processing">
+      <div class="panel-heading">
+        <span class="background-processing-title">{backgroundProcessing}</span>
+        {progress}
+        <br/><a data-toggle="collapse" class="small" href="#background-extra" role="button" aria-expanded="false" aria-controls="background-extra">{moreInfo}</a>
+      </div>
+      <div id="background-extra" class="panel-collapse collapse">
+        <div class="panel-body background-processing-log"></div>
+      </div>
+    </div>
+    HTML,
   // Lock icons.
   'lock_icon' => '<span id="{id}_lock" class="unset-lock">&nbsp;</span>',
   'lock_javascript' => "indicia.locks.initControls (
