@@ -124,16 +124,45 @@ jQuery(document).ready(function($) {
     return $('#complex-attr-grid-group-pages tbody tr td:first-child option').not('[value=""],' + selectablePageSelectors.join(','));
   }
 
+  let previousJoiningMethod;
+
+  /**
+   * Restrict joining methods to those allowed for the current group mode.
+   */
+  function updateJoiningMethods(isContainer) {
+    const joinRadios = $('[name="group:joining_method"]');
+    const adminRadio = joinRadios.filter('[value="A"]');
+    const selectedMethod = joinRadios.filter(':checked').val();
+    const configuredMethods = indiciaData.groupJoinMethods;
+    const adminConfigured = configuredMethods.indexOf('A') !== -1;
+    if (isContainer) {
+      previousJoiningMethod = selectedMethod;
+      joinRadios.not('[value="A"]').closest('li').slideUp();
+      joinRadios.not('[value="A"]').prop('checked', false);
+      adminRadio.prop('disabled', false).prop('checked', true).closest('li').show();
+    } else {
+      joinRadios.not('[value="A"]').closest('li').slideDown();
+      if (!adminConfigured) {
+        adminRadio.prop('checked', false).prop('disabled', true).closest('li').hide();
+      }
+      const restoredMethod = configuredMethods.indexOf(previousJoiningMethod) !== -1
+        ? previousJoiningMethod
+        : (selectedMethod === 'A' && !adminConfigured ? configuredMethods[0] : selectedMethod);
+      joinRadios.filter(function() {
+        return this.value === restoredMethod;
+      }).prop('checked', true);
+      previousJoiningMethod = undefined;
+    }
+    $('#group-joining-methods').toggle(isContainer || configuredMethods.length > 1);
+    joinRadios.filter(':checked').trigger('change');
+  }
+
   /**
    * Switch UI to container group mode.
    */
   function convertToContainerGroup() {
-    const joinRadios = $('[name="group:joining_method"]');
     const unselectablePageOptions = getUnselectableNonReportOptions();
-    // Container project, so admins manage membership.
-    joinRadios.not('[value="A"]').closest('li').slideUp();
-    joinRadios.not('[value="A"]').prop('checked', false);
-    joinRadios.filter('[value="A"]').prop('checked', true);
+    updateJoiningMethods(true);
     $('#ctrl-wrap-groups_user-user_id').slideUp();
     $('#ctrl-wrap-groups_user-user_id li').remove();
     $.each(unselectablePageOptions.filter(':selected'), function() {
@@ -147,7 +176,7 @@ jQuery(document).ready(function($) {
    */
   function convertToNormalGroup() {
     // Not container project, revert to default options.
-    $('[name="group:joining_method"]').not('[value="A"]').closest('li').slideDown();
+    updateJoiningMethods(false);
     $('#ctrl-wrap-groups_user-user_id').slideDown();
     const unselectablePageOptions = getUnselectableNonReportOptions();
     $.each(unselectablePageOptions.filter(':selected'), function() {
@@ -164,7 +193,6 @@ jQuery(document).ready(function($) {
    * Container activities disallow certain form options.
    */
   $('#group\\:container').on('change', function() {
-    const joinRadios = $('[name="group:joining_method"]');
     if ($('#group\\:container').is(':checked')) {
       let warnings = [];
       const unselectablePageOptions = getUnselectableNonReportOptions();
@@ -199,6 +227,8 @@ jQuery(document).ready(function($) {
 
   if ($('#group\\:container').is(':checked')) {
     convertToContainerGroup();
+  } else if ($('#group\\:container').length > 0) {
+    updateJoiningMethods(false);
   }
 
 });
