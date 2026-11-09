@@ -164,7 +164,8 @@ class iform_group_edit implements PrebuiltFormInterface {
           new members, I is an invite only group and A is a group where the administrator creates the list of members
           manually. The latter should only be used in cases where it is appropriate for a group membership to be setup
           without explicit member approval. If you allow only one joining method, then the group creator will not need
-          to pick one so the options control will be hidden on the edit form.
+          to pick one so the options control will be hidden on the edit form. Container groups always use option A.
+          If A is not configured here, it is added automatically but is only available while Container is ticked.
           TXT,
         'type' => 'textarea',
         'default' => <<<TXT
@@ -875,7 +876,7 @@ $('#entry_form').submit(function() {
    * Returns a control for picking one of the allowed joining methods.
    *
    * If there is only one method available then this method returns a single
-   * hidden input.
+   * hidden input, unless container switching requires radio buttons.
    *
    * @param array $args
    *   Form configuration arguments.
@@ -886,18 +887,31 @@ $('#entry_form').submit(function() {
   private static function joinMethodsControl($args) {
     $r = '';
     $joinMethods = data_entry_helper::explode_lines_key_value_pairs($args['join_methods']);
-    if (count($joinMethods) === 1) {
-      $methods = array_keys($joinMethods);
+    $methods = array_keys($joinMethods);
+    $canControlContainer = !empty($args['container_control_permission']) &&
+      hostsite_user_has_permission($args['container_control_permission']) && empty($_GET['container_group_id']);
+    data_entry_helper::$indiciaData['groupJoinMethods'] = $methods;
+    if ($canControlContainer && !isset($joinMethods['A'])) {
+      $joinMethods['A'] = lang::get('Administrator will set up the members manually');
+    }
+    if (count($methods) === 1 && !$canControlContainer) {
       $r .= '<input type="hidden" name="group:joining_method" value="' . $methods[0] . '"/>';
     }
     else {
+      if ($canControlContainer) {
+        $r .= '<div id="group-joining-methods"' . (count($methods) === 1 ? ' style="display: none"' : '') . '>';
+      }
       $r .= data_entry_helper::radio_group([
         'label' => ucfirst(lang::get('How users join this {1}', self::$groupType)),
         'fieldname' => 'group:joining_method',
         'lookupValues' => $joinMethods,
+        'default' => count($methods) === 1 ? $methods[0] : NULL,
         'sep' => '<br/>',
         'validation' => ['required'],
       ]);
+      if ($canControlContainer) {
+        $r .= '</div>';
+      }
     }
     return $r;
   }
