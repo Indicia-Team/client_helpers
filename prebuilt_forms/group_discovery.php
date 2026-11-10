@@ -82,6 +82,7 @@ class iform_group_discovery implements PrebuiltFormInterface {
    *   Form HTML.
    */
   public static function get_form($args, $nid) {
+    global $indicia_templates;
     iform_load_helpers(['data_entry_helper', 'report_helper']);
     helper_base::add_resource('font_awesome');
     $readAuth = data_entry_helper::get_read_auth($args['website_id'], $args['password']);
@@ -111,9 +112,9 @@ class iform_group_discovery implements PrebuiltFormInterface {
     $itemPanel = <<<HTML
       <li>
         <a href="{$rootFolder}groups/{fn:groupGetTitleForLink}">
-          <div class="panel panel-primary">
-            <div class="panel-heading">{fn:groupHeadingImage}</div>
-            <div class="panel-body">
+          <div class="group-card $indicia_templates[cardClass]">
+            <div class="group-card-heading $indicia_templates[cardHeadingClass]">{fn:groupHeadingImage}</div>
+            <div class="group-card-body $indicia_templates[cardBodyClass]">
               <h3>{title}</h3>
               <p>{description}</p>
             </div>

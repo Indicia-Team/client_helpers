@@ -84,9 +84,9 @@ jQuery(document).ready(function($) {
             // Append the group's card.
             $('#search-groups .card-gallery ul').append($(`<li>
         <a href="${indiciaData.rootFolder}groups/${indiciaFns.groupGetTitleForLink(this)}">
-          <div class="panel panel-primary">
-            <div class="panel-heading">${indiciaFns.groupHeadingImage(this)}</div>
-            <div class="panel-body">
+          <div class="group-card ${indiciaData.templates.cardClass}">
+            <div class="group-card-heading ${indiciaData.templates.cardHeadingClass}">${indiciaFns.groupHeadingImage(this)}</div>
+            <div class="group-card-body ${indiciaData.templates.cardBodyClass}">
               <h3>${title}</h3>
               <p>${description}</p>
             </div>
