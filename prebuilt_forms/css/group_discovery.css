@@ -15,7 +15,7 @@
   list-style-type: none;
   flex-basis: 23%;
 }
-.card-gallery ul li .panel:hover {
+.card-gallery ul li .group-card:hover {
   box-shadow: 0px 0px 21px 5px #aaaaaa;
 }
 .card-gallery ul li a {
@@ -24,10 +24,10 @@
 .card-gallery ul li a:hover {
   text-decoration: none;
 }
-.card-gallery ul li .panel-heading {
+.card-gallery ul li .group-card-heading {
   padding: 0;
 }
-.card-gallery ul li .panel-heading img {
+.card-gallery ul li .group-card-heading img {
   object-fit: cover;
   object-position: 50% 0%;
   max-height: 200px;
@@ -35,13 +35,13 @@
   margin: 0;
 }
 /* Missing image fallback icon */
-.card-gallery ul li .panel-heading i {
+.card-gallery ul li .group-card-heading i {
   margin: 8px;
 }
-.card-gallery ul li .panel-body h3 {
+.card-gallery ul li .group-card-body h3 {
   margin-top: 0;
 }
-.card-gallery ul li .panel-body p {
+.card-gallery ul li .group-card-body p {
   text-overflow: ellipsis;
   overflow: hidden;
   display: -webkit-box;

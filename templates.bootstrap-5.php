@@ -39,6 +39,9 @@ $indicia_templates['buttonDefaultClass'] = 'indicia-button btn btn-light';
 $indicia_templates['buttonHighlightedClass'] = 'indicia-button btn btn-primary';
 $indicia_templates['buttonWarningClass'] = 'indicia-button btn btn-danger';
 $indicia_templates['anchorButtonClass'] = 'indicia-button btn btn-light';
+$indicia_templates['cardClass'] = 'card border-primary';
+$indicia_templates['cardHeadingClass'] = 'card-header bg-primary text-white';
+$indicia_templates['cardBodyClass'] = 'card-body';
 $indicia_templates['buttonSmallClass'] = 'btn-sm';
 
 // Floats.

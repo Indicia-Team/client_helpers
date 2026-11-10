@@ -45,6 +45,9 @@ $indicia_templates = [
   'buttonSmallClass' => 'btn-xs',
   // Classes applied to <a> when styled like a button.
   'anchorButtonClass' => 'indicia-button',
+  'cardClass' => 'panel panel-primary',
+  'cardHeadingClass' => 'panel-heading',
+  'cardBodyClass' => 'panel-body',
   // Floats.
   'floatLeftClass' => 'left',
   'floatRightClass' => 'right',
@@ -2538,6 +2541,9 @@ HTML;
       'buttonDefaultClass' => $indicia_templates['buttonDefaultClass'],
       'buttonHighlightedClass' => $indicia_templates['buttonHighlightedClass'],
       'buttonSmallClass' => $indicia_templates['buttonSmallClass'],
+      'cardClass' => $indicia_templates['cardClass'],
+      'cardHeadingClass' => $indicia_templates['cardHeadingClass'],
+      'cardBodyClass' => $indicia_templates['cardBodyClass'],
       'inputGroupClass' => $indicia_templates['inputGroupClass'],
       'inputGroupAddonClass' => $indicia_templates['inputGroupAddonClass'],
       'jQueryValidateErrorClass' => $indicia_templates['error_class'],
