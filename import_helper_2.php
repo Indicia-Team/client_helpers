@@ -2118,8 +2118,17 @@ HTML;
       'completeMessage' => 'The import is complete',
       'confirmTemplateOverwrite' => 'There is already an import template with the same name. Would you like to overwrite it?',
       'downloadErrors' => 'Download the rows that had errors',
+      'downloadImportResults' => 'Download import results',
       'errorInImportFile' => 'Errors were found in {1} row.',
       'errorsInImportFile' => 'Errors were found in {1} rows.',
+      'incompleteImport' => 'Import incomplete',
+      'incompleteImportInfo' => 'The import stopped after processing {rowsProcessed} of {totalRows} rows. Download the spreadsheet to review all rows. The [Imported] column contains "yes" for imported rows and "no" for unimported rows. To avoid duplicates, retry only the rows marked "no", after correcting any errors shown in the [Errors] column.',
+      'incompletePrecheck' => 'Checking incomplete',
+      'incompletePrecheckInfo' => <<<TXT
+        Checking stopped after processing {rowsProcessed} of {totalRows} rows. The import has not started. Download the
+        spreadsheet to review all rows. [Checked] is “yes” for rows successfully validated and “no” for rows not
+        successfully validated; see [Errors] for validation failures. Correct any errors and retry the complete file.
+        TXT,
       'importingCrashInfo' => 'An error occurred on the server whilst importing your data. You can download the errors file which includes all rows that have errors or were not imported. The file also includes an [errors] column with row-level error information and an [imported] column indicating which rows have been successfully imported.',
       'importingData' => 'Importing data',
       'importingDetails' => '{rowsProcessed} of {totalRows} rows imported, {errorsCount} rows with errors found.',
