@@ -1591,7 +1591,7 @@ HTML;
         foreach ($customAttrVariations as $variationSet) {
           if (in_array(strtolower($captionSimplified), $variationSet)) {
             unset($variationSet[array_search($captionSimplified, $variationSet)]);
-            $alts = $alts + $variationSet;
+            $alts = array_merge($alts, $variationSet);
           }
         }
       }
