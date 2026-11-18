@@ -1019,6 +1019,9 @@ HTML;
     }
     require_once 'prebuilt_forms/includes/groups.php';
     $membership = group_get_user_membership($group_id, $options['readAuth'], $checkPage);
+    if ($membership === GroupMembership::PageNotAllowed) {
+      return '';
+    }
     $output = '';
     if (!empty($group_id)) {
       $groups = data_entry_helper::get_population_data([
@@ -1152,10 +1155,12 @@ JS;
     $thisPage = empty($options['nid']) ? '' : hostsite_get_alias($options['nid']);
     foreach ($pageData as $page) {
       // Don't link to the current page or any excluded pages, plus block
-      // member-only pages for non-members.
+      // member-only pages for non-members. $page['administrator'] will be null
+      // for public pages.
       if (!in_array(trim($page['path'], '/'), $excludedGroupPagePaths, TRUE)
           && $page['path'] !== $thisPage
-          && ($membership !== GroupMembership::NonMember || $page['administrator'] === NULL)) {
+          && (in_array($membership, [GroupMembership::Member, GroupMembership::Admin], TRUE)
+            || ($membership === GroupMembership::NonMember && $page['administrator'] === NULL))) {
         $pageLink = hostsite_get_url($page['path'], [
           'group_id' => $group['id'],
           'implicit' => $group['implicit_record_inclusion'],

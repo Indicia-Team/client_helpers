@@ -270,6 +270,9 @@ Record ID',
       }
       $readAuth = data_entry_helper::get_read_auth($args['website_id'], $args['password']);
       $membership = group_authorise_form($args, $readAuth);
+      if ($membership === GroupMembership::PageNotAllowed) {
+        return '';
+      }
       // If groups support is enabled, then do a count report to check access.
       $argArray = [];
       group_apply_report_limits($argArray, $readAuth, $nid, $membership);
