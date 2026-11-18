@@ -27,6 +27,7 @@ enum GroupMembership {
   case NonMember;
   case Member;
   case Admin;
+  case PageNotAllowed;
 }
 /**
  * Authorise the current page.
@@ -70,7 +71,7 @@ function group_authorise_form($args, $readAuth) {
  * @return GroupMembership
  *   Group membership status.
  */
-function group_get_user_membership($group_id, $readAuth, $checkPage = TRUE) {
+function group_get_user_membership($group_id, $readAuth, $checkPage = TRUE): GroupMembership {
   $gu = [];
   // Loading data into a recording group. Are they a member or is the page
   // public?
@@ -97,14 +98,14 @@ function group_get_user_membership($group_id, $readAuth, $checkPage = TRUE) {
     if (count($gp) === 0) {
       hostsite_show_message(lang::get('You are trying to access a page which is not available for this group.'), 'warning', TRUE);
       hostsite_goto_page('<front>');
-      return FALSE;
+      return GroupMembership::PageNotAllowed;
     }
     if (count($gu) === 0 && $gp[0]['administrator'] !== NULL) {
       // Administrator field is null if the page is fully public. Else if not
       // a group member, then throw them out.
       hostsite_show_message(lang::get('You are trying to access a page for a group you do not belong to.'), 'warning', TRUE);
       hostsite_goto_page('<front>');
-      return FALSE;
+      return GroupMembership::NonMember;
     }
     elseif (isset($gu[0]['administrator']) && isset($gp[0]['administrator'])) {
       // Use isn't an administrator, and page is administration
@@ -112,7 +113,7 @@ function group_get_user_membership($group_id, $readAuth, $checkPage = TRUE) {
       if ($gu[0]['administrator'] !== 't' && $gp[0]['administrator'] === 't') {
         hostsite_show_message(lang::get('You are trying to open a group page that you do not have permission to access.'));
         hostsite_goto_page('<front>');
-        return FALSE;
+        return GroupMembership::PageNotAllowed;
       }
     }
   }
@@ -183,7 +184,7 @@ function group_apply_report_limits(array &$args, $readAuth, $nid, GroupMembershi
   // If records private, need to show them on a group report but only if user
   // is group member, which might not be the case if page accidentally made
   // fully public.
-  if ($membership !== GroupMembership::NonMember && $group['private_records'] === 't') {
+  if (in_array($membership, [GroupMembership::Member, GroupMembership::Admin], TRUE) && $group['private_records'] === 't') {
     $defstring .= "release_status=A\n";
   }
   if (empty($_GET['implicit'])) {
