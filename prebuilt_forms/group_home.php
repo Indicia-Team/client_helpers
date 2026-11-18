@@ -89,6 +89,9 @@ class iform_group_home extends iform_dynamic_report_explorer {
     data_entry_helper::$javascript .= 'indiciaData.rejectedTranslation = "' . lang::get('Rejected') . "\";\n";
     self::$auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
     $membership = group_authorise_form($args, self::$auth['read']);
+    if ($membership === GroupMembership::PageNotAllowed) {
+      return '';
+    }
     group_apply_report_limits($args, self::$auth['read'], $nid, $membership);
     if (!empty($args['hide_standard_param_filter'])) {
       data_entry_helper::$javascript .= "$('#standard-params').hide();\n";

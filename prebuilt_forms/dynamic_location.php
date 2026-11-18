@@ -503,7 +503,7 @@ function switchToSatelliteBaseLayerForZoom(map) {
   private static function includeGroupSitesLayer(array $readAuth) {
     if (!empty($_GET['group_id'])) {
       require_once 'includes/groups.php';
-      if (group_get_user_membership($_GET['group_id'], $readAuth, FALSE) !== GroupMembership::NonMember) {
+      if (in_array(group_get_user_membership($_GET['group_id'], $readAuth, FALSE), [GroupMembership::Member, GroupMembership::Admin], TRUE)) {
         $groupSites = data_entry_helper::get_population_data([
           'report' => 'library/locations/locations_for_groups',
           'extraParams' => $readAuth + [

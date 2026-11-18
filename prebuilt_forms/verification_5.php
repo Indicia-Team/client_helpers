@@ -781,7 +781,10 @@ idlist=';
     ], $args);
     $auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
     $membership = group_authorise_form($args, $auth['read']);
-    if ($membership !== GroupMembership::NonMember) {
+    if ($membership === GroupMembership::PageNotAllowed) {
+      return '';
+    }
+    if (in_array($membership, [GroupMembership::Member, GroupMembership::Admin], TRUE)) {
       $group = group_apply_report_limits($args, $auth['read'], $nid, $membership);
       if (!empty($args['group_type_ids']) && !in_array($group['group_type_id'], $args['group_type_ids'])) {
         // Group type is not authorised for verification.
