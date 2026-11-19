@@ -1105,9 +1105,7 @@ class import_helper_2 extends helper_base {
       $response = ['result' => FALSE, 'output' => $e->responseBody];
     }
     $output = json_decode($response['output'], TRUE);
-    $r = <<<HTML
-      <form id="reversal-result-form" method="POST">
-    HTML;
+    $r = '';
     global $indicia_templates;
     if (empty($response['result']) || ($output['status'] ?? NULL) !== 'OK') {
       $printedResponse = htmlspecialchars($output['msg'] ?? print_r($response, TRUE), ENT_QUOTES, 'UTF-8');
@@ -1120,10 +1118,15 @@ class import_helper_2 extends helper_base {
       HTML;
     }
     else {
-      // Result includes links to files which contain changed and unchanged
-      // sample/occurrence rows.
-      $samplesDetails = '<p>' . implode('</p><p>', $output['samplesDetails']);
-      $occurrencesDetails = '<p>' . implode('</p><p>', $output['occurrencesDetails']);
+      if (!headers_sent()) {
+        header('Cache-Control: private, no-store');
+      }
+      $details = static fn(array $messages): string => implode('', array_map(
+        static fn(string $message): string => '<p>' . htmlspecialchars($message, ENT_QUOTES, 'UTF-8') . '</p>',
+        $messages
+      ));
+      $samplesDetails = $details($output['samplesDetails']) . self::reversalDownloadLinks($output['exports'] ?? [], 'samples');
+      $occurrencesDetails = $details($output['occurrencesDetails']) . self::reversalDownloadLinks($output['exports'] ?? [], 'occurrences');
       $r .= <<<HTML
         <h3>The reversal of import $reverseGuid is complete</h3>
         <h4>$output[samplesOutcome]</h4>
@@ -1131,8 +1134,12 @@ class import_helper_2 extends helper_base {
         <h4>$output[occurrencesOutcome]</h4>
         $occurrencesDetails
       HTML;
+      if (!empty($output['exportErrors'])) {
+        $r .= self::reversalWarning('The reversal completed, but one or more CSV exports could not be created.');
+      }
     }
     $r .= <<<HTML
+      <form id="reversal-result-form" method="POST">
         <br>
         <div>
           <input type="submit" class="btn btn-primary" id="return-to-start" value="Return to start" />
@@ -1141,6 +1148,27 @@ class import_helper_2 extends helper_base {
       </form>
     HTML;
     return $r;
+  }
+
+  private static function reversalDownloadLinks(array $exports, string $entity): string {
+    $links = '';
+    foreach (['reversed', 'untouched'] as $type) {
+      $kind = "{$type}_{$entity}";
+      $filename = $exports[$kind] ?? NULL;
+      if (!is_string($filename) || !preg_match('/\Areversal-[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}\.csv\z/', $filename)) {
+        continue;
+      }
+      $labels = [
+        'reversed_samples' => 'Download reversed samples',
+        'untouched_samples' => 'Download samples not reversed',
+        'reversed_occurrences' => 'Download reversed occurrences',
+        'untouched_occurrences' => 'Download occurrences not reversed',
+      ];
+      $label = htmlspecialchars(lang::get($labels[$kind]), ENT_QUOTES, 'UTF-8');
+      $url = htmlspecialchars(self::$base_url . 'download/' . $filename, ENT_QUOTES, 'UTF-8');
+      $links .= "<p><a href=\"$url\" rel=\"noreferrer\" download>$label</a></p>";
+    }
+    return $links;
   }
 
   /**
