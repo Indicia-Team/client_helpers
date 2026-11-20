@@ -1141,13 +1141,23 @@ class import_helper_2 extends helper_base {
         static fn(string $message): string => '<p>' . self::escapeReversalHtml($message) . '</p>',
         $messages
       ));
-      $samplesDetails = $details($output['samplesDetails']) . self::reversalDownloadLinks($output['exports'] ?? [], 'samples');
-      $occurrencesDetails = $details($output['occurrencesDetails']) . self::reversalDownloadLinks($output['exports'] ?? [], 'occurrences');
+      $exports = $output['exports'] ?? [];
+      $token = $output['export_token'] ?? '';
+      $samplesDetails = $details($output['samplesDetails']) . self::reversalDownloadForms($exports, $token, 'samples');
+      $occurrencesDetails = $details($output['occurrencesDetails']) . self::reversalDownloadForms($exports, $token, 'occurrences');
+      $exportNote = '';
+      if (is_string($output['exportsWarning'] ?? NULL)) {
+        $exportNote = self::reversalWarning($output['exportsWarning']);
+      }
+      elseif ($exports) {
+        $exportNote = '<p>' . self::escapeReversalHtml(lang::get('CSVs are generated when requested and reflect records still available at that time, not a snapshot of the reversal.')) . '</p>';
+      }
       $guid = self::escapeReversalHtml($reverseGuid);
       $samplesOutcome = self::escapeReversalHtml($output['samplesOutcome']);
       $occurrencesOutcome = self::escapeReversalHtml($output['occurrencesOutcome']);
       $r .= <<<HTML
         <h3>The reversal of import $guid is complete</h3>
+        $exportNote
         <h4>$samplesOutcome</h4>
         $samplesDetails
         <h4>$occurrencesOutcome</h4>
@@ -1166,12 +1176,15 @@ class import_helper_2 extends helper_base {
     return $r;
   }
 
-  private static function reversalDownloadLinks(array $exports, string $entity): string {
-    $links = '';
+  private static function reversalDownloadForms(array $exports, string $token, string $entity): string {
+    if (!preg_match('/\A[0-9a-f]{64}\z/', $token)) {
+      return '';
+    }
+    $forms = '';
+    $url = self::escapeReversalHtml(self::$base_url . 'index.php/services/import_2/download_reversal_export');
     foreach (['reversed', 'untouched'] as $type) {
       $kind = "{$type}_{$entity}";
-      $filename = $exports[$kind] ?? NULL;
-      if (!is_string($filename) || !preg_match('/\Areversal-[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}\.csv\z/', $filename)) {
+      if (!in_array($kind, $exports, TRUE)) {
         continue;
       }
       $labels = [
@@ -1181,10 +1194,14 @@ class import_helper_2 extends helper_base {
         'untouched_occurrences' => 'Download occurrences not reversed',
       ];
       $label = self::escapeReversalHtml(lang::get($labels[$kind]));
-      $url = self::escapeReversalHtml(self::$base_url . 'download/' . $filename);
-      $links .= "<p><a href=\"$url\" rel=\"noreferrer\" download>$label</a></p>";
+      $forms .= <<<HTML
+        <form method="post" action="$url">
+          <input type="hidden" name="reversal_export_token" value="$token" />
+          <button type="submit" class="btn btn-link" name="kind" value="$kind">$label</button>
+        </form>
+        HTML;
     }
-    return $links;
+    return $forms;
   }
 
   /**
