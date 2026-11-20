@@ -188,9 +188,11 @@ class import_helper_2 extends helper_base {
     self::$indiciaData['getErrorFileUrl'] = $options['getErrorFileUrl'];
     self::$indiciaData['write'] = $options['writeAuth'];
     self::$indiciaData['advancedFields'] = $options['advancedFields'];
-    $nextImportStep = $_POST['next-import-step'] ?? (isset($_GET['reverse_import_guid']) ? 'reversalModeWarningOrSkipToResult' : 'fileSelectForm');
+    $nextImportStep = $_POST['next-import-step'] ?? (isset($_GET['reversal_tasks'])
+      ? 'reversalTasks'
+      : (isset($_GET['reverse_import_guid']) ? 'reversalModeWarningOrSkipToResult' : 'fileSelectForm'));
     if ($options['importReverse'] === 'reverse') {
-      if (!in_array($nextImportStep, ['fileSelectForm', 'reversalModeWarningOrSkipToResult', 'reversalResult'], TRUE)) {
+      if (!in_array($nextImportStep, ['fileSelectForm', 'reversalModeWarningOrSkipToResult', 'reversalResult', 'reversalTasks'], TRUE)) {
         return self::reversalWarning('This form only allows import reversal.');
       }
       self::$indiciaData['step'] = $nextImportStep === 'fileSelectForm' ? 'reversalList' : $nextImportStep;
@@ -243,6 +245,11 @@ class import_helper_2 extends helper_base {
       case 'reversalResult':
         return self::confirmReversal($options);
 
+      case 'reversalTasks':
+        return self::reversalAllowed($options)
+          ? self::reversalTasks($options)
+          : self::reversalWarning('This form does not allow import reversal.');
+
       default:
         throw new exception('Invalid next-import-step parameter');
     }
@@ -257,6 +264,9 @@ class import_helper_2 extends helper_base {
     $form = $options['importReverse'] === 'reverse' ? '' : self::fileSelectForm($options);
     if (self::reversalAllowed($options) && $options['importReverse'] !== 'import_and_reverse_via_query') {
       $form .= self::importToReverseDropDown($options);
+    }
+    if (self::reversalAllowed($options)) {
+      $form .= self::reversalTaskLink(self::reversalPageUrl(TRUE));
     }
     return $form;
   }
@@ -1116,67 +1126,90 @@ class import_helper_2 extends helper_base {
       }
       $response = ['result' => FALSE, 'output' => $e->responseBody];
     }
-    return self::renderReversalResult($response, $reverseGuid);
-  }
-
-  private static function renderReversalResult(array $response, string $reverseGuid): string {
     $output = json_decode($response['output'], TRUE);
-    $r = '';
-    if (empty($response['result']) || ($output['status'] ?? NULL) !== 'OK') {
-      $message = $output['msg'] ?? NULL;
-      $printedResponse = self::escapeReversalHtml(is_string($message) ? $message : print_r($response, TRUE));
-      $r .= self::reversalWarning('An error has occurred during the import reversal.');
-      $r .= <<<HTML
-        <p>
-          <em>The response from the database is:</em>
-        </p>
-        <pre>$printedResponse</pre>
-      HTML;
-    }
-    else {
+    $url = self::reversalPageUrl(TRUE);
+    if (!empty($response['result']) && ($output['status'] ?? NULL) === 'Queued') {
       if (!headers_sent()) {
-        header('Cache-Control: private, no-store');
+        header("Location: $url", TRUE, 303);
       }
-      $details = static fn(array $messages): string => implode('', array_map(
-        static fn(string $message): string => '<p>' . self::escapeReversalHtml($message) . '</p>',
-        $messages
-      ));
-      $exports = $output['exports'] ?? [];
-      $token = $output['export_token'] ?? '';
-      $samplesDetails = $details($output['samplesDetails']) . self::reversalDownloadForms($exports, $token, 'samples');
-      $occurrencesDetails = $details($output['occurrencesDetails']) . self::reversalDownloadForms($exports, $token, 'occurrences');
-      $exportNote = '';
-      if (is_string($output['exportsWarning'] ?? NULL)) {
-        $exportNote = self::reversalWarning($output['exportsWarning']);
+      else {
+        self::$javascript .= 'window.location.replace(' . json_encode($url, JSON_HEX_TAG) . ");\n";
       }
-      elseif ($exports) {
-        $exportNote = '<p>' . self::escapeReversalHtml(lang::get('CSVs are generated when requested and reflect records still available at that time, not a snapshot of the reversal.')) . '</p>';
-      }
-      $guid = self::escapeReversalHtml($reverseGuid);
-      $samplesOutcome = self::escapeReversalHtml($output['samplesOutcome']);
-      $occurrencesOutcome = self::escapeReversalHtml($output['occurrencesOutcome']);
-      $r .= <<<HTML
-        <h3>The reversal of import $guid is complete</h3>
-        $exportNote
-        <h4>$samplesOutcome</h4>
-        $samplesDetails
-        <h4>$occurrencesOutcome</h4>
-        $occurrencesDetails
-      HTML;
+      return self::reversalTaskLink($url);
     }
-    $r .= <<<HTML
-      <form id="reversal-result-form" method="POST">
-        <br>
-        <div>
-          <input type="submit" class="btn btn-primary" id="return-to-start" value="Return to start" />
-          <input type="hidden" name="next-import-step" value="fileSelectForm" />
-        </div>
-      </form>
-    HTML;
-    return $r;
+    $message = $output['msg'] ?? NULL;
+    return self::reversalWarning(is_string($message) ? $message : 'The Warehouse could not confirm submission. Check reversal tasks before trying again.')
+      . self::reversalTaskLink($url);
   }
 
-  private static function reversalDownloadForms(array $exports, string $token, string $entity): string {
+  private static function reversalPageUrl(bool $showTasks): string {
+    $params = $_GET;
+    unset($params['reverse_import_guid'], $params['reversal_tasks']);
+    if ($showTasks) {
+      $params['reversal_tasks'] = 1;
+    }
+    return '?' . http_build_query($params, '', '&', PHP_QUERY_RFC3986);
+  }
+
+  private static function reversalTaskLink(string $url): string {
+    $url = self::escapeReversalHtml($url);
+    $label = self::escapeReversalHtml(lang::get('View reversal tasks'));
+    return "<p><a href=\"$url\">$label</a></p>";
+  }
+
+  private static function reversalTasks(array $options): string {
+    if (!headers_sent()) {
+      header('Cache-Control: private, no-store');
+    }
+    $url = json_encode(self::reversalPageUrl(TRUE), JSON_HEX_TAG);
+    self::$javascript .= "window.setTimeout(function () { window.location.replace($url); }, 600000);\n";
+    try {
+      $response = self::http_post(self::$base_url . 'index.php/services/import_2/import_reversal_status', http_build_query([
+        'nonce' => $options['writeAuth']['nonce'],
+        'auth_token' => $options['writeAuth']['auth_token'],
+      ]), FALSE);
+    }
+    catch (WarehouseRequestException $e) {
+      return self::reversalWarning('Unable to fetch reversal tasks. Refresh the page to try again.');
+    }
+    $output = json_decode($response['output'], TRUE);
+    if (empty($response['result']) || ($output['status'] ?? NULL) !== 'OK' || !is_array($output['tasks'] ?? NULL)) {
+      return self::reversalWarning('Unable to fetch reversal tasks. Refresh the page to try again.');
+    }
+    return self::renderReversalTasks($output['tasks']);
+  }
+
+  private static function renderReversalTasks(array $tasks): string {
+    $text = static fn(string $value): string => self::escapeReversalHtml(lang::get($value));
+    $refresh = self::escapeReversalHtml(self::reversalPageUrl(TRUE));
+    $back = self::escapeReversalHtml(self::reversalPageUrl(FALSE));
+    $html = '<h3>' . $text('Import reversal tasks') . '</h3><p>'
+      . $text('Shows active tasks and reversals completed today (Warehouse time). This page refreshes every 10 minutes.')
+      . " <a href=\"$refresh\">" . $text('Refresh now') . "</a> | <a href=\"$back\">" . $text('Return to importer') . '</a></p>';
+    if (!$tasks) {
+      return $html . '<p>' . $text('No reversal tasks to display.') . '</p>';
+    }
+    $html .= '<p>' . $text('Downloads are listed as soon as the task is queued, but CSVs are only available once it completes. They reflect records still available when requested, not an audit snapshot.') . '</p>';
+    $html .= '<table class="table"><thead><tr>';
+    foreach (['Import ID', 'Queued on', 'Reversed on', 'Status', 'Samples', 'Occurrences'] as $heading) {
+      $html .= '<th scope="col">' . $text($heading) . '</th>';
+    }
+    $html .= '</tr></thead><tbody>';
+    $statuses = ['queued' => 'Queued', 'reversing' => 'Reversing', 'complete' => 'Complete', 'failed' => 'Failed'];
+    foreach ($tasks as $task) {
+      $status = $statuses[$task['status']] ?? 'Unknown';
+      $html .= '<tr><td>' . self::escapeReversalHtml($task['import_guid']) . '</td><td>'
+        . self::escapeReversalHtml($task['queued_on'] ?? '-') . '</td><td>'
+        . self::escapeReversalHtml($task['reversed_on'] ?? '-') . '</td><td>' . $text($status) . '</td>';
+      foreach (['samples', 'occurrences'] as $entity) {
+        $html .= '<td>' . (self::reversalDownloadForms($task['export_token'] ?? '', $entity) ?: $text('Unavailable')) . '</td>';
+      }
+      $html .= '</tr>';
+    }
+    return $html . '</tbody></table>';
+  }
+
+  private static function reversalDownloadForms(string $token, string $entity): string {
     if (!preg_match('/\A[0-9a-f]{64}\z/', $token)) {
       return '';
     }
@@ -1184,9 +1217,6 @@ class import_helper_2 extends helper_base {
     $url = self::escapeReversalHtml(self::$base_url . 'index.php/services/import_2/download_reversal_export');
     foreach (['reversed', 'untouched'] as $type) {
       $kind = "{$type}_{$entity}";
-      if (!in_array($kind, $exports, TRUE)) {
-        continue;
-      }
       $labels = [
         'reversed_samples' => 'Download reversed samples',
         'untouched_samples' => 'Download samples not reversed',
@@ -1195,7 +1225,7 @@ class import_helper_2 extends helper_base {
       ];
       $label = self::escapeReversalHtml(lang::get($labels[$kind]));
       $forms .= <<<HTML
-        <form method="post" action="$url">
+        <form method="post" action="$url" target="_blank" rel="noopener">
           <input type="hidden" name="reversal_export_token" value="$token" />
           <button type="submit" class="btn btn-link" name="kind" value="$kind">$label</button>
         </form>
