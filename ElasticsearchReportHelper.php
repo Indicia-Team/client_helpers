@@ -474,6 +474,7 @@ class ElasticsearchReportHelper {
       'noUpdatesSpecified' => 'Please specify the values you would like to update using the form before previewing the changes.',
       'noValue' => '-value not set-',
       'preparing' => 'Preparing to edit the records...',
+      'previewFailed' => 'The preview could not be loaded. Please try again.',
       'promptAllowSampleSplit' => <<<HTML
         <p>The list of records to update contains occurrences which belong to samples that contain other occurrences
         which are not being updated. For example, sample {1} contains an occurrence {2} which is being updated, but it
@@ -540,16 +541,17 @@ class ElasticsearchReportHelper {
   <div id="$options[id]-dlg" class="bulk-editor-dlg">
     <h2>$lang[bulkEditRecords]</h2>
     <p class="message"></p>
-    <p>$lang[editInstructions]</p>
     <div class="bulk-edit-form-controls">
+      <p class="edit-instructions">$lang[editInstructions]</p>
       $recorderNameControl
       $dateControl
       $locationNameControl
       $srefControl
+      $commentControl
+      $skipReverifyControl
     </div>
-    $commentControl
-    $skipReverifyControl
     <div class="preview-output" style="display: none">
+      <div class="preview-loading loading-spinner" style="display: none"><div>Loading...</div></div>
       <div class="alert alert-warning preview-messages"><i class="fas fa-exclamation-triangle fa-2x"></i>
         <div class="preview-message-text">
           <p class="preview-info-complete">$lang[previewInfoComplete]</p>
@@ -2215,6 +2217,7 @@ HTML;
     $sharingCodes = explode(',', $options['sharingCode']);
     $optionArr = [];
     foreach ($sharingCodes as $sharingCode) {
+      $sharingCode = trim($sharingCode);
       $filterData = report_filters_load_existing($options['readAuth'], $sharingCode, TRUE);
       foreach ($filterData as $filter) {
         if (($filter['defines_permissions'] === 't') === $options['definesPermissions']) {
@@ -2388,6 +2391,11 @@ HTML;
     ];
 
     helper_base::addLanguageStringsToJs('verificationButtons', [
+      'ajaxProxyPermissions403' => <<<TXT
+        Access was denied while updating the verification decision. Please check that your Drupal
+        user role has the “IForm AJAX Proxy passthrough” permission, and that you are still signed
+        in.
+      TXT,
       'cancel' => 'Cancel',
       'close' => 'Close',
       'copyPlaceholder' => 'Copy &quot;{{ placeholder }}&quot; to the clipboard.',
@@ -2421,6 +2429,9 @@ HTML;
       'forceLinkedLocationInfoNoExisting' => 'There is no existing linked location for this record.',
       'nothingSelected' => 'There are no selected records. Either select some rows using the checkboxes in the leftmost column or set the "Apply decision to" mode to "all".',
       'overwrite' => 'Overwrite',
+      'wholeTableProgress' => 'Processed {processed} of {total} records.',
+      'wholeTableProgressUnknown' => 'Processed {processed} records.',
+      'wholeTablePartialError' => '{error} {processed} records were processed before the operation stopped.',
       'pleaseSupplyATemplateNameAndText' => 'Please supply a name and comment text for your template then click the Save button again.',
       'queryEmailTabAnonWithEmail' => 'This record was posted by a recorder who was not logged in but provided their email address so email is the best method of contact.',
       'queryEmailTabAnonWithoutEmail' => 'As this record does not have an email address for the recorder, the query is best added as a comment to the record unless you know the recorder and have their email address and permission to use it. There is no guarantee that the recorder will check their notifications.',
@@ -2441,6 +2452,7 @@ HTML;
       'saveTemplateErrorMsg' => 'An error occurred when saving your template to the database. Please try later.',
       'templateNameTextRequired' => 'Template details required',
       'unknown' => 'Unknown',
+      'unknownError' => 'Unknown error',
       'updatingMultipleInParentSampleWarning' => lang::get('This verification decision will be applied to a total of {1} records of the same taxon within the parent sample (e.g. within the transect or timed count)!'),
       'uploadError' => 'An error occurred whilst uploading your spreadsheet.',
       'verificationDecisionUpdateFailed' => 'Failed to update verification decision',

@@ -1406,6 +1406,7 @@ JS;
     );
     // Load javascript for the classifier.
     self::add_resource('file_classifier');
+    self::add_resource('font_awesome');
     // We need to call the initialisation function.
     $containerId = 'container-' .
       ($options['table'] ?? 'occurrence_medium') . '-' .
@@ -1444,7 +1445,7 @@ JS;
       global $indicia_templates;
       $buttonLabel = lang::get('Get assistance with photo identification');
       $r = <<<HTML
-        <button type="button" class="show-classifier $indicia_templates[buttonDefaultClass]">$buttonLabel</button>
+        <button type="button" class="show-classifier $indicia_templates[buttonHighlightedClass]"><i class="fas fa-magic"></i>$buttonLabel</button>
         <div class="classifier-container" style="display: none">
           $r
         </div>
@@ -1455,6 +1456,7 @@ JS;
       'cancel' => 'Cancel',
       'classifierRequestFailed' => 'The classifier failed to process the image. It has been added to the grid as Unknown.',
       'dialogBtnOk' => 'Okay',
+      'dialogCancelled' => 'The classification was cancelled.',
       'dialogEnd' => 'Your files have been processed. Review the identifications and check the abundances.',
       'dialogStart' => 'Your files are being sent to a classification service which will try to identify the species.',
       'dialogTitle' => 'Requesting classification',
@@ -1489,18 +1491,22 @@ JS;
     // Provide default settings for other options which can be overwritten.
     $defaults = [
       'caption' => lang::get('Image classifier'),
-      'helpText' => $isChecklist ? lang::get(
-        'Add files here then click the classify button and we will attempt to automatically ' .
-        'identify the species and add them to the grid. Files featuring the specimen with minimal ' .
-        'background will be most successful.'
-        ) : lang::get(
-        'Add a photo here then click the classify button and we will attempt to automatically ' .
-        'identify the species and add it to the record. Files featuring the specimen with minimal ' .
-        'background will be most successful.'
+      'helpText' => $isChecklist ? lang::get(<<<TXT
+          Add photos here then click the classify button and we will attempt to automatically
+          identify the species and add them to the grid. Files featuring the specimen with minimal
+          background will be most successful.
+        TXT
+        ) : lang::get(<<<TXT
+          Add a single photo here then click the classify button and we will attempt to automatically
+          identify the species and add it to the record. Files featuring the specimen with minimal
+          background will be most successful.
+        TXT
         ),
       'interimImagePath' => self::$interim_image_folder,
       'mode' => $isChecklist ? 'multi:checklist:append' : "single:$options[taxonControlId]:add",
     ];
+    // Get rid of linefeeds in helpText
+    $defaults['helpText'] = str_replace(["\r", "\n"], ' ', $defaults['helpText']);
     $classifier_options = array_merge($defaults, $options, $requirements);
 
     // Obtain taxon information for unknown species in current language.
@@ -3980,10 +3986,9 @@ RIJS;
       $imageRowIdxs = [];
       $mediaRowIdxs = [];
       $rowIdx = 0;
-      // Tell the addTowToGrid javascript how many rows are already used, so it
-      // has a unique index for new rows.
+      // Initialise counters used to generate unique row and sub-sample indices.
       self::$javascript .= "indiciaData['gridCounter-$options[id]'] = " . count($taxonRows) . ";\n";
-      self::$javascript .= "indiciaData['gridSampleCounter-$options[id]'] = " . count($subSampleRows) . ";\n";
+      self::$javascript .= "indiciaData['gridSampleCounter-$options[id]'] = " . self::getSpeciesChecklistNextSubSampleIndex($subSampleRows) . ";\n";
       // If subspecies are stored, then need to load up the parent species info
       // into the $taxonRows data.
       if ($options['subSpeciesColumn']) {
@@ -4480,6 +4485,19 @@ HTML;
     else {
       return $taxalist['error'];
     }
+  }
+
+  /**
+   * Get the next unused sub-sample index, including after validation errors.
+   */
+  private static function getSpeciesChecklistNextSubSampleIndex(array $subSampleRows) {
+    $nextIndex = count($subSampleRows);
+    foreach (self::$entity_to_load ?? [] as $fieldname => $value) {
+      if (preg_match('/^sc:(\d+):\d*:sample:/', $fieldname, $matches)) {
+        $nextIndex = max($nextIndex, (int) $matches[1] + 1);
+      }
+    }
+    return $nextIndex;
   }
 
   /**
@@ -6352,7 +6370,7 @@ HTML;
    *   the default. Options same as sampleOnClusterButtonContents.
    * * **samplePhotos** - set to true to add a photos upload control for each
    *   sub-sample.
-   * * **location_name** - set to true to add a location name input control for
+   * * **locationName** - set to true to add a location name input control for
    *   each sub-sample.
    * * **hideMapWhenEditingSubsample** - defaults to true. Set to false to
    *   leave the map visible whilst a sub-sample's create/update form is
@@ -6376,6 +6394,7 @@ HTML;
       'hideMapWhenEditingSubsample' => TRUE,
       'base_url' => self::$base_url,
       'samplePhotos' => FALSE,
+      'sample_method_id' => '',
     ], $options);
     $attrOptions = self::getAttrSpecificOptions($options);
     $speciesListEntryCtrl = data_entry_helper::species_checklist($options);
@@ -6383,7 +6402,7 @@ HTML;
     // handled js files.
     self::includeSrefHandlerJs([$options['spatialSystem'] => '']);
     $r = '';
-    if (isset($options['sample_method_id'])) {
+    if (isset($options['sample_method_id']) && $options['sample_method_id'] !== '') {
       require_once 'prebuilt_forms/includes/form_generation.php';
       $sampleAttrs = self::getMultiplePlacesSpeciesChecklistSubsampleAttrs($options);
       foreach ($sampleAttrs as &$attr) {
@@ -6401,8 +6420,8 @@ HTML;
       // Add a template for the form section for a new subsample.
       $r .= "<div id=\"$options[id]-subsample-ctrls\" style=\"display: none\" class=\"subsample-ctrl-cntr\">$sampleCtrls</div>";
     }
-    $enteredSref = self::check_default_value('sample:entered_sref', '');
-    $geom = self::check_default_value('sample:geom', '');
+    $enteredSref = htmlspecialchars(self::check_default_value('sample:entered_sref', '') ?? '');
+    $geom = htmlspecialchars(self::check_default_value('sample:geom', '') ?? '');
     $buttonCtrls = self::getMultiplePlacesSpeciesChecklistButtons($options);
     $r .= <<<TXT
 <div id="$options[id]-cluster" style="display: none"></div>
@@ -6538,27 +6557,29 @@ HTML;
       'singleRecordSubsamples' => FALSE,
     ], $options);
     self::addLanguageStringsToJs('speciesMap', [
-      'AddLabel' => 'Add records to map',
+      'AddLabel' => 'Add recording point',
       'AddMessage' => 'Please click on the map where you would like to add your records. Zoom the map in for greater precision.',
-      'AddDataMessage' => 'Please enter all the species records for this position into the grid below. When you have finished, click the Finish button to return to the map where you may choose another grid reference to enter data for.',
+      'AddDataMessage' => 'Please enter all the species records for this position into the grid below. When you have finished, click the Done with this point button to return to the map where you may choose another grid reference to enter data for.',
 
-      'MoveLabel' => 'Move records',
+      'MoveLabel' => 'Move point',
       'MoveMessage1' => 'Please select the records on the map you wish to move.',
-      'MoveMessage2' => 'Please click on the map to choose the new position. Press the Cancel button to choose another set of records to move instead.',
+      'MoveMessage2' => 'Please click on the map to choose the new position. Press the Cancel move button to choose another set of records to move instead.',
 
-      'ModifyLabel' => 'Modify records',
-      'ModifyMessage1' => 'Please select the records on the map you wish to change.',
-      'ModifyMessage2' => 'Change (or add to) the records for this position. When you have finished, click the Finish button which will return you to the map where you may choose another set of records to change.',
+      'ModifyLabel' => 'Edit records',
+      'ModifyMessage1' => 'Please select the point on the map you wish to change the records at.',
+      'ModifyMessage2' => 'Change (or add to) the records for this point. When you have finished, click the Done with this point button which will return you to the map where you may choose another set of records to change.',
 
-      'DeleteLabel' => 'Delete records',
-      'DeleteMessage' => 'Please select the records on the map you wish to delete.',
-      'ConfirmDeleteTitle' => 'Confirm deletion of records',
-      'ConfirmDeleteText' => 'Are you sure you wish to delete all the records at {OLD}?',
+      'DeleteLabel' => 'Delete point',
+      'DeleteMessage' => 'Please select the point on the map you wish to delete. This will also delete the records at that point.',
+      'ConfirmDeleteTitle' => 'Confirm deletion of point and list of records',
+      'ConfirmDeleteText' => 'Are you sure you wish to delete the point and all the records at {OLD}?',
 
-      'ClusterMessage' => 'You selected a cluster of places on the map, pick one of them to work with.',
+      'ClusterMessage' => 'You selected a cluster of points on the map, pick one of them to work with.',
 
       'CancelLabel' => 'Cancel',
-      'FinishLabel' => 'Finish',
+      'CancelLabelWhenAdding' => 'Discard this point',
+      'CancelLabelWhenMoving' => 'Cancel move',
+      'DoneLabel' => 'Done with this point',
       'Yes' => 'Yes',
       'No' => 'No',
       'SRefLabel' => 'Spatial ref',
@@ -6602,7 +6623,7 @@ HTML;
               <input type="hidden" value="$idValue" name="$idKey">
             HTML;
           }
-          if (!empty($options['sample_method_id'])) {
+          if (isset($options['sample_method_id']) && $options['sample_method_id'] !== '') {
             $sampleAttrs = self::getMultiplePlacesSpeciesChecklistSubsampleAttrs($options, empty($sampleId) ? NULL : $sampleId);
             foreach ($sampleAttrs as &$attr) {
               $attr['fieldname'] = "sc:$a[1]:$a[2]:$attr[fieldname]";
@@ -8597,7 +8618,7 @@ if (errors$uniq.length>0) {
               }
             }
           }
-          if (in_array(strtolower($value), $zeroValues))
+          if (!is_array($value) && in_array(strtolower($value), $zeroValues))
             $zeroCount++;
           else
             $nonZeroCount++;

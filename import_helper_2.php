@@ -105,6 +105,8 @@ class import_helper_2 extends helper_base {
    *   Utilities > Background Import Status, which can be provided as a link
    *   when a large import gets queued for bacgrkound importing. This page
    *   should show progress information for a user's background imports.
+   * * myImportsPath - optional site-relative path to the user's imports
+   *   summary, used when cancelling a reversal or leaving the tasks view.
    * * uploadFileUrl - path to a script that handles the initial upload of a
    *   file to the interim file location. The script can call
    *   import_helper_2::uploadFile for a complete implementation.
@@ -157,6 +159,7 @@ class import_helper_2 extends helper_base {
    *       is triggered by passing a URL parameter called
    *       "reverse_import_guid".
    *     * reverse - only reversal of previous imports allowed.
+   *   Reversal requires a confirmation POST backed by the host PHP session.
    */
   public static function importer($options) {
     if (empty($options['entity'])) {
@@ -187,8 +190,18 @@ class import_helper_2 extends helper_base {
     self::$indiciaData['getErrorFileUrl'] = $options['getErrorFileUrl'];
     self::$indiciaData['write'] = $options['writeAuth'];
     self::$indiciaData['advancedFields'] = $options['advancedFields'];
-    $nextImportStep = $_POST['next-import-step'] ?? (empty($_GET['reverse_import_guid']) ? 'fileSelectForm' : 'reversalModeWarningOrSkipToResult');
-    self::$indiciaData['step'] = $nextImportStep;
+    $nextImportStep = $_POST['next-import-step'] ?? (isset($_GET['reversal_tasks'])
+      ? 'reversalTasks'
+      : (isset($_GET['reverse_import_guid']) ? 'reversalModeWarningOrSkipToResult' : 'fileSelectForm'));
+    if ($options['importReverse'] === 'reverse') {
+      if (!in_array($nextImportStep, ['fileSelectForm', 'reversalModeWarningOrSkipToResult', 'reversalResult', 'reversalTasks'], TRUE)) {
+        return self::reversalWarning('This form only allows import reversal.');
+      }
+      self::$indiciaData['step'] = $nextImportStep === 'fileSelectForm' ? 'reversalList' : $nextImportStep;
+    }
+    else {
+      self::$indiciaData['step'] = $nextImportStep;
+    }
     if ($options['advancedMode']) {
       // Unblock some fields in advanced mode.
       $options['blockedFields'] = array_diff($options['blockedFields'], [
@@ -200,12 +213,7 @@ class import_helper_2 extends helper_base {
     }
     switch ($nextImportStep) {
       case 'fileSelectForm':
-        $r = self::fileSelectForm($options);
-        // The reverser currently assumes occurrence entity.
-        if ($options['entity'] === 'occurrence' && in_array($options['importReverse'], ['import_and_reverse', 'reverse'])) {
-          $r .= self::importToReverseDropDown($options);
-        }
-        return $r;
+        return self::importStartForm($options);
 
       case 'globalValuesForm':
         return self::globalValuesForm($options);
@@ -226,14 +234,144 @@ class import_helper_2 extends helper_base {
         return self::doImportPage($options);
 
       case 'reversalModeWarningOrSkipToResult':
-        return self::reversalModeWarningOrSkipToResult($options);
+        $method = $_SERVER['REQUEST_METHOD'] ?? '';
+        $viaQuery = $method === 'GET';
+        $guid = $viaQuery ? ($_GET['reverse_import_guid'] ?? NULL) : ($_POST['reverse-guid'] ?? NULL);
+        if (!self::reversalAllowed($options)
+            || !self::validReversalGuid($guid)
+            || (!$viaQuery && ($method !== 'POST' || $options['importReverse'] === 'import_and_reverse_via_query'))) {
+          return self::reversalWarning('This import is not available for reversal.');
+        }
+        return self::reversalModeWarning($options, $guid);
 
       case 'reversalResult':
-        return self::reversalResult($options);
+        return self::confirmReversal($options);
+
+      case 'reversalTasks':
+        return self::reversalAllowed($options)
+          ? self::reversalTasks($options)
+          : self::reversalWarning('This form does not allow import reversal.');
 
       default:
         throw new exception('Invalid next-import-step parameter');
     }
+  }
+
+  private static function reversalAllowed(array $options): bool {
+    return $options['entity'] === 'occurrence'
+      && in_array($options['importReverse'], ['import_and_reverse', 'import_and_reverse_via_query', 'reverse'], TRUE);
+  }
+
+  private static function importStartForm(array $options): string {
+    $form = $options['importReverse'] === 'reverse' ? '' : self::fileSelectForm($options);
+    if (self::reversalAllowed($options) && $options['importReverse'] !== 'import_and_reverse_via_query') {
+      $form .= self::importToReverseDropDown($options);
+    }
+    if (self::reversalAllowed($options)) {
+      $form .= self::reversalTaskLink(self::reversalPageUrl(TRUE));
+    }
+    return $form;
+  }
+
+  private static function validReversalGuid(mixed $guid): bool {
+    return is_string($guid) && preg_match('/\A[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}\z/i', $guid) === 1;
+  }
+
+  private static function reversalWarning(string $message): string {
+    global $indicia_templates;
+    return str_replace('{message}', self::escapeReversalHtml(lang::get($message)), $indicia_templates['warningBox']);
+  }
+
+  private static function escapeReversalHtml(string $value): string {
+    return htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+  }
+
+  private static function reversalSessionReady(): bool {
+    return session_status() === PHP_SESSION_ACTIVE
+      || (session_status() === PHP_SESSION_NONE && !headers_sent() && session_start(['use_strict_mode' => 1]));
+  }
+
+  private static function reversalScope(array $options): array {
+    return [
+      (int) hostsite_get_user_field('indicia_user_id'),
+      self::$base_url,
+      $options['website_id'] ?? NULL,
+      $options['initServerConfigUrl'],
+      $options['importReverse'],
+    ];
+  }
+
+  /**
+   * Bind an expiring confirmation to this session, form, import and choices.
+   */
+  private static function issueReversalConfirmation(array $options, string $guid, bool $hasChanges): ?string {
+    if (!self::reversalSessionReady()) {
+      return NULL;
+    }
+    $now = time();
+    $pending = array_filter($_SESSION['indicia:reversal-confirmations'] ?? [], static fn(array $entry): bool => $entry['expires'] > $now);
+    $token = bin2hex(random_bytes(32));
+    $pending = array_slice($pending, -19, NULL, TRUE);
+    $pending[$token] = [
+      'scope' => self::reversalScope($options),
+      'guid' => $guid,
+      'allowReverseAll' => $hasChanges,
+      'expires' => $now + 900,
+    ];
+    $_SESSION['indicia:reversal-confirmations'] = $pending;
+    return $token;
+  }
+
+  private static function confirmReversal(array $options): string {
+    $confirmation = self::consumeReversalConfirmation($options);
+    if ($confirmation === NULL) {
+      return self::reversalWarning('Invalid reversal confirmation. Start the reversal again.');
+    }
+    [$guid, $mode] = $confirmation;
+    if ($mode === 'abort_reverse') {
+      $url = self::myImportsUrl($options);
+      if ($url !== NULL) {
+        if (!headers_sent()) {
+          header("Location: $url", TRUE, 303);
+        }
+        self::$indiciaData['step'] = 'reversalCancelled';
+        self::$indiciaData['myImportsUrl'] = $url;
+        return '<p><a href="' . self::escapeReversalHtml($url) . '">'
+          . self::escapeReversalHtml(lang::get('Back to My Imports')) . '</a></p>';
+      }
+      self::$indiciaData['step'] = 'fileSelectForm';
+      return self::importStartForm($options);
+    }
+    return self::reversalResult($options, $guid, $mode);
+  }
+
+  /**
+   * Return the confirmed GUID and mode, consuming the token before any write.
+   *
+   * @return array{string, string}|null
+   *   The GUID and mode, or NULL for an invalid confirmation.
+   */
+  private static function consumeReversalConfirmation(array $options): ?array {
+    $guid = $_POST['reverse-guid'] ?? NULL;
+    $mode = $_POST['reverse-mode'] ?? NULL;
+    $token = $_POST['reverse-confirmation'] ?? NULL;
+    if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST'
+        || !self::reversalAllowed($options)
+        || !self::validReversalGuid($guid)
+        || !in_array($mode, ['abort_reverse', 'reverse_all', 'do_not_reverse_updated'], TRUE)
+        || !is_string($token) || preg_match('/\A[0-9a-f]{64}\z/', $token) !== 1
+        || !self::reversalSessionReady()) {
+      return NULL;
+    }
+    $entry = $_SESSION['indicia:reversal-confirmations'][$token] ?? NULL;
+    if ($entry === NULL || $entry['expires'] <= time()
+        || $entry['scope'] !== self::reversalScope($options)
+        || $entry['guid'] !== $guid
+        || ($mode === 'reverse_all' && !$entry['allowReverseAll'])) {
+      return NULL;
+    }
+    unset($_SESSION['indicia:reversal-confirmations'][$token]);
+    return [$guid, $mode];
   }
 
   /**
@@ -733,28 +871,10 @@ class import_helper_2 extends helper_base {
    *   HTML.
    */
   private static function importToReverseDropDown(array $options) {
-    iform_load_helpers(['report_helper']);
     if (!function_exists('hostsite_get_user_field') || !hostsite_get_user_field('indicia_user_id')) {
       return '';
     }
-    // We only show user their own imports.
-    $indiciaUserID = hostsite_get_user_field('indicia_user_id');
-    $extraParams = [
-      'currentUser' => $indiciaUserID,
-    ];
-    // This will be empty if importer is running on Warehouse.
-    // In that case all imports for the logged-in user will be shown.
-    if (!empty($options['website_id'])) {
-      $extraParams = array_merge(
-        $extraParams, ['website_id' => $options['website_id']]
-      );
-    }
-    // Get a list of imports that are reversible.
-    $lookupData = report_helper::get_report_data([
-      'readAuth' => $options['readAuth'],
-      'dataSource' => 'library/imports/reversible_imports_list',
-      'extraParams' => $extraParams,
-    ]);
+    $lookupData = self::getReversibleImports($options);
     self::addLanguageStringsToJs('import_helper_2', [
       'are_you_sure_reverse' => 'Are you sure you want to reverse the selected import?',
     ]);
@@ -762,17 +882,16 @@ class import_helper_2 extends helper_base {
       'select_a_previous_import_to_reverse' => lang::get('Or select a previous import to reverse'),
       'no_previous_imports_available_for_you_to_reverse' => lang::get('There are no previous imports available for you to reverse'),
       'imports_are_not_always_reversible' => lang::get('Please note that imports are not always reversible.'),
-      'non_reversible_import_reasons' => lang::get('This may include old imports, imports that have been updated by another import,
-                or imports where a reversal has already been attempted.'),
+      'non_reversible_import_reasons' => lang::get('Only imports that could not update existing records can be reversed. Records linked to a later import and samples with remaining occurrences or child samples are kept.'),
       'reverse_import' => lang::get('Reverse import'),
       'new_records_will_be_reversed' => lang::get('Only new records created by the original import will be reversed.'),
       'updated_records_will_not_be_reversed' => lang::get('Any records that were selected for an update or deletion during that import will not be reversed.'),
     ];
+    $lang = array_map([self::class, 'escapeReversalHtml'], $lang);
     // Construct label for the drop-down from the date/time and import_guid.
     $reversableImports = [];
     foreach ($lookupData as $importRow) {
-      $affected = $importRow['inserted'] + $importRow['updated'];
-      $reversableImports[$importRow['import_guid']] = lang::get('{1}, {2} rows (Import ID: {3}', $importRow['import_date_time'], $affected, $importRow['import_guid']);
+      $reversableImports[$importRow['import_guid']] = lang::get('{1}, {2} rows (Import ID: {3})', $importRow['import_date_time'], $importRow['inserted'], $importRow['import_guid']);
     }
     $r = <<<HTML
       <hr>
@@ -828,24 +947,40 @@ class import_helper_2 extends helper_base {
   }
 
   /**
+   * Read the same import metadata and scope for the list and confirmation.
+   */
+  private static function getReversibleImports(array $options, ?string $guid = NULL): array {
+    iform_load_helpers(['report_helper']);
+    $params = [
+      'currentUser' => hostsite_get_user_field('indicia_user_id'),
+      'website_id' => empty($options['website_id']) ? -1 : $options['website_id'],
+    ];
+    if ($guid !== NULL) {
+      $params['import_guid'] = $guid;
+    }
+    return report_helper::get_report_data([
+      'dataSource' => 'library/imports/reversible_imports_list',
+      'readAuth' => $options['readAuth'],
+      'extraParams' => $params,
+    ]);
+  }
+
+  /**
    * Allow user to select import reverse options.
    *
    * If applicable, allow the user to select whether to reverse all data,
    * or just data that has not been changed since importing.
-   * Skips directly to result page if there is nothing to ask the user.
+   * Always presents a server-generated confirmation before reversal.
    *
    * @param array $options
    *   Options array for the control.
+   * @param string $reverseGuid
+   *   Validated import GUID.
    *
    * @return string
    *   HTML.
    */
-  private static function reversalModeWarningOrSkipToResult(array $options) {
-    $reverseGuid = $_POST['reverse-guid'] ?? $_GET['reverse_import_guid'];
-    if (empty($reverseGuid)) {
-      throw new Exception('Reversal GUID not found.');
-    }
-    iform_load_helpers(['report_helper']);
+  private static function reversalModeWarning(array $options, string $reverseGuid): string {
     self::addLanguageStringsToJs('import_helper_2', [
       'abort' => 'Abort',
       'continue' => 'Continue',
@@ -861,9 +996,14 @@ class import_helper_2 extends helper_base {
       'reverse_all_rows' => lang::get('Reverse all rows'),
       'reverse_unchanged_rows' => lang::get('Reverse unchanged rows'),
     ];
+    $lang = array_map([self::class, 'escapeReversalHtml'], $lang);
     $extraParams = [
       'import_guid' => $reverseGuid,
     ];
+    $imports = self::getReversibleImports($options, $reverseGuid);
+    if (count($imports) !== 1) {
+      return self::reversalWarning('This import is not available for reversal.');
+    }
     // Has any of the data been changed since the import was done.
     $smpsChangedSinceImport = report_helper::get_report_data([
       'dataSource' => 'library/imports/changed_smps_since_import',
@@ -875,48 +1015,46 @@ class import_helper_2 extends helper_base {
       'readAuth' => $options['readAuth'],
       'extraParams' => $extraParams,
     ]);
-    $imports = report_helper::get_report_data([
-      'dataSource' => 'library/imports/occurrence_imports_list',
-      'readAuth' => $options['readAuth'],
-      'extraParams' => $extraParams + ['currentUser' => hostsite_get_user_field('indicia_user_id')],
-    ]);
-    if (count($imports) !== 1) {
-      throw new exception('Failed to find unique import using provided GUID.');
-    }
     $importToReverse = $imports[0];
-    $recordDetails = lang::get('{1} (IDs between {2} and {3})', $importToReverse['records'], $importToReverse['from_id'], $importToReverse['to_id']);
+    $inserted = (int) $importToReverse['inserted'];
+    $remaining = (int) $importToReverse['remaining'];
+    $partial = $remaining < $inserted;
+    $partialWarning = $partial
+      ? '<p class="alert alert-warning">' . self::escapeReversalHtml(lang::get('Reversal can remove at most {1} of the {2} inserted records. The others have been removed or are no longer linked to this import.', $remaining, $inserted)) . '</p>'
+      : '';
+    $importGuid = self::escapeReversalHtml($importToReverse['import_guid']);
+    $importDate = self::escapeReversalHtml($importToReverse['import_date_time']);
     $importDetails = <<<HTML
       <dl class="dl-horizontal">
         <dt>Import ID:</dt>
-        <dd>$importToReverse[import_guid]<dd>
+        <dd>$importGuid</dd>
         <dt>Date/time:</dt>
-        <dd>$importToReverse[date_time]<dd>
-        <dt>By:</dt>
-        <dd>$importToReverse[imported_by]<dd>
-        <dt>Records:</dt>
-        <dd>$recordDetails<dd>
+        <dd>$importDate</dd>
+        <dt>Inserted records:</dt>
+        <dd>$inserted</dd>
       </dl>
+      $partialWarning
     HTML;
-    if (empty($smpsChangedSinceImport) && empty($occsChangedSinceImport)) {
-      // If the reversal was triggered via selecting a GUID in the UI and no
-      // changes have been made to the imported data, then we can skip
-      // straight to the result page.
-      if (empty($_GET['reverse_import_guid'])) {
-        return self::reversalResult($options);
-      }
-      // If we get here, then the user followed a link containing the GUID to
-      // reverse in the URL, so won't have had a chance to confirm the action.
-      // Therefore show a confirmation form. We can add a button for cancel if
-      // we know where we were referred from.
-      $cancelButton = empty($_SERVER['HTTP_REFERER']) ? '' : "<a class=\"btn btn-primary\" href=\"$_SERVER[HTTP_REFERER]\">$lang[cancel]</a>";
+    $hasChanges = !empty($smpsChangedSinceImport) || !empty($occsChangedSinceImport);
+    $confirmation = self::issueReversalConfirmation($options, $reverseGuid, $hasChanges);
+    if ($confirmation === NULL) {
+      return self::reversalWarning('Unable to start a reversal confirmation session. Reload the page and try again.');
+    }
+    $confirmationAttr = self::escapeReversalHtml($confirmation);
+    $reverseGuidAttr = self::escapeReversalHtml($reverseGuid);
+    if (!headers_sent()) {
+      header('Cache-Control: private, no-store');
+    }
+    if (!$hasChanges) {
       return <<<HTML
         <form id="reversal-mode-warning-form" method="POST">
           <p>$lang[confirm_reverse]</p>
           $importDetails
-          <input type="submit" class="btn btn-primary" id="run-reverse" value="$lang[continue]" />
-          $cancelButton
+          <button type="submit" class="btn btn-primary" id="run-reverse" name="reverse-mode" value="do_not_reverse_updated">$lang[continue]</button>
+          <button type="submit" class="btn btn-secondary" name="reverse-mode" value="abort_reverse">$lang[cancel]</button>
           <input type="hidden" name="next-import-step" value="reversalResult" />
-          <input type="hidden" name="reverse-guid" value="$reverseGuid" />
+          <input type="hidden" name="reverse-confirmation" value="$confirmationAttr" />
+          <input type="hidden" name="reverse-guid" value="$reverseGuidAttr" />
         </form>
       HTML;
     }
@@ -935,7 +1073,7 @@ class import_helper_2 extends helper_base {
       <div>
         <p>
           <label for="reverse_all" style="display: inline-flex; align-items: center;">
-          <input style="margin: 0 0.5em 0;" type="radio" id="reverse_all" name="reverse-mode" value="reverse_all">
+          <input style="margin: 0 0.5em 0;" type="radio" id="reverse_all" name="reverse-mode" value="reverse_all" required>
           <em>
             $lang[reverse_all_rows]
           </em>
@@ -960,7 +1098,8 @@ class import_helper_2 extends helper_base {
         <br>
         <input type="submit" class="btn btn-primary" id="run-reverse" value="$lang[continue]" />
         <input type="hidden" name="next-import-step" value="reversalResult" />
-        <input type="hidden" name="reverse-guid" value="$reverseGuid" />
+        <input type="hidden" name="reverse-confirmation" value="$confirmationAttr" />
+        <input type="hidden" name="reverse-guid" value="$reverseGuidAttr" />
       </div>
     </form>
     HTML;
@@ -972,59 +1111,179 @@ class import_helper_2 extends helper_base {
    *
    * @param array $options
    *   Options array for the control.
+   * @param string $reverseGuid
+   *   Confirmed import GUID.
+   * @param string $reverseMode
+   *   Explicit mode selected by the user or the unchanged-only flow.
    *
    * @return string
    *   HTML.
    */
-  private static function reversalResult(array $options) {
-    if (empty($_POST['reverse-guid'])) {
-      throw new exception('POST should contain a value for reverse-guid.');
+  private static function reversalResult(array $options, string $reverseGuid, string $reverseMode): string {
+    $serviceUrl = self::$base_url . 'index.php/services/import_2/import_reverse';
+    $data = [
+      'nonce' => $options['writeAuth']['nonce'],
+      'auth_token' => $options['writeAuth']['auth_token'],
+      'guid_to_reverse' => $reverseGuid,
+      'reverse_mode' => $reverseMode,
+    ];
+    try {
+      $response = self::http_post($serviceUrl, http_build_query($data), FALSE);
     }
-    $indiciaUserID = hostsite_get_user_field('indicia_user_id');
-    $data['warehouse_user_id'] = $indiciaUserID;
-    $serviceUrl = self ::$base_url . 'index.php/services/import_2/import_reverse';
-    $data['guid_to_reverse'] = $_POST['reverse-guid'];
-    if (!empty($_POST['reverse-mode'])) {
-      $data['reverse_mode'] = $_POST['reverse-mode'];
+    catch (WarehouseRequestException $e) {
+      $error = json_decode($e->responseBody, TRUE);
+      if (!in_array($e->httpStatus, [400, 403], TRUE)
+          && !($e->httpStatus === 500 && ($error['status'] ?? NULL) === 'Error' && is_string($error['msg'] ?? NULL))) {
+        throw $e;
+      }
+      $response = ['result' => FALSE, 'output' => $e->responseBody];
     }
-    $response = self::http_post($serviceUrl, $data, FALSE);
     $output = json_decode($response['output'], TRUE);
-    $r = <<<HTML
-      <form id="reversal-result-form" method="POST">
-    HTML;
-    global $indicia_templates;
-    if (!isset($response['result']) || $output['status'] !== 'OK') {
-      $printedResponse = empty($output['msg']) ? print_r($response, TRUE) : $output['msg'];
-      $r .= str_replace('{message}', 'An error has occurred during the import reversal.', $indicia_templates['warningBox']);
-      $r .= <<<HTML
-        <p>
-          <em>The response from the database is:</em>
-        </p>
-        <pre>$printedResponse</pre>
-      HTML;
+    $url = self::reversalPageUrl(TRUE);
+    if (!empty($response['result']) && ($output['status'] ?? NULL) === 'Queued') {
+      $_SESSION['indicia:reversal-queued'] = [
+        'scope' => self::reversalScope($options),
+        'expires' => time() + 300,
+      ];
+      if (!headers_sent()) {
+        header("Location: $url", TRUE, 303);
+      }
+      self::$indiciaData['redirectToReversalTasks'] = TRUE;
+      // Some hosts control the final response headers. Show the tasks even if
+      // the redirect does not reach the browser or JavaScript is unavailable.
+      self::$indiciaData['step'] = 'reversalTasks';
+      return self::reversalTasks($options, TRUE);
     }
-    else {
-      // Result includes links to files which contain changed and unchanged
-      // sample/occurrence rows.
-      $samplesDetails = '<p>' . implode('</p><p>', $output['samplesDetails']);
-      $occurrencesDetails = '<p>' . implode('</p><p>', $output['occurrencesDetails']);
-      $r .= <<<HTML
-        <h3>The reversal of import {$_POST['reverse-guid']} is complete</h3>
-        <h4>$output[samplesOutcome]</h4>
-        $samplesDetails
-        <h4>$output[occurrencesOutcome]</h4>
-        $occurrencesDetails
-      HTML;
+    $message = $output['msg'] ?? NULL;
+    return self::reversalWarning(is_string($message) ? $message : 'The Warehouse could not confirm submission. Check reversal tasks before trying again.')
+      . self::reversalTaskLink($url);
+  }
+
+  private static function reversalPageUrl(bool $showTasks): string {
+    $params = $_GET;
+    unset($params['reverse_import_guid'], $params['reversal_tasks']);
+    if ($showTasks) {
+      $params['reversal_tasks'] = 1;
     }
-    $r .= <<<HTML
-        <br>
-        <div>
-          <input type="submit" class="btn btn-primary" id="return-to-start" value="Return to start" />
-          <input type="hidden" name="next-import-step" value="fileSelectForm" />
-        </div>
-      </form>
-    HTML;
-    return $r;
+    return '?' . http_build_query($params, '', '&', PHP_QUERY_RFC3986);
+  }
+
+  private static function reversalTaskLink(string $url): string {
+    $url = self::escapeReversalHtml($url);
+    $label = self::escapeReversalHtml(lang::get('View reversal tasks'));
+    return "<p><a href=\"$url\">$label</a></p>";
+  }
+
+  /**
+   * Render the submission notice without consuming it on the redirect response.
+   */
+  private static function reversalQueuedNotice(array $options, bool $justQueued): string {
+    if (!$justQueued) {
+      if (!self::reversalSessionReady()) {
+        return '';
+      }
+      $notice = $_SESSION['indicia:reversal-queued'] ?? NULL;
+      if ($notice === NULL || $notice['scope'] !== self::reversalScope($options)) {
+        return '';
+      }
+      unset($_SESSION['indicia:reversal-queued']);
+      if ($notice['expires'] <= time()) {
+        return '';
+      }
+    }
+    return '<p class="alert alert-success" role="status">'
+      . self::escapeReversalHtml(lang::get('Your import reversal has been queued. You can track its progress below.'))
+      . '</p>';
+  }
+
+  private static function reversalTasks(array $options, bool $justQueued = FALSE): string {
+    $notice = self::reversalQueuedNotice($options, $justQueued);
+    if (!headers_sent()) {
+      header('Cache-Control: private, no-store');
+    }
+    self::$indiciaData['reversalTasksUrl'] = self::reversalPageUrl(TRUE);
+    try {
+      $response = self::http_post(self::$base_url . 'index.php/services/import_2/import_reversal_status', http_build_query([
+        'nonce' => $options['writeAuth']['nonce'],
+        'auth_token' => $options['writeAuth']['auth_token'],
+      ]), FALSE);
+    }
+    catch (WarehouseRequestException $e) {
+      return $notice . self::reversalWarning('Unable to fetch reversal tasks. Refresh the page to try again.');
+    }
+    $output = json_decode($response['output'], TRUE);
+    if (empty($response['result']) || ($output['status'] ?? NULL) !== 'OK' || !is_array($output['tasks'] ?? NULL)) {
+      return $notice . self::reversalWarning('Unable to fetch reversal tasks. Refresh the page to try again.');
+    }
+    return $notice . self::renderReversalTasks($output['tasks'], self::myImportsUrl($options));
+  }
+
+  private static function myImportsUrl(array $options): ?string {
+    $path = trim($options['myImportsPath'] ?? '');
+    if ($path === '') {
+      return NULL;
+    }
+    $relativePath = ltrim($path, '/');
+    if (str_starts_with($path, '//') || preg_match('~\A\s*[a-z][a-z0-9+.-]*:|[\x00-\x1f\x7f\\\\]~i', $relativePath)) {
+      throw new InvalidArgumentException('The My imports page path must be site-relative.');
+    }
+    return hostsite_get_url($relativePath);
+  }
+
+  private static function renderReversalTasks(array $tasks, ?string $myImportsUrl = NULL): string {
+    $text = static fn(string $value): string => self::escapeReversalHtml(lang::get($value));
+    $refresh = self::escapeReversalHtml(self::reversalPageUrl(TRUE));
+    $back = self::escapeReversalHtml($myImportsUrl ?? self::reversalPageUrl(FALSE));
+    $backLabel = $text($myImportsUrl === NULL ? 'Return to importer' : 'Back to My Imports');
+    $html = '<h3>' . $text('Import reversal tasks') . '</h3><p>'
+      . $text('Shows active tasks and reversals completed today (Warehouse time). This page refreshes every 10 minutes.')
+      . " <a href=\"$refresh\">" . $text('Refresh now') . "</a> | <a href=\"$back\">$backLabel</a></p>";
+    if (!$tasks) {
+      return $html . '<p>' . $text('No reversal tasks to display.') . '</p>';
+    }
+    $html .= '<p>' . $text('Downloads are listed as soon as the task is queued, but CSVs are only available once it completes. They reflect records still available when requested, not an audit snapshot.') . '</p>';
+    $html .= '<table class="table"><thead><tr>';
+    foreach (['Import ID', 'Queued on', 'Reversed on', 'Status', 'Samples', 'Occurrences'] as $heading) {
+      $html .= '<th scope="col">' . $text($heading) . '</th>';
+    }
+    $html .= '</tr></thead><tbody>';
+    $statuses = ['queued' => 'Queued', 'reversing' => 'Reversing', 'complete' => 'Complete', 'failed' => 'Failed'];
+    foreach ($tasks as $task) {
+      $status = $statuses[$task['status']] ?? 'Unknown';
+      $html .= '<tr><td>' . self::escapeReversalHtml($task['import_guid']) . '</td><td>'
+        . self::escapeReversalHtml($task['queued_on'] ?? '-') . '</td><td>'
+        . self::escapeReversalHtml($task['reversed_on'] ?? '-') . '</td><td>' . $text($status) . '</td>';
+      foreach (['samples', 'occurrences'] as $entity) {
+        $html .= '<td>' . (self::reversalDownloadForms($task['export_token'] ?? '', $entity) ?: $text('Unavailable')) . '</td>';
+      }
+      $html .= '</tr>';
+    }
+    return $html . '</tbody></table>';
+  }
+
+  private static function reversalDownloadForms(string $token, string $entity): string {
+    if (!preg_match('/\A[0-9a-f]{64}\z/', $token)) {
+      return '';
+    }
+    $forms = '';
+    $url = self::escapeReversalHtml(self::$base_url . 'index.php/services/import_2/download_reversal_export');
+    foreach (['reversed', 'untouched'] as $type) {
+      $kind = "{$type}_{$entity}";
+      $labels = [
+        'reversed_samples' => 'Download reversed samples',
+        'untouched_samples' => 'Download samples not reversed',
+        'reversed_occurrences' => 'Download reversed occurrences',
+        'untouched_occurrences' => 'Download occurrences not reversed',
+      ];
+      $label = self::escapeReversalHtml(lang::get($labels[$kind]));
+      $forms .= <<<HTML
+        <form method="post" action="$url" target="_blank" rel="noopener">
+          <input type="hidden" name="reversal_export_token" value="$token" />
+          <button type="submit" class="btn btn-link" name="kind" value="$kind">$label</button>
+        </form>
+        HTML;
+    }
+    return $forms;
   }
 
   /**
