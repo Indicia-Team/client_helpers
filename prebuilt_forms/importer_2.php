@@ -736,23 +736,4 @@ class iform_importer_2 implements PrebuiltFormInterface {
     return $fixedValues;
   }
 
-  /**
-   * Asserts that the request contains write tokens in the headers.
-   *
-   * @return array|bool
-   *   Write tokens object, else false and echoes a suitable response.
-   */
-  private static function getAuthFromHeaders() {
-    $headers = getallheaders();
-    if (!empty($headers['Authorization'])) {
-      if (preg_match('/IndiciaTokens (?<auth_token>[a-z0-9]+(:\d+)?)\|(?<nonce>[a-z0-9]+)/', $headers['Authorization'], $matches)) {
-        return [
-          'auth_token' => $matches['auth_token'],
-          'nonce' => $matches['nonce'],
-        ];
-      }
-    }
-    hostsite_access_denied();
-  }
-
 }

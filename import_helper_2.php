@@ -875,9 +875,6 @@ class import_helper_2 extends helper_base {
       return '';
     }
     $lookupData = self::getReversibleImports($options);
-    self::addLanguageStringsToJs('import_helper_2', [
-      'are_you_sure_reverse' => 'Are you sure you want to reverse the selected import?',
-    ]);
     $lang = [
       'select_a_previous_import_to_reverse' => lang::get('Or select a previous import to reverse'),
       'no_previous_imports_available_for_you_to_reverse' => lang::get('There are no previous imports available for you to reverse'),
@@ -983,16 +980,15 @@ class import_helper_2 extends helper_base {
   private static function reversalModeWarning(array $options, string $reverseGuid): string {
     self::addLanguageStringsToJs('import_helper_2', [
       'abort' => 'Abort',
-      'continue' => 'Continue',
-      'are_you_sure_reverse' => 'Are you sure you wish to continue?',
+      'queue_reversal' => 'Queue reversal',
     ]);
     $lang = [
       'abort_the_reverse' => lang::get('Abort the reverse'),
       'cancel' => lang::get('Cancel'),
       'changes_have_been_made' => lang::get('Changes have been made to the data since it was imported.'),
       'confirm_reverse' => 'Are you sure you want to reverse the following import?',
-      'continue' => lang::get('Continue'),
       'how_do_you_wish_to_proceed' => lang::get('How do you wish to proceed?'),
+      'queue_reversal' => lang::get('Queue reversal'),
       'reverse_all_rows' => lang::get('Reverse all rows'),
       'reverse_unchanged_rows' => lang::get('Reverse unchanged rows'),
     ];
@@ -1050,7 +1046,7 @@ class import_helper_2 extends helper_base {
         <form id="reversal-mode-warning-form" method="POST">
           <p>$lang[confirm_reverse]</p>
           $importDetails
-          <button type="submit" class="btn btn-primary" id="run-reverse" name="reverse-mode" value="do_not_reverse_updated">$lang[continue]</button>
+          <button type="submit" class="btn btn-primary" id="run-reverse" name="reverse-mode" value="do_not_reverse_updated">$lang[queue_reversal]</button>
           <button type="submit" class="btn btn-secondary" name="reverse-mode" value="abort_reverse">$lang[cancel]</button>
           <input type="hidden" name="next-import-step" value="reversalResult" />
           <input type="hidden" name="reverse-confirmation" value="$confirmationAttr" />
@@ -1096,7 +1092,7 @@ class import_helper_2 extends helper_base {
           </label>
         </p>
         <br>
-        <input type="submit" class="btn btn-primary" id="run-reverse" value="$lang[continue]" />
+        <input type="submit" class="btn btn-primary" id="run-reverse" value="$lang[queue_reversal]" />
         <input type="hidden" name="next-import-step" value="reversalResult" />
         <input type="hidden" name="reverse-confirmation" value="$confirmationAttr" />
         <input type="hidden" name="reverse-guid" value="$reverseGuidAttr" />
