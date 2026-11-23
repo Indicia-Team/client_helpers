@@ -248,6 +248,13 @@ class iform_importer_2 implements PrebuiltFormInterface {
         'required' => FALSE,
       ],
       [
+        'name' => 'myImportsPath',
+        'caption' => 'My imports page path',
+        'description' => 'Site-relative path to the user\'s imports summary. Users return here when they cancel a reversal or select Back to My Imports on the reversal tasks page.',
+        'type' => 'text_input',
+        'required' => FALSE,
+      ],
+      [
         'name' => 'fileSelectFormIntro',
         'caption' => 'File select form introduction',
         'group' => 'Instruction texts',
