@@ -105,6 +105,8 @@ class import_helper_2 extends helper_base {
    *   Utilities > Background Import Status, which can be provided as a link
    *   when a large import gets queued for bacgrkound importing. This page
    *   should show progress information for a user's background imports.
+   * * myImportsPath - optional site-relative path to the user's imports
+   *   summary, used when cancelling a reversal or leaving the tasks view.
    * * uploadFileUrl - path to a script that handles the initial upload of a
    *   file to the interim file location. The script can call
    *   import_helper_2::uploadFile for a complete implementation.
@@ -327,6 +329,16 @@ class import_helper_2 extends helper_base {
     }
     [$guid, $mode] = $confirmation;
     if ($mode === 'abort_reverse') {
+      $url = self::myImportsUrl($options);
+      if ($url !== NULL) {
+        if (!headers_sent()) {
+          header("Location: $url", TRUE, 303);
+        }
+        self::$indiciaData['step'] = 'reversalCancelled';
+        self::$indiciaData['myImportsUrl'] = $url;
+        return '<p><a href="' . self::escapeReversalHtml($url) . '">'
+          . self::escapeReversalHtml(lang::get('Back to My Imports')) . '</a></p>';
+      }
       self::$indiciaData['step'] = 'fileSelectForm';
       return self::importStartForm($options);
     }
@@ -1129,13 +1141,18 @@ class import_helper_2 extends helper_base {
     $output = json_decode($response['output'], TRUE);
     $url = self::reversalPageUrl(TRUE);
     if (!empty($response['result']) && ($output['status'] ?? NULL) === 'Queued') {
+      $_SESSION['indicia:reversal-queued'] = [
+        'scope' => self::reversalScope($options),
+        'expires' => time() + 300,
+      ];
       if (!headers_sent()) {
         header("Location: $url", TRUE, 303);
       }
-      else {
-        self::$javascript .= 'window.location.replace(' . json_encode($url, JSON_HEX_TAG) . ");\n";
-      }
-      return self::reversalTaskLink($url);
+      self::$indiciaData['redirectToReversalTasks'] = TRUE;
+      // Some hosts control the final response headers. Show the tasks even if
+      // the redirect does not reach the browser or JavaScript is unavailable.
+      self::$indiciaData['step'] = 'reversalTasks';
+      return self::reversalTasks($options, TRUE);
     }
     $message = $output['msg'] ?? NULL;
     return self::reversalWarning(is_string($message) ? $message : 'The Warehouse could not confirm submission. Check reversal tasks before trying again.')
@@ -1157,12 +1174,34 @@ class import_helper_2 extends helper_base {
     return "<p><a href=\"$url\">$label</a></p>";
   }
 
-  private static function reversalTasks(array $options): string {
+  /**
+   * Render the submission notice without consuming it on the redirect response.
+   */
+  private static function reversalQueuedNotice(array $options, bool $justQueued): string {
+    if (!$justQueued) {
+      if (!self::reversalSessionReady()) {
+        return '';
+      }
+      $notice = $_SESSION['indicia:reversal-queued'] ?? NULL;
+      if ($notice === NULL || $notice['scope'] !== self::reversalScope($options)) {
+        return '';
+      }
+      unset($_SESSION['indicia:reversal-queued']);
+      if ($notice['expires'] <= time()) {
+        return '';
+      }
+    }
+    return '<p class="alert alert-success" role="status">'
+      . self::escapeReversalHtml(lang::get('Your import reversal has been queued. You can track its progress below.'))
+      . '</p>';
+  }
+
+  private static function reversalTasks(array $options, bool $justQueued = FALSE): string {
+    $notice = self::reversalQueuedNotice($options, $justQueued);
     if (!headers_sent()) {
       header('Cache-Control: private, no-store');
     }
-    $url = json_encode(self::reversalPageUrl(TRUE), JSON_HEX_TAG);
-    self::$javascript .= "window.setTimeout(function () { window.location.replace($url); }, 600000);\n";
+    self::$indiciaData['reversalTasksUrl'] = self::reversalPageUrl(TRUE);
     try {
       $response = self::http_post(self::$base_url . 'index.php/services/import_2/import_reversal_status', http_build_query([
         'nonce' => $options['writeAuth']['nonce'],
@@ -1170,22 +1209,35 @@ class import_helper_2 extends helper_base {
       ]), FALSE);
     }
     catch (WarehouseRequestException $e) {
-      return self::reversalWarning('Unable to fetch reversal tasks. Refresh the page to try again.');
+      return $notice . self::reversalWarning('Unable to fetch reversal tasks. Refresh the page to try again.');
     }
     $output = json_decode($response['output'], TRUE);
     if (empty($response['result']) || ($output['status'] ?? NULL) !== 'OK' || !is_array($output['tasks'] ?? NULL)) {
-      return self::reversalWarning('Unable to fetch reversal tasks. Refresh the page to try again.');
+      return $notice . self::reversalWarning('Unable to fetch reversal tasks. Refresh the page to try again.');
     }
-    return self::renderReversalTasks($output['tasks']);
+    return $notice . self::renderReversalTasks($output['tasks'], self::myImportsUrl($options));
   }
 
-  private static function renderReversalTasks(array $tasks): string {
+  private static function myImportsUrl(array $options): ?string {
+    $path = trim($options['myImportsPath'] ?? '');
+    if ($path === '') {
+      return NULL;
+    }
+    $relativePath = ltrim($path, '/');
+    if (str_starts_with($path, '//') || preg_match('~\A\s*[a-z][a-z0-9+.-]*:|[\x00-\x1f\x7f\\\\]~i', $relativePath)) {
+      throw new InvalidArgumentException('The My imports page path must be site-relative.');
+    }
+    return hostsite_get_url($relativePath);
+  }
+
+  private static function renderReversalTasks(array $tasks, ?string $myImportsUrl = NULL): string {
     $text = static fn(string $value): string => self::escapeReversalHtml(lang::get($value));
     $refresh = self::escapeReversalHtml(self::reversalPageUrl(TRUE));
-    $back = self::escapeReversalHtml(self::reversalPageUrl(FALSE));
+    $back = self::escapeReversalHtml($myImportsUrl ?? self::reversalPageUrl(FALSE));
+    $backLabel = $text($myImportsUrl === NULL ? 'Return to importer' : 'Back to My Imports');
     $html = '<h3>' . $text('Import reversal tasks') . '</h3><p>'
       . $text('Shows active tasks and reversals completed today (Warehouse time). This page refreshes every 10 minutes.')
-      . " <a href=\"$refresh\">" . $text('Refresh now') . "</a> | <a href=\"$back\">" . $text('Return to importer') . '</a></p>';
+      . " <a href=\"$refresh\">" . $text('Refresh now') . "</a> | <a href=\"$back\">$backLabel</a></p>";
     if (!$tasks) {
       return $html . '<p>' . $text('No reversal tasks to display.') . '</p>';
     }
