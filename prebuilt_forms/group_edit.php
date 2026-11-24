@@ -1186,19 +1186,22 @@ $('#entry_form').submit(function() {
           $page = ['deleted' => 't'];
         }
         else {
-          $tokens = explode(':', $values[$base . '0']);
+          $tokens = explode(':', $values[$base . '0'], 2);
           $path = $tokens[0];
-          $caption = empty($values[$base . '1']) ? $tokens[1] : $values[$base . '1'];
+          $caption = empty($values[$base . '1']) ? ($tokens[1] ?? $path) : $values[$base . '1'];
           $administrator = explode(':', $values[$base . '2']);
           $administrator = empty($administrator) ? NULL : $administrator[0];
-          $access_level = isset($values[$base . '3']) ? explode(':', $values[$base . '3']) : NULL;
-          $access_level = empty($access_level) ? NULL : $access_level[0];
           $page = [
             'caption' => $caption,
             'path' => $path,
             'administrator' => $administrator,
-            'access_level' => $access_level,
           ];
+          // Leave existing access levels unchanged when the optional control
+          // is not included in this form.
+          if (isset($values[$base . '3'])) {
+            $access_level = explode(':', $values[$base . '3']);
+            $page['access_level'] = $access_level[0] === '' ? NULL : $access_level[0];
+          }
         }
         // If existing group page, hook up to the id.
         if (preg_match('/^groupComplex:pages:(\d+)/', $key, $matches)) {
