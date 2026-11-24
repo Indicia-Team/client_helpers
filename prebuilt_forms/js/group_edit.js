@@ -117,11 +117,13 @@ jQuery(document).ready(function($) {
    *   Options elements that are not for report pages.
    */
   function getUnselectableNonReportOptions() {
-    const selectablePageSelectors = [];
+    const reportingPageValues = Object.create(null);
     $.each(indiciaData.reportingPages, function(path, title) {
-      selectablePageSelectors.push('[value="' + path + '\\:' + title.replace(':', '\\:') + '"]')
+      reportingPageValues[path + ':' + title] = true;
     });
-    return $('#complex-attr-grid-group-pages tbody tr td:first-child option').not('[value=""],' + selectablePageSelectors.join(','));
+    return $('#complex-attr-grid-group-pages tbody tr td:first-child option').filter(function() {
+      return this.value !== '' && !reportingPageValues[this.value];
+    });
   }
 
   let previousJoiningMethod;
