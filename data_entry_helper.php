@@ -357,6 +357,7 @@ class data_entry_helper extends helper_base {
       'deleteRows' => FALSE,
       'rowCountControl' => '',
       'encoding' => 'json',
+      'extraParams' => [],
     ], $options);
     list($attrTypeTag, $attrId) = explode(':', $options['fieldname']);
     if (preg_match('/\[\]$/', $attrId)) {
@@ -413,7 +414,8 @@ class data_entry_helper extends helper_base {
           foreach ($termlistData as $term) {
             $listData[] = [$term['id'], $term['term']];
           }
-          self::$javascript .= "indiciaData.tl$def[termlist_id]=" . json_encode($listData) . ";\n";
+          self::$javascript .= "indiciaData.tl$def[termlist_id]=" .
+            json_encode($listData, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) . ";\n";
         }
         elseif (isset($def['lookupValues'])) {
           foreach ($def['lookupValues'] as $id => $term) {
@@ -424,7 +426,7 @@ class data_entry_helper extends helper_base {
         if (isset($def['control']) && $def['control'] === 'checkbox_group') {
           // Add checkbox text to table header.
           foreach ($listData as $listItem) {
-            $thRow2 .= "<th>$listItem[1]</th>";
+            $thRow2 .= '<th>' . htmlspecialchars($listItem[1], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '</th>';
           }
         }
         $lookupData["tl$idx"] = $listData;
@@ -454,6 +456,7 @@ class data_entry_helper extends helper_base {
     for ($i = 0; $i <= $rowCount - 1; $i++) {
       $class = ($i % 2 === 1) ? '' : ' class="odd"';
       $r .= "<tr$class>";
+      $defaults = [];
       if (isset($options['default'][$i])) {
         $defaults = $options['encoding'] === 'json'
           ? json_decode($options['default'][$i]['default'], TRUE)
@@ -482,8 +485,10 @@ class data_entry_helper extends helper_base {
           // Array field.
           $fieldname .= '[]';
           foreach ($lookupData["tl$idx"] as $term) {
+            $termValue = htmlspecialchars("$term[0]:$term[1]", ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+            $termLabel = htmlspecialchars($term[1], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
             $checked = is_array($default) && in_array($term[0], $default) ? ' checked="checked"' : '';
-            $checkboxes[] = "<input title=\"$term[1]\" type=\"checkbox\" class=\"$controlClass\" name=\"$fieldname\" value=\"$term[0]:$term[1]\"$checked>";
+            $checkboxes[] = "<input title=\"$termLabel\" type=\"checkbox\" class=\"$controlClass\" name=\"$fieldname\" value=\"$termValue\"$checked>";
           }
           $r .= implode('</td><td>', $checkboxes);
           $extraCols .= count($checkboxes) - 1;
@@ -492,15 +497,17 @@ class data_entry_helper extends helper_base {
           // Add lookup as select.
           $r .= "<select name=\"$fieldname\" class=\"$controlClass\"><option value=''>&lt;" . lang::get('Please select') . "&gt;</option>";
           foreach ($lookupData["tl$idx"] as $term) {
+            $termValue = htmlspecialchars("$term[0]:$term[1]", ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+            $termLabel = htmlspecialchars($term[1], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
             $selected = $default == "$term[0]" ? ' selected="selected"' : '';
-            $r .= "<option value=\"$term[0]:$term[1]\"$selected>$term[1]</option>";
+            $r .= "<option value=\"$termValue\"$selected>$termLabel</option>";
           }
           $r .= "</select>";
         }
         else {
           // Add text input.
           $class = empty($def['regex']) ? $controlClass : "$controlClass {pattern:$def[regex]}";
-          $default = htmlspecialchars($default);
+          $default = htmlspecialchars($default, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
           $r .= "<input type=\"text\" name=\"$fieldname\" value=\"$default\" class=\"$class\"/>";
         }
         if (!empty($def['unit'])) {
@@ -555,11 +562,12 @@ $('#$escaped').on('change', function(e) {
       lang::get('Please clear the values in some more rows before trying to reduce the number of rows further.') . "'\n";
     $jsData = [
       'cols' => $options['columns'],
-      'rowCount' => $options['defaultRows'],
+      'rowCount' => $rowCount,
       'rowCountControl' => $options['rowCountControl'],
       'deleteRows' => $options['deleteRows'],
     ];
-    self::$javascript .= "indiciaData['complexAttrGrid-$attrTypeTag-$attrId']=" . json_encode($jsData) . ";\n";
+    self::$javascript .= "indiciaData['complexAttrGrid-$attrTypeTag-$attrId']=" .
+      json_encode($jsData, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) . ";\n";
 
     return $r;
   }
