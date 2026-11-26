@@ -2398,6 +2398,7 @@ HTML;
       'checkingData' => lang::get('Checking data'),
       'importAnother' => lang::get('Import another file'),
       'importingDone' => lang::get('Import complete'),
+      'importingDoneWithErrors' => lang::get('Import finished but with errors'),
       'importingTitle' => lang::get('Importing the data...'),
       'precheckDone' => 'Checking complete',
       'precheckTitle' => 'Checking the import data for validation errors...',
@@ -2419,6 +2420,7 @@ HTML;
           <p id="import-details-importing-title" style="display: none">$lang[importingTitle]</p>
           <p id="import-details-importing-details" style="display: none"></p>
           <p id="import-details-importing-done" style="display: none"><i class="fas fa-check"></i>$lang[importingDone]</p>
+          <p id="import-details-importing-done-with-errors" style="display: none"><i class="fas fa-exclamation-triangle"></i>$lang[importingDoneWithErrors]</p>
           <p id="import-details-import-another" style="display: none"><a href="$restartUrl" class="btn btn-primary">$lang[importAnother]</a></p>
         </div>
       </div>
