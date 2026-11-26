@@ -57,6 +57,7 @@
 }
 .import-info .progress-container .progress {
   margin: 0;
+  height: 1.5rem;
 }
 .import-info .progress-container span {
   position: absolute;
@@ -66,6 +67,8 @@
   left: 0;
   color: white;
   z-index: 1000;
+  font-size: 1rem;
+  line-height: 1.5rem;
 }
 
 /*# sourceMappingURL=background_import_status.css.map */

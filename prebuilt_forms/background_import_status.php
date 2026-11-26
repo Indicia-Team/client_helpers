@@ -209,11 +209,11 @@ class iform_background_import_status implements PrebuiltFormInterface {
               </div>
             </div>
             <div class="progress-container">
-              <span>$lang[precheckProgress] ($precheckProgressRounded)</span>
+              <span>$lang[precheckProgress] ($precheckProgressRounded)%</span>
               <progress class="progress" max="100" value="$precheckProgress"></progress>
             </div>
             <div class="progress-container">
-              <span>$lang[importProgress] ($importProgressRounded)</span>
+              <span>$lang[importProgress] ($importProgressRounded)%</span>
               <progress class="progress" max="100" value="$importProgress"></progress>
             </div>
             $errorWarningBox
