@@ -895,9 +895,9 @@ class filter_quality extends FilterBase {
   <div class="quality-pane" style="display: none">
     $includeExcludeRadios
     $qualityCheckboxes
-    <div class="pull-right">
-      <button type="button" class="$indicia_templates[buttonHighlightedClass] btn-xs ok">$lang[ok]</button>
-      <button type="button" class="$indicia_templates[buttonDefaultClass] btn-xs cancel">$lang[cancel]</button>
+    <div class="$indicia_templates[floatRightClass]">
+      <button type="button" class="$indicia_templates[buttonHighlightedClass] $indicia_templates[buttonSmallClass] ok">$lang[ok]</button>
+      <button type="button" class="$indicia_templates[buttonDefaultClass] $indicia_templates[buttonSmallClass] cancel">$lang[cancel]</button>
     </div>
   </div>
 </div>

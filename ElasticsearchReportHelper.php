@@ -729,6 +729,7 @@ HTML;
    * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-datagrid
    */
   public static function dataGrid(array $options) {
+    global $indicia_templates;
     self::checkOptions(
       'dataGrid',
       $options,
@@ -832,10 +833,10 @@ JS;
         <p>$lang[columnConfigIntro]</p>
         <div class="form-inline">
           <input class="grid-settings-search form-control" type="text" placeholder="Search" />
-          <button class="btn btn-default toggle">$lang[toggleTick]</button>
-          <button class="btn btn-default restore">$lang[restoreDefaults]</button>
-          <button class="btn btn-default cancel">$lang[cancel]</button>
-          <button class="btn btn-primary save">$lang[save]</button>
+          <button class="$indicia_templates[buttonDefaultClass] toggle">$lang[toggleTick]</button>
+          <button class="$indicia_templates[buttonDefaultClass] restore">$lang[restoreDefaults]</button>
+          <button class="$indicia_templates[buttonDefaultClass] cancel">$lang[cancel]</button>
+          <button class="$indicia_templates[buttonHighlightedClass] save">$lang[save]</button>
         </div>
         <ol></ol>
       </div>
