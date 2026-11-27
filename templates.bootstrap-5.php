@@ -111,7 +111,7 @@ HTML;
 $indicia_templates['georeference_lookup'] = <<<HTML
 <div class="input-group">
   <input type="text" id="imp-georef-search"{class} />
-  <span class="input-group-btn">{searchButton}</span>
+  {searchButton}
 </div>
 <div id="imp-georef-div" class="ui-corner-all ui-widget-content ui-helper-hidden">
   <div id="imp-georef-output-div"></div>
